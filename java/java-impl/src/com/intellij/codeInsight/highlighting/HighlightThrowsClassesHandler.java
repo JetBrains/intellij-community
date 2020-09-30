@@ -7,7 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -38,7 +38,7 @@ class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
                                 @NotNull PsiClassType type,
                                 @NotNull PsiElement block,
                                 @NotNull PsiElement resolved) {
-    super(editor, file, target, new PsiClassType[]{type}, block, null, Conditions.alwaysTrue());
+    super(editor, file, target, new PsiClassType[]{type}, block, null, __->true);
     myEditor = editor;
     myFile = file;
     myResolved = resolved;
@@ -52,9 +52,13 @@ class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
     String showUsagesMode = JavaBundle.message("highlight.throws.popup.usages", className);
     IPopupChooserBuilder<String> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(Arrays.asList(throwingPlacesMode, showUsagesMode))
-      .setRenderer(new SimpleListCellRenderer<String>(){
+      .setRenderer(new SimpleListCellRenderer<>() {
         @Override
-        public void customize(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+        public void customize(@NotNull JList<? extends String> list,
+                              @NlsContexts.Label String value,
+                              int index,
+                              boolean selected,
+                              boolean hasFocus) {
           setIcon(showUsagesMode.equals(value) ? AllIcons.Nodes.Class : AllIcons.Nodes.ExceptionClass);
           setText(value);
         }

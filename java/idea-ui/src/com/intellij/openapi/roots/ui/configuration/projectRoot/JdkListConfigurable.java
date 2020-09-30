@@ -189,7 +189,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   protected
   @Nullable
   String getEmptySelectionString() {
-    return "Select an SDK to view or edit its details here";
+    return JavaUiBundle.message("project.jdks.configurable.empty.selection.string");
   }
 
   private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {

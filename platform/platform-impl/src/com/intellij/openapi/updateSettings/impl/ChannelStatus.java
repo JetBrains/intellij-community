@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+
 public enum ChannelStatus {
   EAP("eap", "Canary Channel"),
   MILESTONE("milestone", "Dev Channel"),
@@ -10,7 +14,7 @@ public enum ChannelStatus {
   private final String myCode;
   private final String myDisplayName;
 
-  ChannelStatus(String code, String displayName) {
+  ChannelStatus(@NonNls String code, @Nls String displayName) {
     myCode = code;
     myDisplayName = displayName;
   }

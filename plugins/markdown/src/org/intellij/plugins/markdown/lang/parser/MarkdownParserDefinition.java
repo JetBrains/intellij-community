@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.lang.lexer.MarkdownToplevelLexer;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiFactory;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
@@ -57,7 +58,7 @@ public class MarkdownParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public TokenSet getWhitespaceTokens() {
-    return TokenSet.create();
+    return MarkdownTokenTypeSets.WHITE_SPACES;
   }
 
   @NotNull

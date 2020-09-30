@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -27,8 +28,7 @@ fun showProcessExecutionErrorDialog(project: Project?,
                                     exitCode: Int) {
   check(project == null || !project.isDisposed)
 
-  val errorMessageText = "$command could not complete successfully. " +
-                         "Please see the command's output for information about resolving this problem."
+  val errorMessageText = IdeBundle.message("dialog.message.command.could.not.complete", command)
   // HTML format for text in `JBLabel` enables text wrapping
   val errorMessageLabel = JBLabel(UIUtil.toHtml(errorMessageText), Messages.getErrorIcon(), SwingConstants.LEFT)
 
@@ -40,7 +40,7 @@ fun showProcessExecutionErrorDialog(project: Project?,
   }
 
   val commandOutputPanel = BorderLayoutPanel().apply {
-    border = IdeBorderFactory.createTitledBorder("Command output", false)
+    border = IdeBorderFactory.createTitledBorder(IdeBundle.message("border.title.command.output"), false)
 
     addToCenter(
       JBScrollPane(commandOutputTextPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER))

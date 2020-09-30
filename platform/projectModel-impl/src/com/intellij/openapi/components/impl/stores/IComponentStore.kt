@@ -6,6 +6,7 @@ import com.intellij.configurationStore.StateStorageManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +25,7 @@ interface IComponentStore {
   fun unloadComponent(component: Any) {
   }
 
-  fun initPersistencePlainComponent(component: Any, key: String)
+  fun initPersistencePlainComponent(component: Any, @NlsSafe key: String)
 
   fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)
 

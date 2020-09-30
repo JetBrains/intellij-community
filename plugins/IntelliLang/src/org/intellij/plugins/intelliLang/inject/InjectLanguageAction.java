@@ -33,9 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.injection.Injectable;
@@ -51,6 +49,7 @@ import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,30 +273,32 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     void showFix(@NotNull Editor editor,
                  @NotNull TextRange range,
                  @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
-                 @NotNull String text,
+                 @NotNull @Nls String text,
                  @NotNull Processor<PsiLanguageInjectionHost> data);
   }
 
 
   public static void addFixer(@NotNull PsiLanguageInjectionHost host,
                               Processor<? super PsiLanguageInjectionHost> annotationFixer,
-                              String text) {
+                              @NlsContexts.PopupContent String text) {
     host.putUserData(FIX_KEY, withFixName(annotationFixer, text));
   }
 
-  public static Processor<? super PsiLanguageInjectionHost> withFixName(Processor<? super PsiLanguageInjectionHost> fix, String text) {
+  public static Processor<? super PsiLanguageInjectionHost> withFixName(Processor<? super PsiLanguageInjectionHost> fix,
+                                                                        @NlsContexts.PopupContent String text) {
     return new MyFixAction(text, fix);
   }
 
-  private static class MyFixAction implements Processor<PsiLanguageInjectionHost> {
-    private final String myText;
+  private static final class MyFixAction implements Processor<PsiLanguageInjectionHost> {
+    private final @NlsContexts.PopupContent String myText;
     private final Processor<? super PsiLanguageInjectionHost> myFix;
 
-    private MyFixAction(String text, Processor<? super PsiLanguageInjectionHost> fix) {
+    private MyFixAction(@NlsContexts.PopupContent String text, Processor<? super PsiLanguageInjectionHost> fix) {
       myText = text;
       myFix = fix;
     }
 
+    @NlsContexts.PopupContent
     public String getText() {
       return myText;
     }

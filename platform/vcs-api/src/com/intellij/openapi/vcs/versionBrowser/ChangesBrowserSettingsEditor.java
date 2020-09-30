@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.versionBrowser;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ public interface ChangesBrowserSettingsEditor<T extends ChangeBrowserSettings> {
 
   void setSettings(@NotNull T settings);
 
+  @Nls
   @Nullable
   String validateInput();
 

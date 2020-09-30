@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -159,7 +159,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
           FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
         }
       }
-    }, ApplicationManager.getApplication());
+    }, null);
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
@@ -430,7 +430,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     public Set<VirtualFile> getAdditionalRootsToIndex() {
       ScratchFileService instance = ScratchFileService.getInstance();
       LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      HashSet<VirtualFile> result = new HashSet<>();
+      Set<VirtualFile> result = new HashSet<>();
       for (RootType rootType : RootType.getAllRootTypes()) {
         if (rootType.isHidden()) continue;
         ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));

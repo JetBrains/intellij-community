@@ -42,7 +42,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
-    myModule.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    myModule.getProject().getMessageBus().connect(myModule).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {

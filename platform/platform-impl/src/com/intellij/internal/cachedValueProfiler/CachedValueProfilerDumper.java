@@ -19,7 +19,7 @@ import java.util.*;
 
 import static java.time.temporal.ChronoField.*;
 
-public class CachedValueProfilerDumper {
+public final class CachedValueProfilerDumper {
   private final MultiMap<StackTraceElement, ProfilingInfo> myStorage;
 
   private CachedValueProfilerDumper(MultiMap<StackTraceElement, ProfilingInfo> storage) {
@@ -54,7 +54,7 @@ public class CachedValueProfilerDumper {
     return list;
   }
 
-  private static class TotalInfo {
+  private static final class TotalInfo {
     private final StackTraceElement myOrigin;
     private final long myTotalLifeTime;
     private final long myTotalUseCount;
@@ -105,7 +105,7 @@ public class CachedValueProfilerDumper {
     return LocalDateTime.now().format(formatter);
   }
 
-  private static class MyWriter {
+  private static final class MyWriter {
     private final JsonWriter myWriter;
 
     private MyWriter(@NotNull JsonWriter writer) {

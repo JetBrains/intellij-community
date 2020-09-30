@@ -20,6 +20,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,10 +31,10 @@ import java.awt.event.ActionListener;
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
   private JTextArea myTextArea;
-  private final String myText;
+  private final @Nls String myText;
   private boolean isToShowInFuture;
 
-  public InfoDialog(String text, Project project) {
+  public InfoDialog(@Nls String text, Project project) {
     super(project, false);
     myText = text;
     setButtonsAlignment(SwingUtilities.CENTER);

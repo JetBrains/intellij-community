@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ShowSettingsAction extends AnAction implements DumbAware {
+public class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(ShowSettingsAction.class);
 
   public ShowSettingsAction() {

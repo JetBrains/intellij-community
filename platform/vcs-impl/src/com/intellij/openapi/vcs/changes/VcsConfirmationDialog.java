@@ -17,11 +17,11 @@ import java.awt.event.ActionEvent;
  * @author Dmitry Avdeev
  */
 class VcsConfirmationDialog extends OptionsDialog {
-  @NotNull private final String myOkText;
-  @NotNull private final String myCancelText;
+  @NotNull private final @NlsContexts.Button String myOkText;
+  @NotNull private final @NlsContexts.Button String myCancelText;
   private final VcsShowConfirmationOption myOption;
-  private final String myMessage;
-  private final String myDoNotShowMessage;
+  private final @NlsContexts.Label String myMessage;
+  private final @NlsContexts.Checkbox String myDoNotShowMessage;
 
   VcsConfirmationDialog(@NotNull Project project,
                         @NotNull @NlsContexts.DialogTitle String title,

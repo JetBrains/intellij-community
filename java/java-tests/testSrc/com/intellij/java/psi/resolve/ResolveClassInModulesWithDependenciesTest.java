@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +56,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   }
 
   public void testModuleSourceAsLibrarySource() throws Exception {
-    VirtualFile dir = createTempVfsDirectory();
+    VirtualFile dir = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(dir.getUrl()));
 
     final PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
@@ -68,7 +68,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   }
 
   public void testModuleSourceAsLibraryClasses() throws Exception {
-    VirtualFile dir = createTempVfsDirectory();
+    VirtualFile dir = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(dir.getUrl()), Collections.emptyList());
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);

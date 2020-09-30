@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +156,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myCenterPane.repaint();
   }
 
-  public void setFailMessage(@NotNull String reason) {
+  public void setFailMessage(@NotNull @Nls String reason) {
     StreamEx.of(myTabContents).prepend(myFlatContent)
             .forEach(x -> x.setContent(new JBLabel(reason, SwingConstants.CENTER), BorderLayout.CENTER));
   }
@@ -221,6 +222,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   @NotNull
+  @Nls
   private static String getButtonText(@NotNull MyMode currentState) {
     return MyMode.SPLIT.equals(currentState)
            ? StreamDebuggerBundle.message("stream.debugger.dialog.flat.mode.button")

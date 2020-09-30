@@ -1,11 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.redmine;
 
-import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssueWrapper;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssuesWrapper;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.ProjectsWrapper;
-
 import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -19,13 +14,6 @@ import com.intellij.tasks.redmine.model.RedmineProject;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Pattern;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -35,6 +23,17 @@ import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
+
+import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 
 /**
  * @author Mikhail Golubev
@@ -264,7 +263,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public String getPresentableName() {
     String name = super.getPresentableName();
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-      name += "/projects/" + StringUtil.notNullize(myCurrentProject.getIdentifier(), String.valueOf(myCurrentProject.getId()));
+      name += "/projects/" + StringUtil.notNullize(myCurrentProject.getIdentifier(), String.valueOf(myCurrentProject.getId())); //NON-NLS
     }
     return name;
   }

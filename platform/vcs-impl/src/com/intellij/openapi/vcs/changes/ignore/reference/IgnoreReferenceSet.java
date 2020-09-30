@@ -230,7 +230,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   /**
    * Custom definition of {@link FileReference}.
    */
-  private class IgnoreReference extends FileReference {
+  private final class IgnoreReference extends FileReference {
 
     private IgnoreReference(@NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
       super(fileReferenceSet, range, index, text);

@@ -130,6 +130,11 @@ class LookupUi {
         updateHint();
       }
     });
+
+    myScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+      if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
+      myLookup.myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
+    });
   }
 
   private void updateHint() {
@@ -265,7 +270,7 @@ class LookupUi {
     return new Rectangle(location.x, location.y, dim.width, candidate.height);
   }
 
-  private class LookupLayeredPane extends JBLayeredPane {
+  private final class LookupLayeredPane extends JBLayeredPane {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
@@ -313,7 +318,7 @@ class LookupUi {
     }
   }
 
-  private class HintAction extends DumbAwareAction {
+  private final class HintAction extends DumbAwareAction {
     private HintAction() {
       super(AllIcons.Actions.IntentionBulb);
 
@@ -330,13 +335,13 @@ class LookupUi {
     }
   }
 
-  private static class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction() {
       setPopup(true);
     }
   }
 
-  private class ChangeSortingAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
+  private final class ChangeSortingAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
     private ChangeSortingAction() {
       super(ActionsBundle.messagePointer("action.ChangeSortingAction.text"));
     }

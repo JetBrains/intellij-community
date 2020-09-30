@@ -7,7 +7,9 @@
 
 package com.intellij.tasks.mantis.model;
 
-public class IssueNoteData  implements java.io.Serializable {
+import org.jetbrains.annotations.Nls;
+
+public class IssueNoteData implements java.io.Serializable {
     private java.math.BigInteger id;
 
     private com.intellij.tasks.mantis.model.AccountData reporter;
@@ -96,7 +98,7 @@ public class IssueNoteData  implements java.io.Serializable {
      * 
      * @return text
      */
-    public java.lang.String getText() {
+    public java.lang.@Nls String getText() {
         return text;
     }
 

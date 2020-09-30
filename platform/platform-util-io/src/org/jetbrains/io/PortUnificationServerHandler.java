@@ -28,7 +28,7 @@ final class PortUnificationServerHandler extends Decoder {
   // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
   // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
   @SuppressWarnings("SpellCheckingInspection")
-  private static final AtomicNotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SslContext>() {
+  private static final AtomicNotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<>() {
     @NotNull
     @Override
     protected SslContext compute() {
@@ -39,7 +39,7 @@ final class PortUnificationServerHandler extends Decoder {
 
       try {
         KeyStore ks = KeyStore.getInstance("JCEKS");
-        char[] password = "jb".toCharArray();
+        char[] password = "jb".toCharArray(); //NON-NLS
         String keyStoreResourceName = "cert.jceks";
         InputStream keyStoreData = getClass().getResourceAsStream(keyStoreResourceName);
         if (keyStoreData == null) {

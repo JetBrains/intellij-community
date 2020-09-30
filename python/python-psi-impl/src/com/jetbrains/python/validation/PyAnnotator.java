@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -49,7 +50,7 @@ public abstract class PyAnnotator extends PyElementVisitor {
     }
   }
 
-  protected void markError(PsiElement element, String message) {
+  protected void markError(@NotNull PsiElement element, @NotNull @InspectionMessage String message) {
     getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(element).create();
   }
 

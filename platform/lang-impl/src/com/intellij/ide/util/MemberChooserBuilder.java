@@ -21,6 +21,7 @@ package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ public class MemberChooserBuilder<T extends ClassMember> {
   private boolean myIsInsertOverrideVisible = false;
   private boolean myIsCopyJavadocVisible = false;
   private JComponent myHeaderPanel;
-  private String myTitle;
+  private @NlsContexts.DialogTitle String myTitle;
 
   public MemberChooserBuilder(final Project project) {
     myProject = project;
@@ -70,7 +71,7 @@ public class MemberChooserBuilder<T extends ClassMember> {
     myIsCopyJavadocVisible = isCopyJavadocVisible;
   }
 
-  public void setTitle(final String title) {
+  public void setTitle(final @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 }

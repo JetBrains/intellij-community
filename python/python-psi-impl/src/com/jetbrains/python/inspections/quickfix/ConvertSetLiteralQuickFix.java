@@ -19,7 +19,7 @@ public class ConvertSetLiteralQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.set.literal");
+    return PyPsiBundle.message("QFIX.NAME.convert.set.literal");
   }
 
   @Override

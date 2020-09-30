@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.reset;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,7 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
@@ -99,15 +99,16 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         catch (VcsException e) {
           String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
           LOG.warn(message, e);
-          Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.ERROR, null);
-          VcsNotifier.getInstance(project).notify(notification);
+          VcsNotifier.getInstance(project).notifyError("git.could.not.load.changes.of.commit",
+                                                       "",
+                                                       message);
           return;
         }
 
         // TODO change notification title
         new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), SOFT, indicator).execute();
 
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+        ChangeListManager changeListManager = ChangeListManager.getInstance(project);
         changeListManager.invokeAfterUpdate(() -> {
           Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
           changeListManager.moveChangesTo(changeList, changes.toArray(new Change[0]));

@@ -30,7 +30,9 @@ import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +44,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/searchInLibs";
-    VirtualFile rootFile = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
+    VirtualFile rootFile = createTestProjectStructure(myProject, myModule, root, false);
 
     final VirtualFile projectRoot = rootFile.findChild("project");
     assertNotNull(projectRoot);
@@ -71,7 +73,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     doTest("LibraryClass1", new String[]{"ProjectClass.java"}, GlobalSearchScope.projectScope(myProject));
   }
   public void testFindUsagesInProject2() {
-    doTest("LibraryClass2", new String[]{}, GlobalSearchScope.projectScope(myProject));
+    doTest("LibraryClass2", ArrayUtil.EMPTY_STRING_ARRAY, GlobalSearchScope.projectScope(myProject));
   }
 
   public void testFindUsagesInLibs() {
@@ -95,7 +97,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     model.setProjectScope(false);
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
-    CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
+    Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
     FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
@@ -113,7 +115,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     model.setProjectScope(false);
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
-    CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
+    Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
     FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 

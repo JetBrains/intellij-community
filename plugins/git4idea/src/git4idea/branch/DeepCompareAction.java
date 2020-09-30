@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,7 +100,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
       @NotNull
       @Override
-      protected AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs) {
+      protected AnAction createAction(@NotNull @NlsActions.ActionText String name, @NotNull Collection<? extends VcsRef> refs) {
         return new DumbAwareAction(name) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {

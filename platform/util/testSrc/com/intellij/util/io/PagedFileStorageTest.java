@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.google.common.base.Charsets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -12,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -110,7 +110,7 @@ public class PagedFileStorageTest {
     withLock(lock, () -> {
       int initialSize = 4096;
       ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, PagedFileStorage.MB, false);
-      byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(Charsets.UTF_8);
+      byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
       assertTrue(bytes.length > initialSize);
 
       file.put(0, bytes, 0, bytes.length);

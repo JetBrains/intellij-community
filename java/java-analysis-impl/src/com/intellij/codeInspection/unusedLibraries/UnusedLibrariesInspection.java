@@ -152,7 +152,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     Map<VirtualFile, Set<String>> toClasses = new THashMap<>();
     collectClassesPerRoots(givenRoots, fromClasses, toClasses);
 
-    Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<VirtualFile>() {
+    Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<VirtualFile> getNodes() {

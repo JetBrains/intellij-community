@@ -50,7 +50,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myHideOnAction = true;
   private boolean myHideOnCloseClick = true;
   private boolean myDialogMode;
-  private String  myTitle;
+  private @NlsContexts.PopupTitle String  myTitle;
   private Insets  myContentInsets = JBUI.insets(2);
   private boolean myShadow        = true;
   private boolean mySmallVariant;

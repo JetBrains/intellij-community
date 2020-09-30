@@ -5,6 +5,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
@@ -14,13 +15,15 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.application.Experiments;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,13 +37,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
-             RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile {
+public class ApplicationConfiguration extends JavaRunConfigurationBase
+  implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
+             FusAwareRunConfiguration {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -143,7 +144,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     if (getMainClassName() == null) {
       return null;
     }
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(getMainClassName()), 6) + ".main()";
+    @NlsSafe String mainSuffix = ".main()";
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(getMainClassName()), 6) + mainSuffix;
   }
 
   @Override
@@ -156,7 +158,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+    final PsiClass psiClass =
+      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
@@ -279,6 +282,15 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
     getOptions().setRemoteTarget(targetName);
+  }
+
+  @Override
+  public @NotNull List<EventPair> getAdditionalUsageData() {
+    PsiClass mainClass = getMainClass();
+    if (mainClass == null) {
+      return Collections.emptyList();
+    }
+    return Collections.singletonList(EventFields.Language.with(mainClass.getLanguage()));
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {

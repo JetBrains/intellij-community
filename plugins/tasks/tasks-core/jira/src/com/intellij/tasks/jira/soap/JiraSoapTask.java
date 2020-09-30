@@ -24,6 +24,7 @@ import com.intellij.tasks.TaskType;
 import com.intellij.tasks.jira.JiraTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +45,8 @@ class JiraSoapTask extends JiraTask {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US);
 
   private final String myKey;
-  private final String mySummary;
-  private final String myDescription;
+  private final @Nls String mySummary;
+  private final @Nls String myDescription;
   private final String myIconUrl;
   private final Date myUpdated;
   private final Date myCreated;
@@ -57,7 +58,9 @@ class JiraSoapTask extends JiraTask {
   JiraSoapTask(@NotNull Element element, @NotNull TaskRepository repository) {
     super(repository);
     myKey = element.getChildText("key");
+    //noinspection HardCodedStringLiteral
     mySummary = element.getChildText("summary");
+    //noinspection HardCodedStringLiteral
     myDescription = element.getChildText("description");
 
     myIconUrl = getChildAttribute(element, "type", "iconUrl");
@@ -81,6 +84,7 @@ class JiraSoapTask extends JiraTask {
         @Nullable
         @Override
         public String getAuthor() {
+          //noinspection HardCodedStringLiteral
           return element1.getAttributeValue("author");
         }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.remote
 
+import com.intellij.ide.IdeBundle
+
 enum class AuthType {
   PASSWORD, KEY_PAIR,
   /**
@@ -26,8 +28,8 @@ enum class AuthType {
 
   val displayName: String
     get() = when (this) {
-      PASSWORD -> "Password"
-      KEY_PAIR -> "Key pair (OpenSSH or PuTTY)"
-      OPEN_SSH -> "OpenSSH config and authentication agent"
+      PASSWORD -> IdeBundle.message("display.name.password")
+      KEY_PAIR -> IdeBundle.message("display.name.key.pair.openssh.or.putty")
+      OPEN_SSH -> IdeBundle.message("display.name.openssh.config.and.authentication.agent")
     }
 }

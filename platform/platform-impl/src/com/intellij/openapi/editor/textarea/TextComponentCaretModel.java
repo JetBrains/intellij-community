@@ -56,6 +56,11 @@ class TextComponentCaretModel implements CaretModel {
     return false;
   }
 
+  @Override
+  public int getMaxCaretCount() {
+    return 1;
+  }
+
   @NotNull
   @Override
   public Caret getCurrentCaret() {
@@ -107,7 +112,7 @@ class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates) {
-    if (caretStates.size() != 1) throw new IllegalArgumentException("Exactly one CaretState object must be passed");
+    if (caretStates.size() < 1) throw new IllegalArgumentException("Empty list");
     CaretState state = caretStates.get(0);
     if (state != null) {
       if (state.getCaretPosition() != null) moveToLogicalPosition(state.getCaretPosition());

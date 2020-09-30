@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -52,7 +53,7 @@ class ConfigurableController implements Configurable.TopComponentController {
     }
   }
 
-  static ConfigurableController getOrCreate(Configurable configurable, Map<Configurable, ConfigurableController> controllers) {
+  static ConfigurableController getOrCreate(Configurable configurable, @NotNull Map<Configurable, ConfigurableController> controllers) {
     ConfigurableController controller = controllers.get(configurable);
     if (controller != null) {
       return controller;

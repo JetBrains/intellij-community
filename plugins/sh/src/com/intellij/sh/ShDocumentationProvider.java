@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,7 +38,7 @@ public class ShDocumentationProvider implements DocumentationProvider {
   private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
   @NonNls private static final String FEATURE_ACTION_ID = "DocumentationProviderUsed";
 
-  private static final NullableLazyValue<String> myManExecutable = new AtomicNullableLazyValue<String>() {
+  private static final NullableLazyValue<String> myManExecutable = new AtomicNullableLazyValue<>() {
     @Nullable
     @Override
     protected String compute() {
@@ -80,10 +82,10 @@ public class ShDocumentationProvider implements DocumentationProvider {
 
   private final ConcurrentHashMap<String, String> myManCache = new ConcurrentHashMap<>();
 
-  private String fetchInfo(@Nullable String commandName) {
+  private @NlsSafe String fetchInfo(@Nullable String commandName) {
     if (commandName == null) return null;
     String manExecutable = myManExecutable.getValue();
-    if (manExecutable == null) return "Can't find info in your $PATH";
+    if (manExecutable == null) return ShBundle.message("error.message.can.t.find.info.in.your.path");
 
     return myManCache.computeIfAbsent(commandName, s -> {
       try {
@@ -111,7 +113,7 @@ public class ShDocumentationProvider implements DocumentationProvider {
       while (m.find()) {
         if (m.groupCount() > 0) {
           String url = m.group(0);
-          m.appendReplacement(sb, "<a href='" + url + "'>" + url + "</a>");
+          m.appendReplacement(sb, HtmlChunk.link(url, url).toString());
         }
       }
       m.appendTail(sb);

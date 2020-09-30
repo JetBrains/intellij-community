@@ -1,4 +1,4 @@
-public enum Style {
+public sealed enum Style {
     SHEET("foo") {
         @java.lang.Override
         public fun getExitAnimation() : java.lang.String {

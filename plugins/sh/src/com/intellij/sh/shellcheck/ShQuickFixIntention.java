@@ -2,6 +2,7 @@
 package com.intellij.sh.shellcheck;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,9 +20,9 @@ public class ShQuickFixIntention implements IntentionAction {
   @NonNls private static final String FEATURE_ACTION_ID = "QuickFixUsed";
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
-  private final String message;
+  private final @IntentionName String message;
 
-  public ShQuickFixIntention(String message, ShShellcheckExternalAnnotator.Fix fix, long timestamp) {
+  public ShQuickFixIntention(@IntentionName String message, ShShellcheckExternalAnnotator.Fix fix, long timestamp) {
     this.timestamp = timestamp;
     this.message = message;
     this.fix = fix;

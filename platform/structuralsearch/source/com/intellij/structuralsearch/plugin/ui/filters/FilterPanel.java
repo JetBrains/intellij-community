@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,23 +49,24 @@ public class FilterPanel implements FilterTable {
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
-  boolean myShown = false;
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
-  private final ScriptFilter myScriptFilter = new ScriptFilter(this);
-  private final List<FilterAction> myFilters =
-    Arrays.asList(new TextFilter(this),
-                  new CountFilter(this),
-                  new TypeFilter(this),
-                  new ReferenceFilter(this),
-                  new ContextFilter(this),
-                  myScriptFilter);
+  private final ScriptFilter myScriptFilter = new ScriptFilter();
+  private final List<FilterAction> myFilters;
   private Runnable myConstraintChangedCallback;
 
   public FilterPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
     myProject = project;
     myFileType = fileType;
+    myFilters = new SmartList<>();
+    for (FilterAction filterAction : FilterAction.EP_NAME.getExtensionList()) {
+      myFilters.add(filterAction);
+      filterAction.setTable(this);
+    }
+    myFilters.add(myScriptFilter);
+    myScriptFilter.setTable(this);
+
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable
       @Override
@@ -211,9 +211,6 @@ public class FilterPanel implements FilterTable {
 
   public void setCompiledPattern(@Nullable CompiledPattern compiledPattern) {
     myCompiledPattern = compiledPattern;
-    if (myCompiledPattern == null) {
-      myShown = false;
-    }
     showFilters();
   }
 
@@ -226,7 +223,6 @@ public class FilterPanel implements FilterTable {
       return;
     }
     myConstraint = constraint;
-    myShown = false;
     showFilters();
   }
 
@@ -235,7 +231,7 @@ public class FilterPanel implements FilterTable {
   }
 
   private void showFilters() {
-    if (myConstraint == null || myShown) {
+    if (myConstraint == null) {
       return;
     }
     if (!isValid()) {
@@ -275,7 +271,6 @@ public class FilterPanel implements FilterTable {
                                        showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
                                      });
     }
-    myShown = true;
   }
 
   public void setConstraintChangedCallback(Runnable callback) {

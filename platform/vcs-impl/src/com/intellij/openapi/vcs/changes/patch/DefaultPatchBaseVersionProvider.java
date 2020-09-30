@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -35,8 +36,8 @@ public final class DefaultPatchBaseVersionProvider {
   /**
    * @see com.intellij.openapi.diff.impl.patch.TextPatchBuilder
    */
-  private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)");
-  private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)";
+  private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)"); // NON-NLS
+  private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)"; // NON-NLS
 
   @CalledInAny
   public static void getBaseVersionContent(@NotNull Project project,
@@ -138,7 +139,9 @@ public final class DefaultPatchBaseVersionProvider {
     }
   }
 
-  private static void runWithModalProgressIfNeeded(@Nullable Project project, @NotNull String title, @NotNull VcsRunnable task)
+  private static void runWithModalProgressIfNeeded(@Nullable Project project,
+                                                   @NotNull @NlsContexts.ProgressTitle String title,
+                                                   @NotNull VcsRunnable task)
     throws VcsException {
     VcsUtil.runVcsProcessWithProgress(task, title, true, project);
   }

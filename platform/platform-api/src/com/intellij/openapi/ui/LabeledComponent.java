@@ -22,7 +22,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
 
   private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
-  private String myLabelConstraints = BorderLayout.NORTH;
+  private @NonNls String myLabelConstraints = BorderLayout.NORTH;
   private JComponent myAnchor;
 
   public LabeledComponent() {
@@ -38,7 +38,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   @NotNull
   public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
                                                                         @NotNull @NlsContexts.Label String text,
-                                                                        String labelConstraint) {
+                                                                        @NonNls String labelConstraint) {
     LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
     labeledComponent.setText(text);
@@ -57,7 +57,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     TextWithMnemonic.fromTextWithMnemonic(text).setToLabel(myLabel);
   }
 
-  private static String handleSemicolon(String text) {
+  private static @NlsContexts.Label String handleSemicolon(@NlsContexts.Label String text) {
     return StringUtil.isEmpty(text) || StringUtil.endsWithChar(text, ':') || StringUtil.endsWithChar(text, '：') ? text : text + ':';
   }
 
@@ -83,7 +83,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
       add(myComponent, BorderLayout.CENTER);
     }
     if (myComponent instanceof ComponentWithBrowseButton && !(myComponent instanceof TextFieldWithBrowseButton)) {
-      myLabel.setLabelFor(((ComponentWithBrowseButton)myComponent).getChildComponent());
+      myLabel.setLabelFor(((ComponentWithBrowseButton<?>)myComponent).getChildComponent());
     }
     else {
       myLabel.setLabelFor(myComponent);
@@ -148,10 +148,10 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   public static class TextWithMnemonic {
-    private final String myText;
+    private final @NlsContexts.Label String myText;
     private final int myMnemonicIndex;
 
-    public TextWithMnemonic(String text, int mnemonicIndex) {
+    public TextWithMnemonic(@NlsContexts.Label String text, int mnemonicIndex) {
       myText = text;
       myMnemonicIndex = mnemonicIndex;
     }

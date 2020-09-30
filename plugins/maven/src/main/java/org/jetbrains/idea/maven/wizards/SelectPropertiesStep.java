@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.execution.MavenPropertiesPanel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -112,11 +113,11 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   public boolean validate() throws ConfigurationException {
     File mavenHome = MavenUtil.resolveMavenHomeDirectory(myEnvironmentForm.getMavenHome());
     if (mavenHome == null) {
-      throw new ConfigurationException("Maven home directory is not specified");
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.not.specified"));
     }
 
     if (!MavenUtil.isValidMavenHome(mavenHome)) {
-      throw new ConfigurationException("Maven home directory is invalid: " + mavenHome);
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
     }
 
     return true;

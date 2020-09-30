@@ -3,6 +3,7 @@ package com.intellij.util.progress;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public final class ConcurrentTasksProgressManager {
   private final int myTotalWeight;
   private final AtomicDouble myTotalFraction;
   private final Object myLock = new Object();
-  private final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
+  private final LinkedHashMap<SubTaskProgressIndicator, @NlsContexts.ProgressDetails String> myText2Stack = new LinkedHashMap<>();
   private final AtomicInteger myRemainingTotalWeight;
 
   public ConcurrentTasksProgressManager(ProgressIndicator parent, int totalWeight) {
@@ -50,11 +51,11 @@ public final class ConcurrentTasksProgressManager {
     myParent.setFraction(newFraction);
   }
 
-  public void setText(@NotNull String text) {
+  public void setText(@NotNull @NlsContexts.ProgressText String text) {
     myParent.setText(text);
   }
 
-  void setText2(@NotNull SubTaskProgressIndicator subTask, @Nullable String text) {
+  void setText2(@NotNull SubTaskProgressIndicator subTask, @Nullable @NlsContexts.ProgressDetails String text) {
     if (text != null) {
       synchronized (myLock) {
         myText2Stack.put(subTask, text);

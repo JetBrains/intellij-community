@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -24,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +88,7 @@ public class Java8MigrationUtils {
    * @param expectedName name of the Map method
    */
   @Contract("null, _ -> null")
-  public static PsiMethodCallExpression extractMapMethodCall(PsiExpression expression, @NotNull String expectedName) {
+  public static PsiMethodCallExpression extractMapMethodCall(PsiExpression expression, @NotNull @NonNls String expectedName) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
@@ -168,7 +155,7 @@ public class Java8MigrationUtils {
   /**
    * Class represents check when working with map: there is 2 ways - when there is a value that matches the key, and when value doesn't exists
    */
-  public static class MapCheckCondition implements MapCondition {
+  public static final class MapCheckCondition implements MapCondition {
     private final @Nullable PsiReferenceExpression myValueReference;
     private final PsiExpression myMapExpression;
     private final PsiExpression myKeyExpression;
@@ -294,7 +281,7 @@ public class Java8MigrationUtils {
    * 1. for (String value : map.keySet())
    * 2. for (Entry entry : map.entrySet())
    */
-  public static class MapLoopCondition implements MapCondition {
+  public static final class MapLoopCondition implements MapCondition {
     private final PsiParameter myIterParam;
     private final boolean myIsEntrySet;
     private final PsiReferenceExpression myMapExpression;
@@ -374,7 +361,7 @@ public class Java8MigrationUtils {
       return myIsEntrySet;
     }
 
-    private boolean isParamCall(@NotNull PsiExpression expression, @NotNull String expectedName) {
+    private boolean isParamCall(@NotNull PsiExpression expression, @NotNull @NonNls String expectedName) {
       PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
       if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();

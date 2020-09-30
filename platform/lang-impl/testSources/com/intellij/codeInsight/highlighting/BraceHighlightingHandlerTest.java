@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/braceHighlighter/")
 public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
@@ -32,11 +30,9 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
 
   @Test
   public void testAction() {
-    runInEdtAndWait(() -> {
-      configureByFile(myFileSuffix);
-      String result = getEditorTextWithHighlightedBraces(getEditor(), getFile());
-      UsefulTestCase.assertSameLinesWithFile(getAnswerFilePath(), result);
-    });
+    configureByFile(myFileSuffix);
+    String result = getEditorTextWithHighlightedBraces(getEditor(), getFile());
+    UsefulTestCase.assertSameLinesWithFile(getAnswerFilePath(), result);
   }
 
   @Nullable

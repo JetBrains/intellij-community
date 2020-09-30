@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -95,8 +95,10 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
   }
 
   private static TableView<CombinedNestingRule> createTable() {
+    String childColumn = LangBundle.message("child.file.suffix.column.name");
+    String parentColumn = LangBundle.message("parent.file.suffix.column.name");
     final ListTableModel<CombinedNestingRule> model = new ListTableModel<>(
-      new ColumnInfo<CombinedNestingRule, String>("Parent file suffix") {
+      new ColumnInfo<CombinedNestingRule, String>(parentColumn) {
         @Override
         public int getWidth(JTable table) {
           return JBUIScale.scale(125);
@@ -117,7 +119,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
           rule.parentSuffix = value.trim();
         }
       },
-      new ColumnInfo<CombinedNestingRule, String>("Child file suffix") {
+      new ColumnInfo<CombinedNestingRule, String>(childColumn) {
         @Override
         public boolean isCellEditable(CombinedNestingRule rule) {
           return true;
@@ -221,7 +223,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     }
   }
 
-  private static class CombinedNestingRule {
+  private static final class CombinedNestingRule {
     @NotNull String parentSuffix;
     @NotNull String childSuffixes; // semicolon-separated, space symbols around each suffix are ignored
 

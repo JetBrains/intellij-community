@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
@@ -30,7 +31,7 @@ public class SelectSiblingsAction extends AnAction {
   private final EditableArea myArea;
 
   public SelectSiblingsAction(EditableArea area) {
-    super("Select Siblings", "Select Siblings", null);
+    super(DesignerBundle.message("action.select.siblings.text"), DesignerBundle.message("action.select.siblings.description"), null);
     myArea = area;
   }
 

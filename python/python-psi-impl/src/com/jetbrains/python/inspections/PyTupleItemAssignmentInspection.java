@@ -47,7 +47,7 @@ public class PyTupleItemAssignmentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       PyExpression[] targets = node.getTargets();
       if (targets.length == 1 && targets[0] instanceof PySubscriptionExpression) {
         PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targets[0];

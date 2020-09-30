@@ -9,6 +9,7 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     return false;
   }
 
-  private void sendMessageToAllParents(String line, Consumer<? super BuildEvent> messageConsumer) {
+  private void sendMessageToAllParents(@NlsSafe String line, Consumer<? super BuildEvent> messageConsumer) {
     List<MavenParsingContext.MavenExecutionEntry> ids = myParsingContext.getAllEntriesReversed();
     for (MavenParsingContext.MavenExecutionEntry entry : ids) {
       if (entry.getId() == myTaskId) {

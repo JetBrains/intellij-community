@@ -10,16 +10,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-public class SuperTypesGrouper implements Grouper{
+public final class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
@@ -27,7 +27,7 @@ public class SuperTypesGrouper implements Grouper{
   @NotNull
   public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
-    Map<Group, SuperTypeGroup> groups = new THashMap<>();
+    Map<Group, SuperTypeGroup> groups = new HashMap<>();
 
     for (TreeElement child : children) {
       if (child instanceof PsiMethodTreeElement) {

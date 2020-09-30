@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,15 +14,17 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isVisible;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsToggling;
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
@@ -61,9 +63,8 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
   }
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
-    if (properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER)) {
-      List<Integer> columnOrder = properties.get(CommonUiProperties.COLUMN_ORDER);
-      return columnOrder.contains(VcsLogColumn.DATE.ordinal());
+    if (properties != null && supportsColumnsToggling(properties)) {
+      return isVisible(Date.INSTANCE, properties);
     }
     return false;
   }

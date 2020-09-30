@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DarculaColors;
@@ -49,7 +50,7 @@ class PreviewTreeRenderer extends ColoredTreeCellRenderer {
     }
     else {
       SimpleTextAttributes attributes = StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes;
-      append("Invalid ", patchMainTextAttrs(attributes, node));
+      append(JavaRefactoringBundle.message("extract.method.preview.node.invalid.prefix"), patchMainTextAttrs(attributes, node));
     }
 
     for (TextChunk textChunk : node.getTextChunks()) {

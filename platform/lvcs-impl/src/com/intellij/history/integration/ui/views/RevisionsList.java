@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -11,6 +11,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -148,12 +149,13 @@ public class RevisionsList {
     OLDER(LocalHistoryBundle.message("revisions.table.period.older")),
     OLD(LocalHistoryBundle.message("revisions.table.period.old"));
 
-    private final String myDisplayString;
+    private final @NlsContexts.Label String myDisplayString;
 
-    Period(String displayString) {
+    Period(@NlsContexts.Label String displayString) {
       myDisplayString = displayString;
     }
 
+    @NlsContexts.Label
     public String getDisplayString() {
       return myDisplayString;
     }
@@ -351,7 +353,8 @@ public class RevisionsList {
       return myWrapperPanel;
     }
 
-    private static String ensureString(String s) {
+    @NlsContexts.Label
+    private static String ensureString(@NlsContexts.Label String s) {
       return StringUtil.isEmpty(s) ? " " : s;
     }
 
@@ -369,7 +372,7 @@ public class RevisionsList {
 
       String filesCount = StringUtil.pluralize(LocalHistoryBundle.message("revisions.table.filesCount", affected.second), affected.second);
 
-      Pair<String, Color> label = null;
+      Pair<@NlsContexts.Label String, Color> label = null;
       if (!item.labels.isEmpty()) {
         Revision first = item.labels.getFirst();
         label = Pair.create(first.getLabel(), first.getLabelColor() == -1 ? USER_LABEL_COLOR : new Color(first.getLabelColor()));
@@ -410,13 +413,16 @@ public class RevisionsList {
       }
     }
 
-    private static class LabelsAndColor {
+    private static final class LabelsAndColor {
       final boolean isNamed;
-      final String title;
-      final String filesCount;
-      final Pair<String, Color> label;
+      final @NlsContexts.Label String title;
+      final @NlsContexts.Label String filesCount;
+      final Pair<@NlsContexts.Label String, Color> label;
 
-      private LabelsAndColor(boolean isNamed, String title, String filesCount, Pair<String, Color> label) {
+      private LabelsAndColor(boolean isNamed,
+                             @NlsContexts.Label String title,
+                             @NlsContexts.Label String filesCount,
+                             Pair<@NlsContexts.Label String, Color> label) {
         this.isNamed = isNamed;
         this.title = title;
         this.filesCount = filesCount;
@@ -424,7 +430,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyBorder extends EmptyBorder {
+    private static final class MyBorder extends EmptyBorder {
       private boolean isLast;
 
       private MyBorder(Insets insets) {
@@ -448,7 +454,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyLabelContainer extends JPanel {
+    private static final class MyLabelContainer extends JPanel {
       private MyLabelContainer() {
         super(new BorderLayout());
       }
@@ -476,7 +482,7 @@ public class RevisionsList {
       }
     }
 
-    private static class MyCopyProvider implements CopyProvider {
+    private static final class MyCopyProvider implements CopyProvider {
       @NotNull private final JBTable myTable;
 
       private MyCopyProvider(@NotNull JBTable table) {

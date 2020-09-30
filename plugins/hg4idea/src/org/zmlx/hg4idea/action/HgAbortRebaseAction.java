@@ -48,7 +48,10 @@ public class HgAbortRebaseAction extends HgProcessStateAction {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.abortRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message("action.hg4idea.Rebase.Abort.error"));
+            new HgCommandResultNotifier(project).notifyError("hg.rebase.abort.error",
+                                                             result,
+                                                             HgBundle.message("hg4idea.hg.error"),
+                                                             HgBundle.message("action.hg4idea.Rebase.Abort.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

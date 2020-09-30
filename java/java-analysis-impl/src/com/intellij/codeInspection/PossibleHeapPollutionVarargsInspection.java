@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,10 +16,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(PossibleHeapPollutionVarargsInspection.class);
@@ -82,37 +81,33 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
           .compute(() -> rec.addBefore(ctor, firstMethod));
       }
       if (owner instanceof PsiMethod) {
-        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner).applyFix(project, descriptor);
       }
     }
   }
 
-  private static class MakeFinalAndAnnotateQuickFix implements LocalQuickFix {
-    @NotNull
+  private static class MakeFinalAndAnnotateQuickFix extends AddAnnotationPsiFix {
+    MakeFinalAndAnnotateQuickFix(@NotNull PsiMethod method) {
+      super(CommonClassNames.JAVA_LANG_SAFE_VARARGS, method);
+    }
+
     @Override
-    public String getFamilyName() {
+    public @NotNull String getText() {
+      return getFamilyName();
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs");
     }
 
-    @Nullable
     @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-      return currentFile;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiIdentifier) {
-        final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
-        WriteAction.run(() -> psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
-        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+    public void applyFix() {
+      PsiMethod method = ObjectUtils.tryCast(getStartElement(), PsiMethod.class);
+      if (method != null) {
+        method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
       }
+      super.applyFix();
     }
   }
 
@@ -196,7 +191,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
         boolean canBeFinal = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
                              !containingClass.isInterface() &&
                              OverridingMethodsSearch.search(method).findFirst() == null;
-        quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
+        quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix(method) : null;
       }
       myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
     }

@@ -60,7 +60,8 @@ class MavenTreeStructureProviderTest : MavenImportingTestCase() {
                           " -PsiDirectory: project\n" +
                           "  -PsiDirectory: m1\n" +
                           "   -MavenPomFileNode:pom.xml\n" +
-                          "  -MavenPomFileNode:pom.xml", actual)
+                          "  -MavenPomFileNode:pom.xml\n" +
+                          " External Libraries", actual)
 
   }
 
@@ -92,7 +93,8 @@ class MavenTreeStructureProviderTest : MavenImportingTestCase() {
                           " -PsiDirectory: project\n" +
                           "  -PsiDirectory: m1\n" +
                           "   -MavenPomFileNode:pom.xml (ignored)\n" +
-                          "  -MavenPomFileNode:pom.xml", actual)
+                          "  -MavenPomFileNode:pom.xml\n" +
+                          " External Libraries", actual)
 
   }
 

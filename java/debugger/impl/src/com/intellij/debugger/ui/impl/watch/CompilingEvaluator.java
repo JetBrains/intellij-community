@@ -65,7 +65,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     try {
       // invoke base evaluator on call code
       ExpressionEvaluator evaluator =
-        DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
+        DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<>() {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
             TextWithImports callCode = getCallCode();

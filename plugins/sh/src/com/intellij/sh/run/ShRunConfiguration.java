@@ -2,6 +2,7 @@
 package com.intellij.sh.run;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
@@ -11,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,7 @@ import java.io.File;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
+import static com.intellij.sh.ShBundle.message;
 
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
   @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
@@ -39,12 +41,15 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   @NonNls private static final String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
   @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
+  @NonNls private static final String EXECUTE_IN_TERMINAL_TAG = "EXECUTE_IN_TERMINAL";
 
   private String myScriptPath = "";
   private String myScriptOptions = "";
   private String myInterpreterPath = "";
   private String myInterpreterOptions = "";
   private String myScriptWorkingDirectory = "";
+  private boolean myExecuteInTerminal = true;
+  private EnvironmentVariablesData myEnvData = EnvironmentVariablesData.DEFAULT;
 
   ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
     super(project, factory, name);
@@ -59,23 +64,27 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (!FileUtil.exists(myScriptPath)) {
-      throw new RuntimeConfigurationError("Shell script not found");
+      throw new RuntimeConfigurationError(message("sh.run.script.not.found"));
     }
     if (!FileUtil.exists(myScriptWorkingDirectory)) {
-      throw new RuntimeConfigurationError("Working directory not found");
+      throw new RuntimeConfigurationError(message("sh.run.working.dir.not.found"));
     }
     if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
       // WSL can be used as an interpreter
       if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded() != null) return;
-      if (!FileUtil.exists(myInterpreterPath)) throw new RuntimeConfigurationError("Interpreter not found");
-      if (!new File(myInterpreterPath).canExecute()) throw new RuntimeConfigurationError("Interpreter should be executable file");
+      if (!FileUtil.exists(myInterpreterPath)) {
+        throw new RuntimeConfigurationError(message("sh.run.interpreter.not.found"));
+      }
+      if (!new File(myInterpreterPath).canExecute()) {
+        throw new RuntimeConfigurationError(message("sh.run.interpreter.should.be.executable"));
+      }
     }
   }
 
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-    return ShSupport.getInstance().createRunProfileState(executor, environment, this);
+    return new ShRunConfigurationProfileState(environment.getProject(), this);
   }
 
   @Override
@@ -87,6 +96,8 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     writePathWithMetadata(element, myScriptWorkingDirectory, SCRIPT_WORKING_DIRECTORY_TAG);
     writePathWithMetadata(element, myInterpreterPath, INTERPRETER_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, INTERPRETER_OPTIONS_TAG, myInterpreterOptions);
+    JDOMExternalizerUtil.writeField(element, EXECUTE_IN_TERMINAL_TAG, String.valueOf(myExecuteInTerminal));
+    myEnvData.writeExternal(element);
   }
 
   @Override
@@ -98,6 +109,8 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     myScriptWorkingDirectory = readPathWithMetadata(element, SCRIPT_WORKING_DIRECTORY_TAG);
     myInterpreterPath = readPathWithMetadata(element, INTERPRETER_PATH_TAG);
     myInterpreterOptions = readStringTagValue(element, INTERPRETER_OPTIONS_TAG);
+    myExecuteInTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXECUTE_IN_TERMINAL_TAG, Boolean.TRUE.toString()));
+    myEnvData = EnvironmentVariablesData.readExternal(element);
   }
 
   @Nullable
@@ -168,6 +181,22 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     myScriptWorkingDirectory = scriptWorkingDirectory.trim();
   }
 
+  public boolean isExecuteInTerminal() {
+    return myExecuteInTerminal;
+  }
+
+  public void setExecuteInTerminal(boolean executeInTerminal) {
+    myExecuteInTerminal = executeInTerminal;
+  }
+
+  public EnvironmentVariablesData getEnvData() {
+    return myEnvData;
+  }
+
+  public void setEnvData(EnvironmentVariablesData envData) {
+    myEnvData = envData;
+  }
+
   public String getInterpreterPath() {
     return myInterpreterPath;
   }
@@ -188,7 +217,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return getWSLDistributionIfNeeded(null, null);
   }
 
-  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable String scriptPath) {
+  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable @NlsSafe String scriptPath) {
     if (!Experiments.getInstance().isFeatureEnabled("com.intellij.sh.run.with.wsl")) {
       return null;
     }

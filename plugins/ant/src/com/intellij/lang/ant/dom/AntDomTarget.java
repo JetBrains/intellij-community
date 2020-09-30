@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -31,7 +32,7 @@ public abstract class AntDomTarget extends AntDomNamedElement{
   public abstract GenericAttributeValue<String> getUnlessPropertyName();
 
   @Attribute("description")
-  public abstract GenericAttributeValue<String> getDescription();
+  public abstract GenericAttributeValue<@NlsSafe String> getDescription();
 
   @Attribute("depends")
   @Convert(value = AntDomTargetDependsListConverter.class)

@@ -35,7 +35,7 @@ import java.util.*;
 public abstract class ArtifactsTestCase extends JavaProjectTestCase {
   protected boolean mySetupModule;
 
-  protected ArtifactManager getArtifactManager() {
+  protected final ArtifactManager getArtifactManager() {
     return ArtifactManager.getInstance(myProject);
   }
 
@@ -46,36 +46,36 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     }
   }
 
-  protected void deleteArtifact(final Artifact artifact) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+  protected void deleteArtifact(@NotNull Artifact artifact) {
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.removeArtifact(artifact);
     commitModel(model);
   }
 
-  protected static void commitModel(final ModifiableArtifactModel model) {
+  protected static void commitModel(@NotNull ModifiableArtifactModel model) {
     WriteAction.runAndWait(() -> model.commit());
   }
 
-  protected Artifact rename(Artifact artifact, String newName) {
+  protected final Artifact rename(Artifact artifact, String newName) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setName(newName);
     commitModel(model);
     return artifact;
   }
 
-  protected Artifact addArtifact(String name) {
+  protected final @NotNull Artifact addArtifact(String name) {
     return addArtifact(name, null);
   }
 
-  protected Artifact addArtifact(String name, final CompositePackagingElement<?> root) {
-    return addArtifact(name, PlainArtifactType.getInstance(), root);
+  protected final @NotNull Artifact addArtifact(String name, CompositePackagingElement<?> root) {
+    return getArtifactManager().addArtifact(name, PlainArtifactType.getInstance(), root);
   }
 
-  protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
+  protected final @NotNull Artifact addArtifact(String name, ArtifactType type, CompositePackagingElement<?> root) {
     return getArtifactManager().addArtifact(name, type, root);
   }
 
-  protected PackagingElementResolvingContext getContext() {
+  protected final PackagingElementResolvingContext getContext() {
     return ArtifactManager.getInstance(myProject).getResolvingContext();
   }
 

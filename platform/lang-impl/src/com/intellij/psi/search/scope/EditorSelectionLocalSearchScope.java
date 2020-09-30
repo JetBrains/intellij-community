@@ -16,10 +16,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class EditorSelectionLocalSearchScope extends LocalSearchScope {
@@ -30,7 +30,7 @@ public class EditorSelectionLocalSearchScope extends LocalSearchScope {
   private TextRange[] myRanges;
   private final boolean myIgnoreInjectedPsi;
   @NotNull
-  private final String myDisplayName;
+  private final @Nls String  myDisplayName;
 
   private LocalSearchScope myLocalSearchScope;
 
@@ -115,12 +115,12 @@ public class EditorSelectionLocalSearchScope extends LocalSearchScope {
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final String displayName) {
+                                         @NotNull final @Nls String displayName) {
     this(editor, project, displayName, false);
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final String displayName,
+                                         @NotNull final @Nls String displayName,
                                          final boolean ignoreInjectedPsi) {
     super(PsiElement.EMPTY_ARRAY);
     myEditor = editor;

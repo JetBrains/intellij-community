@@ -32,5 +32,6 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
     else {
       setText(shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true));
     }
+    setEnabled(list.isEnabled());
   }
 }

@@ -27,10 +27,10 @@ class AntBeforeCompileTask implements CompileTask {
   static boolean initializeAndRun(CompileContext context, Processor<? super AntConfigurationBase> action) {
     context.getProgressIndicator().pushState();
     try {
-      context.getProgressIndicator().setText(AntBundle.message("loading.ant.config.progress"));
+      context.getProgressIndicator().setText(AntBundle.message("progress.text.loading.ant.config"));
       AntConfigurationBase config = AntConfigurationBase.getInstance(context.getProject());
       config.ensureInitialized();
-      context.getProgressIndicator().setText("Running Ant Tasks...");
+      context.getProgressIndicator().setText(AntBundle.message("progress.text.running.ant.tasks"));
       return action.process(config);
     }
     finally {

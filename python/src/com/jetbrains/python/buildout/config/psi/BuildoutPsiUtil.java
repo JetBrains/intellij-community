@@ -6,14 +6,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgOption;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgSection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class BuildoutPsiUtil {
-  private static final String RECIPE = "recipe";
-  private static final String DJANGO_RECIPE = "djangorecipe";
+  @NonNls private static final String RECIPE = "recipe";
+  @NonNls private static final String DJANGO_RECIPE = "djangorecipe";
 
   @Nullable
   public static BuildoutCfgSection getDjangoSection(@NotNull BuildoutCfgFile configFile) {

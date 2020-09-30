@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -22,10 +23,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
@@ -64,19 +61,19 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyFunction(final PyFunction node) {
+  public void visitPyFunction(final @NotNull PyFunction node) {
     if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
       processScope(node);
     }
   }
 
   @Override
-  public void visitPyLambdaExpression(final PyLambdaExpression node) {
+  public void visitPyLambdaExpression(final @NotNull PyLambdaExpression node) {
     processScope(node);
   }
 
   @Override
-  public void visitPyClass(PyClass node) {
+  public void visitPyClass(@NotNull PyClass node) {
     processScope(node);
   }
 
@@ -91,7 +88,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
+  public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression pyString) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
     if (owner != null && !(owner instanceof PsiFile)) {
       final PsiElement instrAnchor = getControlFlowAnchorForString(pyString);
@@ -105,7 +102,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         for (Pair<PsiElement, TextRange> pair : pairs) {
           pair.getFirst().accept(new PyRecursiveElementVisitor() {
             @Override
-            public void visitPyReferenceExpression(PyReferenceExpression expr) {
+            public void visitPyReferenceExpression(@NotNull PyReferenceExpression expr) {
               final PyExpression qualifier = expr.getQualifier();
               if (qualifier != null) {
                 qualifier.accept(this);
@@ -289,7 +286,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     try {
       owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
-        public void visitPyCallExpression(final PyCallExpression node) {
+        public void visitPyCallExpression(final @NotNull PyCallExpression node) {
           final PyExpression callee = node.getCallee();
           if (callee != null && "locals".equals(callee.getName())){
             throw new DontPerformException();
@@ -298,7 +295,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
 
         @Override
-        public void visitPyFunction(final PyFunction node) {
+        public void visitPyFunction(final @NotNull PyFunction node) {
           // stop here
         }
       });
@@ -406,6 +403,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
+          if (isComprehensionTarget(element)) {
+            registerWarning(element, warningMsg, new ReplaceWithWildCard());
+            continue;
+          }
+
           final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
           if (exceptPart != null) {
             registerWarning(element, warningMsg, new PyRemoveExceptionTargetQuickFix());
@@ -423,10 +425,30 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
-          registerWarning(element, warningMsg, new PyRemoveStatementQuickFix());
+          // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
+          final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+          if (assignmentStatement != null && assignmentStatement.getRawTargets().length == 1 &&
+              PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
+            if (assignmentStatement.getLeftHandSideExpression() == element) {
+              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
+            }
+            else {
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
+            }
+            continue;
+          }
+
+          registerWarning(element, warningMsg);
         }
       }
     }
+  }
+
+  private static boolean isComprehensionTarget(@NotNull PsiElement element) {
+    final PyComprehensionElement comprehensionExpr = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
+    if (comprehensionExpr == null) return false;
+    return ContainerUtil.exists(comprehensionExpr.getForComponents(),
+                                it -> PsiTreeUtil.isAncestor(it.getIteratorVariable(), element, false));
   }
 
   private boolean isRangeIteration(@NotNull PyForStatement forStatement) {
@@ -482,7 +504,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(@NotNull final PsiElement element, final String msg, LocalQuickFix... quickfixes) {
+  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, LocalQuickFix @NotNull... quickfixes) {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 

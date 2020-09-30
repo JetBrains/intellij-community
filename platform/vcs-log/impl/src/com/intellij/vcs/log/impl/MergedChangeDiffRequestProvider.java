@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -20,6 +21,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +55,9 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   private static SimpleDiffRequest createTwoSideRequest(@Nullable Project project,
                                                         @Nullable ContentRevision leftRevision,
                                                         @Nullable ContentRevision rightRevision,
-                                                        @NotNull String requestTitle,
-                                                        @NotNull String leftTitle,
-                                                        @NotNull String rightTitle,
+                                                        @NotNull @NlsContexts.DialogTitle String requestTitle,
+                                                        @NotNull @NlsContexts.Label String leftTitle,
+                                                        @NotNull @NlsContexts.Label String rightTitle,
                                                         @NotNull UserDataHolder context,
                                                         @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
@@ -66,11 +68,12 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   }
 
   @NotNull
+  @Nls
   private static String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
-                                         @NotNull Key<String> key,
+                                         @NotNull Key<@Nls String> key,
                                          @Nullable ContentRevision revision,
-                                         @NotNull String defaultTitle) {
-    String titleFromContext = (String)context.get(key);
+                                         @NotNull @Nls String defaultTitle) {
+    @Nls String titleFromContext = (String)context.get(key);
     if (titleFromContext != null) return titleFromContext;
     return ChangeDiffRequestProducer.getRevisionTitle(revision, defaultTitle);
   }

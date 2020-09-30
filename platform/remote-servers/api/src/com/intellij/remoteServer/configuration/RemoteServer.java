@@ -1,11 +1,11 @@
 package com.intellij.remoteServer.configuration;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.ServerType;
 import org.jetbrains.annotations.NotNull;
 
 public interface RemoteServer<C extends ServerConfiguration> {
-  @NotNull
-  String getName();
+  @NotNull @NlsSafe String getName();
 
   @NotNull
   ServerType<C> getType();

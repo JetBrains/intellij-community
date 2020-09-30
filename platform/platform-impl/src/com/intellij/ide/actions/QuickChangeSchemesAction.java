@@ -9,6 +9,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+  public QuickChangeSchemesAction() {
+    myActionPlace = ActionPlaces.QUICK_SWITCH_SCHEME_POPUP;
+  }
+
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final AnAction[] actions = getGroup().getChildren(null);

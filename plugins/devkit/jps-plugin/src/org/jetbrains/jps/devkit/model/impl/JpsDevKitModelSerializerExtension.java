@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.model.impl;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -50,15 +50,9 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
       }
       return JpsElementFactory.getInstance().createSimpleElement(new JpsIdeaSdkProperties(sandboxHome, jdkName));
     }
-
-    @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JpsIdeaSdkProperties> properties, @NotNull Element element) {
-      JDOMExternalizerUtil.writeField(element, SANDBOX_HOME_FIELD, properties.getData().getSandboxHome());
-      element.setAttribute(JDK_NAME_ATTRIBUTE, properties.getData().getJdkName());
-    }
   }
 
-  private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
+  private static final class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
     private static final String URL_ATTRIBUTE = "url";
     private static final String MANIFEST_ATTRIBUTE = "manifest";
 
@@ -71,18 +65,6 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
       String pluginXmlUrl = componentElement != null ? componentElement.getAttributeValue(URL_ATTRIBUTE) : null;
       String manifestFileUrl = componentElement != null ? componentElement.getAttributeValue(MANIFEST_ATTRIBUTE) : null;
       return JpsElementFactory.getInstance().createSimpleElement(new JpsPluginModuleProperties(pluginXmlUrl, manifestFileUrl));
-    }
-
-    @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JpsPluginModuleProperties> element, @NotNull Element componentElement) {
-      String pluginXmlUrl = element.getData().getPluginXmlUrl();
-      if (pluginXmlUrl != null) {
-        componentElement.setAttribute(URL_ATTRIBUTE, pluginXmlUrl);
-      }
-      String manifestFileUrl = element.getData().getManifestFileUrl();
-      if (manifestFileUrl != null) {
-        componentElement.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
-      }
     }
   }
 }

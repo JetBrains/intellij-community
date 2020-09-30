@@ -16,8 +16,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -29,6 +31,7 @@ import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -59,12 +62,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -72,7 +72,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class HighlightUtil {
+public final class HighlightUtil {
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
@@ -87,7 +87,7 @@ public class HighlightUtil {
     ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
-  private static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = ContainerUtil.immutableSet(
+  private static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
     "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
 
   static {
@@ -263,13 +263,14 @@ public class HighlightUtil {
         }
 
         final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
-        final Ref<String> differentArgumentsMessage = new Ref<>();
+        final Ref<@Nls String> differentArgumentsMessage = new Ref<>();
         final PsiClass sameGenericParameterization =
           InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
             if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
               return true;
             }
-            differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+            differentArgumentsMessage.set(IdeBundle.message("x.and.y", pair.first.getPresentableText(),
+                                                            pair.second.getPresentableText()));
             return false;
           });
         if (sameGenericParameterization != null) {
@@ -595,12 +596,12 @@ public class HighlightUtil {
   }
 
   @NotNull
-  public static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled) {
+  public static @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled) {
     return getUnhandledExceptionsDescriptor(unhandled, null);
   }
 
   @NotNull
-  private static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled, @Nullable final String source) {
+  private static @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled, @Nullable @Nls String source) {
     final String exceptions = formatTypes(unhandled);
     return source == null
            ? JavaErrorBundle.message("unhandled.exceptions", exceptions, unhandled.size())
@@ -765,7 +766,7 @@ public class HighlightUtil {
   }
 
   @NotNull
-  public static String formatClass(@NotNull PsiClass aClass) {
+  public static @NlsSafe String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
   }
 
@@ -801,7 +802,7 @@ public class HighlightUtil {
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
     if (highlightType == null) return null;
 
-    String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
+    String description = getUnhandledExceptionsDescriptor(unhandled, JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
     HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
     return highlight;
@@ -959,6 +960,9 @@ public class HighlightUtil {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed = !(modifierOwnerParent instanceof PsiDeclarationStatement);
         }
+        if (PsiModifier.SEALED.equals(modifier)) {
+          isAllowed = !aClass.isAnnotationType();
+        }
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
@@ -981,7 +985,7 @@ public class HighlightUtil {
         }
 
         if (aClass.isEnum()) {
-          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier));
+          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier) || PsiModifier.SEALED.equals(modifier));
         }
 
         if (aClass.isRecord()) {
@@ -1594,6 +1598,56 @@ public class HighlightUtil {
     return null;
   }
 
+  /**
+   * This method validates that the language level of the project where the context accesses
+   * the owner that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
+   *
+   * @param context the expression to examine
+   * @param level the current language level
+   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
+   * if the current language level is not sufficient or null
+   */
+  @Nullable
+  @Contract(value = "null, _, _ -> null; _, null, _ -> null", pure = true)
+  static HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,
+                                                  @Nullable final PsiModifierListOwner owner,
+                                                  @NotNull final LanguageLevel level) {
+    if (context == null) return null;
+    if (owner == null) return null;
+
+    final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
+    final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
+    if (feature == null) return null;
+
+    return checkFeature(context, feature, level, context.getContainingFile());
+  }
+
+  @Nullable
+  @Contract(value = "null -> null", pure = true)
+  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
+    if (owner == null) return null;
+
+    final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+    if (annotation != null) return annotation;
+
+    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
+      final PsiMember member = (PsiMember)owner;
+      final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
+      if (result != null) return result;
+    }
+
+    final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
+    if (psiPackage  == null) return null;
+
+    final PsiAnnotation packageAnnotation = psiPackage.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+    if (packageAnnotation != null) return packageAnnotation;
+
+    final PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
+    if (module == null) return null;
+
+    return module.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+  }
+
   private enum SelectorKind { INT, ENUM, STRING }
 
   private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {
@@ -1774,21 +1828,21 @@ public class HighlightUtil {
   }
 
   @NotNull
-  static String staticContextProblemDescription(@NotNull PsiElement refElement) {
+  static @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
     String type = LanguageFindUsages.getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorBundle.message("non.static.symbol.referenced.from.static.context", type, name);
   }
 
   @NotNull
-  static String accessProblemDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
+  static @NlsContexts.DetailedDescription String accessProblemDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
     return accessProblemDescriptionAndFixes(ref, resolved, result).first;
   }
 
   @NotNull
-  static Pair<String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
-                                                                              @NotNull PsiElement resolved,
-                                                                              @NotNull JavaResolveResult result) {
+  static Pair<@Nls String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
+                                                                                   @NotNull PsiElement resolved,
+                                                                                   @NotNull JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
@@ -2193,7 +2247,7 @@ public class HighlightUtil {
   }
 
   /**
-   * See JLS 8.3.2.3.
+   * See JLS 8.3.3.
    */
   static HighlightInfo checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
     Boolean isIllegalForwardReference = isIllegalForwardReferenceToField(expression, referencedField, false);
@@ -2210,8 +2264,13 @@ public class HighlightUtil {
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
     TextRange fieldRange = referencedField.getTextRange();
     if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
-    // only simple reference can be illegal
-    if (!acceptQualified && expression.getQualifierExpression() != null) return null;
+    if (!acceptQualified) {
+      if (containingClass.isEnum()) {
+        if (isLegalForwardReferenceInEnum(expression, referencedField, containingClass)) return null;
+      }
+      // simple reference can be illegal (JLS 8.3.3)
+      else if (expression.getQualifierExpression() != null) return null;
+    }
     PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
@@ -2225,6 +2284,23 @@ public class HighlightUtil {
       return null;
     }
     return initField != referencedField;
+  }
+
+  private static boolean isLegalForwardReferenceInEnum(@NotNull PsiReferenceExpression expression,
+                                                       @NotNull PsiField referencedField,
+                                                       @NotNull PsiClass containingClass) {
+    PsiExpression qualifierExpr = expression.getQualifierExpression();
+    // simple reference can be illegal (JLS 8.3.3)
+    if (qualifierExpr == null) return false;
+    if (!(qualifierExpr instanceof PsiReferenceExpression)) return true;
+
+    PsiElement qualifiedReference = ((PsiReferenceExpression)qualifierExpr).resolve();
+    if (containingClass.equals(qualifiedReference)) {
+      // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
+      // so a qualified reference to the constant variable is possible.
+      return PsiUtil.isCompileTimeConstant(referencedField);
+    }
+    return true;
   }
 
   /**
@@ -2404,10 +2480,10 @@ public class HighlightUtil {
       if (thisExpression.getQualifier() != null) {
         resolvedName = referencedClass == null
                        ? null
-                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + ".this";
+                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + "." + PsiKeyword.THIS;
       }
       else {
-        resolvedName = "this";
+        resolvedName = PsiKeyword.THIS;
       }
     }
     else {
@@ -2826,8 +2902,8 @@ public class HighlightUtil {
   }
 
   interface IncompatibleTypesTooltipComposer {
-    @NotNull
-    String consume(@NotNull String lRawType, @NotNull String lTypeArguments, @NotNull String rRawType, @NotNull String rTypeArguments);
+    @NotNull @NlsContexts.Tooltip
+    String consume(@NotNull @NlsSafe String lRawType, @NotNull @NlsSafe String lTypeArguments, @NotNull @NlsSafe String rRawType, @NotNull @NlsSafe String rTypeArguments);
 
     /**
      * Override if expected/actual pair layout is a row
@@ -2838,7 +2914,7 @@ public class HighlightUtil {
   }
 
   @NotNull
-  static String createIncompatibleTypesTooltip(PsiType lType, PsiType rType, @NotNull IncompatibleTypesTooltipComposer consumer) {
+  static @NlsContexts.Tooltip String createIncompatibleTypesTooltip(PsiType lType, PsiType rType, @NotNull IncompatibleTypesTooltipComposer consumer) {
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
     PsiTypeParameter[] lTypeParams = lTypeData.second;
@@ -2882,9 +2958,9 @@ public class HighlightUtil {
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
     boolean shortType = showShortType(lRawType, rRawType);
-    return consumer.consume(redIfNotMatch(lRawType, true, shortType),
+    return consumer.consume(redIfNotMatch(lRawType, true, shortType).toString(),
                             requiredRow.toString(),
-                            redIfNotMatch(rRawType, assignable, shortType),
+                            redIfNotMatch(rRawType, assignable, shortType).toString(),
                             foundRow.toString());
   }
 
@@ -2901,12 +2977,8 @@ public class HighlightUtil {
         PsiElement element1 = results[0].getElement();
         PsiElement element2 = results[1].getElement();
         if (element1 instanceof PsiMethod && element2 instanceof PsiMethod) {
-          String candidate1 = PsiFormatUtil.formatMethod((PsiMethod)element1, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
-          String candidate2 = PsiFormatUtil.formatMethod((PsiMethod)element2, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+          String candidate1 = format(element1);
+          String candidate2 = format(element2);
           return JavaErrorBundle.message("incompatible.types.reason.ambiguous.method.reference", candidate1, candidate2);
         }
       }
@@ -2928,10 +3000,11 @@ public class HighlightUtil {
   }
 
   @NotNull
-  static String redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
-    if (type == null) return "";
+  static @NlsSafe HtmlChunk redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
+    if (type == null) return HtmlChunk.empty();
     String color = ColorUtil.toHtmlColor(matches ? UIUtil.getToolTipForeground() : DialogWrapper.ERROR_FOREGROUND_COLOR);
-    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText()) + "</font>";
+    return HtmlChunk.tag("font").attr("color", color)
+      .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
   }
 
 
@@ -3036,7 +3109,7 @@ public class HighlightUtil {
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
     if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
-        Pair<String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
+        Pair<@Nls String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
         boolean moduleAccessProblem = problem.second != null;
         PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first).create();
@@ -3093,7 +3166,7 @@ public class HighlightUtil {
   }
 
   @NotNull
-  private static String format(@NotNull PsiElement element) {
+  static String format(@NotNull PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
     if (element instanceof PsiMethod) return JavaHighlightUtil.formatMethod((PsiMethod)element);
     if (element instanceof PsiField) return formatField((PsiField)element);
@@ -3277,10 +3350,10 @@ public class HighlightUtil {
     registrar.register(getFixFactory().createShowModulePropertiesFix(element));
   }
 
-  private static @NotNull String getUnsupportedFeatureMessage(@NotNull PsiElement element,
-                                                              @NotNull HighlightingFeature feature,
-                                                              @NotNull LanguageLevel level,
-                                                              @NotNull PsiFile file) {
+  private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull PsiElement element,
+                                                                                               @NotNull HighlightingFeature feature,
+                                                                                               @NotNull LanguageLevel level,
+                                                                                               @NotNull PsiFile file) {
     String name = JavaAnalysisBundle.message(feature.key);
     String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
     String message = JavaErrorBundle.message("insufficient.language.level", name, version);

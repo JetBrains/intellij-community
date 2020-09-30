@@ -18,6 +18,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -84,7 +85,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
   private class ImplicitNumericConversionFix extends InspectionGadgetsFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
     ImplicitNumericConversionFix(PsiExpression expression, PsiType expectedType) {
       final String convertedExpression = convertExpression(expression, expectedType);

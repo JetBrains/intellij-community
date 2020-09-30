@@ -16,17 +16,20 @@
 
 package org.intellij.plugins.relaxNG.compact;
 
+import com.intellij.BundleBase;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.text.MessageFormat;
 
 public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
@@ -88,16 +91,25 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     final TextRange range = TextRange.from(reference.getElement().getTextRange().getStartOffset()
             + rangeInElement.getStartOffset(), rangeInElement.getLength());
 
-
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
-      final String s = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-      message = MessageFormat.format(s, reference.getCanonicalText());
+      message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
     }
     else {
-      message = "Cannot resolve symbol";
+      //noinspection UnresolvedPropertyKey
+      message = AnalysisBundle.message("cannot.resolve.symbol");
     }
-    AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(range)
+
+    String description;
+    try {
+      description = BundleBase.format(message, reference.getCanonicalText()); // avoid double formatting NON-NLS
+    }
+    catch (IllegalArgumentException ex) {
+      // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
+      description = message;
+    }
+
+    AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, description).range(range)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
     if (reference instanceof LocalQuickFixProvider) {

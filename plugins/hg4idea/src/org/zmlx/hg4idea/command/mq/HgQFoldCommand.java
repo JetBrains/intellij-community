@@ -39,7 +39,10 @@ public class HgQFoldCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qfold", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QFold.error"), HgBundle.message("action.hg4idea.QFold.error.msg"));
+        .notifyError("hg.qfold.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QFold.error"),
+                     HgBundle.message("action.hg4idea.QFold.error.msg"));
     }
     myRepository.update();
   }

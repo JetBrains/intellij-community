@@ -14,7 +14,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-      final StringBuilder newExpression = new StringBuilder("java.util.Arrays.");
+      final @NonNls StringBuilder newExpression = new StringBuilder("java.util.Arrays.");
       if (myDeep) {
         newExpression.append("deepEquals");
       }

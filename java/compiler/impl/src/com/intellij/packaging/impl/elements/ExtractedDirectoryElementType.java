@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import java.util.List;
 public class ExtractedDirectoryElementType extends PackagingElementType<ExtractedDirectoryPackagingElement> {
 
   ExtractedDirectoryElementType() {
-    super("extracted-dir", "Extracted Directory");
+    super("extracted-dir", JavaCompilerBundle.messagePointer("extracted.directory.element.type.name"));
   }
 
   @Override

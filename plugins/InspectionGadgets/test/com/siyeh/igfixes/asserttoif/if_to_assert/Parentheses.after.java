@@ -2,6 +2,6 @@ package com.siyeh.ipp.asserttoif.if_to_assert;
 
 class Parentheses {
   void s(String s) {
-      assert s != null : ("s");
+      assert ((s) != (null)) : ("s");
   }
 }

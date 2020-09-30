@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -46,8 +47,8 @@ public class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAc
     return getName();
   }
 
-  private static String getName() {
-    return IntentionPowerPackBundle.defaultableMessage("eliminate.parentheses.intention.name");
+  private static @NlsContexts.Command String getName() {
+    return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
   @Override

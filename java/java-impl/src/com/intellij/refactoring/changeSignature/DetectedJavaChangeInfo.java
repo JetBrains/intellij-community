@@ -2,7 +2,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -265,7 +265,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       createChangeSignatureProcessor(method).run();
       InplaceChangeSignature.temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, currentSignature, project);
       if (prototype != null) {
-        WriteCommandAction.runWriteCommandAction(project, "Delegate", null, () -> {
+        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.delegate.detected.change"), null, () -> {
           PsiMethod delegate = currentMethod.getContainingClass().findMethodBySignature(prototype, false);
           PsiExpression expression = delegate != null ? LambdaUtil.extractSingleExpressionFromBody(delegate.getBody()) : null;
           if (expression instanceof PsiMethodCallExpression) {
@@ -303,7 +303,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
           CommandProcessor.getInstance().executeCommand(myProject, () -> {
             InplaceChangeSignature.temporallyRevertChanges(JavaChangeSignatureDetector.getSignatureRange(currentMethod), document, oldText, project);
             doRefactor(processor);
-          }, RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(currentMethod)), null);
+          }, RefactoringBundle.message("changeSignature.refactoring.name"), null);
         }
 
         private void doRefactor(BaseRefactoringProcessor processor) {

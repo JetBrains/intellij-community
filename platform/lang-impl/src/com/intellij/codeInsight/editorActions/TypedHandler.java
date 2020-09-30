@@ -227,7 +227,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   }
 
   // returns true if any delegate requested a STOP
-  private static boolean callDelegates(Function<TypedHandlerDelegate, TypedHandlerDelegate.Result> action) {
+  private static boolean callDelegates(Function<? super TypedHandlerDelegate, ? extends TypedHandlerDelegate.Result> action) {
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
       TypedHandlerDelegate.Result result = action.apply(delegate);
       if (result == TypedHandlerDelegate.Result.STOP) {

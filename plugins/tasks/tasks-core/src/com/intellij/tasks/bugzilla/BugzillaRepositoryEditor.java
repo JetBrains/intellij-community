@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.components.JBLabel;
@@ -64,10 +65,10 @@ public class BugzillaRepositoryEditor extends BaseRepositoryEditor<BugzillaRepos
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProductLabel = new JBLabel("Product:", SwingConstants.RIGHT);
+    myProductLabel = new JBLabel(TaskBundle.message("bugzilla.label.product"), SwingConstants.RIGHT);
     myProductInput = TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), true,
                                                         myRepository.getProductName());
-    myComponentLabel = new JBLabel("Component:", SwingConstants.RIGHT);
+    myComponentLabel = new JBLabel(TaskBundle.message("bugzilla.label.component"), SwingConstants.RIGHT);
     myComponentInput = TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), false,
                                                           myRepository.getComponentName());
     return FormBuilder.createFormBuilder()

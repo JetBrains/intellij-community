@@ -3,6 +3,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -52,13 +53,11 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract boolean isStandardResource(VirtualFile file);
 
   @Nullable
-  public abstract String getUserResource(Project project, String url, String version);
+  public abstract @NlsSafe String getUserResource(Project project, String url, String version);
 
-  @Nullable
-  public abstract String getStdResource(@NotNull String url, @Nullable String version);
+  public abstract @NlsSafe String getStdResource(@NotNull String url, @Nullable String version);
 
-  @NotNull
-  public abstract String getDefaultHtmlDoctype(@NotNull Project project);
+  public abstract @NlsSafe String getDefaultHtmlDoctype(@NotNull Project project);
 
   public abstract void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project);
 
@@ -66,7 +65,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project);
 
-  public abstract String getCatalogPropertiesFile();
+  public abstract @NlsSafe String getCatalogPropertiesFile();
 
   public abstract void setCatalogPropertiesFile(@Nullable String filePath);
 

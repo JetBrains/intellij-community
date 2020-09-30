@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -18,8 +18,7 @@ import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 @JvmOverloads
-// Android Studio: b/127990038
-fun askJBAccountCredentials(parent: Component?, project: Project?, authFailed: Boolean = false): Credentials? {
+fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Boolean = false): Credentials? {
   val credentials = ErrorReportConfigurable.getCredentials()
   val remember = if (credentials?.userName == null) PasswordSafe.instance.isRememberPasswordByDefault  // EA credentials were never stored
                  else !credentials.password.isNullOrEmpty()  // a password was stored already
@@ -27,7 +26,7 @@ fun askJBAccountCredentials(parent: Component?, project: Project?, authFailed: B
   val prompt = if (authFailed) DiagnosticBundle.message("error.report.auth.failed")
                else DiagnosticBundle.message("error.report.auth.prompt")
   val userField = JTextField(credentials?.userName)
-  val passwordField = JPasswordField(credentials?.password?.toString())
+  val passwordField = JPasswordField(credentials?.getPasswordAsString())
   val rememberCheckBox = CheckBox(UIBundle.message("auth.remember.cb"), remember)
 
   val panel = panel {
@@ -51,7 +50,7 @@ fun askJBAccountCredentials(parent: Component?, project: Project?, authFailed: B
     panel = panel,
     focusedComponent = if (credentials?.userName == null) userField else passwordField,
     project = project,
-    parent = if (parent?.isShowing == true) parent else null)  // Android Studio: b/127990038
+    parent = if (parent.isShowing) parent else null)
 
   if (!dialog.showAndGet()) {
     return null

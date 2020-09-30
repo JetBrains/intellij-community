@@ -31,6 +31,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -40,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +179,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
 
   @Override
-  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
+  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, final MultiMap<PsiElement, @Nls String> conflicts) {
     final PsiMethod method = data.getMethodToReplaceIn();
     final int parametersCount = method.getParameterList().getParametersCount();
     for (UsageInfo usage : usages) {
@@ -192,11 +194,13 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
         final int actualParamLength = argList.getExpressionCount();
         if ((method.isVarArgs() && actualParamLength + 1 < parametersCount) ||
             (!method.isVarArgs() && actualParamLength < parametersCount)) {
-          conflicts.putValue(call, "Incomplete call(" + call.getText() +"): " + parametersCount + " parameters expected but only " + actualParamLength + " found");
+          conflicts.putValue(call, RefactoringBundle.message("refactoring.introduce.parameter.incomplete.call.less.params",
+                                                             call.getText(), parametersCount, actualParamLength));
         }
         data.getParametersToRemove().forEach(paramNum -> {
           if (paramNum >= actualParamLength) {
-            conflicts.putValue(call, "Incomplete call(" + call.getText() +"): expected to delete the " + paramNum + " parameter but only " + actualParamLength + " parameters found");
+            conflicts.putValue(call, RefactoringBundle.message("refactoring.introduce.parameter.incomplete.call.param.not.found",
+                                                                   call.getText(), paramNum, actualParamLength));
           }
           return true;
         });

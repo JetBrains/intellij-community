@@ -31,11 +31,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @ApiStatus.Experimental
 public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, DataProvider {
   private final Map<String, T> myViewMap = new ConcurrentHashMap<>();
-  private final String mySelectionStateKey;
+  private final @NonNls String mySelectionStateKey;
   private final AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
   private final @NotNull SwitchViewAction mySwitchViewAction;
 
-  public CompositeView(String selectionStateKey) {
+  public CompositeView(@NonNls String selectionStateKey) {
     super(new CardLayout());
     mySelectionStateKey = selectionStateKey;
     mySwitchViewAction = new SwitchViewAction();

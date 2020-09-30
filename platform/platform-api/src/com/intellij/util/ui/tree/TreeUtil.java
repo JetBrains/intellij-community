@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -57,8 +59,24 @@ public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
+  private static final Key<Function<TreePath, Navigatable>> NAVIGATABLE_PROVIDER = Key.create("TreeUtil: convert TreePath to Navigatable");
 
   private TreeUtil() {}
+
+  /**
+   * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
+   */
+  public static @Nullable Navigatable getNavigatable(@NotNull JTree tree, @Nullable TreePath path) {
+    Function<? super TreePath, ? extends Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
+    return supplier != null ? supplier.apply(path) : getLastUserObject(Navigatable.class, path);
+  }
+
+  /**
+   * Sets the mapping function that provides a navigatable object for a tree path.
+   */
+  public static void setNavigatableProvider(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends Navigatable> provider) {
+    tree.putClientProperty(NAVIGATABLE_PROVIDER, provider);
+  }
 
   @NotNull
   public static JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {
@@ -697,7 +715,7 @@ public final class TreeUtil {
         bounds.x = tree.getVisibleRect().x;
       }
 
-    LOG.debug("tree scroll: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree scroll: ", path);
     tree.scrollRectToVisible(bounds);
     // try to scroll later when the tree is ready
     Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
@@ -719,7 +737,7 @@ public final class TreeUtil {
       if (pathBounds != null) {
         Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
         long stamp = property instanceof Long ? (Long)property : Long.MAX_VALUE;
-        LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
+        if (LOG.isTraceEnabled()) LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
         if (stamp == expected) {
           bounds.y = pathBounds.y - offset; // restore bounds according to the current row
           Rectangle visible = tree.getVisibleRect();
@@ -1374,7 +1392,7 @@ public final class TreeUtil {
   }
 
   private static void expandPathWithDebug(@NotNull JTree tree, @NotNull TreePath path) {
-    LOG.debug("tree expand path: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree expand path: ", path);
     tree.expandPath(path);
   }
 
@@ -1528,7 +1546,7 @@ public final class TreeUtil {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {
           if (!promise.isCancelled()) {
-            LOG.debug("tree expand canceled");
+            if (LOG.isTraceEnabled()) LOG.debug("tree expand canceled");
             promise.cancel();
           }
           return TreeVisitor.Action.SKIP_SIBLINGS;
@@ -1607,7 +1625,7 @@ public final class TreeUtil {
     assert EventQueue.isDispatchThread();
     Rectangle bounds = tree.getPathBounds(path);
     if (bounds == null) {
-      LOG.debug("cannot scroll to: ", path);
+      if (LOG.isTraceEnabled()) LOG.debug("cannot scroll to: ", path);
       return false;
     }
     Container parent = tree.getParent();

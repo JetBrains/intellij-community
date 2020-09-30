@@ -2,12 +2,14 @@
 package com.intellij.internal.ml.completion
 
 import com.intellij.internal.ml.*
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
-abstract class JarCompletionModelProvider(private val displayName: String,
-                                          private val resourceDirectory: String) : RankingModelProvider {
+abstract class JarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
+                                          @NonNls private val resourceDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {
-    val metadata = FeaturesInfo.buildInfo(ResourcesMetadataReader(this::class.java, resourceDirectory))
+    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
     createModel(metadata)
   }
 

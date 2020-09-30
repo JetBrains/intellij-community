@@ -54,7 +54,7 @@ public final class AccessibilityUtils {
         Foundation.nsString("com.apple.universalaccess")
       );
       ID voiceOverEnabledKey = Foundation.invoke(universalAccess, "boolForKey:", Foundation.nsString("voiceOverOnOffKey"));
-      return voiceOverEnabledKey.intValue() != 0;
+      return voiceOverEnabledKey.booleanValue();
     }
     finally {
       if (universalAccess != null) Foundation.cfRelease(universalAccess);

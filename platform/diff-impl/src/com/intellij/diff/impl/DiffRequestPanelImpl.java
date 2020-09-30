@@ -23,8 +23,8 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +102,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public synchronized void updateRequest(boolean force, @Nullable DiffUserDataKeysEx.ScrollToPolicy scrollToChangePolicy) {
       applyRequest(myRequest, force, scrollToChangePolicy);
     }

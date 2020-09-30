@@ -4,6 +4,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RelativeFont;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +81,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     }
 
     //strange node
-    final String text = node.toString();
+    final @NlsSafe String text = node.toString();
     //no icon
     append(text != null ? text : SPACE_STRING, GRAYED_ATTRIBUTES);
   }

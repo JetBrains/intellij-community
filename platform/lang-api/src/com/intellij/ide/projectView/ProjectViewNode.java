@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -189,11 +190,12 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    *
    * @param condition the condition to check the nodes.
    */
-  public boolean canHaveChildrenMatching(Condition<PsiFile> condition) {
+  public boolean canHaveChildrenMatching(Condition<? super PsiFile> condition) {
     return true;
   }
 
   @Nullable
+  @NlsContexts.PopupTitle
   public String getTitle() {
     return null;
   }

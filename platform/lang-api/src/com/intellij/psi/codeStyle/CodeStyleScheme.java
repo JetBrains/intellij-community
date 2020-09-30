@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.options.Scheme;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface CodeStyleScheme extends Scheme {
@@ -27,6 +28,7 @@ public interface CodeStyleScheme extends Scheme {
 
   @Override
   @NotNull
+  @Nls
   String getName();
 
   boolean isDefault();

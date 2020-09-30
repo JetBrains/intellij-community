@@ -14,6 +14,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IdIterator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +111,7 @@ public abstract class StubIndex {
   }
 
   @NotNull
-  public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Key dataKey,
+  public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
                                                     @NotNull Project project,
                                                     @NotNull final GlobalSearchScope scope);
 

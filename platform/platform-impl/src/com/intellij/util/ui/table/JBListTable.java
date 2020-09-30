@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
@@ -18,9 +18,10 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +34,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -211,11 +213,11 @@ public abstract class JBListTable {
     }
   }
 
-  private static class RowResizeAnimator implements ActionListener, Disposable {
+  private static final class RowResizeAnimator implements ActionListener, Disposable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
+    private final Int2ObjectOpenHashMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
     private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
@@ -250,27 +252,23 @@ public abstract class JBListTable {
       myAnimationTimer.stop();
     }
 
-    private void doAnimationStep(final long updateTime) {
-      final TIntArrayList completeRows = new TIntArrayList(myRowAnimationStates.size());
-      myRowAnimationStates.forEachEntry(new TIntObjectProcedure<RowAnimationState>() {
-        @Override
-        public boolean execute(int row, RowAnimationState animationState) {
-          if (animationState.doAnimationStep(updateTime)) {
-            completeRows.add(row);
-          }
-          return true;
+    private void doAnimationStep(long updateTime) {
+      IntArrayList completeRows = new IntArrayList(myRowAnimationStates.size());
+      for (ObjectIterator<Int2ObjectMap.Entry<RowAnimationState>> iterator = myRowAnimationStates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
+        Int2ObjectMap.Entry<RowAnimationState> entry = iterator.next();
+        if (entry.getValue().doAnimationStep(updateTime)) {
+          completeRows.add(entry.getIntKey());
         }
-      });
-      completeRows.forEach(row -> {
+      }
+      completeRows.forEach((IntConsumer)row -> {
         myRowAnimationStates.remove(row);
-        return true;
       });
       if (myRowAnimationStates.isEmpty()) {
         stopAnimation();
       }
     }
 
-    private class RowAnimationState {
+    private final class RowAnimationState {
       private final int myRow;
       private final int myTargetHeight;
       private long myLastUpdateTime;

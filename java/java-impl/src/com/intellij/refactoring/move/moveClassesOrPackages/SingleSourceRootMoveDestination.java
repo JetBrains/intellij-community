@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -52,7 +53,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
 
   @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) {
-    return myTargetDirectory;
+    return getDirectory(source);
   }
 
   @Override
@@ -90,6 +91,11 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
 
   @Override
   public PsiDirectory getTargetDirectory(PsiFile source) {
-    return myTargetDirectory;
+    return getDirectory(source);
+  }
+
+  private PsiDirectory getDirectory(PsiElement source) {
+    ModelBranch branch = ModelBranch.getPsiBranch(source);
+    return branch == null ? myTargetDirectory : branch.obtainPsiCopy(myTargetDirectory);
   }
 }

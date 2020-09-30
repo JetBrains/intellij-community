@@ -646,21 +646,29 @@ public final class FindInProjectUtil {
     );
   }
 
+  @NotNull
   public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
     @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
-    if (searchContext == FindModel.SearchContext.ANY) {
-      messageKey = "find.context.anywhere.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS) {
-      messageKey = "find.context.except.comments.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_STRING_LITERALS) {
-      messageKey = "find.context.except.literals.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS) {
-      messageKey = "find.context.except.comments.and.literals.scope.label";
-    } else if (searchContext == FindModel.SearchContext.IN_COMMENTS) {
-      messageKey = "find.context.in.comments.scope.label";
-    } else if (searchContext == FindModel.SearchContext.IN_STRING_LITERALS) {
-      messageKey = "find.context.in.literals.scope.label";
+    switch (searchContext) {
+      case ANY:
+        messageKey = "find.context.anywhere.scope.label";
+        break;
+      case EXCEPT_COMMENTS:
+        messageKey = "find.context.except.comments.scope.label";
+        break;
+      case EXCEPT_STRING_LITERALS:
+        messageKey = "find.context.except.literals.scope.label";
+        break;
+      case EXCEPT_COMMENTS_AND_STRING_LITERALS:
+        messageKey = "find.context.except.comments.and.literals.scope.label";
+        break;
+      case IN_COMMENTS:
+        messageKey = "find.context.in.comments.scope.label";
+        break;
+      case IN_STRING_LITERALS:
+        messageKey = "find.context.in.literals.scope.label";
+        break;
     }
-    return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
+    return FindBundle.message(messageKey);
   }
 }

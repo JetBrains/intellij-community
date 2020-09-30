@@ -154,14 +154,11 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     }
 
     if (!existingEntries.isEmpty()) {
-      String message;
-      if (existingEntries.size() > 1) {
-        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace them?";
-      }
-      else {
-        final String name = existingEntries.get(0).getPresentableName();
-        message = "There is already a " + myFrameworkType.getPresentableName() + " library '" + name + "'.\n Do you want to replace it?";
-      }
+      final String name = existingEntries.get(0).getPresentableName();
+      final String message = JavaUiBundle.message("add.support.for.single.framework.remove.duplicates.dialog.message",
+                                            existingEntries.size(),
+                                            myFrameworkType.getPresentableName(),
+                                            name);
       final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message,
                                                         JavaUiBundle.message("dialog.title.library.already.exists"),
                                                         CommonBundle.message("button.replace.r"),

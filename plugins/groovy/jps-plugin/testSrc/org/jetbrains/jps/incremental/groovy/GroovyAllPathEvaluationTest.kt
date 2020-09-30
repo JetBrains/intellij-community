@@ -42,9 +42,9 @@ class GroovyAllPathEvaluationTest {
                                               "/lib/groovy-all-2.4.17.jar"))
     assertEquals("/lib/groovy-all-2.4.17.jar",
                  evalPathForParentClassloader("/lib/groovy-all-2.4.17.jar",
-                                              "/lib/groovy-jps-plugin.jar",
-                                              "/lib/groovy-rt-constants.jar",
-                                              "/lib/groovy_rt.jar"))
+                                              "/lib/groovy-jps.jar",
+                                              "/lib/groovy-constants-rt.jar",
+                                              "/lib/groovy-rt.jar"))
   }
 
   @Test

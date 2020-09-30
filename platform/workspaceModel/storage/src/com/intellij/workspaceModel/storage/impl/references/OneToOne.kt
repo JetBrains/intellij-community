@@ -13,11 +13,11 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class OneToOneParent private constructor() {
-  class NotNull<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>(private val childClass: Class<SUBT>,
-                                                                     val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT> {
+  class NotNull<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val childClass: Class<Child>,
+                                                                     val isParentInChildNullable: Boolean) : ReadOnlyProperty<Parent, Child> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: T, property: KProperty<*>): SUBT {
+    override fun getValue(thisRef: Parent, property: KProperty<*>): Child {
       if (connectionId == null) {
         connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
@@ -25,11 +25,11 @@ class OneToOneParent private constructor() {
     }
   }
 
-  class Nullable<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>(private val childClass: Class<SUBT>,
-                                                                      val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT?> {
+  class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val childClass: Class<Child>,
+                                                                      val isParentInChildNullable: Boolean) : ReadOnlyProperty<Parent, Child?> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: T, property: KProperty<*>): SUBT? {
+    override fun getValue(thisRef: Parent, property: KProperty<*>): Child? {
       if (connectionId == null) {
         connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
@@ -39,11 +39,11 @@ class OneToOneParent private constructor() {
 }
 
 class OneToOneChild private constructor() {
-  class NotNull<SUBT : WorkspaceEntityBase, T : WorkspaceEntityBase>(private val parentClass: Class<T>,
-                                                                     val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T> {
+  class NotNull<Child : WorkspaceEntityBase, Parent : WorkspaceEntityBase>(private val parentClass: Class<Parent>,
+                                                                     val isChildInParentNullable: Boolean) : ReadOnlyProperty<Child, Parent> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
+    override fun getValue(thisRef: Child, property: KProperty<*>): Parent {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
@@ -51,11 +51,11 @@ class OneToOneChild private constructor() {
     }
   }
 
-  class Nullable<SUBT : WorkspaceEntityBase, T : WorkspaceEntityBase>(private val parentClass: Class<T>,
-                                                                      val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T?> {
+  class Nullable<Child : WorkspaceEntityBase, Parent : WorkspaceEntityBase>(private val parentClass: Class<Parent>,
+                                                                      val isChildInParentNullable: Boolean) : ReadOnlyProperty<Child, Parent?> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
+    override fun getValue(thisRef: Child, property: KProperty<*>): Parent? {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
@@ -65,22 +65,22 @@ class OneToOneChild private constructor() {
 }
 
 class MutableOneToOneParent private constructor() {
-  class NotNull<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODT : ModifiableWorkspaceEntityBase<T>>(
-    private val parentClass: Class<T>,
-    private val childClass: Class<SUBT>,
+  class NotNull<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
+    private val parentClass: Class<Parent>,
+    private val childClass: Class<Child>,
     private val isParentInChildNullable: Boolean
-  ) : ReadWriteProperty<MODT, SUBT> {
+  ) : ReadWriteProperty<ModifParent, Child> {
 
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: MODT, property: KProperty<*>): SUBT {
+    override fun getValue(thisRef: ModifParent, property: KProperty<*>): Child {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
       return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
 
-    override fun setValue(thisRef: MODT, property: KProperty<*>, value: SUBT) {
+    override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Child) {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
@@ -91,22 +91,22 @@ class MutableOneToOneParent private constructor() {
     }
   }
 
-  class Nullable<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODT : ModifiableWorkspaceEntityBase<T>>(
-    private val parentClass: Class<T>,
-    private val childClass: Class<SUBT>,
+  class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
+    private val parentClass: Class<Parent>,
+    private val childClass: Class<Child>,
     private val isParentInChildNullable: Boolean
-  ) : ReadWriteProperty<MODT, SUBT?> {
+  ) : ReadWriteProperty<ModifParent, Child?> {
 
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: MODT, property: KProperty<*>): SUBT? {
+    override fun getValue(thisRef: ModifParent, property: KProperty<*>): Child? {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
       return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
 
-    override fun setValue(thisRef: MODT, property: KProperty<*>, value: SUBT?) {
+    override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Child?) {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
@@ -119,21 +119,21 @@ class MutableOneToOneParent private constructor() {
 }
 
 class MutableOneToOneChild private constructor() {
-  class NotNull<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODSUBT : ModifiableWorkspaceEntityBase<SUBT>>(
-    private val childClass: Class<SUBT>,
-    private val parentClass: Class<T>,
+  class NotNull<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifChild : ModifiableWorkspaceEntityBase<Child>>(
+    private val childClass: Class<Child>,
+    private val parentClass: Class<Parent>,
     private val isChildInParentNullable: Boolean
-  ) : ReadWriteProperty<MODSUBT, T> {
+  ) : ReadWriteProperty<ModifChild, Parent> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
+    override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
       return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
 
-    override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
+    override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent) {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
@@ -144,21 +144,21 @@ class MutableOneToOneChild private constructor() {
     }
   }
 
-  class Nullable<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODSUBT : ModifiableWorkspaceEntityBase<SUBT>>(
-    private val childClass: Class<SUBT>,
-    private val parentClass: Class<T>,
+  class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifChild : ModifiableWorkspaceEntityBase<Child>>(
+    private val childClass: Class<Child>,
+    private val parentClass: Class<Parent>,
     private val isChildInParentNullable: Boolean
-  ) : ReadWriteProperty<MODSUBT, T?> {
+  ) : ReadWriteProperty<ModifChild, Parent?> {
     private var connectionId: ConnectionId? = null
 
-    override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
+    override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent? {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
       return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)
     }
 
-    override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
+    override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent?) {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }

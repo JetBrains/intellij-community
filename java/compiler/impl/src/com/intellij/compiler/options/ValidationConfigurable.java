@@ -104,7 +104,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     if (markedValidators.size() != selectedElements.size()) {
       return true;
     }
-    Set<Validator> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<Validator>() {
+    Set<Validator> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(Validator object) {
         return object.getId().hashCode();
@@ -155,7 +155,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   }
 
   private void createUIComponents() {
-    myValidators = new ElementsChooser<Validator>(true) {
+    myValidators = new ElementsChooser<>(true) {
       @Override
       protected String getItemText(@NotNull final Validator validator) {
         return validator.getDescription();

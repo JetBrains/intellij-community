@@ -8,9 +8,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
@@ -35,20 +37,20 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
     GitExecutableProblemsNotifier.notify(project, createNotification(text, null))
   }
 
-  override fun executeTask(@Nls(capitalization = Nls.Capitalization.Title) title: String, cancellable: Boolean, action: () -> Unit) {
-    ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, cancellable) {
+  override fun executeTask(@NlsContexts.ProgressTitle title: String, cancellable: Boolean, action: () -> Unit) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, cancellable) {
       override fun run(indicator: ProgressIndicator) {
         action()
       }
     })
   }
 
-  override fun changeProgressTitle(@Nls(capitalization = Nls.Capitalization.Title) text: String) {
+  override fun changeProgressTitle(@NlsContexts.ProgressTitle text: String) {
     ProgressManager.getInstance().progressIndicator?.text = text
   }
 
-  override fun showMessage(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
-    VcsNotifier.getInstance(project).notifyInfo(text)
+  override fun showMessage(@NlsContexts.NotificationContent text: String) {
+    VcsNotifier.getInstance(project).notifyInfo(null, "", text)
   }
 
   override fun hideProgress() {

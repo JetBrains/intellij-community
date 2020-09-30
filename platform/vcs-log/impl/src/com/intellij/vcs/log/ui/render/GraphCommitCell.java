@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.PrintElement;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ public class GraphCommitCell {
   }
 
   @NotNull
+  @NlsSafe
   public String getText() {
     return myText;
   }

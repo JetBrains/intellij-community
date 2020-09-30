@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
@@ -91,7 +92,7 @@ public class SpacingBuilder {
     }
   }
 
-  private static class RuleCondition {
+  private static final class RuleCondition {
     private final TokenSet myParentType;
     private final TokenSet myChild1Type;
     private final TokenSet myChild2Type;
@@ -109,7 +110,7 @@ public class SpacingBuilder {
     }
   }
 
-  public class RuleBuilder {
+  public final class RuleBuilder {
     RuleCondition[] myConditions;
 
     private RuleBuilder(RuleCondition... conditions) {
@@ -219,7 +220,7 @@ public class SpacingBuilder {
   }
 
   /**
-   * Creates SpacingBuilder with given code style settings and language whose settings must be used. 
+   * Creates SpacingBuilder with given code style settings and language whose settings must be used.
    * @param codeStyleSettings The root code style settings.
    * @param language          The language to obtain settings for.
    */

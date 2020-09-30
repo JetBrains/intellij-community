@@ -23,12 +23,13 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
-  public static final String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
+  @NonNls public static final String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {

@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import java.util.concurrent.atomic.AtomicInteger
 
-class ProjectAwareWrapper(val delegate: ExternalSystemProjectAware) : ExternalSystemProjectAware by delegate {
+class ProjectAwareWrapper(val delegate: ExternalSystemProjectAware,
+                          parentDisposable: Disposable) : ExternalSystemProjectAware by delegate {
   val subscribeCounter = AtomicInteger(0)
   val unsubscribeCounter = AtomicInteger(0)
   val refreshCounter = AtomicInteger(0)
@@ -13,19 +14,20 @@ class ProjectAwareWrapper(val delegate: ExternalSystemProjectAware) : ExternalSy
   val afterRefreshCounter = AtomicInteger(0)
   override val settingsFiles = delegate.settingsFiles
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
-    val listenerWrapper = object : ExternalSystemProjectRefreshListener {
+  init {
+    delegate.subscribe(object : ExternalSystemProjectRefreshListener {
       override fun beforeProjectRefresh() {
         beforeRefreshCounter.incrementAndGet()
-        listener.beforeProjectRefresh()
       }
 
       override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
         afterRefreshCounter.incrementAndGet()
-        listener.afterProjectRefresh(status)
       }
-    }
-    delegate.subscribe(listenerWrapper, parentDisposable)
+    }, parentDisposable)
+  }
+
+  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
+    delegate.subscribe(listener, parentDisposable)
     subscribeCounter.incrementAndGet()
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
   }

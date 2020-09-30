@@ -1,8 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -21,7 +23,7 @@ import java.util.Map;
 public class PackagesNotificationPanel {
   private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<>();
-  private String myErrorTitle;
+  private @NlsContexts.DialogTitle String myErrorTitle;
   private PackageManagementService.ErrorDescription myErrorDescription;
 
   public PackagesNotificationPanel() {
@@ -61,9 +63,8 @@ public class PackagesNotificationPanel {
       if (packageName != null) {
         title = IdeBundle.message("failed.to.install.package.dialog.title", packageName);
       }
-      String firstLine = IdeBundle.message("install.package.failure", packageName);
-      showError(firstLine + "<a href=\"xxx\">" + IdeBundle.message("install.packages.failure.details") + "</a>", title,
-                errorDescription);
+      String text = IdeBundle.message("install.package.failure", packageName);
+      showError(text, title, errorDescription);
     }
   }
 
@@ -79,11 +80,11 @@ public class PackagesNotificationPanel {
     return myHtmlViewer;
   }
 
-  public void showSuccess(String text) {
+  public void showSuccess(@NotificationContent String text) {
     showContent(text, MessageType.INFO.getPopupBackground());
   }
 
-  private void showContent(@NotNull String text, @NotNull Color background) {
+  private void showContent(@NotNull @NotificationContent String text, @NotNull Color background) {
     String htmlText = text.startsWith("<html>") ? text : UIUtil.toHtml(text);
     myHtmlViewer.setText(htmlText);
     myHtmlViewer.setBackground(background);
@@ -92,7 +93,7 @@ public class PackagesNotificationPanel {
     myErrorDescription = null;
   }
 
-  public void showError(String text,
+  public void showError(@NotificationContent String text,
                         @Nullable @NlsContexts.DialogTitle String detailsTitle,
                         PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
@@ -100,7 +101,7 @@ public class PackagesNotificationPanel {
     myErrorDescription = errorDescription;
   }
 
-  public void showWarning(String text) {
+  public void showWarning(@NotificationContent String text) {
     showContent(text, MessageType.WARNING.getPopupBackground());
   }
 

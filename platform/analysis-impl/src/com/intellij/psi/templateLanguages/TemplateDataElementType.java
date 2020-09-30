@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -28,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +40,8 @@ import java.util.function.Function;
  * @author peter
  */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
+  private static final Logger LOG = Logger.getInstance(TemplateDataElementType.class);
+  private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
@@ -146,17 +148,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = VolatileNotNullLazyValue.createValue(() -> {
-    Class<?> aClass = this.getClass();
-    while (!TemplateDataElementType.class.equals(aClass)) {
-      try {
-        aClass.getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
-        return true;
-      }
-      catch (NoSuchMethodException e) {
-        aClass = aClass.getSuperclass();
-      }
-    }
-    return false;
+    Class<?> implementationClass = ReflectionUtil.getMethodDeclaringClass(
+      getClass(), "appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+    return implementationClass != TemplateDataElementType.class;
   });
 
   private CharSequence oldCreateTemplateText(@NotNull CharSequence sourceCode,
@@ -166,7 +160,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     baseLexer.start(sourceCode);
 
     TextRange currentRange = TextRange.EMPTY_RANGE;
+    int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
+      if (++tokenCounter % CHECK_PROGRESS_AFTER_TOKENS == 0) {
+        ProgressManager.checkCanceled();
+      }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
@@ -194,7 +192,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     TemplateDataModifications modifications = new TemplateDataModifications();
     baseLexer.start(sourceCode);
     TextRange currentRange = TextRange.EMPTY_RANGE;
+    int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
+      if (++tokenCounter % CHECK_PROGRESS_AFTER_TOKENS == 0) {
+        ProgressManager.checkCanceled();
+      }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
@@ -254,8 +256,27 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return TokenSet.EMPTY;
   }
 
+  /**
+   * @return instance of {@link OuterLanguageElementImpl} for outer element
+   * @apiNote there are few ways to resolve error from this method:
+   * <ul>
+   * <li> Create your own {@link ASTFactory} and create proper element for your outer element</li>
+   * <li> Use {@link com.intellij.psi.tree.OuterLanguageElementType} for your outer element type</li>
+   * </ul>
+   * @deprecated this method is going to be removed and com.intellij.lang.ASTFactory#leaf(com.intellij.psi.tree.IElementType, java.lang.CharSequence) going to be used instead
+   */
+  @Deprecated
   protected OuterLanguageElementImpl createOuterLanguageElement(@NotNull CharSequence internedTokenText,
                                                                 @NotNull IElementType outerElementType) {
+    var factoryCreatedElement = ASTFactory.leaf(outerElementType, internedTokenText);
+    if (factoryCreatedElement instanceof OuterLanguageElementImpl) {
+      return (OuterLanguageElementImpl)factoryCreatedElement;
+    }
+    LOG.error(
+      "Wrong element created by ASTFactory. See method documentation for details. Here is what we have:" +
+      " elementType: " + outerElementType +
+      "; language: " + outerElementType.getLanguage() +
+      "; element from factory: " + factoryCreatedElement);
     return new OuterLanguageElementImpl(outerElementType, internedTokenText);
   }
 
@@ -280,7 +301,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   public static @NotNull ASTNode parseWithOuterAndRemoveRangesApplied(@NotNull ASTNode chameleon,
                                                                       @NotNull Language language,
-                                                                      @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
+                                                                      @NotNull Function<? super @NotNull CharSequence, ? extends @NotNull ASTNode> parser) {
     RangeCollectorImpl collector = chameleon.getUserData(RangeCollectorImpl.OUTER_ELEMENT_RANGES);
     return collector != null ? collector.applyRangeCollectorAndExpandChameleon(chameleon, language, parser)
                              : parser.apply(chameleon.getChars());

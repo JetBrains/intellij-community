@@ -25,6 +25,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public class LocalHistoryFacade {
     }
   }
 
-  public void endChangeSet(String name) {
+  public void endChangeSet(@NlsContexts.Label String name) {
     if (myChangeList.endChangeSet(name)) {
       fireChangeSetFinished();
     }
@@ -82,11 +83,11 @@ public class LocalHistoryFacade {
     addChange(new DeleteChange(myChangeList.nextId(), path, deletedEntry));
   }
 
-  public LabelImpl putSystemLabel(String name, String projectId, int color) {
+  public LabelImpl putSystemLabel(@NlsContexts.Label String name, String projectId, int color) {
     return putLabel(new PutSystemLabelChange(myChangeList.nextId(), name, projectId, color));
   }
 
-  public LabelImpl putUserLabel(String name, String projectId) {
+  public LabelImpl putUserLabel(@NlsContexts.Label String name, String projectId) {
     return putLabel(new PutLabelChange(myChangeList.nextId(), name, projectId));
   }
 

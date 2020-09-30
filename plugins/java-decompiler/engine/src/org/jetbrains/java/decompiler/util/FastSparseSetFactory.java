@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.Collection;
@@ -69,7 +69,7 @@ public class FastSparseSetFactory<E> {
   }
 
 
-  public static class FastSparseSet<E> implements Iterable<E> {
+  public static final class FastSparseSet<E> implements Iterable<E> {
     public static final FastSparseSet[] EMPTY_ARRAY = new FastSparseSet[0];
 
     private final FastSparseSetFactory<E> factory;
@@ -360,7 +360,7 @@ public class FastSparseSetFactory<E> {
     }
   }
 
-  public static class FastSparseSetIterator<E> implements Iterator<E> {
+  public static final class FastSparseSetIterator<E> implements Iterator<E> {
 
     private final VBStyleCollection<int[], E> colValuesInternal;
     private final int[] data;

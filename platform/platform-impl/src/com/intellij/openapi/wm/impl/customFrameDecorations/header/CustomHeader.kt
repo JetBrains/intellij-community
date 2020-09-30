@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
@@ -8,9 +9,8 @@ import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
@@ -65,19 +65,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
-                if(window.rootPane is IdeRootPane) {
-                    createMainFrameHeader(window, null)
-                } else {
-                    createFrameHeader(window)
-                }
+                DefaultFrameHeader(window)
             } else {
                 DialogHeader(window)
             }
         }
-
-        private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
-        @JvmStatic
-        fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
 
         private val windowBorderThicknessInPhysicalPx: Int = run {
             // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
@@ -231,7 +223,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
     }
 
-    protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }
+    protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
 
     protected fun close() {
         window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
@@ -240,7 +232,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun dispose() {
     }
 
-    protected class CustomFrameAction(name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
+    protected class CustomFrameAction(@NlsActions.ActionText name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
         override fun actionPerformed(e: ActionEvent) = action()
     }
 

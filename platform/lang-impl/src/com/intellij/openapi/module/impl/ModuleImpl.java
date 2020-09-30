@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
+import com.intellij.configurationStore.RenameableStateStorageManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -33,11 +34,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,7 +111,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     // Component loading progress is not reported for module, because at this stage minimal reporting unit it is the module itself.
-    // Stage "Loading modules" — progress reported for each loaded module and module component count doesn't matter.
+    // Stage "Loading modules" progress reported for each loaded module and module component count doesn't matter.
   }
 
   @Override
@@ -160,7 +163,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void rename(@NotNull String newName, boolean notifyStorage) {
     myName = newName;
     if (notifyStorage) {
-      getStore().getStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      ((RenameableStateStorageManager)getStore().getStorageManager()).rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
   }
 
@@ -170,11 +173,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   @NotNull
-  public String getModuleFilePath() {
+  public Path getModuleNioFile() {
     if (!isPersistent()) {
-      return "";
+      return Paths.get("");
     }
-    return getStore().getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return getStore().getStorageManager().expandMacro(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -339,7 +342,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public String toString() {
     if (myName == null) return "Module (not initialized)";
-    return "Module: '" + getName() + "'";
+    return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
   }
 
   @Override
@@ -369,7 +372,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-      public final Map<String, String> options = new THashMap<>();
+      public final Map<String, String> options = new HashMap<>();
     }
 
     private State state = new State();

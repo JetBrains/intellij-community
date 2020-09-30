@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     return items;
   }
 
-  static @NotNull String calcText(@Nullable PsiDocCommentBase comment) {
+  static @NotNull @Nls String calcText(@Nullable PsiDocCommentBase comment) {
     try {
       String text = comment == null ? null : DocumentationManager.getProviderFromElement(comment).generateRenderedDoc(comment);
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
@@ -135,11 +136,11 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     }
   }
 
-  static class Item {
+  static final class Item {
     final TextRange textRange;
-    final String textToRender;
+    final @Nls String textToRender;
 
-    private Item(@NotNull TextRange textRange, @Nullable String textToRender) {
+    private Item(@NotNull TextRange textRange, @Nullable @Nls String textToRender) {
       this.textRange = textRange;
       this.textToRender = textToRender;
     }

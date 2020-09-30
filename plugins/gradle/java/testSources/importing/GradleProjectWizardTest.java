@@ -19,8 +19,8 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -213,7 +213,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         });
       },
       () -> {
-        Messages.setTestDialog(TestDialog.DEFAULT);
+        TestDialogManager.setTestDialog(TestDialog.DEFAULT);
       },
       super::tearDown
     ).run();

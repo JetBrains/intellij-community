@@ -463,7 +463,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule);
-  
+
   @NotNull
   public abstract IntentionAction createAddParameterListFix(@NotNull PsiMethod method);
 
@@ -474,4 +474,27 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateFieldFromParameterFix();
   @NotNull
   public abstract IntentionAction createAssignFieldFromParameterFix();
+
+  @NotNull
+  public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
+
+  /**
+   * @param subClass class that should be added to parents permits list
+   * @param superClass sealed parent class from subclasses' extends / implements clause
+   * @return
+   */
+  @NotNull
+  public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass);
+
+  public abstract IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName);
+
+  /**
+   * Provides fixes to make class extend sealed class and
+   * possibly mark extending class with one of sealed subclass modifiers (final, sealed, non-sealed)
+   *
+   * @param subclassRef reference in permits list of a parent class
+   * @return
+   */
+  public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
+                                                                            @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
 }

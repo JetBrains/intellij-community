@@ -19,6 +19,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ui.JBColor.namedColor;
@@ -45,7 +46,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull public static final String ID = "MERGE_COMMITS"; // NON-NLS
+    @NotNull @NonNls public static final String ID = "MERGE_COMMITS";
 
     @NotNull
     @Override

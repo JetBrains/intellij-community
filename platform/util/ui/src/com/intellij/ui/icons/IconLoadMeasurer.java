@@ -2,6 +2,7 @@
 package com.intellij.ui.icons;
 
 import com.intellij.diagnostic.StartUpMeasurer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -64,7 +65,7 @@ public final class IconLoadMeasurer {
     private final AtomicInteger counter = new AtomicInteger();
     private final AtomicLong totalTime = new AtomicLong();
 
-    public Counter(@NotNull String type) {
+    public Counter(@NotNull @NonNls String type) {
       this.type = type;
     }
 

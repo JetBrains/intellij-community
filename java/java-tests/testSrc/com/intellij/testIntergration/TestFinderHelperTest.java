@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntergration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
@@ -19,7 +18,8 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myContentRootDir = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+
+    myContentRootDir = getTempDir().createVirtualDir();
     PsiTestUtil.addSourceRoot(myModule, myContentRootDir);
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
     ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
@@ -69,7 +69,7 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
     assertFalse(TestFinderHelper.isTest(cm));
     assertTrue(TestFinderHelper.isTest(tm));
   }
-  
+
   public void testVariousTestNaming() {
     PsiClass c = createClass("Foo");
 
@@ -135,7 +135,7 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
 
     assertOrderedEquals(TestFinderHelper.findClassesForTest(t), classes);
   }
-  
+
   private PsiClass createClass(String name) throws IncorrectOperationException {
     PsiDirectory directory = myPsiManager.findDirectory(myContentRootDir);
     assertNotNull(directory);

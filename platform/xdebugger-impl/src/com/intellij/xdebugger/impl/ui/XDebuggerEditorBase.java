@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -20,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -103,7 +105,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }.installOn(myLanguageChooser);
 
     // setup expand button
-    myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
+    myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
     myExpandButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myExpandButton.setBorder(JBUI.Borders.empty(0, 3));
     myExpandButton.setDisabledIcon(AllIcons.General.ExpandComponent);
@@ -494,7 +496,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     JScrollPane pane = editor.getScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
-      setToolTipText(KeymapUtil.createTooltipText("Collapse", "CollapseExpandableComponent"));
+      setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"));
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       setBorder(JBUI.Borders.empty(5, 0, 5, 5));
       addMouseListener(new MouseAdapter() {
@@ -517,7 +519,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   @NotNull
-  private static String getAdText() {
+  private static @NlsContexts.Label String getAdText() {
     return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
                                    KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)) + ", " +
                                    KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_UP)));

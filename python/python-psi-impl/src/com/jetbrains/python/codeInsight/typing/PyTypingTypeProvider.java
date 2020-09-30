@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -26,6 +25,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -1394,7 +1393,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   public static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<String> names = new LinkedHashSet<String>();
+    final Set<String> names = new LinkedHashSet<>();
     for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);
       if (name != null) {
@@ -1429,22 +1428,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
-    final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(COROUTINE),
-                                                                           PyResolveImportUtil.fromFoothold(resolveAnchor)), PyClass.class);
+    final PyClass coroutine = PyPsiFacade.getInstance(resolveAnchor.getProject()).createClassByQName(COROUTINE, resolveAnchor);
     return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
   }
 
   @Nullable
   public static PyType wrapInGeneratorType(@Nullable PyType elementType, @Nullable PyType returnType, @NotNull PsiElement anchor) {
-    final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(GENERATOR),
-                                                                           PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
+    final PyClass generator = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(GENERATOR, anchor);
     return generator != null ? new PyCollectionTypeImpl(generator, false, Arrays.asList(elementType, null, returnType)) : null;
   }
 
   @Nullable
   private static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
-    final PyClass asyncGenerator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(ASYNC_GENERATOR),
-                                                                                PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
+    final PyClass asyncGenerator = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(ASYNC_GENERATOR, anchor);
     return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
   }
 
@@ -1511,18 +1507,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   public static boolean isInAnnotationOrTypeComment(@NotNull PsiElement element) {
-    final PsiElement realContext = PyPsiUtils.getRealContext(element);
-
-    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, ScopeOwner.class) != null) {
-      return true;
-    }
-
-    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, ScopeOwner.class);
-    if (comment != null && getTypeCommentValue(comment.getText()) != null) {
-      return true;
-    }
-
-    return false;
+    return PsiTreeUtil.instanceOf(element.getContainingFile(), PyTypeHintFile.class, PyFunctionTypeAnnotationFile.class) ||
+           PsiTreeUtil.getParentOfType(PyPsiUtils.getRealContext(element), PyAnnotation.class, false, ScopeOwner.class) != null;
   }
 
   static class Context {

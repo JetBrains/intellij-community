@@ -268,7 +268,7 @@ public class PropertyUtilBase {
     switch (flavour) {
       case GENERIC:
         PsiType returnType = method.getReturnType();
-        return returnType == null || !PsiType.VOID.equals(returnType);
+        return !PsiType.VOID.equals(returnType);
       case BOOLEAN:
         return isBoolean(method.getReturnType());
       case NOT_A_GETTER:

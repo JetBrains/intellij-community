@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
@@ -50,7 +50,7 @@ public class TestDataReferenceCollector {
     myContainingClass = ReadAction.compute(() -> method.getContainingClass());
     List<TestDataFile> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
-      myLogMessages.add("Found no parameters annotated with @TestDataFile");
+      myLogMessages.add("Found no parameters annotated with @TestDataFile"); //NON-NLS
     }
 
     if (collectByExistingFiles && result.isEmpty()) {
@@ -161,7 +161,7 @@ public class TestDataReferenceCollector {
     return StringUtil.join(myLogMessages, "\n");
   }
 
-  private class TestDataEvaluatorExtension extends SimpleEvaluatorExtension {
+  private final class TestDataEvaluatorExtension extends SimpleEvaluatorExtension {
     private final Map<String, Computable<UValue>> myArguments;
 
     private TestDataEvaluatorExtension(Map<String, Computable<UValue>> arguments) {

@@ -55,7 +55,7 @@ class CommittedChangesFilterComponent :
       null
     }
     catch (e: PatternSyntaxException) {
-      ValidationInfo("Please enter a valid regex", textEditor)
+      ValidationInfo(message("changes.please.enter.a.valid.regex"), textEditor)
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
@@ -39,6 +40,9 @@ class GitStageDiffPreview(project: Project, private val tree: ChangesTree, track
   fun getToolbarWrapper(): com.intellij.ui.components.panels.Wrapper = myToolbarWrapper
 
   override fun selectChange(change: Wrapper) {
+    if (change !is GitFileStatusNodeWrapper) return
+    val node = TreeUtil.findNodeWithObject(tree.root, change.node) ?: return
+    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
   override fun getSelectedChanges(): Stream<Wrapper?> {

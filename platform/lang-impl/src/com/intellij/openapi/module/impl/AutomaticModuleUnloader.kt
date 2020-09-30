@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.xml.util.XmlStringUtil
 
@@ -19,11 +19,10 @@ import com.intellij.xml.util.XmlStringUtil
  * aren't required for loaded modules.
  */
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-class AutomaticModuleUnloader(private val project: Project) : PersistentStateComponent<LoadedModulesListStorage> {
-  private val loadedModulesListStorage = LoadedModulesListStorage()
-
+@Service
+class AutomaticModuleUnloader(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()) {
   fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
-    val oldLoaded = loadedModulesListStorage.modules.toSet()
+    val oldLoaded = state.modules.toSet()
     if (oldLoaded.isEmpty() || modulesToLoad.all { it.moduleName in oldLoaded }) {
       return UnloadedModulesListChange(emptyList(), emptyList(), emptyList())
     }
@@ -41,8 +40,10 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     val newLoadedNames = oldLoadedWithDependencies.mapTo(LinkedHashSet()) { it.name }
     val toLoad = modulesToLoad.filter { it.moduleName in newLoadedNames && it.moduleName !in oldLoaded}
     val toUnload = modulesToLoad.filter { it.moduleName !in newLoadedNames && it.moduleName in moduleDescriptions}
-    loadedModulesListStorage.modules.clear()
-    modulesToLoad.filter { it.moduleName in newLoadedNames }.mapTo(loadedModulesListStorage.modules) { it.moduleName }
+    state.modules.clear()
+    modulesToLoad.asSequence()
+      .filter { it.moduleName in newLoadedNames }
+      .mapTo(state.modules) { it.moduleName }
     val change = UnloadedModulesListChange(toLoad, toUnload, toUnload.map { moduleDescriptions[it.moduleName]!! })
     fireNotifications(change)
     return change
@@ -63,62 +64,40 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
   private fun fireNotifications(change: UnloadedModulesListChange) {
     if (change.toLoad.isEmpty() && change.toUnload.isEmpty()) return
 
-    val messages = ArrayList<String>()
-    val actions = ArrayList<NotificationAction>()
-    populateNotification(change.toUnload, messages, actions, "Load", {"Load $it back"}, change.toLoad.isEmpty(), {"unloaded"}) {
-      it.removeAll(change.toUnload.map { it.moduleName })
+    val messages = mutableListOf<String>()
+    val actions = mutableListOf<NotificationAction>()
+
+    if (change.toUnload.isNotEmpty()) {
+      val modules = change.toUnload
+      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+      messages += ProjectBundle.message("auto.unloaded.notification", *args)
+      val text = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.unloaded.revert.short" else "auto.unloaded.revert.full", *args)
+      actions += createAction(text) { list -> list.removeAll(modules.map { it.moduleName }) }
     }
-    populateNotification(change.toLoad, messages, actions, "Unload", {"Unload $it"}, change.toUnload.isEmpty(), {"loaded because some other modules depend on $it"}) {
-      it.addAll(change.toLoad.map { it.moduleName })
+
+    if (change.toLoad.isNotEmpty()) {
+      val modules = change.toLoad
+      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+      messages += ProjectBundle.message("auto.loaded.notification", *args)
+      val action = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.loaded.revert.short" else "auto.loaded.revert.full", *args)
+      actions += createAction(action) { list -> list.addAll(modules.map { it.moduleName }) }
     }
-    actions.add(object: NotificationAction("Configure Unloaded Modules") {
+
+    actions += object : NotificationAction(ProjectBundle.message("configure.unloaded.modules")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        val ok = ConfigureUnloadedModulesDialog(project, null).showAndGet()
-        if (ok) {
+        if (ConfigureUnloadedModulesDialog(project, null).showAndGet()) {
           notification.expire()
         }
       }
-    })
-
-    NOTIFICATION_GROUP.createNotification("New Modules are Added", XmlStringUtil.wrapInHtml(messages.joinToString("<br>")),
-                                          NotificationType.INFORMATION, null)
-      .apply {
-        actions.forEach { addAction(it) }
-      }
-      .notify(project)
-  }
-
-  private fun populateNotification(modules: List<ModulePath>,
-                                   messages: ArrayList<String>,
-                                   actions: ArrayList<NotificationAction>,
-                                   revertActionName: String,
-                                   revertActionShortText: (String) -> String,
-                                   useShortActionText: Boolean,
-                                   statusDescription: (String) -> String,
-                                   revertAction: (MutableList<String>) -> Unit) {
-    when {
-      modules.size == 1 -> {
-        val moduleName = modules.single().moduleName
-        messages.add("Newly added module '$moduleName' was automatically ${statusDescription("it")}.")
-        val text = if (useShortActionText) revertActionShortText("it") else "$revertActionName '$moduleName' module"
-        actions.add(createAction(text, revertAction))
-      }
-      modules.size == 2 -> {
-        val names = "'${modules[0].moduleName}' and '${modules[1].moduleName}'"
-        messages.add("Newly added modules $names were automatically ${statusDescription("them")}.")
-        val text = if (useShortActionText) revertActionShortText("them") else "$revertActionName modules $names"
-        actions.add(createAction(text, revertAction))
-      }
-      modules.size > 2 -> {
-        val names = "'${modules.first().moduleName}' and ${modules.size - 1} more modules"
-        messages.add("$names were automatically ${statusDescription("them")}.")
-        val text = if (useShortActionText) revertActionShortText("them") else "$revertActionName $names"
-        actions.add(createAction(text, revertAction))
-      }
     }
+
+    val content = XmlStringUtil.wrapInHtml(messages.joinToString("<br>"))
+    val notification = NOTIFICATION_GROUP.createNotification(ProjectBundle.message("modules.added.notification.title"), content, NotificationType.INFORMATION, null)
+    notification.addActions(actions)
+    notification.notify(project)
   }
 
-  fun createAction(text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
+  fun createAction(@NlsContexts.NotificationContent text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       val unloaded = ArrayList<String>()
       val moduleManager = ModuleManager.getInstance(project)
@@ -130,27 +109,25 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
   }
 
   fun setLoadedModules(modules: List<String>) {
-    loadedModulesListStorage.modules.clear()
-    loadedModulesListStorage.modules.addAll(modules)
-  }
-
-  override fun getState(): LoadedModulesListStorage = loadedModulesListStorage
-
-  override fun loadState(state: LoadedModulesListStorage) {
-    setLoadedModules(state.modules)
+    val list = state.modules
+    list.clear()
+    list.addAll(modules)
+    // compiler uses module list from disk, ask to save workspace
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): AutomaticModuleUnloader = project.service<AutomaticModuleUnloader>()
+    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
 
-    private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
+    private val NOTIFICATION_GROUP: NotificationGroup
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Automatic Module Unloading")
   }
 }
 
-class LoadedModulesListStorage {
+class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
-  var modules: MutableList<String> = ArrayList()
+  val modules by list<String>()
 }
 
 class UnloadedModulesListChange(val toLoad: List<ModulePath>, val toUnload: List<ModulePath>, val toUnloadDescriptions: List<UnloadedModuleDescriptionImpl>)

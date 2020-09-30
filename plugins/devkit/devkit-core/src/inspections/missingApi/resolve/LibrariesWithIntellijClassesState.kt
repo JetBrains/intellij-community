@@ -56,6 +56,7 @@ private fun getKnownIntellijLibrariesCoordinates(): List<Pair<String, String>> {
   return result
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair<String, String>? = when (product) {
   IntelliJPlatformProduct.IDEA -> "com.jetbrains.intellij.idea" to "ideaIU"
   IntelliJPlatformProduct.IDEA_IC -> "com.jetbrains.intellij.idea" to "ideaIC"
@@ -70,6 +71,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.PHPSTORM,
   IntelliJPlatformProduct.WEBSTORM,
   IntelliJPlatformProduct.APPCODE,
+  IntelliJPlatformProduct.MOBILE_IDE,
   IntelliJPlatformProduct.DBE,
   IntelliJPlatformProduct.GOIDE,
   IntelliJPlatformProduct.ANDROID_STUDIO,

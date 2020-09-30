@@ -5,6 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.BalloonBuilder
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.NonNls
+import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -124,16 +128,24 @@ abstract class ToolWindowManager {
    * tool window with specified `id` then the method returns `null`.
    * @see ToolWindowId
    */
-  abstract fun getToolWindow(id: String?): ToolWindow?
+  abstract fun getToolWindow(@NonNls id: String?): ToolWindow?
 
   /**
    * Puts specified runnable to the tail of current command queue.
    */
   abstract fun invokeLater(runnable: Runnable)
 
-  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String)
+  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String)
 
-  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String, icon: Icon?, listener: HyperlinkListener?)
+  fun notifyByBalloon(toolWindowId: String,
+                      type: MessageType,
+                      @NlsContexts.PopupContent htmlBody: String,
+                      icon: Icon?,
+                      listener: HyperlinkListener?) {
+    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId, type = type, htmlBody = htmlBody, icon = icon, listener = listener))
+  }
+
+  abstract fun notifyByBalloon(options: ToolWindowBalloonShowOptions)
 
   abstract fun getToolWindowBalloon(id: String): Balloon?
 
@@ -147,5 +159,12 @@ abstract class ToolWindowManager {
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 
-  abstract fun getLastActiveToolWindow(condition: Predicate<JComponent>?): ToolWindow?
+  abstract fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow?
 }
+
+data class ToolWindowBalloonShowOptions(val toolWindowId: String,
+                                        val type: MessageType,
+                                        @NlsContexts.PopupContent val htmlBody: String,
+                                        val icon: Icon? = null,
+                                        val listener: HyperlinkListener? = null,
+                                        val balloonCustomizer: Consumer<BalloonBuilder>? = null)

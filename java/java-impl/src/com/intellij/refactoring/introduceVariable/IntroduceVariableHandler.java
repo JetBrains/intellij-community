@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -86,7 +87,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   @Override
-  protected void showErrorMessage(final Project project, Editor editor, String message) {
+  protected void showErrorMessage(final Project project, Editor editor, @NlsContexts.DialogMessage String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }
 

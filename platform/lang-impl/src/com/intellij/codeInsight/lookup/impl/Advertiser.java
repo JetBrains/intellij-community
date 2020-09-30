@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,7 +93,7 @@ public class Advertiser {
     return font.deriveFont((float)(font.getSize() - JBUIScale.scale(2)));
   }
 
-  public void addAdvertisement(@NotNull String text, @Nullable Icon icon) {
+  public void addAdvertisement(@PopupAdvertisement @NotNull String text, @Nullable Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myTexts.add(new Item(text, icon));
     updateAdvertisements();
@@ -166,11 +167,11 @@ public class Advertiser {
     }
   }
 
-  private static class Item {
-    private final String text;
-    private final Icon   icon;
+  private static final class Item {
+    private final @PopupAdvertisement String text;
+    private final                     Icon   icon;
 
-    private Item(@NotNull String text, @Nullable Icon icon) {
+    private Item(@PopupAdvertisement @NotNull String text, @Nullable Icon icon) {
       this.text = text;
       this.icon = icon;
     }
@@ -182,7 +183,7 @@ public class Advertiser {
     }
 
     @Override
-    public String toString() {
+    public @PopupAdvertisement String toString() {
       return text + "  ";
     }
   }

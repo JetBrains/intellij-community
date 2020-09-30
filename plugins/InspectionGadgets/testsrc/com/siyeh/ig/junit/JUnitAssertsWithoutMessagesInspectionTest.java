@@ -28,6 +28,48 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
     doTest();
   }
 
+  public void testQuickFixAssertEquals() {
+    doTest("import org.junit.Test;\n" +
+           "import static org.junit.Assert.*;\n" +
+
+           "class TestCase {\n" +
+           "    @Test\n" +
+           "    public void test() {\n" +
+           "        <warning descr=\"'assertEquals()' without message\"><caret>assertEquals</warning>(1, 1);\n" +
+           "    }\n" +
+           "}");
+    checkQuickFix("Add error message", "import org.junit.Test;\n" +
+                                       "import static org.junit.Assert.*;\n" +
+
+                                       "class TestCase {\n" +
+                                       "    @Test\n" +
+                                       "    public void test() {\n" +
+                                       "        assertEquals(\"<caret>\", 1, 1);\n" +
+                                       "    }\n" +
+                                       "}");
+  }
+
+  public void testQuickFixFail() {
+    doTest("import org.junit.Test;\n" +
+           "import static org.junit.Assert.*;\n" +
+
+           "class TestCase {\n" +
+           "    @Test\n" +
+           "    public void test() {\n" +
+           "        <warning descr=\"'fail()' without message\"><caret>fail</warning>();\n" +
+           "    }\n" +
+           "}");
+    checkQuickFix("Add error message", "import org.junit.Test;\n" +
+                                       "import static org.junit.Assert.*;\n" +
+
+                                       "class TestCase {\n" +
+                                       "    @Test\n" +
+                                       "    public void test() {\n" +
+                                       "        fail(\"<caret>\");\n" +
+                                       "    }\n" +
+                                       "}");
+  }
+
   @Override
   protected String getBasePath() {
     return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/junit_asserts_without_messages";
@@ -48,6 +90,11 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
+      "  static public void assertEquals(String message, Object expected, Object actual){}" +
+      "  static public void assertSame(Object expected, Object actual){}" +
+      "  static public void assertSame(String message, Object expected, Object actual){}" +
+      "  static public void fail(){}" +
+      "  static public void fail(String message){}" +
       "}",
 
       "package org.junit.jupiter.api;\n" +

@@ -16,6 +16,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Defines a single pair of braces which need to be matched when editing code in a custom language.
@@ -73,7 +74,7 @@ public class BracePair {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "BracePair{" +
            "myLeftBrace=" + myLeftBrace +
            ", myRightBrace=" + myRightBrace +

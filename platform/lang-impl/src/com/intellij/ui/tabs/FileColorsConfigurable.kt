@@ -3,14 +3,14 @@ package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutsText
 import com.intellij.openapi.options.CheckBoxConfigurable
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
@@ -37,8 +38,8 @@ import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.PaintIcon
+import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.lang.IllegalStateException
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
@@ -155,7 +156,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
   private var table: JTable? = null
 
   private fun copy(list: List<FileColorConfiguration>) = list.map { copy(it) }
-  private fun copy(configuration: FileColorConfiguration) = FileColorConfiguration(configuration.scopeName, configuration.colorName)
+  private fun copy(configuration: FileColorConfiguration) = FileColorConfiguration(configuration.scopeName, configuration.colorID)
 
   private fun selectRow(row: Int) {
     val table = table ?: return
@@ -186,12 +187,13 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val index = list.indexOfFirst { it.scopeName == scopeName }
     if (index < 0) return false
     val parent = table ?: return false
+    val presentableName = findScope(scopeName, manager.project)!!.presentableName
     val title = when (toSharedList) {
-      true -> message("settings.file.colors.dialog.warning.shared", scopeName)
-      else -> message("settings.file.colors.dialog.warning.local", scopeName)
+      true -> message("settings.file.colors.dialog.warning.shared", presentableName)
+      else -> message("settings.file.colors.dialog.warning.local", presentableName)
     }
     val configuration = list[index]
-    val update = when (configuration.colorName == colorName) {
+    val update = when (configuration.colorID == colorName) {
       true -> {
         Messages.YES != Messages.showYesNoDialog(
           parent,
@@ -200,7 +202,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
           Messages.getWarningIcon())
       }
       else -> {
-        val oldColor = manager.getColor(configuration.colorName)?.let { toHex(it) } ?: ""
+        val oldColor = manager.getColor(configuration.colorID)?.let { toHex(it) } ?: ""
         val newColor = manager.getColor(colorName)?.let { toHex(it) } ?: ""
         Messages.OK == Messages.showOkCancelDialog(
           parent,
@@ -214,7 +216,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
       }
     }
     if (!update) return false
-    configuration.colorName = colorName
+    configuration.colorID = colorName
     val row = if (toSharedList) local.size + index else index
     fireTableRowsUpdated(row, row)
     selectRow(row)
@@ -228,12 +230,12 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
   internal fun addScopeColor(scope: NamedScope, color: String?) {
     val colorName = resolveCustomColor(color) ?: return
-    if (resolveDuplicate(scope.name, colorName, false)) return
-    local.add(0, FileColorConfiguration(scope.name, colorName))
+    if (resolveDuplicate(scope.scopeId, colorName, false)) return
+    local.add(0, FileColorConfiguration(scope.scopeId, colorName))
     onRowInserted(0)
   }
 
-  internal fun getColors(): List<String> {
+  internal fun getColors(): List<@Nls String> {
     val list = mutableListOf<String>()
     list += manager.colorNames
     list += message("settings.file.color.custom.name")
@@ -265,7 +267,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     when (column) {
       1 -> {
         val configuration = getConfiguration(row) ?: return
-        configuration.colorName = resolveCustomColor(value) ?: return
+        configuration.colorID = resolveCustomColor(value) ?: return
         fireTableCellUpdated(row, column)
       }
       2 -> {
@@ -273,14 +275,14 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
         if (index < 0) {
           val configuration = local.removeAt(row)
           fireTableRowsDeleted(row, row)
-          if (resolveDuplicate(configuration.scopeName, configuration.colorName, true)) return
+          if (resolveDuplicate(configuration.scopeName, configuration.colorID, true)) return
           shared.add(0, configuration)
           onRowInserted(local.size)
         }
         else if (index < shared.size) {
           val configuration = shared.removeAt(index)
           fireTableRowsDeleted(row, row)
-          if (resolveDuplicate(configuration.scopeName, configuration.colorName, false)) return
+          if (resolveDuplicate(configuration.scopeName, configuration.colorID, false)) return
           local.add(configuration)
           onRowInserted(local.size - 1)
         }
@@ -342,6 +344,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
     this.table = table
 
+    table.tableHeader.defaultRenderer = TableHeaderRenderer()
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
     // configure color renderer and its editor
     val editor = ComboBox<String>(getColors().toTypedArray())
@@ -406,8 +409,8 @@ private class TableColorRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val configuration = value as? FileColorConfiguration
-    super.getTableCellRendererComponent(table, configuration?.colorPresentableName, selected, focused, row, column)
-    return updateColorRenderer(this, selected, configuration?.colorName?.let { manager.getColor(it) })
+    super.getTableCellRendererComponent(table, configuration?.colorID?.let { manager.getColorName(it) }, selected, focused, row, column)
+    return updateColorRenderer(this, selected, configuration?.colorID?.let { manager.getColor(it) })
   }
 
   override fun paintComponent(g: Graphics?) {
@@ -421,13 +424,25 @@ private class TableColorRenderer(val manager: FileColorManagerImpl) : DefaultTab
   }
 }
 
+private class TableHeaderRenderer : DefaultTableCellRenderer() {
+  override fun getTableCellRendererComponent(table: JTable?, value: Any?,
+                                             selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
+    val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
+    horizontalTextPosition = SwingConstants.LEFT
+    toolTipText = if (column == 2) message("settings.file.color.column.shared.help") else null
+    icon = if (column == 2) AllIcons.General.ContextHelp else null
+    return component
+  }
+}
+
 private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTableCellRenderer() {
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val unknown = null == value?.toString()?.let { findScope(it, manager.project) }
-    toolTipText = if (unknown) message("settings.file.colors.scope.unknown") else null
-    icon = if (unknown) AllIcons.General.Error else null
+    val namedScope = value?.toString()?.let { findScope(it, manager.project) }
+    toolTipText = if (namedScope == null) message("settings.file.colors.scope.unknown") else null
+    icon = if (namedScope == null) AllIcons.General.Error else null
+    text = if (namedScope != null) namedScope.presentableName else value?.toString()
     return component
   }
 }
@@ -439,15 +454,13 @@ private fun getScopes(project: Project): List<NamedScope> {
   return list.filter { it.value != null }
 }
 
-private fun findScope(scopeName: String, project: Project) =
-  DependencyValidationManager.getInstance(project).scopes.find { it.name == scopeName }
-  ?: NamedScopeManager.getInstance(project).scopes.find { it.name == scopeName }
+private fun findScope(scopeName: String, project: Project) = NamedScopesHolder.getScope(project, scopeName)
 
 // popup steps
 
 private class ScopeListPopupStep(val model: FileColorsTableModel)
   : BaseListPopupStep<NamedScope>(null, getScopes(model.manager.project)) {
-  override fun getTextFor(scope: NamedScope?) = scope?.name ?: ""
+  override fun getTextFor(scope: NamedScope?) = scope?.presentableName ?: ""
   override fun getIconFor(scope: NamedScope?) = scope?.icon
   override fun hasSubstep(selectedValue: NamedScope?) = true
   override fun onChosen(scope: NamedScope?, finalChoice: Boolean): PopupStep<*>? {

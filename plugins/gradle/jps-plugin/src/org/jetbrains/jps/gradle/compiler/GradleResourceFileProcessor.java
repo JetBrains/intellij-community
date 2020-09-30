@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.compiler;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import org.apache.tools.ant.util.ReaderInputStream;
+import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
 import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
@@ -19,6 +18,9 @@ import org.jetbrains.jps.model.JpsProject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -42,8 +44,8 @@ public class GradleResourceFileProcessor {
     boolean shouldFilter = rootConfiguration.isFiltered && !rootConfiguration.filters.isEmpty() && filteringFilter.accept(file);
     if (shouldFilter && file.length() > FILTERING_SIZE_LIMIT) {
       context.processMessage(new CompilerMessage(
-        GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-        "File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering", file.getPath())
+        GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+        GradleJpsBundle.message("file.is.too.big.to.be.filtered"), file.getPath())
       );
       shouldFilter = false;
     }
@@ -55,34 +57,20 @@ public class GradleResourceFileProcessor {
     }
   }
 
-  private static void copyWithFiltering(File file, Ref<File> outputFileRef, List<ResourceRootFilter> filters, CompileContext context)
-    throws IOException {
-    final FileInputStream originalInputStream = new FileInputStream(file);
-    try {
-      final InputStream inputStream = transform(filters, originalInputStream, outputFileRef, context);
-      try {
-        final File outputFile = outputFileRef.get();
-        FileUtil.createIfDoesntExist(outputFile);
-        FileOutputStream outputStream = new FileOutputStream(outputFileRef.get());
-        try {
-          FileUtil.copy(inputStream, outputStream);
-        }
-        finally {
-          StreamUtil.closeStream(outputStream);
-        }
-      }
-      finally {
-        StreamUtil.closeStream(inputStream);
-      }
-    }
-    finally {
-      StreamUtil.closeStream(originalInputStream);
+  private static void copyWithFiltering(File file, Ref<File> outputFileRef, List<ResourceRootFilter> filters, CompileContext context) throws IOException {
+    try (InputStream inputStream = transform(file, filters, outputFileRef, context)) {
+      Path target = outputFileRef.get().toPath();
+      Files.createDirectories(target.getParent());
+      Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
-  private static InputStream transform(List<ResourceRootFilter> filters, FileInputStream original, Ref<File> outputFileRef, CompileContext context) {
-    final InputStreamReader streamReader = new InputStreamReader(original, StandardCharsets.UTF_8);
-    final Reader newReader = new ChainingFilterTransformer(context, filters, outputFileRef).transform(streamReader);
-    return streamReader == newReader ? original : new ReaderInputStream(newReader);
+  private static InputStream transform(File file,
+                                       List<ResourceRootFilter> filters,
+                                       Ref<File> outputFileRef,
+                                       CompileContext context) throws FileNotFoundException {
+    Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+    Reader transformer = new ChainingFilterTransformer(context, filters, outputFileRef).transform(reader);
+    return new ReaderInputStream(transformer);
   }
 }

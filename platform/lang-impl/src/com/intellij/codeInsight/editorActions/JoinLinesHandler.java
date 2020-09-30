@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.DataManager;
@@ -331,7 +332,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       CharSequence text = myDoc.getCharsSequence();
       FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
       CodeStyleSettings settings = CodeStyle.getSettings(myFile);
-      FormattingModel model = builder == null ? null : builder.createModel(myFile, settings);
+      FormattingModel model = builder == null ? null : builder.createModel(FormattingContext.create(myFile, settings));
       FormatterEx formatter = FormatterEx.getInstance();
       for (int i = 0; i < size; i++) {
         myIndicator.checkCanceled();

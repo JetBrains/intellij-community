@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,13 +12,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
+  @NonNls private static final String GROOVY = "Groovy";
+
   public NewGroovyClassNamingConventionInspection() {
-    super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), GROOVY + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
     registerConventionsListener(NewClassNamingConventionInspection.EP_NAME);
   }
 
@@ -40,7 +41,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
         public String getShortName() {
           String shortName = ex.getShortName();
           if (shortName.startsWith("JUnit")) return shortName;
-          return "Groovy" + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
+          return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
         }
 
         @Override

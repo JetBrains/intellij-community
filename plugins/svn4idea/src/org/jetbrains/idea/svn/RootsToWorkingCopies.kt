@@ -15,7 +15,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.CalledInBackground
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
@@ -27,7 +28,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
   private val myLock = Any()
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
   private val myUnversioned = mutableSetOf<VirtualFile>()
-  private val myQueue = BackgroundTaskQueue(project, "SVN VCS roots authorization checker")
+  private val myQueue = BackgroundTaskQueue(project, message("progress.title.svn.roots.authorization.checker"))
   private val myZipperUpdater = ZipperUpdater(200, this)
   private val myRechecker = Runnable {
     clear()
@@ -44,14 +45,14 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
   }
 
   private fun addRoot(root: VirtualFile) {
-    myQueue.run(object : Task.Backgroundable(project, "Looking for '${root.path}' working copy root", false) {
+    myQueue.run(object : Task.Backgroundable(project, message("progress.title.looking.for.file.working.copy.root", root.path), false) {
       override fun run(indicator: ProgressIndicator) {
         calculateRoot(root)
       }
     })
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   fun getMatchingCopy(url: Url?): WorkingCopy? {
     assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
     if (url == null) return null
@@ -68,7 +69,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
     return null
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   fun getWcRoot(root: VirtualFile): WorkingCopy? {
     assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
 

@@ -22,7 +22,9 @@ public class TemplateProjectStructureAction extends ShowStructureSettingsAction 
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
-      e.getPresentation().setText(StringUtil.trimEnd(getTemplatePresentation().getText(), "..."));
+      final String text = getTemplatePresentation().getText();
+      if (text == null) return;
+      e.getPresentation().setText(StringUtil.trimEnd(text, "..."));
     }
   }
 }

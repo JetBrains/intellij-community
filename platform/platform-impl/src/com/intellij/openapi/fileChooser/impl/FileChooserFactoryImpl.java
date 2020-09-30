@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,12 +15,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.ui.win.WinPathChooserDialog;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -106,11 +106,10 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public static Map<String, String> getMacroMap() {
     PathMacros macros = PathMacros.getInstance();
     Set<String> allNames = macros.getAllMacroNames();
-    Map<String, String> map = new THashMap<>(allNames.size());
+    Map<String, String> map = new HashMap<>(allNames.size());
     for (String eachMacroName : allNames) {
       map.put("$" + eachMacroName + "$", macros.getValue(eachMacroName));
     }
-
     return map;
   }
 

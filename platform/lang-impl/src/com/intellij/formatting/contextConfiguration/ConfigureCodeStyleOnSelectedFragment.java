@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -30,13 +17,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
@@ -53,25 +43,31 @@ import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.Setti
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
-  private static final String ID = "configure.code.style.on.selected.fragment";
 
   @Nls
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
+    return getFamilyName();
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "ConfigureCodeStyleOnSelectedFragment";
+    return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return editor.getSelectionModel().hasSelection() && file.isWritable() && hasSettingsToShow(editor, file);
+    return isFileSuitable(file) && editor.getSelectionModel().hasSelection() && hasSettingsToShow(editor, file);
+  }
+
+  private static boolean isFileSuitable(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    return file.isWritable() &&
+           file.isPhysical() &&
+           virtualFile != null && !(virtualFile instanceof LightVirtualFile);
   }
 
   private static boolean hasSettingsToShow(Editor editor, PsiFile file) {
@@ -97,7 +93,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
 
-    //reformat before calculating settings to show 
+    //reformat before calculating settings to show
     //to avoid considering that arbitrary first setting affects formatting for this fragment
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     textFormatter.reformatSelectedText(settings);
@@ -112,7 +108,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
   public boolean startInWriteAction() {
     return false;
   }
-  
+
   static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
     private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final Editor myEditor;
@@ -143,7 +139,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
-      String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
+      @NlsSafe String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + languageName);
 
       setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
@@ -311,13 +307,13 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       }
     }
 
-    private class ApplyToSettings extends AbstractAction implements OptionAction {
+    private final class ApplyToSettings extends AbstractAction implements OptionAction {
       private final Action[] myOptions = {
         new ApplyToSettingsAndReformat()
       };
 
       private ApplyToSettings() {
-        super("Save");
+        super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.button"));
         putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
@@ -342,7 +338,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
     private class ApplyToSettingsAndReformat extends AbstractAction {
       ApplyToSettingsAndReformat() {
-        super("Save and Reformat File");
+        super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.and.reformat.file"));
       }
 
       @Override

@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiUtil;
@@ -43,7 +44,7 @@ import java.util.*;
 public class InheritanceToDelegationHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationHandler.class);
 
-  private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
+  private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<>() {
     @Override
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
@@ -137,7 +138,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
     return memberInfoList;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.inheritance.with.delegation.title");
   }
 }

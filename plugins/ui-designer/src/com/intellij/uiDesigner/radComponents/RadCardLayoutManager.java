@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -222,7 +222,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
   }
 
-  private static class CardNameProperty extends Property<RadComponent, String> {
+  private static final class CardNameProperty extends Property<RadComponent, String> {
     private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>();
 
     private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {

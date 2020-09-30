@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 
@@ -130,7 +130,7 @@ public class CustomDictionariesPanel extends JPanel {
     return myCustomDictionariesTableView.getItems();
   }
 
-  private static class CustomDictionariesTableView extends TableView<String> {
+  private static final class CustomDictionariesTableView extends TableView<String> {
 
     final TableCellRenderer myTypeRenderer;
 

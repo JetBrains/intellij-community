@@ -69,10 +69,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
   protected Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                               @NotNull String branchToCompare) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
-    final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
-    if (gitRepository == null) {
-      throw new VcsException("Couldn't find Git Repository for " + file.getName());
-    }
+    final GitRepository gitRepository = GitUtil.getRepositoryForFile(project, file);
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =

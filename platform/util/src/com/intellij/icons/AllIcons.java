@@ -34,6 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CheckMulticaret = load("/actions/CheckMulticaret.svg");
     /** 16x16 */ public static final @NotNull Icon CheckOut = load("/actions/checkOut.svg");
     /** 16x16 */ public static final @NotNull Icon Close = load("/actions/close.svg");
+    /** 16x16 */ public static final @NotNull Icon CloseDarkGrey = load("/actions/closeDarkGrey.svg");
     /** 16x16 */ public static final @NotNull Icon CloseHovered = load("/actions/closeHovered.svg");
     /** 16x16 */ public static final @NotNull Icon Collapseall = load("/actions/collapseall.svg");
     /** 16x16 */ public static final @NotNull Icon Colors = load("/actions/colors.svg");
@@ -75,7 +76,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final @NotNull Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final @NotNull Icon Highlighting = load("/actions/highlighting.svg");
+    /** 9x5 */ public static final @NotNull Icon InlayDropTriangle = load("/actions/inlayDropTriangle.svg");
     /** 12x12 */ public static final @NotNull Icon InlayGear = load("/actions/inlayGear.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("/actions/inlayGlobe.svg");
     /** 12x12 */ public static final @NotNull Icon InlayRenameInComments = load("/actions/inlayRenameInComments.svg");
     /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("/actions/inlayRenameInCommentsActive.svg");
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("/actions/inlayRenameInNoCodeFiles.svg");
@@ -115,6 +118,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon OfflineMode = load("/actions/offlineMode.svg");
     /** 16x16 */ public static final @NotNull Icon OpenNewTab = load("/actions/openNewTab.svg");
     /** 16x16 */ public static final @NotNull Icon Pause = load("/actions/pause.svg");
+    /** 16x16 */ public static final @NotNull Icon PinTab = load("/actions/pinTab.svg");
     /** 16x16 */ public static final @NotNull Icon Play_back = load("/actions/play_back.svg");
     /** 16x16 */ public static final @NotNull Icon Play_first = load("/actions/play_first.svg");
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("/actions/play_forward.svg");
@@ -274,6 +278,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon LambdaBreakpoint = load("/debugger/LambdaBreakpoint.svg");
     /** 12x12 */ public static final @NotNull Icon MultipleBreakpoints = load("/debugger/MultipleBreakpoints.svg");
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("/debugger/muteBreakpoints.svg");
+    /** 12x12 */ public static final @NotNull Icon NextStatement = load("/debugger/nextStatement.svg");
     /** 16x16 */ public static final @NotNull Icon Overhead = load("/debugger/overhead.svg");
     /** 16x16 */ public static final @NotNull Icon PromptInput = load("/debugger/promptInput.svg");
     /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("/debugger/promptInputHistory.svg");
@@ -439,6 +444,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");
     /** 16x16 */ public static final @NotNull Icon LayoutPreviewOnly = load("/general/layoutPreviewOnly.svg");
     /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("/general/linkDropTriangle.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalizationSettings = load("/general/localizationSettings.svg");
     /** 16x16 */ public static final @NotNull Icon Locate = load("/general/locate.svg");
     /** 13x13 */ public static final @NotNull Icon Modified = load("/general/modified.svg");
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("/general/modifiedSelected.svg");
@@ -856,7 +862,6 @@ public class AllIcons {
   public final static class Plugins {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final @NotNull Icon Downloads = load("/plugins/downloads.svg");
-    /** 16x16 */ public static final @NotNull Icon Hieroglyph = load("/plugins/hieroglyph.svg");
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final @NotNull Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg");
@@ -993,6 +998,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestMark = load("/runConfigurations/testMark.svg");
     /** 16x16 */ public static final @NotNull Icon TestNotRan = load("/runConfigurations/testNotRan.svg");
     /** 16x16 */ public static final @NotNull Icon TestPassed = load("/runConfigurations/testPassed.svg");
+    /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("/runConfigurations/testPassedIgnored.svg");
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("/runConfigurations/testPaused.svg");
     /** 16x16 */ public static final @NotNull Icon TestSkipped = load("/runConfigurations/testSkipped.svg");
 
@@ -1133,11 +1139,8 @@ public class AllIcons {
   }
 
   public final static class Welcome {
-    /** 32x32 */ public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
-    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
     /** 24x24 */ public static final @NotNull Icon CreateNewProjectTab = load("/welcome/createNewProjectTab.svg");
     /** 24x24 */ public static final @NotNull Icon CreateNewProjectTabSelected = load("/welcome/createNewProjectTabSelected.svg");
-    /** 16x16 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
     /** 24x24 */ public static final @NotNull Icon FromVCSTab = load("/welcome/fromVCSTab.svg");
     /** 24x24 */ public static final @NotNull Icon FromVCSTabSelected = load("/welcome/fromVCSTabSelected.svg");
     /** 24x24 */ public static final @NotNull Icon Open = load("/welcome/open.svg");
@@ -1150,7 +1153,30 @@ public class AllIcons {
       /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("/welcome/project/removeDisabled.svg");
 
     }
-    /** 32x32 */ public static final @NotNull Icon Register = load("/welcome/register.png");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon FromVcs = load("/welcome/fromVcs.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon Register = load("/welcome/register.png");
 
   }
 

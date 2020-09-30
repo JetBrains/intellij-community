@@ -181,18 +181,14 @@ public final class IndexDataGetter {
     return executeAndCatch(() -> {
       IntSet result = new IntOpenHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileHistoryData(path).build().getCommits();
-        if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).build().getCommits();
-        }
-        result.addAll(commits);
+        result.addAll(createFileHistoryData(path).build().getCommits());
       }
       return result;
     }, new IntOpenHashSet());
   }
 
   @NotNull
-  private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntIterable candidates) {
+  private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
     if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
       IntSet resultByTrigrams = executeAndCatch(() -> {
         List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
@@ -201,21 +197,8 @@ public final class IndexDataGetter {
         IntCollection commitsForSearch = new IntOpenHashSet();
         for (String string : trigramSources) {
           IntSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
-          if (commits == null) {
-            return null;
-          }
-
-          if (candidates == null) {
-            commitsForSearch.addAll(commits);
-          }
-          else {
-            for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
-              int v = iterator.nextInt();
-              if (commits.contains(v)) {
-                commitsForSearch.add(v);
-              }
-            }
-          }
+          if (commits == null) return null;
+          commitsForSearch.addAll(TroveUtil.intersect(candidates, commits));
         }
         IntSet result = new IntOpenHashSet();
         for (IntIterator iterator = commitsForSearch.iterator(); iterator.hasNext(); ) {
@@ -425,7 +408,7 @@ public final class IndexDataGetter {
     return myLogStorage;
   }
 
-  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<Integer> processor) throws IOException {
+  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<? super Integer> processor) throws IOException {
     if (map instanceof PersistentHashMap) {
       ((PersistentHashMap<Integer, T>)map).processKeysWithExistingMapping(processor);
     }

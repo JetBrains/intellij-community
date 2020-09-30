@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
@@ -32,6 +32,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
@@ -87,7 +88,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myTargetClass = defaultTargetClass;
     myDefaultTargetClass = defaultTargetClass;
 
-    setTitle(GrIntroduceConstantHandler.REFACTORING_NAME);
+    setTitle(GroovyBundle.message("introduce.constant.title"));
 
     myJavaVisibilityPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
 
@@ -369,7 +370,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     super.doOKAction();
   }
 
-  private static class TargetClassInfo {
+  private static final class TargetClassInfo {
     private PsiClass myTargetClass;
 
     String myQualifiedName;

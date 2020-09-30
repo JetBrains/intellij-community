@@ -185,6 +185,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamInlining() { doTest(); }
+  public void testStreamCollectInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest(); 
+  }
   public void testStreamCollectorInlining() { doTest(); }
   public void testStreamToMapInlining() { doTest(); }
   public void testStreamToMapInlining2() { doTest(); }
@@ -288,4 +292,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testClassInsideLambda() { doTest(); }
+  public void testMultiDimensionalArrays() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }

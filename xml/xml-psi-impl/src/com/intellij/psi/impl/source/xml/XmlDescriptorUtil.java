@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.html.impl.DelegatingRelaxedHtmlElementDescriptor;
@@ -16,7 +16,7 @@ import static com.intellij.xml.XmlElementDescriptor.EMPTY_ARRAY;
 /**
  * @author Irina.Chernushina on 3/21/2018.
  */
-public class XmlDescriptorUtil {
+public final class XmlDescriptorUtil {
   public static XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     XmlDocumentImpl xmlDocument = PsiTreeUtil.getParentOfType(context, XmlDocumentImpl.class);
     if (xmlDocument == null) return EMPTY_ARRAY;

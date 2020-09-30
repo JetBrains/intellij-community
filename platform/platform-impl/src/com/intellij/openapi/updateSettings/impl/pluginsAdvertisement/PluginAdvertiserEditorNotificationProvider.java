@@ -89,7 +89,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           .addData("source", "editor")
           .addData("plugins", Collections.singletonList(finalDisabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin));
+        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin.getPluginId()));
       });
     }
     else if (!jbPluginsToInstall.isEmpty()) {
@@ -103,6 +103,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
       panel.setText(IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extensionOrFileName));
 
+      //noinspection DialogTitleCapitalization
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         FeatureUsageData data = new FeatureUsageData().addData("source", "editor");

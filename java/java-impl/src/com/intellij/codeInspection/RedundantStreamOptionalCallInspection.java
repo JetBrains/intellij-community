@@ -146,6 +146,11 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                       .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_OPTIONAL, null, "ofNullable", new PsiType[1])) {
                   register(call, null);
                 }
+              } else {
+                if (FunctionalExpressionUtils
+                      .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, "of", new PsiType[1])) {
+                  register(call, null);
+                }
               }
             }
             break;
@@ -227,12 +232,11 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, String explanation, LocalQuickFix... additionalFixes) {
+      private void register(PsiMethodCallExpression call, @Nls String explanation, LocalQuickFix... additionalFixes) {
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
-        String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
-        if (explanation != null) {
-          message += ": " + explanation;
-        }
+        String message = explanation != null
+                         ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
+                         : JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
         holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }

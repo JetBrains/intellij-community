@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public abstract class FrameworkDetectorRegistry {
   public static FrameworkDetectorRegistry getInstance() {
@@ -27,22 +26,17 @@ public abstract class FrameworkDetectorRegistry {
   @NotNull
   public abstract List<? extends FrameworkType> getFrameworkTypes();
 
-
-  public abstract int getDetectorsVersion();
-
-  public abstract int getDetectorId(@NotNull FrameworkDetector detector);
-
   @Nullable
-  public abstract FrameworkDetector getDetectorById(int id);
+  public abstract FrameworkDetector getDetectorById(@NotNull String id);
 
   @NotNull
-  public abstract Collection<Integer> getDetectorIds(@NotNull FileType fileType);
-
-  public abstract int[] getAllDetectorIds();
+  public abstract Collection<String> getDetectorIds(@NotNull FileType fileType);
 
   @NotNull
-  public abstract MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> getDetectorsMap();
+  public abstract Collection<String> getAllDetectorIds();
 
   @NotNull
-  public abstract Set<FileType> getAcceptedFileTypes();
+  public abstract MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap();
+
+  public abstract FileType @NotNull [] getAcceptedFileTypes();
 }

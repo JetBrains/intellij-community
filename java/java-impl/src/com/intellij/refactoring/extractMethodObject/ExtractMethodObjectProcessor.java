@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -55,7 +56,6 @@ import java.util.*;
 
 public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ExtractMethodObjectProcessor.class);
-  @NonNls public static final String REFACTORING_NAME = "Extract Method Object";
 
   private final PsiElementFactory myElementFactory;
 
@@ -82,7 +82,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull String innerClassName) {
     super(project);
     myInnerClassName = innerClassName;
-    myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
+    myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null,
+                                                      JavaRefactoringBundle.message("extract.method.object"), innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
     myElementFactory = JavaPsiFacade.getElementFactory(project);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
@@ -214,7 +215,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         memberInfos.add(new MemberInfo((PsiMethod)usage.getElement()));
       }
 
-      final MemberSelectionPanel panel = new MemberSelectionPanel("&Methods to move to the extracted class", memberInfos, null);
+      final MemberSelectionPanel panel = new MemberSelectionPanel(JavaRefactoringBundle.message("move.methods.panel.title"), memberInfos, null);
       DialogWrapper dlg = new DialogWrapper(myProject, false) {
         {
           init();
@@ -523,7 +524,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return JavaRefactoringBundle.message("extract.method.object");
   }
 
 
@@ -739,12 +740,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     public MyExtractMethodProcessor(Project project,
-                                        Editor editor,
-                                        PsiElement[] elements,
-                                        PsiType forcedReturnType,
-                                        String refactoringName,
-                                        String initialMethodName,
-                                        String helpId) {
+                                    Editor editor,
+                                    PsiElement[] elements,
+                                    PsiType forcedReturnType,
+                                    @NlsContexts.DialogTitle String refactoringName,
+                                    String initialMethodName,
+                                    String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
 
     }

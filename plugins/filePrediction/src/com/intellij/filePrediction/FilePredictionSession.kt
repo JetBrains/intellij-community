@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
+import com.intellij.filePrediction.logger.FileUsagePredictionLogger
 import com.intellij.filePrediction.predictor.*
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,9 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val counter = AtomicInteger(0)
 
-internal class FilePredictionSession(val prevPath: String?, threshold: Double) {
+internal class FilePredictionSession(predict: Boolean, threshold: Double) {
   val id: Int = counter.incrementAndGet()
-  val shouldLog: Boolean = Math.random() < threshold
+  val shouldLog: Boolean = predict && Math.random() < threshold
 
   var candidatesHolder: FilePredictionCandidatesHolder? = null
   var totalDuration: Long = -1
@@ -25,7 +27,7 @@ internal class FilePredictionSession(val prevPath: String?, threshold: Double) {
     refsDuration = refs
   }
 
-  fun findOpenedCandidate(file: VirtualFile, candidates: List<FilePredictionCandidate>): FilePredictionCandidate? {
+  fun findOpenedCandidate(file: VirtualFile, candidates: List<FilePredictionCompressedCandidate>): FilePredictionCompressedCandidate? {
     for (candidate in candidates) {
       if (StringUtil.equals(candidate.path, file.path)) {
         return candidate
@@ -56,7 +58,7 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
   }
 
   private fun startSession(project: Project, file: VirtualFile) {
-    val newSession = FilePredictionSession(file.path, threshold)
+    val newSession = FilePredictionSession(!PowerSaveMode.isEnabled(), threshold)
     if (newSession.shouldLog) {
       val start = System.currentTimeMillis()
       val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, file)
@@ -72,18 +74,15 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
   private fun logSessionFinished(project: Project, currentSession: FilePredictionSession, openedFile: VirtualFile) {
     val candidates = currentSession.candidatesHolder?.getCandidates() ?: emptyList()
     if (candidates.isNotEmpty()) {
-      val prevPath = currentSession.prevPath
       val sessionId = currentSession.id
       val refsDuration = currentSession.refsDuration
       val totalDuration = currentSession.totalDuration
 
       val opened = currentSession.findOpenedCandidate(openedFile, candidates)
-      if (opened != null) {
-        logger.logOpenedFile(project, sessionId, prevPath, opened, totalDuration, refsDuration)
-      }
-
       val notOpened = candidates.filter { it != opened }
-      logger.logNotOpenedCandidates(project, sessionId, prevPath, notOpened, totalDuration, refsDuration)
+      FilePredictionSessionHistory.getInstance(project).onCandidatesCalculated(notOpened)
+
+      logger.logCandidates(project, sessionId, opened, notOpened, totalDuration, refsDuration)
     }
   }
 }

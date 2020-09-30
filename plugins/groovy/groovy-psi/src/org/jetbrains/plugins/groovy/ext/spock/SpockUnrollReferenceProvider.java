@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -24,6 +25,8 @@ import java.util.regex.Pattern;
 public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
+  @NlsSafe private static final String UNROLL = "Unroll";
+  @NlsSafe private static final String SPOCK_LANG_UNROLL = "spock.lang.Unroll";
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -41,7 +44,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     GrAnnotation annotation = (GrAnnotation)eAnnotation;
 
     String shortName = annotation.getShortName();
-    if (!shortName.equals("Unroll") && !shortName.equals("spock.lang.Unroll")) return PsiReference.EMPTY_ARRAY;
+    if (!shortName.equals(UNROLL) && !shortName.equals(SPOCK_LANG_UNROLL)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement modifierList = annotation.getParent();
     if (!(modifierList instanceof GrModifierList)) return PsiReference.EMPTY_ARRAY;

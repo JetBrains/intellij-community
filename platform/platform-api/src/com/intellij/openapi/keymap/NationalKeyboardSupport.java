@@ -17,7 +17,7 @@ import java.util.Locale;
 
 @State(name = "KeyboardSettings", storages = @Storage("keyboard.xml"))
 public class NationalKeyboardSupport implements PersistentStateComponent<NationalKeyboardSupport.OptionSet> {
-  private static final String[] MAC_SUPPORTED_LOCALES = {"de", "fr", "it", "no"};
+  private static final String[] MAC_SUPPORTED_LOCALES = {"de", "fr", "it", "no", "sk"};
   private static final String[] WIN_SUPPORTED_LOCALES = {"be", "ru", "uk", "bg", "sr"};
 
   public static final String VMOption = getVMOption();

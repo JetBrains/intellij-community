@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -33,6 +34,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +69,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull protected final TextFilterModel myTextFilterModel;
   @NotNull private final TextFilterField myFilterField;
 
+  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
+
   public VcsLogClassicFilterUi(@NotNull VcsLogData logData,
                                @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
                                @NotNull MainVcsLogUiProperties uiProperties,
@@ -91,6 +95,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
         filterConsumer.consume(getFilters());
+        myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
@@ -178,6 +183,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   protected FilterActionComponent createStructureFilterComponent() {
     return new FilterActionComponent(
       () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
+  }
+
+  @Override
+  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
+    myFilterListenerDispatcher.addListener(listener);
   }
 
   protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
@@ -589,8 +599,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   public static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
-    @NotNull private static final String DIR = "dir:"; // NON-NLS
-    @NotNull private static final String FILE = "file:"; // NON-NLS
+    @NotNull @NonNls private static final String DIR = "dir:";
+    @NotNull @NonNls private static final String FILE = "file:";
     @NotNull private final Set<VirtualFile> myRoots;
 
     public FileFilterModel(@NotNull Set<VirtualFile> roots,

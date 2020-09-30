@@ -89,7 +89,7 @@ public final class CachingDataReader implements Disposable {
     }
   }
 
-  private class CachingInputStream extends InputStream {
+  private final class CachingInputStream extends InputStream {
     private final URL myURL;
     private final InputStream myDelegate;
     private ByteArrayOutputStream myStreamCopy;

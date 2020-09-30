@@ -30,6 +30,11 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
           private final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
 
           @Override
+          public boolean acceptsTarget(@NotNull PsiElement target) {
+            return target instanceof PsiFileSystemItem;
+          }
+
+          @Override
           public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
                                                                         @NotNull PsiLanguageInjectionHost host,
                                                                         @NotNull ProcessingContext context) {

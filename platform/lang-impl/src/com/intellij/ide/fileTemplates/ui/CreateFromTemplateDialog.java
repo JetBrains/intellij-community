@@ -30,9 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.JBUI;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,14 +151,14 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 
-  private String getErrorMessage() {
+  private @NlsContexts.DialogTitle String getErrorMessage() {
     return FileTemplateUtil.findHandler(myTemplate).getErrorMessage();
   }
 
   @Nullable
-  private String filterMessage(String message){
+  private @NlsContexts.DialogMessage String filterMessage(@NlsContexts.DialogMessage String message){
     if (message == null) {
-      message = "unknown error";
+      message = IdeBundle.message("dialog.message.unknown.error");
     }
 
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
@@ -174,7 +176,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   protected JComponent createCenterPanel(){
     myAttrPanel.ensureFitToScreen(200, 200);
     JPanel centerPanel = new JPanel(new GridBagLayout());
-    centerPanel.add(myAttrComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    centerPanel.add(myAttrComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                            JBUI.emptyInsets(), 0, 0));
     return centerPanel;
   }
 

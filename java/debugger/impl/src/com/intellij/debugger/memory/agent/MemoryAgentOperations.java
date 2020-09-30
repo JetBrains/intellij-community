@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class MemoryAgentOperations {
+final class MemoryAgentOperations {
   private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
 
@@ -41,10 +41,16 @@ class MemoryAgentOperations {
   }
 
   @NotNull
-  static ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ObjectReference reference, int limit) throws EvaluateException {
-    IntegerValue limitValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(limit);
-    Value value = callMethod(evaluationContext, MemoryAgentNames.Methods.FIND_GC_ROOTS, Arrays.asList(reference, limitValue));
+  static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                        @NotNull ObjectReference reference, int pathsNumber,
+                                                        int objectsNumber) throws EvaluateException {
+    IntegerValue pathsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(pathsNumber);
+    IntegerValue objectsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsNumber);
+    Value value = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
+      Arrays.asList(reference, pathsNumberValue, objectsNumberValue)
+    );
     return GcRootsPathsParser.INSTANCE.parse(value);
   }
 
@@ -77,7 +83,11 @@ class MemoryAgentOperations {
       return builder
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
-        .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
+        .setCanFindPathsToClosestGcRoots(
+          checkAgentCapability(
+            context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS
+          )
+        )
         .buildLoaded();
     }
   }

@@ -8,25 +8,15 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
-import com.intellij.psi.search.scope.ProblemsScope
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestSourceBasedTestCase
 import com.intellij.ui.tree.TreeTestUtil
-import com.intellij.ui.tree.ui.DefaultTreeUI
 import javax.swing.JTree
-import javax.swing.UIManager
 
 abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   override fun getTestPath(): String? = null
-
-  override fun setUp() {
-    // TODO: move the following line to HeadlessLafManagerImpl
-    // TODO: when FilteringTreeBuilderTest#testFilter is fixed
-    UIManager.put("TreeUI", DefaultTreeUI::class.java.name)
-    super.setUp()
-  }
 
   protected val projectView: ProjectViewImpl
     get() = ProjectView.getInstance(project) as ProjectViewImpl
@@ -49,8 +39,6 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   protected fun selectPackagesPane() = selectProjectViewPane(PackageViewPane.ID, null)
 
   protected fun selectProjectFilesPane() = selectScopeViewPane(ProjectFilesScope.INSTANCE)
-
-  protected fun selectProblemsPane() = selectScopeViewPane(ProblemsScope.INSTANCE)
 
   protected fun selectScopeViewPane(scope: NamedScope) = selectProjectViewPane(ScopeViewPane.ID, scope.toString() + "; " + scope.javaClass)
 

@@ -296,7 +296,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return false;
   }
 
-  private static class MyContainer extends MyContentPanel {
+  private static final class MyContainer extends MyContentPanel {
     private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);

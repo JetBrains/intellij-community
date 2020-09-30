@@ -9,9 +9,10 @@ import com.intellij.openapi.util.Disposer
 
 internal class ChangedStateEventsPanel(val project: Project,
                                        parentDisposable: Disposable,
-                                       difference: Collection<LogEvent>)
+                                       difference: Collection<LogEvent>,
+                                       recorderId: String)
   : SimpleToolWindowPanel(false, true) {
-  private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel())
+  private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel(), recorderId)
 
   init {
     setContent(consoleLog.component)

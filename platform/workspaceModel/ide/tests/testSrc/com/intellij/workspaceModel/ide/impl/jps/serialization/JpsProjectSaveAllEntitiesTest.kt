@@ -37,7 +37,15 @@ class JpsProjectSaveAllEntitiesTest {
 
   @Test
   fun `test save facets`() {
-    val projectFile = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/ide/tests/testData/serialization/facets/facets.ipr")
+    val projectFile = File(PathManagerEx.getCommunityHomePath(),
+                           "platform/workspaceModel/ide/tests/testData/serialization/facets/facets.ipr")
+    checkLoadSave(projectFile)
+  }
+
+  @Test
+  fun `test order of attributes in NewModuleRootManager component`() {
+    val projectFile = File(PathManagerEx.getCommunityHomePath(),
+                           "platform/workspaceModel/ide/tests/testData/serialization/orderOfAttributesInRootManagerTag/orderOfAttributes.ipr")
     checkLoadSave(projectFile)
   }
 

@@ -1,26 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing
 
-import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @ApiStatus.Experimental
 abstract class AbstractOpenProjectProvider : OpenProjectProvider {
+  protected open val systemId: ProjectSystemId? = null
+
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
   protected abstract fun linkAndRefreshProject(projectDirectory: Path, project: Project)
@@ -35,23 +36,26 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     if (focusOnOpenedSameProject(projectDirectory.toNioPath())) {
       return null
     }
-    else if (canOpenPlatformProject(projectDirectory)) {
-      return openPlatformProject(projectDirectory, projectToClose, forceOpenInNewFrame)
-    }
-
     val nioPath = projectDirectory.toNioPath()
-    val options = OpenProjectTask(isNewProject = true,
-                                  forceOpenInNewFrame = forceOpenInNewFrame,
-                                  projectToClose = projectToClose,
-                                  runConfigurators = false,
-                                  beforeOpen = { project ->
-                                    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-                                    ApplicationManager.getApplication().invokeAndWait {
-                                      linkAndRefreshProject(nioPath, project)
-                                    }
-                                    updateLastProjectLocation(nioPath)
-                                    true
-                                  })
+    val isValidIdeaProject = isValidProjectPath(nioPath)
+    val options = OpenProjectTask(
+      isNewProject = !isValidIdeaProject,
+      forceOpenInNewFrame = forceOpenInNewFrame,
+      projectToClose = projectToClose,
+      runConfigurators = false,
+      beforeOpen = { project ->
+        if (isValidIdeaProject) {
+          systemId?.let { UnlinkedProjectNotificationAware.enableNotifications(project, it) }
+          return@OpenProjectTask true
+        }
+        project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
+        ApplicationManager.getApplication().invokeAndWait {
+          linkAndRefreshProject(nioPath, project)
+        }
+        updateLastProjectLocation(nioPath)
+        return@OpenProjectTask true
+      }
+    )
     return ProjectManagerEx.getInstanceEx().openProject(nioPath, options)
   }
 
@@ -61,26 +65,14 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     linkAndRefreshProject(projectDirectory.toNioPath(), project)
   }
 
-  private fun canOpenPlatformProject(projectDirectory: VirtualFile): Boolean {
-    if (!PlatformProjectOpenProcessor.getInstance().canOpenProject(projectDirectory)) {
-      return false
+  fun linkToExistingProject(projectFilePath: String, project: Project) {
+    val localFileSystem = LocalFileSystem.getInstance()
+    val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
+    if (projectFile == null) {
+      val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFilePath), false)
+      throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId?.readableName, shortPath))
     }
-    if (isChildExistUsingIo(projectDirectory, Project.DIRECTORY_STORE_FOLDER)) {
-      return true
-    }
-    if (isChildExistUsingIo(projectDirectory, projectDirectory.name + ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      return true
-    }
-    return false
-  }
-
-  private fun isChildExistUsingIo(parent: VirtualFile, name: String): Boolean {
-    return try {
-      Paths.get(FileUtil.toSystemDependentName(parent.path), name).exists()
-    }
-    catch (e: InvalidPathException) {
-      false
-    }
+    linkToExistingProject(projectFile, project)
   }
 
   private fun focusOnOpenedSameProject(projectDirectory: Path): Boolean {
@@ -91,11 +83,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
       }
     }
     return false
-  }
-
-  private fun openPlatformProject(projectDirectory: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    val openProcessor = PlatformProjectOpenProcessor.getInstance()
-    return openProcessor.doOpenProject(projectDirectory, projectToClose, forceOpenInNewFrame)
   }
 
   private fun getProjectDirectory(file: VirtualFile): VirtualFile {

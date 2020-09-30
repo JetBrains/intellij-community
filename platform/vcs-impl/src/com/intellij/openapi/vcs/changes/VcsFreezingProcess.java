@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,12 +26,12 @@ public class VcsFreezingProcess {
 
   @NotNull private final ChangeListManagerEx myChangeListManager;
 
-  public VcsFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
+  public VcsFreezingProcess(@NotNull Project project, @NotNull @Nls String operationTitle, @NotNull Runnable runnable) {
     myProject = project;
     myOperationTitle = operationTitle;
     myRunnable = runnable;
 
-    myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+    myChangeListManager = ChangeListManagerEx.getInstanceEx(project);
   }
 
   public void execute() {

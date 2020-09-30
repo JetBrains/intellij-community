@@ -13,8 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -27,20 +25,18 @@ import java.io.IOException
 import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URLConnection
+import java.nio.file.Path
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
+
 @ApiStatus.Internal
 open class MarketplaceRequests {
-
-  private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
-
   companion object {
+    private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
     private const val TAG_EXT = ".etag"
 
     private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
-
-    private const val FILENAME = "filename="
 
     private val INSTANCE = MarketplaceRequests()
 
@@ -86,9 +82,11 @@ open class MarketplaceRequests {
 
   private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
-  private val objectMapper = ObjectMapper()
+  private val objectMapper by lazy { ObjectMapper() }
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
+
+  internal fun getBrokenPluginsFile() = File(PathManager.getPluginsPath()).resolve("brokenPlugins.json")
 
   private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(
     update.externalUpdateId + ".json")
@@ -103,6 +101,8 @@ open class MarketplaceRequests {
   private fun createFeatureUrl(param: Map<String, String>) = Urls.newFromEncoded(
     "${PLUGIN_MANAGER_URL}/feature/getImplementations"
   ).addParameters(param)
+
+  private val BROKEN_PLUGIN_PATH = "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json"
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
     if (param.isEmpty()) emptyList()
@@ -182,6 +182,23 @@ open class MarketplaceRequests {
     emptyList()
   }
 
+  fun getBrokenPlugins(): List<MarketplaceBrokenPlugin> {
+    return try {
+      readOrUpdateFile(
+        getBrokenPluginsFile(),
+        BROKEN_PLUGIN_PATH,
+        null,
+        "",
+        ::parseBrokenPlugins
+      )
+    }
+    catch (e: Exception) {
+      logWarnOrPrintIfDebug("Can not get broken plugins file from Marketplace", e)
+      emptyList()
+    }
+  }
+
+
   fun getAllPluginsTags(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_TAGS_URL)
@@ -239,27 +256,33 @@ open class MarketplaceRequests {
     val eTag = if (file != null) loadEtagForFile(file) else null
     return HttpRequests
       .request(url)
-      .tuner { connection -> eTag?.also { connection.setRequestProperty("If-None-Match", it) } }
+      .tuner { connection -> connection.setUpETag(eTag) }
       .productNameAsUserAgent()
       .connect { request ->
-        indicator?.checkCanceled()
-        val connection = request.connection
-        if (file != null && file.length() > 0 && connection is HttpURLConnection && connection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-          return@connect file.bufferedReader().use(parser)
-        }
-        if (indicator != null) {
-          indicator.checkCanceled()
-          indicator.text2 = indicatorMessage
-        }
-        if (file != null) {
-          synchronized(INSTANCE) {
-            request.saveToFile(file, indicator)
-            connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+        try {
+          indicator?.checkCanceled()
+          val connection = request.connection
+          if (file != null && connection.isNotModified(file)) {
+            return@connect file.bufferedReader().use(parser)
           }
-          return@connect file.bufferedReader().use(parser)
-        }
-        else {
-          return@connect request.reader.use(parser)
+          if (indicator != null) {
+            indicator.checkCanceled()
+            indicator.text2 = indicatorMessage
+          }
+          if (file != null) {
+            synchronized(INSTANCE) {
+              request.saveToFile(file, indicator)
+              connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+            }
+            return@connect file.bufferedReader().use(parser)
+          }
+          else {
+            return@connect request.reader.use(parser)
+          }
+        } catch (e: Exception) {
+          val fileText = file?.readText()
+          LOG.warn("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
+          throw e
         }
       }
   }
@@ -341,6 +364,11 @@ open class MarketplaceRequests {
       }
     } else {}
 
+  private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
+    reader,
+    object : TypeReference<List<MarketplaceBrokenPlugin>>() {}
+  )
+
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 
   private fun parseJsonPluginMeta(reader: Reader) = objectMapper.readValue(reader, IntellijUpdateMetadata::class.java)
@@ -378,51 +406,20 @@ open class MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  open fun download(pluginUrl: String, indicator: ProgressIndicator): File {
-    val pluginsTemp = File(PathManager.getPluginTempPath())
-    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
-    }
-    val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
-    return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
-      HttpRequests.RequestProcessor { request: HttpRequests.Request ->
-        request.saveToFile(file, indicator)
-        val fileName: String = guessFileName(request.connection, file, pluginUrl)
-        val newFile = File(file.parentFile, fileName)
-        FileUtil.rename(file, newFile)
-        newFile
-      })
-  }
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) = MarketplacePluginDownloadService.downloadPlugin(pluginUrl,
+                                                                                                                             indicator)
 
   @Throws(IOException::class)
-  private fun guessFileName(connection: URLConnection, file: File, pluginUrl: String): String {
-    var fileName: String? = null
-    val contentDisposition = connection.getHeaderField("Content-Disposition")
-    LOG.debug("header: $contentDisposition")
-    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-      val startIdx = contentDisposition.indexOf(FILENAME)
-      val endIdx = contentDisposition.indexOf(';', startIdx)
-      fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
-      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
-        fileName = fileName.substring(1, fileName.length - 1)
-      }
-    }
-    if (fileName == null) {
-      // try to find a filename in an URL
-      val usedURL = connection.url.toString()
-      LOG.debug("url: $usedURL")
-      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
-      if (fileName.isEmpty() || fileName.contains("?")) {
-        fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
-      }
-    }
-    if (!PathUtil.isValidFileName(fileName)) {
-      LOG.debug("fileName: $fileName")
-      FileUtil.delete(file)
-      throw IOException("Invalid filename returned by a server")
-    }
-    return fileName
+  open fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+    return MarketplacePluginDownloadService.downloadPluginViaBlockMap(pluginUrl, prevPlugin, indicator)
   }
+
+  private fun URLConnection.setUpETag(eTag: String?) {
+    eTag?.also { this.setRequestProperty("If-None-Match", it) }
+  }
+
+  private fun URLConnection.isNotModified(file: File?): Boolean =
+    file != null && file.length() > 0 && this is HttpURLConnection && this.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
   private data class CompatibleUpdateForModuleRequest(val build: String, val module: String)

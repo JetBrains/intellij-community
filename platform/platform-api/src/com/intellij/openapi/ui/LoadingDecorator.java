@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -152,7 +152,7 @@ public class LoadingDecorator {
     return myLoadingLayer.isLoading();
   }
 
-  private class LoadingLayer extends JPanel {
+  private final class LoadingLayer extends JPanel {
     private final JLabel myText = new JLabel("", SwingConstants.CENTER);
 
     private BufferedImage mySnapshot;
@@ -253,7 +253,7 @@ public class LoadingDecorator {
   public interface CursorAware {
   }
 
-  private static class MyLayeredPane extends JBLayeredPane implements CursorAware {
+  private static final class MyLayeredPane extends JBLayeredPane implements CursorAware {
     private final JComponent myContent;
 
     private MyLayeredPane(JComponent content) {

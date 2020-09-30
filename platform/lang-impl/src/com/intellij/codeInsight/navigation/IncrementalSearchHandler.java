@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -313,7 +314,7 @@ public final class IncrementalSearchHandler {
   }
 
   private static class MyLabel extends JLabel {
-    MyLabel(String text) {
+    MyLabel(@NlsContexts.Label String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());

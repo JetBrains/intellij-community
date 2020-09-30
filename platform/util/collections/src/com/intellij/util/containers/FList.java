@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 /**
  * Immutable list in functional style
  */
-public class FList<E> extends AbstractList<E> {
+public final class FList<E> extends AbstractList<E> {
   private static final FList<?> EMPTY_LIST = new FList<>(null, null, 0);
   private final E myHead;
   private final FList<E> myTail;
@@ -69,9 +69,9 @@ public class FList<E> extends AbstractList<E> {
   @Override
   public Iterator<E> iterator() {
     return new Iterator<E>() {
-      
+
       private FList<E> list = FList.this;
-      
+
       @Override
       public boolean hasNext() {
         return list.size() > 0;
@@ -80,11 +80,11 @@ public class FList<E> extends AbstractList<E> {
       @Override
       public E next() {
         if (list.size() == 0) throw new NoSuchElementException();
-        
+
         E res = list.myHead;
         list = list.getTail();
         assert list != null;
-        
+
         return res;
       }
 

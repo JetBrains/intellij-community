@@ -3,6 +3,7 @@ package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.requests.Requestor;
+import com.intellij.openapi.util.NlsContexts;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,14 +19,14 @@ public interface LocatableEventRequestor extends Requestor {
   String getSuspendPolicy();
 
   class EventProcessingException extends Exception {
-    private final String myTitle;
+    private final @NlsContexts.DialogTitle String myTitle;
 
-    public EventProcessingException(String title, String message, Throwable cause) {
+    public EventProcessingException(@NlsContexts.DialogTitle String title, String message, Throwable cause) {
       super(message, cause);
       myTitle = title;
     }
 
-    public String getTitle() {
+    public @NlsContexts.DialogTitle String getTitle() {
       return myTitle;
     }
   }

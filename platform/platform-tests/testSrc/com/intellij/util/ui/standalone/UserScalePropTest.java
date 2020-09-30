@@ -18,6 +18,7 @@ public class UserScalePropTest {
   @Test
   public void test() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
 
     System.setProperty(IDE_UI_SCALE_PROP, "1.0");
 

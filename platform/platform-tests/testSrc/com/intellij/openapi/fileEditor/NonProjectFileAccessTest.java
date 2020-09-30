@@ -31,7 +31,6 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +139,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       try {
         VirtualFile moduleDir = VfsUtil.createDirectoryIfMissing(getProject().getBasePath() + "/moduleWithoutContentRoot");
-        moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
+        moduleName = moduleModel.newModule(moduleDir.toNioPath().resolve("moduleWithoutContentRoot.iml"), EmptyModuleType.EMPTY_MODULE).getName();
         moduleModel.commit();
       }
       catch (Throwable t) {
@@ -151,7 +150,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     });
     PlatformTestUtil.saveProject(getProject());
 
-    VirtualFile fileUnderNonProjectModuleDir = createFileExternally(new File(PathUtil.getParentPath(moduleWithoutContentRoot.getModuleFilePath())));
+    VirtualFile fileUnderNonProjectModuleDir = createFileExternally(moduleWithoutContentRoot.getModuleNioFile().getParent().toFile());
 
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 

@@ -12,19 +12,18 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
-import org.jetbrains.annotations.CalledInAwt;
+import java.awt.*;
+import java.util.function.Supplier;
+import javax.swing.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.function.Supplier;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -72,7 +71,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void initTabContent(@NotNull Content content) {
     myContent = content;
-    myContent.setTabName(TAB_NAME);
+    // Display name is always used for presentation, tab name is used as an id.
+    // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
+    myContent.setTabName(TAB_NAME); //NON-NLS
     updateDisplayName();
 
     myProjectLog.createLogInBackground(true);
@@ -84,7 +85,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
@@ -94,7 +95,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       DataManager.registerDataProvider(myContainer, panel);
 
       updateDisplayName();
-      myUi.addFilterListener(this::updateDisplayName);
+      myUi.getFilterUi().addFilterListener(this::updateDisplayName);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;
@@ -112,7 +113,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     return new VcsLogPanel(logManager, ui);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void disposeMainUi() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -132,7 +133,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    *
    * @param consumer consumer to execute.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 

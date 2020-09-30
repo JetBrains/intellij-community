@@ -112,7 +112,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
-    setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
+    setCellRenderer(new CheckboxTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     showCheckboxesChanged();
@@ -155,6 +155,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
     if (!myShowCheckboxes || !isEnabled()) return null;
 
+    TreePath path = getPathIfInsideComponent(p);
+    if (path != null && isIncludable(path)) return path;
+    return null;
+  }
+
+  public @Nullable TreePath getPathIfInsideComponent(@NotNull Point p) {
     TreePath path = getPathForLocation(p.x, p.y);
     if (path == null) return null;
 
@@ -162,8 +168,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (pathBounds == null) return null;
 
     Rectangle checkBoxBounds = pathBounds.getBounds();
-    checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
-    return checkBoxBounds.contains(p) && isIncludable(path) ? path : null;
+    checkBoxBounds.setSize(getComponentWidth(path), checkBoxBounds.height);
+    if (!checkBoxBounds.contains(p)) return null;
+
+    return path;
   }
 
   protected void installTreeLinkHandler(@NotNull ChangesBrowserNodeRenderer nodeRenderer) {
@@ -172,7 +180,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
         int x = super.getRendererRelativeX(e, tree, path);
 
-        return !myShowCheckboxes ? x : x - myCheckboxWidth;
+        return x - getComponentWidth(path);
       }
 
       @Override
@@ -182,6 +190,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     }.installOn(this);
+  }
+
+  protected int getComponentWidth(@NotNull TreePath path) {
+    if (!myShowCheckboxes) return 0;
+    return myCheckboxWidth;
   }
 
   @NotNull
@@ -245,20 +258,20 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @Nullable
-  public Processor<MouseEvent> getDoubleClickHandler() {
+  public Processor<? super MouseEvent> getDoubleClickHandler() {
     return myHandlers.getDoubleClickHandler();
   }
 
-  public void setDoubleClickHandler(@Nullable Processor<MouseEvent> handler) {
+  public void setDoubleClickHandler(@Nullable Processor<? super MouseEvent> handler) {
     myHandlers.setDoubleClickHandler(handler);
   }
 
   @Nullable
-  public Processor<KeyEvent> getEnterKeyHandler() {
+  public Processor<? super KeyEvent> getEnterKeyHandler() {
     return myHandlers.getEnterKeyHandler();
   }
 
-  public void setEnterKeyHandler(@Nullable Processor<KeyEvent> handler) {
+  public void setEnterKeyHandler(@Nullable Processor<? super KeyEvent> handler) {
     myHandlers.setEnterKeyHandler(handler);
   }
 

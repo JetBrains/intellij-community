@@ -22,6 +22,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -39,15 +40,15 @@ public class IssueLinkRenderer {
     myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
   }
 
-  public List<String> appendTextWithLinks(final String text) {
+  public List<String> appendTextWithLinks(@Nls String text) {
     return appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle) {
+  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle) {
     return appendTextWithLinks(text, baseStyle, s -> append(s, baseStyle));
   }
 
-  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle, final Consumer<? super String> consumer) {
+  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle, final Consumer<? super String> consumer) {
     final List<String> pieces = new ArrayList<>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
@@ -72,11 +73,11 @@ public class IssueLinkRenderer {
     return pieces;
   }
 
-  private void append(final String piece, final SimpleTextAttributes baseStyle) {
+  private void append(@Nls String piece, final SimpleTextAttributes baseStyle) {
     myColoredComponent.append(piece, baseStyle);
   }
 
-  private void append(final String piece, final SimpleTextAttributes baseStyle, final IssueNavigationConfiguration.LinkMatch match) {
+  private void append(@Nls String piece, final SimpleTextAttributes baseStyle, final IssueNavigationConfiguration.LinkMatch match) {
     myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(match.getTargetUrl()));
   }
 

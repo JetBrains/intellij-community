@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.images.mappings
 
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.isImage
+import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
 import java.io.File
 import java.nio.file.FileVisitResult
@@ -12,7 +13,12 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.streams.toList
 
-fun main() = generateMappings()
+fun main() = try {
+  generateMappings()
+}
+finally {
+  shutdownAppScheduledExecutorService()
+}
 
 /**
  * Generate icon mappings for https://github.com/JetBrains/IntelliJIcons-web-site

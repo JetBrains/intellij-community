@@ -31,7 +31,6 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
 import net.miginfocom.layout.PlatformDefaults
@@ -41,6 +40,7 @@ import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.dnd.DragSource
 import java.io.IOException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -73,15 +73,19 @@ private fun executeInitAppInEdt(args: List<String>,
       val starter = findStarter(args.first()) ?: IdeStarter()
       if (Main.isHeadless() && !starter.isHeadless) {
         val commandName = starter.commandName
-        val message = "Application cannot start in a headless mode" + when {
-          starter is IdeStarter -> ""
-          commandName != null -> ", for command: $commandName"
-          else -> ", for starter: " + starter.javaClass.name
-        } + when {
-          args.isNotEmpty() -> " (commandline: ${args.joinToString(" ")})"
-          else -> ""
-        }
-        Main.showMessage("Startup Error", message, true)
+        val message = IdeBundle.message(
+          "application.cannot.start.in.a.headless.mode",
+          when {
+            starter is IdeStarter -> 0
+            commandName != null -> 1
+            else -> 2
+          },
+          commandName,
+          starter.javaClass.name,
+          if (args.isEmpty()) 0 else 1,
+          args.joinToString(" ")
+        )
+        Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
         exitProcess(Main.NO_GRAPHICS)
       }
 
@@ -202,12 +206,6 @@ private fun startApp(app: ApplicationImpl,
       // should be after scheduling all app initialized listeners (because this activity is not important)
       if (!Main.isLightEdit()) {
         NonUrgentExecutor.getInstance().execute {
-          if (starter.commandName == null) {
-            runActivity("project converter provider preloading") {
-              app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
-            }
-          }
-
           // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
           runActivity("system properties setting") {
             SystemPropertyBean.initSystemProperties()
@@ -412,12 +410,12 @@ private fun loadSystemFonts() {
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 @ApiStatus.Internal
-fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
+fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
   var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
-  val effectiveConfigPath = configPath?.let { Paths.get(it) } ?: PathManager.getConfigDir()
+  val effectiveConfigPath = configPath ?: PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
-      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath.systemIndependentPath)
+      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
     }
     catch (e: ProcessCanceledException) {
       throw e

@@ -6,6 +6,7 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -24,6 +26,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -267,15 +270,16 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return scrollPanel;
   }
 
-  public void setErrorText(@Nullable String text) {
+  public void setErrorText(@Nullable @Nls String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(MessageType.ERROR.getTitleForeground());
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
-  public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("<html><strong>Note:</strong> " + text + "  </html>");
+  public void setWarningText(@Nullable @Nls String text) {
+    myErrorLabel.setText(HtmlChunk.html().children(HtmlChunk.text(LangBundle.message("warning.prefix.note")).wrapWith("strong"),
+                                                   HtmlChunk.text(" "+text+"  ")).toString());
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
   }

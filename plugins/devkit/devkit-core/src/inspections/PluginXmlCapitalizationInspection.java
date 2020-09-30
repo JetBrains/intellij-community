@@ -11,6 +11,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
@@ -26,8 +27,10 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
@@ -36,6 +39,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
+
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
@@ -61,6 +65,8 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
     if (checkCapitalization(holder, overrideText.getText(), Nls.Capitalization.Title)) return;
+
+    if (DomUtil.hasXml(overrideText.getUseTextOfPlace())) return;
 
     Action action = overrideText.getParentOfType(Action.class, true);
     assert action != null;
@@ -114,16 +120,17 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
                                                   DomElement domElement,
                                                   Nls.Capitalization capitalization,
-                                                  @Nullable String resourceKey, boolean required) {
+                                                  @NonNls @Nullable String resourceKey, boolean required) {
     if (resourceKey == null) return;
-    
+
     final PropertiesFile bundleFile = DescriptorI18nUtil.findBundlePropertiesFile(domElement);
     if (bundleFile == null) return;
 
     final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);
     if (property == null) {
       if (required) {
-        holder.createProblem(domElement, "Missing resource bundle key '" + resourceKey + "'");
+        holder.createProblem(domElement,
+                             DevKitBundle.message("inspections.plugin.xml.capitalization.missing.resource.bundle.key", resourceKey));
       }
     }
     else {
@@ -225,7 +232,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
                                               @Nullable Property property) {
     if (StringUtil.isEmptyOrSpaces(value)) return;
 
-    final String escapedValue = XmlUtil.unescape(value).replace("_", "");
+    @NlsSafe final String escapedValue = XmlUtil.unescape(value).replace("_", "");
     if (NlsCapitalizationUtil.isCapitalizationSatisfied(escapedValue, capitalization)) {
       return;
     }
@@ -238,12 +245,12 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
       @Override
       public @IntentionName @NotNull String getName() {
-        return "Properly capitalize '" + escapedValue + '\'';
+        return DevKitBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", escapedValue);
       }
 
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
-        return "Properly capitalize";
+        return DevKitBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize.family.name");
       }
 
       @Override
@@ -260,8 +267,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
 
     holder.createProblem(domElement,
-                         "String '" + escapedValue + "' is not properly capitalized. " +
-                         "It should have " + StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
+                         DevKitBundle.message("inspections.plugin.xml.capitalization.error",
+                                              escapedValue,
+                                              StringUtil.toLowerCase(capitalization.toString())),
                          quickFix);
   }
 }

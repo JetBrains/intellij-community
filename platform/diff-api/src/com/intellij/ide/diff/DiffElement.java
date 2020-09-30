@@ -18,11 +18,13 @@ package com.intellij.ide.diff;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.pom.Navigatable;
@@ -42,15 +44,19 @@ import java.util.concurrent.Callable;
 public abstract class DiffElement<T> {
   public static final DiffElement<?>[] EMPTY_ARRAY = new DiffElement[0];
 
+  @NlsSafe
   public abstract String getPath();
 
+  @NlsSafe
   @NotNull
   public abstract String getName();
 
+  @NlsSafe
   public String getPresentableName() {
     return getName();
   }
 
+  @NlsSafe
   public String getPresentablePath() {
     return getPresentableName();
   }
@@ -116,7 +122,7 @@ public abstract class DiffElement<T> {
       }
 
       byte[] content = getContent();
-      if (content == null) throw new DiffRequestProducerException("Can't get content");
+      if (content == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.dirdiff.preview.cant.load.content"));
 
       return DiffContentFactory.getInstance().create(project, new String(content, getCharset()), getFileType());
     }

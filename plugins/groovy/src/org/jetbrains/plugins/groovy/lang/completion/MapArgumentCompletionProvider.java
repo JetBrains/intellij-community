@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+final class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   // @formatter:off
 

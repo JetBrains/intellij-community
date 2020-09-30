@@ -6,26 +6,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
-import com.intellij.util.indexing.roots.IndexableFilesProvider;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public class EmptyFileBasedIndex extends FileBasedIndexEx {
-  private static final ThreadLocal<DumbModeAccessType> ourDumbModeAccessType = new ThreadLocal<>();
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
@@ -37,12 +33,7 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public DumbModeAccessType getCurrentDumbModeAccessType() {
-    return ourDumbModeAccessType.get();
-  }
-
-  @Override
-  public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
+  public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
 
   }
 
@@ -140,37 +131,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public void ignoreDumbMode(@NotNull Runnable command, @NotNull DumbModeAccessType dumbModeAccessType) {
-    ignoreDumbMode(dumbModeAccessType, () -> {
-      command.run();
-      return null;
-    });
-  }
-
-  @Override
-  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
-                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
-    boolean setAccessType = true;
-    DumbModeAccessType currentAccessType = ourDumbModeAccessType.get();
-    if (currentAccessType != null) {
-      if (currentAccessType == dumbModeAccessType) {
-        setAccessType = false;
-      }
-      else {
-        throw new AssertionError(
-          "Reentrant dumb mode ignorance. Current mode: " + currentAccessType + ", Requested mode: " + dumbModeAccessType);
-      }
-    }
-    if (setAccessType) ourDumbModeAccessType.set(dumbModeAccessType);
-    try {
-      return computable.compute();
-    }
-    finally {
-      if (setAccessType) ourDumbModeAccessType.set(null);
-    }
-  }
-
-  @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
     return true;
   }
@@ -215,11 +175,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public @NotNull List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project) {
-    return super.getOrderedIndexableFilesProviders(project);
-  }
-
-  @Override
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
   }
@@ -258,7 +213,12 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void resetIndexedStateForFile(int fileId) {
+    public void invalidateIndexedStateForFile(int fileId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setUnindexedStateForFile(int fileId) {
       throw new UnsupportedOperationException();
     }
 
@@ -277,7 +237,8 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
+    public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Key, Value> diffBuilder) {
+
     }
 
     @Override
@@ -328,35 +289,5 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     @Override
     public void dispose() {
     }
-
-    private static final Lock NO_LOCK = new Lock() {
-      @Override
-      public void lock() {
-      }
-
-      @Override
-      public void lockInterruptibly() {
-      }
-
-      @Override
-      public boolean tryLock() {
-        return false;
-      }
-
-      @Override
-      public boolean tryLock(long time, @NotNull TimeUnit unit) {
-        return false;
-      }
-
-      @Override
-      public void unlock() {
-      }
-
-      @NotNull
-      @Override
-      public java.util.concurrent.locks.Condition newCondition() {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 }

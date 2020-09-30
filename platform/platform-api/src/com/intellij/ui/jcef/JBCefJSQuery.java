@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
@@ -22,17 +22,25 @@ import java.util.function.Function;
  *
  * @author tav
  */
-public class JBCefJSQuery implements JBCefDisposable {
+public final class JBCefJSQuery implements JBCefDisposable {
   @NotNull private final JSQueryFunc myFunc;
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
-  @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
+  @NotNull private final Map<Function<? super String, ? extends Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
   private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
     myFunc = func;
     myCefClient = browser.getJBCefClient().getCefClient();
-    Disposer.register(browser, this);
+    Disposer.register(browser.getJBCefClient(), this);
+  }
+
+  /**
+   * @return name of the global function JS must call to send query to Java
+   */
+  @NotNull
+  public final String getFuncName() {
+    return myFunc.myFuncName;
   }
 
   /**
@@ -82,7 +90,7 @@ public class JBCefJSQuery implements JBCefDisposable {
            "});";
   }
 
-  public void addHandler(@NotNull Function<String, Response> handler) {
+  public void addHandler(@NotNull Function<? super String, ? extends Response> handler) {
     CefMessageRouterHandler cefHandler;
     myFunc.myRouter.addHandler(cefHandler = new CefMessageRouterHandlerAdapter() {
       @Override
@@ -109,7 +117,7 @@ public class JBCefJSQuery implements JBCefDisposable {
     myHandlerMap.put(handler, cefHandler);
   }
 
-  public void removeHandler(@NotNull Function<String, Response> handler) {
+  public void removeHandler(@NotNull Function<? super String, ? extends Response> handler) {
     CefMessageRouterHandler cefHandler = myHandlerMap.remove(handler);
     if (cefHandler != null) {
       myFunc.myRouter.removeHandler(cefHandler);

@@ -10,10 +10,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "Git.Update.Project.Info.Tabs.Properties", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
-})
+@State(name = "Git.Update.Project.Info.Tabs.Properties", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class GitUpdateProjectInfoLogProperties extends VcsLogUiPropertiesWithSharedRecentFilters<VcsLogUiPropertiesImpl.State> {
   public GitUpdateProjectInfoLogProperties(@NotNull Project project) {
     super(project, ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class));

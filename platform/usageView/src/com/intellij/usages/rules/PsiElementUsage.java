@@ -13,7 +13,6 @@ public interface PsiElementUsage extends Usage {
 
   /**
    * Returns the class of the reference that describes the current usage.
-   * @return
    */
   default @Nullable Class<? extends PsiReference> getReferenceClass() {
     return null;

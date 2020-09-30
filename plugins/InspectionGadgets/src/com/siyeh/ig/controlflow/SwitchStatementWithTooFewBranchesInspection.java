@@ -131,7 +131,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     }
   }
 
-  public static class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
+  public static final class UnwrapSwitchStatementFix extends InspectionGadgetsFix {
     int myBranchCount;
 
     private UnwrapSwitchStatementFix(int branchCount) {

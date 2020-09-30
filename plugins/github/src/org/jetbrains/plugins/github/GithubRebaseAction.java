@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -97,12 +98,16 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
 
       GHRepositoryPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
       if (userAndRepo == null) {
-        GithubNotifications.showError(myProject, GithubBundle.message("rebase.error"),
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.cannot.validate.upstream.remote",
+                                      GithubBundle.message("rebase.error"),
                                       GithubBundle.message("cannot.validate.upstream", upstreamRemoteUrl));
         return;
       }
       if (isUpstreamWithSameUsername(indicator, userAndRepo)) {
-        GithubNotifications.showError(myProject, GithubBundle.message("rebase.error"),
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.upstream.is.own.repo",
+                                      GithubBundle.message("rebase.error"),
                                       GithubBundle.message("rebase.error.upstream.is.own.repo", upstreamRemoteUrl));
         return;
       }
@@ -139,8 +144,10 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
         return userAndRepo.getOwner().equals(username);
       }
       catch (IOException e) {
-        GithubNotifications
-          .showError(myProject, GithubBundle.message("rebase.error"), GithubBundle.message("cannot.get.user.info"));
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.cannot.get.user.info",
+                                      GithubBundle.message("rebase.error"),
+                                      GithubBundle.message("cannot.get.user.info"));
         return true;
       }
     }
@@ -151,16 +158,20 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
         GithubRepo repo = myRequestExecutor.execute(indicator,
                                                     GithubApiRequests.Repos.get(myServer, userAndRepo.getOwner(), userAndRepo.getRepository()));
         if (repo == null) {
-          GithubNotifications.showError(myProject, GithubBundle.message("rebase.error"),
+          GithubNotifications.showError(myProject,
+                                        "github.rebase.cannot.retrieve.upstream.info",
+                                        GithubBundle.message("rebase.error"),
                                         GithubBundle.message("cannot.retrieve.upstream.info", userAndRepo));
           return null;
         }
         return repo.getDefaultBranch();
       }
       catch (IOException e) {
-        GithubNotifications
-          .showError(myProject, GithubBundle.message("rebase.error"),
-                     GithubBundle.message("cannot.retrieve.upstream.info", userAndRepo), e.getMessage());
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.cannot.retrieve.upstream.info",
+                                      GithubBundle.message("rebase.error"),
+                                      GithubBundle.message("cannot.retrieve.upstream.info", userAndRepo),
+                                      e.getMessage());
         return null;
       }
     }
@@ -173,10 +184,11 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       }
 
       if (!repositoryInfo.isFork() || repositoryInfo.getParent() == null) {
-        GithubNotifications
-          .showWarningURL(myProject, GithubBundle.message("rebase.error"),
-                          "GitHub repository ", "'" + repositoryInfo.getName() + "'", " is not a fork",
-                          repositoryInfo.getHtmlUrl());
+        GithubNotifications.showWarningURL(myProject,
+                                           "github.rebase.repo.is.not.a.fork",
+                                           GithubBundle.message("rebase.error"),
+                                           "GitHub repository ", "'" + repositoryInfo.getName() + "'", " is not a fork",
+                                           repositoryInfo.getHtmlUrl());
         return null;
       }
 
@@ -188,9 +200,10 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
         myGit.addRemote(myRepository, UPSTREAM_REMOTE, parentRepoUrl).throwOnError();
       }
       catch (VcsException e) {
-        GithubNotifications
-          .showError(myProject, GithubBundle.message("rebase.error"),
-                     GithubBundle.message("cannot.configure.remote", UPSTREAM_REMOTE, e.getMessage()));
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.cannot.configure.upstream.remote",
+                                      GithubBundle.message("rebase.error"),
+                                      GithubBundle.message("cannot.configure.remote", UPSTREAM_REMOTE, e.getMessage()));
         return null;
       }
       myRepository.update();
@@ -203,12 +216,18 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
         GithubRepoDetailed repo =
           myRequestExecutor.execute(indicator, GithubApiRequests.Repos.get(myServer, fullPath.getOwner(), fullPath.getRepository()));
         if (repo == null) {
-          GithubNotifications.showError(myProject, GithubBundle.message("rebase.error.repo.not.found", fullPath.toString()), "");
+          GithubNotifications.showError(myProject,
+                                        "github.rebase.repo.not.found",
+                                        GithubBundle.message("rebase.error.repo.not.found", fullPath.toString()),
+                                        "");
         }
         return repo;
       }
       catch (IOException e) {
-        GithubNotifications.showError(myProject, GithubBundle.message("cannot.load.repo.info"), e);
+        GithubNotifications.showError(myProject,
+                                      "github.rebase.cannot.load.repo.info",
+                                      GithubBundle.message("cannot.load.repo.info"),
+                                      e);
         return null;
       }
     }
@@ -222,7 +241,7 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       return fetchSupport(myProject).fetch(myRepository, remote).showNotificationIfFailed();
     }
 
-    private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, String onto) {
+    private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, @NlsSafe String onto) {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("rebase.git.operation.name"))) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
         GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
@@ -260,7 +279,10 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       repositoryManager.updateRepository(root);
       if (rebaseResult.success()) {
         root.refresh(false, true);
-        GithubNotifications.showInfo(myProject, GithubBundle.message("rebase.process.success"), "");
+        GithubNotifications.showInfo(myProject,
+                                     "github.rebase.success",
+                                     GithubBundle.message("rebase.process.success"),
+                                     "");
       }
       else {
         GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseResult, rebaseConflictDetector,
@@ -268,7 +290,10 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
         if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
             result == GitUpdateResult.SUCCESS ||
             result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-          GithubNotifications.showInfo(myProject, GithubBundle.message("rebase.process.success"), "");
+          GithubNotifications.showInfo(myProject,
+                                       "github.rebase.success",
+                                       GithubBundle.message("rebase.process.success"),
+                                       "");
         }
       }
     }

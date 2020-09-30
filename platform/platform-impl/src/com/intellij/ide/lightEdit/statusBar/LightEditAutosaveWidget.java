@@ -129,7 +129,7 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
       });
     }
 
-    private static String getPopupText() {
+    private static @NlsContexts.PopupContent String getPopupText() {
       StringBuilder builder = new StringBuilder();
       GeneralSettings generalSettings = GeneralSettings.getInstance();
       if (generalSettings.isAutoSaveIfInactive()) {

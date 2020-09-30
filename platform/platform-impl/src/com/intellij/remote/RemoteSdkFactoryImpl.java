@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -111,6 +112,6 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
   @NotNull
   @Nls
   public static String getDefaultUnfinishedInterpreterName(@NotNull String sdkName) {
-    return "Remote " + sdkName + " interpreter";
+    return IdeBundle.message("interpreter.default.name", sdkName);
   }
 }

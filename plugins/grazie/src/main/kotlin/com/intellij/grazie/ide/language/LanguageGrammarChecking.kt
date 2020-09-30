@@ -3,30 +3,44 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
+import com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 
-class LanguageGrammarChecking : LanguageExtensionPoint<GrammarCheckingStrategy>() {
-  companion object : LanguageExtension<GrammarCheckingStrategy>("com.intellij.grazie.grammar.strategy") {
-    val EP_NAME: ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>> = ExtensionPointName.create(
-      "com.intellij.grazie.grammar.strategy")
+private const val EXTENSION_POINT_NAME = "com.intellij.grazie.grammar.strategy"
 
-    fun getLanguageExtensionPoints(): List<LanguageExtensionPoint<GrammarCheckingStrategy>> = EP_NAME.extensionList
+object LanguageGrammarChecking : LanguageExtension<GrammarCheckingStrategy>(EXTENSION_POINT_NAME) {
+  val EP_NAME = ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>>(EXTENSION_POINT_NAME)
+  private val INTERNAL_STRATEGIES_IDS = setOf(CommitMessageGrammarCheckingStrategy.ID)
 
-    fun getStrategies(): Set<GrammarCheckingStrategy> = getLanguageExtensionPoints().map { it.instance }.toSet()
+  /**
+   * @return all registered GrammarCheckingStrategy without internal ones
+   */
+  fun getStrategies(): Set<GrammarCheckingStrategy> = EP_NAME.extensionList
+    .map { it.instance }
+    .filter { it.getID() !in INTERNAL_STRATEGIES_IDS }
+    .toSortedSet(Comparator { f, s -> f.getName().compareTo(s.getName()) })
 
-    fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensions.firstOrNull { it.instance == strategy }
+  fun getStrategyByID(id: String) = EP_NAME.extensionList.firstOrNull { it.instance.getID() == id }?.instance
 
-    fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {
-      return LanguageGrammarChecking.allForLanguage(element.language)
-        .asSequence()
-        .filter {
-          it.isMyContextRoot(element) &&
-          it.getContextRootTextDomain(element) != TextDomain.NON_TEXT &&
-          (it.getID() in enabledIDs || (it.isEnabledByDefault() && it.getID() !in disabledIDs))
-        }.toSet()
-    }
+  fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensionList.firstOrNull { it.instance == strategy }
+
+  /**
+   * @param element [PsiElement] with text to check
+   * @param enabledIDs IDs of enabled strategies
+   * @param disabledIDs IDs of disabled strategies
+   * @return all registered GrammarCheckingStrategy without internal ones which match element language
+   */
+  fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {
+    return allForLanguage(element.language)
+      .asSequence()
+      .filter {
+        it.getID() !in INTERNAL_STRATEGIES_IDS &&
+        it.isMyContextRoot(element) &&
+        it.getContextRootTextDomain(element) != TextDomain.NON_TEXT &&
+        (it.getID() in enabledIDs || (it.isEnabledByDefault() && it.getID() !in disabledIDs))
+      }.toSet()
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
@@ -14,6 +15,8 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -56,10 +59,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
@@ -72,15 +72,16 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -123,18 +124,19 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
   public static final Key<Boolean> TEST_STRUCTURAL_SEARCH_DIALOG = Key.create("TEST_STRUCTURAL_SEARCH_DIALOG");
 
+  @NotNull
   private final SearchContext mySearchContext;
-  Editor myEditor;
-  boolean myReplace;
-  Configuration myConfiguration;
-  @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
-  Language myDialect = null;
-  PatternContext myPatternContext = null;
-  final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
+  private Editor myEditor;
+  private boolean myReplace;
+  @NotNull
+  private Configuration myConfiguration;
+  @NotNull
+  @NonNls private LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private Language myDialect;
+  private PatternContext myPatternContext;
+  private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
   private final DocumentListener myRestartHighlightingListener = new DocumentListener() {
-    final Runnable runnable = () -> ReadAction.nonBlocking(() -> {
-      addMatchHighlights();
-    })
+    final Runnable runnable = () -> ReadAction.nonBlocking(() -> addMatchHighlights())
       .withDocumentsCommitted(getProject())
       .expireWith(getDisposable())
       .coalesceBy(this)
@@ -156,20 +158,21 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private boolean myFilterIsShowing;
 
   // components
-  final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
-  ActionToolbarImpl myOptionsToolbar;
-  EditorTextField mySearchCriteriaEdit;
-  EditorTextField myReplaceCriteriaEdit;
-  OnePixelSplitter mySearchEditorPanel;
+  private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
+  private ActionToolbarImpl myOptionsToolbar;
+  private EditorTextField mySearchCriteriaEdit;
+  private EditorTextField myReplaceCriteriaEdit;
+  private OnePixelSplitter mySearchEditorPanel;
 
-  FilterPanel myFilterPanel;
+  private FilterPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
 
-  JComponent myReplacePanel;
+  private JComponent myReplacePanel;
+  private SwitchAction mySwitchAction;
 
-  public StructuralSearchDialog(SearchContext searchContext, boolean replace) {
+  public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
   }
 
@@ -265,7 +268,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     initiateValidation();
   }
 
-  void initiateValidation() {
+  private void initiateValidation() {
     if (myAlarm.isDisposed()) return;
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
@@ -302,11 +305,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private void initializeFilterPanel() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
+    if (compiledPattern == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (compiledPattern != null) {
-        SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
-        if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
-      }
+      SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
+      if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
       myFilterPanel.setCompiledPattern(compiledPattern);
       if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
@@ -314,13 +316,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }, ModalityState.stateForComponent(myFilterPanel.getComponent()));
   }
 
+  @NotNull
   private Configuration createConfiguration(Configuration template) {
     if (myReplace) {
       return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
     }
-    else {
-      return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
-    }
+    return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
   }
 
   private void setTextFromContext() {
@@ -346,7 +347,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final Configuration previousConfiguration = getProject().getUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION);
     if (previousConfiguration != null) {
       loadConfiguration(previousConfiguration);
-    } else {
+    }
+    else {
       final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
       if (configuration != null) {
         loadConfiguration(configuration);
@@ -381,7 +383,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @NotNull
   @Nls
   @NlsContexts.DialogTitle
-  String getDefaultTitle() {
+  private String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
 
@@ -668,6 +670,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       });
     templateActionGroup.addSeparator();
+    mySwitchAction = new SwitchAction();
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
       new PasteConfigurationAction(),
@@ -685,7 +688,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       },
       Separator.getInstance(),
-      new SwitchAction()
+      mySwitchAction
     );
 
 
@@ -694,10 +697,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     presentation.setIcon(AllIcons.General.Settings);
     presentation.setText(SSRBundle.message("tools.button"));
 
-    final Icon modified = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-    final LayeredIcon filterModifiedIcon = new LayeredIcon(2);
-    filterModifiedIcon.setIcon(AllIcons.General.Filter, 0);
-    filterModifiedIcon.setIcon(modified, 1, SwingConstants.SOUTH_EAST);
+    final Icon filterModifiedIcon = ExecutionUtil.getLiveIndicator(AllIcons.General.Filter);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
                                                             filterModifiedIcon) {
@@ -756,7 +756,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return panel;
   }
 
-  Project getProject() {
+  private Project getProject() {
     return mySearchContext.getProject();
   }
 
@@ -854,6 +854,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return myConfiguration.copy();
   }
 
+  @Nullable
   private CompiledPattern compilePattern() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final Project project = getProject();
@@ -902,7 +903,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  void removeMatchHighlights() {
+  private void removeMatchHighlights() {
     if (myEditConfigOnly) {
       return;
     }
@@ -925,8 +926,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     });
   }
 
-  void addMatchHighlights() {
-    if (myEditConfigOnly) {
+  private void addMatchHighlights() {
+    if (myEditConfigOnly || DumbService.isDumb(getProject())) {
       return;
     }
     final Project project = getProject();
@@ -940,13 +941,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return;
     }
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
+    matchOptions.setScope(new LocalSearchScope(file, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()));
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     try {
       new Matcher(project, matchOptions).findMatches(sink);
       final List<MatchResult> matches = sink.getMatches();
       removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+      addMatchHighlights(matches, editor, file, SSRBundle.message("status.bar.text.results.found.in.current.file", matches.size()));
     }
     catch (StructuralSearchException e) {
       reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
@@ -954,10 +955,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
+  private void addMatchHighlights(@NotNull List<? extends MatchResult> matchResults,
                                   @NotNull Editor editor,
                                   @NotNull PsiFile file,
-                                  @Nullable String statusBarText) {
+                                  @NlsContexts.StatusBarText @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final Project project = getProject();
       if (project.isDisposed()) {
@@ -996,8 +997,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     });
   }
 
-  Balloon myBalloon = null;
-  void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
+  private Balloon myBalloon;
+  private void reportMessage(@NlsContexts.PopupContent @Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
@@ -1019,21 +1020,22 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }, ModalityState.stateForComponent(component));
   }
 
-  void securityCheck() {
+  private void securityCheck() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     int scripts = 0;
     for (String name : matchOptions.getVariableConstraintNames()) {
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
       if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
-    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-    if (replaceOptions != null) {
+    if (myConfiguration instanceof ReplaceConfiguration) {
+      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
       for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
         if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
       }
     }
     if (scripts > 0) {
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
+      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
+      notificationGroup.createNotification(NotificationType.WARNING)
         .setTitle(SSRBundle.message("import.template.script.warning.title"))
         .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
         .notify(mySearchContext.getProject());
@@ -1046,7 +1048,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myConfiguration.setCurrentVariableName(variableName);
   }
 
-  void setFilterPanelVisible(boolean visible) {
+  private void setFilterPanelVisible(boolean visible) {
     if (visible) {
       if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
@@ -1063,7 +1065,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  boolean isFilterPanelVisible() {
+  private boolean isFilterPanelVisible() {
     return mySearchEditorPanel.getSecondComponent() != null;
   }
 
@@ -1075,7 +1077,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myTargetComboBox.setItems(names);
     if (names.size() > 1) {
       myTargetComboBox.setEnabled(true);
-      for (String name : names) {
+      for (@NlsSafe String name : names) {
         final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
         if (constraint != null && constraint.isPartOfSearchResults()) {
           myTargetComboBox.setSelectedItem(name);
@@ -1093,7 +1095,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
    * @param text  the text to try and load a configuration from
    * @return {@code true}, if some configuration was found, even if it was broken or corrupted {@code false} otherwise.
    */
-  boolean loadConfiguration(String text) {
+  private boolean loadConfiguration(String text) {
     if (text == null) {
       return false;
     }
@@ -1101,6 +1103,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       final Configuration configuration = ConfigurationUtil.fromXml(text);
       if (configuration == null) {
         return false;
+      }
+      if (configuration instanceof ReplaceConfiguration) {
+        mySwitchAction.actionPerformed(
+          AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
       }
       loadConfiguration(configuration);
       securityCheck();
@@ -1112,7 +1118,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   public void loadConfiguration(Configuration configuration) {
-    myConfiguration = createConfiguration(configuration);
+    final Configuration newConfiguration = createConfiguration(configuration);
+    if (myUseLastConfiguration) {
+      newConfiguration.setUuid(myConfiguration.getUuid());
+      newConfiguration.setName(myConfiguration.getName());
+      newConfiguration.setDescription(myConfiguration.getDescription());
+      newConfiguration.setSuppressId(myConfiguration.getSuppressId());
+      newConfiguration.setProblemDescriptor(myConfiguration.getProblemDescriptor());
+    }
+    myConfiguration = newConfiguration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
     if (!myEditConfigOnly) {
@@ -1168,15 +1182,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     matchOptions.setPatternContext(myPatternContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
 
-    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-
-    if (myReplace) {
-      replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
-      matchOptions.setRecursiveSearch(false);
-    }
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (myReplace) {
+      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+      replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
+      matchOptions.setRecursiveSearch(false);
       properties.setValue(SHORTEN_FQN_STATE, replaceOptions.isToShortenFQN());
       properties.setValue(USE_STATIC_IMPORT_STATE, replaceOptions.isToUseStaticImport());
       properties.setValue(REFORMAT_STATE, replaceOptions.isToReformatAccordingToStyle());

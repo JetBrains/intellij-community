@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -24,24 +25,20 @@ class PyOverloadsInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
-      if (node?.containingFile is PyiFile) return
+    override fun visitPyClass(node: PyClass) {
+      if (node.containingFile is PyiFile) return
 
       super.visitPyClass(node)
 
-      if (node != null) {
-        processScope(node, { node.visitMethods(it, false, myTypeEvalContext) })
-      }
+      processScope(node, { node.visitMethods(it, false, myTypeEvalContext) })
     }
 
-    override fun visitPyFile(node: PyFile?) {
+    override fun visitPyFile(node: PyFile) {
       if (node is PyiFile) return
 
       super.visitPyFile(node)
 
-      if (node != null) {
-        processScope(node, { processor -> node.topLevelFunctions.forEach { processor.process(it) } })
-      }
+      processScope(node, { processor -> node.topLevelFunctions.forEach { processor.process(it) } })
     }
 
     private fun processScope(owner: ScopeOwner, processorUsage: (GroupingFunctionsByNameProcessor) -> Unit) {
@@ -59,32 +56,37 @@ class PyOverloadsInspection : PyInspection() {
         functions
           .maxBy { it.textOffset }
           ?.let {
-            registerProblem(it.nameIdentifier,
-                            "A series of @overload-decorated ${chooseBetweenFunctionsAndMethods(owner)} " +
-                            "should always be followed by an implementation that is not @overload-ed")
+            registerProblem(it.nameIdentifier, if (owner is PyClass) {
+              PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
+            }
+            else {
+              PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
+            })
           }
       }
       else {
         if (implementation != functions.last()) {
-          registerProblem(functions.last().nameIdentifier,
-                          "A series of @overload-decorated ${chooseBetweenFunctionsAndMethods(owner)} " +
-                          "should always be followed by an implementation that is not @overload-ed")
+          registerProblem(functions.last().nameIdentifier, if (owner is PyClass) {
+            PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
+          }
+          else {
+            PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
+          })
         }
 
         functions
           .asSequence()
           .filter { isIncompatibleOverload(implementation, it) }
           .forEach {
-            registerProblem(it.nameIdentifier,
-                            "Signature of this @overload-decorated ${chooseBetweenFunctionAndMethod(owner)} " +
-                            "is not compatible with the implementation")
+            registerProblem(it.nameIdentifier, if (owner is PyClass) {
+              PyPsiBundle.message("INSP.overloads.this.method.overload.signature.not.compatible.with.implementation")
+            }
+            else {
+              PyPsiBundle.message("INSP.overloads.this.function.overload.signature.not.compatible.with.implementation")
+            })
           }
       }
     }
-
-    private fun chooseBetweenFunctionsAndMethods(owner: ScopeOwner) = if (owner is PyClass) "methods" else "functions"
-
-    private fun chooseBetweenFunctionAndMethod(owner: ScopeOwner) = if (owner is PyClass) "method" else "function"
 
     private fun isIncompatibleOverload(implementation: PyFunction, overload: PyFunction): Boolean {
       return implementation != overload &&

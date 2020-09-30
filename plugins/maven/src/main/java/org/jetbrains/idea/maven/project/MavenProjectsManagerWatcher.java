@@ -49,14 +49,14 @@ public class MavenProjectsManagerWatcher {
                                      MavenProjectsTree projectsTree,
                                      MavenGeneralSettings generalSettings,
                                      MavenProjectsProcessor readingProcessor) {
+    myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
     myManager = manager;
     myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
-    myProjectsAware = new MavenProjectsAware(project, manager, projectsTree);
+    myProjectsAware = new MavenProjectsAware(project, projectsTree, manager, this, myBackgroundExecutor);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
-    myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
   }
 

@@ -6,5 +6,5 @@ import git4idea.i18n.GitBundle
 
 internal class GitCommitFixupBySubjectAction : GitAutoSquashCommitAction() {
   override fun getCommitMessage(commit: VcsShortCommitDetails) = "fixup! ${commit.subject}"
-  override fun getFailureTitle() = GitBundle.getString("rebase.log.create.fixup.commit.action.failure.title")
+  override fun getFailureTitle() = GitBundle.message("rebase.log.create.fixup.commit.action.failure.title")
 }

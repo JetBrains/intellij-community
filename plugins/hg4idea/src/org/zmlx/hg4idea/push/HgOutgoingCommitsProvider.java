@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.push;
 import com.intellij.dvcs.push.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -50,8 +51,8 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
       return new OutgoingResult(Collections.emptyList(), errors);
     }
     List<String> resultErrors = result.getErrorLines();
-    if (resultErrors != null && !resultErrors.isEmpty() && result.getExitValue() != 0) {
-      for (String error : resultErrors) {
+    if (!resultErrors.isEmpty() && result.getExitValue() != 0) {
+      for (@NlsSafe String error : resultErrors) {
         if (HgErrorUtil.isAbortLine(error)) {
           if (HgErrorUtil.isAuthorizationError(error)) {
             VcsError authorizationError =

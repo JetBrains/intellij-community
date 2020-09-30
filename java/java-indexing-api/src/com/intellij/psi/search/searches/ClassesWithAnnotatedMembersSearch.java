@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author yole
  */
-public class ClassesWithAnnotatedMembersSearch extends ExtensibleQueryFactory<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> {
+public final class ClassesWithAnnotatedMembersSearch extends ExtensibleQueryFactory<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters>> EP_NAME = ExtensionPointName.create("com.intellij.classesWithAnnotatedMembersSearch");
   public static final ClassesWithAnnotatedMembersSearch INSTANCE = new ClassesWithAnnotatedMembersSearch();
 

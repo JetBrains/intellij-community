@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.*;
@@ -13,7 +13,7 @@ import static com.intellij.util.containers.ContainerUtil.find;
 import static java.util.Objects.requireNonNull;
 
 // TODO support com.intellij.codeInsight.runner.JavaMainMethodProvider
-public class JvmMainMethodUtil {
+public final class JvmMainMethodUtil {
 
   private static final String MAIN = "main";
 

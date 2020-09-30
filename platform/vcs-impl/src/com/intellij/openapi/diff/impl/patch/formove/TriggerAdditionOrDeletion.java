@@ -100,7 +100,9 @@ public class TriggerAdditionOrDeletion {
   private void notifyAndLogFiles(@NotNull List<FilePath> incorrectFilePath) {
     String message = VcsBundle.message("patch.apply.incorrectly.processed.warning", incorrectFilePath.size(), incorrectFilePath);
     LOG.warn(message);
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(VcsBundle.message("patch.apply.new.files.warning"), message);
+    VcsNotifier.getInstance(myProject).notifyImportantWarning("vcs.patch.apply.new.files.error",
+                                                              VcsBundle.message("patch.apply.new.files.warning"),
+                                                              message);
   }
 
   private void processDeletion() {
@@ -181,7 +183,7 @@ public class TriggerAdditionOrDeletion {
     }
   }
 
-  private static class RecursiveCheckAdder {
+  private static final class RecursiveCheckAdder {
     private final Set<FilePath> myToBeAdded = new HashSet<>();
     private final VirtualFile myRoot;
 

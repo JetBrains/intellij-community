@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -35,10 +24,10 @@ import java.util.List;
  * @author peter
  */
 class EclipseOutputParser {
-  private final String myBuilderName;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String myBuilderName;
   private final ModuleChunk myChunk;
 
-  EclipseOutputParser(String builderName, ModuleChunk chunk) {
+  EclipseOutputParser(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String builderName, ModuleChunk chunk) {
     myBuilderName = builderName;
     myChunk = chunk;
   }
@@ -47,10 +36,10 @@ class EclipseOutputParser {
 
   List<CompilerMessage> parseMessages(String input) throws IOException {
     if (input.contains("The type groovy.lang.GroovyObject cannot be resolved. It is indirectly referenced from required .class files")) {
-      return Collections.singletonList(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR,
-                                                           "Cannot compile Groovy files: no Groovy library is defined for module '" +
-                                                           myChunk.representativeTarget().getModule().getName() +
-                                                           "'"));
+      return Collections.singletonList(new CompilerMessage(
+        myBuilderName, BuildMessage.Kind.ERROR,
+        GroovyJpsBundle.message("no.groovy.library.0", myChunk.representativeTarget().getModule().getName())
+      ));
     }
 
     List<CompilerMessage> parsedMessages = new ArrayList<>();
@@ -93,7 +82,7 @@ class EclipseOutputParser {
   }
 
   @Nullable
-  private CompilerMessage parseMessage(String msgText) {
+  private CompilerMessage parseMessage(@NlsSafe String msgText) {
     // message should look like this:
     //        1. WARNING in /Users/andrew/git-repos/foo/src/main/java/packAction.java (at line 47)
     //            public abstract class AbstractScmTagAction extends TaskAction implements BuildBadgeAction {

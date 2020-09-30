@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
@@ -118,7 +119,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       if (method == null) {
         return false;
       }
-      final String methodName = method.getName();
+      @NonNls final String methodName = method.getName();
       if (!methodName.startsWith("synchronized")) {
         return false;
       }

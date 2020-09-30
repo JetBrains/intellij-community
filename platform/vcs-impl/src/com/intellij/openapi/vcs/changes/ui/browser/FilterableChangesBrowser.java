@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     myChangesFilterer.clearFilter();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public ChangesFilterer.FilteredState filterChanges(@NotNull List<? extends Change> changes, boolean shouldFilter) {
     if (!shouldFilter) {
       myChangesFilterer.setChanges(null);

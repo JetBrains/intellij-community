@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -62,9 +63,9 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
     myInformationLabel.setFont(myInformationLabel.getFont().deriveFont(Font.BOLD));
     init();
     myDestinationCB.setData(myProject, defaultTargetDirectory,
-                            new Pass<String>() {
+                            new Pass<>() {
                               @Override
-                              public void pass(String s) {
+                              public void pass(@NlsContexts.DialogMessage String s) {
                                 setErrorText(s, myDestinationCB);
                               }
                             }, myTfPackage.getChildComponent());

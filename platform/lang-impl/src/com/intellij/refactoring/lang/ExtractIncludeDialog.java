@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
@@ -104,7 +105,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     return panel;
   }
 
-  protected String getNameLabel() {
+  protected @NlsContexts.Label String getNameLabel() {
     return RefactoringBundle.message("name.for.extracted.include.file", myExtension);
   }
 
@@ -165,7 +166,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     myTargetDirLabel.setVisible(false);
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("extractIncludeFile.name");
   }
 }

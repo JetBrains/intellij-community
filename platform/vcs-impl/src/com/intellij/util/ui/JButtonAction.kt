@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.NlsActions.ActionDescription
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.ui.ComponentUtil
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 
-abstract class JButtonAction(text: String?, description: String? = null, icon: Icon? = null)
+abstract class JButtonAction(text: @ActionText String?, @ActionDescription description: String? = null, icon: Icon? = null)
   : DumbAwareAction(text, description, icon), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

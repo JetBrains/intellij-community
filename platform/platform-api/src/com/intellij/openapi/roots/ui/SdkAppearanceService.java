@@ -4,13 +4,14 @@ package com.intellij.openapi.roots.ui;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SdkAppearanceService {
   @NotNull
   public abstract CellAppearanceEx forSdk(@NotNull SdkTypeId sdkType,
-                                          @NotNull String name,
+                                          @NlsSafe @NotNull String name,
                                           @Nullable String versionString,
                                           boolean hasValidPath,
                                           boolean isInComboBox,

@@ -15,6 +15,9 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.ProgramParametersConfigurator;
@@ -27,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMapper;
@@ -43,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -142,7 +147,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             if (file == null) {
               return null;
             }
-            return new Result(entireLength - filePath.length() - 1, entireLength, new OpenFileHyperlinkInfo(new OpenFileDescriptor(project, file)));
+            return new Result(entireLength - filePath.length() - 1, entireLength,
+                              new OpenFileHyperlinkInfo(new OpenFileDescriptor(project, file)));
           }
           return null;
         }
@@ -169,6 +175,18 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
+      }
+    }
+  }
+
+  @Override
+  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
+                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                      boolean passParentEnvs) {
+    super.customizePythonExecutionEnvironmentVars(targetEnvironment, envs, passParentEnvs);
+    if (emulateTerminal()) {
+      if (!SystemInfo.isWindows) {
+        envs.put("TERM", TargetEnvironmentFunctions.constant("xterm-256color"));
       }
     }
   }
@@ -202,6 +220,32 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     else {
       return super.doCreateProcess(commandLine);
     }
+  }
+
+  @Override
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+    PythonExecution pythonExecution;
+    if (myConfig.isModuleMode()) {
+      PythonModuleExecution moduleExecution = new PythonModuleExecution();
+      String moduleName = myConfig.getScriptName();
+      if (!StringUtil.isEmptyOrSpaces(moduleName)) {
+        moduleExecution.setModuleName(moduleName);
+      }
+      pythonExecution = moduleExecution;
+    }
+    else {
+      PythonScriptExecution pythonScriptExecution = new PythonScriptExecution();
+      String scriptPath = myConfig.getScriptName();
+      if (!StringUtil.isEmptyOrSpaces(scriptPath)) {
+        pythonScriptExecution.setPythonScriptPath(TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(targetEnvironmentRequest,
+                                                                                                                   scriptPath));
+      }
+      pythonExecution = pythonScriptExecution;
+    }
+
+    pythonExecution.setCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
+
+    return pythonExecution;
   }
 
   @Override

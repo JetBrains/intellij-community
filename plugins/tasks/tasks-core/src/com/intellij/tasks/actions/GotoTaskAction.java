@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -22,6 +22,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +58,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setAlwaysHasMore(true);
-    popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
-                    "Pressing " +
-                    KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) +
-                    " would show task description and comments</html>");
+    popup.setAdText(
+      TaskBundle.message("popup.advertisement.html.press.shift.to.merge.with.current.context.br.pressing.would.show.task.description.comments.html", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC))));
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -122,7 +121,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
 
     protected GotoTaskPopupModel(@NotNull Project project) {
-      super(project, "Enter task name:", null);
+      super(project, TaskBundle.message("enter.task.name"), null);
       myListCellRenderer = new TaskCellRenderer(project);
     }
 
@@ -155,7 +154,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     @Override
     public String getCheckBoxName() {
-      return "Include closed tasks";
+      return TaskBundle.message("label.include.closed.tasks");
     }
 
     @Override
@@ -173,7 +172,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
    * {@link ChooseByNameBase} and {@link ChooseByNamePopup} are not disposable (why?). So to correctly dispose alarm used in
    * {@link TaskItemProvider} and don't touch existing UI classes We have to extend popup and override {@link ChooseByNamePopup#close(boolean)}.
    */
-  private static class MyChooseByNamePopup extends ChooseByNamePopup {
+  private static final class MyChooseByNamePopup extends ChooseByNamePopup {
     private MyChooseByNamePopup(@Nullable Project project,
                                 @NotNull ChooseByNameModel model,
                                 @NotNull ChooseByNameItemProvider provider,
@@ -209,8 +208,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static class CreateNewTaskAction {
     private String taskName;
 
-    public String getActionText() {
-      return "Create New Task '" + taskName + "'";
+    public @Nls String getActionText() {
+      return TaskBundle.message("create.new.task.0", taskName);
     }
 
     public void setTaskName(final String taskName) {

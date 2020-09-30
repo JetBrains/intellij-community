@@ -64,10 +64,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the Terminal", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, TerminalBundle.message("progress.title.running.terminal"), false) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Running the terminal...");
+        indicator.setText(TerminalBundle.message("progress.text.running.terminal"));
         try {
           doRun();
         }
@@ -137,7 +137,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ProcessHandler processHandler = createProcessHandler(process);
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process));
+      new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process)); //NON-NLS
 
     contentDescriptor.setAutoFocusContent(true);
 

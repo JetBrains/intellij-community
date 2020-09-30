@@ -17,17 +17,19 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildFile {
 
   @Nullable
-  String getPresentableName();
+  @Nls String getPresentableName();
 
   @Nullable
-  String getName();
+  @NlsSafe String getName();
 
   AntBuildModel getModel();
 
@@ -39,7 +41,7 @@ public interface AntBuildFile {
   VirtualFile getVirtualFile();
 
   @Nullable
-  String getPresentableUrl();
+  @NlsSafe String getPresentableUrl();
 
   boolean isTargetVisible(final AntBuildTarget target);
 

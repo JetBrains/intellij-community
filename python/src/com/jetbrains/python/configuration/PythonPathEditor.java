@@ -13,6 +13,8 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +30,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +44,7 @@ import java.util.Set;
 public class PythonPathEditor extends SdkPathEditor {
   private final PathListModel myPathListModel;
 
-  public PythonPathEditor(String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
+  public PythonPathEditor(@NlsContexts.TabTitle String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
     myPathListModel = new PathListModel(orderRootType, getListModel());
   }
@@ -215,6 +218,7 @@ public class PythonPathEditor extends SdkPathEditor {
       myExcluded = Sets.newHashSet(excluded);
     }
 
+    @Nls
     public String getPresentationSuffix(VirtualFile file) {
       if (myAdded.contains(file)) {
         return PyBundle.message("sdk.paths.dialog.added.by.user.suffix");
@@ -293,6 +297,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
   }
 
+  @NlsSafe
   protected String getPresentablePath(VirtualFile value) {
     return value.getPresentableUrl();
   }

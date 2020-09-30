@@ -7,47 +7,52 @@ import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.Storage;
 import com.intellij.util.io.storage.StorageTestBase;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CompactStorageTest extends StorageTestBase {
   @NotNull
   @Override
-  protected Storage createStorage(@NotNull String fileName) throws IOException {
+  protected Storage createStorage(@NotNull Path fileName) throws IOException {
     return new CompactStorage(fileName);
   }
 
   @Test
   public void testCompactAndIterators() throws IOException {
-    TIntArrayList recordsList = new TIntArrayList();
+    IntArrayList recordsList = new IntArrayList();
     // 1000 records after deletion greater than 3M limit for init time compaction
     final int recordCount = 2000;
-    for (int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord(myStorage));
+    for (int i = 0; i < recordCount; ++i) {
+      recordsList.add(createTestRecord(myStorage));
+    }
     final int physicalRecordCount = myStorage.getLiveRecordsCount();
-    for (int i = 0; i < recordCount / 2; ++i) myStorage.deleteRecord(recordsList.getQuick(i));
+    for (int i = 0; i < recordCount / 2; ++i) {
+      myStorage.deleteRecord(recordsList.getInt(i));
+    }
     int logicalRecordCount = countLiveLogicalRecords();
-    assertEquals(recordCount / 2, logicalRecordCount);
+    assertThat(logicalRecordCount).isEqualTo(recordCount / 2);
 
-    int removedRecordId = recordsList.getQuick(0);
-    assertEquals("No content for reading removed record",0, myStorage.readStream(removedRecordId).available());
+    int removedRecordId = recordsList.getInt(0);
+    assertThat(myStorage.readStream(removedRecordId).available()).describedAs("No content for reading removed record").isEqualTo(0);
 
-    Disposer.dispose(myStorage);  // compact is triggered
+    // compact is triggered
+    Disposer.dispose(myStorage);
     setUpStorage();
-    assertEquals(myStorage.getLiveRecordsCount(), physicalRecordCount / 2);
+    assertThat(myStorage.getLiveRecordsCount()).isEqualTo(physicalRecordCount / 2);
 
     logicalRecordCount = 0;
 
     RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
-    while(recordIdIterator.hasNextId()) {
+    while (recordIdIterator.hasNextId()) {
       boolean validId = recordIdIterator.validId();
       int nextId = recordIdIterator.nextId();
       if (!validId) continue;
@@ -55,7 +60,7 @@ public class CompactStorageTest extends StorageTestBase {
       checkTestRecord(nextId);
     }
 
-    assertEquals(recordCount / 2, logicalRecordCount);
+    assertThat(logicalRecordCount).isEqualTo(recordCount / 2);
   }
 
   protected int countLiveLogicalRecords() throws IOException {
@@ -86,22 +91,22 @@ public class CompactStorageTest extends StorageTestBase {
     return r;
   }
 
-  void checkTestRecord(int id) throws IOException {
+  private void checkTestRecord(int id) throws IOException {
     try (DataInputStream stream = myStorage.readStream(id)) {
       Random random = new Random(id);
       for (int i = 0; i < TIMES_LIMIT; i++) {
-        assertEquals(random.nextInt(), stream.readInt());
+        assertThat(stream.readInt()).isEqualTo(random.nextInt());
       }
     }
   }
 
-  static class CompactStorage extends Storage {
-    CompactStorage(String fileName) throws IOException {
+  static final class CompactStorage extends Storage {
+    CompactStorage(@NotNull Path fileName) throws IOException {
       super(fileName);
     }
 
     @Override
-    protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
+    protected AbstractRecordsTable createRecordsTable(@NotNull PagePool pool, @NotNull Path recordsFile) throws IOException {
       return new CompactRecordsTable(recordsFile, pool, false);
     }
   }

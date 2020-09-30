@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ public interface Instruction {
    * element presentation is used in toString() for dumping the graph
    */
   @NotNull
-  String getElementPresentation();
+  @NonNls String getElementPresentation();
 
   default void addSucc(@NotNull Instruction endInstruction) {
     if (!allSucc().contains(endInstruction)) {

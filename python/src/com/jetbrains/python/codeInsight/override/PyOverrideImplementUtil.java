@@ -375,7 +375,7 @@ public class PyOverrideImplementUtil {
     private final List<PyReferenceExpression> myUnresolved = new ArrayList<>();
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
       super.visitPyReferenceExpression(referenceExpression);
       final PyResolveContext resolveContext = PyResolveContext.defaultContext();
       if (referenceExpression.getReference(resolveContext).multiResolve(false).length == 0) {
@@ -413,7 +413,7 @@ public class PyOverrideImplementUtil {
     }
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
       super.visitPyReferenceExpression(referenceExpression);
 
       if (myExpressionsToResolve.containsKey(referenceExpression.getName())) {

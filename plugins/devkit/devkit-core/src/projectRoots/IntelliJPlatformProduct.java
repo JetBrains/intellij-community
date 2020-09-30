@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
@@ -19,6 +20,7 @@ public enum IntelliJPlatformProduct {
   WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX),
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX),
+  MOBILE_IDE("MI", "Mobile IDE", PlatformUtils.MOBILE_IDE_PREFIX),
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX),
@@ -29,15 +31,15 @@ public enum IntelliJPlatformProduct {
   private final String myName;
   private final String myPlatformPrefix;
 
-  public String getName() {
+  public @NonNls String getName() {
     return myName;
   }
 
-  public String getPlatformPrefix() {
+  public @NonNls String getPlatformPrefix() {
     return myPlatformPrefix;
   }
 
-  IntelliJPlatformProduct(String productCode, String name, String platformPrefix) {
+  IntelliJPlatformProduct(@NonNls String productCode,@NonNls String name, @NonNls String platformPrefix) {
     myProductCode = productCode;
     myName = name;
     myPlatformPrefix = platformPrefix;

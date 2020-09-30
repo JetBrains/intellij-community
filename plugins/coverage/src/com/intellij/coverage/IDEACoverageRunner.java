@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -10,6 +9,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IDEACoverageRunner extends JavaCoverageRunner {
+public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
 
   @Override
@@ -66,7 +66,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
                                      @Nullable String sourceMapPath) {
-    StringBuilder argument = new StringBuilder("-javaagent:");
+    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
     argument.append(agentPath);

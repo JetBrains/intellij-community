@@ -508,7 +508,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       customizeComponents(token);
 
-      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+      ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if(artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).customize();
+      }
       ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);

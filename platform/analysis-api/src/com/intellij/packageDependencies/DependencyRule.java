@@ -59,8 +59,8 @@ public class DependencyRule {
   }
 
   public String getDisplayText() {
-    String toScopeName = myToScope == null ? "" : myToScope.getName();
-    String fromScopeName = myFromScope == null ? "" : myFromScope.getName();
+    String toScopeName = myToScope == null ? "" : myToScope.getPresentableName();
+    String fromScopeName = myFromScope == null ? "" : myFromScope.getPresentableName();
 
     return myDenyRule
            ? AnalysisBundle.message("scope.display.name.deny.scope", toScopeName, fromScopeName)

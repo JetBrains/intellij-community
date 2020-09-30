@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -13,19 +13,19 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
+public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   public ApplyTextFilePatch(final TextFilePatch patch) {
     super(patch);
   }
 
   @Override
-  @Nullable
-  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<? extends CharSequence> baseContents) throws IOException {
+  protected @NotNull Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<? extends CharSequence> baseContents) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
     if (document == null) {
       throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
@@ -47,18 +47,18 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   }
 
   @Override
-  protected void applyCreate(Project project, final VirtualFile newFile, CommitContext commitContext) throws IOException {
-    final Document document = FileDocumentManager.getInstance().getDocument(newFile);
+  protected void applyCreate(Project project, @NotNull VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
+    Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
       throw new IOException("Failed to set contents for new file " + newFile.getPath());
     }
-    final String charsetName = CharsetEP.getCharset(newFile.getPath(), commitContext);
+
+    String charsetName = commitContext == null ? null : CharsetEP.getCharset(newFile.getPath(), commitContext);
     if (charsetName != null) {
       try {
-        final Charset charset = Charset.forName(charsetName);
-        newFile.setCharset(charset);
-      } catch (IllegalArgumentException e) {
-        //
+        newFile.setCharset(Charset.forName(charsetName));
+      }
+      catch (IllegalArgumentException ignore) {
       }
     }
     document.setText(myPatch.getSingleHunkPatchText());

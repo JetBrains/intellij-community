@@ -16,6 +16,7 @@
 package com.intellij.navigation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ import javax.swing.*;
  */
 public class DelegatingItemPresentation implements ColoredItemPresentation {
   private final ItemPresentation myBase;
-  private String myPresentableText;
+  private @Nls String myPresentableText;
   private String myLocationString;
   private Icon myIcon;
   private boolean myCustomLocationString;
@@ -34,7 +35,7 @@ public class DelegatingItemPresentation implements ColoredItemPresentation {
     myBase = base;
   }
 
-  public DelegatingItemPresentation withPresentableText(String presentableText) {
+  public DelegatingItemPresentation withPresentableText(@Nls String presentableText) {
     myPresentableText = presentableText;
     return this;
   }

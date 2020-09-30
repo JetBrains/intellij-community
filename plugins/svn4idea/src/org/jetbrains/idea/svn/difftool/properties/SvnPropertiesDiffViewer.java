@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContentFactory;
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -47,7 +48,9 @@ import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.*;
 
-public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
+public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
+  private static final @NonNls String HELP_ID = "topicId758145";
+
   @NotNull private final List<DiffChange> myDiffChanges;
 
   private boolean myFirstRediff = true;
@@ -313,9 +316,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return "topicId758145";
-    }
+    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     return super.getData(dataId);
   }
 
@@ -426,9 +427,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @Nullable private final String myBefore;
     @Nullable private final String myAfter;
 
-    PropertyRecord(@NotNull String name,
-                          @Nullable String before,
-                          @Nullable String after) {
+    PropertyRecord(@NotNull String name, @Nullable String before, @Nullable String after) {
       assert before != null || after != null;
 
       myName = name;
@@ -436,8 +435,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       myAfter = after;
     }
 
-    @NotNull
-    public String getName() {
+    public @NlsSafe @NotNull String getName() {
       return myName;
     }
 

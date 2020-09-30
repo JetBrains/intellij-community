@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ColumnInfo;
 
 import java.util.Comparator;
@@ -18,9 +19,9 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   private final CoverageViewManager.StateBean myStateBean;
 
   public PercentageCoverageColumnInfo(int columnIdx,
-                               String name,
-                               final CoverageSuitesBundle suitesBundle,
-                               CoverageViewManager.StateBean stateBean) {
+                                      @NlsContexts.ColumnName String name,
+                                      final CoverageSuitesBundle suitesBundle,
+                                      CoverageViewManager.StateBean stateBean) {
     super(name);
     this.myColumnIdx = columnIdx;
     myComparator = (o1, o2) -> {

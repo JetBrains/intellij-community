@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +21,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -86,7 +86,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
         myChangelist.setRenderer(new ColoredListCellRenderer<String>() {
           @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+          protected void customizeCellRenderer(@NotNull JList<? extends String> list, @NlsSafe String value, int index, boolean selected, boolean hasFocus) {
             if (value == null) return;
             String trimmed = StringUtil.first(value, 50, true);
             if (value.equals(defaultChangelist)) {
@@ -170,19 +170,5 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   public static Dimension getDialogPreferredSize() {
     return new Dimension(500, 400);
-  }
-
-  @NotNull
-  public static String getTheseFilesMessage(Collection<? extends VirtualFile> files) {
-    boolean dirsOnly = true;
-    for (VirtualFile each : files) {
-      if (!each.isDirectory()) {
-        dirsOnly = false;
-        break;
-      }
-    }
-
-    int size = files.size();
-    return StringUtil.pluralize("this", size) + " " + StringUtil.pluralize((dirsOnly ? "directory" : "file"), size);
   }
 }

@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
@@ -189,12 +191,9 @@ public final class ExportToFileUtil {
 
       String defaultFilePath = myExporter.getDefaultFilePath();
       if (!new File(defaultFilePath).isAbsolute()) {
-        defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath).replace('/', File.separatorChar);
+        defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath);
       }
-      else {
-        defaultFilePath = defaultFilePath.replace('/', File.separatorChar);
-      }
-      myTfFile.setText(defaultFilePath);
+      myTfFile.setText(FileUtil.toSystemDependentName(defaultFilePath));
 
       panel.setBorder(JBUI.Borders.emptyBottom(5));
 
@@ -205,7 +204,7 @@ public final class ExportToFileUtil {
       return myTextArea.getDocument().getText();
     }
 
-    public void setFileName(String s) {
+    public void setFileName(@NlsSafe String s) {
       myTfFile.setText(s);
     }
 

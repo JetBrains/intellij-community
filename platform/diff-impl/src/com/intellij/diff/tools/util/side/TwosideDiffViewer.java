@@ -30,7 +30,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,14 +66,14 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorHolders();
     super.onDispose();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myFocusTrackerSupport.processContextHints(myRequest, myContext);
@@ -83,7 +83,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myFocusTrackerSupport.updateContextHints(myRequest, myContext);
@@ -116,7 +116,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createSimpleTitles(myRequest));
+    return DiffUtil.createSimpleTitles(myRequest);
   }
 
   //

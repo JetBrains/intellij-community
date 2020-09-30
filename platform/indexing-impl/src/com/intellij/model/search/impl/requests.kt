@@ -66,6 +66,7 @@ internal class WordRequest<out R>(
 
 internal sealed class InjectionInfo {
   object NoInjection : InjectionInfo()
+  object IncludeInjections : InjectionInfo()
   class InInjection(val languageInfo: LanguageInfo) : InjectionInfo()
 }
 

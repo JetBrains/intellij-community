@@ -14,7 +14,7 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-public class WinIntelliJSliderUI extends BasicSliderUI {
+public final class WinIntelliJSliderUI extends BasicSliderUI {
   private static final String HOVER_PROPERTY = "JSlider.mouseHover";
   private static final String PRESSED_PROPERTY = "JSlider.mousePressed";
 

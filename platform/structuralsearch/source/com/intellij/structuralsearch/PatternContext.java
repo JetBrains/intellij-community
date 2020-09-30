@@ -1,20 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * @author Bas Leijdekkers
  */
-public final class PatternContext implements Comparable<PatternContext> {
-
+public final class PatternContext {
+  @NotNull
   public final String myID;
-  private final String myDisplayName;
+  @NotNull
+  private final Supplier<String> myDisplayName;
 
-  public PatternContext(@NotNull String ID, String displayName) {
+  public PatternContext(@NonNls @NotNull String ID, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) @NotNull String> displayName) {
     myID = ID;
     myDisplayName = displayName;
+  }
 
+  /**
+   * @deprecated Use {@link com.intellij.structuralsearch.PatternContext#PatternContext(java.lang.String, java.util.function.Supplier)} instead.
+   */
+  @Deprecated
+  public PatternContext(@NonNls @NotNull String ID, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String displayName) {
+    this(ID, () -> displayName);
   }
 
   @Override
@@ -23,17 +35,12 @@ public final class PatternContext implements Comparable<PatternContext> {
     if (o == null || getClass() != o.getClass()) return false;
 
     final PatternContext other = (PatternContext)o;
-    return myID.equals(other.myID) && myDisplayName.equals(other.myDisplayName);
+    return myID.equals(other.myID);
   }
 
   @Override
   public int hashCode() {
-    return 31 * myID.hashCode() + myDisplayName.hashCode();
-  }
-
-  @Override
-  public int compareTo(@NotNull PatternContext o) {
-    return myDisplayName.compareTo(o.myDisplayName);
+    return myID.hashCode();
   }
 
   @NotNull
@@ -41,12 +48,12 @@ public final class PatternContext implements Comparable<PatternContext> {
     return myID;
   }
 
-  public String getDisplayName() {
-    return myDisplayName;
+  public @NotNull String getDisplayName() {
+    return myDisplayName.get();
   }
 
   @Override
   public String toString() {
-    return myDisplayName + " (" + myID + ')';
+    return myDisplayName.get() + " (" + myID + ')';
   }
 }

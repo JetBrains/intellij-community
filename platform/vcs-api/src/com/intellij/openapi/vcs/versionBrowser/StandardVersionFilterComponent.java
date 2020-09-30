@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.versionBrowser;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +54,19 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.setVisible(false);
   }
 
+  @Nls
   protected String getChangeNumberTitle() {
     return VcsBundle.message("border.changes.filter.change.number.filter");
+  }
+
+  @Nls
+  protected String getChangeFromParseError() {
+    return VcsBundle.message("error.change.from.must.be.a.valid.number");
+  }
+
+  @Nls
+  protected String getChangeToParseError() {
+    return VcsBundle.message("error.change.to.must.be.a.valid.number");
   }
 
   private void installCheckBoxesListeners() {
@@ -128,7 +140,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumAfter.getText());
       }
       catch(NumberFormatException ex) {
-        return getChangeNumberTitle() + " From must be a valid number";
+        return getChangeFromParseError();
       }
     }
     if (myUseNumBeforeFilter.isSelected()) {
@@ -136,7 +148,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumBefore.getText());
       }
       catch(NumberFormatException ex) {
-        return getChangeNumberTitle() + " To must be a valid number";
+        return getChangeToParseError();
       }
     }
     return myDateFilterComponent.validateInput();

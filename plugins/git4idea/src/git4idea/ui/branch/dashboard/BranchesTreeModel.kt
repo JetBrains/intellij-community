@@ -9,13 +9,15 @@ import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal val GIT_BRANCHES = DataKey.create<Set<BranchInfo>>("GitBranchKey")
+internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterKey")
+internal val GIT_REMOTES = DataKey.create<Set<String>>("GitRemoteKey")
 
 internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
+                               var isFavorite: Boolean,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
-  var isFavorite = false
   override fun toString() = branchName
 }
 
@@ -32,7 +34,7 @@ internal data class BranchNodeDescriptor(val type: NodeType,
 }
 
 internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE
+  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE, HEAD_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
@@ -42,6 +44,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
     return when (nodeDescriptor.type) {
       NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
       NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
+      NodeType.HEAD_NODE -> message("group.Git.HEAD.Branch.Filter.title")
       else -> nodeDescriptor.getDisplayText() ?: super.toString()
     }
   }
@@ -75,11 +78,12 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
     branches.forEach { branch -> populateFrom(branch, useGrouping) }
   }
 
-  private fun populateFrom(branch: BranchInfo, useGrouping: Boolean) {
+  private fun populateFrom(br: BranchInfo, useGrouping: Boolean) {
+    val branch = with(br) { BranchInfo(branchName, isLocal, isCurrent, isFavorite, repositories) }
     var curParent: BranchNodeDescriptor = if (branch.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
 
     if (!useGrouping) {
-      addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, branch))
+      addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, branch, parent = curParent))
       return
     }
 

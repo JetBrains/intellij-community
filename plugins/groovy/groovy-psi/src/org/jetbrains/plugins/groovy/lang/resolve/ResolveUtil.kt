@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("LoopToCallChain")
-
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
@@ -27,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 
-val log: Logger = logger("#org.jetbrains.plugins.groovy.lang.resolve")
+val log: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve")
 
 @JvmField
 val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")

@@ -2,8 +2,8 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
@@ -393,7 +393,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(1, "foo", null, false),
                                              new PyParameterInfo(2, "**kwargs", null, false)));
   }
-  
+
   // PY-24602
   public void testScatteredKwargsArgsAddParamAfter() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
@@ -401,7 +401,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(NEW_PARAMETER, "y", "None", false),
                                              new PyParameterInfo(2, "**kwargs", null, false)));
   }
-  
+
   // PY-24602
   public void testScatteredKwargsArgsAddParamAfterWithDefault() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
@@ -409,7 +409,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(NEW_PARAMETER, "y", "None", true),
                                              new PyParameterInfo(2, "**kwargs", null, false)));
   }
-  
+
   // PY-24602
   public void testScatteredKwargsArgsSwapParams() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
@@ -423,7 +423,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(2, "x", null, false),
                                              new PyParameterInfo(1, "*args", null, false)));
   }
-  
+
   // PY-24609
   public void testKeepKeywordOfArgumentBeforeEmptyVararg() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "y", null, false),
@@ -588,16 +588,16 @@ public class PyChangeSignatureTest extends PyTestCase {
     assertNotNull(function);
     final PyFunction newFunction;
     // Accept modifying the base method
-    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
     try {
       newFunction = PyChangeSignatureHandler.getSuperMethod(function);
     }
     finally {
-      Messages.setTestDialog(oldTestDialog);
+      TestDialogManager.setTestDialog(oldTestDialog);
     }
     assertNotNull(newFunction);
     final PyMethodDescriptor method = new PyMethodDescriptor(newFunction);
-    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);                                                                                                                                                                                                     
+    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);
     try {
       if (newName != null) {
         dialog.setNewName(newName);

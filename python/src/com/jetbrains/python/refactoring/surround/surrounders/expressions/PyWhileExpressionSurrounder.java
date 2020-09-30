@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.refactoring.surround.surrounders.expressions;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementListContainer;
 import com.jetbrains.python.psi.PyWhileStatement;
 
 public class PyWhileExpressionSurrounder extends PyExpressionAsConditionSurrounder {
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "while expr";
 
   @Override
   protected String getTextToGenerate() {
@@ -45,6 +47,7 @@ public class PyWhileExpressionSurrounder extends PyExpressionAsConditionSurround
 
   @Override
   public String getTemplateDescription() {
-    return "while expr";
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }

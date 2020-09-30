@@ -65,8 +65,8 @@ public class MavenSpyBufferTest extends UsefulTestCase {
 
   private static void doTest(String[] text, String[] expected) {
     List<String> actual = new ArrayList<>();
-    MavenExternalExecutor.MavenSpyEventsBuffer spyEventsBuffer =
-      new MavenExternalExecutor.MavenSpyEventsBuffer((l, k) -> actual.add(l));
+    MavenSpyEventsBuffer spyEventsBuffer =
+      new MavenSpyEventsBuffer((l, k) -> actual.add(l));
     for (String s : text) {
       spyEventsBuffer.addText(s, Key.create("test"));
     }

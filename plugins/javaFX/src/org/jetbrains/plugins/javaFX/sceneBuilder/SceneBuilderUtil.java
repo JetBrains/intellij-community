@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -20,8 +20,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class SceneBuilderUtil {
+final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
   static final String SCENE_BUILDER_VERSION = "11.0.5";
@@ -94,15 +95,16 @@ class SceneBuilderUtil {
     for (String artifact : JAVAFX_ARTIFACTS) {
       Path path2Artifact = javaFx.resolve(artifact).resolve(JAVAFX_VERSION);
 
-      List<Path> paths = Files
-        .list(path2Artifact)
-        .filter(path -> {
-          String name = path.toFile().getName();
-          return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
-        }).collect(Collectors.toList());
+      try (Stream<Path> artifacts = Files.list(path2Artifact)) {
+        List<Path> paths = artifacts
+          .filter(path -> {
+            String name = path.toFile().getName();
+            return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
+          }).collect(Collectors.toList());
 
-      for (Path path : paths) {
-        urls.add(path.toUri().toURL());
+        for (Path path : paths) {
+          urls.add(path.toUri().toURL());
+        }
       }
     }
   }

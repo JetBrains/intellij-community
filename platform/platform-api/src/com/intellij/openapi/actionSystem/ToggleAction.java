@@ -23,7 +23,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(() -> text);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text) {
     super(text);
   }
 
@@ -33,13 +33,13 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text,
-                      @NotNull Supplier<String> description,
+  public ToggleAction(@NotNull Supplier<@ActionText String> text,
+                      @NotNull Supplier<@ActionDescription String> description,
                       @Nullable final Icon icon) {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text, @Nullable final Icon icon) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable final Icon icon) {
     super(text, Presentation.NULL_STRING, icon);
   }
 

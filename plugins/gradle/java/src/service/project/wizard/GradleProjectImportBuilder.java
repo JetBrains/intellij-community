@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import icons.GradleIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
 
     Set<String> existingPaths = Arrays.stream(jdkTable.getAllJdks())
                                       .map(sdk -> sdk.getHomePath())
-                                      .collect(Collectors.toCollection(() -> new THashSet<>(FileUtil.PATH_HASHING_STRATEGY)));
+                                      .collect(Collectors.toCollection(() -> CollectionFactory.createFilePathSet()));
     for (String javaHome : javaSdkType.suggestHomePaths()) {
       if (!existingPaths.contains(FileUtil.toCanonicalPath(javaHome))) {
         Sdk jdk = javaSdkType.createJdk(ObjectUtils.notNull(javaSdkType.suggestSdkName(null, javaHome), ""), javaHome);

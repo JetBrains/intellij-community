@@ -96,7 +96,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
       return null;
     }
     if (value instanceof String || value instanceof Number || value instanceof Boolean) {
-      return value.toString();
+      return value.toString(); //NON-NLS
     }
     throw new Exception(String.format("JsonPath expression '%s' should match string value. Got '%s' instead",
                                       selector.getPath(), value));

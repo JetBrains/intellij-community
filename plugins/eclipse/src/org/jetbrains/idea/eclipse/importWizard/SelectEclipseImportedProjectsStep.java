@@ -6,11 +6,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
@@ -20,11 +21,11 @@ import java.util.Set;
 
 class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<String> {
 
-  Set<String> duplicateNames;
+  Set<@NlsSafe String> duplicateNames;
 
   SelectEclipseImportedProjectsStep(WizardContext context) {
     super(context);
-    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
+    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
       @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
         duplicateNames = null;
@@ -79,14 +80,16 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
     if (!duplicateNames.isEmpty()) {
-      throw new ConfigurationException("Duplicate names found:" + StringUtil.join(ArrayUtilRt.toStringArray(duplicateNames), ","), "Unable to proceed");
+      throw new ConfigurationException(
+        EclipseBundle.message("duplicate.names.found.import.error.message", StringUtil.join(duplicateNames, ",")),
+        EclipseBundle.message("unable.to.proceed.import.title"));
     }
     return super.validate();
   }
 
   @Override
   public String getName() {
-    return "Eclipse Projects to Import";
+    return EclipseBundle.message("eclipse.projects.to.import.selection.step.name");
   }
 
   @Override

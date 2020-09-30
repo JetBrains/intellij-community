@@ -20,7 +20,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    this(project, ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFilesPaths());
+    this(project, ChangeListManager.getInstance(project).getUnversionedFilesPaths());
   }
 
   public UnversionedViewDialog(@NotNull Project project, @NotNull List<FilePath> filePaths) {
@@ -53,6 +53,6 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   @NotNull
   @Override
   protected List<FilePath> getFiles() {
-    return ((ChangeListManagerImpl)myChangeListManager).getUnversionedFilesPaths();
+    return ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
   }
 }

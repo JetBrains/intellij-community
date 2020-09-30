@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 
@@ -15,9 +16,9 @@ import java.util.Collection;
 */
 public class DefaultGutterIconNavigationHandler<T extends PsiElement> implements GutterIconNavigationHandler<T> {
   private final Collection<? extends NavigatablePsiElement> myReferences;
-  private final String myTitle;
+  private final @NlsContexts.PopupTitle String myTitle;
 
-  public DefaultGutterIconNavigationHandler(Collection<? extends NavigatablePsiElement> references, String title) {
+  public DefaultGutterIconNavigationHandler(Collection<? extends NavigatablePsiElement> references, @NlsContexts.PopupTitle String title) {
     myReferences = references;
     myTitle = title;
   }

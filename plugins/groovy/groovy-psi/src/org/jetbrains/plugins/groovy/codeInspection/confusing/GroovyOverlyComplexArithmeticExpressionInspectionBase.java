@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -31,7 +32,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
 
   @Override
   protected String buildErrorString(Object... args) {
-    return "Overly complex arithmetic expression #loc";
+    return GroovyBundle.message("inspection.message.overly.complex.arithmetic.expression");
   }
 
   @NotNull

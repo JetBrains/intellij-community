@@ -55,7 +55,7 @@ import java.util.stream.Stream;
  * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
-public class PyResolveUtil {
+public final class PyResolveUtil {
   private PyResolveUtil() {
   }
 
@@ -386,7 +386,9 @@ public class PyResolveUtil {
       .anyMatch(e -> name.equals(e.getVisibleName()));
   }
 
-  public static void addImplicitResolveResults(String referencedName, ResolveResultList ret, PyQualifiedExpression element) {
+  public static void addImplicitResolveResults(@NotNull String referencedName,
+                                               @NotNull ResolveResultList ret,
+                                               @NotNull PyQualifiedExpression element) {
     final Project project = element.getProject();
     final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
     final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, project, scope);

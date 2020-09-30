@@ -16,23 +16,28 @@
 package com.intellij.remote.ext;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class PathMappingType {
-  public static final PathMappingType REPLICATED_FOLDER = new PathMappingType(AllIcons.Ide.Readonly, "Shared folders from Vagrantfile:");
-  public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly, "From deployment configuration:");
+  public static final PathMappingType REPLICATED_FOLDER = new PathMappingType(AllIcons.Ide.Readonly,
+                                                                              IdeBundle.message("tooltip.shared.folders.from.vagrantfile"));
+  public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly,
+                                                                       IdeBundle.message("tooltip.from.deployment.configuration"));
 
   @Nullable private final Icon myIcon;
-  @Nullable private final String myTooltip;
+  @NlsContexts.Tooltip @Nullable private final String myTooltip;
 
   public PathMappingType() {
     myIcon = null;
     myTooltip = null;
   }
 
-  public PathMappingType(@Nullable Icon icon, @Nullable String tooltip) {
+  public PathMappingType(@Nullable Icon icon, @NlsContexts.Tooltip @Nullable String tooltip) {
     myIcon = icon;
     myTooltip = tooltip;
   }
@@ -42,6 +47,7 @@ public class PathMappingType {
     return myIcon;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   public String getTooltip() {
     return myTooltip;
@@ -54,7 +60,7 @@ public class PathMappingType {
 
     PathMappingType type = (PathMappingType)o;
 
-    if (myTooltip != null ? !myTooltip.equals(type.myTooltip) : type.myTooltip != null) return false;
+    if (!Objects.equals(myTooltip, type.myTooltip)) return false;
 
     return true;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
@@ -25,8 +26,8 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
   private final ListCellRenderer<T> myLeftRenderer;
   private final ListCellRenderer<T> myRightRenderer;
   private final JComponent myPanel;
-  private String myLeftText;
-  private String myRightText;
+  private @NlsContexts.Label String myLeftText;
+  private @NlsContexts.Label String myRightText;
   private Icon myIcon;
   private Icon myRightIcon;
   private Color myLeftForeground;
@@ -74,7 +75,7 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
     myRightIcon = rightIcon;
   }
 
-  protected final void setLeftText(String text) {
+  protected final void setLeftText(@NlsContexts.Label String text) {
     myLeftText = text;
   }
 
@@ -82,7 +83,7 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
     myIcon = icon;
   }
 
-  protected final void setRightText(String text) {
+  protected final void setRightText(@NlsContexts.Label String text) {
     myRightText = text;
   }
 

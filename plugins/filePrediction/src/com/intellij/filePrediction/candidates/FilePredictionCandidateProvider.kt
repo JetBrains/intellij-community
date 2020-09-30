@@ -4,6 +4,7 @@ package com.intellij.filePrediction.candidates
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName<FilePredictionCandidateProvider>("com.intellij.filePrediction.candidateProvider")
@@ -20,11 +21,11 @@ internal abstract class FilePredictionBaseCandidateProvider(private val weight: 
 
   internal fun addWithLimit(from: Iterator<VirtualFile>,
                             to: MutableSet<FilePredictionCandidateFile>,
-                            source: String,
+                            source: FilePredictionCandidateSource,
                             skip: VirtualFile?, limit: Int) {
     while (to.size < limit && from.hasNext()) {
       val next = from.next()
-      if (!next.isDirectory && skip != next) {
+      if (!next.isDirectory && skip != next && next !is LightVirtualFile) {
         to.add(FilePredictionCandidateFile(next, source))
       }
     }
@@ -51,7 +52,7 @@ open class CompositeCandidateProvider : FilePredictionCandidateProvider {
   }
 }
 
-data class FilePredictionCandidateFile(val file: VirtualFile, val source: String) {
+data class FilePredictionCandidateFile(val file: VirtualFile, val source: FilePredictionCandidateSource) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

@@ -35,11 +35,11 @@ public abstract class Task implements TaskInfo, Progressive {
   private static final Logger LOG = Logger.getInstance(Task.class);
 
   protected final Project myProject;
-  protected String myTitle;
+  protected @NlsContexts.ProgressTitle String myTitle;
   private final boolean myCanBeCancelled;
 
-  private String myCancelText = CoreBundle.message("button.cancel");
-  private String myCancelTooltipText = CoreBundle.message("button.cancel");
+  private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");
+  private @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
   private Task(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
     myProject = project;
@@ -117,7 +117,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setTitle(@Nls@NlsContexts.ProgressTitle @NotNull String title) {
+  public final Task setTitle(@NlsContexts.ProgressTitle @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -253,8 +253,8 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public static class NotificationInfo {
     private final String myNotificationName;
-    private final String myNotificationTitle;
-    private final String myNotificationText;
+    private final @NlsContexts.SystemNotificationTitle String myNotificationTitle;
+    private final @NlsContexts.SystemNotificationText String myNotificationText;
     private final boolean myShowWhenFocused;
 
     public NotificationInfo(@NotNull String notificationName,

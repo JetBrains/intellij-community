@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -21,12 +19,14 @@ public final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
 
   private CachingSemiGraph(@NotNull InboundSemiGraph<Node> original) {
     myNodes = new LinkedHashSet<>(original.getNodes());
-    myIn = new THashMap<>();
+    myIn = new HashMap<>();
     for (Node node : myNodes) {
       Iterator<Node> inIterator = original.getIn(node);
       if (inIterator.hasNext()) {
-        ArrayList<Node> value = new ArrayList<>();
-        ContainerUtil.addAll(value, inIterator);
+        List<Node> value = new ArrayList<>();
+        while (inIterator.hasNext()) {
+          value.add(inIterator.next());
+        }
         myIn.put(node, value);
       }
     }

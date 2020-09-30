@@ -15,17 +15,43 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.Hash;
-import git4idea.history.wholeTree.GitCreateNewTag;
+import git4idea.branch.GitBrancher;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 public class GitCreateTagAction extends GitLogSingleCommitAction {
 
   @Override
   protected void actionPerformed(@NotNull GitRepository repository, @NotNull Hash commit) {
-    String reference = commit.asString();
-    new GitCreateNewTag(repository.getProject(), repository, reference, null).execute();
+    createNewTag(repository.getProject(), repository, commit.asString());
   }
 
+  private static void createNewTag(@NotNull Project project, @NotNull GitRepository repository, @NotNull @NlsSafe String reference) {
+    String name = Messages.showInputDialog(project,
+                                           GitBundle.message("git.new.tag.dialog.tag.name.label"),
+                                           GitBundle.message("git.new.tag.dialog.title", reference),
+                                           Messages.getQuestionIcon(), "", new InputValidator() {
+        @Override
+        public boolean checkInput(String inputString) {
+          return !StringUtil.isEmpty(inputString) && !StringUtil.containsWhitespaces(inputString);
+        }
+
+        @Override
+        public boolean canClose(String inputString) {
+          return !StringUtil.isEmpty(inputString) && !StringUtil.containsWhitespaces(inputString);
+        }
+      });
+    if (name != null) {
+      GitBrancher.getInstance(project).createNewTag(name, reference, Collections.singletonList(repository), null);
+    }
+  }
 }

@@ -19,6 +19,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.Map;
 public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final static Logger LOG = Logger.getInstance(MigrateAssertToMatcherAssertInspection.class);
-  private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<>();
+  private final static Map<String, Pair<@NonNls String, @NonNls String>> ASSERT_METHODS = new HashMap<>();
 
   static {
     ASSERT_METHODS.put("assertArrayEquals", Pair.create("$expected$, $actual$", "$actual$, {0}.is($expected$)"));
@@ -175,7 +176,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
       }
     }
 
-    private Pair<String, String> buildFullTemplate(Pair<String, String> templatePair, PsiMethod method) {
+    private Pair<@NonNls String, @NonNls String> buildFullTemplate(Pair<String, String> templatePair, PsiMethod method) {
       if (templatePair == null) {
         return null;
       }
@@ -190,13 +191,13 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
     }
 
     @Nullable
-    private Pair<String, String> getSuitableMatcherForBinaryExpressionInsideBooleanAssert(PsiBinaryExpression expression, boolean negate) {
+    private Pair<@NonNls String, @NonNls String> getSuitableMatcherForBinaryExpressionInsideBooleanAssert(PsiBinaryExpression expression, boolean negate) {
       final PsiJavaToken sign = expression.getOperationSign();
       IElementType tokenType = sign.getTokenType();
       if (negate) {
         tokenType = negate(tokenType);
       }
-      final String fromTemplate = "$left$ " + sign.getText() + "  $right$";
+      final @NonNls String fromTemplate = "$left$ " + sign.getText() + "  $right$";
       if (JavaTokenType.EQEQ.equals(tokenType) || JavaTokenType.NE.equals(tokenType)) {
         boolean isEqEqForPrimitives = true;
         for (PsiExpression operand : Arrays.asList(expression.getLOperand(), expression.getROperand())) {
@@ -205,7 +206,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
             break;
           }
         }
-        String rightPartOfAfterTemplate =
+        @NonNls String rightPartOfAfterTemplate =
           isEqEqForPrimitives ? "{0}.is($right$)" : "{0}.sameInstance($right$)";
         if (JavaTokenType.NE.equals(tokenType)) {
           rightPartOfAfterTemplate = "{0}.not(" + rightPartOfAfterTemplate + ")";
@@ -213,7 +214,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
         return  Pair.create(fromTemplate,
                            "$left$, " + rightPartOfAfterTemplate);
       }
-      String replaceTemplate = null;
+      @NonNls String replaceTemplate = null;
       if (JavaTokenType.GT.equals(tokenType)) {
         replaceTemplate = "greaterThan($right$)";
       }
@@ -257,9 +258,9 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
   @Nullable
   private static Pair<String, String> getSuitableMatcherForMethodCallInsideBooleanAssert(PsiMethodCallExpression expression, boolean negate) {
     final String methodName = expression.getMethodExpression().getReferenceName();
-    String fromTemplate = null;
-    String toLeftPart = null;
-    String toRightPart = null;
+    @NonNls String fromTemplate = null;
+    @NonNls String toLeftPart = null;
+    @NonNls String toRightPart = null;
     if ("contains".equals(methodName)) {
       final PsiMethod method = expression.resolveMethod();
       final PsiClass containingClass;

@@ -19,6 +19,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +38,7 @@ public class WeakFileReference extends FileReferenceWithOneContext implements Ps
 
   @Nullable
   @Override
-  public String getUnresolvedDescription() {
+  public @Nls String getUnresolvedDescription() {
     return null;
   }
 }

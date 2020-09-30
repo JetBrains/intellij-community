@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 /**
  * @author Alexander Lobas
  */
-@SuppressWarnings("ALL")
 public class PluginPriceService {
   private static final Logger LOG = Logger.getInstance(PluginPriceService.class);
 
@@ -39,8 +38,8 @@ public class PluginPriceService {
   private static boolean myPreparing;
 
   public static void getPrice(@NotNull IdeaPluginDescriptor descriptor,
-                              @NotNull Consumer<String> callback,
-                              @NotNull Consumer<String> asyncCallback) {
+                              @NotNull Consumer<? super String> callback,
+                              @NotNull Consumer<? super String> asyncCallback) {
     checkAccess();
 
     String code = descriptor.getProductCode();

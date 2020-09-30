@@ -21,6 +21,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   ConnectionStatus getStatus();
 
   @NotNull
+  @Nls
   String getStatusText();
 
 
@@ -43,7 +45,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
 
   void disconnect();
 
-  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<String> onDeploymentStarted);
+  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<? super String> onDeploymentStarted);
 
   void computeDeployments(@NotNull Runnable onFinished);
 

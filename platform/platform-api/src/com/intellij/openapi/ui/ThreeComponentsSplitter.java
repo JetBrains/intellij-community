@@ -271,7 +271,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return super.isVisible() && (firstVisible() || innerVisible() || lastVisible());
   }
 
-  private boolean lastVisible() {
+  protected boolean lastVisible() {
     return !Splitter.isNull(myLastComponent) && myLastComponent.isVisible();
   }
 
@@ -279,7 +279,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return !Splitter.isNull(myInnerComponent) && myInnerComponent.isVisible();
   }
 
-  private boolean firstVisible() {
+  protected boolean firstVisible() {
     return !Splitter.isNull(myFirstComponent) && myFirstComponent.isVisible();
   }
 
@@ -675,7 +675,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myIsFirst = isFirst;
       setOrientation(myVerticalSplit);
 
-      new UiNotifyConnector(this, new Activatable() {
+      Disposer.register(parentDisposable, new UiNotifyConnector(this, new Activatable() {
         @Override
         public void showNotify() {
           initGlassPane(parentDisposable);
@@ -685,7 +685,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         public void hideNotify() {
           releaseGlassPane();
         }
-      });
+      }));
     }
 
     private boolean isInside(Point p) {

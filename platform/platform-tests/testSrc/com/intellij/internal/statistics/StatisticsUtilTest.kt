@@ -8,9 +8,12 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import kotlin.test.assertEquals
 
 @Suppress("SameParameterValue")
+@RunWith(JUnit4::class)
 class StatisticsUtilTest : LightPlatformTestCase() {
   @Test
   fun test_counting_usage() {

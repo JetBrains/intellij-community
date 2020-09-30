@@ -9,9 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author Max Medvedev
@@ -63,7 +66,7 @@ public final class GrInlineFieldUtil {
     }
   }
 
-  public static String getInlineField() {
+  public static @Nls(capitalization = Title) String getInlineField() {
     return JavaRefactoringBundle.message("inline.field.title");
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.customFolding;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -42,7 +43,8 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public String getDescription() {
-    return "region...endregion Comments";
+    //noinspection DialogTitleCapitalization -- region..endregion are standard keywords
+    return LangBundle.message("custom.folding.comments.vs.description");
   }
 
   @Override

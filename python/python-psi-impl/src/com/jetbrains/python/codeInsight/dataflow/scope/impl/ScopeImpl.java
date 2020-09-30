@@ -214,7 +214,7 @@ public class ScopeImpl implements Scope {
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyTargetExpression(PyTargetExpression node) {
+      public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         targetExpressions.add(node);
         final PsiElement parent = node.getParent();
         if (!node.isQualified() && !(parent instanceof PyImportElement)) {
@@ -223,7 +223,7 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         if (PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null) {
           augAssignments.add(node.getName());
         }
@@ -231,7 +231,7 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
-      public void visitPyGlobalStatement(PyGlobalStatement node) {
+      public void visitPyGlobalStatement(@NotNull PyGlobalStatement node) {
         for (PyTargetExpression expression : node.getGlobals()) {
           final String name = expression.getReferencedName();
           globals.add(name);
@@ -240,7 +240,7 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
-      public void visitPyNonlocalStatement(PyNonlocalStatement node) {
+      public void visitPyNonlocalStatement(@NotNull PyNonlocalStatement node) {
         for (PyTargetExpression expression : node.getVariables()) {
           nonlocals.add(expression.getReferencedName());
         }
@@ -248,7 +248,7 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
-      public void visitPyFunction(PyFunction node) {
+      public void visitPyFunction(@NotNull PyFunction node) {
         for (PyParameter parameter : node.getParameterList().getParameters()) {
           final PyExpression defaultValue = parameter.getDefaultValue();
           if (defaultValue != null) {
@@ -260,22 +260,22 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
-      public void visitPyNamedParameter(PyNamedParameter node) {
+      public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
         processNamedElement(node);
       }
 
       @Override
-      public void visitPyClass(PyClass node) {
+      public void visitPyClass(@NotNull PyClass node) {
         visitDecorators(node.getDecoratorList());
         super.visitPyClass(node);
       }
 
       @Override
-      public void visitPyDecoratorList(PyDecoratorList node) {
+      public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
       }
 
       @Override
-      public void visitPyElement(PyElement node) {
+      public void visitPyElement(@NotNull PyElement node) {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
           processNamedElement((PsiNamedElement)node);
         }

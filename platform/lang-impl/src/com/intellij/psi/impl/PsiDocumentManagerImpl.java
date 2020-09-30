@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -121,10 +122,15 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                               @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously,
                                               boolean forceNoPsiCommit) {
+    boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
+    PsiFile file = getCachedPsiFile(document);
+    if (file != null) {
+      InjectedLanguageManagerImpl.clearInvalidInjections(file);
+    }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
       InjectedLanguageManagerImpl.disposeInvalidEditors();
     }
-    return super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
+    return success;
   }
 
   @Override
@@ -203,5 +209,13 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
       FileDocumentManagerImpl.registerDocument(document, vFile);
     }
+  }
+
+  @Override
+  public boolean commitAllDocumentsUnderProgress() {
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
+    boolean success = super.commitAllDocumentsUnderProgress();
+    IdeEventQueue.getInstance().setEventCount(eventCount);
+    return success;
   }
 }

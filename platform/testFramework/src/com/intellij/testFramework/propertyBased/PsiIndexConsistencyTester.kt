@@ -30,6 +30,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ref.GCUtil
 import org.junit.Assert.fail
 
@@ -43,6 +45,7 @@ object PsiIndexConsistencyTester {
                                          RefKind.StubRef(null), RefKind.GreenStubRef(null))
   
   val commonActions: List<Action> = listOf(Action.Commit,
+                                           Action.FlushIndexes,
                                            Action.Gc,
                                            Action.ReparseFile,
                                            Action.FilePropertiesChanged,
@@ -96,6 +99,12 @@ object PsiIndexConsistencyTester {
 
     abstract class SimpleAction: Action {
       override fun toString(): String = javaClass.simpleName
+    }
+
+    object FlushIndexes: SimpleAction() {
+      override fun performAction(model: Model) {
+        (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
+      }
     }
 
     object Gc: SimpleAction() {

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
@@ -52,7 +53,7 @@ public class ChangeNotesPanel {
     setDecorateState(false);
   }
 
-  public void show(@Nullable String text) {
+  public void show(@Nullable @NlsContexts.DialogMessage String text) {
     if (text == null) {
       myPanel.setVisible(false);
     }

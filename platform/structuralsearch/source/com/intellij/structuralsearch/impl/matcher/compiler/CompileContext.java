@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author maxim
@@ -16,7 +17,7 @@ public class CompileContext {
   private final MatchOptions myOptions;
   private final Project myProject;
 
-  public CompileContext(CompiledPattern pattern, MatchOptions options, Project project) {
+  public CompileContext(@NotNull CompiledPattern pattern, @NotNull MatchOptions options, @NotNull Project project) {
     myPattern = pattern;
     myOptions = options;
     myProject = project;
@@ -30,18 +31,22 @@ public class CompileContext {
     mySearchHelper.clear();
   }
 
+  @NotNull
   public OptimizingSearchHelper getSearchHelper() {
     return mySearchHelper;
   }
 
+  @NotNull
   public CompiledPattern getPattern() {
     return myPattern;
   }
 
+  @NotNull
   public MatchOptions getOptions() {
     return myOptions;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

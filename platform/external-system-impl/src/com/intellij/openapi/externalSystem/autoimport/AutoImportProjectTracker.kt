@@ -131,7 +131,9 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       if (isAllowAutoReload && !projectData.isUpToDate()) {
         isSkippedProjectRefresh = false
         LOG.debug("$projectId: Project refresh")
-        val context = ProjectReloadContext(!smart)
+        val hasUndefinedModifications = !projectData.status.isUpToDate()
+        val settingsContext = projectData.settingsTracker.getSettingsContext()
+        val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
         projectData.projectAware.reloadProject(context)
       }
       else {
@@ -315,7 +317,11 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     )
   }
 
-  private data class ProjectReloadContext(override val isExplicitReload: Boolean) : ExternalSystemProjectReloadContext
+  private data class ProjectReloadContext(
+    override val isExplicitReload: Boolean,
+    override val hasUndefinedModifications: Boolean,
+    override val settingsFilesContext: ExternalSystemSettingsFilesReloadContext
+  ) : ExternalSystemProjectReloadContext
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")

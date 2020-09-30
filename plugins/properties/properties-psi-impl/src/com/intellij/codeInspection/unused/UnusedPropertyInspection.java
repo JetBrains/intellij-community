@@ -82,7 +82,8 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
-        holder.registerProblem(key, PropertiesBundle.message("unused.property.problem.descriptor.name"),
+        holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name") 
+                                               : PropertiesBundle.message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
       }
     };
@@ -103,7 +104,8 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
     PsiSearchHelper searchHelper = helper.getSearchHelper();
     if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly, original)) return true;
 
-    final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), property.getProject(), helper.getModule());
+    final GlobalSearchScope widerScope = isOnTheFly ? getWidestUseScope(property.getKey(), property.getProject(), helper.getModule())
+                                                    : GlobalSearchScope.projectScope(property.getProject());
     if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly, original)) return true;
     return false;
   }

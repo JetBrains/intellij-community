@@ -1,9 +1,0 @@
-class X {
-  void bar(boolean b) {
-    String str = <spot>b ? foo("true") : foo("false")</spot>;
-  }
-
-  String foo(String p) {
-    return p;
-  }
-}

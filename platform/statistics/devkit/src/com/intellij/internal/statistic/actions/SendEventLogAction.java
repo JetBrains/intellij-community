@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.connect.StatisticsResult;
+import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
@@ -77,7 +77,7 @@ public class SendEventLogAction extends AnAction {
     });
   }
 
-  private static class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
+  private static final class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
     private EventLogTestSettingsService() {
       super(FUS_RECORDER, new EventLogTestApplication());
     }
@@ -95,7 +95,7 @@ public class SendEventLogAction extends AnAction {
     }
   }
 
-  private static class EventLogTestApplication extends EventLogInternalApplicationInfo {
+  private static final class EventLogTestApplication extends EventLogInternalApplicationInfo {
     private EventLogTestApplication() {
       super(FUS_RECORDER, true);
     }

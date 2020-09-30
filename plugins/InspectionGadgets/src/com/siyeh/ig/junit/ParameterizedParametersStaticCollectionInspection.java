@@ -86,7 +86,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected String buildErrorString(Object... infos) {
     return infos.length > 0
            ? (String)infos[1]
-           : "Class #ref annotated @RunWith(Parameterized.class) lacks data provider";
+           : InspectionGadgetsBundle.message("fix.data.provider.signature.problem");
   }
 
   @Override

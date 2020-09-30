@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
 public class HgReferenceValidator implements InputValidatorEx {
-  protected String myErrorText;
+  protected @Nls String myErrorText;
   private static final HgReferenceValidator INSTANCE = new HgReferenceValidator();
 
   private static final Pattern DIGITS_ILLEGAL = Pattern.compile("[0-9]*");  // reference names couldn't contain only digits

@@ -5,10 +5,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.tooling.BuildController
 import org.gradle.tooling.GradleConnectionException
-import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
@@ -136,21 +133,6 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
   }
 }
 
-class TestModelProvider : ProjectImportModelProvider {
-  override fun populateBuildModels(controller: BuildController,
-                                   buildModel: GradleBuild,
-                                   consumer: ProjectImportModelProvider.BuildModelConsumer) {
-    controller.findModel(Object::class.java)
-  }
-
-  override fun populateProjectModels(controller: BuildController,
-                                     module: Model,
-                                     modelConsumer: ProjectImportModelProvider.ProjectModelConsumer) {
-  }
-}
-
-
-
 class TestProjectResolverExtension : AbstractProjectResolverExtension() {
   val buildFinished = CompletableFuture<Boolean>()
 
@@ -163,7 +145,7 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
   }
 
   override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-    return TestModelProvider()
+    return TestBuildObjectModelProvider()
   }
 
   override fun requiresTaskRunning(): Boolean {

@@ -61,7 +61,7 @@ public class ExternalizableWithSerializationMethodsInspection
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       if (!SerializationUtils.isExternalizable(aClass)) {

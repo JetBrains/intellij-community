@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Some code is not what it seems to be!
@@ -78,6 +79,14 @@ public abstract class PsiAugmentProvider {
   @Nullable
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
     return null;
+  }
+
+  /**
+   * @return whether this extension might infer the type for the given PSI,
+   * preferably checked in a lightweight way without actually inferring the type.
+   */
+  protected boolean canInferType(@NotNull PsiTypeElement typeElement) {
+    return inferType(typeElement) != null;
   }
 
   /**
@@ -150,6 +159,20 @@ public abstract class PsiAugmentProvider {
       else {
         return true;
       }
+    });
+
+    return result.get();
+  }
+
+  public static boolean isInferredType(@NotNull PsiTypeElement typeElement) {
+    AtomicBoolean result = new AtomicBoolean();
+
+    forEach(typeElement.getProject(), provider -> {
+      boolean canInfer = provider.canInferType(typeElement);
+      if (canInfer) {
+        result.set(true);
+      }
+      return !canInfer;
     });
 
     return result.get();

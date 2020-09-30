@@ -16,8 +16,10 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +28,15 @@ public abstract class OutputParser {
   protected final List<ParserAction> myParserActions = new ArrayList<>(10);
 
   public interface Callback {
-    String getNextLine();        
+    @NlsSafe
+    String getNextLine();
+    @NlsSafe
     String getCurrentLine();
-    void pushBack(String line);
-    void setProgressText(String text);
-    void fileProcessed(String path);
-    void fileGenerated(String path);
-    void message(CompilerMessageCategory category, String message, @NonNls String url, int lineNum, int columnNum);
+    void pushBack(@Nls String line);
+    void setProgressText(@NlsContexts.ProgressText String text);
+    void fileProcessed(@NlsSafe String path);
+    void fileGenerated(@NlsSafe String path);
+    void message(CompilerMessageCategory category, @Nls String message, @NlsSafe String url, int lineNum, int columnNum);
   }
 
   public boolean processMessageLine(Callback callback) {
@@ -54,14 +58,14 @@ public abstract class OutputParser {
     return false;
   }
 
-  protected static void addMessage(Callback callback, CompilerMessageCategory type, String message) {
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, @Nls String message) {
     if(message == null || message.trim().length() == 0) {
       return;
     }
     addMessage(callback, type, message, null, -1, -1);
   }
 
-  protected static void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, @Nls String text, @NlsSafe String url, int line, int column){
     callback.message(type, text, url, line, column);
   }
 }

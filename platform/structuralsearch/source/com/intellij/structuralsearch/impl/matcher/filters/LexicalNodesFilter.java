@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
  */
 public final class LexicalNodesFilter implements NodeFilter {
 
-  LexicalNodesFilter() {}
+  private LexicalNodesFilter() {}
 
   public static NodeFilter getInstance() {
     return NodeFilterHolder.INSTANCE;

@@ -4,6 +4,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -325,6 +326,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   @NotNull
+  @NlsSafe
   public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asString();
   }
@@ -371,7 +373,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   @NotNull
   static ChainIterable<String> describeDecorators(@NotNull PyDecoratable decoratable,
                                                   @NotNull Function<String, String> escapedCalleeMapper,
-                                                  @NotNull Function<String, String> escaper,
+                                                  @NotNull Function<@NotNull String, @NotNull String> escaper,
                                                   @NotNull String separator,
                                                   @NotNull String suffix) {
     final ChainIterable<String> result = new ChainIterable<>();
@@ -399,13 +401,13 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
                                              @NotNull Function<? super String, String> escapedNameMapper,
-                                             @NotNull Function<? super String, String> escaper,
+                                             @NotNull Function<@NotNull ? super String, @NotNull String> escaper,
                                              boolean link,
                                              boolean linkAncestors,
                                              @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
 
-    final String name = escapedNameMapper.apply(escaper.apply(cls.getName()));
+    final String name = escapedNameMapper.apply(escaper.apply(StringUtil.notNullize(cls.getName(), PyNames.UNNAMED_ELEMENT)));
     result.addItem(escaper.apply("class "));
     result.addItem(link ? PyDocumentationLink.toContainingClass(name) : name);
 
@@ -491,7 +493,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   @NotNull
   private static Iterable<String> describeDecorator(@NotNull PyDecorator decorator,
                                                     @NotNull Function<String, String> escapedCalleeMapper,
-                                                    @NotNull Function<String, String> escaper) {
+                                                    @NotNull Function<@NotNull String, @NotNull String> escaper) {
     final ChainIterable<String> result = new ChainIterable<>();
 
     result
@@ -509,8 +511,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   // provides ctrl+Q doc
   @Override
   public String generateDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
-    if (PythonRuntimeService.getInstance().isInPydevConsole(element) || originalElement != null && PythonRuntimeService.getInstance().isInPydevConsole(originalElement)) {
-      return PythonRuntimeService.getInstance().createPydevDoc(element, originalElement);
+    final PythonRuntimeService runtimeService = PythonRuntimeService.getInstance();
+    if (runtimeService.isInPydevConsole(element) || originalElement != null && runtimeService.isInPydevConsole(originalElement)) {
+      return runtimeService.createPydevDoc(element, originalElement);
     }
     return new PyDocumentationBuilder(element, originalElement).build();
   }

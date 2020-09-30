@@ -16,8 +16,8 @@
 
 #include <Windows.h>
 #include <elevTools.h>
-#include<stdio.h>
-
+#include <stdio.h>
+#include <string.h>
 
 #define ERR_INVALID_HANDLE -1
 #define ERR_CANT_INHERIT -2
@@ -33,6 +33,7 @@
 #define ERR_LAUNCHING - 12
 #define ERR_WAITING - 13
 #define ERR_PARENT_DIED -14
+#define ERR_FAILED_PIPE_READ -15
 
 
 // UAC-enabled (in manifset) tool to launch ptocesses.
@@ -83,6 +84,40 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 	return 0;
 }
 
+// Get the environment vars from the launcher through the named pipe.
+static void _ReadAndSetEnvVars(DWORD nParentPid, _In_ HANDLE eventSource)
+{
+	ELEV_PIPE_NAME sEnvVarsPipeName;
+	ELEV_GEN_PIPE_NAME(sEnvVarsPipeName, nParentPid, ELEV_DESCR_ENVVAR);
+
+	HANDLE hEnvVarsPipe = CreateFile(sEnvVarsPipeName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+	if (hEnvVarsPipe == INVALID_HANDLE_VALUE) {
+		DWORD nError = GetLastError();
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_INVALID_HANDLE, NULL, 0, 0, NULL, NULL);
+		fwprintf(stderr, L"Error opening env vars pipe. Exit code %ld", nError);
+		exit(nError);
+	}
+
+	WCHAR* buf = malloc(_MAX_ENV);
+	while (TRUE) {
+		DWORD ulBytesRead = 0;
+		BOOL bReadOk = ReadFile(hEnvVarsPipe, buf, _MAX_ENV, &ulBytesRead, NULL);
+		DWORD nError = GetLastError();
+		if (nError == ERROR_BROKEN_PIPE || ulBytesRead == 0)
+		{
+			break;
+		}
+		if (!bReadOk)
+		{
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAILED_PIPE_READ, NULL, 0, 0, NULL, NULL);
+			fwprintf(stderr, L"Failed to read from env pipe: %ld", nError);
+			exit(ERR_FAILED_PIPE_READ);
+		}
+		_wputenv(buf);
+	}
+	free(buf);
+}
+
 // PID Directory DescriptorFlags ProgramToRun Arguments
 #define _ARG_PID 1
 #define _ARG_DIR 2
@@ -98,6 +133,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		fwprintf(stderr, L"Bad command line");
 		return ERR_BAD_COMMAND_LINE;
 	}
+
 	if (!SetCurrentDirectory(argv[_ARG_DIR]))
 	{
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_SET_DIR, NULL, 0, 0, NULL, NULL);
@@ -182,9 +218,10 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_OPEN_PARENT, NULL, 0, 0, NULL, NULL);
 		exit(GetLastError()); // If parent process can't be opened it probably dead
 	}
-	
+
+	_ReadAndSetEnvVars(nParentPid, eventSource);
+
 	PROCESS_INFORMATION processInfo;
-	
 	if (!CreateProcess(NULL, sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
 	{
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCHING, NULL, 0, 0, NULL, NULL);

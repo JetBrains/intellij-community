@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
@@ -14,7 +15,7 @@ import java.util.*
 interface CommitWorkflowUi : DataProvider, Disposable {
   val commitMessageUi: CommitMessageUi
 
-  var defaultCommitActionName: String
+  var defaultCommitActionName: @NlsContexts.Button String
 
   fun activate(): Boolean
 

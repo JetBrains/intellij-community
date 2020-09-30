@@ -10,6 +10,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
@@ -35,14 +36,14 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private final RemoteServersManager myServersManager;
   private RemoteServer<?> myLastSelectedServer;
-  private final String myInitialSelectedName;
+  private final @NlsSafe String myInitialSelectedName;
   private final List<ServerType<?>> myDisplayedServerTypes;
 
   private boolean isTreeInitialized;
 
   private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
                                        @NotNull ServerType<?> type,
-                                       @Nullable String initialSelectedName) {
+                                       @Nullable @NlsSafe String initialSelectedName) {
     this(manager, Collections.singletonList(type), initialSelectedName);
   }
 
@@ -238,7 +239,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     return configurables;
   }
 
-  private class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
+  private final class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
     private AddRemoteServerGroup() {
       super(CloudBundle.message("group.action.AddRemoteServerGroup.text"), "", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -260,7 +261,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
   }
 
-  private class AddRemoteServerAction extends DumbAwareAction {
+  private final class AddRemoteServerAction extends DumbAwareAction {
     private final ServerType<?> myServerType;
 
     private AddRemoteServerAction(ServerType<?> serverType, final Icon icon) {

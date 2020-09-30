@@ -18,6 +18,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -27,6 +28,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +82,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   }
 
   @NotNull
-  public static String getFixName(boolean negated) {
+  public static @IntentionFamilyName String getFixName(boolean negated) {
     return negated
            ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!=", "!equals()")
            : CommonQuickFixBundle.message("fix.replace.x.with.y", "==", "equals()");
@@ -106,7 +108,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    final StringBuilder newExpression = new StringBuilder();
+    @NonNls final StringBuilder newExpression = new StringBuilder();
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }

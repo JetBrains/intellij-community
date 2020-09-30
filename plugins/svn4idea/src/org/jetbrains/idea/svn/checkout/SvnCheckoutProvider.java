@@ -21,7 +21,8 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -111,8 +112,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                                                                               message("message.title.check.out"), true,
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -139,7 +139,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (exception[0] != null) {
-          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("message.title.check.out"));
+          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("dialog.title.check.out"));
         }
 
         VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
@@ -177,7 +177,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public static WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
@@ -214,19 +214,19 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doImport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean includeIgnored, final String message) {
-    final Ref<String> errorMessage = new Ref<>();
+    final Ref<@Nls String> errorMessage = new Ref<>();
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
+    final String targetPath = target.getAbsolutePath();
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
-        progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
+        progressIndicator.setText(message("progress.text.import", targetPath));
 
         final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
         if (targetVf == null) {
-          errorMessage.set("Can not find file: " + targetPath);
+          errorMessage.set(message("error.can.not.find.file", targetPath));
         }
         else {
           final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));
@@ -237,7 +237,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             vcs.getFactoryFromSettings().createImportClient().doImport(target, url, depth, message, includeIgnored, handler, filter);
 
           if (revision > 0) {
-            StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
+            StatusBar.Info.set(message("status.text.committed.revision", revision), project);
           }
         }
       }
@@ -251,7 +251,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  private static class MyFilter implements Predicate<File> {
+  private static final class MyFilter implements Predicate<File> {
     @NotNull private final LocalFileSystem myLfs = LocalFileSystem.getInstance();
     @NotNull private final SvnExcludingIgnoredOperation.Filter myFilter;
 
@@ -287,7 +287,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       error = new AtomicReference<>();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public WorkingCopyFormat prompt() {
       assert !getApplication().isUnitTestMode();
 
@@ -313,7 +313,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           if (errorMessage != null) {
             dialog.doCancelAction();
             showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
-                            message("message.title.check.out"));
+                            message("dialog.title.check.out"));
           }
           else {
             dialog.setSupported(formats);

@@ -861,6 +861,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
   }
 
   private fun changeSignatureIntention(): String {
-    return RefactoringBundle.message("suggested.refactoring.change.signature.intention.text", SuggestedRefactoringAvailability.USAGES)
+    return RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
+                                     RefactoringBundle.message("suggested.refactoring.usages"))
   }
 }

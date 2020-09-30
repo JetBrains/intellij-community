@@ -1,6 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GitExecutor")
-
 package git4idea.test
 
 import com.intellij.openapi.project.Project
@@ -23,9 +22,11 @@ fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 
 @JvmOverloads
 fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
+
 fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
+
 @JvmOverloads
-fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
+internal fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -57,7 +58,8 @@ fun cd(repository: GitRepository) = cd(repository.root.path)
 fun GitRepository.add(path: String = ".") = cd { add(project, path) }
 
 fun GitPlatformTest.add(path: String = ".") = add(project, path)
-private fun add(project: Project, path: String = ".") = git(project, "add --verbose " + path)
+
+private fun add(project: Project, path: String = ".") = git(project, "add --verbose $path")
 
 fun GitRepository.addCommit(message: String) = cd { addCommit(project, message) }
 fun GitPlatformTest.addCommit(message: String) = addCommit(project, message)
@@ -75,8 +77,10 @@ fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
-private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
-  git(project, "checkout -b $branchName $startPoint")
+
+private fun checkoutNew(project: Project, branchName: String, startPoint: String): String {
+  return git(project, "checkout -b $branchName $startPoint")
+}
 
 fun GitRepository.commit(message: String) = cd { commit(project, message) }
 fun GitPlatformTest.commit(message: String) = commit(project, message)
@@ -113,7 +117,7 @@ fun GitRepository.modify(file: String): String = cd { modify(project, file) }
 fun GitPlatformTest.modify(file: String): String = modify(project, file)
 private fun modify(project: Project, file: String): String {
   overwrite(file, "content" + Math.random())
-  return addCommit(project, "modified " + file)
+  return addCommit(project, "modified $file")
 }
 
 fun GitRepository.last() = cd { last(project) }
@@ -169,13 +173,12 @@ internal fun GitRepository.file(fileName: String): TestFile {
 
 private class GitExecutorHolder {
   //using inner class to avoid extra work during class loading of unrelated tests
-  internal object PathHolder {
+  object PathHolder {
     internal val GIT_EXECUTABLE = ExecutableHelper.findGitExecutable()!!
   }
 }
 
 internal class TestFile internal constructor(val repo: GitRepository, val file: File) {
-
   fun append(content: String): TestFile {
     FileUtil.writeToFile(file, content.toByteArray(), true)
     return this
@@ -222,7 +225,7 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
 
   fun read() = FileUtil.loadFile(file)
 
-  fun cat(): String = FileUtil.loadFile(file)
+  private fun cat(): String = FileUtil.loadFile(file)
 
   fun prepend(content: String): TestFile {
     val previousContent = cat()

@@ -194,7 +194,7 @@ public final class VcsLogTabsWatcher implements Disposable {
 
   private final class MyToolWindowManagerListener implements ToolWindowManagerListener {
     @Override
-    public void toolWindowsRegistered(@NotNull List<String> ids) {
+    public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
       if (ids.contains(ChangesViewContentManager.TOOLWINDOW_ID)) {
         installContentListeners();
       }
@@ -220,7 +220,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private class MyRefreshPostponedEventsListener extends VcsLogTabsListener {
+  private final class MyRefreshPostponedEventsListener extends VcsLogTabsListener {
     private MyRefreshPostponedEventsListener(@NotNull ToolWindow toolWindow) {
       super(myProject, toolWindow, myListenersDisposable);
     }
@@ -284,7 +284,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
+    public void toolWindowShown(@NotNull ToolWindow toolWindow) {
       if (myToolWindow == toolWindow) selectionChanged();
     }
 

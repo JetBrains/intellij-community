@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +37,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,6 +56,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -189,7 +193,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   private abstract static class ProxyBasedAction extends AnAction {
     protected final ProcessHandler myProcessHandler;
 
-    protected ProxyBasedAction(String text, String description, Icon icon, ProcessHandler processHandler) {
+    protected ProxyBasedAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, ProcessHandler processHandler) {
       super(text, description, icon);
       myProcessHandler = processHandler;
     }
@@ -248,10 +252,15 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
           myExecutor.execute(() -> {
             VirtualMachine vm = null;
-            try {  vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-            InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
-              .invoke(vm, new Object[]{ArrayUtilRt.EMPTY_OBJECT_ARRAY});
-            String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
+            try {
+              vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
+              InputStream inputStream = (InputStream)vm.getClass()
+                .getMethod("remoteDataDump", Object[].class)
+                .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
+              String text;
+              try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                text = StreamUtil.readText(reader);
+              }
               List<ThreadState> threads = ThreadDumpParser.parse(text);
               ApplicationManager.getApplication().invokeLater(
                 () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope),
@@ -418,7 +427,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   private static void showThreadDump(String out, List<ThreadState> states, Project project) {
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
-    String title = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String title = JavaCompilerBundle.message("tab.title.thread.dump", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     ApplicationManager.getApplication().invokeLater(
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }

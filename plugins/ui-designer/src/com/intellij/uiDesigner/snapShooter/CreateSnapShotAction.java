@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -281,7 +282,7 @@ public class CreateSnapShotAction extends AnAction {
     return snapshotConfiguration;
   }
 
-  private static class MyDialog extends DialogWrapper {
+  private static final class MyDialog extends DialogWrapper {
     private JPanel myRootPanel;
     private JTree myComponentTree;
     private JTextField myFormNameTextField;
@@ -479,7 +480,8 @@ public class CreateSnapShotAction extends AnAction {
           builder.append(layoutManagerClass).append("\n");
         }
         builder.append(UIDesignerBundle.message("snapshot.unknown.layout.prompt"));
-        return Messages.showYesNoDialog(myProject, builder.toString(),
+        @NlsSafe String message = builder.toString();
+        return Messages.showYesNoDialog(myProject, message,
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == Messages.YES;
       }
       return true;

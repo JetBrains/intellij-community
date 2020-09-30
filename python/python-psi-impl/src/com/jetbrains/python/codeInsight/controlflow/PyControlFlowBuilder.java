@@ -59,7 +59,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyFunction(final PyFunction node) {
+  public void visitPyFunction(final @NotNull PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
     visitParameterListExpressions(node.getParameterList());
@@ -75,7 +75,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyDecoratorList(PyDecoratorList node) {
+  public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
   }
 
   private void visitDecorators(PyDecoratorList list) {
@@ -103,7 +103,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyClass(final PyClass node) {
+  public void visitPyClass(final @NotNull PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
     for (PsiElement element : node.getSuperClassExpressions()) {
@@ -116,13 +116,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyStatement(final PyStatement node) {
+  public void visitPyStatement(final @NotNull PyStatement node) {
     myBuilder.startNode(node);
     super.visitPyStatement(node);
   }
 
   @Override
-  public void visitPyElement(PyElement node) {
+  public void visitPyElement(@NotNull PyElement node) {
     if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
       myBuilder.startNode(node);
       myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE));
@@ -131,7 +131,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyCallExpression(final PyCallExpression node) {
+  public void visitPyCallExpression(final @NotNull PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     // Flow abrupted
     final String repr = PyUtil.getReadableRepr(callee, true);
@@ -154,7 +154,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+  public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
     myBuilder.startNode(node);
     node.getOperand().accept(this);
     final PyExpression expression = node.getIndexExpression();
@@ -164,7 +164,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyReferenceExpression(final PyReferenceExpression node) {
+  public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
@@ -183,7 +183,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyBoolLiteralExpression(PyBoolLiteralExpression node) {
+  public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
     myBuilder.addNode(readWriteInstruction);
@@ -191,7 +191,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+  public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
     myBuilder.addNode(readWriteInstruction);
@@ -199,7 +199,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyTypeDeclarationStatement(PyTypeDeclarationStatement node) {
+  public void visitPyTypeDeclarationStatement(@NotNull PyTypeDeclarationStatement node) {
     myBuilder.startNode(node);
     final PyAnnotation annotation = node.getAnnotation();
     if (annotation != null) {
@@ -209,7 +209,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+  public void visitPyAssignmentStatement(final @NotNull PyAssignmentStatement node) {
     myBuilder.startNode(node);
     final PyExpression value = node.getAssignedValue();
     if (value != null) {
@@ -225,7 +225,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyDelStatement(PyDelStatement node) {
+  public void visitPyDelStatement(@NotNull PyDelStatement node) {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
       if (target instanceof PyReferenceExpression){
@@ -243,7 +243,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyAugAssignmentStatement(final PyAugAssignmentStatement node) {
+  public void visitPyAugAssignmentStatement(final @NotNull PyAugAssignmentStatement node) {
     myBuilder.startNode(node);
     final PyExpression value = node.getValue();
     if (value != null) {
@@ -253,7 +253,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyTargetExpression(final PyTargetExpression node) {
+  public void visitPyTargetExpression(final @NotNull PyTargetExpression node) {
     final QualifiedName qName = node.asQualifiedName();
     if (qName != null) {
       final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, qName.toString(),
@@ -269,7 +269,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyNamedParameter(final PyNamedParameter node) {
+  public void visitPyNamedParameter(final @NotNull PyNamedParameter node) {
     final PyExpression defaultValue = node.getDefaultValue();
     if (defaultValue != null) {
       defaultValue.accept(this);
@@ -280,12 +280,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyImportStatement(final PyImportStatement node) {
+  public void visitPyImportStatement(final @NotNull PyImportStatement node) {
     visitPyImportStatementBase(node);
   }
 
   @Override
-  public void visitPyFromImportStatement(PyFromImportStatement node) {
+  public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
     visitPyImportStatementBase(node);
     final PyStarImportElement starImportElement = node.getStarImportElement();
     if (starImportElement != null) {
@@ -294,7 +294,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyStarImportElement(PyStarImportElement node) {
+  public void visitPyStarImportElement(@NotNull PyStarImportElement node) {
     myBuilder.startNode(node);
   }
 
@@ -322,7 +322,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyConditionalExpression(PyConditionalExpression node) {
+  public void visitPyConditionalExpression(@NotNull PyConditionalExpression node) {
     myBuilder.startNode(node);
     final PyExpression condition = node.getCondition();
     final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
@@ -346,7 +346,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyIfStatement(final PyIfStatement node) {
+  public void visitPyIfStatement(final @NotNull PyIfStatement node) {
     myBuilder.startNode(node);
 
     PyExpression lastCondition = null; // last visited condition
@@ -462,7 +462,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyBinaryExpression(PyBinaryExpression node) {
+  public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
     final PyElementType operator = node.getOperator();
     if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
       myBuilder.startNode(node);
@@ -488,7 +488,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyWhileStatement(final PyWhileStatement node) {
+  public void visitPyWhileStatement(final @NotNull PyWhileStatement node) {
     final Instruction instruction = myBuilder.startNode(node);
     final PyWhilePart whilePart = node.getWhilePart();
     final PyExpression condition = whilePart.getCondition();
@@ -521,7 +521,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyForStatement(final PyForStatement node) {
+  public void visitPyForStatement(final @NotNull PyForStatement node) {
     myBuilder.startNode(node);
     final PyForPart forPart = node.getForPart();
     final PyExpression source = forPart.getSource();
@@ -576,7 +576,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyBreakStatement(final PyBreakStatement node) {
+  public void visitPyBreakStatement(final @NotNull PyBreakStatement node) {
     myBuilder.startNode(node);
     final PyLoopStatement loop = node.getLoopStatement();
     if (loop != null) {
@@ -589,7 +589,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyContinueStatement(final PyContinueStatement node) {
+  public void visitPyContinueStatement(final @NotNull PyContinueStatement node) {
     myBuilder.startNode(node);
     final PyLoopStatement loop = node.getLoopStatement();
     if (loop != null) {
@@ -614,7 +614,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyYieldExpression(PyYieldExpression node) {
+  public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
     myBuilder.startNode(node);
     final PyExpression expression = node.getExpression();
     if (expression != null) {
@@ -623,7 +623,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyRaiseStatement(final PyRaiseStatement node) {
+  public void visitPyRaiseStatement(final @NotNull PyRaiseStatement node) {
     myBuilder.startNode(node);
     final PyExpression[] expressions = node.getExpressions();
     for (PyExpression expression : expressions) {
@@ -644,7 +644,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyReturnStatement(final PyReturnStatement node) {
+  public void visitPyReturnStatement(final @NotNull PyReturnStatement node) {
     myBuilder.startNode(node);
     final PyExpression expression = node.getExpression();
     if (expression != null) {
@@ -654,7 +654,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
+  public void visitPyTryExceptStatement(final @NotNull PyTryExceptStatement node) {
     myBuilder.startNode(node);
 
     // Process try part
@@ -802,7 +802,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyComprehensionElement(final PyComprehensionElement node) {
+  public void visitPyComprehensionElement(final @NotNull PyComprehensionElement node) {
     PyExpression prevCondition = null;
     myBuilder.startNode(node);
     List<Instruction> iterators = new ArrayList<>();
@@ -879,7 +879,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyAssertStatement(final PyAssertStatement node) {
+  public void visitPyAssertStatement(final @NotNull PyAssertStatement node) {
     myBuilder.startNode(node);
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
@@ -894,13 +894,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyLambdaExpression(final PyLambdaExpression node) {
+  public void visitPyLambdaExpression(final @NotNull PyLambdaExpression node) {
     myBuilder.startNode(node);
     visitParameterListExpressions(node.getParameterList());
   }
 
   @Override
-  public void visitPyWithStatement(final PyWithStatement node) {
+  public void visitPyWithStatement(final @NotNull PyWithStatement node) {
     super.visitPyWithStatement(node);
 
     final boolean suppressor = StreamEx
@@ -923,7 +923,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+  public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
     final PyExpression assignedValue = node.getAssignedValue();
     if (assignedValue != null) assignedValue.accept(this);
 

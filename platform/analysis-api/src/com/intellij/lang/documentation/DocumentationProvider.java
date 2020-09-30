@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
@@ -96,7 +97,7 @@ public interface DocumentationProvider {
    * for the given element
    */
   @Nullable
-  default String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @NlsSafe String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
@@ -116,7 +117,7 @@ public interface DocumentationProvider {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
@@ -126,7 +127,7 @@ public interface DocumentationProvider {
    * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
-  default @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     return generateRenderedDoc(target == null ? comment : target);
   }
@@ -141,7 +142,7 @@ public interface DocumentationProvider {
    * documentation view to work correctly.
    */
   @ApiStatus.Experimental
-  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {}
 
   /**
    * This method is needed to support rendered representation of documentation comments in editor. It should return doc comment located at

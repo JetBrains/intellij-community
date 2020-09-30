@@ -17,7 +17,7 @@ public class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBa
 
   @NotNull
   public static String getCommand(@NotNull AnAction action, @NotNull String command) {
-    return command + " " + (action.getTemplatePresentation().getText() != null ? action.getTemplatePresentation().getText() : "undefined");
+    return command + " " + (action.getTemplatePresentation().getText() != null ? action.getTemplatePresentation().getText() : "undefined"); //NON-NLS
   }
 
   @Nullable

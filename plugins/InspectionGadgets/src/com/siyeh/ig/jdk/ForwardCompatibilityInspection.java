@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -34,7 +35,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Nullable
-      private String getIdentifierWarning(PsiIdentifier identifier) {
+      private @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
         switch (name) {

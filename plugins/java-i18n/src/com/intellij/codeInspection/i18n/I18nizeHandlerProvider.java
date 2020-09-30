@@ -30,6 +30,6 @@ public abstract class I18nizeHandlerProvider {
   public static final ExtensionPointName<I18nizeHandlerProvider> EP_NAME = ExtensionPointName.create("com.intellij.java-i18n.i18nizeHandlerProvider");
 
   @Nullable
-  public abstract I18nQuickFixHandler getHandler(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull TextRange range);
+  public abstract I18nQuickFixHandler<?> getHandler(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull TextRange range);
 
 }

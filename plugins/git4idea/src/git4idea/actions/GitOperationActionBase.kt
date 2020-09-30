@@ -10,11 +10,12 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSelectRootDialog
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 
 abstract class GitOperationActionBase(
   private val repositoryState: Repository.State
 ) : DumbAwareAction(), GitOngoingOperationAction {
-  protected abstract val operationName: String
+  protected abstract val operationName: @Nls String
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = !getAffectedRepositories(e.project).isEmpty()

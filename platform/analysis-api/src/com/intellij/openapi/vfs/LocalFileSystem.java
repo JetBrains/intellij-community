@@ -84,10 +84,14 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     refreshFiles(files, false, false, null);
   }
 
-  public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files,
+                                    boolean async,
+                                    boolean recursive,
+                                    @Nullable Runnable onFinish);
 
   public interface WatchRequest {
     @NotNull @SystemIndependent String getRootPath();
+
     boolean isToWatchRecursively();
   }
 

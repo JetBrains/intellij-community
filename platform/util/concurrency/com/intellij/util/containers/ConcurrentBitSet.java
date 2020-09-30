@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -36,12 +22,12 @@ import java.util.concurrent.locks.StampedLock;
  * @see java.util.BitSet
  */
 @ReviseWhenPortedToJDK("9") // todo port to VarHandles
-public class ConcurrentBitSet {
+public final class ConcurrentBitSet {
   public ConcurrentBitSet() {
     clear();
   }
 
-  private static final Unsafe UNSAFE = AtomicFieldUpdater.getUnsafe();
+  private static final Unsafe UNSAFE = (Unsafe)AtomicFieldUpdater.getUnsafe();
   private static final int base = UNSAFE.arrayBaseOffset(int[].class);
   private static final int shift;
 
@@ -53,6 +39,10 @@ public class ConcurrentBitSet {
     shift = 31 - Integer.numberOfLeadingZeros(scale);
   }
 
+  /**
+   * store all bits here.
+   * The bit at bitIndex is stored in {@code array[arrayIndex(bitIndex)]} word.
+   */
   private volatile int[] array;
 
   private static int arrayIndex(int bitIndex) {
@@ -94,33 +84,23 @@ public class ConcurrentBitSet {
     return (prevWord & mask) != 0;
   }
 
-  private static long checkedByteOffset(int i, int[] array) {
-    if (i < 0 || i >= array.length) {
-      throw new IndexOutOfBoundsException("index " + i);
-    }
-
-    return byteOffset(i);
-  }
-
   private static long byteOffset(int i) {
-      return ((long) i << shift) + base;
+    return ((long) i << shift) + base;
   }
 
   int changeWord(int bitIndex, @NotNull TIntFunction change) {
-    if (bitIndex < 0) {
-      throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
-    }
+    ensureNonNegative(bitIndex);
 
     long stamp = lock.writeLock();
     try {
       int i = arrayIndex(bitIndex);
       int[] array = growArrayTo(i);
-      long offset = checkedByteOffset(i, array);
+      long offset = byteOffset(i);
 
       int word;
       int newWord;
       do {
-        word = getVolatile(array, i);
+        word = UNSAFE.getIntVolatile(array, offset);
         newWord = change.execute(word);
       }
       while (!UNSAFE.compareAndSwapInt(array, offset, word, newWord));
@@ -131,8 +111,18 @@ public class ConcurrentBitSet {
     }
   }
 
+  private static void ensureNonNegative(int index) {
+    if (index < 0) {
+      reportNegativeIndex(index);
+    }
+  }
+
+  private static void reportNegativeIndex(int fromIndex) {
+    throw new IndexOutOfBoundsException("index < 0: " + fromIndex);
+  }
+
   private static int getVolatile(int[] array, int i) {
-    return UNSAFE.getIntVolatile(array, checkedByteOffset(i, array));
+    return UNSAFE.getIntVolatile(array, byteOffset(i));
   }
 
   private static final AtomicFieldUpdater<ConcurrentBitSet, int[]> ARRAY_UPDATER = AtomicFieldUpdater.forFieldOfType(ConcurrentBitSet.class, int[].class);
@@ -178,8 +168,7 @@ public class ConcurrentBitSet {
   }
 
   /**
-   * Clear method in presense of concurrency complicates everything to no end.
-   * PLEASE REWRITE EVERY OTHER METHOD IF EVER DECIDE TO IMPLEMENT THIS
+   * Set all bits to {@code false}.
    */
   public void clear() {
     long stamp = lock.writeLock();
@@ -205,9 +194,7 @@ public class ConcurrentBitSet {
   }
 
   int getWord(int bitIndex) {
-    if (bitIndex < 0) {
-      throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
-    }
+    ensureNonNegative(bitIndex);
     long stamp;
     int word;
     int arrayIndex = arrayIndex(bitIndex);
@@ -238,9 +225,7 @@ public class ConcurrentBitSet {
   * @throws IndexOutOfBoundsException if the specified index is negative
   */
   public int nextSetBit(int fromIndex) {
-    if (fromIndex < 0) {
-      throw new IndexOutOfBoundsException("bitIndex < 0: " + fromIndex);
-    }
+    ensureNonNegative(fromIndex);
     int i = arrayIndex(fromIndex);
     int result;
     long stamp;
@@ -280,9 +265,7 @@ public class ConcurrentBitSet {
   * @throws IndexOutOfBoundsException if the specified index is negative
   */
   public int nextClearBit(int fromIndex) {
-    if (fromIndex < 0) {
-      throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
-    }
+    ensureNonNegative(fromIndex);
 
     int i = arrayIndex(fromIndex);
     int result;

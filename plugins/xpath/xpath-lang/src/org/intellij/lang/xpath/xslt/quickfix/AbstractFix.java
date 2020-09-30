@@ -37,12 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AbstractFix implements IntentionAction {
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    final String name = getClass().getSimpleName();
-    return "XSLT " + name.replaceAll("Fix$", "").replaceAll("(\\p{Lower}+)(\\p{Upper})", "$1 $2");
-  }
 
   @Override
   public boolean startInWriteAction() {

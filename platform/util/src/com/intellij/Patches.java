@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.*;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public final class Patches {
   /**
    * See https://bugs.openjdk.java.net/browse/JDK-6322854.
@@ -114,4 +113,11 @@ public final class Patches {
                                                     !SystemInfo.isJavaVersionAtLeast(13) &&
                                                     (SystemInfo.isJavaVersionAtLeast(12) ||
                                                      !SystemInfo.isJavaVersionAtLeast(11, 0, 6));
+
+  /**
+   * Since Java 13, unprivileged Windows symlink creation is supported.
+   * https://bugs.openjdk.java.net/browse/JDK-8218418
+   */
+  @ReviseWhenPortedToJDK("13")
+  public static final boolean JDK_BUG_ID_JDK_8218418 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast(13);
 }

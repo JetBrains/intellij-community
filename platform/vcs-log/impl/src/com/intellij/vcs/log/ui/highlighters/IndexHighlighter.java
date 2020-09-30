@@ -20,6 +20,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IndexHighlighter implements VcsLogHighlighter {
@@ -46,7 +47,7 @@ public class IndexHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "INDEXED_COMMITS"; // NON-NLS
+    @NotNull @NonNls private static final String ID = "INDEXED_COMMITS";
 
     @NotNull
     @Override

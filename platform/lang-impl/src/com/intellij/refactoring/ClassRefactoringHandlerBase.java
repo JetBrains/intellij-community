@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -5,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.lang.ElementsHandler;
@@ -63,7 +66,7 @@ public abstract class ClassRefactoringHandlerBase implements RefactoringActionHa
 
   protected abstract String getHelpId();
 
-  protected abstract String getTitle();
+  protected abstract @DialogTitle String getTitle();
 
-  protected abstract String getInvalidPositionMessage();
+  protected abstract @DialogMessage String getInvalidPositionMessage();
 }

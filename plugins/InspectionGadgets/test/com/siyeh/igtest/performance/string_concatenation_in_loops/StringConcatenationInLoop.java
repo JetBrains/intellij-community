@@ -278,4 +278,23 @@ public class StringConcatenationInLoop
             System.out.println(i > 5 ? s : "...");
         }
     }
+    static class C {
+        String s = "";
+
+        // IDEA-250202
+        public static void main(String[] args) {
+            String s = "";
+            C c1;
+            C c2 = new C();
+            for (int i = 0; i < 100; i++) {
+                s <warning descr="String concatenation '+=' in loop">+=</warning> "x";
+                C c = new C();
+                c.s += "p";
+                c1 = new C();
+                c1.s += "x";
+                c2.s <warning descr="String concatenation '+=' in loop">+=</warning> "y";
+            }
+            System.out.println(s);
+        }
+    }
 }

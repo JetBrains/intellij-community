@@ -28,7 +28,7 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.jetbrains.annotations.NotNull;
 
-public class XPathChangeUtil {
+public final class XPathChangeUtil {
     private XPathChangeUtil() {
     }
 

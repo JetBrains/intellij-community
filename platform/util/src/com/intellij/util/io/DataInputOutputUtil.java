@@ -11,9 +11,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.List;
 
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class DataInputOutputUtil extends DataInputOutputUtilRt {
+public final class DataInputOutputUtil {
   public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
 
   private DataInputOutputUtil() { }
@@ -117,5 +118,19 @@ public class DataInputOutputUtil extends DataInputOutputUtilRt {
   @Nullable
   public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readValue) throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
+  }
+
+  @NotNull
+  public static <T> List<T> readSeq(@NotNull DataInput in,
+                                    @SuppressWarnings("BoundedWildcard")
+                                    @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
+    return DataInputOutputUtilRt.readSeq(in, readElement);
+  }
+
+  public static <T> void writeSeq(@NotNull DataOutput out,
+                                  @NotNull Collection<? extends T> collection,
+                                  @SuppressWarnings("BoundedWildcard")
+                                  @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
+    DataInputOutputUtilRt.writeSeq(out, collection, writeElement);
   }
 }

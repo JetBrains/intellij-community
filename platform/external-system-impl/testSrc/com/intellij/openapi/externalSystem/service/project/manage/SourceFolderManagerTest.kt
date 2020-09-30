@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.application.runWriteAction
@@ -16,25 +16,23 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
 
 class SourceFolderManagerTest: HeavyPlatformTestCase() {
-
   fun `test source folder is added to content root when created`() {
     val rootManager = ModuleRootManager.getInstance(module)
-    val dir = createTempDir("contentEntry")
     val modifiableModel = rootManager.modifiableModel
-    modifiableModel.addContentEntry(VfsUtilCore.pathToUrl(dir.absolutePath))
+    modifiableModel.addContentEntry(tempDir.createVirtualDir())
     runWriteAction {
       modifiableModel.commit()
     }
 
-    val manager: SourceFolderManagerImpl = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
+    val manager = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
 
-    val folderUrl = ModuleRootManager.getInstance(module).contentRootUrls[0] + "/newFolder";
+    val folderUrl = ModuleRootManager.getInstance(module).contentRootUrls[0] + "/newFolder"
     val folderFile = File(VfsUtilCore.urlToPath(folderUrl))
 
     manager.addSourceFolder(module, folderUrl, JavaSourceRootType.SOURCE)
 
     val file = File(folderFile, "file.txt")
-    FileUtil.writeToFile(file, "SomeContent");
+    FileUtil.writeToFile(file, "SomeContent")
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
@@ -56,7 +54,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     manager.addSourceFolder(module, folderUrl, JavaSourceRootType.SOURCE)
 
     val file = File(folderFile, "file.txt")
-    FileUtil.writeToFile(file, "SomeContent");
+    FileUtil.writeToFile(file, "SomeContent")
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
@@ -73,12 +71,13 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     val modifiableModel = moduleManager.modifiableModel
     val newModule: Module =
       try {
-        modifiableModel.newModule(File(dir, "topModule").absolutePath, ModuleTypeId.JAVA_MODULE)
-    } finally {
+        modifiableModel.newModule(dir.toPath().resolve("topModule").toAbsolutePath(), ModuleTypeId.JAVA_MODULE)
+      }
+      finally {
         runWriteAction {
           modifiableModel.commit()
         }
-    }
+      }
 
     val modifiableRootModel = ModuleRootManager.getInstance(newModule).modifiableModel
     try {

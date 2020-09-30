@@ -10,7 +10,7 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class PyStubElementType<StubT extends StubElement, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
+public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
   public PyStubElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
   }

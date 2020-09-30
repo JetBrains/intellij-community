@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,7 +10,6 @@ import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexedFile;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,9 +17,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
-public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> implements Closeable {
+public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> implements Closeable {
   private static final String INDEXED_VERSIONS = "indexed_versions";
 
   @NotNull
@@ -67,8 +67,17 @@ public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> im
   }
 
   public void setIndexedState(int fileId, @NotNull IndexedFile file) throws IOException {
+    int indexerId = ProgressManager.getInstance().computeInNonCancelableSection(() -> getFileIndexerId(file));
+    setFileIndexerId(fileId, indexerId);
+  }
+
+  public void setUnindexedState(int fileId) throws IOException {
+    setFileIndexerId(fileId, -2);
+  }
+
+  private void setFileIndexerId(int fileId, int indexerId) throws IOException {
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, myFileAttribute)) {
-      DataInputOutputUtil.writeINT(stream, ProgressManager.getInstance().computeInNonCancelableSection(() -> getFileIndexerId(file)));
+      DataInputOutputUtil.writeINT(stream, indexerId);
     }
   }
 
@@ -96,10 +105,11 @@ public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> im
     return myIndexer.getSubIndexerVersion(type);
   }
 
-  private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes = new THashMap<>();
+  private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes = new HashMap<>();
+
   private static FileAttribute getFileAttribute(String name, int version) {
     synchronized (ourAttributes) {
-      return ourAttributes.computeIfAbsent(Pair.create(name, version), __ -> new FileAttribute(name + ".index.version", version, false));
+      return ourAttributes.computeIfAbsent(new Pair<>(name, version), __ -> new FileAttribute(name + ".index.version", version, false));
     }
   }
 }

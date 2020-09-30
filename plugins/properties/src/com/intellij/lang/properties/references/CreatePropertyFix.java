@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,7 +173,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return false;
   }
 
-  public static String getFixName() {
+  public static @IntentionName String getFixName() {
     return PropertiesBundle.message("create.property.quickfix.text");
   }
 }

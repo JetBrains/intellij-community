@@ -59,6 +59,7 @@ public interface Sorter extends TreeAction {
       return true;
     }
 
+    @NonNls
     public String toString() {
       return getName();
     }
@@ -67,7 +68,7 @@ public interface Sorter extends TreeAction {
     @NotNull
     public ActionPresentation getPresentation() {
       return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
-                                        PlatformEditorBundle.message("action.sort.alphabetically"),
+                                        null,
                                         AllIcons.ObjectBrowser.Sorted);
     }
 

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.psi.PyElement;
@@ -49,7 +50,7 @@ class PyExtractSuperclassInitializationInfo extends MembersViewInitializationInf
   }
 
   @NotNull
-  public String getDefaultFilePath() {
+  public @NlsSafe String getDefaultFilePath() {
     return myDefaultFilePath;
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -139,7 +140,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
   }
 
   @NotNull
-  public String getPluginXmlPath() {
+  public @NlsSafe String getPluginXmlPath() {
     String url = getPluginXmlUrl();
     if (url == null) {
       return getDefaultLocation();
@@ -170,7 +171,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
   }
 
   @Nullable
-  public String getManifestPath() {
+  public @NlsSafe String getManifestPath() {
     return myManifestFilePointer != null ? FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl()) : null;
   }
 

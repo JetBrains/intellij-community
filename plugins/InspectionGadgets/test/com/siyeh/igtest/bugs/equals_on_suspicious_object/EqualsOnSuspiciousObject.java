@@ -17,13 +17,13 @@ import java.util.Objects;
 
 public class EqualsOnSuspiciousObject {
   public void test(StringBuilder sb1, StringBuilder sb2) {
-    if(sb1.<warning descr="Suspicious call 'equals' on 'StringBuilder' object">equals</warning>(sb2)) {
+    if(sb1.<warning descr="Suspicious call to 'equals()' on 'StringBuilder' object">equals</warning>(sb2)) {
       System.out.println("Strange");
     }
-    if("xyz".<warning descr="Suspicious call 'equals' on 'StringBuilder' object">equals</warning>(sb1)) {
+    if("xyz".<warning descr="Suspicious call to 'equals()' on 'StringBuilder' object">equals</warning>(sb1)) {
       System.out.println("Strange");
     }
-    if(Objects.<warning descr="Suspicious call 'equals' on 'StringBuilder' object">equals</warning>(sb1, sb2)) {
+    if(Objects.<warning descr="Suspicious call to 'equals()' on 'StringBuilder' object">equals</warning>(sb1, sb2)) {
       System.out.println("Strange");
     }
   }

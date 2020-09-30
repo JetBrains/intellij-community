@@ -24,7 +24,9 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerImpl.class);
@@ -36,7 +38,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
   final VirtualFilePointerListener myListener;
 
-  VirtualFilePointerImpl(VirtualFilePointerListener listener) {
+  VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
     myListener = listener;
   }
@@ -92,6 +94,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
 
   @Override
+  @NonNls
   public String toString() {
     FilePartNode node = myNode;
     return node == null ? "(disposed)" : FilePartNode.myUrl(node.myFileOrUrl);
@@ -99,6 +102,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   public void dispose() {
     VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+    String url = TRACE_CREATION ? getUrl() : "?";
     boolean shouldKill;
     if (pointerManager instanceof VirtualFilePointerManagerImpl) {
       shouldKill = ((VirtualFilePointerManagerImpl)pointerManager).decrementUsageCount(this);
@@ -108,7 +112,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
     }
 
     if (shouldKill) {
-      kill("URL when die: " + this);
+      kill("URL when die: " + url);
     }
   }
 

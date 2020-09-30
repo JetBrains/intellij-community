@@ -27,7 +27,7 @@ public final class ArrayUtil {
   /**
    * @deprecated use {@link com.intellij.openapi.util.text.Strings#EMPTY_CHAR_SEQUENCE} instead
    */
-  @Deprecated
+  @SuppressWarnings("StringOperationCanBeSimplified") @Deprecated
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new String();
 
   public static final ArrayFactory<String> STRING_ARRAY_FACTORY = ArrayUtil::newStringArray;
@@ -656,7 +656,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<T, T> comparator) {
+  public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = 0; i < objects.length; i++) {
       if (comparator.test(objects[i], object)) {
         return i;
@@ -884,7 +884,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure = true)
-  public static int min(int[] values) {
+  public static int min(int @NotNull [] values) {
     int min = Integer.MAX_VALUE;
     for (int value : values) {
       if (value < min) min = value;
@@ -893,7 +893,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure = true)
-  public static int max(int[] values) {
+  public static int max(int @NotNull [] values) {
     int max = Integer.MIN_VALUE;
     for (int value : values) {
       if (value > max) max = value;
@@ -902,7 +902,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure = true)
-  public static int[] mergeSortedArrays(int[] a1, int[] a2, boolean mergeEqualItems) {
+  public static int[] mergeSortedArrays(int @NotNull [] a1, int @NotNull [] a2, boolean mergeEqualItems) {
     int newSize = a1.length + a2.length;
     if (newSize == 0) return ArrayUtilRt.EMPTY_INT_ARRAY;
     int[] r = new int[newSize];
@@ -950,4 +950,15 @@ public final class ArrayUtil {
     //noinspection unchecked
     return (Class<T>)collection.getClass().getComponentType();
   }
+
+  @Contract(pure=true)
+  public static <T> int indexOfIdentity(T @NotNull [] list, T element) {
+    for (int i = 0; i < list.length; i++) {
+      if (list[i] == element) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
 }

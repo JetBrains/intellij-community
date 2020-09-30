@@ -82,7 +82,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyComprehensionElement(PyComprehensionElement node) {
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
     node.acceptChildren(this);
 
     if (alreadyVisited.contains(node)) return;

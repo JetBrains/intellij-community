@@ -48,7 +48,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("remove.extra.closing.tag.quickfix");
+    return XmlAnalysisBundle.message("xml.quickfix.remove.extra.closing.tag");
   }
 
 

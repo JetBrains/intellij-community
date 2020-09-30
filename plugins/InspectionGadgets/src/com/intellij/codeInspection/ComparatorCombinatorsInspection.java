@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,10 +53,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
         if (replacementText != null) {
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacementText)) return;
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
-          String methodName = StringUtil.getShortName(qualifiedName);
-          holder
-            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName),
-                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator." + methodName));
+          @NonNls String methodName = "Comparator." + StringUtil.getShortName(qualifiedName);
+          final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName);
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(methodName));
           return;
         }
         if (lambda.getBody() instanceof PsiCodeBlock) {
@@ -69,9 +65,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String chainCombinator = generateChainCombinator(blocks, parameters[0], parameters[1]);
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
-          holder
-            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description"),
-                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
+          final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description");
+          final String fixMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain");
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(fixMessage));
         }
       }
     };
@@ -192,7 +188,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return ExpressionUtils.isReferenceTo(((PsiReturnStatement)thenStmt).getReturnValue(), last);
   }
 
-  private static class ComparisonBlock {
+  private static final class ComparisonBlock {
     private final PsiExpression myKey; // second operand expression
     private final PsiVariable myResult;
 
@@ -304,7 +300,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                                  PsiParameter leftVar, PsiParameter rightVar) {
     PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
     PsiExpression left;
-    String methodName = null;
+    @NonNls String methodName = null;
     if (body instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
       if (MethodCallUtils.isCompareToCall(methodCall)) {
@@ -343,7 +339,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       return null;
     }
     if (methodName == null) return null;
-    String text;
+    @NonNls String text;
     if (!methodName.startsWith("comparing")) {
       text = "java.util.Comparator." + methodName + "()";
     }
@@ -384,8 +380,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Contract("null, _ -> null")
-  @Nullable
-  private static String getComparingMethodName(@Nullable PsiType exprType, boolean first) {
+  private static @Nullable @NonNls String getComparingMethodName(@Nullable PsiType exprType, boolean first) {
     if(exprType == null) return null;
     String name = getComparingMethodName(exprType.getCanonicalText(), first);
     if(name != null) return name;
@@ -438,8 +433,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Contract(value = "null, _ -> null", pure = true)
-  @Nullable
-  private static String getComparingMethodName(String type, boolean first) {
+  private static @Nullable @NonNls String getComparingMethodName(String type, boolean first) {
     if(type == null) return null;
     switch(PsiTypesUtil.unboxIfPossible(type)) {
       case "int":
@@ -477,7 +471,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, copy);
   }
 
-  private static class PrimitiveComparison {
+  private static final class PrimitiveComparison {
     private final @NotNull PsiExpression myKeyExtractor;
     private final @NotNull String myMethodName;
 
@@ -520,7 +514,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   static class ReplaceWithComparatorFix implements LocalQuickFix {
     private final String myMessage;
 
-    ReplaceWithComparatorFix(String message) {
+    ReplaceWithComparatorFix(@Nls String message) {
       myMessage = message;
     }
 

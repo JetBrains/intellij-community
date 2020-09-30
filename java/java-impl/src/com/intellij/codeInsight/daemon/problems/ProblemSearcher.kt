@@ -9,7 +9,22 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-internal data class Problem(val reportedElement: PsiElement, val context: PsiElement)
+class Problem(val reportedElement: PsiElement, val context: PsiElement) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Problem
+
+    if (context != other.context) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return context.hashCode()
+  }
+}
 
 internal class ProblemSearcher(private val file: PsiFile) : JavaElementVisitor() {
 

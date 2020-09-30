@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.parser
 
 import org.intellij.markdown.MarkdownTokenTypes
@@ -15,6 +15,7 @@ import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 import org.intellij.markdown.parser.markerblocks.providers.AtxHeaderProvider
 import org.intellij.markdown.parser.markerblocks.providers.LinkReferenceDefinitionProvider
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
+import kotlin.math.min
 
 class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constraintsBase: MarkdownConstraints)
   : CommonMarkMarkerProcessor(productionHolder, constraintsBase) {
@@ -54,7 +55,7 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
         MarkdownTokenTypes.LIST_BULLET
     }
     val middleOffset = pos.offset - pos.offsetInCurrentLine + offset
-    val endOffset = Math.min(pos.offset - pos.offsetInCurrentLine + constraints.getCharsEaten(pos.currentLine),
+    val endOffset = min(pos.offset - pos.offsetInCurrentLine + constraints.getCharsEaten(pos.currentLine),
                              pos.nextLineOrEofOffset)
 
     productionHolder.addProduction(listOf(

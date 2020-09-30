@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  *   write lock), which {@code git stash list} doesn't (and therefore no lock is needed).
  * </p>
  */
-public class GitCommand {
+public final class GitCommand {
 
   public static final GitCommand ADD = write("add");
   public static final GitCommand BLAME = read("blame");
@@ -78,13 +64,13 @@ public class GitCommand {
   /**
    * Name of environment variable that specifies editor for the git
    */
-  public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
+  public static final @NonNls String GIT_EDITOR_ENV = "GIT_EDITOR";
   /**
    * Name of environment variable that specifies askpass for the git (http and ssh passphrase authentication)
    */
-  public static final String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
-  public static final String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
-  public static final String DISPLAY_ENV = "DISPLAY";
+  public static final @NonNls String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
+  public static final @NonNls String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
+  public static final @NonNls String DISPLAY_ENV = "DISPLAY";
 
   enum LockingPolicy {
     READ,
@@ -95,7 +81,7 @@ public class GitCommand {
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
 
-  private GitCommand(@NotNull String name, @NotNull LockingPolicy lockingPolicy) {
+  private GitCommand(@NotNull @NonNls String name, @NotNull LockingPolicy lockingPolicy) {
     myLocking = lockingPolicy;
     myName = name;
   }
@@ -126,17 +112,17 @@ public class GitCommand {
   }
 
   @NotNull
-  private static GitCommand read(@NotNull String name) {
+  private static GitCommand read(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ);
   }
 
   @NotNull
-  private static GitCommand readOptional(@NotNull String name) {
+  private static GitCommand readOptional(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ_OPTIONAL_LOCKING);
   }
 
   @NotNull
-  private static GitCommand write(@NotNull String name) {
+  private static GitCommand write(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.WRITE);
   }
 

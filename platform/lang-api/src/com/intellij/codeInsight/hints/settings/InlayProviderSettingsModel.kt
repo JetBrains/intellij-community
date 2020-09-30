@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
@@ -20,7 +22,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   /**
    * Name of provider to be displayed in list
    */
-  abstract val name: String
+  abstract val name: @Nls String
 
   /**
    *  Arbitrary component to be displayed in
@@ -53,6 +55,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun reset()
 
+  @get:NlsContexts.Checkbox
   abstract val mainCheckBoxLabel: String
 
   /**

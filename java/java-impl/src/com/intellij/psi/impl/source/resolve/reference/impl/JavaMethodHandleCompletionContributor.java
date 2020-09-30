@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
@@ -29,10 +30,10 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Pavel.Dolgov
  */
-public class JavaMethodHandleCompletionContributor extends CompletionContributor {
+public class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
 
   // MethodHandle for constructors and methods
-  private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = ContainerUtil.immutableSet(
+  private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = Set.of(
     FIND_CONSTRUCTOR, FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL);
 
   private static final PsiJavaElementPattern.Capture<PsiElement> METHOD_TYPE_ARGUMENT_PATTERN = psiElement().afterLeaf(",")
@@ -42,7 +43,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
 
 
   // VarHandle for fields and synthetic MethodHandle for field getters/setters
-  private static final Set<String> FIELD_HANDLE_FACTORY_NAMES = ContainerUtil.immutableSet(
+  private static final Set<String> FIELD_HANDLE_FACTORY_NAMES = Set.of(
     FIND_GETTER, FIND_SETTER, FIND_STATIC_GETTER, FIND_STATIC_SETTER, FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE);
 
   private static final PsiJavaElementPattern.Capture<PsiElement> FIELD_TYPE_ARGUMENT_PATTERN = psiElement().afterLeaf(",")

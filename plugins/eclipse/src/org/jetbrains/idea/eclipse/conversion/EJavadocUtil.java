@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -38,7 +38,7 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
  * <li>http://www.javadoc.url
  * </ul>
  */
-public class EJavadocUtil {
+public final class EJavadocUtil {
   private EJavadocUtil() {
   }
 

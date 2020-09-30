@@ -30,6 +30,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,7 +364,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
   }
 
-  private static String getStatsKey(final PsiType defaultType) {
+  private static @NonNls String getStatsKey(final PsiType defaultType) {
     if (defaultType == null) {
       return "IntroduceVariable##";
     }

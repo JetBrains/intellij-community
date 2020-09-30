@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   }
 
   @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull String value, @Nullable String metadata) {
+  private static MetricEvent newLicencingMetric(@NotNull @NonNls String value, @Nullable String metadata) {
     FeatureUsageData data = new FeatureUsageData();
     if (StringUtil.isNotEmpty(metadata)) {
       data.addData("metadata", metadata);
@@ -81,7 +82,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   }
 
   @NotNull
-  private static MetricEvent newBuildMetric(@NotNull String value) {
+  private static MetricEvent newBuildMetric(@NotNull @NonNls String value) {
     return MetricEventFactoryKt.newMetric("build", value);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnUtil.resolvePath
 import org.jetbrains.idea.svn.api.*
@@ -80,7 +81,7 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
         // "E155007: '' is not a working copy"
         // Workaround: in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder, if there are files with
         // conflicts. But the requested info is still in the output except root closing tag.
-        "is not a working copy" in text && !output.stdout.isEmpty() -> "${output.stdout}</info>"
+        NOT_WORKING_COPY in text && output.stdout.isNotEmpty() -> output.stdout + INFO_CLOSING_TAG
         else -> throw e
       }
     }
@@ -119,6 +120,9 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
   }
 
   companion object {
+    @NonNls private const val NOT_WORKING_COPY = "is not a working copy"
+    @NonNls private const val INFO_CLOSING_TAG = "</info>"
+
     fun parseResult(base: File?, result: String): Info? {
       val ref = Ref<Info?>()
       parseResult(InfoConsumer(ref::set), base, result)
@@ -131,8 +135,12 @@ private class InfoRevisionNumberAdapter : XmlAdapter<String, Long>() {
   override fun marshal(v: Long) = throw UnsupportedOperationException()
 
   override fun unmarshal(v: String) = when (v) {
-    "Resource is not under version control." -> -1L
+    NOT_SVN_RESOURCE -> -1L
     else -> v.toLong()
+  }
+
+  companion object {
+    @NonNls private const val NOT_SVN_RESOURCE = "Resource is not under version control."
   }
 }
 

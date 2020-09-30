@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -115,8 +114,10 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   private static @Nullable IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngineFactory scriptEngineFactory,
                                                                  @Nullable ClassLoader loader) {
-    if (scriptEngineFactory == null) return null;
-    EngineImpl engine = new EngineImpl(scriptEngineFactory, ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE));
+    if (scriptEngineFactory == null) {
+      return null;
+    }
+    IdeScriptEngine engine = new EngineImpl(scriptEngineFactory, loader == null ? AllPluginsLoader.INSTANCE : loader);
     redirectOutputToLog(engine);
 
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(scriptEngineFactory.getClass());
@@ -127,23 +128,37 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static void redirectOutputToLog(@NotNull IdeScriptEngine engine) {
-    class Log extends Writer {
-      final boolean error;
-      Log(boolean error) {this.error = error;}
-      @Override public void flush() throws IOException { }
-      @Override public void close() throws IOException { }
-      @Override public void write(char[] cbuf, int off, int len) throws IOException {
-        while (len > 0 && Character.isWhitespace(cbuf[off + len - 1])) len --;
+    final class Log extends Writer {
+      private final boolean error;
+
+      private Log(boolean error) {
+        this.error = error;
+      }
+
+      @Override
+      public void flush() { }
+
+      @Override
+      public void close() { }
+
+      @Override
+      public void write(char[] cbuf, int off, int len) {
+        while (len > 0 && Character.isWhitespace(cbuf[off + len - 1])) len--;
         if (len == 0) return;
         String s = new String(cbuf, off, len);
-        if (error) LOG.warn(s); else LOG.info(s);
+        if (error) {
+          LOG.warn(s);
+        }
+        else {
+          LOG.info(s);
+        }
       }
     }
     engine.setStdOut(new Log(false));
     engine.setStdErr(new Log(true));
   }
 
-  static class EngineImpl implements IdeScriptEngine {
+  static final class EngineImpl implements IdeScriptEngine {
     private final ScriptEngine myEngine;
     private final ClassLoader myLoader;
 

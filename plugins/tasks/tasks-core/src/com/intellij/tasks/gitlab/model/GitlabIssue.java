@@ -1,6 +1,7 @@
 package com.intellij.tasks.gitlab.model;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -29,7 +30,7 @@ public class GitlabIssue {
   }
 
   @NotNull
-  public String getTitle() {
+  public @NlsSafe String getTitle() {
     return title;
   }
 

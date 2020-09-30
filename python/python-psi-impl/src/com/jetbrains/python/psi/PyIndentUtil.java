@@ -36,20 +36,20 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Contains various methods for manipulation on indentation found in arbitrary text and individual lines: 
+ * Contains various methods for manipulation on indentation found in arbitrary text and individual lines:
  * <ul>
  *   <li>calculating actual and expected indentation</li>
  *   <li>finding common indentation of several lines</li>
  *   <li>replacing and removing indentation of multiple lines</li>
  * </ul>
  *
- * It indented to be used primarily when one needs to modify content of Python files on document level and preserve valid block structure.  
- * Note that in most scenarios accurate indentation consistent with the code style settings is provided by automatic formatting pass 
+ * It indented to be used primarily when one needs to modify content of Python files on document level and preserve valid block structure.
+ * Note that in most scenarios accurate indentation consistent with the code style settings is provided by automatic formatting pass
  * that is performed each time you modify PSI tree directly.
- * 
+ *
  * @author Mikhail Golubev
  */
-public class PyIndentUtil {
+public final class PyIndentUtil {
   @NonNls public static final String TWO_SPACES = "  ";
   @NonNls public static final String FOUR_SPACES = "    ";
 
@@ -57,7 +57,7 @@ public class PyIndentUtil {
   }
 
   /**
-   * Returns indentation size as number of characters <tt>' '</tt> and <tt>'\t'</tt> in the beginning of a line. 
+   * Returns indentation size as number of characters <tt>' '</tt> and <tt>'\t'</tt> in the beginning of a line.
    * It doesn't perform any expansion of tabs.
    */
   public static int getLineIndentSize(@NotNull CharSequence line) {
@@ -133,7 +133,7 @@ public class PyIndentUtil {
 
   /**
    * Returns indentation size configured in the Python code style settings.
-   * 
+   *
    * @see #getIndentFromSettings(PsiFile)
    */
   public static int getIndentSizeFromSettings(@NotNull PsiFile file) {
@@ -143,7 +143,7 @@ public class PyIndentUtil {
   /**
    * Returns indentation configured in the Python code style settings either as space character repeated number times specified there
    * or a single tab character if tabs are set to use for indentation.
-   * 
+   *
    * @see #getIndentSizeFromSettings(PsiFile)
    * @see #areTabsUsedForIndentation(PsiFile)
    */
@@ -202,7 +202,7 @@ public class PyIndentUtil {
   /**
    * Finds maximum common indentation of the given lines. Indentation of empty lines and lines containing only whitespaces is ignored unless
    * they're the only lines provided. In the latter case common indentation for such lines is returned. If mix of tabs and spaces was used
-   * for indentation and any two of lines taken into account contain incompatible combination of these symbols, i.e. it's impossible to 
+   * for indentation and any two of lines taken into account contain incompatible combination of these symbols, i.e. it's impossible to
    * decide which one can be used as prefix for another, empty string is returned.
    *
    * @param ignoreFirstLine whether the first line should be considered (useful for multiline string literals)

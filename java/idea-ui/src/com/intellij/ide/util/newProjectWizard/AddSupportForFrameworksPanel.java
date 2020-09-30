@@ -220,7 +220,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel initializeGroupPanel(FrameworkGroup<?> group, boolean addToOptions) {
     JPanel panel = myInitializedGroupPanels.get(group);
     if (panel == null) {
-      FrameworkVersionComponent component = new FrameworkVersionComponent(myModel, group.getId(), group.getGroupVersions(), group.getPresentableName() + " version:");
+      FrameworkVersionComponent component = new FrameworkVersionComponent(myModel, group.getId(), group.getGroupVersions(),
+                                                                          JavaUiBundle.message("add.framework.support.label.version", group.getPresentableName()));
       panel = component.getMainPanel();
       myInitializedGroupPanels.put(group, panel);
       if (addToOptions) {

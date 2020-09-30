@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricIfDiffers;
 
+@NonNls
 public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override

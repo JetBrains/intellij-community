@@ -1,18 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xml.JavaMethod;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author peter
 */
-class PropertyAccessorInvocation implements Invocation {
-  final int myLastElement;
+final class PropertyAccessorInvocation implements Invocation {
+  private final int myLastElement;
   private final JavaMethod[] myMethods;
 
   PropertyAccessorInvocation(final JavaMethod[] methods) {
@@ -21,17 +20,17 @@ class PropertyAccessorInvocation implements Invocation {
   }
 
   @Override
-  public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public final Object invoke(DomInvocationHandler handler, Object[] args) {
     return invoke(0, handler.getProxy());
   }
 
-  private Object invoke(final int i, final Object object) throws IllegalAccessException, InvocationTargetException {
+  private Object invoke(final int i, final Object object) {
     final Object o = myMethods[i].invoke(object, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     if (i == myLastElement) return o;
 
     if (o instanceof List) {
       List<Object> result = new ArrayList<>();
-      for (Object o1 : (List)o) {
+      for (Object o1 : (List<?>)o) {
         result.add(invoke(i + 1, o1));
       }
       return result;

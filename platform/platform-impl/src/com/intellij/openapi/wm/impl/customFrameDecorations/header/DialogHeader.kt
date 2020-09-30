@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
@@ -56,6 +57,7 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
         titleLabel.text = getTitle()
     }
 
+    @NlsContexts.DialogTitle
     private fun getTitle(): String? {
         when (window) {
             is Dialog -> return window.title

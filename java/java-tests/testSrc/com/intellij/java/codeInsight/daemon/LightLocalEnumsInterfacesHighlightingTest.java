@@ -25,6 +25,8 @@ public class LightLocalEnumsInterfacesHighlightingTest extends LightJavaCodeInsi
   public void testLocalEnum() {
     doTest();
   }
+
+  public void testLocalEnumForwardReference() { doTest(); }
   
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

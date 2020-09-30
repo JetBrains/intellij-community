@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefinitionResolver extends CommonElement.Visitor implements
+public final class DefinitionResolver extends CommonElement.Visitor implements
         CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");

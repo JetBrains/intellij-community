@@ -16,10 +16,10 @@ public class SCR20557 {
     private final MyResultSet myResultSet = new MyResultSet();
 
     protected abstract Object getObject(int columnIndex, Map<String, Class<?>> map)
-        throws SQLException;
+      throws SQLException;
 
     protected abstract Object getObject(String columnLabel, Map<String, Class<?>> map)
-          throws SQLException;
+      throws SQLException;
 
     protected abstract RowId getRowId(int columnIndex) throws SQLException;
 
@@ -145,23 +145,19 @@ public class SCR20557 {
 
     protected abstract <T> T getObject(String columnLabel, Class<T> type) throws SQLException;
 
-    protected abstract <T> T unwrap(Class<T> iface) throws SQLException;
-
-    protected abstract boolean isWrapperFor(Class<?> iface) throws SQLException;
-
-    public Date getDate(int columnIndex) throws SQLException {
+    public java.sql.Date getDate(int columnIndex) throws SQLException {
         return myResultSet.getDate(columnIndex);
     }
 
-    public Date getDate(String columnLabel) throws SQLException {
+    public java.sql.Date getDate(String columnLabel) throws SQLException {
         return myResultSet.getDate(columnLabel);
     }
 
-    public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+    public java.sql.Date getDate(int columnIndex, Calendar cal) throws SQLException {
         return myResultSet.getDate(columnIndex, cal);
     }
 
-    public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+    public java.sql.Date getDate(String columnLabel, Calendar cal) throws SQLException {
         return myResultSet.getDate(columnLabel, cal);
     }
 
@@ -869,14 +865,6 @@ public class SCR20557 {
 
         public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
             return SCR20557.this.getObject(columnLabel, type);
-        }
-
-        public <T> T unwrap(Class<T> iface) throws SQLException {
-            return SCR20557.this.unwrap(iface);
-        }
-
-        public boolean isWrapperFor(Class<?> iface) throws SQLException {
-            return SCR20557.this.isWrapperFor(iface);
         }
     }
 }

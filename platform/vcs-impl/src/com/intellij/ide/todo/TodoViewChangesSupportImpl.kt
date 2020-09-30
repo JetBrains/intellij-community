@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.messages.MessageBusConnection
@@ -19,7 +18,7 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
   }
 
   override fun getTabName(project: Project): String {
-    return TodoView.getTabNameForChangeList(ChangeListManager.getInstance(project).defaultChangeList.name)
+    return ChangeListTodosPanel.getTabName(project)
   }
 
   override fun createPanel(project: Project, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory): TodoPanel {

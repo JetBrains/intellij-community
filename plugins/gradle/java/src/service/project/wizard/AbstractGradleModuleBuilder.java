@@ -47,11 +47,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
@@ -82,7 +82,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  * @author Denis Zhdanov
  */
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
-
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
 
   private static final String TEMPLATE_GRADLE_SETTINGS = "Gradle Settings.gradle";
@@ -320,7 +319,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return StdModuleTypes.JAVA;
   }
 
@@ -430,7 +429,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     catch (IOException e) {
       LOG.warn(String.format("Unexpected exception on applying template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
       throw new ConfigurationException(
-        e.getMessage(), String.format("Can't apply %s template config text", GradleConstants.SYSTEM_ID.getReadableName())
+        e.getMessage(), GradleInspectionBundle.message("dialog.title.can.t.apply.template.config.text", GradleConstants.SYSTEM_ID.getReadableName())
       );
     }
   }
@@ -445,7 +444,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     catch (IOException e) {
       LOG.warn(String.format("Unexpected exception on appending template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
       throw new ConfigurationException(
-        e.getMessage(), String.format("Can't append %s template config text", GradleConstants.SYSTEM_ID.getReadableName())
+        e.getMessage(), GradleInspectionBundle.message("dialog.title.can.t.append.template.config.text", GradleConstants.SYSTEM_ID.getReadableName())
       );
     }
   }
@@ -468,10 +467,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     VirtualFile virtualFile = VfsUtil.findFile(file, true);
     if (virtualFile == null) {
-      throw new ConfigurationException(String.format("Can't create configuration file '%s'", file));
+      throw new ConfigurationException(GradleInspectionBundle.message("dialog.message.can.t.create.configuration.file", file));
     }
     if (virtualFile.isDirectory()) {
-      throw new ConfigurationException(String.format("Configuration file is a directory '%s'", file));
+      throw new ConfigurationException(GradleInspectionBundle.message("dialog.message.configuration.file.directory", file));
     }
     VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
     return virtualFile;
@@ -568,8 +567,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myUseKotlinDSL = useKotlinDSL;
   }
 
-  private class ConfigureGradleModuleCallback implements ExternalProjectRefreshCallback {
-
+  private final class ConfigureGradleModuleCallback implements ExternalProjectRefreshCallback {
     private final @Nullable String externalConfigPath;
     private final @Nullable String sdkName;
 
@@ -577,7 +575,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     ConfigureGradleModuleCallback(@NotNull ImportSpecBuilder importSpecBuilder) {
       this.defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(importSpecBuilder.build());
-      this.sdkName = ObjectUtils.doIfNotNull(myJdk, it -> it.getName());
+      this.sdkName = myJdk == null ? null : myJdk.getName();
       this.externalConfigPath = FileUtil.toCanonicalPath(getContentEntryPath());
     }
 

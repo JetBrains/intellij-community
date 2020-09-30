@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 val isMacOsCredentialStoreSupported: Boolean
-  get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
+  get() = SystemInfo.isMacIntel64
 
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -76,7 +77,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    int endOffset,
                    @NotNull HighlightInfoProcessor processor,
                    boolean mainHighlightingPass) {
-    super(file.getProject(), document, "External annotators", file, editor, new TextRange(startOffset, endOffset), false, processor);
+    super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
     myDocument = document;
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
     myExternalToolPassFactory = factory;

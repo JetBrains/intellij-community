@@ -12,6 +12,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
@@ -103,7 +104,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
 
     JList<TestDataNavigationElement> list = new JBList<>(elementsToDisplay);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new ColoredListCellRenderer<TestDataNavigationElement>() {
+    list.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, TestDataNavigationElement element, int index,
                                            boolean selected, boolean hasFocus) {
@@ -118,7 +119,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
         if (selectedElement != null) {
           selectedElement.performAction(project);
         }
-      }).setTitle("Test Data").createPopup().show(point);
+      }).setTitle(DevKitBundle.message("testdata.popup.navigation.title")).createPopup().show(point);
   }
 
   private static void consumeElementsToDisplay(@NotNull Project project,

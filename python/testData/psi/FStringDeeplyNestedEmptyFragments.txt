@@ -10,25 +10,25 @@ PyFile:FStringDeeplyNestedEmptyFragments.py
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             <empty list>
           PyFStringFragmentFormatPart
             PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
             PyFStringFragment
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-              PsiErrorElement:expression expected
+              PsiErrorElement:Expression expected
                 <empty list>
               PyFStringFragmentFormatPart
                 PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
                 PyFStringFragment
                   PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-                  PsiErrorElement:expression expected
+                  PsiErrorElement:Expression expected
                     <empty list>
                   PyFStringFragmentFormatPart
                     PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
                     PyFStringFragment
                       PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-                      PsiErrorElement:expression expected
+                      PsiErrorElement:Expression expected
                         <empty list>
                       PsiElement(Py:FSTRING_FRAGMENT_END)('}')
                   PsiElement(Py:FSTRING_FRAGMENT_END)('}')

@@ -23,6 +23,7 @@ private const val VERSION = 1
 
 private const val MAX_CONTENT_LENGTH = 0xFFFF
 
+@Suppress("HardCodedStringLiteral")
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)
 

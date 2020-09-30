@@ -364,7 +364,7 @@ public class ChangesCacheFile {
     writeChanges(lists, present);
   }
 
-  private class BackIterator implements Iterator<ChangesBunch> {
+  private final class BackIterator implements Iterator<ChangesBunch> {
     private final int bunchSize;
     private long myOffset;
 
@@ -766,7 +766,6 @@ public class ChangesCacheFile {
     private final Set<FilePath> myReplacedFiles = new HashSet<>();
     private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<>();
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<>();
-    private final ChangeListManagerImpl myClManager;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
     private final DiffProvider myDiffProvider;
@@ -777,7 +776,6 @@ public class ChangesCacheFile {
       myChangesCacheFile = changesCacheFile;
       myProject = project;
       myDiffProvider = diffProvider;
-      myClManager = ChangeListManagerImpl.getInstanceImpl(project);
     }
 
     public boolean invoke() throws VcsException, IOException {
@@ -886,7 +884,7 @@ public class ChangesCacheFile {
       return myAnyChanges || !list.isEmpty();
     }
 
-    private static class ProcessingResult {
+    private static final class ProcessingResult {
       final boolean changeFound;
       final IncomingChangeState.State state;
       final VirtualFile file;
@@ -989,7 +987,8 @@ public class ChangesCacheFile {
         }
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
-          final boolean locallyDeleted = myClManager.isContainedInLocallyDeleted(beforeRevision.getFile());
+          final boolean locallyDeleted = ChangeListManagerImpl.getInstanceImpl(myProject)
+            .isContainedInLocallyDeleted(beforeRevision.getFile());
           debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
           return new ProcessingResult(!locallyDeleted, locallyDeleted ? BEFORE_NOT_EXISTS_DELETED_LOCALLY : BEFORE_NOT_EXISTS_ALREADY_DELETED);
         }
@@ -1013,7 +1012,7 @@ public class ChangesCacheFile {
     }
 
     private boolean fileMarkedForDeletion(final FilePath localPath) {
-      final List<LocalChangeList> changeLists =  myClManager.getChangeListsCopy();
+      final List<LocalChangeList> changeLists =  ChangeListManager.getInstance(myProject).getChangeLists();
       for (LocalChangeList list : changeLists) {
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {

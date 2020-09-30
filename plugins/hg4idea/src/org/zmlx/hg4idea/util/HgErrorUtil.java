@@ -12,14 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -31,15 +35,15 @@ public final class HgErrorUtil {
 
   private static final Logger LOG = Logger.getInstance(HgErrorUtil.class.getName());
 
-  private static final String MERGE_WITH_ANCESTOR_ERROR = "merging with a working directory ancestor has no effect";
-  private static final String NOTHING_TO_REBASE_WARNING = "nothing to rebase";
+  private static final @NonNls String MERGE_WITH_ANCESTOR_ERROR = "merging with a working directory ancestor has no effect";
+  private static final @NonNls String NOTHING_TO_REBASE_WARNING = "nothing to rebase";
 
   private HgErrorUtil() {
   }
 
   public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
     if (result == null) {
-      throw new VcsException("Couldn't execute Mercurial command");
+      throw new VcsException(HgBundle.message("error.cannot.execute.command"));
     }
     // workaround for mercurial: trying to merge with ancestor is not important/fatal error but natively hg produces abort error.
     if (fatalErrorOccurred(result) && !isAncestorMergeError(result)) {
@@ -49,7 +53,7 @@ public final class HgErrorUtil {
   }
 
   private static boolean fatalErrorOccurred(@NotNull HgCommandResult result) {
-    return result.getExitValue() == 255 || result.getRawError().contains("** unknown exception encountered");
+    return result.getExitValue() == 255 || result.getRawError().contains("** unknown exception encountered"); //NON-NLS
   }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
@@ -114,7 +118,7 @@ public final class HgErrorUtil {
       return false;
     }
     String line = errorLines.get(0);
-    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding"));
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding")); //NON-NLS
   }
 
   //during update  or revert action with  uncommitted merges/changes
@@ -130,20 +134,25 @@ public final class HgErrorUtil {
   }
 
   public static boolean isAuthorizationError(String line) {
-    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed"));
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed")); //NON-NLS
   }
 
   public static boolean isAbortLine(String line) {
-    return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:");
+    return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:"); //NON-NLS
   }
 
-  public static void handleException(@Nullable Project project, @NotNull Exception e) {
-    handleException(project, "Error", e);
+  public static void handleException(@Nullable Project project,
+                                     @NonNls @Nullable String notificationDisplayId,
+                                     @NotNull Exception e) {
+    handleException(project, notificationDisplayId, CommonBundle.message("title.error"), e);
   }
 
-  public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
+  public static void handleException(@Nullable Project project,
+                                     @NonNls @Nullable String notificationDisplayId,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotNull Exception e) {
     LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
+    new HgCommandResultNotifier(project).notifyError(notificationDisplayId, null, title, e.getMessage());
   }
 
   @Deprecated
@@ -156,6 +165,6 @@ public final class HgErrorUtil {
     // or
     //waiting for lock on working directory of repo_name
     if (result == null) return false;
-    return isAbort(result) && result.getRawError().contains("waiting for lock");
+    return isAbort(result) && result.getRawError().contains("waiting for lock"); //NON-NLS
   }
 }

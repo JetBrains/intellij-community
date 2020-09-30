@@ -15,12 +15,12 @@
  */
 package com.intellij.find.actions;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 /**
  * Runs activity in the EDT.
@@ -34,7 +34,7 @@ class PingEDT {
   private final Runnable pingAction;
   private volatile boolean stopped;
   private volatile boolean pinged;
-  private final Condition<?> myShutUpCondition;
+  private final @NotNull BooleanSupplier myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
@@ -43,7 +43,7 @@ class PingEDT {
     public void run() {
       boolean b = invokeLaterScheduled.compareAndSet(true, false);
       assert b;
-      if (stopped || myShutUpCondition.value(null)) {
+      if (stopped || myShutUpCondition.getAsBoolean()) {
         stop();
         return;
       }
@@ -66,7 +66,7 @@ class PingEDT {
   };
 
   PingEDT(@NotNull @NonNls String name,
-          @NotNull Condition<?> shutUpCondition,
+          @NotNull BooleanSupplier shutUpCondition,
           int maxUnitOfWorkThresholdMs,
           @NotNull Runnable pingAction) {
     myName = name;

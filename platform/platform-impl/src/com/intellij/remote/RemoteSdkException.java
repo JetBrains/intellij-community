@@ -2,6 +2,8 @@
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 import java.net.NoRouteToHostException;
 
@@ -11,7 +13,7 @@ public class RemoteSdkException extends ExecutionException {
 
   private Throwable myCause;
 
-  public RemoteSdkException(String s, Throwable throwable) {
+  public RemoteSdkException(@DialogMessage String s, Throwable throwable) {
     super(s, throwable);
 
     myAuthFailed = false;
@@ -29,7 +31,7 @@ public class RemoteSdkException extends ExecutionException {
     myCause = throwable;
   }
 
-  public RemoteSdkException(String s) {
+  public RemoteSdkException(@DialogMessage String s) {
     super(s);
     myAuthFailed = false;
     myNoRouteToHost = false;
@@ -49,7 +51,7 @@ public class RemoteSdkException extends ExecutionException {
       return myCause.getMessage();
     }
     else if (myAuthFailed) {
-      return "Authentication failed";
+      return IdeBundle.message("authentication.failed");
     }
     else {
       return super.getMessage();
@@ -59,7 +61,7 @@ public class RemoteSdkException extends ExecutionException {
   public static RemoteSdkException cantObtainRemoteCredentials(Throwable e) {
     // TODO needs review
     if (e.getCause() instanceof RemoteCredentialException) {
-      return new RemoteSdkException("Cant obtain remote credentials", e);
+      return new RemoteSdkException(IdeBundle.message("remote.sdk.exception.cant.obtain.remote.credentials"), e);
     }
     else {
       return new RemoteSdkException(e.getMessage(), e);

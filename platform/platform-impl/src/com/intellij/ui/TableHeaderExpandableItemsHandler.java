@@ -31,7 +31,8 @@ public class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHa
                                                             -1, column.getModelIndex());
     AppUIUtil.targetToDevice(comp, myComponent);
 
-    Rectangle rect = myComponent.getHeaderRect(column.getModelIndex());
+    int viewIndex = myComponent.getTable().convertColumnIndexToView(column.getModelIndex());
+    Rectangle rect = myComponent.getHeaderRect(viewIndex);
     rect.width = comp.getPreferredSize().width;
     return Pair.create(comp, rect);
   }

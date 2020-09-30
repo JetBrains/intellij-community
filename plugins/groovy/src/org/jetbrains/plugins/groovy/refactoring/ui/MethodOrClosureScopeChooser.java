@@ -27,9 +27,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PairFunction;
 import icons.JetgroovyIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -55,9 +55,6 @@ import java.util.List;
 public final class MethodOrClosureScopeChooser {
   private static final Logger LOG = Logger.getInstance(MethodOrClosureScopeChooser.class);
 
-  @NonNls private static final String USE_SUPER_METHOD_OF = "Change base method";
-  @NonNls private static final String CHANGE_USAGES_OF = "Change usages";
-
   public interface JBPopupOwner {
     JBPopup get();
   }
@@ -71,7 +68,7 @@ public final class MethodOrClosureScopeChooser {
                                final JBPopupOwner popupRef,
                                final PairFunction<? super GrParameterListOwner, ? super PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox(USE_SUPER_METHOD_OF, true);
+    final JCheckBox superMethod = new JCheckBox(GroovyBundle.message("change.base.method.label"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(scopes.toArray());
@@ -144,7 +141,7 @@ public final class MethodOrClosureScopeChooser {
 
 
     return JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-      .setTitle("Introduce parameter to")
+      .setTitle(GroovyBundle.message("parameter.list.owner.chooser.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
@@ -169,11 +166,11 @@ public final class MethodOrClosureScopeChooser {
                                       HighlighterTargetArea.EXACT_RANGE);
     highlighters.add(rangeHighlighter);
     if (selectedMethod instanceof GrMethod) {
-      superMethod.setText(USE_SUPER_METHOD_OF);
+      superMethod.setText(GroovyBundle.message("change.base.method.label"));
       superMethod.setEnabled(((GrMethod)selectedMethod).findDeepestSuperMethod() != null);
     }
     else {
-      superMethod.setText(CHANGE_USAGES_OF);
+      superMethod.setText(GroovyBundle.message("change.usages.label"));
       superMethod.setEnabled(findVariableToUse(selectedMethod) != null);
     }
   }

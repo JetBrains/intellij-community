@@ -264,19 +264,6 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to replace class value on top of stack with the corresponding object value
-   * <p>
-   * Stack before: ... class_value
-   * <p>
-   * Stack after: ... object_value
-   *
-   * @return this builder
-   */
-  public CFGBuilder objectOf() {
-    return add(new ObjectOfInstruction());
-  }
-
-  /**
    * Generate instructions to bind top-of-stack value to the given expression. Stack remains unchanged.
    *
    * @param expression expression to bind top-of-stack value to
@@ -298,6 +285,20 @@ public class CFGBuilder {
    */
   public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
     return add(new InstanceofInstruction(anchor));
+  }
+
+  /**
+   * Generate instructions to perform an Class.isAssignableFrom operation
+   * <p>
+   * Stack before: ... super_class sub_class
+   * <p>
+   * Stack after: ... result
+   *
+   * @param anchor element to bind this instruction to
+   * @return this builder
+   */
+  public CFGBuilder isAssignableFrom(PsiMethodCallExpression anchor) {
+    return add(new IsAssignableInstruction(anchor));
   }
 
   /**

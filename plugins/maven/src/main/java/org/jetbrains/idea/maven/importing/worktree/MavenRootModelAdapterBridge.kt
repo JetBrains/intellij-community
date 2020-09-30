@@ -44,7 +44,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = ModuleRootComponentBridge.getInstance(module)
-  private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
+  private val modifiableModel = legacyBridge.getModifiableModel(builder, builder.toStorage(), RootConfigurationAccessor())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val entitySource = MavenExternalSource.INSTANCE
 
@@ -88,14 +88,16 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                                  path: String,
                                                  generated: Boolean) {
     val typeId = getTypeId(rootType)
-    val sourceRootEntity = builder.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)),
+    val contentRootEntity = getContentRootFor(toUrl(path)) ?: error("Can't find content root for the source root $path")
+    val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity,
+                                                       virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)),
                                                        rootType.isForTests,
                                                        typeId,
                                                        entitySource)
 
     when (rootType) {
-      is JavaSourceRootType -> builder.addJavaSourceRootEntity(sourceRootEntity, generated, "", entitySource)
-      is JavaResourceRootType -> builder.addJavaResourceRootEntity(sourceRootEntity, generated, "", entitySource)
+      is JavaSourceRootType -> builder.addJavaSourceRootEntity(sourceRootEntity, generated, "")
+      is JavaResourceRootType -> builder.addJavaResourceRootEntity(sourceRootEntity, generated, "")
       else -> TODO()
     }
   }
@@ -200,8 +202,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                                  roots,
                                                  emptyList(), entitySource)
 
-    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
-                                       MavenExternalSource.INSTANCE)
+    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />")
   }
 
   override fun addLibraryDependency(artifact: MavenArtifact,
@@ -227,8 +228,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val libraryEntity = builder.addLibraryEntity(artifact.ideaLibraryName(), libraryTableId,
                                                  roots,
                                                  emptyList(), entitySource)
-    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
-                                       MavenExternalSource.INSTANCE)
+    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />")
 
     val libDependency = ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(libraryEntity.name, libraryTableId), false,
                                                                           toEntityScope(scope))

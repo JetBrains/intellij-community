@@ -183,6 +183,8 @@ service PythonConsoleBackendService {
     throws (1: UnsupportedArrayTypeException unsupported, 2: ExceedingArrayDimensionsException exceedingDimensions,
     3: PythonUnhandledException unhandledException),
 
+  void execDataViewerAction(1: string varName, 2: string action, 3: string myArgs)
+    throws (1: PythonUnhandledException unhandledException),
 
   /**
    * The result is returned asyncronously with `PythonConsoleFrontendService.returnFullValue`.

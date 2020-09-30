@@ -24,20 +24,6 @@ class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullReques
     get() = valueModel.value.number.toString()
   override val title: String
     get() = valueModel.value.title
-  override val baseBranch: String
-    get() = valueModel.value.baseRefName
-  override val headBranch: String
-    get() {
-      with(valueModel.value) {
-        if (headRepository == null) return headRefName
-        if (headRepository.isFork || baseRefName == headRefName) {
-          return headRepository.owner.login + ":" + headRefName
-        }
-        else {
-          return headRefName
-        }
-      }
-    }
   override val state: GHPullRequestState
     get() = valueModel.value.state
   override val isDraft: Boolean

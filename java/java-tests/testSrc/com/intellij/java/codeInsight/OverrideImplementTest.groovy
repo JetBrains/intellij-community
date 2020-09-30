@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -38,6 +39,8 @@ class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testImplementRecordMethods() { addRecordClass();doTest(true) }
+
+  void testImplementInterfaceMethodsInRecord() { addRecordClass();doTest(true) }
 
   void testOverrideRecordMethods() { addRecordClass();doTest(false) }
 
@@ -248,7 +251,7 @@ class Test implements A {
 
       class C implements I {
           @Override
-          public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] @TA(3) [] p2) throws @TA IllegalArgumentException {
+          public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(3) [] @TA(2) [] p2) throws @TA IllegalArgumentException {
               return null;
           }
       }""".stripIndent()
@@ -325,6 +328,16 @@ class Test implements A {
               return null;
           }
       }""".stripIndent()
+  }
+
+  void "test invocation before orphan type parameters does not lead to stub-AST mismatches"() {
+    myFixture.configureByText 'a.java', '''
+public class Test implements Runnable{
+    int i = ; <caret><X>
+}'''
+    invokeAction(true)
+    PsiTestUtil.checkStubsMatchText(file)
+    assert file.text.contains('run()')
   }
 
   private void doTest(boolean toImplement) {

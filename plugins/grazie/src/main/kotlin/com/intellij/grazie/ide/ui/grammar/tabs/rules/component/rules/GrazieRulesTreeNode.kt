@@ -10,7 +10,7 @@ class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject)
   val nodeText: String
     get() = when (val meta = userObject) {
       is RuleWithLang -> meta.rule.description
-      is ComparableCategory -> meta.category.getName(meta.lang.jLanguage)
+      is ComparableCategory -> meta.category.name
       is Lang -> meta.nativeName
       else -> ""
     }

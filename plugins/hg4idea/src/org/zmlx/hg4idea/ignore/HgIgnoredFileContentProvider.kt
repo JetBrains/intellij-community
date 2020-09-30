@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.ignore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
@@ -120,6 +121,6 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
 
   override fun supportIgnoreFileNotInVcsRoot() = false
 
-  private fun prependCommentHashCharacterIfNeeded(description: String): String =
+  private fun prependCommentHashCharacterIfNeeded(description: @NlsSafe String): @NlsSafe String =
     if (description.startsWith("#")) description else "# $description"
 }

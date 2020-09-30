@@ -1,17 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.idea.preloadServices
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -29,13 +40,20 @@ private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DIS
 
 @ApiStatus.Internal
 open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectStoreOwner {
-  private val earlyDisposable: AtomicReference<Disposable?> = AtomicReference(Disposer.newDisposable())
+  companion object {
+    @ApiStatus.Internal
+    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+  }
+
+  private val earlyDisposable = AtomicReference<Disposable?>(Disposer.newDisposable())
 
   @Volatile
   var isTemporarilyDisposed = false
     private set
 
   private val isLight: Boolean
+
+  private var cachedName: String? = null
 
   private var componentStoreValue = SynchronizedClearableLazy {
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
@@ -48,11 +66,53 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
-    myName = projectName
+    cachedName = projectName
     // light project may be changed later during test, so we need to remember its initial state
     //noinspection TestOnlyProblems
     // light project may be changed later during test, so we need to remember its initial state
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
+  }
+
+  override fun isInitialized(): Boolean {
+    val containerState = containerState.get()
+    if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS) || isTemporarilyDisposed || !isOpen) {
+      return false
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode && getUserData(RUN_START_UP_ACTIVITIES) == false) {
+      // if test asks to not run RUN_START_UP_ACTIVITIES, it means "ignore start-up activities", but project considered as initialized
+      return true
+    }
+    else {
+      return (serviceIfCreated<StartupManager>() as StartupManagerEx?)?.startupActivityPassed() == true
+    }
+  }
+
+  override fun getName(): String {
+    var result = cachedName
+    if (result == null) {
+      // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, project name is required on each load of configuration file.
+      // So, anyway name is computed very early.
+      result = componentStore.projectName
+      cachedName = result
+    }
+    return result
+  }
+
+  override fun setProjectName(value: String) {
+    if (cachedName == value) {
+      return
+    }
+
+    cachedName = value
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      StartupManager.getInstance(this).runAfterOpened {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
+          val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
+          frame.title = title
+        }, ModalityState.NON_MODAL, disposed)
+      }
+    }
   }
 
   final override var componentStore: IProjectStore
@@ -66,10 +126,10 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun getStateStore() = componentStore
 
-  final override fun getProjectFilePath() = componentStore.projectFilePath
+  final override fun getProjectFilePath() = componentStore.projectFilePath.systemIndependentPath
 
   final override fun getProjectFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByPath(componentStore.projectFilePath)
+    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
   }
 
   final override fun getBaseDir(): VirtualFile? {
@@ -78,24 +138,56 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun getBasePath() = componentStore.projectBasePath.systemIndependentPath
 
-  override fun getPresentableUrl(): String? {
+  final override fun getPresentableUrl(): String {
     val store = componentStore
-    return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath
+    return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath.systemIndependentPath
   }
 
   override fun getLocationHash(): String {
-    val prefix = if (componentStore.storageScheme == StorageScheme.DIRECTORY_BASED) "" else name
-    return "$prefix${Integer.toHexString((presentableUrl ?: name).hashCode())}"
+    val store = componentStore
+    val prefix: String
+    val path: Path
+    if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
+      path = store.projectBasePath
+      prefix = ""
+    }
+    else {
+      path = store.projectFilePath
+      prefix = getName()
+    }
+    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
   }
 
   final override fun getWorkspaceFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByPath(componentStore.workspaceFilePath ?: return null)
+    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
   }
 
   final override fun isLight() = isLight
 
   @ApiStatus.Internal
   final override fun activityNamePrefix() = "project "
+
+  override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
+    val app = ApplicationManager.getApplication()
+
+    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
+    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this,
+                                                                       activityPrefix = "project ",
+                                                                       onlyIfAwait = isLight) else null
+    createComponents(indicator)
+    servicePreloadingFuture?.join()
+
+    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling") else null
+    @Suppress("DEPRECATION")
+    app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
+
+    activity = activity?.endAndStart("projectComponentCreated")
+    runOnlyCorePluginExtensions((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>(
+      "com.intellij.projectServiceContainerInitializedListener")) {
+      it.serviceCreated(this)
+    }
+    activity?.end()
+  }
 
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
@@ -148,8 +240,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   private fun createEarlyDisposableError(error: String): RuntimeException {
     return IllegalStateException("$error for ${toString()}\n---begin of dispose trace--" +
-                                getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) +
-                                "}---end of dispose trace---\n")
+                                 getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) +
+                                 "}---end of dispose trace---\n")
   }
 
   final override fun isDisposed(): Boolean {
@@ -165,7 +257,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     if (projectManager.isProjectOpened(this)) {
-      throw IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
+      throw IllegalStateException(
+        "Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().")
     }
 
     super.dispose()
@@ -183,7 +276,9 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun toString(): String {
     val store = componentStoreValue.valueIfInitialized
-    return "Project(name=$myName, containerState=${if (isTemporarilyDisposed) "disposed temporarily" else containerStateName}" +
-           ", componentStore=" + (if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath) + ")"
+    val containerState = if (isTemporarilyDisposed) "disposed temporarily" else containerStateName
+    val componentStore = if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath
+    val disposedStr = if (isDisposed) " (disposed)" else ""
+    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
   }
 }

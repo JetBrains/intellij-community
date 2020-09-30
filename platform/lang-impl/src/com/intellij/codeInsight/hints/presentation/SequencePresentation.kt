@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
-import com.intellij.codeInsight.hints.dimension
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -112,9 +111,7 @@ class SequencePresentation(val presentations: List<InlayPresentation>) : BasePre
     }
 
     override fun sizeChanged(previous: Dimension, current: Dimension) {
-      val old = dimension()
-      val new = dimension()
-      this@SequencePresentation.fireSizeChanged(old, new)
+      this@SequencePresentation.fireSizeChanged(previous, current)
     }
 
     private fun shiftOfCurrent(): Int {

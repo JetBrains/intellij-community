@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.markup
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
 import java.util.*
@@ -19,18 +21,19 @@ enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) p
   SYNTAX("iw.level.syntax"),
   ALL("iw.level.all");
 
+  @Nls
   override fun toString(): String = EditorBundle.message(bundleKey)
 }
 
 /*
  * Per language highlight level
  */
-data class LanguageHighlightLevel(val langID: String, val level: InspectionsLevel)
+data class LanguageHighlightLevel(@NlsSafe @get:NlsSafe val langID: String, val level: InspectionsLevel)
 
 /**
  * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.
  */
-data class PassWrapper(val presentableName: String, val progress: Double, val finished: Boolean) {
+data class PassWrapper(@Nls @get:Nls val presentableName: String, val progress: Double, val finished: Boolean) {
   fun toPercent() : Int {
     val percent = (progress * 100).roundToInt()
     return if (percent == 100 && !finished) 99 else percent
@@ -49,7 +52,7 @@ enum class AnalyzingType {
 /**
  * Severity status item containing text (not necessarily a number) possible icon and severity type
  */
-data class StatusItem @JvmOverloads constructor(val text: String, val icon: Icon? = null, val type: String? = null)
+data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val type: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -111,7 +114,7 @@ interface UIController {
  * Container containing all necessary information for rendering TrafficLightRenderer.
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
-class AnalyzerStatus(val icon: Icon, val title: String, val details: String, controllerCreator: () -> UIController) {
+class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, controllerCreator: () -> UIController) {
   /**
    * Lazy UI controller getter. Call only when you do need access to the UI details.
    */
@@ -129,7 +132,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withTextStatus(status: String): AnalyzerStatus {
+  fun withTextStatus(@Nls status: String): AnalyzerStatus {
     expandedStatus = Collections.singletonList(StatusItem(status))
     textStatus = true
     return this

@@ -2,15 +2,16 @@
 package com.intellij.util.proxy;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 public final class SharedProxyConfig {
-  private static final File CONFIG_FILE = new File(PathManager.getConfigPath(), "proxy_config");
+  private static final Path CONFIG_FILE = PathManager.getConfigDir().resolve("proxy_config");
   private static final String HOST = "host";
   private static final String PORT = "port";
   private static final String LOGIN = "login";
@@ -38,7 +39,12 @@ public final class SharedProxyConfig {
   }
 
   public static boolean clear() {
-    return FileUtil.delete(CONFIG_FILE);
+    try {
+      return Files.deleteIfExists(CONFIG_FILE);
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   @Nullable
@@ -75,9 +81,12 @@ public final class SharedProxyConfig {
       }
     }
     else {
-      FileUtil.delete(CONFIG_FILE);
+      try {
+        Files.deleteIfExists(CONFIG_FILE);
+      }
+      catch (IOException ignore) {
+      }
     }
     return false;
   }
-
 }

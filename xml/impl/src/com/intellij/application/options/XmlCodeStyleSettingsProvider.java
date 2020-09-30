@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -54,7 +55,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return new XmlCodeStyleSettings(settings);
   }
 
-  public static String getConfigurableDisplayNameText() {
+  public static @ConfigurableName String getConfigurableDisplayNameText() {
     return XmlBundle.message("title.xml");
   }
 }

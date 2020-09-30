@@ -28,11 +28,11 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.fenceLanguageProvider"
                     interface="org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.markdown.codeFencePluginGeneratingProvider"
-                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.previewStylesProvider"
                     interface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewStylesProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -79,7 +79,7 @@ Includes the following features:</p>
                              instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable">
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
@@ -97,16 +97,20 @@ Includes the following features:</p>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
-    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.MarkdownLanguageCodeStyleSettingsProvider"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
-    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
     <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+
+    <!--Formatting-->
+    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
+    <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
+    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
     </intentionAction>
-    <notificationAllowlist groupIds="Markdown headers group;Markdown"/>
+    <notificationGroup id="Markdown" displayType="BALLOON"/>
 
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"
@@ -117,6 +121,12 @@ Includes the following features:</p>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
                  description="Open Markdown link in an external browser (otherwise open in the IDE viewer)"/>
+    <registryKey key="markdown.formatter.apply.to.code.fence"
+                 defaultValue="false"
+                 description="Should Markdown use injected languages' formatters to format code-fences"/>
+    <registryKey key="markdown.mermaid.download.link"
+                 defaultValue="https://unpkg.com/mermaid@8.6.0/dist/mermaid.js"
+                 description="Link which Markdown plugin will use to download Mermaid.js library"/>
   </extensions>
 
   <applicationListeners>
@@ -126,9 +136,18 @@ Includes the following features:</p>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
-    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeFenceLanguageProvider"/>
-    <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeGeneratingProvider"/>
-    <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
+
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension"/>
+
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension"/>
+
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
   </extensions>
 
   <actions>

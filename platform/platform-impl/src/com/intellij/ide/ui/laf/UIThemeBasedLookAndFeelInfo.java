@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
@@ -82,10 +82,10 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
           EditorColorsScheme globalScheme = cm.getGlobalScheme();
           PropertiesComponent properties = PropertiesComponent.getInstance();
 
-          EditorColorsScheme baseScheme = cm.getScheme(SchemeManager.getBaseName(globalScheme));
+          EditorColorsScheme baseScheme = cm.getScheme(Scheme.getBaseName(globalScheme.getName()));
 
           if (!properties.getBoolean(RELAUNCH_PROPERTY) &&
-              !SchemeManager.getBaseName(globalScheme).equals(themeName) &&
+              !Scheme.getBaseName(globalScheme.getName()).equals(themeName) &&
               EditorColorsScheme.DEFAULT_SCHEME_NAME.equals(baseScheme.getName())) { // is default based
             EditorColorsScheme scheme = cm.getScheme(themeName);
             if (scheme != null) {

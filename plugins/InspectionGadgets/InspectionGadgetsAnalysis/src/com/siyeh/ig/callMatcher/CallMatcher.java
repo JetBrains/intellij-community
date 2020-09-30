@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
 
 import java.util.Collections;
 import java.util.Set;
@@ -41,6 +42,9 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
   @Contract(value = "null -> false", pure = true)
   boolean methodMatches(@Nullable PsiMethod method);
+
+  @Contract(value = "null -> false", pure = true)
+  boolean uCallMatches(@Nullable UCallExpression call);
 
   /**
    * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
@@ -81,6 +85,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean methodMatches(PsiMethod method) {
         for (CallMatcher m : matchers) {
           if (m.methodMatches(method)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean uCallMatches(@Nullable UCallExpression call) {
+        for (CallMatcher m : matchers) {
+          if (m.uCallMatches(call)) {
             return true;
           }
         }
@@ -196,6 +210,12 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       }
 
       @Override
+      public boolean uCallMatches(@Nullable UCallExpression call) {
+        if (call == null || !filter.test(call.getSourcePsi())) return false;
+        return CallMatcher.this.uCallMatches(call);
+      }
+
+      @Override
       public String toString() {
         return CallMatcher.this.toString();
       }
@@ -210,7 +230,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     return withContextFilter(element -> PsiUtil.getLanguageLevel(element).isAtLeast(level));
   }
 
-  class Simple implements CallMatcher {
+  final class Simple implements CallMatcher {
     static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtilRt.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
     static final Simple ENUM_VALUE_OF =
       new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
@@ -255,7 +275,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
      * @throws IllegalStateException if this matcher is already limited to parameters count or types
      */
     @Contract(pure = true)
-    public Simple parameterTypes(String @NotNull ... types) {
+    public Simple parameterTypes(@NonNls String @NotNull ... types) {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }
@@ -281,7 +301,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       return parametersMatch(parameterList);
     }
 
-    @Contract(pure = true)
+    @Contract(value = "null -> false", pure = true)
     @Override
     public boolean test(PsiMethodCallExpression call) {
       if (call == null) return false;
@@ -317,6 +337,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (aClass == null) return false;
       return myCallType.matches(aClass, myClassName, method.hasModifierProperty(PsiModifier.STATIC)) &&
              parametersMatch(method.getParameterList());
+    }
+
+    @Override
+    public boolean uCallMatches(@Nullable UCallExpression call) {
+      if (call == null) return false;
+      String name = call.getMethodName();
+      if (!myNames.contains(name)) return false;
+      return methodMatches(call.resolve());
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.NonNls
 import java.awt.Cursor
 import java.awt.FontMetrics
 import java.awt.Graphics
@@ -192,6 +193,7 @@ private fun readSafely(text: String, read: (StringReader) -> Unit) {
   }
 }
 
+@NonNls
 private const val underlineStyles = """
 p { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; text-decoration: underline }
 body { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; text-decoration: underline }

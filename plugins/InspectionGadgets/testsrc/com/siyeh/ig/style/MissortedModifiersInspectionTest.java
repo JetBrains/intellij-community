@@ -15,7 +15,7 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    return JAVA_15;
   }
 
   public void testMissortedModifiers() {
@@ -33,26 +33,30 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
     final MissortedModifiersInspection inspection = new MissortedModifiersInspection();
     inspection.typeUseWithType = true;
     myFixture.enableInspections(inspection);
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
+    doTestQuickFix();
   }
 
   public void testSimpleComment() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
+    doTestQuickFix();
   }
 
   public void testAnotherComment() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
+    doTestQuickFix();
   }
 
   public void testKeepAnnotationOrder() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
+    doTestQuickFix();
   }
 
   public void testMissortedInModuleRequires(){
+    doTestQuickFix();
+  }
+
+  public void testSealedClass() {
+    doTestQuickFix();
+  }
+
+  public void doTestQuickFix() {
     doTest();
     checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
   }

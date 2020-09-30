@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   protected static final Logger LOG = Logger.getInstance(QualifyThisOrSuperArgumentFix.class);
   protected final PsiExpression myExpression;
   protected final PsiClass myPsiClass;
-  private String myText;
+  private @IntentionName String myText;
 
 
   public QualifyThisOrSuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
@@ -58,7 +59,7 @@ public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myExpression.isValid()) return false;
     if (!myPsiClass.isValid()) return false;
-    myText = "Qualify " + getQualifierText() + " expression with '" + myPsiClass.getQualifiedName() + "'";
+    myText = JavaAnalysisBundle.message("intention.name.qualify.expression", getQualifierText(), myPsiClass.getQualifiedName());
     return true;
   }
 

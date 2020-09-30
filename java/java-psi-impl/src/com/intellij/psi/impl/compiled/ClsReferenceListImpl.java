@@ -18,32 +18,27 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
-  private static final ClsJavaCodeReferenceElementImpl[] EMPTY_REFS_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
-
-  private final NotNullLazyValue<ClsJavaCodeReferenceElementImpl[]> myRefs;
+  private final NotNullLazyValue<PsiJavaCodeReferenceElement[]> myRefs;
 
   public ClsReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
     super(stub);
-    myRefs = new AtomicNotNullLazyValue<ClsJavaCodeReferenceElementImpl[]>() {
+    myRefs = new AtomicNotNullLazyValue<PsiJavaCodeReferenceElement[]>() {
       @Override
-      protected ClsJavaCodeReferenceElementImpl @NotNull [] compute() {
-        String[] strings = getStub().getReferencedNames();
-        if (strings.length > 0) {
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[strings.length];
-          for (int i = 0; i < strings.length; i++) {
-            refs[i] = new ClsJavaCodeReferenceElementImpl(ClsReferenceListImpl.this, strings[i]);
-          }
-          return refs;
+      protected PsiJavaCodeReferenceElement @NotNull [] compute() {
+        TypeInfo[] types = getStub().getTypes();
+        if (types.length <= 0) {
+          return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
         }
-        else {
-          return EMPTY_REFS_ARRAY;
-        }
+        return ContainerUtil.map2Array(types, PsiJavaCodeReferenceElement.class, info ->
+          new ClsJavaCodeReferenceElementImpl(ClsReferenceListImpl.this, info.text, info.getTypeAnnotations()));
       }
     };
   }
@@ -70,10 +65,13 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
-    String[] names = getStub().getReferencedNames();
-    if (names.length != 0) {
-      switch (getRole()) {
+    PsiClassType @NotNull [] types = getStub().getReferencedTypes();
+    if (types.length != 0) {
+      Role role = getRole();
+      switch (role) {
         case EXTENDS_BOUNDS_LIST:
+          buffer.append(' ').append(PsiKeyword.EXTENDS).append(' ');
+          break;
         case EXTENDS_LIST:
           buffer.append(PsiKeyword.EXTENDS).append(' ');
           break;
@@ -87,9 +85,9 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
           buffer.append(PsiKeyword.WITH).append(' ');
           break;
       }
-      for (int i = 0; i < names.length; i++) {
-        if (i > 0) buffer.append(", ");
-        buffer.append(names[i]);
+      for (int i = 0; i < types.length; i++) {
+        if (i > 0) buffer.append(role == Role.EXTENDS_BOUNDS_LIST ? " & " : ", ");
+        buffer.append(types[i].getCanonicalText(true));
       }
     }
   }
@@ -97,7 +95,13 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-    setMirrors(getReferenceElements(), SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements());
+    PsiJavaCodeReferenceElement[] mirrorRefs = SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements();
+    PsiJavaCodeReferenceElement[] stubRefs = getReferenceElements();
+    if (mirrorRefs.length == 0 && stubRefs.length == 1 && CommonClassNames.JAVA_LANG_OBJECT.equals(stubRefs[0].getQualifiedName())) {
+      // annotated Object type is supported in stubs but not supported in decompiler yet
+      return;
+    }
+    setMirrors(stubRefs, mirrorRefs);
   }
 
   @Override
@@ -112,6 +116,6 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @Override
   public String toString() {
-    return "PsiReferenceList";
+    return "PsiReferenceList:" + getRole();
   }
 }

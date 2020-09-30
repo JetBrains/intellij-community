@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public final class UiInspectorUtil {
   }
 
   @NotNull
-  public static List<PropertyBean> collectActionGroupInfo(@NotNull String prefix, @NotNull ActionGroup group, @Nullable String place) {
+  public static List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix, @NotNull ActionGroup group, @Nullable String place) {
     List<PropertyBean> result = new ArrayList<>();
 
     if (place != null) {

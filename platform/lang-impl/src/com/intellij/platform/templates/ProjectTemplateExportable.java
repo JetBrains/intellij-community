@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.ExportableComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,6 @@ public class ProjectTemplateExportable implements ExportableComponent {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Project templates";
+    return LangBundle.message("project.template.presentable.name");
   }
 }

@@ -95,7 +95,7 @@ PyFile:InvalidAssignmentExpressions.py
         PsiWhiteSpace(' ')
         PyPrefixExpression
           PsiElement(Py:MINUS)('-')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             <empty list>
       PsiElement(Py:RPAR)(')')
   PsiWhiteSpace('\n')
@@ -107,7 +107,7 @@ PyFile:InvalidAssignmentExpressions.py
           PsiElement(Py:IDENTIFIER)('x')
         PsiWhiteSpace(' ')
         PsiElement(Py:COLONEQ)(':=')
-        PsiErrorElement:expression expected
+        PsiErrorElement:Expression expected
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(Py:RPAR)(')')

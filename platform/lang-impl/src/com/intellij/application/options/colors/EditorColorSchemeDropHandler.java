@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,9 +35,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
-
-  public static final String ADDED = "Color scheme added";
+public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
 
   @Override
   public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
@@ -57,12 +55,11 @@ public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
     VirtualFile file = getColorSchemeFile(t);
     assert file != null;
 
-    if (Messages.YES == Messages.showYesNoDialog(
-      LangBundle.message("message.would.you.like.to.install.and.apply.0.editor.color.scheme", file.getName()),
-      LangBundle.message("dialog.title.install.color.scheme"),
-      LangBundle.message("button.install"),
-      LangBundle.message("button.open.in.editor"),
-      null)) {
+    if (MessageDialogBuilder.yesNo(LangBundle.message("dialog.title.install.color.scheme"),
+                                   LangBundle.message("message.would.you.like.to.install.and.apply.0.editor.color.scheme", file.getName()))
+      .yesText(LangBundle.message("button.install"))
+      .noText(LangBundle.message("button.open.in.editor"))
+      .ask(project)) {
       try {
         ColorSchemeImporter importer = new ColorSchemeImporter();
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -85,14 +82,16 @@ public class EditorColorSchemeDropHandler extends CustomFileDropHandler {
           }
 
           colorsManager.setGlobalScheme(imported);
-          Notification notification = new Notification("", ADDED, message, NotificationType.INFORMATION);
-          QuickChangeColorSchemeAction.changeLafIfNecessary(imported,
-                                                            () -> new Alarm().addRequest(
-                                                              () -> Notifications.Bus.notify(notification, project), 300));
+          Notification notification = new Notification("", LangBundle.message("notification.title.color.scheme.added"), message, NotificationType.INFORMATION);
+          QuickChangeColorSchemeAction.changeLafIfNecessary(imported, () -> {
+            new Alarm().addRequest(
+              () -> Notifications.Bus.notify(notification, project), 300);
+          });
         }
       }
       catch (SchemeImportException e) {
-        String title = e.isWarning() ? ADDED : LangBundle.message("notification.title.color.scheme.import.failed");
+        String title = e.isWarning() ? LangBundle.message("notification.title.color.scheme.added")
+                                     : LangBundle.message("notification.title.color.scheme.import.failed");
         NotificationType type = e.isWarning() ? NotificationType.WARNING : NotificationType.ERROR;
         Notification notification = new Notification("", title, e.getMessage(), type);
         notification.notify(project);

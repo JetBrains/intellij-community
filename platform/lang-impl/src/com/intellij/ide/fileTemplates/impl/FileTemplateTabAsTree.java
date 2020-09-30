@@ -19,6 +19,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +42,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private final JTree myTree;
   private final FileTemplateNode myRoot;
 
-  protected FileTemplateTabAsTree(String title) {
+  protected FileTemplateTabAsTree(@NlsContexts.TabTitle String title) {
     super(title);
     myRoot = initModel();
     MyTreeModel treeModel = new MyTreeModel(myRoot);

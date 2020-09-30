@@ -208,7 +208,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
      * <code>assertFalse</code> -> <code>assertNotEquals</code> (do not replace for junit 5 Assertions
      * as there is no primitive overloads for <code>assertNotEquals</code> and boxing would be enforced if replaced)
      */
-    private void replaceWithAssertEquals(AssertHint assertHint, final String methodName) {
+    private void replaceWithAssertEquals(AssertHint assertHint, final @NonNls String methodName) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
@@ -330,7 +330,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private String compoundMethodCall(String methodName, AssertHint assertHint, String args) {
+    private String compoundMethodCall(@NonNls String methodName, AssertHint assertHint, String args) {
       final PsiExpression message = assertHint.getMessage();
       final StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier(methodName, assertHint, newExpression);

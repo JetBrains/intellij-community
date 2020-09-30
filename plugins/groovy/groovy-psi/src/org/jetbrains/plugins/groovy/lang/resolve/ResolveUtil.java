@@ -5,6 +5,7 @@ import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -65,7 +66,6 @@ import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
@@ -77,7 +77,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialSta
  * @author ven
  */
 public final class ResolveUtil {
-
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
 
@@ -616,14 +615,14 @@ public final class ResolveUtil {
 
 
   public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
-                                                                    @Nullable String methodName,
+                                                                    @NlsSafe @Nullable String methodName,
                                                                     @NotNull PsiElement place,
                                                                     PsiType @Nullable ... argumentTypes) {
     return getMethodCandidates(thisType, methodName, place, false, argumentTypes);
   }
 
   public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
-                                                                    @Nullable String methodName,
+                                                                    @NlsSafe @Nullable String methodName,
                                                                     @NotNull PsiElement place,
                                                                     boolean allVariants,
                                                                     PsiType @Nullable ... argumentTypes) {
@@ -825,8 +824,9 @@ public final class ResolveUtil {
         if (candidate != null) {
           ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
           if (mapping != null) {
-            ExpressionArgument argument = new ExpressionArgument(arg);
-            PsiParameter targetParameter = doIfNotNull(mapping.targetParameter(argument), PsiCallParameter::getPsi);
+            Argument argument = new ExpressionArgument(arg);
+            PsiCallParameter obj = mapping.targetParameter(argument);
+            PsiParameter targetParameter = obj == null ? null : obj.getPsi();
             PsiType expectedType = mapping.expectedType(argument);
             ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
           }

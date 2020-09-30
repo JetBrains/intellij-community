@@ -146,7 +146,7 @@ public class KeywordArgumentCompletionUtil {
     }
 
     @Override
-    public void visitPyParameter(PyParameter par) {
+    public void visitPyParameter(@NotNull PyParameter par) {
       myCount++;
       if (myCount == 1 && myNeedSelf) {
         myHasSelf = true;
@@ -184,18 +184,18 @@ public class KeywordArgumentCompletionUtil {
     }
 
     @Override
-    public void visitPyElement(PyElement node) {
+    public void visitPyElement(@NotNull PyElement node) {
       node.acceptChildren(this);
     }
 
     @Override
-    public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+    public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
       String operandName = node.getOperand().getName();
       processGet(operandName, node.getIndexExpression());
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       if (node.isCalleeText("pop", "get", "getattr")) {
         PyReferenceExpression child = PsiTreeUtil.getChildOfType(node.getCallee(), PyReferenceExpression.class);
         if (child != null) {

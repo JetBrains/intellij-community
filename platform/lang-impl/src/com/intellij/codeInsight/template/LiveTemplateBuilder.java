@@ -52,7 +52,7 @@ public class LiveTemplateBuilder {
     return name.startsWith(END_PREFIX);
   }
 
-  private static class VarOccurence {
+  private static final class VarOccurence {
     String myName;
     int myOffset;
 
@@ -310,7 +310,7 @@ public class LiveTemplateBuilder {
     return marker;
   }
 
-  public static class Marker {
+  public static final class Marker {
     int myStartOffset;
     int myEndOffset;
 

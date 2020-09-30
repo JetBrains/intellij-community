@@ -2,7 +2,7 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ public abstract class CommandProcessorEx extends CommandProcessor {
   public abstract void leaveModal();
 
   @Nullable
-  public abstract CommandToken startCommand(@Nullable Project project, @Nls String name, @Nullable Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
+  public abstract CommandToken startCommand(@Nullable Project project, @NlsContexts.Command String name, @Nullable Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
 
   public abstract void finishCommand(@NotNull final CommandToken command, @Nullable Throwable throwable);
 }

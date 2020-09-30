@@ -199,6 +199,9 @@
     </action>
 
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
+    <action id="QuickPreview" class="com.intellij.codeInsight.hint.actions.QuickPreviewAction">
+      <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
+    </action>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
       <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBarWidgetsGroup" anchor="after"/>
@@ -333,7 +336,9 @@
       </group>
 
       <group id="CodeFormatGroup">
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
+        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction">
+          <synonym key="action.ReformatCode.synonym1"/>
+        </action>
         <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
@@ -730,7 +735,7 @@
 
     <group id="EditorLangPopupMenu">
       <separator/>
-      <group id="EditorPopupMenu.GoTo" popup="true">
+      <group id="EditorPopupMenu.GoTo" popup="true" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
@@ -1054,7 +1059,6 @@
     <group id="TestTreePopupMenu">
       <reference ref="RunContextGroup"/>
       <reference ref="EditSource"/>
-      <reference ref="ViewSource"/>
     </group>
 
     <group id="ConsoleView.PopupMenu">

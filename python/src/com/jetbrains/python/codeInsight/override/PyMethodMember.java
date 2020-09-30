@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.override;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
@@ -32,6 +33,7 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PyMethodMember extends PsiElementMemberChooserObject implements ClassMember {
+  @NlsSafe
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());

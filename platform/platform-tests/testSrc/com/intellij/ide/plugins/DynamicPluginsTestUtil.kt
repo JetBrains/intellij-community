@@ -18,7 +18,7 @@ import java.util.function.Supplier
 
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
-  PluginManagerCore.ourPluginError = null
+  PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
   val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true,
@@ -27,8 +27,7 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   }
   if (result == null) {
     @Suppress("USELESS_CAST")
-    assertThat(PluginManagerCore.ourPluginError as String?).isNotNull
-    PluginManagerCore.ourPluginError = null
+    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty
   }
   return result!!
 }
@@ -47,7 +46,7 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   val pair = preparePluginDescriptor(pluginBuilder.text(), fs)
   val plugin = pair.first
   var descriptor = pair.second
-  assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
+  assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   descriptor.setLoader(loader)
   try {
     loadPlugin(descriptor)

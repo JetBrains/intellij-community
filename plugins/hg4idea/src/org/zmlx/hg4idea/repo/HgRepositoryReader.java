@@ -35,8 +35,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.doIOOperation;
  *
  * @author Nadya Zabrodina
  */
-public class HgRepositoryReader {
-
+public final class HgRepositoryReader {
   private static final Logger LOG = Logger.getInstance(HgRepositoryReader.class);
 
   private static final Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]{40})[:?|\\s+](.+)");

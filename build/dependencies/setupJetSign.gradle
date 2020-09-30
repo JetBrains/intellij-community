@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 repositories {
-  maven {
-    url 'https://repo.labs.intellij.net/jet-sign'
+  if (inJetBrainsNetwork) {
+    maven {
+      url 'https://repo.labs.intellij.net/jet-sign'
+    }
   }
 }
 

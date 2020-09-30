@@ -14,10 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructField;
-import org.jetbrains.java.decompiler.struct.StructMember;
-import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.*;
 import org.jetbrains.java.decompiler.struct.attr.*;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
@@ -28,6 +25,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClassWriter {
   private final PoolInterceptor interceptor;
@@ -162,10 +160,18 @@ public class ClassWriter {
 
       dummy_tracer.incrementCurrentSourceLine(buffer.countLines(start_class_def));
 
+      List<StructRecordComponent> components = cl.getRecordComponents();
+
       for (StructField fd : cl.getFields()) {
         boolean hide = fd.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                        wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
         if (hide) continue;
+
+        if (components != null && fd.getAccessFlags() == (CodeConstants.ACC_FINAL | CodeConstants.ACC_PRIVATE) &&
+            components.stream().anyMatch(c -> c.getName().equals(fd.getName()) && c.getDescriptor().equals(fd.getDescriptor()))) {
+          // Record component field: skip it
+          continue;
+        }
 
         boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
         if (isEnum) {
@@ -256,6 +262,21 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
+  private static boolean isSyntheticRecordMethod(StructMethod mt, TextBuffer code) {
+    if (mt.getClassStruct().getRecordComponents() == null) return false;
+    String name = mt.getName();
+    String descriptor = mt.getDescriptor();
+    if (name.equals("equals") && descriptor.equals("(Ljava/lang/Object;)Z") ||
+        name.equals("hashCode") && descriptor.equals("()I") ||
+        name.equals("toString") && descriptor.equals("()Ljava/lang/String;")) {
+      if (code.countLines() == 1) {
+        String str = code.toString().trim();
+        return str.startsWith("return this." + name + "<invokedynamic>(this");
+      }
+    }
+    return false;
+  }
+
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
     StructLineNumberTableAttribute table = method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
@@ -302,6 +323,13 @@ public class ClassWriter {
       flags &= ~CodeConstants.ACC_FINAL;
     }
 
+    List<StructRecordComponent> components = cl.getRecordComponents();
+
+    if (components != null) {
+      // records are implicitly final
+      flags &= ~CodeConstants.ACC_FINAL;
+    }
+
     appendModifiers(buffer, flags, CLASS_ALLOWED, isInterface, CLASS_EXCLUDED);
 
     if (isEnum) {
@@ -312,6 +340,9 @@ public class ClassWriter {
         buffer.append('@');
       }
       buffer.append("interface ");
+    }
+    else if (components != null) {
+      buffer.append("record ");
     }
     else {
       buffer.append("class ");
@@ -324,9 +355,22 @@ public class ClassWriter {
       appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
     }
 
+    if (components != null) {
+      buffer.append('(');
+      for (int i = 0; i < components.size(); i++) {
+        StructRecordComponent cd = components.get(i);
+        if (i > 0) {
+          buffer.append(", ");
+        }
+        boolean varArgComponent = i == components.size() - 1 && isVarArgRecord(cl);
+        recordComponentToJava(cd, buffer, varArgComponent);
+      }
+      buffer.append(')');
+    }
+
     buffer.append(' ');
 
-    if (!isEnum && !isInterface && cl.superClass != null) {
+    if (!isEnum && !isInterface && components == null && cl.superClass != null) {
       VarType supertype = new VarType(cl.superClass.getString(), true);
       if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
         buffer.append("extends ");
@@ -360,6 +404,13 @@ public class ClassWriter {
     }
 
     buffer.append('{').appendLineSeparator();
+  }
+
+  private boolean isVarArgRecord(StructClass cl) {
+    String canonicalConstructorDescriptor = 
+      cl.getRecordComponents().stream().map(c -> c.getDescriptor()).collect(Collectors.joining("", "(", ")V"));
+    StructMethod ctor = cl.getMethod(CodeConstants.INIT_NAME, canonicalConstructorDescriptor);
+    return ctor != null && ctor.hasModifier(CodeConstants.ACC_VARARGS);
   }
 
   private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
@@ -450,6 +501,33 @@ public class ClassWriter {
       buffer.append(";").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
+  }
+
+  private static void recordComponentToJava(StructRecordComponent cd, TextBuffer buffer, boolean varArgComponent) {
+    appendAnnotations(buffer, -1, cd, TypeAnnotation.FIELD);
+
+    VarType fieldType = new VarType(cd.getDescriptor(), false);
+
+    GenericFieldDescriptor descriptor = null;
+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute attr = cd.getAttribute(StructGeneralAttribute.ATTRIBUTE_SIGNATURE);
+      if (attr != null) {
+        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
+      }
+    }
+
+    if (descriptor != null) {
+      buffer.append(GenericMain.getGenericCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type));
+    }
+    else {
+      buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? fieldType.decreaseArrayDim() : fieldType));
+    }
+    if (varArgComponent) {
+      buffer.append("...");
+    }
+    buffer.append(' ');
+
+    buffer.append(cd.getName());
   }
 
   private static void methodLambdaToJava(ClassNode lambdaNode,
@@ -817,7 +895,8 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags));
+            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags))
+                  || isSyntheticRecordMethod(mt, code);
 
             buffer.append(code);
 
@@ -959,7 +1038,13 @@ public class ClassWriter {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
           String text = annotation.toJava(indent, BytecodeMappingTracer.DUMMY).toString();
           filter.add(text);
-          buffer.append(text).appendLineSeparator();
+          buffer.append(text);
+          if (indent < 0) {
+            buffer.append(' ');
+          }
+          else {
+            buffer.appendLineSeparator();
+          }
         }
       }
     }

@@ -161,7 +161,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         val path = localTempDir.newDirectory("pluginTemp").toPath().resolve("my-plugin-new.jar")
         PluginBuilder()
           .id(oldBuilder.id)
@@ -187,7 +187,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw IOException("404")
       }
     }
@@ -244,7 +244,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -274,7 +274,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -290,7 +290,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw AssertionError("No file download should be requested")
       }
     }
@@ -311,7 +311,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .buildZip(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.UnzipCommand(tempPath.toFile(), oldPluginsDir.toFile()))
+    commands.add(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()

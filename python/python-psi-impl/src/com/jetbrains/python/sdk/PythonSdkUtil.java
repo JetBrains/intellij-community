@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -147,7 +148,7 @@ public class PythonSdkUtil {
     return sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker;
   }
 
-  public static String getUserSite() {
+  public static @NlsSafe String getUserSite() {
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
       return appdata + File.separator + "Python";

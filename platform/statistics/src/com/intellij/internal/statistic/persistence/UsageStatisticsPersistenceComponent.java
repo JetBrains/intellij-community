@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.persistence;
 
 import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,13 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-  name = "UsagesStatistic",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-  reportStatistic = false
-)
+@State(name = "UsagesStatistic", storages = @Storage(StoragePathMacros.CACHE_FILE))
 @Service
-public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element> {
+public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element>, StatisticsSystemEventIdProvider {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   private boolean isAllowedForEAP = true;
@@ -144,16 +141,18 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   @Nullable
-  public static ConsentOptionsProvider getConsentOptionsProvider() {
-    return ServiceManager.getService(ConsentOptionsProvider.class);
+  private static ConsentOptionsProvider getConsentOptionsProvider() {
+    return ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
   }
 
-  public long getEventId(@NotNull String recorderId) {
+  @Override
+  public long getSystemEventId(@NotNull String recorderId) {
     Long eventId = myRecorderToSystemEventIds.get(recorderId);
     return eventId != null ? eventId : 0;
   }
 
-  public void setEventId(@NotNull String recorderId, long eventId) {
+  @Override
+  public void setSystemEventId(@NotNull String recorderId, long eventId) {
     myRecorderToSystemEventIds.put(recorderId, eventId);
   }
 }

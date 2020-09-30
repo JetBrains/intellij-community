@@ -154,7 +154,7 @@ public class PyJavaClassType implements PyClassLikeType {
   }
 
   @Override
-  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+  public void visitMembers(final @NotNull Processor<? super PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
     for (PsiMethod method : myClass.getAllMethods()) {
       processor.process(method);
     }

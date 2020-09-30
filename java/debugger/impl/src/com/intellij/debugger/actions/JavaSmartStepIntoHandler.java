@@ -398,7 +398,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               visitLinesInstructions(frameProxy.location(), true, lines, visitor);
 
               // check if anything real left, fallback to the previous state
-              if (!targets.isEmpty() && !immediateMethodCalls(targets).findAny().isPresent()) {
+              if (!targets.isEmpty() && immediateMethodCalls(targets).findAny().isEmpty()) {
                 targets.clear();
                 targets.addAll(copy);
               }

@@ -29,8 +29,8 @@ import java.util.List;
  */
 public class FailureImpl implements Failure {
 
-  private final String myMessage;
-  private final String myDescription;
+  private final @BuildEventsNls.Message String myMessage;
+  private final @BuildEventsNls.Description String myDescription;
   private final List<? extends Failure> myCauses;
   @Nullable
   private final Throwable myError;

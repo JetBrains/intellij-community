@@ -1,9 +1,9 @@
 <idea-plugin version="2">
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <scriptDefinitionsProvider
-            id="circletScriptDefinitionsProvider"
-            implementation="circlet.plugins.pipelines.services.CircletScriptDefinitionsProvider"
-            order="first"
-        />
-    </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsProvider
+      id="spaceScriptDefinitionsProvider"
+      implementation="com.intellij.space.plugins.pipelines.services.SpaceScriptDefinitionsProvider"
+      order="first"
+    />
+  </extensions>
 </idea-plugin>

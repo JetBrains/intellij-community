@@ -36,6 +36,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -130,14 +131,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class UiInspectorNotification extends Notification {
+  private static final class UiInspectorNotification extends Notification {
     private UiInspectorNotification() {
       super(Notifications.SYSTEM_MESSAGES_GROUP_ID, "UI Inspector", "Control-Alt-Click to view component info!",
             NotificationType.INFORMATION);
     }
   }
 
-  private static class InspectorWindow extends JDialog {
+  private static final class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     @NotNull private final List<Component> myComponents = new ArrayList<>();
     private List<? extends PropertyBean> myInfo;
@@ -556,7 +557,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     public abstract void onComponentsChanged(List<Component> components);
 
-    private static class ComponentNode extends DefaultMutableTreeNode  {
+    private static final class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;
       String myText;
 
@@ -634,7 +635,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class HighlightComponent extends JComponent {
+  private static final class HighlightComponent extends JComponent {
     @NotNull private final Color myColor;
     @NotNull private final Insets myInsets;
 
@@ -673,7 +674,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class InspectorTable extends JPanel {
+  private static final class InspectorTable extends JPanel {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
 
@@ -773,7 +774,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class DimensionsComponent extends JComponent {
+  private static final class DimensionsComponent extends JComponent {
     Component myComponent;
     int myWidth;
     int myHeight;
@@ -1292,6 +1293,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (myComponent instanceof Container) {
         addLayoutProperties((Container)myComponent);
       }
+      if (myComponent instanceof TextPanel.WithIconAndArrows) {
+        myProperties.add(new PropertyBean("icon", ((TextPanel.WithIconAndArrows)myComponent).getIcon()));
+      }
       if (myComponent.getParent() != null) {
         LayoutManager layout = myComponent.getParent().getLayout();
         if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
@@ -1431,6 +1435,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (component instanceof ActionToolbarImpl) {
         ActionToolbarImpl toolbar = (ActionToolbarImpl)component;
         myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
+
+        JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
+        if (targetComponent != null) {
+          myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
+        }
       }
     }
 

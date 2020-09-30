@@ -28,23 +28,23 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
-                                          @Nullable("null means all") final HighlightSeverity minSeverity,
-                                          final int startOffset,
-                                          final int endOffset,
-                                          @NotNull final Processor<? super HighlightInfo> processor) {
+                                          @Nullable("null means all") HighlightSeverity minSeverity,
+                                          int startOffset,
+                                          int endOffset,
+                                          @NotNull Processor<? super HighlightInfo> processor) {
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return processHighlights(model, project, minSeverity, startOffset, endOffset, processor);
   }
 
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
-                                          @Nullable("null means all") final HighlightSeverity minSeverity,
-                                          final int startOffset,
-                                          final int endOffset,
-                                          @NotNull final Processor<? super HighlightInfo> processor) {
+                                          @Nullable("null means all") HighlightSeverity minSeverity,
+                                          int startOffset,
+                                          int endOffset,
+                                          @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();
@@ -58,13 +58,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   static boolean processHighlightsOverlappingOutside(@NotNull Document document,
                                                      @NotNull Project project,
-                                                     @Nullable("null means all") final HighlightSeverity minSeverity,
-                                                     final int startOffset,
-                                                     final int endOffset,
-                                                     @NotNull final Processor<? super HighlightInfo> processor) {
+                                                     @Nullable("null means all") HighlightSeverity minSeverity,
+                                                     int startOffset,
+                                                     int endOffset,
+                                                     @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
@@ -96,9 +96,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract void cleanFileLevelHighlights(@NotNull Project project, int group, PsiFile psiFile);
 
-  public abstract void addFileLevelHighlight(@NotNull final Project project,
-                                             final int group,
-                                             @NotNull final HighlightInfo info,
-                                             @NotNull final PsiFile psiFile);
+  public abstract void addFileLevelHighlight(@NotNull Project project,
+                                             int group,
+                                             @NotNull HighlightInfo info,
+                                             @NotNull PsiFile psiFile);
 
 }

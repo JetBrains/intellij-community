@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -35,7 +36,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor;
 
-  private volatile String myInferenceError;
+  private volatile @NlsContexts.DetailedDescription String myInferenceError;
   private volatile boolean myApplicabilityError;
 
   private final LanguageLevel myLanguageLevel;
@@ -328,7 +329,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
-  
+
   @NotNull
   public PsiSubstitutor getSubstitutorFromQualifier() {
     return super.getSubstitutor();
@@ -492,7 +493,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * Should be invoked on the top level call expression candidate only
    */
-  public void setApplicabilityError(@NotNull String applicabilityError) {
+  public void setApplicabilityError(@NotNull @NlsContexts.DetailedDescription String applicabilityError) {
     boolean overloadCheck = isOverloadCheck();
     if (!overloadCheck) {
       myInferenceError = applicabilityError;
@@ -506,7 +507,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     myApplicabilityError = true;
   }
 
-  public String getInferenceErrorMessage() {
+  public @NlsContexts.DetailedDescription String getInferenceErrorMessage() {
     getSubstitutor();
     return myInferenceError;
   }
@@ -515,7 +516,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
-  public static class ApplicabilityLevel {
+  public static final class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
     public static final int FIXED_ARITY = 3;

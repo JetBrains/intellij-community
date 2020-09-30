@@ -8,6 +8,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -15,20 +16,17 @@ import java.util.Set;
 
 @ApiStatus.Internal
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, clazz.getName(), pluginDescriptor, clazz, false);
-  }
-
   public InterfaceExtensionPoint(@NotNull String name,
                                  @NotNull String className,
                                  @NotNull PluginDescriptor pluginDescriptor,
+                                 @Nullable Class<T> clazz,
                                  boolean dynamic) {
-    super(name, className, pluginDescriptor, null, dynamic);
+    super(name, className, pluginDescriptor, clazz, dynamic);
   }
 
   @Override
   public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
+    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), null, isDynamic());
     result.setComponentManager(manager);
     return result;
   }
@@ -53,16 +51,14 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   @Override
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
-                            @NotNull List<Element> elements,
-                            @NotNull List<Runnable> priorityListenerCallbacks,
-                            @NotNull List<Runnable> listenerCallbacks) {
+                            @NotNull List<? extends Element> elements,
+                            @NotNull List<? super Runnable> priorityListenerCallbacks,
+                            @NotNull List<? super Runnable> listenerCallbacks) {
     Set<String> implementationClassNames = new HashSet<>();
     for (Element element : elements) {
       implementationClassNames.add(element.getAttributeValue("implementation"));
     }
-    unregisterExtensions((x, adapter) -> {
-      return !implementationClassNames.contains(adapter.getAssignableToClassName());
-    }, false, priorityListenerCallbacks, listenerCallbacks);
+    unregisterExtensions((x, adapter) -> !implementationClassNames.contains(adapter.getAssignableToClassName()), false, priorityListenerCallbacks, listenerCallbacks);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

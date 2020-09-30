@@ -69,7 +69,12 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
   @Override
   public String getName() {
-    return String.format("Make " + (myImplements ? "implements" : "extends") + " '%s'", myNewSuperName);
+    if (myImplements) {
+      return JavaCompilerBundle.message("intention.name.make.implements", myNewSuperName);
+    }
+    else {
+      return JavaCompilerBundle.message("intention.name.make.extends", myNewSuperName);
+    }
   }
 
   @NotNull
@@ -185,7 +190,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
       return ContainerUtil.map(candidates, c -> (PsiMethod)c.getMember());
     }
     MemberSelectionPanel panel =
-      new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
+      new MemberSelectionPanel(JavaCompilerBundle.message("separator.choose.members.to.delete", newClassName),
                                candidates,
                                null);
     DialogWrapper dlg = new DialogWrapper(project, false) {

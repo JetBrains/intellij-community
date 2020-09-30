@@ -215,7 +215,7 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static class ColorizedIcon extends SingleColorIcon {
+  private static final class ColorizedIcon extends SingleColorIcon {
     private final Icon baseIcon;
 
     private ColorizedIcon(@NotNull TextAttributesKey key, @NotNull Icon baseIcon) {

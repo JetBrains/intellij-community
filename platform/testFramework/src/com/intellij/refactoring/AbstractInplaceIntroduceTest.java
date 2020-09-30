@@ -3,7 +3,7 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       if (pass != null) {
         pass.accept(introducer);
       }
-      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(getEditor()));
+      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(getEditor()));
       assert state != null;
       state.gotoEnd(false);
       checkResultByFile(getBasePath() + name + "_after" + getExtension());

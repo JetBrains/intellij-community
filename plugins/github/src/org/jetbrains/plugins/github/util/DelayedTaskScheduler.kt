@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +20,7 @@ class DelayedTaskScheduler(private val delaySeconds: Long,
     })
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun start() {
     if (Disposer.isDisposed(disposable)) error("Already disposed")
 
@@ -29,7 +29,7 @@ class DelayedTaskScheduler(private val delaySeconds: Long,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun stop() {
     scheduler?.cancel(true)
     scheduler = null

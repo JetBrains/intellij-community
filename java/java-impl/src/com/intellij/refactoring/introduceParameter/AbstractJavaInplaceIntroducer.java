@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,7 +36,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiExpression expr,
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
-                                       TypeSelectorManagerImpl typeSelectorManager, String title) {
+                                       TypeSelectorManagerImpl typeSelectorManager, 
+                                       @NlsContexts.Command String title) {
     super(project, getEditor(editor, expr), expr, localVariable, occurrences, title, JavaFileType.INSTANCE);
     myTypeSelectorManager = typeSelectorManager;
   }

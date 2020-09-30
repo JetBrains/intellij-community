@@ -1,7 +1,7 @@
-import codeanalysis.experimental.annotations.DefaultNotNull;
-import codeanalysis.experimental.annotations.Nullable;
+import jspecify.annotations.DefaultNonNull;
+import jspecify.annotations.Nullable;
 
-@DefaultNotNull
+@DefaultNonNull
 class NullnessDemo {
   static <E extends @Nullable Object> void foo(E e) {
   }

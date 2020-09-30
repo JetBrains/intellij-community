@@ -18,6 +18,8 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -109,12 +111,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private final @NotNull PsiElement myElementToHighlight;
     private final boolean myIsWarning;
     private final @NotNull LocalQuickFix myFix;
-    private final @NotNull String myMessage;
+    private final @NotNull @InspectionMessage String myMessage;
 
     IfInspectionResult(@NotNull PsiElement elementToHighlight,
-                              boolean isWarning,
-                              @NotNull LocalQuickFix fix,
-                              @NotNull String message) {
+                       boolean isWarning,
+                       @NotNull LocalQuickFix fix,
+                       @NotNull @InspectionMessage String message) {
       myElementToHighlight = elementToHighlight;
       myIsWarning = isWarning;
       myFix = fix;
@@ -206,7 +208,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   }
 
 
-  private static class ExtractCommonIfPartsFix implements LocalQuickFix {
+  private static final class ExtractCommonIfPartsFix implements LocalQuickFix {
     private final CommonPartType myType;
     private final boolean myMayChangeSemantics;
     private final boolean myIsOnTheFly;
@@ -220,14 +222,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       myIsOnTheFly = isOnTheFly;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.common.if.parts.family");
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
@@ -451,7 +451,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
-  private static class VariableDeclarationUnit extends ExtractionUnit {
+  private static final class VariableDeclarationUnit extends ExtractionUnit {
     final @NotNull PsiLocalVariable myThenVariable;
     final @NotNull PsiLocalVariable myElseVariable;
     String myNewVariableName; // must be set when
@@ -533,7 +533,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
 
     @NotNull
-    private String getFixMessage(boolean mayChangeSemantics) {
+    private @IntentionName String getFixMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleFixKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
@@ -543,7 +543,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @NotNull
-    private String getDescriptionMessage(boolean mayChangeSemantics) {
+    private @InspectionMessage String getDescriptionMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleDescriptionKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
@@ -575,7 +575,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     return true;
   }
 
-  private static class ImplicitElseData {
+  private static final class ImplicitElseData {
     final @NotNull List<PsiStatement> myImplicitElseStatements;
     final @NotNull PsiIfStatement myIfWithImplicitElse;
 
@@ -668,7 +668,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
   }
 
-  private static class ImplicitElse {
+  private static final class ImplicitElse {
     final @NotNull PsiIfStatement myIfToDelete;
 
     private ImplicitElse(@NotNull PsiIfStatement ifToDelete) {
@@ -724,7 +724,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
-  private static class ThenElse {
+  private static final class ThenElse {
     // count of statements required to consider branch consists of similar statements
     public static final int SIMILAR_STATEMENTS_COUNT = 2;
     final List<ExtractionUnit> myHeadUnitsOfThen;
@@ -1112,7 +1112,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     return true;
   }
 
-  private static class ElseIf {
+  private static final class ElseIf {
     final @NotNull PsiStatement myElseBranch;
     final @NotNull PsiStatement myElseIfElseStatement;
     final @NotNull PsiElement myElseIfThen;
@@ -1167,7 +1167,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   /**
    * Equivalence checker that allows to substitute some variable names with another
    */
-  private static class LocalEquivalenceChecker extends EquivalenceChecker {
+  private static final class LocalEquivalenceChecker extends EquivalenceChecker {
     final Set<PsiLocalVariable> myLocalVariables;
     // From else variable to then variable name
     final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(0); // supposed to use rare

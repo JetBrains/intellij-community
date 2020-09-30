@@ -3,9 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Setter;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.layout.RowBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -23,7 +21,7 @@ import java.util.function.Function;
  */
 public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   implements UiDslConfigurable, ConfigurableWithOptionDescriptors {
-  private String myTitle;
+  private @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
     T getValue();
@@ -31,7 +29,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     void setValue(@NotNull T value);
   }
 
-  private static class CallbackAccessor<T> implements PropertyAccessor<T> {
+  private static final class CallbackAccessor<T> implements PropertyAccessor<T> {
     private final Getter<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
@@ -51,7 +49,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     }
   }
 
-  private static class KPropertyAccessor<T> implements PropertyAccessor<T> {
+  private static final class KPropertyAccessor<T> implements PropertyAccessor<T> {
     private final KMutableProperty0<T> myProperty;
 
     private KPropertyAccessor(KMutableProperty0<T> property) {
@@ -107,10 +105,10 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     protected abstract void setComponentValue(T value);
   }
 
-  private static class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
-    private final String myTitle;
+  private static final class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
+    private final @NlsContexts.Checkbox String myTitle;
 
-    private CheckboxField(PropertyAccessor<Boolean> accessor, @NotNull String title) {
+    private CheckboxField(PropertyAccessor<Boolean> accessor, @NotNull @NlsContexts.Checkbox String title) {
       super(accessor);
       myTitle = title;
     }
@@ -150,7 +148,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   protected ConfigurableBuilder() {
   }
 
-  protected ConfigurableBuilder(@Nullable String title) {
+  protected ConfigurableBuilder(@Nullable @NlsContexts.BorderTitle String title) {
     setTitle(title);
   }
 
@@ -159,7 +157,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     return myTitle;
   }
 
-  protected void setTitle(@Nullable String title) {
+  protected void setTitle(@Nullable @NlsContexts.BorderTitle String title) {
     myTitle = title;
   }
 
@@ -168,11 +166,11 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
    * Initial checkbox value is obtained from {@code getter}.
    * After the apply, the value from the check box is written back to model via {@code setter}.
    */
-  protected void checkBox(@NotNull String title, @NotNull Getter<@NotNull Boolean> getter, @NotNull Setter<? super Boolean> setter) {
+  protected void checkBox(@NotNull @NlsContexts.Checkbox String title, @NotNull Getter<@NotNull Boolean> getter, @NotNull Setter<? super Boolean> setter) {
     myFields.add(new CheckboxField(new CallbackAccessor<>(getter, setter), title));
   }
 
-  protected void checkBox(@NotNull String title, @NotNull KMutableProperty0<@NotNull Boolean> prop) {
+  protected void checkBox(@NotNull @NlsContexts.Checkbox String title, @NotNull KMutableProperty0<@NotNull Boolean> prop) {
     myFields.add(new CheckboxField(new KPropertyAccessor<>(prop), title));
   }
 
@@ -211,7 +209,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   @NotNull
   @Override
   public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                      @NotNull Function<? super String, String> nameConverter) {
+                                                      @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override

@@ -15,6 +15,7 @@ public interface PoolOfTestIcons {
   Icon NOT_RAN = AllIcons.RunConfigurations.TestNotRan;
   Icon TERMINATED_ICON = AllIcons.RunConfigurations.TestTerminated;
   Icon IGNORED_ICON = AllIcons.RunConfigurations.TestIgnored;
+  Icon PASSED_IGNORED = AllIcons.RunConfigurations.TestPassedIgnored;
   Icon ERROR_ICON_MARK = AllIcons.Nodes.ErrorMark;
   Icon TEAR_DOWN_FAILURE = new LayeredIcon(PASSED_ICON, ERROR_ICON_MARK);
 }

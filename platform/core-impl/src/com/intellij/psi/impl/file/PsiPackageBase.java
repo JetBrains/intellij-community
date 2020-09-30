@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
@@ -20,9 +21,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
@@ -31,11 +30,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   private final PsiManager myManager;
   private final String myQualifiedName;
 
-  protected Collection<PsiDirectory> getAllDirectories() {
-    return getAllDirectories(false);
-  }
-
-  protected abstract Collection<PsiDirectory> getAllDirectories(boolean includeLibrarySources);
+  protected abstract Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope);
 
   protected abstract PsiPackageBase findPackage(String qName);
 
@@ -61,22 +56,13 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public PsiDirectory @NotNull [] getDirectories() {
-    final Collection<PsiDirectory> collection = getAllDirectories();
-    return collection.toArray(PsiDirectory.EMPTY_ARRAY);
+    return getDirectories(new EverythingGlobalScope(getProject()));
   }
 
   @Override
   public PsiDirectory @NotNull [] getDirectories(@NotNull GlobalSearchScope scope) {
-    List<PsiDirectory> result = null;
-    final boolean includeLibrarySources = scope.isForceSearchingInLibrarySources();
-    final Collection<PsiDirectory> directories = getAllDirectories(includeLibrarySources);
-    for (final PsiDirectory directory : directories) {
-      if (scope.contains(directory.getVirtualFile())) {
-        if (result == null) result = new ArrayList<>();
-        result.add(directory);
-      }
-    }
-    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(PsiDirectory.EMPTY_ARRAY);
+    Collection<PsiDirectory> directories = getAllDirectories(scope);
+    return directories.isEmpty() ? PsiDirectory.EMPTY_ARRAY : directories.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override

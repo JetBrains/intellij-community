@@ -102,7 +102,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   @Override
   public void addProblemElement(@Nullable RefEntity refElement,
                                 boolean filterSuppressed,
-                                @NotNull CommonProblemDescriptor... descriptors) {
+                                CommonProblemDescriptor @NotNull ... descriptors) {
     super.addProblemElement(refElement, filterSuppressed, descriptors);
 
     final GlobalInspectionContextImpl context = getContext();

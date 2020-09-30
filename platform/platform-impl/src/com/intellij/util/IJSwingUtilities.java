@@ -57,14 +57,6 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  /**
-   * @deprecated no functionality
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
-  }
-
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
     URL url = null;
     try {

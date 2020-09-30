@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -86,10 +87,9 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
 
   @Override
   @Nullable
-  public String getPresentableText() {
+  public @NlsSafe String getPresentableText() {
     final Function function = getFunction();
-    return function != null ? function.buildSignature() +
-            ": " + function.getReturnType().getName() : null;
+    return function.buildSignature() + ": " + function.getReturnType().getName();
   }
 
   @Override

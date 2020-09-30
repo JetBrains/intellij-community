@@ -16,13 +16,13 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
-import org.jetbrains.annotations.CalledInAwt
 import java.nio.file.Paths
 
 class GitCloneDialogComponent(project: Project,
@@ -47,8 +47,7 @@ class GitCloneDialogComponent(project: Project,
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
       LOG.error("Unable to create destination directory", destinationValidation.message)
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
 
@@ -59,8 +58,7 @@ class GitCloneDialogComponent(project: Project,
     }
     if (destinationParent == null) {
       LOG.error("Clone Failed. Destination doesn't exist")
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
     val sourceRepositoryURL = getUrl()
@@ -73,7 +71,7 @@ class GitCloneDialogComponent(project: Project,
     rememberedInputs.cloneParentDir = parentDirectory
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
     updateOkActionState(dialogStateListener)
 
@@ -132,8 +130,14 @@ class GitCloneDialogComponent(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
+
+  private fun notifyCloneError(project: Project) {
+    VcsNotifier.getInstance(project).notifyError("git.clone.unable.to.create.destination.dir",
+                                                 VcsBundle.message("clone.dialog.clone.button"),
+                                                 VcsBundle.message("clone.dialog.unable.create.destination.error"))
+  }
 
   private enum class VersionCheckState {
     NOT_CHECKED,

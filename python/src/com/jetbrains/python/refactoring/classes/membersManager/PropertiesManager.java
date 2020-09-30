@@ -184,7 +184,7 @@ class PropertiesManager extends MembersManager<PyElement> {
 
 
     @Override
-    public void visitPyExpression(final PyExpression node) {
+    public void visitPyExpression(final @NotNull PyExpression node) {
       final PsiReference reference = node.getReference();
       if (reference == null) {
         return;

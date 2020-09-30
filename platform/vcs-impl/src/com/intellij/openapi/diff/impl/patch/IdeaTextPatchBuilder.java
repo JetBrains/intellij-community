@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -56,21 +58,26 @@ public final class IdeaTextPatchBuilder {
     }
   }
 
-  @NotNull
-  public static List<FilePatch> buildPatch(Project project,
-                                           Collection<? extends Change> changes,
-                                           String basePath,
-                                           boolean reversePatch) throws VcsException {
+  public static @NotNull List<FilePatch> buildPatch(Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull String basePath,
+                                                    boolean reversePatch) throws VcsException {
+    return buildPatch(project, changes, Paths.get(basePath), reversePatch, false);
+  }
+
+  public static @NotNull List<FilePatch> buildPatch(Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch) throws VcsException {
     return buildPatch(project, changes, basePath, reversePatch, false);
   }
 
-  @NotNull
-  public static List<FilePatch> buildPatch(Project project,
-                                           Collection<? extends Change> changes,
-                                           String basePath,
-                                           boolean reversePatch,
-                                           boolean honorExcludedFromCommit) throws VcsException {
-    final Collection<BeforeAfter<AirContentRevision>> revisions;
+  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit) throws VcsException {
+    Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes), honorExcludedFromCommit);
     }
@@ -91,10 +98,12 @@ public final class IdeaTextPatchBuilder {
 
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
-    if (cr == null) return null;
-    final FilePath fp = cr.getFile();
-    final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(), fp.getIOFile().lastModified(), fp.getPath());
+    if (cr == null) {
+      return null;
+    }
 
+    FilePath filePath = cr.getFile();
+    StaticPathDescription description = new StaticPathDescription(filePath.isDirectory(), filePath.getIOFile().toPath());
     if (actualTextContent != null) {
       return new PartialTextAirContentRevision(actualTextContent, cr, description, null);
     }

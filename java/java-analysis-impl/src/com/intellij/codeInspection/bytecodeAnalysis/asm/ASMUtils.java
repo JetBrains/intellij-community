@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.Contract;
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author lambdamix
  */
-public class ASMUtils {
+public final class ASMUtils {
   public static final Type THIS_TYPE = Type.getObjectType("this");
   public static final Type THROWABLE_TYPE = Type.getObjectType("java/lang/Throwable");
   public static final BasicValue THIS_VALUE = new BasicValue(THIS_TYPE);

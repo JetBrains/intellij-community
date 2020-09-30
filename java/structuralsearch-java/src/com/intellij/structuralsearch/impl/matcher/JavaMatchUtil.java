@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,15 +7,17 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JavaMatchUtil {
+public final class JavaMatchUtil {
 
   private JavaMatchUtil() {}
 
-  public static String getCommentText(PsiComment comment) {
+  @NotNull
+  public static String getCommentText(@NotNull PsiComment comment) {
     if (comment instanceof PsiDocComment) {
       final PsiDocComment docComment = (PsiDocComment)comment;
       final StringBuilder result = new StringBuilder();

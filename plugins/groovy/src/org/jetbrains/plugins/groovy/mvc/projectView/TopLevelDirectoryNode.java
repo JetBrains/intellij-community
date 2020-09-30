@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,13 +15,13 @@ import java.util.Objects;
  * @author peter
  */
 public class TopLevelDirectoryNode extends AbstractFolderNode {
-  private final String myTitle;
+  private final @Nls String myTitle;
   private final Icon myIcon;
 
   public TopLevelDirectoryNode(@NotNull Module module,
                                @NotNull PsiDirectory directory,
                                ViewSettings viewSettings,
-                               String title,
+                               @Nls String title,
                                Icon icon,
                                int weight) {
     super(module, directory, directory.getName(), viewSettings, weight);

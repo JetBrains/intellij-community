@@ -18,7 +18,7 @@ public class MarkdownTypedHandler extends TypedHandlerDelegate {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       for (Caret caret : editor.getCaretModel().getAllCarets()) {
         final int offset = caret.getOffset();
-        if (!LanguageListCompletionContributor.isInMiddleOfUncollapsedFence(file.findElementAt(offset), offset)) {
+        if (!LanguageListCompletionContributor.isInMiddleOfUnCollapsedFence(file.findElementAt(offset), offset)) {
           return Result.CONTINUE;
         }
       }

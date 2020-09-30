@@ -51,14 +51,16 @@ private class UpdateComponentWatcher : Disposable {
     val ep = EP_NAME.findFirstSafe { it.accept(editor, fileType) } ?: return
 
     // TODO: Use PluginAware EP
-    val plugin = PluginManagerCore.getPlugin(PluginId.getId(ep.pluginId))
+    val plugin = EP_NAME.computeIfAbsent(ep, UpdateComponentWatcher::class.java) {
+      Optional.ofNullable(PluginManagerCore.getPlugin(PluginId.getId(ep.pluginId)))
+    }
     val pluginIdString = ep.pluginId
-    if (plugin == null) {
+    if (!plugin.isPresent) {
       LOG.error("Unknown plugin id: $pluginIdString is reported by ${ep::class.java}")
       return
     }
 
-    val pluginVersion = plugin.version
+    val pluginVersion = plugin.get().version
     if (checkUpdateRequired(pluginIdString, pluginVersion)) {
       ApplicationManager.getApplication().executeOnPooledThread {
         update(pluginIdString, pluginVersion)

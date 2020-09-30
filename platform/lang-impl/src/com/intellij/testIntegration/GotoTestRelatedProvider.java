@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -36,7 +37,8 @@ public class GotoTestRelatedProvider extends GotoRelatedProvider {
     if (!result.isEmpty()) {
       final List<GotoRelatedItem> items = new ArrayList<>();
       for (PsiElement element : result) {
-        items.add(new GotoRelatedItem(element, isTest ? "Tested classes" : "Tests"));
+        String group = isTest ? CodeInsightBundle.message("separator.goto.tested.classes") : CodeInsightBundle.message("separator.goto.tests");
+        items.add(new GotoRelatedItem(element, group));
       }
       return items;
     }

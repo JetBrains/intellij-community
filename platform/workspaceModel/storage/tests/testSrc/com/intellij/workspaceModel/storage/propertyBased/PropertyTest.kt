@@ -9,7 +9,6 @@ import com.intellij.workspaceModel.storage.entities.MySource
 import com.intellij.workspaceModel.storage.impl.RefsTable
 import com.intellij.workspaceModel.storage.impl.StorageIndexes
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import junit.framework.TestCase
@@ -98,7 +97,8 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
     try {
       storage.replaceBySource(filter.first, another)
     }
-    catch (e: ReplaceBySourceException) {
+    catch (e: AssertionError) {
+      if (e.cause !is ReplaceBySourceException) error("ReplaceBySource exception expected")
       env.logMessage("Cannot perform replace by source: ${e.message}. Fallback to previous state")
       (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
     }
@@ -140,7 +140,7 @@ private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: Workspac
   indexes.persistentIdIndex.clear()
   indexes.externalMappings.clear()
 
-  indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
+  indexes.softLinks.copyFrom(backupBuilder.indexes.softLinks)
   indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
   indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
   indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)

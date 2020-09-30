@@ -18,8 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -58,8 +58,7 @@ public abstract class ArtifactConfigurableBase extends ProjectStructureElementCo
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @NlsContexts.ConfigurableName String getDisplayName() {
     return getArtifact().getName();
   }
 

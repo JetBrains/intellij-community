@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -6,10 +6,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +71,8 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
     super.doOKAction();
 
     if (!myPlatformUpdate) {
-      new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
+      String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+      new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(myUploadedPlugins, indicator);
@@ -81,16 +84,9 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
                   PluginManagerMain.notifyPluginsUpdated(null);
                 }
                 else {
-                  String message;
-                  if (result.getPluginsInstalled().size() == 1) {
-                    final IdeaPluginDescriptor installedPlugin = result.getPluginsInstalled().get(0);
-                    message = "Updated " + installedPlugin.getName() + " plugin to version " + installedPlugin.getVersion();
-                  }
-                  else {
-                    message = "Updated " + result.getPluginsInstalled() + " plugins";
-                  }
+                  String message = notificationText(result);
                   UpdateChecker.getNotificationGroup()
-                    .createNotification("", message, NotificationType.INFORMATION, null, "plugins.updated.without.restart")
+                    .createNotification(message, NotificationType.INFORMATION, "plugins.updated.without.restart")
                     .notify(myProject);
                 }
               }
@@ -98,6 +94,16 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
           }
         }
       }.queue();
+    }
+  }
+
+  static @NlsContexts.NotificationContent @NotNull String notificationText(@NotNull PluginUpdateResult result) {
+    if (result.getPluginsInstalled().size() == 1) {
+      IdeaPluginDescriptor installedPlugin = result.getPluginsInstalled().get(0);
+      return IdeBundle.message("notification.content.updated.plugin.to.version", installedPlugin.getName(), installedPlugin.getVersion());
+    }
+    else {
+      return IdeBundle.message("notification.content.updated.plugins", result.getPluginsInstalled());
     }
   }
 

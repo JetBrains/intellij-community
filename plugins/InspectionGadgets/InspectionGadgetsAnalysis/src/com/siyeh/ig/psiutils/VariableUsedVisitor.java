@@ -21,7 +21,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedVisitor extends JavaRecursiveElementWalkingVisitor {
+final class VariableUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean used;
   @NotNull private final PsiVariable variable;
 

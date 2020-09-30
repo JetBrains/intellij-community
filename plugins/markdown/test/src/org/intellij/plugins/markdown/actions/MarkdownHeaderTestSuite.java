@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.actions;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.util.ThrowableRunnable;
 import junit.framework.TestSuite;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class MarkdownHeaderTestSuite extends TestSuite {
         }
 
         @Override
-        protected void runTest() {
+        protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
           configureByFile(testFile.getName());
           executeAction(actionId);
           checkResultByFile(dataName + "/" + StringUtil.substringBefore(testFile.getName(), "_before.md") + "_after.md");

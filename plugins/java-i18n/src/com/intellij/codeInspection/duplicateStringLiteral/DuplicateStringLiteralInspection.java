@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -286,8 +287,9 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final String myText;
+  private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    private final @IntentionName String myText;
+    @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 
     private ReplaceFix(PsiField constant, PsiExpression originalExpression) {
@@ -393,7 +395,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class StringLiteralSearchQuery {
+  private static final class StringLiteralSearchQuery {
     @NotNull
     private final String stringToFind;
     private final boolean ignorePropertyKeys;

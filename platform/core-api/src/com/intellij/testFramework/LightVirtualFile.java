@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,15 +27,15 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this("");
   }
 
-  public LightVirtualFile(@NotNull String name) {
+  public LightVirtualFile(@NlsSafe @NotNull String name) {
     this(name, "");
   }
 
-  public LightVirtualFile(@NotNull String name, @NotNull CharSequence content) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull CharSequence content) {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(@NotNull String name, FileType fileType, @NotNull CharSequence text) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, FileType fileType, @NotNull CharSequence text) {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
@@ -43,13 +44,13 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(original.getCharset());
   }
 
-  public LightVirtualFile(@NotNull String name, FileType fileType, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, FileType fileType, @NotNull CharSequence text, long modificationStamp) {
     this(name, fileType, text, CharsetUtil.extractCharsetFromFileContent(null, null, fileType, text), modificationStamp);
   }
 
-  public LightVirtualFile(@NotNull String name,
+  public LightVirtualFile(@NlsSafe @NotNull String name,
                           FileType fileType,
-                          @NotNull CharSequence text,
+                          @NlsSafe @NotNull CharSequence text,
                           Charset charset,
                           long modificationStamp) {
     super(name, fileType, modificationStamp);
@@ -57,7 +58,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(charset);
   }
 
-  public LightVirtualFile(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull Language language, @NlsSafe @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);

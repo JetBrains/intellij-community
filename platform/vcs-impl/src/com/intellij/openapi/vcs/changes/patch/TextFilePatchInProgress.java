@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -27,17 +27,16 @@ import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
-
-  protected TextFilePatchInProgress(TextFilePatch patch,
-                                    Collection<VirtualFile> autoBases,
-                                    VirtualFile baseDir) {
+public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
+  TextFilePatchInProgress(TextFilePatch patch, Collection<VirtualFile> autoBases, VirtualFile baseDir) {
     super(patch.pathsOnlyCopy(), autoBases, baseDir);
   }
 
   @Override
   public ContentRevision getNewContentRevision() {
-    if (FilePatchStatus.DELETED.equals(myStatus)) return null;
+    if (FilePatchStatus.DELETED.equals(myStatus)) {
+      return null;
+    }
 
     if (myNewContentRevision == null) {
       myConflicts = null;
@@ -59,9 +58,9 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
   @NotNull
   @Override
   public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader patchReader) {
-    final PatchChange change = getChange();
-    final FilePatch patch = getPatch();
-    final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
+    PatchChange change = getChange();
+    FilePatch patch = getPatch();
+    String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
     return new DiffRequestProducer() {
       @NotNull
       @Override

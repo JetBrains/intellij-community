@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
   protected ExecutorAction() {
   }
 
-  protected ExecutorAction(String text, String description, Icon icon) {
+  protected ExecutorAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 

@@ -6,8 +6,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private final List<PopupFactoryImpl.ActionItem> myItems;
-  private final String myTitle;
+  private final @NlsContexts.PopupTitle String myTitle;
   private final Supplier<? extends DataContext> myContext;
   private final String myActionPlace;
   private final boolean myEnableMnemonics;
@@ -126,14 +127,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public int getMnemonicPos(final PopupFactoryImpl.ActionItem value) {
-    final String text = getTextFor(value);
+    String text = getTextFor(value);
     int i = text.indexOf(UIUtil.MNEMONIC);
-    if (i < 0) {
-      i = text.indexOf('&');
-    }
-    if (i < 0) {
-      i = text.indexOf('_');
-    }
+    if (i < 0) i = text.indexOf('&');
+    if (i < 0) i = text.indexOf('_');
     return i;
   }
 
@@ -160,7 +157,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public void setEmptyText(@NotNull StatusText emptyText) {
+  public void setEmptyText(@NotNull StatusText emptyText) { }
+
+  @Override
+  public @Nullable String getValueFor(PopupFactoryImpl.ActionItem item) {
+    return item.getValue();
   }
 
   @Override
@@ -179,14 +180,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public PopupStep onChosen(final PopupFactoryImpl.ActionItem actionChoice, final boolean finalChoice) {
+  public PopupStep<?> onChosen(final PopupFactoryImpl.ActionItem actionChoice, final boolean finalChoice) {
     return onChosen(actionChoice, finalChoice, 0);
   }
 
   @Override
-  public PopupStep<PopupFactoryImpl.ActionItem> onChosen(PopupFactoryImpl.ActionItem actionChoice,
-                                                         boolean finalChoice,
-                                                         int eventModifiers) {
+  public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice, int eventModifiers) {
     if (!actionChoice.isEnabled()) return FINAL_CHOICE;
     final AnAction action = actionChoice.getAction();
     final DataContext dataContext = myContext.get();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -31,6 +31,7 @@ import gnu.trove.TObjectIntProcedure;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -159,7 +160,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
     if (myInfo.getToReplaceIn() instanceof GrClosableBlock) {
       myDelegateViaOverloadingMethodCheckBox.setEnabled(false);
-      myDelegateViaOverloadingMethodCheckBox.setToolTipText("Delegating is not allowed in closure context");
+      myDelegateViaOverloadingMethodCheckBox.setToolTipText(GroovyBundle.message("introduce.parameter.delegating.unavailable.tooltip"));
     }
 
 
@@ -226,16 +227,24 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(splitter, BorderLayout.CENTER);
-    myForceReturnCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("Use e&xplicit return statement"));
+    myForceReturnCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand(
+      GroovyBundle.message("introduce.parameter.explicit.return.statement.option.label")
+    ));
     panel.add(myForceReturnCheckBox, BorderLayout.NORTH);
 
     return panel;
   }
 
   private JPanel createFieldPanel() {
-    myDoNotReplaceRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand("Do n&ot replace"));
-    myReplaceFieldsInaccessibleInRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand("Replace fields &inaccessible in usage context"));
-    myReplaceAllFieldsRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand("&Replace all fields"));
+    myDoNotReplaceRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand(
+      GroovyBundle.message("introduce.parameter.do.not.replace.option.label")
+    ));
+    myReplaceFieldsInaccessibleInRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand(
+      GroovyBundle.message("introduce.parameter.replace.inaccessible.fields.option.label")
+    ));
+    myReplaceAllFieldsRadioButton = new JBRadioButton(UIUtil.replaceMnemonicAmpersand(
+      GroovyBundle.message("introduce.parameter.replace.all.fields.option.label")
+    ));
 
     myDoNotReplaceRadioButton.setFocusable(false);
     myReplaceFieldsInaccessibleInRadioButton.setFocusable(false);
@@ -252,7 +261,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     panel.add(myReplaceFieldsInaccessibleInRadioButton);
     panel.add(myReplaceAllFieldsRadioButton);
 
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(GroovyBundle.message("introduce.parameter.replace.fields.border.title")));
     return panel;
   }
 
@@ -260,7 +269,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1, 1, 1, 1);
     final JPanel namePanel = new JPanel(new GridBagLayout());
 
-    final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Type:"));
+    final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand(GroovyBundle.message("introduce.variable.type.label")));
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(typeLabel, c);
 
@@ -269,7 +278,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     namePanel.add(myTypeComboBox, c);
     typeLabel.setLabelFor(myTypeComboBox);
 
-    final JLabel nameLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Name:"));
+    final JLabel nameLabel = new JLabel(UIUtil.replaceMnemonicAmpersand(GroovyBundle.message("introduce.variable.name.label")));
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(nameLabel, c);
 
@@ -285,11 +294,14 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
 
   private void createCheckBoxes(JPanel panel) {
-    myDeclareFinalCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("Declare &final"));
+    myDeclareFinalCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand(GroovyBundle.message(
+      "introduce.variable.declare.final.label")));
     myDeclareFinalCheckBox.setFocusable(false);
     panel.add(myDeclareFinalCheckBox);
 
-    myDelegateViaOverloadingMethodCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("De&legate via overloading method"));
+    myDelegateViaOverloadingMethodCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand(
+      GroovyBundle.message("introduce.parameter.delegate.via.overload")
+    ));
     myDelegateViaOverloadingMethodCheckBox.setFocusable(false);
     panel.add(myDelegateViaOverloadingMethodCheckBox);
 

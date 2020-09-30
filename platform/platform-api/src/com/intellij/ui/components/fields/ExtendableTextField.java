@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,11 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
     this(null, columns);
   }
 
-  public ExtendableTextField(String text) {
+  public ExtendableTextField(@Nls String text) {
     this(text, 20);
   }
 
-  public ExtendableTextField(String text, int columns) {
+  public ExtendableTextField(@Nls String text, int columns) {
     super(text, columns);
   }
 

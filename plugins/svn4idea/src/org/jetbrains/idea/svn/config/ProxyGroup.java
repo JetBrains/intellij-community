@@ -1,19 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
+
+import com.intellij.openapi.util.NlsSafe;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +14,7 @@ public class ProxyGroup {
   // svnkit has its internal named referencies
   private final Map<String, String> myProperties;
 
-  public ProxyGroup(final String groupName, final String patterns, final Map<String, String> properties) {
+  public ProxyGroup(@NlsSafe String groupName, final String patterns, final Map<String, String> properties) {
     myGroupName = groupName;
     myPattern = patterns;
     myProperties = properties;
@@ -40,24 +28,24 @@ public class ProxyGroup {
     return false;
   }
 
-  public void setName(final String value) {
+  public void setName(@NlsSafe String value) {
     myGroupName = value;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myGroupName;
   }
 
   public String getPort() {
-    return myProperties.get(SvnServerFileKeys.PORT);
+    return myProperties.get(ServersFileKeys.PORT);
   }
 
   public String getTimeout() {
-    return myProperties.get(SvnServerFileKeys.TIMEOUT);
+    return myProperties.get(ServersFileKeys.TIMEOUT);
   }
 
   public void setTimeout(final String value) {
-    myProperties.put(SvnServerFileKeys.TIMEOUT, value);
+    myProperties.put(ServersFileKeys.TIMEOUT, value);
   }
 
   public String getPatterns() {

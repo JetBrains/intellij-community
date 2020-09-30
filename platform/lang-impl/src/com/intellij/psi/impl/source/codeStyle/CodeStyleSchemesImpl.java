@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.SchemeManager;
@@ -41,59 +40,53 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.loadSchemes();
     setCurrentScheme(getDefaultScheme());
 
-    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager.getInstance()
+          .registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          CodeStyleSettingsManager.getInstance()
-            .registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
-        }
+        CodeStyleSettingsManager.getInstance()
+          .unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
+      }
+    }, null);
 
-        @Override
-        public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
-          CodeStyleSettingsManager.getInstance()
-            .unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
-        }
-      }, ApplicationManager.getApplication());
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
+                                     manager -> {
+                                       manager.registerLanguageSettings(getAllSettings(), extension);
+                                       manager.registerCustomSettings(getAllSettings(), extension);
+                                     });
+      }
 
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
-                                       manager -> {
-                                         manager.registerLanguageSettings(getAllSettings(), extension);
-                                         manager.registerCustomSettings(getAllSettings(), extension);
-                                       });
-        }
+      @Override
+      public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(), manager -> {
+          manager.unregisterLanguageSettings(getAllSettings(), extension);
+          manager.unregisterCustomSettings(getAllSettings(), extension);
+        });
+      }
+    }, null);
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<CodeStyleSettingsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
+                                     instance -> instance.registerCustomSettings(getAllSettings(), extension));
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
-                                       manager -> {
-                                         manager.unregisterLanguageSettings(getAllSettings(), extension);
-                                         manager.unregisterCustomSettings(getAllSettings(), extension);
-                                       });
-        }
-      }, ApplicationManager.getApplication()
-    );
-    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
-      new ExtensionPointListener<CodeStyleSettingsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
-                                       instance -> instance.registerCustomSettings(getAllSettings(), extension));
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
-                                       instance -> instance.unregisterCustomSettings(getAllSettings(), extension));
-        }
-      }, ApplicationManager.getApplication()
-    );
+      @Override
+      public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
+                                     instance -> instance.unregisterCustomSettings(getAllSettings(), extension));
+      }
+    }, null);
   }
 
   private List<CodeStyleSettings> getAllSettings() {

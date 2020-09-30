@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -134,7 +135,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
 
   private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
     UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
       m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression, new CommentTracker()));

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.HttpRequests
@@ -16,7 +16,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 
 private const val feedUrl = "https://download.jetbrains.com/jdk/feed/v1/gits.json.xz"
-private val LOG = logger("#git4idea.config.GitDownloadAndInstall")
+private val LOG = Logger.getInstance("#git4idea.config.GitDownloadAndInstall")
 
 internal data class GitInstaller(
   val os: String,

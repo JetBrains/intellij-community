@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,21 +37,19 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
-    private static final String ANNOTATOR_SHORT_NAME = "Annotator";
+    private static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
       super(false, true);
     }
-    @Nls
-    @NotNull
+
     @Override
-    public String getDisplayName() {
-      return getShortName();
+    public @Nls @NotNull String getDisplayName() {
+      return AnalysisBundle.message("inspection.display.name.annotator");
     }
 
-    @NotNull
     @Override
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return ANNOTATOR_SHORT_NAME;
     }
 
@@ -81,10 +80,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @Override
   public void checkFile(@NotNull PsiFile originalFile,
-                        @NotNull final InspectionManager manager,
+                        @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        @NotNull final GlobalInspectionContext globalContext,
-                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
@@ -110,11 +109,11 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                                                                          boolean runAnnotators) {
     ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
     MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
-    if (indicator == null) {
-      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
+    if (indicator instanceof DaemonProgressIndicator) {
+      file.accept(visitor);
     }
     else {
-      file.accept(visitor);
+      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
     }
     return visitor.result;
   }
@@ -137,13 +136,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
 
     @Override
-    public void visitFile(@NotNull final PsiFile file) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+    public void visitFile(@NotNull PsiFile file) {
+      VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) {
         return;
       }
 
-      final Project project = file.getProject();
+      Project project = file.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document == null) return;
       ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
@@ -152,7 +151,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
       List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
       List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-      for (final GeneralHighlightingPass gpass : gpasses) {
+      for (GeneralHighlightingPass gpass : gpasses) {
         gpass.setHighlightVisitorProducer(() -> {
           gpass.incVisitorUsageCount(1);
 

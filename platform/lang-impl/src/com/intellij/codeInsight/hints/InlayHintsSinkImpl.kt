@@ -14,8 +14,9 @@ class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
   private val buffer = HintsBuffer()
   private val document: Document = editor.document
 
-  override fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation) {
-    addInlineElement(offset, RecursivelyUpdatingRootPresentation(presentation), HorizontalConstraints(0, relatesToPrecedingText))
+  override fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation, placeAtTheEndOfLine: Boolean) {
+    addInlineElement(offset, RecursivelyUpdatingRootPresentation(presentation),
+                     HorizontalConstraints(0, relatesToPrecedingText, placeAtTheEndOfLine))
   }
 
   override fun addInlineElement(offset: Int, presentation: RootInlayPresentation<*>, constraints: HorizontalConstraints?) {

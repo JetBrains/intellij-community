@@ -3,14 +3,15 @@ package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ArrayCopyIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
-  private static final String SOURCE_INDEX_PREFIX = "source index ";
-  private static final String DESTINATION_INDEX_PREFIX = "destination index ";
-  private static final String COMMON_PREFIX = "arraycopy: ";
-  private static final String LENGTH_PREFIX = "length ";
+  private static final @NonNls String SOURCE_INDEX_PREFIX = "source index ";
+  private static final @NonNls String DESTINATION_INDEX_PREFIX = "destination index ";
+  private static final @NonNls String COMMON_PREFIX = "arraycopy: ";
+  private static final @NonNls String LENGTH_PREFIX = "length ";
   private final int myValue;
   private final int myParameter;
 

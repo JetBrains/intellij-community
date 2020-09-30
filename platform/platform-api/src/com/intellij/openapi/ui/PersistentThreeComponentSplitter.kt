@@ -3,8 +3,10 @@ package com.intellij.openapi.ui
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.NonNls
 import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
 
@@ -12,19 +14,21 @@ class PersistentThreeComponentSplitter(
   vertical: Boolean,
   onePixelDivider: Boolean,
   proportionKey: String,
-  disposable: Disposable,
+  private val disposable: Disposable,
   private val project: Project?,
   private val defaultFirstProportion: Float = 0.3f,
   private val defaultLastProportion: Float = 0.5f
 ) : ThreeComponentsSplitter(vertical, onePixelDivider, disposable) {
 
   companion object {
-    private const val firstSuffixKey = "_PTCS_FirstProportionKey"
-    private const val lastSuffixKey = "_PTCS_LastProportionKey"
+    private val logger = logger<PersistentThreeComponentSplitter>()
   }
 
-  private val firstProportionKey = "$proportionKey$firstSuffixKey"
-  private val lastProportionKey = "$proportionKey$lastSuffixKey"
+  // hack
+  var maxRetryCount = 100
+
+  @NonNls private val firstProportionKey = "${proportionKey}_PTCS_FirstProportionKey"
+  @NonNls private val lastProportionKey = "${proportionKey}_PTCS_LastProportionKey"
 
   private var firstProportion: Float
     get() = getProportion(firstProportionKey, defaultFirstProportion)
@@ -36,9 +40,9 @@ class PersistentThreeComponentSplitter(
 
   private val propertiesComponent get() = if (project != null)  PropertiesComponent.getInstance(project) else PropertiesComponent.getInstance()
 
-  private fun getProportion(key: String, defaultProportion: Float): Float = propertiesComponent.getFloat(key, defaultProportion)
+  private fun getProportion(@NonNls key: String, defaultProportion: Float): Float = propertiesComponent.getFloat(key, defaultProportion)
 
-  private fun setProportion(key: String, value: Float, defaultProportion: Float) {
+  private fun setProportion(@NonNls key: String, value: Float, defaultProportion: Float) {
     if (value < 0 || value > 1) return
 
     propertiesComponent.setValue(key, value, defaultProportion)
@@ -51,6 +55,8 @@ class PersistentThreeComponentSplitter(
   private var layoutIsRunning = false
 
   private val shouldLayout get() = addNotifyCalled && !layoutIsRunning
+
+  private var addNotifyTimestamp: Long = 0
 
   init {
     Disposer.register(disposable, Disposable {
@@ -73,18 +79,25 @@ class PersistentThreeComponentSplitter(
   override fun addNotify() {
     super.addNotify()
     addNotifyCalled = true
-    invokeLaterWhen({ checkSize() }) {
+    invokeLaterWhen({ checkSize() }, ++addNotifyTimestamp) {
       addNotifyCalled = false
       restoreProportions()
     }
   }
 
-  private fun invokeLaterWhen(condition: () -> Boolean, action: () -> Unit) {
+  @Suppress("DuplicatedCode")
+  private fun invokeLaterWhen(condition: () -> Boolean, timestamp: Long, count: Int = 0, action: () -> Unit) {
+    if (addNotifyTimestamp != timestamp) return
+
     SwingUtilities.invokeLater {
-      if (condition()) {
-        action()
-      } else {
-        invokeLaterWhen(condition, action)
+      when {
+        Disposer.isDisposed(disposable) -> return@invokeLater
+        condition() -> action()
+        count > maxRetryCount -> {
+          logger.error("Could not restore proportions in $maxRetryCount times. ${dump()}")
+          action()
+        }
+        else -> invokeLaterWhen(condition, timestamp, count + 1, action)
       }
     }
   }
@@ -121,7 +134,10 @@ class PersistentThreeComponentSplitter(
     lastSize = (lastProportion * (totalSize - 2 * dividerWidth)).roundToInt()
   }
 
+  @NonNls private fun dump() =
+    "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
+
   private fun checkSize(): Boolean {
-    return totalMinSize < totalSize && firstSize > 0 && lastSize > 0
+    return totalMinSize < totalSize && (firstSize > 0 || !firstVisible()) && (lastSize > 0 || !lastVisible())
   }
 }

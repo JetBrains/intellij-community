@@ -5,15 +5,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.InlineIconButton
 import com.intellij.util.ui.WrapLayout
+import com.intellij.util.ui.codereview.InlineIconButton
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor
@@ -28,7 +29,7 @@ import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
-                                                  emptyText: String, notEmptyText: String) {
+                                                  @NlsContexts.Label emptyText: String, @NlsContexts.Label notEmptyText: String) {
 
   private var isBusy by Delegates.observable(false) { _, _, _ ->
     updateControls()
@@ -44,7 +45,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
   private val editButton = InlineIconButton(AllIcons.General.Inline_edit,
-                                            AllIcons.General.Inline_edit_hovered).apply {
+                                                                                               AllIcons.General.Inline_edit_hovered).apply {
     border = JBUI.Borders.empty(6, 0)
     actionListener = ActionListener { editList() }
   }
@@ -97,9 +98,10 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
     editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
     progressLabel.isVisible = isBusy
     errorIcon.isVisible = adjustmentError != null
+    val title = GithubBundle.message("pull.request.adjustment.failed")
+    val errorMessage = adjustmentError?.message.orEmpty()
     //language=html
-    errorIcon.toolTipText = "<html><body>${GithubBundle.message(
-      "pull.request.adjustment.failed")}<br/>${adjustmentError?.message.orEmpty()}</body></html> "
+    errorIcon.toolTipText = "<html><body>$title<br/>$errorMessage</body></html>"
   }
 
   private fun getListItemComponent(item: T, last: Boolean = false) =
@@ -130,9 +132,9 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
       }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<T>): CompletableFuture<Unit>
 }

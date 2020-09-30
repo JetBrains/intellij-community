@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.daemon.GutterName;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -65,11 +66,10 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     return Contract.class.getName().equals(anno.getAnnotationQualifiedName());
   }
 
-  private final String myName;
+  private final @GutterName String myName;
   private final LineMarkerType myLineMarkerType;
 
-  protected NonCodeAnnotationsLineMarkerProvider(String name,
-                                                 LineMarkerType lineMarkerType) {
+  protected NonCodeAnnotationsLineMarkerProvider(@GutterName String name, LineMarkerType lineMarkerType) {
     myName = name;
     myLineMarkerType = lineMarkerType;
   }

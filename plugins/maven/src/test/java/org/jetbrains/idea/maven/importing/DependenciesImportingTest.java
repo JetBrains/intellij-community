@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -13,17 +14,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
   @Override
@@ -355,40 +356,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<version>1</version>");
 
     importProject();
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
-  }
-
-
-  public void testInterSnapshotModuleDependenciesWithVersionRanges() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>[, 2]</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1-SNAPSHOT</version>");
-
-    importProjectWithErrors();
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
@@ -857,13 +824,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
+  @Bombed(user= "Nikita.Skvortsov", month = Calendar.OCTOBER, day = 15)
   public void testDependencyWithEnvironmentENVProperty() {
-    if (ignore()) {
-      return;
-    }
-    if (MavenUtil.newModelEnabled(myProject)) {
-      throw new IllegalStateException("This test brokes all subsequent!");
-    }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
     envDir = StringUtil.trimEnd(envDir, "/");
 
@@ -1650,8 +1612,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/xxx.jar!/"),
@@ -1969,13 +1930,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-      Library lib = appTable.createLibrary("foo");
-      ModuleRootModificationUtil.addDependency(getModule("project"), lib);
-      appTable.removeLibrary(lib);
-    });
-
+    ApplicationManager.getApplication().invokeAndWait( () ->
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+        Library lib = appTable.createLibrary("foo");
+        ModuleRootModificationUtil.addDependency(getModule("project"), lib);
+        appTable.removeLibrary(lib);
+      })
+    );
 
     importProject(); // should not fail;
   }
@@ -2244,7 +2206,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
 
                      "</dependencies>");
-    importProject();
+    importProjectWithErrors();
 
     WriteAction.runAndWait(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
@@ -2372,11 +2334,15 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
       importProject();
 
-      OrderEntry[] entries = ModuleRootManager.getInstance(getModule("project")).getOrderEntries();
-      List<String> strings = ContainerUtil.map(entries, Object::toString);
+      List<String> librariesDepNames = Arrays.stream(ModuleRootManager.getInstance(getModule("project"))
+        .getOrderEntries())
+        .filter(LibraryOrderEntry.class::isInstance)
+        .map(LibraryOrderEntry.class::cast)
+        .map(loe -> loe.getLibraryName())
+        .collect(Collectors.toList());
 
-      assertContain(strings, "project -> SomeLibrary", "project -> Maven: junit:junit:4.0");
-      assertDoesntContain(strings, "project -> Maven: AnotherLibrary");
+      assertContain(librariesDepNames, "SomeLibrary", "Maven: junit:junit:4.0");
+      assertDoesntContain(librariesDepNames, "Maven: AnotherLibrary");
 
     }
     finally {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +30,7 @@ public class DefaultCompactActionGroup extends DefaultActionGroup implements Com
     super(actions);
   }
 
-  public DefaultCompactActionGroup(String shortName, boolean popup) {
+  public DefaultCompactActionGroup(@NlsActions.ActionText String shortName, boolean popup) {
     super(shortName, popup);
   }
 }

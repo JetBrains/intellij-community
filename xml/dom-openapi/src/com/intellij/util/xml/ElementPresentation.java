@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,9 +27,9 @@ import javax.swing.*;
  */
 public abstract class ElementPresentation {
   @Nullable
-  public abstract String getElementName();
+  public abstract @NlsSafe String getElementName();
 
-  public abstract String getTypeName();
+  public abstract @NlsSafe String getTypeName();
 
   @Nullable
   public abstract Icon getIcon();

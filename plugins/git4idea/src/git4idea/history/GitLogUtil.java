@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -98,6 +98,9 @@ public class GitLogUtil {
   public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
                                                                   @NotNull List<String> hashes)
     throws VcsException {
+    if (hashes.isEmpty()) {
+      return Collections.emptyList();
+    }
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -180,28 +183,6 @@ public class GitLogUtil {
     return new LogDataImpl(refs, commits);
   }
 
-  /**
-   * @deprecated use {@link GitHistoryUtils#history(Project, VirtualFile, String...)} instead.
-   */
-  @Deprecated
-  @NotNull
-  public static List<GitCommit> collectFullDetails(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
-                                                   String... parameters) throws VcsException {
-
-    List<GitCommit> commits = new ArrayList<>();
-    try {
-      readFullDetails(project, root, commits::add, parameters);
-    }
-    catch (VcsException e) {
-      if (commits.isEmpty()) {
-        throw e;
-      }
-      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
-    }
-    return commits;
-  }
-
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
@@ -215,6 +196,9 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
+    if (hashes.isEmpty()) {
+      return;
+    }
     new GitFullDetailsCollector(project, root, new InternedGitLogRecordBuilder())
       .readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
   }

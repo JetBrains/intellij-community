@@ -17,21 +17,28 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 public class InvalidArtifact extends ArtifactImpl {
   private final ArtifactState myState;
-  private final String myErrorMessage;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myErrorMessage;
 
-  public InvalidArtifact(@NotNull ArtifactState state, String errorMessage, ProjectModelExternalSource externalSource) {
-    super(state.getName(), InvalidArtifactType.getInstance(), false, PackagingElementFactory.getInstance().createArtifactRootElement(), "",
+  public InvalidArtifact(@NotNull ArtifactState state,
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage,
+                         ProjectModelExternalSource externalSource) {
+    super(state.getName(),
+          InvalidArtifactType.getInstance(),
+          false,
+          PackagingElementFactory.getInstance().createArtifactRootElement(),
+          "",
           externalSource);
     myState = state;
     myErrorMessage = errorMessage;
   }
 
-  public String getErrorMessage() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getErrorMessage() {
     return myErrorMessage;
   }
 

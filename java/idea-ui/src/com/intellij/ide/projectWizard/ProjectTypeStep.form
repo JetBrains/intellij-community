@@ -81,7 +81,7 @@
                   <component id="916d9" class="com.intellij.ui.components.JBLabel" binding="myFrameworksLabel">
                     <constraints border-constraint="North"/>
                     <properties>
-                      <text value="Additional Libraries and &amp;Frameworks:"/>
+                      <text resource-bundle="messages/JavaUiBundle" key="label.additional.libraries.and.frameworks"/>
                     </properties>
                   </component>
                 </children>

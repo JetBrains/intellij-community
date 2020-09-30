@@ -6,12 +6,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class GitTag extends GitReference {
-  public static final String REFS_TAGS_PREFIX = "refs/tags/";
+  public static final @NonNls String REFS_TAGS_PREFIX = "refs/tags/";
 
   public GitTag(@NotNull String name) {
     super(name);

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpReplacementUtil {
+public final class RegExpReplacementUtil {
 
   /**
    * Dummy text that never needs escaping

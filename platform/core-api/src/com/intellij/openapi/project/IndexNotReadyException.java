@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -25,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Thrown on accessing indices when they're not ready, in so-called dumb mode. Possible fixes:
  * <ul>
- * <li> If {@link com.intellij.openapi.actionSystem.AnAction#actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent)} is in stack trace,
+ * <li> If {@link com.intellij.openapi.actionSystem.AnAction#actionPerformed} is in stack trace,
  * consider making the action not implement {@link DumbAware}.
  *
  * <li> A {@link DumbAware} action, having got this exception, may just notify the user that the requested activity is not possible while
  * indexing is in progress. It can be done via a dialog (see {@link com.intellij.openapi.ui.Messages}) or a status bar balloon
- * (see {@link DumbService#showDumbModeNotification(String)}, {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning(com.intellij.openapi.actionSystem.AnActionEvent...)}).
+ * (see {@link DumbService#showDumbModeNotification(String)}, {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning} (com.intellij.openapi.actionSystem.AnActionEvent...)}).
  *
  * <li> If index access is performed from some non-urgent invokeLater activity, consider replacing it with
  * {@link DumbService#smartInvokeLater(Runnable)}. Note that this 'later' can be very late, several minutes may pass. So if that code
@@ -55,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * @see DumbService
  * @see DumbAware
  */
-public class IndexNotReadyException extends RuntimeException implements ExceptionWithAttachments {
+public final class IndexNotReadyException extends RuntimeException implements ExceptionWithAttachments {
   @Nullable private final Throwable myStartTrace;
 
   // constructor is private to not let ForkJoinTask.getThrowableException() clone this by reflection causing invalid nesting etc

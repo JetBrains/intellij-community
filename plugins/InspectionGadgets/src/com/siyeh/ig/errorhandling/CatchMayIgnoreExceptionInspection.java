@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
@@ -36,6 +36,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ import java.util.Properties;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final String IGNORED_PARAMETER_NAME = "ignored";
+  private static final @NonNls String IGNORED_PARAMETER_NAME = "ignored";
 
   public boolean m_ignoreCatchBlocksWithComments = true;
   public boolean m_ignoreNonEmptyCatchBlock = true;
@@ -197,7 +198,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   static class IgnoredExceptionVisitor extends SideEffectVisitor {
     private final @NotNull PsiParameter myParameter;
     private final @NotNull PsiCodeBlock myBlock;
-    private final @NotNull List<PsiMethod> myMethods;
+    @NonNls private final @NotNull List<PsiMethod> myMethods;
     private final @NotNull DfaVariableValue myExceptionVar;
 
     IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
@@ -273,7 +274,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
-  private static class RenameCatchParameterFix implements LocalQuickFix {
+  private static final class RenameCatchParameterFix implements LocalQuickFix {
     private final String myName;
 
     private RenameCatchParameterFix(String name) {

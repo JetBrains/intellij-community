@@ -16,6 +16,7 @@
 package com.jetbrains.rest.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.rest.validation.RestElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public class RestRole extends RestElement {
     return "RestRole:" + getNode().getElementType().toString();
   }
 
-  public String getRoleName() {
+  public @NlsSafe String getRoleName() {
     String text = getNode().getText();
     return text.substring(1, text.length()-1);
   }

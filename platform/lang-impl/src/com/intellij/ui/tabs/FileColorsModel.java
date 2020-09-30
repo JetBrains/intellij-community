@@ -56,7 +56,7 @@ public final class FileColorsModel implements Cloneable {
 
   private void initPredefinedAndGlobalScopes() {
     for (NamedScope scope : CustomScopesAggregator.getAllCustomScopes(myProject)) {
-      String scopeName = scope.getName();
+      String scopeName = scope.getScopeId();
       String colorName = scope.getDefaultColorName();
 
       if (StringUtil.isEmpty(colorName)) continue;
@@ -84,8 +84,8 @@ public final class FileColorsModel implements Cloneable {
 
         if (!colorName.isEmpty()) {
           Color color = ColorUtil.fromHex(colorName, null);
-          String name = color == null ? null : FileColorManagerImpl.getColorName(color);
-          myApplicationLevelConfigurations.add(new FileColorConfiguration(scopeName, name == null ? colorName : name));
+          String colorID = color == null ? null : FileColorManagerImpl.getColorID(color);
+          myApplicationLevelConfigurations.add(new FileColorConfiguration(scopeName, colorID == null ? colorName : colorID));
         }
       }
     }
@@ -115,7 +115,7 @@ public final class FileColorsModel implements Cloneable {
       }
       else {
         PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-        propertyComponent.setValue(propertyKey, configuration.getColorName(), myPredefinedScopeNameToColor.get(scopeName));
+        propertyComponent.setValue(propertyKey, configuration.getColorID(), myPredefinedScopeNameToColor.get(scopeName));
         // previously it was saved incorrectly as scope name instead of specified property key
         PropertiesComponent.getInstance().setValue(scopeName, null);
       }
@@ -209,7 +209,7 @@ public final class FileColorsModel implements Cloneable {
 
     final FileColorConfiguration configuration = findConfiguration(file);
     if (configuration != null && configuration.isValid(project)) {
-      return configuration.getColorName();
+      return configuration.getColorID();
     }
     return null;
   }
@@ -224,7 +224,7 @@ public final class FileColorsModel implements Cloneable {
       }
     }
     if (configuration != null && configuration.isValid(project)) {
-      return configuration.getColorName();
+      return configuration.getColorID();
     }
     return null;
   }
@@ -266,7 +266,7 @@ public final class FileColorsModel implements Cloneable {
         myApplicationLevelConfigurations.add(configuration);
         String propertyKey = predefinedScopeNameToPropertyKey.remove(configuration.getScopeName());
         if (propertyKey != null) {
-          propertiesComponent.setValue(propertyKey, configuration.getColorName());
+          propertiesComponent.setValue(propertyKey, configuration.getColorID());
         }
       }
       for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {

@@ -12,18 +12,25 @@ public class WordPrefixMatcher implements Matcher {
   private final String[] myFallbackPatternWords;
 
   public WordPrefixMatcher(String pattern) {
-    myPatternWords = NameUtil.nameToWords(pattern);
+    myPatternWords = splitToWords(pattern);
     String fixedLayout = FixingLayoutMatcher.fixLayout(pattern);
     myFallbackPatternWords = fixedLayout != null && !fixedLayout.equals(pattern) ? NameUtil.nameToWords(fixedLayout) : null;
   }
 
   @Override
   public boolean matches(@NotNull String name) {
-    String[] nameWords = NameUtil.nameToWords(name);
+    String[] nameWords = splitToWords(name);
     return matches(myPatternWords, nameWords) || myFallbackPatternWords != null && matches(myFallbackPatternWords, nameWords);
   }
 
+  @NotNull
+  private static String[] splitToWords(@NotNull String string) {
+    return string.split("[\\s-/]");
+  }
+
   private static boolean matches(String[] patternWords, String[] nameWords) {
-    return Arrays.stream(patternWords).allMatch(pw -> Arrays.stream(nameWords).anyMatch(nw -> StringUtilRt.startsWithIgnoreCase(nw, pw)));
+    return Arrays.stream(patternWords).allMatch(
+      pw -> Arrays.stream(nameWords).anyMatch(nw -> StringUtilRt.startsWithIgnoreCase(nw, pw))
+    );
   }
 }

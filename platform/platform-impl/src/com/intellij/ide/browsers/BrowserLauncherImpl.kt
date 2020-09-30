@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
@@ -61,7 +62,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     super.openWithExplicitBrowser(url, browserPath, project)
   }
 
-  override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, fix: (() -> Unit)?) {
+  override fun showError(@NlsContexts.DialogMessage error: String?, browser: WebBrowser?, project: Project?, @NlsContexts.DialogTitle title: String?, fix: (() -> Unit)?) {
     AppUIExecutor.onUiThread().expireWith(project ?: Disposable {}).submit {
       if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
                          okText = IdeBundle.message("button.fix"),

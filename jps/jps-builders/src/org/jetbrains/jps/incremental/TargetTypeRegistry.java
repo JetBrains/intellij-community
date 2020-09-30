@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TargetTypeRegistry {
+public final class TargetTypeRegistry {
   private static final Logger LOG = Logger.getInstance(TargetTypeRegistry.class);
   private static final class Holder {
     static final TargetTypeRegistry ourInstance = new TargetTypeRegistry();

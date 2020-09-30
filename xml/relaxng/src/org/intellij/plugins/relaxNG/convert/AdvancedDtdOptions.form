@@ -9,15 +9,15 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="none" title="DTD Input"/>
+    <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.advanced-options.dtd.border-title.dtd-input"/>
     <children>
       <component id="60570" class="javax.swing.JCheckBox" binding="myInlineAttlistCheckBox" default-binding="true">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;inline-attlist"/>
-          <toolTipText value="Specifies not to generate definitions for attribute list declarations and instead move attributes declared in attribute list declarations into the definitions generated for element declarations. This is the default behavior when the output module is xsd. Otherwise, the default behaviour is as described in the -i no-inline-attlist parameter.  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.checkbox.inline-attlist"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.inline-attlist"/>
         </properties>
       </component>
       <component id="ee970" class="javax.swing.JLabel">
@@ -26,8 +26,8 @@
         </constraints>
         <properties>
           <labelFor value="4bcfc"/>
-          <text value="&amp;colon-replacement:"/>
-          <toolTipText value="Replaces colons in element names by chars when constructing the names of definitions used to represent the element declarations and attribute list declarations in the DTD. Trang generates a definition for each element declaration and attlist declaration in the DTD. The name of the definition is based on the name of the element. In RELAX NG, the names of definitions cannot contain colons. However, in the DTD, the element name may contain a colon. By default, Trang will first try to use the element names without prefixes. If this causes a conflict, it will instead replace the colon by a legal name character (it try first to use a period).  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.colon-replacement"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.colon-replacement"/>
         </properties>
       </component>
       <component id="4bcfc" class="javax.swing.JTextField" binding="myColonReplacement">
@@ -44,8 +44,8 @@
         </constraints>
         <properties>
           <labelFor value="12ad0"/>
-          <text value="&amp;element-define:"/>
-          <toolTipText value="Specifies how to construct the name of the definition representing an element declaration from the name of the element. The name-pattern must contain exactly one percent character. This percent character is replaced by the name of element (after colon replacement) and the result is used as the name of the definition"/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.element-define"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.element-define"/>
         </properties>
       </component>
       <component id="12ad0" class="javax.swing.JTextField" binding="myElementDefine">
@@ -62,8 +62,8 @@
         </constraints>
         <properties>
           <labelFor value="5576"/>
-          <text value="&amp;attlist-define:"/>
-          <toolTipText value="This specifies how to construct the name of the definition representing an attribute list declaration from the name of the element. The name-pattern must contain exactly one percent character. This percent character is replaced by the name of element (after colon replacement) and the result is used as the name of the definition.  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.attlist-define"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.attlist-define"/>
         </properties>
       </component>
       <component id="5576" class="javax.swing.JTextField" binding="myAttlistDefine">
@@ -80,8 +80,8 @@
         </constraints>
         <properties>
           <labelFor value="bbb31"/>
-          <text value="a&amp;ny-name:"/>
-          <toolTipText value="Specifies the name of the definition generated for the content of elements declared in the DTD as having a content model of ANY."/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.any-name"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.any-name"/>
         </properties>
       </component>
       <component id="bbb31" class="javax.swing.JTextField" binding="myAnyName">
@@ -97,8 +97,8 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;strict-any"/>
-          <toolTipText value="Preserves the exact semantics of ANY content models by using an explicit choice of references to all declared elements. By default, Trang uses a wildcard that allows any element.  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.checkbox.strict-any"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.strict-any"/>
         </properties>
       </component>
       <component id="b1561" class="javax.swing.JLabel">
@@ -107,8 +107,8 @@
         </constraints>
         <properties>
           <labelFor value="79c45"/>
-          <text value="ann&amp;otation-prefix:"/>
-          <toolTipText value="Default values are represented using an annotation attribute prefix:defaultValue where prefix is bound to http://relaxng.org/ns/compatibility/annotations/1.0 as defined by the RELAX NG DTD Compatibility Committee Specification. By default, Trang will use a for prefix unless that conflicts with a prefix used in the DTD.  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.annotation-prefix"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.annotation-prefix"/>
         </properties>
       </component>
       <component id="79c45" class="javax.swing.JTextField" binding="myAnnotationPrefix">
@@ -124,8 +124,8 @@
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;generate-start"/>
-          <toolTipText value="Specifies whether Trang should generate a start element. DTDs do not indicate what elements are allowed as document elements. Trang assumes that all elements that are defined but never referenced are allowed as document elements.  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.checkbox.generate-start"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.tooltip.generate-start"/>
         </properties>
       </component>
       <grid id="c0da2" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -137,7 +137,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Namespace Settings"/>
+        <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.advanced-options.dtd.border-title.namespace-settings"/>
         <children>
           <component id="3e6e" class="javax.swing.JLabel">
             <constraints>
@@ -145,7 +145,7 @@
             </constraints>
             <properties>
               <labelFor value="577de"/>
-              <text value="&amp;Default:"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.dtd.label.default"/>
             </properties>
           </component>
           <vspacer id="827e3">

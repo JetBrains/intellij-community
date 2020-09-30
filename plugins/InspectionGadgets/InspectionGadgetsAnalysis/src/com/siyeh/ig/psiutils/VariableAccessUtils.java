@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class VariableAccessUtils {
+public final class VariableAccessUtils {
 
   private VariableAccessUtils() {}
 
@@ -254,7 +254,7 @@ public class VariableAccessUtils {
     });
     return result;
   }
-  
+
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                        @Nullable PsiElement context) {
@@ -544,10 +544,10 @@ public class VariableAccessUtils {
   public static boolean canUseAsNonFinal(PsiLocalVariable var) {
     if (var == null) return false;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    return block != null && ReferencesSearch.search(var).allMatch(ref -> {
-      PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
-      return context == null || PsiTreeUtil.isAncestor(context, block, false);
-    });
+    return block != null &&
+           getVariableReferences(var, block).stream()
+             .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
+             .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {

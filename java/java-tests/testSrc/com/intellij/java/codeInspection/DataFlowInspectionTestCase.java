@@ -28,7 +28,7 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
     });
   }
 
-  protected void doTestWith(Consumer<DataFlowInspection> inspectionMutator) {
+  protected void doTestWith(Consumer<? super DataFlowInspection> inspectionMutator) {
     DataFlowInspection inspection = new DataFlowInspection();
     inspectionMutator.accept(inspection);
     myFixture.enableInspections(inspection);

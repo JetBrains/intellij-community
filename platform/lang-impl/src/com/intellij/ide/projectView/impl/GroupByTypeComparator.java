@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -14,29 +15,30 @@ import java.util.Comparator;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 
 public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
-  private ProjectView myProjectView;
+  private final Project project;
   private String myPaneId;
   private boolean myForceSortByType;
 
-  public GroupByTypeComparator(@Nullable ProjectView projectView, final String paneId) {
-    myProjectView = projectView;
+  public GroupByTypeComparator(@Nullable Project project, String paneId) {
+    this.project = project;
     myPaneId = paneId;
   }
 
-  public GroupByTypeComparator(final boolean forceSortByType) {
+  public GroupByTypeComparator(boolean forceSortByType) {
     myForceSortByType = forceSortByType;
+    this.project = null;
   }
 
   @Override
   public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-    if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode) descriptor1).isSortByFirstChild()) {
+    if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode)descriptor1).isSortByFirstChild()) {
       Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor1).getChildren();
       if (!children.isEmpty()) {
         descriptor1 = children.iterator().next();
         descriptor1.update();
       }
     }
-    if (!isSortByType() && descriptor2 instanceof ProjectViewNode && ((ProjectViewNode) descriptor2).isSortByFirstChild()) {
+    if (!isSortByType() && descriptor2 instanceof ProjectViewNode && ((ProjectViewNode)descriptor2).isSortByFirstChild()) {
       Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor2).getChildren();
       if (!children.isEmpty()) {
         descriptor2 = children.iterator().next();
@@ -98,37 +100,38 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
   }
 
   protected boolean isManualOrder() {
-    if (myProjectView != null) {
-      return myProjectView.isManualOrder(myPaneId);
+    if (project == null) {
+      return true;
     }
-    return true;
+    return ProjectView.getInstance(project).isManualOrder(myPaneId);
   }
 
   protected boolean isSortByType() {
-    if (myProjectView != null) {
-      return myProjectView.isSortByType(myPaneId);
+    if (project == null) {
+      return myForceSortByType;
     }
-    return myForceSortByType;
+    return ProjectView.getInstance(project).isSortByType(myPaneId);
   }
 
   protected boolean isAbbreviateQualifiedNames() {
-    return myProjectView != null && myProjectView.isAbbreviatePackageNames(myPaneId);
+    return project != null && ProjectView.getInstance(project).isAbbreviatePackageNames(myPaneId);
   }
 
   protected boolean isFoldersAlwaysOnTop() {
-    return myProjectView == null || myProjectView.isFoldersAlwaysOnTop(myPaneId);
+    return project == null || ProjectView.getInstance(project).isFoldersAlwaysOnTop(myPaneId);
   }
 
-  private static int compare(Comparable key1, Comparable key2) {
+  private static int compare(Comparable<?> key1, Comparable<?> key2) {
     if (key1 == null && key2 == null) return 0;
     if (key1 == null) return 1;
     if (key2 == null) return -1;
     if (key1 instanceof String && key2 instanceof String) {
       return naturalCompare((String)key1, (String)key2);
     }
+
     try {
-      //noinspection unchecked
-      return key1.compareTo(key2);
+      //noinspection unchecked,rawtypes
+      return ((Comparable)key1).compareTo(key2);
     }
     catch (ClassCastException ignored) {
       // if custom nodes provide comparable keys of different types,

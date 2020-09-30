@@ -24,7 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     reinstallHighlighters();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();
@@ -159,7 +160,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   private GutterIconRenderer createIconRenderer(@NotNull final ThreeSide sourceSide,
                                                 @NotNull final ThreeSide modifiedSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull final @NlsContexts.Tooltip String tooltipText,
                                                 @NotNull final Icon icon,
                                                 @NotNull final Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {

@@ -2,23 +2,20 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.HashSet;
+import java.util.*;
 
 /**
  * Weak hash set.
  * Null keys are NOT allowed
  */
 final class WeakHashSet<T> extends AbstractSet<T> {
-  private final Set<MyRef<T>> set = new THashSet<>();
+  private final Set<MyRef<T>> set = new HashSet<>();
   private final ReferenceQueue<T> queue = new ReferenceQueue<>();
 
   private static class MyRef<T> extends WeakReference<T> {

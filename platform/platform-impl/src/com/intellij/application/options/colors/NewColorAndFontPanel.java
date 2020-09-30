@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
@@ -183,7 +184,7 @@ public class NewColorAndFontPanel extends JPanel {
     return mySettingsPage;
   }
   
-  public void setEmptyText(@NotNull String text, @NotNull String details) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text, @NotNull @NlsContexts.PopupContent String details) {
     myOptionsPanel.setEmptyText(text, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -192,7 +193,7 @@ public class NewColorAndFontPanel extends JPanel {
     });
   }
 
-  private void notifyAtSchemePanel(@NotNull String message) {
+  private void notifyAtSchemePanel(@NotNull @NlsContexts.PopupContent String message) {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     Balloon balloon = popupFactory
       .createHtmlTextBalloonBuilder(message, MessageType.INFO, null)

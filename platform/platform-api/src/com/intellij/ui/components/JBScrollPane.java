@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -10,6 +10,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import com.intellij.ui.scroll.LatchingScroll;
+import com.intellij.ui.scroll.MouseWheelSmoothScroll;
+import com.intellij.ui.scroll.TouchScroll;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,13 +55,21 @@ public class JBScrollPane extends JScrollPane {
    * when insets for {@code JScrollPane's} content are being calculated.
    * <p>
    * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
-   * scrollbar
+   * scrollbar.
    * <p>
-   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   * Please use as a marker for scrollbars, that should be transparent and shown over content.
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
+
+  /**
+   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
+   *
+   * @see LatchingScroll
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -184,9 +196,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   /**
-   * Adds status component which's anchored to the top right corner above the right scrollbar.
-   * This component obeys the <code>Flip</code>
-   * @param statusComponent
+   * Adds status component which is anchored to the top right corner above the right scrollbar.
+   * This component obeys the {@link Flip}.
    */
   public void setStatusComponent(JComponent statusComponent) {
     JComponent old = getStatusComponent();
@@ -207,11 +218,12 @@ public class JBScrollPane extends JScrollPane {
     return statusComponent;
   }
 
-  private static class JBMouseWheelListener implements MouseWheelListener {
+  private static final class JBMouseWheelListener implements MouseWheelListener {
 
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
     private TouchScroll myTouchScroll;
+    private LatchingScroll myLatchingScroll;
 
     private JBMouseWheelListener(MouseWheelListener delegate) {
       this.myDelegate = delegate;
@@ -242,8 +254,16 @@ public class JBScrollPane extends JScrollPane {
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
-            myDelegate.mouseWheelMoved(event);
+          } else {
+            if (LatchingScroll.isEnabled()) {
+              if (myLatchingScroll == null) myLatchingScroll = new LatchingScroll();
+              if (myLatchingScroll.shouldBeIgnored(event)) {
+                event.consume();
+              }
+            }
+            if (!event.isConsumed() && !(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
+              myDelegate.mouseWheelMoved(event);
+            }
           }
         }
 
@@ -641,7 +661,7 @@ public class JBScrollPane extends JScrollPane {
       colHeadBounds.x = bounds.x - insets.left;
       colHeadBounds.width = bounds.width + insets.left + insets.right;
       boolean fillUpperCorner = false;
-      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing(); 
+      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing();
       if (colHead != null) {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);

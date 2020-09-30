@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,6 +28,7 @@ import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.*;
 
 public class ShareProjectAction extends BasicAction {
 
@@ -77,9 +78,13 @@ public class ShareProjectAction extends BasicAction {
 
       if (ShareDialog.ShareTarget.useSelected.equals(shareTarget) &&
           !isFolderEmpty(vcs, parent) &&
-          YES !=
-          showYesNoDialog(vcs.getProject(), "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
-                          "Share Directory", getWarningIcon())) {
+          YES != showYesNoDialog(
+            vcs.getProject(),
+            message("dialog.message.share.to.not.empty.directory", parent),
+            message("share.directory.title"),
+            getWarningIcon()
+          )
+      ) {
         return false;
       }
 
@@ -112,7 +117,7 @@ public class ShareProjectAction extends BasicAction {
           finally {
             vcs.invokeRefreshSvnRoots();
           }
-        }, message("share.directory.title"), true, vcs.getProject()));
+        }, message("progress.title.share.directory"), true, vcs.getProject()));
 
       if (Boolean.TRUE.equals(actionStarted.get())) {
         if (error[0] != null) {
@@ -139,11 +144,11 @@ public class ShareProjectAction extends BasicAction {
         return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
       default:
         Target projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), "trunk", commitText);
+        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), TRUNK_NAME, commitText);
 
         if (createStandardStructure) {
-          createRemoteFolder(vcs, projectRoot.getUrl(), "branches", commitText);
-          createRemoteFolder(vcs, projectRoot.getUrl(), "tags", commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), BRANCHES_NAME, commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), TAGS_NAME, commitText);
         }
         return trunk;
     }
@@ -151,7 +156,7 @@ public class ShareProjectAction extends BasicAction {
 
   private static boolean isFolderEmpty(@NotNull SvnVcs vcs, @NotNull String folderUrl) throws VcsException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), "Check Remote Folder Contents", false, vcs.getProject());
+      () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), message("progress.title.check.remote.folder.contents"), false, vcs.getProject());
   }
 
   @NotNull

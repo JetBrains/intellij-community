@@ -168,17 +168,6 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
         StringCase argCase = fromExpression(arg, ANALYSIS_COMPLEXITY);
         if (argCase.myHasUpper != ThreeState.YES && argCase.myHasLower != ThreeState.YES) return;
         StringCase qualifierCase = fromExpression(qualifier, ANALYSIS_COMPLEXITY);
-        String problematicCase;
-        String oppositeCase;
-        if (qualifierCase.myHasLower == ThreeState.NO && argCase.myHasLower == ThreeState.YES) {
-          problematicCase = "a lowercase";
-          oppositeCase = "uppercase";
-        } else if (qualifierCase.myHasUpper == ThreeState.NO && argCase.myHasUpper == ThreeState.YES) {
-          problematicCase = "an uppercase";
-          oppositeCase = "lowercase";
-        } else {
-          return;
-        }
         PsiElement anchor = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
         String methodName = anchor.getText();
         String returnValue;
@@ -190,9 +179,15 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
           default:
             returnValue = "false";
         }
-        String message = InspectionGadgetsBundle.message("inspection.case.mismatch.message",
-                                                         methodName, returnValue, problematicCase, oppositeCase);
-        holder.registerProblem(anchor, message);
+        String errorMessage;
+        if (qualifierCase.myHasLower == ThreeState.NO && argCase.myHasLower == ThreeState.YES) {
+          errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.arg.is.lower", methodName, returnValue);
+        } else if (qualifierCase.myHasUpper == ThreeState.NO && argCase.myHasUpper == ThreeState.YES) {
+          errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.arg.is.upper", methodName, returnValue);
+        } else {
+          return;
+        }
+        holder.registerProblem(anchor, errorMessage);
       }
     };
   }

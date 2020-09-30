@@ -32,8 +32,6 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
-import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
-
 
 public class PyExceptionBreakpointType
   extends XBreakpointType<XBreakpoint<PyExceptionBreakpointProperties>, PyExceptionBreakpointProperties> {
@@ -122,7 +120,7 @@ public class PyExceptionBreakpointType
     if (properties != null) {
       String exception = properties.getException();
       if (BASE_EXCEPTION.equals(exception)) {
-        return "Any exception";
+        return PyBundle.message("debugger.exception.breakpoint.any.exception");
       }
       return exception;
     }
@@ -181,7 +179,7 @@ public class PyExceptionBreakpointType
       IdeTooltipManager.getInstance().setCustomTooltip(
         myWarningIcon,
         new TooltipWithClickableLinks.ForBrowser(myWarningIcon,
-                                                 DEBUGGER_WARNING_MESSAGE));
+                                                 PyBundle.message("debugger.warning.message")));
       myWarningIcon.setBorder(JBUI.Borders.emptyLeft(5));
       panel.add(myWarningIcon);
       notificationsBox.add(panel);

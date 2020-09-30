@@ -2,10 +2,12 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DarculaColors;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -47,14 +49,16 @@ public final class XDebuggerUIConstants {
   private XDebuggerUIConstants() {
   }
 
-  public static String getCollectingDataMessage() {
+  public static @NlsContexts.Label String getCollectingDataMessage() {
     return XDebuggerBundle.message("xdebugger.building.tree.node.message");
   }
 
+  @Nls
   public static String getEvaluatingExpressionMessage() {
     return XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
   }
 
+  @Nls
   public static String getModifyingValueMessage() {
     return XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   }

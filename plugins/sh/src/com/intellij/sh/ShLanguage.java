@@ -8,7 +8,7 @@ import static com.intellij.sh.ShBundle.message;
 
 public class ShLanguage extends Language {
   public static final Language INSTANCE = new ShLanguage();
-  public static final String NOTIFICATION_GROUP_ID = NotificationGroup.createIdWithTitle("Shell Script", message("sh.title.case"));
+  public static final String NOTIFICATION_GROUP_ID = NotificationGroup.createIdWithTitle("Shell Script", message("sh.shell.script"));
 
   public ShLanguage() {
     super("Shell Script", "application/x-bsh", "application/x-sh", "text/x-script.sh");

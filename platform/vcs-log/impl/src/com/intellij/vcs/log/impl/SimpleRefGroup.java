@@ -6,6 +6,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -13,15 +14,15 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleRefGroup implements RefGroup {
-  @NotNull private final String myName;
+  @NotNull private final @Nls String myName;
   @NotNull private final List<VcsRef> myRefs;
   private final boolean myExpanded;
 
-  public SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
+  public SimpleRefGroup(@NotNull @Nls String name, @NotNull List<VcsRef> refs) {
     this(name, refs, false);
   }
 
-  public SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs, boolean expanded) {
+  public SimpleRefGroup(@NotNull @Nls String name, @NotNull List<VcsRef> refs, boolean expanded) {
     myName = name;
     myRefs = refs;
     myExpanded = expanded;

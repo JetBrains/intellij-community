@@ -9,6 +9,7 @@ import com.intellij.grazie.utils.Text
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 
 
@@ -24,7 +25,7 @@ object StrategyUtils {
    * @return extension point
    */
   internal fun getStrategyExtensionPoint(strategy: GrammarCheckingStrategy): LanguageExtensionPoint<GrammarCheckingStrategy> {
-    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("${strategy.getName()} strategy is not registered")
+    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
   internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
@@ -101,6 +102,43 @@ object StrategyUtils {
     if (from != -1) result.add(IntRange(from, str.length - 1))
 
     return result
+  }
+
+  /**
+   * Get all siblings of [element] of specific [types]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param types possible types of siblings
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) = sequence {
+    fun PsiElement.process(types: Set<IElementType>, next: Boolean) = sequence<PsiElement> {
+      val whitespaceTokens = strategy.getWhiteSpaceTokens()
+      var newLinesBetweenSiblingsCount = 0
+
+      var sibling: PsiElement? = this@process
+      while (sibling != null) {
+        val candidate = if (next) sibling.nextSibling else sibling.prevSibling
+        sibling = when (candidate.elementType) {
+          in types -> {
+            newLinesBetweenSiblingsCount = 0
+            candidate
+          }
+          in whitespaceTokens -> {
+            newLinesBetweenSiblingsCount += candidate.text.count { char -> char == '\n' }
+            if (newLinesBetweenSiblingsCount > 1) null else candidate
+          }
+          else -> null
+        }
+
+        if (sibling != null) yield(sibling)
+      }
+    }
+
+    yieldAll(element.process(types, false).toList().asReversed())
+    yield(element)
+    yieldAll(element.process(types, true))
   }
 
   private fun quotesOffset(str: CharSequence): Int {

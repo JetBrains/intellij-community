@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.google.common.hash.Hasher;
@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -49,7 +46,7 @@ import static com.intellij.util.ui.JBUI.asUIResource;
 /**
  * @author Konstantin Bulenkov
  */
-public class UITheme {
+public final class UITheme {
   public static final String FILE_EXT_ENDING = ".theme.json";
 
   private static final Logger LOG = Logger.getInstance(UITheme.class);
@@ -112,13 +109,13 @@ public class UITheme {
   }
 
   @NotNull
-  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
+  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
   @NotNull
   public static UITheme loadFromJson(@NotNull InputStream stream,
-                                     @NotNull String themeId,
+                                     @NotNull @NonNls String themeId,
                                      @Nullable ClassLoader provider,
                                      @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
@@ -150,7 +147,7 @@ public class UITheme {
 
         @Nullable
         @Override
-        public ClassLoader getContextClassLoader(@NotNull String path, ClassLoader originalClassLoader) {
+        public ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
           return theme.providerClassLoader;
         }
       };
@@ -200,50 +197,7 @@ public class UITheme {
             byte[] digest = scope.digest();
             Map<String, String> newPalette = scope.newPalette;
             Map<String, Integer> alphas = scope.alphas;
-            return newPatcher(digest, newPalette, alphas);
-          }
-
-          @Nullable
-          private SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
-                                                              @NotNull Map<String, String> newPalette,
-                                                              @NotNull Map<String, Integer> alphas) {
-            if (newPalette.isEmpty()) {
-              return null;
-            }
-
-            return new SVGLoader.SvgElementColorPatcher() {
-              @Override
-              public byte[] digest() {
-                return digest;
-              }
-
-              @Override
-              public void patchColors(@NotNull Element svg) {
-                patchColorAttribute(svg, "fill");
-                patchColorAttribute(svg, "stroke");
-                NodeList nodes = svg.getChildNodes();
-                int length = nodes.getLength();
-                for (int i = 0; i < length; i++) {
-                  Node item = nodes.item(i);
-                  if (item instanceof Element) {
-                    patchColors((Element)item);
-                  }
-                }
-              }
-
-              private void patchColorAttribute(@NotNull Element svg, String attrName) {
-                String color = svg.getAttribute(attrName);
-                if (color != null) {
-                  String newColor = newPalette.get(StringUtil.toLowerCase(color));
-                  if (newColor != null) {
-                    svg.setAttribute(attrName, newColor);
-                    if (alphas.get(newColor) != null) {
-                      svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
-                    }
-                  }
-                }
-              }
-            };
+            return SVGLoader.newPatcher(digest, newPalette, alphas);
           }
         };
       }
@@ -311,7 +265,7 @@ public class UITheme {
     colorPalette.put("Tree.iconColor.Dark", "#AFB1B3");
   }
 
-  public String getId() {
+  public @NonNls String getId() {
     return id;
   }
 
@@ -455,7 +409,8 @@ public class UITheme {
       return parseGrayFilter(value);
     }
     else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;      if (icon != null) {
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
+      if (icon != null) {
         return new IconUIResource(icon);
       }
       Color color = parseColor(value);

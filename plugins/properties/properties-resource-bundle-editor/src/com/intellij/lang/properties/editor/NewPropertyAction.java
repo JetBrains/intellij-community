@@ -40,8 +40,8 @@ class NewPropertyAction extends AnAction {
   }
 
   NewPropertyAction(final boolean enabledForce) {
-    super(ResourceBundleEditorBundle.message("action.NewPropertyAction.text"), 
-          ResourceBundleEditorBundle.message("description.NewPropertyAction.description"), AllIcons.General.Add);
+    super(ResourceBundleEditorBundle.message("action.NewPropertyAction.text"),
+          ResourceBundleEditorBundle.message("action.NewPropertyAction.description"), AllIcons.General.Add);
     myEnabledForce = enabledForce;
   }
 
@@ -77,7 +77,7 @@ class NewPropertyAction extends AnAction {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
     if (status.hasReadonlyFiles()) {
       Messages.showErrorDialog(bundle.getProject(),
-                               String.format("Resource bundle '%s' has read-only default properties file", bundle.getBaseName()),
+                               ResourceBundleEditorBundle.message("new.property.read.only.error.message", bundle.getBaseName()),
                                ResourceBundleEditorBundle.message("already.exists.dialog.title"));
       return;
     }
@@ -150,7 +150,7 @@ class NewPropertyAction extends AnAction {
       };
       ResourceBundleEditor finalResourceBundleEditor = resourceBundleEditor;
       ApplicationManager.getApplication().runWriteAction(() -> {
-        WriteCommandAction.runWriteCommandAction(bundle.getProject(), insertionAction);
+        WriteCommandAction.runWriteCommandAction(bundle.getProject(), ResourceBundleEditorBundle.message("action.NewPropertyAction.text"), null, insertionAction);
         finalResourceBundleEditor.flush();
       });
 

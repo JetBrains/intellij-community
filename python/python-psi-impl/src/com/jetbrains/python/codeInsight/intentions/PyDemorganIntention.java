@@ -34,7 +34,7 @@ public class PyDemorganIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return PyPsiBundle.message("INTN.demorgan.law");
+    return PyPsiBundle.message("INTN.NAME.demorgan.law");
   }
 
   @NotNull

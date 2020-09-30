@@ -2,6 +2,7 @@
 package com.intellij.execution.target.local
 
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import org.junit.Assert
 import org.junit.Assume
@@ -9,6 +10,8 @@ import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 class LocalTargetEnvironmentTest {
+  val LOG: Logger = Logger.getInstance(LocalTargetEnvironmentTest::class.java)
+
   @Test
   fun `create general command line on Windows`() {
     assumeWindows()
@@ -33,7 +36,7 @@ class LocalTargetEnvironmentTest {
 
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
-    println(generalCommandLine.commandLineString)
+    LOG.debug(generalCommandLine.commandLineString)
 
     Assert.assertEquals(
       listOf("C:\\Path\\To\\Some Executable.exe",
@@ -70,7 +73,7 @@ class LocalTargetEnvironmentTest {
 
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
-    println(generalCommandLine.commandLineString)
+    LOG.debug(generalCommandLine.commandLineString)
 
     Assert.assertEquals(
       listOf("/path/to/some executable",

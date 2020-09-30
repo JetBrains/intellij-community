@@ -108,7 +108,7 @@ public final class ProjectViewTestUtil {
                                           @Nullable Queryable.PrintInfo printInfo) {
     checkGetParentConsistency(structure, rootNode);
     String actual = PlatformTestUtil.print(structure, rootNode, 0, comparator, maxRowCount, ' ', printInfo).toString();
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expected.trim(), actual.trim());
   }
 
   public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -116,7 +116,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     }
   }
 
-  private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
+  private static final class PluginTableCellRenderer extends DefaultTableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final PluginNode myPluginNode;
 

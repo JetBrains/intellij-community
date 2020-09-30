@@ -17,23 +17,22 @@
 
 package com.intellij.find.actions;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class FindInPathAction extends AnAction implements DumbAware {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Find in Path", ToolWindowId.FIND, false,
-                                                                                               PluginManagerCore.CORE_ID);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find in Path");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -50,7 +49,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
   }
 
   static void showNotAvailableMessage(AnActionEvent e, Project project) {
-    final String message = "'" + e.getPresentation().getText() + "' is not available while search is in progress";
+    final String message = FindBundle.message("notification.content.not.available.while.search.in.progress", e.getPresentation().getText());
     NOTIFICATION_GROUP.createNotification(message, NotificationType.WARNING).notify(project);
   }
 

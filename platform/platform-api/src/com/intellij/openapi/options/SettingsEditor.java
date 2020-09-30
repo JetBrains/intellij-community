@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -37,7 +38,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     this(null);
   }
 
-  public SettingsEditor(Factory<Settings> settingsFactory) {
+  public SettingsEditor(@Nullable Factory<Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
     Disposer.register(this, new Disposable() {
       @Override

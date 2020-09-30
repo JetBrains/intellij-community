@@ -15,17 +15,20 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,9 +50,8 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     }
   }
 
-  private ModuleRootManager createTempModuleRootManager() {
-    File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
-    Module module = createModule(tmpModule);
+  private @NotNull ModuleRootManager createTempModuleRootManager() {
+    Module module = createModule(getTempDir().newPath("tst" + ModuleFileType.DOT_DEFAULT_EXTENSION));
     return ModuleRootManager.getInstance(module);
   }
 
@@ -82,8 +84,8 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
 
     assertNotNull(testClassesFile);
 
-    final File moduleFile = new File(content, "test.iml");
-    final Module module = createModule(moduleFile);
+    Path moduleFile = content.toPath().resolve("test.iml");
+    Module module = createModule(moduleFile);
 
     PsiTestUtil.addContentRoot(module, contentFile);
     PsiTestUtil.addSourceRoot(module, sourceFile);
@@ -121,7 +123,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     FileUtil.createDirectory(annotationsDir);
     String javadocUrl = refreshAndFindFile(javadocDir).getUrl();
     String annotationsUrl = refreshAndFindFile(annotationsDir).getUrl();
-    File moduleFile = new File(content, "test.iml");
+    Path moduleFile = content.toPath().resolve("test.iml");
     Module module = createModule(moduleFile);
     ModuleRootModificationUtil.updateModel(module, (model) -> {
       JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
@@ -158,7 +160,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
   }
 
   public void testModuleLibraries() throws IOException, JDOMException {
-    File moduleFile = new File(myProject.getBasePath(), "test.iml");
+    Path moduleFile = ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
@@ -218,7 +220,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
   }
 
   public void testCompilerOutputInheritance() throws IOException, JDOMException {
-    File moduleFile = new File(myProject.getBasePath(), "test.iml");
+    Path moduleFile = ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();

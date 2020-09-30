@@ -66,6 +66,9 @@ public abstract class AbstractCommand<T> {
 
   public static final int CMD_SET_UNIT_TESTS_DEBUGGING_MODE = 170;
 
+  // Powerful DataViewer commands
+  public static final int CMD_DATAVIEWER_ACTION = 210;
+
   /**
    * The code of the message that means that IDE received
    * {@link #PROCESS_CREATED} message from the Python debugger script.
@@ -218,15 +221,19 @@ public abstract class AbstractCommand<T> {
     return RemoteDebugger.RESPONSE_TIMEOUT;
   }
 
+  public static boolean isErrorCommand(int command) {
+    return command >= 900 && command < 1000;
+  }
+
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
-    if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+    if (isErrorCommand(response.getCommand())) {
       throw new PyDebuggerException(response.getPayload());
     }
   }
 
   protected abstract static class ResponseProcessor<T> {
     protected T processResponse(final ProtocolFrame response) throws PyDebuggerException {
-      if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+      if (isErrorCommand(response.getCommand())) {
         throw new PyDebuggerException(response.getPayload());
       }
 

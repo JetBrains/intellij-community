@@ -16,6 +16,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.contents.DiffContent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,5 +36,5 @@ public abstract class ThreesideMergeRequest extends MergeRequest {
    * Titles could be null.
    */
   @NotNull
-  public abstract List<String> getContentTitles();
+  public abstract List<@Nls String> getContentTitles();
 }

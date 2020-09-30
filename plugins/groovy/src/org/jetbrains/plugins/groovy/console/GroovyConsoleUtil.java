@@ -4,21 +4,22 @@ package org.jetbrains.plugins.groovy.console;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
 import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroovyVersion;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getApplicableModules;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.sdkVersionIfHasNeededDependenciesToRunConsole;
-import static org.jetbrains.plugins.groovy.util.ModuleChooserUtil.formatModuleVersion;
 
 public final class GroovyConsoleUtil {
 
   @NotNull
-  public static String getDisplayGroovyVersion(@NotNull Module module) {
+  public static @Nls String getDisplayGroovyVersion(@NotNull Module module) {
     final String sdkVersion = sdkVersionIfHasNeededDependenciesToRunConsole(module);
-    return sdkVersion == null ? "Bundled Groovy " + getBundledGroovyVersion()
-                              : "Groovy" + " " + sdkVersion;
+    return sdkVersion == null ? GroovyBundle.message("groovy.version.bundled.0", getBundledGroovyVersion())
+                              : GroovyBundle.message("groovy.version.0", sdkVersion);
   }
 
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer) {
@@ -26,7 +27,7 @@ public final class GroovyConsoleUtil {
   }
 
   @NotNull
-  public static String getTitle(@NotNull Module module) {
-    return formatModuleVersion(module, getDisplayGroovyVersion(module));
+  public static @Nls String getTitle(@NotNull Module module) {
+    return GroovyBundle.message("module.name.0.and.groovy.version.1", module.getName(), getDisplayGroovyVersion(module));
   }
 }

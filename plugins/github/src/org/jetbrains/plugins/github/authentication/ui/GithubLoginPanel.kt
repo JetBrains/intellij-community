@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -61,6 +62,7 @@ internal class GithubLoginPanel(
   }
 
   fun createSwitchUiLink(): LinkLabel<*> {
+    @NlsContexts.LinkLabel
     fun switchUiText(): String = if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
     fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
 

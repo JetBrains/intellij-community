@@ -268,13 +268,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final Set<String> members = new HashSet<>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         visitPyQualifiedExpression(node);
       }
 
       @Override
-      public void visitPyTargetExpression(PyTargetExpression node) {
+      public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         super.visitPyTargetExpression(node);
         visitPyQualifiedExpression(node);
       }
@@ -354,7 +354,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
     PyElement pyElement = ObjectUtils.tryCast(element, PyElement.class);
-    if (pyElement != null && Objects.equals(referencedName, pyElement.getName()) && !PyUtil.isInitOrNewMethod(element)) {
+    if (pyElement == null) {
+      return false;
+    }
+    if (Objects.equals(referencedName, pyElement.getName()) && !PyUtil.isInitOrNewMethod(element)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.BeforeRunTask;
@@ -20,15 +20,15 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
+public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
   private final Project myProject;
   private final JBList<Pair<RunConfiguration, ExecutionTarget>> myList;
   private final RunManagerImpl myRunManager;
@@ -51,7 +51,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
-    for (BeforeRunTask task : tasks) {
+    for (BeforeRunTask<?> task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
         RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
           = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
@@ -80,7 +80,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   @Override
   protected void applyEditorTo(@NotNull CompoundRunConfiguration compoundConfiguration) throws ConfigurationException {
-    Map<RunConfiguration, ExecutionTarget> checked = new THashMap<>();
+    Map<RunConfiguration, ExecutionTarget> checked = new HashMap<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       Pair<RunConfiguration, ExecutionTarget> configurationAndTarget = myModel.get(i);
       RunConfiguration configuration = configurationAndTarget.first;

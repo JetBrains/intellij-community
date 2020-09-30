@@ -33,7 +33,7 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
 
   protected NestedGroupFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 Predicate<S> initialSelection) {
     super(id, name, group, null, null, null, initialSelection);
   }

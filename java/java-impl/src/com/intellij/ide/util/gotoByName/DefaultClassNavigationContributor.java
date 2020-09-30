@@ -72,7 +72,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     }
     final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-      PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
+      PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<>() {
         final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
 
         @Override

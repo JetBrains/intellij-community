@@ -9,6 +9,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,14 +37,14 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   private final boolean myChangeThreadName;
 
-  BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
+  BoundedTaskExecutor(@NotNull @NonNls String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     this(name, backendExecutor, maxThreads, changeThreadName, new LinkedBlockingQueue<>());
     if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
       Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
     }
   }
 
-  BoundedTaskExecutor(@NotNull String name,
+  BoundedTaskExecutor(@NotNull @NonNls String name,
                       @NotNull Executor backendExecutor,
                       int maxThreads,
                       boolean changeThreadName,

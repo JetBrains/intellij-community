@@ -179,7 +179,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           return PathUtil.toPresentableUrl(url);
         }
         else {
-          return ProjectModelBundle.message("library.empty.library.item");
+          return ProjectModelBundle.message("empty.library.title");
         }
       }
     }

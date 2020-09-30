@@ -12,22 +12,18 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import kotlin.reflect.jvm.jvmName
 
 class ExternalProjectsDataStorageTest: UsefulTestCase() {
   lateinit var myFixture: IdeaProjectTestFixture
 
-  @Before
   override fun setUp() {
     super.setUp()
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
     myFixture.setUp()
   }
 
-  @After
   override fun tearDown() {
     myFixture.tearDown()
     super.tearDown()

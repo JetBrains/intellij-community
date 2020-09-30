@@ -169,10 +169,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
-    if (processHandler != null) {
-      attachToProcess(processHandler, true);
-    }
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
+    attachToProcess(processHandler, true);
   }
 
   /**
@@ -310,7 +308,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            !(processHandler instanceof ColoredProcessHandler);
   }
 
-  private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
+  private final class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
     private ConsoleTerminalWidget(@NotNull Project project, @NotNull JBTerminalSystemSettingsProviderBase provider) {
       super(project, 200, 24, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }
@@ -366,7 +364,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  private class ClearAction extends DumbAwareAction {
+  private final class ClearAction extends DumbAwareAction {
     private ClearAction() {
       super(ExecutionBundle.messagePointer("clear.all.from.console.action.name"),
             ExecutionBundle.messagePointer("clear.all.from.console.action.text"), AllIcons.Actions.GC);
@@ -383,7 +381,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  private class ScrollToTheEndAction extends DumbAwareAction {
+  private final class ScrollToTheEndAction extends DumbAwareAction {
     private ScrollToTheEndAction() {
       super(ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
             ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),

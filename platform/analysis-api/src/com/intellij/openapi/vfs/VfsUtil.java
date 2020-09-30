@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -194,11 +195,11 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile findFile(@NotNull Path file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.toAbsolutePath().toString()), refreshIfNeeded);
+    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   public static @Nullable VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.getAbsolutePath()), refreshIfNeeded);
+    return findFile(file.getAbsolutePath().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   private static @Nullable VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
@@ -329,9 +330,9 @@ public final class VfsUtil extends VfsUtilCore {
     return WriteAction.computeAndWait(() -> createDirectoryIfMissing(directoryPath));
   }
 
-  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, @NotNull String relativePath) throws IOException {
     if (parent == null) {
-      return createDirectoryIfMissing(relativePath);
+      return createDirectoryIfMissing(LocalFileSystem.getInstance(), relativePath);
     }
 
     for (String each : StringUtil.split(relativePath, "/")) {
@@ -397,7 +398,7 @@ public final class VfsUtil extends VfsUtilCore {
     });
   }
 
-  public static @NotNull String getReadableUrl(final @NotNull VirtualFile file) {
+  public static @NotNull @NlsSafe String getReadableUrl(@NotNull VirtualFile file) {
     String url = null;
     if (file.isInLocalFileSystem()) {
       url = file.getPresentableUrl();
@@ -441,7 +442,7 @@ public final class VfsUtil extends VfsUtilCore {
   /**
    * Returns a name of the given file.
    */
-  public static @Nullable String extractFileName(@Nullable String urlOrPath) {
+  public static @Nullable @NlsSafe String extractFileName(@Nullable String urlOrPath) {
     if (urlOrPath == null) return null;
     int index = urlOrPath.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : urlOrPath.substring(index+1);

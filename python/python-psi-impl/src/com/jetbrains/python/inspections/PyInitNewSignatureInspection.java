@@ -40,7 +40,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       final PyClass cls = PyUtil.turnConstructorIntoClass(node);
       if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
 

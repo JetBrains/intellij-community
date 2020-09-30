@@ -27,6 +27,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.Locale;
 
 /**
@@ -93,6 +94,16 @@ public final class DarculaUIUtil {
     shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw * 2, height + blw * 2), false);
     shape.append(new Ellipse2D.Float(x, y, width, height), false);
     g.fill(shape);
+  }
+
+  public static void paintFocusTag(Graphics2D g2, float width, float height) {
+    Outline.focus.setGraphicsColor(g2, true);
+    float bw = BW.getFloat();
+    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    border.append(new RoundRectangle2D.Float(0, 0, width, height, height, height), false);
+    float inner = height - bw * 2;
+    border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, inner, inner, inner), false);
+    g2.fill(border);
   }
 
   /**

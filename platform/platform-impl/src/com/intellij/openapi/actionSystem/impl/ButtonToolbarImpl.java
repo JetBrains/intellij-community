@@ -71,7 +71,7 @@ class ButtonToolbarImpl extends JPanel {
     private final AnAction myAction;
 
     ActionJButton(final AnAction action) {
-      super(action.getTemplatePresentation().getText());
+      super(action.getTemplatePresentation().getText(true));
       myAction = action;
       setMnemonic(action.getTemplatePresentation().getMnemonic());
       setDisplayedMnemonicIndex(action.getTemplatePresentation().getDisplayedMnemonicIndex());

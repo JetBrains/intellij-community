@@ -18,6 +18,7 @@ package com.intellij.openapi.deployment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.descriptors.ConfigFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,5 +67,6 @@ public abstract class DeploymentUtil {
   }
 
   @Nullable
+  @Nls
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);
 }

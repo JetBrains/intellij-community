@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotatedMembersSearch {
+public final class AnnotatedMembersSearch {
 
   private AnnotatedMembersSearch() {}
 

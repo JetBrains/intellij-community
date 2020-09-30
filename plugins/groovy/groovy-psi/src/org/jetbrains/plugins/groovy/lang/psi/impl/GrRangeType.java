@@ -1,11 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,9 +74,9 @@ public class GrRangeType extends GrLiteralClassType {
   @Override
   public String getInternalCanonicalText() {
     return "[" +
-           (myLeft == null ? "null" : myLeft.getInternalCanonicalText()) +
+           (myLeft == null ? PsiKeyword.NULL : myLeft.getInternalCanonicalText()) +
            ".." +
-           (myRight == null ? "null" : myRight.getInternalCanonicalText()) +
+           (myRight == null ? PsiKeyword.NULL : myRight.getInternalCanonicalText()) +
            "]";
   }
 

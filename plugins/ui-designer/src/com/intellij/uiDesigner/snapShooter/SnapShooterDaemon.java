@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -164,7 +165,7 @@ public class SnapShooterDaemon implements Runnable {
     return children;
   }
 
-  private static String getChildText(final Component component) {
+  private static @NlsSafe String getChildText(final Component component) {
     if (component instanceof Frame) {
       Frame frame = (Frame) component;
       return frame.getTitle();

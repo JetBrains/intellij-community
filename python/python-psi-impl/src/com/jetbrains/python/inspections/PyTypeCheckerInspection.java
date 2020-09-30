@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
@@ -49,17 +50,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     // TODO: Visit decorators with arguments
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       checkCallSite(node);
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       checkCallSite(node);
     }
 
     @Override
-    public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+    public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
       // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
       // so this case is covered by PyTypedDictInspection
@@ -68,12 +69,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyForStatement(PyForStatement node) {
+    public void visitPyForStatement(@NotNull PyForStatement node) {
       checkIteratedValue(node.getForPart().getSource(), node.isAsync());
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFunction) {
         final PyFunction function = (PyFunction)owner;
@@ -89,7 +90,7 @@ public class PyTypeCheckerInspection extends PyInspection {
             PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
             PyMakeFunctionReturnTypeQuickFix globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
             registerProblem(returnExpr != null ? returnExpr : node,
-                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
                             localQuickFix, globalQuickFix);
           }
         }
@@ -108,7 +109,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       // TODO: Check types in class-level assignments
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyClass) return;
@@ -117,9 +118,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(value, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-        registerProblem(value, String.format("Expected type '%s', got '%s' instead",
-                                             PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
-                                             PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
+        String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+        String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+        registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
     }
 
@@ -131,7 +132,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       final PyAnnotation annotation = node.getAnnotation();
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
@@ -143,20 +144,20 @@ public class PyTypeCheckerInspection extends PyInspection {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             if (expected != null && !(expected instanceof PyNoneType)) {
               registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                              String.format("Expected to return '%s', got no return", expectedName));
+                              PyPsiBundle.message("INSP.type.checker.expected.to.return.type.got.no.return", expectedName));
             }
           }
         }
 
         if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                          PyNames.INIT + " should return " + PyNames.NONE);
+                          PyPsiBundle.message("INSP.type.checker.init.should.return.none"));
         }
       }
     }
 
     @Override
-    public void visitPyComprehensionElement(PyComprehensionElement node) {
+    public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
       super.visitPyComprehensionElement(node);
 
       for (PyComprehensionForComponent forComponent : node.getForComponents()) {
@@ -173,7 +174,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       @Override
-      public void visitPyReturnStatement(PyReturnStatement node) {
+      public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;
         }
@@ -204,7 +205,8 @@ public class PyTypeCheckerInspection extends PyInspection {
             !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
 
-          registerProblem(iteratedValue, String.format("Expected 'collections.%s', got '%s' instead", iterableClassName, typeName));
+          String qualifiedName = "collections." + iterableClassName;
+          registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName));
         }
       }
     }

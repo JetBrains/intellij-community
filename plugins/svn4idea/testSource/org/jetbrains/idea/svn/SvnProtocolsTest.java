@@ -63,8 +63,8 @@ public class SvnProtocolsTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(vcs);

@@ -15,7 +15,9 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +33,14 @@ public interface PropertiesProvider {
   interface SkipPropertyExpansionInValues {}
 
   @NotNull
-  Iterator<String> getNamesIterator();
+  Iterator<@NonNls String> getNamesIterator();
 
   /**
    * @param propertyName
    * @return property value string as defined in xml or null if this provider does not define a property with such name
    */
   @Nullable
-  String getPropertyValue(String propertyName);
+  @NlsSafe String getPropertyValue(@NonNls String propertyName);
 
   /**
    * Needed for referencing purposes.
@@ -46,5 +48,5 @@ public interface PropertiesProvider {
    * @param propertyName
    */
   @Nullable
-  PsiElement getNavigationElement(String propertyName);
+  PsiElement getNavigationElement(@NonNls String propertyName);
 }

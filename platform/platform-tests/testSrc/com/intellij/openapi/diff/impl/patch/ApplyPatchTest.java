@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,7 +16,8 @@ import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -188,24 +188,20 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   }
 
   private void doTest(final int skipTopDirs, final ApplyPatchStatus expectedStatus, final VirtualFileFilter fileFilter) throws Exception {
-    ApplicationManager.getApplication()
-      .runWriteAction(() -> FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old")));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old"));
+    });
 
-    String testDataPath = getTestDir(getTestName(true));
-    String beforePath = testDataPath + "/before";
-    String afterPath = testDataPath + "/after";
-    VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterPath.replace(File.separatorChar, '/'));
+    Path testDataPath = Paths.get(getTestDir(getTestName(true)));
+    Path beforePath = testDataPath.resolve("before");
+    Path afterPath = testDataPath.resolve("after");
+    VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(afterPath);
+    VirtualFile patchedDir = createTestProjectStructure(beforePath.toString());
 
-    VirtualFile patchedDir = createTestProjectStructure(beforePath);
-
-    String patchPath = testDataPath + "/apply.patch";
-    VirtualFile patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'));
-
-    PatchReader reader = PatchVirtualFileReader.create(patchFile);
-    List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
+    List<FilePatch> patches = new ArrayList<>(new PatchReader(testDataPath.resolve("apply.patch")).readTextPatches());
 
     ApplyPatchAction.applySkipDirs(patches, skipTopDirs);
-    final PatchApplier patchApplier = new PatchApplier(myProject, patchedDir, patches, null, null);
+    PatchApplier patchApplier = new PatchApplier(myProject, patchedDir, patches, null, null);
     ApplyPatchStatus applyStatus = patchApplier.execute(false, false);
 
     assertEquals(expectedStatus, applyStatus);

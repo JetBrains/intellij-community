@@ -36,7 +36,7 @@ public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest {
 
   @Override
   protected String getActionName() {
-    return ConvertJavadocInspection.FIX_NAME;
+    return "Convert TestNG Javadoc to 1.5 annotations";
   }
 
   @Override

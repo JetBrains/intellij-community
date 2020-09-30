@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,26 +39,38 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
   @Override
   protected List<SettingsEditorFragment<T, ?>> createChildren() {
     List<SettingsEditorFragment<T, ?>> fragments = new ArrayList<>();
-    fragments.add(createFilterEditor("coverage.include", JavaCoverageBundle.message("record.coverage.filters.title"), true,
-                                     JavaCoverageBundle.message("coverage.settings.include")));
-    fragments.add(createFilterEditor("coverage.exclude", JavaCoverageBundle.message("exclude.coverage.filters.title"), false,
-                                     JavaCoverageBundle.message("coverage.settings.exclude")));
+    SettingsEditorFragment<T, CoverageClassFilterEditor> include =
+      createFilterEditor("coverage.include", JavaCoverageBundle.message("record.coverage.filters.title"), true,
+                         JavaCoverageBundle.message("coverage.settings.include"));
+    include.setActionHint(JavaCoverageBundle.message("show.coverage.data.only.in.specified.classes.and.packages"));
+    fragments.add(include);
+    SettingsEditorFragment<T, CoverageClassFilterEditor> exclude =
+      createFilterEditor("coverage.exclude", JavaCoverageBundle.message("exclude.coverage.filters.title"), false,
+                         JavaCoverageBundle.message("coverage.settings.exclude"));
+    exclude.setActionHint(JavaCoverageBundle.message("do.not.show.coverage.data.in.specified.classes.and.packages"));
+    fragments.add(exclude);
 
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     fragments.add(createRunnerFragment());
-    fragments.add(SettingsEditorFragment.createTag("coverage.tracing", JavaCoverageBundle.message("coverage.settings.tracing"), null,
-                                                   t -> !configuration.isSampling(),
-                                                   (t, value) -> configuration.setSampling(!value)));
-    fragments.add(SettingsEditorFragment.createTag("coverage.test.folders", JavaCoverageBundle.message("coverage.settings.test.folders"), null,
-                                                   t -> configuration.isTrackTestFolders(),
-                                                   (t, value) -> configuration.setTrackTestFolders(value)));
+    SettingsEditorFragment<T, ?> tracing =
+      SettingsEditorFragment.createTag("coverage.tracing", JavaCoverageBundle.message("coverage.settings.tracing"), null,
+                                       t -> !configuration.isSampling(),
+                                       (t, value) -> configuration.setSampling(!value));
+    tracing.setActionHint(JavaCoverageBundle.message("enables.accurate.collection"));
+    fragments.add(tracing);
+    SettingsEditorFragment<T, ?> tests =
+      SettingsEditorFragment.createTag("coverage.test.folders", JavaCoverageBundle.message("coverage.settings.test.folders"), null,
+                                       t -> configuration.isTrackTestFolders(),
+                                       (t, value) -> configuration.setTrackTestFolders(value));
+    tests.setActionHint(JavaCoverageBundle.message("collect.code.coverage.statistics.for.tests"));
+    fragments.add(tests);
     return fragments;
   }
 
   @NotNull
   private SettingsEditorFragment<T, CoverageClassFilterEditor> createFilterEditor(String id,
-                                                                                  @NotNull String message,
-                                                                                  boolean included, @NotNull String optionName) {
+                                                                                  @NotNull @Nls String message,
+                                                                                  boolean included, @NotNull @Nls String optionName) {
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
@@ -75,6 +88,9 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
 
   private static void setCoveragePatterns(JavaCoverageEnabledConfiguration configuration, ClassFilter[] filters, boolean included) {
     ClassFilter[] patterns = CoverageConfigurable.getCoveragePatterns(configuration, !included);
+    for (ClassFilter filter : filters) {
+      filter.INCLUDE = included;
+    }
     configuration.setCoveragePatterns(ArrayUtil.mergeArrays(filters, patterns));
   }
 
@@ -93,9 +109,14 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(comboBox, BorderLayout.WEST);
     LabeledComponent<?> component = LabeledComponent.create(panel, JavaCoverageBundle.message("run.configuration.choose.coverage.runner"), BorderLayout.WEST);
-    return new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
-                                        (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
-                                        (t, c) -> configuration.setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
-                                        t -> false);
+    SettingsEditorFragment<T, ? extends LabeledComponent<?>> fragment =
+      new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
+                                   (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
+                                   (t, c) -> configuration
+                                     .setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
+                                   t -> false);
+    fragment.setEditorGetter(c -> comboBox);
+    fragment.setActionHint(JavaCoverageBundle.message("select.to.use.a.code.coverage.runner.other.than.the.built.in.one"));
+    return fragment;
   }
 }

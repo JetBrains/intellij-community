@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +40,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +50,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -96,10 +96,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private Map<PsiVariable, ParameterInfo> myInitialParameterInfos;
 
   public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
-                                PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
-                                boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
-                                String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
-                                @Nullable Supplier<Integer> duplicatesCountSupplier) {
+                             PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
+                             boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
+                             @NlsContexts.DialogTitle String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
+                             @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
     myTargetClass = targetClass;
@@ -391,7 +391,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return optionsPanel;
   }
 
-  protected void createStaticOptions(JPanel optionsPanel, String passFieldsAsParamsLabel) {
+  protected void createStaticOptions(JPanel optionsPanel, @Nls String passFieldsAsParamsLabel) {
     if (myStaticFlag || myCanBeStatic) {
       myMakeStatic.setEnabled(!myStaticFlag);
       myMakeStatic.setSelected(myStaticFlag);
@@ -501,7 +501,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
               ModalityState.any());
           }
 
-          private void showCount(Icon icon, String message, Border border) {
+          private void showCount(Icon icon, @NlsContexts.Label String message, Border border) {
             duplicatesCount.setIcon(icon);
             duplicatesCount.setText(message);
             duplicatesCount.setBorder(border);
@@ -525,7 +525,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     myParamTable.setMinimumSize(JBUI.size(500, 100));
     myCenterPanel.add(myParamTable, BorderLayout.CENTER);
     final JTable table = UIUtil.findComponentOfType(myParamTable, JTable.class);
-    myCenterPanel.add(SeparatorFactory.createSeparator("&Parameters", table), BorderLayout.NORTH);
+    final TitledSeparator separator = SeparatorFactory.createSeparator(JavaRefactoringBundle.message("extract.method.dialog.separator.parameters"), table);
+    myCenterPanel.add(separator, BorderLayout.NORTH);
     if (table != null) {
       table.addFocusListener(new FocusAdapter() {
         @Override
@@ -691,7 +692,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     Set<String> usedNames = new HashSet<>();
     for (VariableData data : myInputVariables) {
       if (data.passAsParameter && !usedNames.add(data.name)) {
-        conflicts.putValue(null, "Conflicting parameter name: " + data.name);
+        conflicts.putValue(null, JavaRefactoringBundle.message("extract.method.conflict.parameter", data.name));
       }
     }
   }
@@ -708,7 +709,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     FUCounterUsageLogger.getInstance().logEvent("java.extract.method","dialog.closed", featureUsageData);
   }
 
-  private static class ParameterInfo {
+  private static final class ParameterInfo {
     final int myIndex;
     final String myName;
     final PsiType myType;

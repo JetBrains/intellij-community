@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -65,6 +66,58 @@ I i = {3}
 '''
   }
 
+  void 'test method reference to SAM conversion'() {
+    highlightingTest '''
+
+class A {
+  def String m(){
+
+  }
+}
+List<A> list = []
+
+list.sort(Comparator.comparing(A::m))
+''', GroovyAssignabilityCheckInspection
+  }
+
+  void 'test method reference to SAM conversion 2'() {
+    highlightingTest '''
+
+class A {
+  def String m(){
+
+  }
+}
+List<A> list = []
+def c = A::m
+list.sort(Comparator.comparing(c))
+''', GroovyAssignabilityCheckInspection
+  }
+
+  void 'test method reference to SAM conversion with overload'() {
+    highlightingTest '''
+class A {
+  String m(Integer i){
+    return null
+  }
+  
+  Integer m(Thread i){
+    return null
+  }
+}
+
+interface SAM<T> {
+  T m(Integer a);
+}
+
+def <T> T foo(SAM<T> sam) {
+}
+
+def a = new A()
+foo(a::m).toUpperCase()
+''', GrUnresolvedAccessInspection
+  }
+
   void 'test constructor reference static access'() {
     fileHighlightingTest GrUnresolvedAccessInspection
   }
@@ -77,3 +130,12 @@ I i = {3}
     fileHighlightingTest()
   }
 }
+//
+//class A {
+//  def String m(){
+//
+//  }
+//}
+//List<A> list = []
+//
+//list.sort(Comparator.comparing(A::m))

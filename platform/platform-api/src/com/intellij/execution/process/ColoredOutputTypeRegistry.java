@@ -228,7 +228,7 @@ public class ColoredOutputTypeRegistry {
     return new AnsiConsoleViewContentType(attribute, backgroundColor, foregroundColor, inverse, effectType, fontType);
   }
 
-  private static class AnsiConsoleViewContentType extends ConsoleViewContentType {
+  private static final class AnsiConsoleViewContentType extends ConsoleViewContentType {
     private final int myBackgroundColorIndex;
     private final int myForegroundColorIndex;
     private final @Nullable Color myEnforcedBackgroundColor;

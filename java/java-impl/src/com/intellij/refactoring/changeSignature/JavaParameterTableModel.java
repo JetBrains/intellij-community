@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -80,7 +81,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       f.createExpressionCodeFragment(ObjectUtils.notNull(value, ""), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
-    return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
+    return new ParameterTableModelItemBase<>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
       @Override
       public boolean isEllipsisType() {
         try {
@@ -206,7 +207,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<ParameterInfoImpl> item) {
       return new ColoredTableCellRenderer() {
         @Override
-        public void customizeCellRenderer(JTable table, Object value,
+        public void customizeCellRenderer(@NotNull JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
           if (isSelected || hasFocus) {

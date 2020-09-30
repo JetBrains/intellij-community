@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -251,7 +251,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     }
   }
 
-  private static class MethodAnalysisVisitor extends KeyedMethodVisitor {
+  private static final class MethodAnalysisVisitor extends KeyedMethodVisitor {
     private final Map<EKey, Equations> myEquations;
     private final String myPresentableUrl;
     private final ExpandableArray<State> mySharedPendingStates;

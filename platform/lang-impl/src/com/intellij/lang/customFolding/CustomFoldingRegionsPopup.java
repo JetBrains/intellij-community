@@ -42,7 +42,7 @@ public final class CustomFoldingRegionsPopup {
       .showInBestPositionFor(editor);
   }
 
-  private static class MyFoldingDescriptorWrapper {
+  private static final class MyFoldingDescriptorWrapper {
     private final @NotNull FoldingDescriptor myDescriptor;
     private final int myIndent;
 

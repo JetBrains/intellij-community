@@ -2,9 +2,11 @@
 package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionListModel
@@ -22,10 +24,11 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 class EditEventsTestSchemePanel(private val project: Project,
-                                testSchemeGroups: List<LocalWhitelistGroup>,
-                                productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
+                                testSchemeGroups: List<GroupValidationTestRule>,
+                                productionGroups: EventGroupRemoteDescriptors,
+                                generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>) : JPanel(), Disposable {
   private val groupsModel = CollectionListModel(testSchemeGroups)
-  private val groupsList: JBList<LocalWhitelistGroup> = JBList(groupsModel)
+  private val groupsList: JBList<GroupValidationTestRule> = JBList(groupsModel)
   private var groupConfiguration: EventsTestSchemeGroupConfiguration
   private val cardLayout = CardLayout()
   private val detailsComponent: JPanel = JPanel(cardLayout)
@@ -34,15 +37,16 @@ class EditEventsTestSchemePanel(private val project: Project,
   private val CONTENT_KEY = "content"
 
   init {
-    val initialGroup = LocalWhitelistGroup("", false)
-    groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup) { group ->
+    val initialGroup = GroupValidationTestRule("", false)
+    groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup, generatedScheme) { group ->
       groupsModel.contentsChanged(group)
     }
 
     val groupListPanel = ToolbarDecorator.createDecorator(groupsList)
-      .setAsUsualTopToolbar()
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
       .setAddAction {
-        val newGroup = LocalWhitelistGroup("", false)
+        val newGroup = GroupValidationTestRule("", false)
         groupsModel.add(newGroup)
         groupsList.selectedIndex = groupsModel.getElementIndex(newGroup)
       }
@@ -71,7 +75,7 @@ class EditEventsTestSchemePanel(private val project: Project,
     }
     add(splitter, BorderLayout.CENTER)
 
-    groupsList.cellRenderer = SimpleListCellRenderer.create("", LocalWhitelistGroup::groupId)
+    groupsList.cellRenderer = SimpleListCellRenderer.create("", GroupValidationTestRule::groupId)
     groupsList.addListSelectionListener { updateDetails() }
     if (!groupsModel.isEmpty) {
       groupsList.selectedIndex = 0
@@ -91,12 +95,11 @@ class EditEventsTestSchemePanel(private val project: Project,
 
   fun getFocusedComponent(): JComponent = groupConfiguration.getFocusedComponent()
 
-  fun getGroups(): List<LocalWhitelistGroup> = groupsModel.items
+  fun getGroups(): List<GroupValidationTestRule> = groupsModel.items
 
   fun validateGroups(): List<ValidationInfo> {
     for (group in groupsModel.items) {
-      val validationInfo = EventsTestSchemeGroupConfiguration.validateTestSchemeGroup(project, group,
-                                                                                      groupConfiguration.groupIdTextField)
+      val validationInfo = EventsTestSchemeGroupConfiguration.validateTestSchemeGroup(project, group, groupConfiguration.groupIdTextField)
       if (validationInfo.isNotEmpty()) {
         groupsList.selectedIndex = groupsModel.getElementIndex(group)
         return validationInfo

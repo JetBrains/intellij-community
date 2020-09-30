@@ -72,7 +72,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       IntroduceTargetChooser.showChooser(
         editor,
         placesToAdd,
-        new Pass<PsiNameIdentifierOwner>() {
+        new Pass<>() {
           @Override
           public void pass(PsiNameIdentifierOwner owner) {
             createTypeParameter(owner, context.typeName);

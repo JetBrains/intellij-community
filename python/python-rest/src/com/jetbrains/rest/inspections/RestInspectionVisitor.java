@@ -17,6 +17,7 @@ package com.jetbrains.rest.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.rest.validation.RestElementVisitor;
@@ -42,7 +43,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
   }
 
   protected final void registerProblem(final PsiElement element,
-                                       final String message){
+                                       final @InspectionMessage String message){
     if (element == null || element.getTextLength() == 0){
       return;
     }
@@ -52,7 +53,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
   }
 
   protected final void registerProblem(@Nullable final PsiElement element,
-                                       @NotNull final String message,
+                                       @NotNull final @InspectionMessage String message,
                                        @NotNull final LocalQuickFix quickFix){
       if (element == null || element.getTextLength() == 0){
           return;
@@ -69,7 +70,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,
-    @NotNull final String descriptionTemplate,
+    @NotNull final @InspectionMessage String descriptionTemplate,
     final ProblemHighlightType highlightType,
     @Nullable final HintAction hintAction,
     final LocalQuickFix... fixes) {
@@ -82,7 +83,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,
-    @NotNull final String descriptionTemplate,
+    @NotNull final @InspectionMessage String descriptionTemplate,
     final ProblemHighlightType highlightType,
     @Nullable final HintAction hintAction,
     @Nullable final TextRange rangeInElement,

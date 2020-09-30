@@ -18,10 +18,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -275,6 +272,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     appendCount(renderer);
   }
 
+  @Nls
   @NotNull
   protected String getCountText() {
     int count = getFileCount();
@@ -301,6 +299,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return getTextPresentation();
   }
 
+  @Nls
   public String getTextPresentation() {
     return userObject == null ? "" : userObject.toString();
   }

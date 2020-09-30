@@ -26,7 +26,7 @@ PyFile:FStringTerminatedByQuoteInsideNestedFStringLiteralInFormatPart.py
                         PsiElement(Py:FSTRING_START)('f"')
                         PsiErrorElement:" expected
                           <empty list>
-                    PsiErrorElement:} expected
+                    PsiErrorElement:'}' expected
                       <empty list>
               PsiErrorElement:""" expected
                 <empty list>

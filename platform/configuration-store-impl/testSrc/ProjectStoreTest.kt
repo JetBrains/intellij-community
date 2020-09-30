@@ -17,10 +17,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.readChars
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -28,7 +25,6 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 internal class ProjectStoreTest {
@@ -51,7 +47,7 @@ internal class ProjectStoreTest {
   </component>
 </project>""".trimIndent()
 
-  @State(name = "AATestComponent")
+  @State(name = "AATestComponent", allowLoadInTests = true)
   private class TestComponent : PersistentStateComponent<TestState> {
     private var state: TestState? = null
 
@@ -75,7 +71,7 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
+      val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)
       file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
@@ -213,26 +209,8 @@ internal class ProjectStoreTest {
   <component name="AppLevelLoser" foo="old?" />
   <component name="ValidComponent" foo="some data" />
 </project>""".trimIndent()
-      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(obsoleteStorageBean.file)).isEqualTo(
+      assertThat(project.stateStore.storageManager.expandMacro(PROJECT_CONFIG_DIR).resolve(obsoleteStorageBean.file)).isEqualTo(
         expected)
-    }
-  }
-
-  @Test
-  fun `save cancelled because project disposed`() = runBlocking {
-    withTimeout(TimeUnit.SECONDS.toMillis(10)) {
-      loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-        it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
-        Paths.get(it.path)
-      }) { project ->
-        val testComponent = test(project as ProjectEx)
-        testComponent.state!!.AAvalue = "s"
-        launch {
-          project.stateStore.save()
-        }
-
-        delay(50)
-      }
     }
   }
 
@@ -247,13 +225,10 @@ internal class ProjectStoreTest {
 
     val newProjectPath = tempDirManager.newPath()
     val newProject = projectManager.openProject(newProjectPath, OpenProjectTask(isNewProject = true, isRefreshVfsNeeded = false))!!
-    try {
+    newProject.use {
       val miscXml = newProjectPath.resolve(".idea/misc.xml").readChars()
       assertThat(miscXml).contains("AATestComponent")
       assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")
-    }
-    finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(newProject)
     }
   }
 
@@ -265,7 +240,7 @@ internal class ProjectStoreTest {
     testComponent.state!!.AAvalue = "foo"
     project.stateStore.save()
 
-    val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
+    val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)
     assertThat(file).isRegularFile
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

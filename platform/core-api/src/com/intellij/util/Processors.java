@@ -2,20 +2,20 @@
 package com.intellij.util;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public final class Processors {
   @NotNull
   public static <T> Processor<T> filter(@NotNull Processor<? super T> processor,
-                                        @NotNull Condition<? super T> filter) {
-    return o -> !filter.value(o) || processor.process(o);
+                                        @NotNull Predicate<? super T> filter) {
+    return o -> !filter.test(o) || processor.process(o);
   }
 
   @NotNull
-  public static <T, S> Processor<S> map(@NotNull Processor<T> processor,
+  public static <T, S> Processor<S> map(@NotNull Processor<? super T> processor,
                                         @NotNull Function<? super S, ? extends T> map) {
     return o -> processor.process(map.fun(o));
   }

@@ -49,6 +49,10 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     doTestRename();
   }
 
+  public void testRenameOnRecordCanonicalConstructor() {
+    doTestRename();
+  }
+
   public void testRenameOnCompactConstructorReference() {
     doTestRename();
   }

@@ -5,6 +5,7 @@ package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +13,7 @@ import java.awt.*;
 public class NamingConventionWithFallbackBean extends NamingConventionBean {
   public boolean inheritDefaultSettings = false;
 
-  public NamingConventionWithFallbackBean(String regex, int minLength, int maxLength, String... predefinedNames) {
+  public NamingConventionWithFallbackBean(@NonNls String regex, int minLength, int maxLength, String... predefinedNames) {
     super(regex, minLength, maxLength, predefinedNames);
   }
 

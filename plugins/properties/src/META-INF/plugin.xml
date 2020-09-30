@@ -128,7 +128,7 @@
   </projectListeners>
 
   <actions>
-    <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
+    <action id="DissociateResourceBundleAction" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
       <add-to-group group-id="ProjectViewPopupMenu"/>
     </action>
     <action id="CombinePropertiesFilesAction" class="com.intellij.lang.properties.customizeActions.CombinePropertiesFilesAction">
@@ -142,4 +142,5 @@
     </action>
 
   </actions>
+  <resource-bundle>messages.PropertiesBundle</resource-bundle>
 </idea-plugin>

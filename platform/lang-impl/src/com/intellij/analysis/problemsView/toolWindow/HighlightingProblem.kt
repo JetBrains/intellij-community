@@ -1,12 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.FileProblem
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xml.util.XmlStringUtil.escapeString
 import javax.swing.Icon
 
-internal class HighlightingProblem(private val highlighter: RangeHighlighterEx) : Problem {
+internal class HighlightingProblem(
+  override val provider: ProblemsProvider,
+  override val file: VirtualFile,
+  private val highlighter: RangeHighlighterEx
+) : FileProblem {
 
   private fun getIcon(level: HighlightDisplayLevel) = if (severity >= level.severity.myVal) level.icon else null
 
@@ -19,10 +28,23 @@ internal class HighlightingProblem(private val highlighter: RangeHighlighterEx) 
             ?: getIcon(HighlightDisplayLevel.WARNING)
             ?: HighlightDisplayLevel.WEAK_WARNING.icon
 
-  override val description: String
-    get() = info?.description ?: "Invalid"
+  override val text: String
+    get() {
+      val text = info?.description ?: return "Invalid"
+      val pos = text.indexOfFirst { StringUtil.isLineBreak(it) }
+      return if (pos < 0 || text.startsWith("<html>", ignoreCase = true)) text
+      else text.substring(0, pos) + StringUtil.ELLIPSIS
+    }
 
-  override val severity: Int
+  override val description: String?
+    get() {
+      val text = info?.description ?: return null
+      val pos = text.indexOfFirst { StringUtil.isLineBreak(it) }
+      return if (pos < 0 || text.startsWith("<html>", ignoreCase = true)) null
+      else "<html>" + StringUtil.join(StringUtil.splitByLines(escapeString(text)), "<br/>")
+    }
+
+  val severity: Int
     get() = info?.severity?.myVal ?: -1
 
   override val offset: Int

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -98,7 +97,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
 
     if (scopes.size() == 1) {
       final GrMethod owner = scopes.get(0);
-      final PsiMethod toSearchFor = SuperMethodWarningUtil.checkSuperMethod(owner, RefactoringBundle.message("to.refactor"));
+      final PsiMethod toSearchFor = SuperMethodWarningUtil.checkSuperMethod(owner);
       if (toSearchFor == null) return; //if it is null, refactoring was canceled
       showDialog(toSearchFor, ref, project);
     }

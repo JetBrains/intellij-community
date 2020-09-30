@@ -1,3 +1,5 @@
+import java.util.*;
+
 class EqualsWithItself {
 
   boolean foo(Object o) {
@@ -39,5 +41,46 @@ class EqualsWithItself {
 
   boolean safe(String a, String b) {
     return a.equals(b) && a.equalsIgnoreCase(b) && a.compareTo(b) == 0;
+  }
+
+  void wrappers(int a, boolean b) {
+    Byte.<warning descr="'compare()' called on itself">compare</warning>((byte)a, (byte)a);
+    Byte.<warning descr="'compareUnsigned()' called on itself">compareUnsigned</warning>((byte)a, (byte)a);
+    Short.<warning descr="'compare()' called on itself">compare</warning>((short)a, (short)a);
+    Short.<warning descr="'compareUnsigned()' called on itself">compareUnsigned</warning>((short)a, (short)a);
+    Integer.<warning descr="'compare()' called on itself">compare</warning>(a, a);
+    Integer.<warning descr="'compareUnsigned()' called on itself">compareUnsigned</warning>(a, a);
+    Long.<warning descr="'compare()' called on itself">compare</warning>((long)a, (long)a);
+    Long.<warning descr="'compareUnsigned()' called on itself">compareUnsigned</warning>((long)a, (long)a);
+    Double.<warning descr="'compare()' called on itself">compare</warning>((double)a, (double)a);
+    Float.<warning descr="'compare()' called on itself">compare</warning>((float)a, (float)a);
+    Boolean.<warning descr="'compare()' called on itself">compare</warning>(b, b);
+    Character.<warning descr="'compare()' called on itself">compare</warning>((char)a, (char)a);
+  }
+
+  void more(String[] ss) {
+    Arrays.<warning descr="'equals()' called on itself">equals</warning>(ss, ss);
+    Arrays.<warning descr="'deepEquals()' called on itself">deepEquals</warning>(ss, ss);
+    Objects.<warning descr="'equals()' called on itself">equals</warning>(ss, ss);
+    Objects.<warning descr="'deepEquals()' called on itself">deepEquals</warning>(ss, ss);
+    Comparator c = (o1, o2) -> 0;
+    c.<warning descr="'compare()' called on itself">compare</warning>(ss, ss);
+  }
+
+  static class Outer {
+    class Inner extends Outer {
+      void test() {
+        if (equals(Outer.this)) { // equals called on itself
+
+        }
+      }
+    }
+    class Inner2 {
+      void test() {
+        if (<warning descr="'equals()' called on itself">equals</warning>(Inner2.this)) {
+
+        }
+      }
+    }
   }
 }

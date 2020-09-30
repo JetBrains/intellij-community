@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -28,13 +29,13 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
 
   public abstract Key<T> getId();
 
-  public abstract String getName();
+  public abstract @Nls(capitalization = Nls.Capitalization.Title) String getName();
 
   public @Nullable Icon getIcon() {
     return null;
   }
 
-  public String getDescription(T task) {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(T task) {
     return getName();
   }
 

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -388,8 +389,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
       return stub.getName();

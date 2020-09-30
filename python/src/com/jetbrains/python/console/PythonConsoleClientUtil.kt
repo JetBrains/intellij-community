@@ -19,8 +19,11 @@ private const val PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME: String = "Python C
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
+  // DO NOT replace this ExecutorService with `SequentialTaskExecutor.createSequentialApplicationPoolExecutor()`!
+  // It may use different threads for executing different tasks in a sequence and it breaks the prerequisite of `PipedInputStream`
+  // that requires every read to be made from the same thread.
   val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
-  // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
+
   val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
     PythonConsoleBackendService.Iface::class.java),
                                      InvocationHandler { _, method, args ->

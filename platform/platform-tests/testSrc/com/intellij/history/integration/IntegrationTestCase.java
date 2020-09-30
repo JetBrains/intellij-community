@@ -23,14 +23,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   protected static final int TIMESTAMP_INCREMENT = 3000;
@@ -63,21 +65,8 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     });
   }
 
-  @NotNull
-  @Override
-  protected Path getProjectDirOrFile() {
-    try {
-      return createTempDirectory().toPath().resolve("test.ipr");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   protected void setUpInWriteAction() throws Exception {
-    VirtualFile tmpTestDir =
-      Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
-    myRoot = tmpTestDir.createChildDirectory(null, "idea_test_integration");
+    myRoot = getTempDir().createVirtualDir();
     PsiTestUtil.addContentRoot(myModule, myRoot);
   }
 
@@ -95,57 +84,53 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     }
   }
 
-  protected VirtualFile createFile(String name) throws IOException {
+  protected @NotNull VirtualFile createFile(@NotNull String name) {
     return createFile(name, null);
   }
 
-  @NotNull
-  protected VirtualFile createFile(String name, String content) throws IOException {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createFileExternally(name, content));
-    assertNotNull(name, file);
-    return file;
+  // tests fail if file created via API, so, refreshAndFindFileByNioFile is used
+  protected @NotNull VirtualFile createFile(@NotNull String name, @Nullable String content) {
+    Path file = myRoot.toNioPath().resolve(name);
+    if (content == null) {
+      PathKt.createFile(file);
+    }
+    else {
+      PathKt.write(file, content);
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
   }
 
-  @NotNull
-  protected VirtualFile createDirectory(String name) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createDirectoryExternally(name));
-    assertNotNull(name, file);
-    return file;
+  protected final @NotNull VirtualFile createDirectory(@NotNull String name) {
+    return VfsTestUtil.createDir(myRoot, name);
   }
 
-  protected void setContent(VirtualFile f, String content) {
+  protected final void setContent(@NotNull VirtualFile f, @NotNull String content) {
     setContent(f, content, f.getTimeStamp() + TIMESTAMP_INCREMENT);
   }
 
-  protected void setContent(VirtualFile f, String content, long timestamp) {
+  protected final void setContent(VirtualFile f, String content, long timestamp) {
     setBinaryContent(f, content.getBytes(StandardCharsets.UTF_8), -1, timestamp, this);
   }
 
-  protected String createFileExternally(String name) throws IOException {
-    return createFileExternally(name, null);
+  protected final @NotNull String createFileExternally(@NotNull String name) {
+    Path file = myRoot.toNioPath().resolve(name);
+    PathKt.createFile(file);
+    return file.toString().replace(File.separatorChar, '/');
   }
 
-  protected String createFileExternally(String name, String content) throws IOException {
-    File f = new File(myRoot.getPath(), name);
-    assertTrue(f.getPath(), f.getParentFile().mkdirs() || f.getParentFile().isDirectory());
-    assertTrue(f.getPath(), f.createNewFile() || f.exists());
-    if (content != null) FileUtil.writeToFile(f, content.getBytes(StandardCharsets.UTF_8));
-    return FileUtil.toSystemIndependentName(f.getPath());
-  }
-
-  protected String createDirectoryExternally(String name) {
+  protected final String createDirectoryExternally(String name) {
     File f = new File(myRoot.getPath(), name);
     assertTrue(f.getPath(), f.mkdirs() || f.isDirectory());
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
-  protected void setContentExternally(String path, String content) throws IOException {
+  protected static void setContentExternally(String path, String content) throws IOException {
     File f = new File(path);
     FileUtil.writeToFile(f, content.getBytes(StandardCharsets.UTF_8));
     assertTrue(f.getPath(), f.setLastModified(f.lastModified() + 2000));
   }
 
-  protected void setDocumentTextFor(VirtualFile f, String text) {
+  protected static void setDocumentTextFor(VirtualFile f, String text) {
     Document document = FileDocumentManager.getInstance().getDocument(f);
     assertNotNull(f.getPath(), document);
     ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
@@ -155,24 +140,25 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     return LocalHistoryImpl.getInstanceImpl().getFacade();
   }
 
-  protected List<Revision> getRevisionsFor(VirtualFile f) {
+  protected List<Revision> getRevisionsFor(@NotNull VirtualFile f) {
     return getRevisionsFor(f, null);
   }
 
-  protected List<Revision> getRevisionsFor(final VirtualFile f, final String pattern) {
-    return ReadAction
-      .compute(() -> LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern));
+  protected List<Revision> getRevisionsFor(@NotNull VirtualFile f, @Nullable String pattern) {
+    return ReadAction.compute(() -> {
+      return LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern);
+    });
   }
 
   protected RootEntry getRootEntry() {
     return myGateway.createTransientRootEntry();
   }
 
-  protected void addContentRoot(String path) {
+  protected void addContentRoot(@NotNull String path) {
     addContentRoot(myModule, path);
   }
 
-  protected static void addContentRoot(final Module module, final String path) {
+  protected static void addContentRoot(@NotNull Module module, @NotNull String path) {
     ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.addContentRoot(module, FileUtil.toSystemIndependentName(path)));
   }
 

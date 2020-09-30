@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class TypeUtils {
+public final class TypeUtils {
   private static final String[] EQUAL_CONTRACT_CLASSES = {CommonClassNames.JAVA_UTIL_LIST,
     CommonClassNames.JAVA_UTIL_SET, CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_MAP_ENTRY};
 

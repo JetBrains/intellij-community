@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PyClassInsertHandler implements InsertHandler<LookupElement> {
+public final class PyClassInsertHandler implements InsertHandler<LookupElement> {
   public static PyClassInsertHandler INSTANCE = new PyClassInsertHandler();
 
   private PyClassInsertHandler() {

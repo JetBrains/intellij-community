@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
@@ -122,14 +123,14 @@ public final class ReflectionUtil {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
-    for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
+    for (Class<?> c : ReflectionStartupUtil.classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
     return result;
   }
 
   @NotNull
-  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull final String name) throws NoSuchFieldException {
+  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull @NonNls final String name) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> name.equals(field.getName()) && (type == null || field.getType().equals(type)));
     if (result != null) return result;
 
@@ -137,7 +138,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
+  public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull @NonNls String fieldName) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType())));
     if (result != null) {
       return result;
@@ -162,7 +163,7 @@ public final class ReflectionUtil {
 
   @Nullable
   private static Field processInterfaces(Class<?> @NotNull [] interfaces,
-                                         @NotNull Set<Class<?>> visited,
+                                         @NotNull Set<? super Class<?>> visited,
                                          @NotNull java.util.function.Predicate<? super Field> checker) {
     for (Class<?> anInterface : interfaces) {
       if (!visited.add(anInterface)) {
@@ -184,7 +185,7 @@ public final class ReflectionUtil {
     return null;
   }
 
-  public static void resetField(@NotNull Class<?> clazz, @Nullable("null means of any type") Class<?> type, @NotNull String name)  {
+  public static void resetField(@NotNull Class<?> clazz, @Nullable("null means of any type") Class<?> type, @NotNull @NonNls String name)  {
     try {
       resetField(null, findField(clazz, type, name));
     }
@@ -193,7 +194,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull String name)  {
+  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull @NonNls String name)  {
     try {
       resetField(object, findField(object.getClass(), type, name));
     }
@@ -202,7 +203,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static void resetField(@NotNull Object object, @NotNull String name) {
+  public static void resetField(@NotNull Object object, @NotNull @NonNls String name) {
     try {
       resetField(object, findField(object.getClass(), null, name));
     }
@@ -320,7 +321,15 @@ public final class ReflectionUtil {
   @Nullable
   public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, Class<?> @NotNull ... parameters) {
     Method method = getMethod(instanceClass, methodName, parameters);
-    return method == null ? null : method.getDeclaringClass();
+    if (method != null) return method.getDeclaringClass();
+
+    while (instanceClass != null) {
+      method = getDeclaredMethod(instanceClass, methodName, parameters);
+      if (method != null) return method.getDeclaringClass();
+
+      instanceClass = instanceClass.getSuperclass();
+    }
+    return null;
   }
 
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
@@ -581,7 +590,7 @@ public final class ReflectionUtil {
       fields = ArrayUtil.mergeArrays(fields, newSettings.getClass().getDeclaredFields());
     }
     for (Field field : fields) {
-      if (!useField.apply(field)) continue;
+      if (!useField.test(field)) continue;
       field.setAccessible(true);
       try {
         if (!Comparing.equal(field.get(newSettings), field.get(defaultSettings))) {
@@ -693,5 +702,10 @@ public final class ReflectionUtil {
 
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
+  }
+
+  @NotNull
+  public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
+    return ReflectionStartupUtil.classTraverser(root);
   }
 }

@@ -26,35 +26,21 @@ internal fun registerComponents(project: ProjectImpl) {
   project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>)
 
   activity = activity?.endAndStart("projectComponentRegistered")
-  runHandler(
+  runOnlyCorePluginExtensions(
     ProjectServiceContainerCustomizer.getEp()) {
     it.serviceRegistered(project)
   }
   activity?.end()
 }
 
-internal fun notifyThatComponentCreated(project: ProjectImpl) {
-  var activity = createActivity(project) { "projectComponentCreated event handling" }
-  @Suppress("DEPRECATION")
-  ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(project)
-
-  activity = activity?.endAndStart("projectComponentCreated")
-  runHandler(getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
-    it.serviceCreated(project)
-  }
-  activity?.end()
-}
-
-private val LOG = logger<ProjectImpl>()
-
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
   return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else StartUpMeasurer.startActivity(message())
 }
 
-private inline fun <T : Any> runHandler(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
+internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
   ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
     if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
     }
 
     try {
@@ -64,13 +50,9 @@ private inline fun <T : Any> runHandler(ep: ExtensionPointImpl<T>, crossinline e
       throw e
     }
     catch (e: Throwable) {
-      LOG.error(PluginException(e, pluginDescriptor.pluginId))
+      logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))
     }
   }
-}
-
-private fun <T : Any> getExtensionPoint(name: String): ExtensionPointImpl<T> {
-  return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint(name)
 }
 
 /**
@@ -80,8 +62,8 @@ private fun <T : Any> getExtensionPoint(name: String): ExtensionPointImpl<T> {
 interface ProjectServiceContainerCustomizer {
   companion object {
     @JvmStatic
-    fun getEp() = getExtensionPoint<ProjectServiceContainerCustomizer>(
-      "com.intellij.projectServiceContainerCustomizer")
+    fun getEp() = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+      .getExtensionPoint<ProjectServiceContainerCustomizer>("com.intellij.projectServiceContainerCustomizer")
   }
 
   /**

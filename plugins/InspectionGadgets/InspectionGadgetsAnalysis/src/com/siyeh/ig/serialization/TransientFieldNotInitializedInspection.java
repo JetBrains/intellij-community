@@ -47,7 +47,7 @@ public class TransientFieldNotInitializedInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();
-      if (!SerializationUtils.isSerializable(containingClass)) {
+      if (containingClass != null && containingClass.isRecord() || !SerializationUtils.isSerializable(containingClass)) {
         return;
       }
       final PsiExpression initializer = field.getInitializer();

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.PackagingElementsTestCase;
@@ -5,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ComplexPackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -79,7 +80,7 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
 
   protected static void runAction(final Runnable action, boolean confirmationExpected) {
     final Ref<Boolean> dialogShown = Ref.create(false);
-    final TestDialog oldDialog = Messages.setTestDialog(new TestDialog() {
+    final TestDialog oldDialog = TestDialogManager.setTestDialog(new TestDialog() {
       @Override
       public int show(@NotNull String message) {
         dialogShown.set(true);
@@ -91,7 +92,7 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
       action.run();
     }
     finally {
-      Messages.setTestDialog(oldDialog);
+      TestDialogManager.setTestDialog(oldDialog);
     }
 
     if (confirmationExpected) {

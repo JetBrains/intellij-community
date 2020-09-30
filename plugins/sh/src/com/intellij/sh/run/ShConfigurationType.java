@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.util.EnvironmentUtil;
 import icons.SHIcons;
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ShConfigurationType extends SimpleConfigurationType {
   public ShConfigurationType() {
-    super("ShConfigurationType", ShLanguage.INSTANCE.getID(), ShLanguage.INSTANCE.getID() + " configuration",
+    super("ShConfigurationType", ShLanguage.INSTANCE.getID(),
+          ShBundle.message("sh.run.configuration.description.0.configuration", ShLanguage.INSTANCE.getID()),
           NotNullLazyValue.createValue(() -> SHIcons.ShFile));
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
@@ -47,14 +48,15 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
-    final MessageBusConnection connection = project.getMessageBus().connect();
+    Disposable extensionDisposable = ExtensionPointUtil.createExtensionDisposable(this, EP.getPoint(project));
+    final MessageBusConnection connection = project.getMessageBus().connect(extensionDisposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         clearCache();
       }
     });
-    LowMemoryWatcher.register(() -> myCache = null, ExtensionPointUtil.createExtensionDisposable(this, EP.getPoint(project)));
+    LowMemoryWatcher.register(() -> clearCache(), extensionDisposable);
   }
 
   @NotNull

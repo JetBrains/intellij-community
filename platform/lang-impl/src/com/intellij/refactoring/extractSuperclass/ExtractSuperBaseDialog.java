@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -30,7 +31,7 @@ import java.util.List;
  * @author dsl
  */
 public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberInfoType extends MemberInfoBase> extends RefactoringDialog {
-  private final String myRefactoringName;
+  private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
   protected final List<MemberInfoType> myMemberInfos;
@@ -54,7 +55,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract JTextField createSourceClassField();
 
-  protected abstract String getDocCommentPanelName();
+  protected abstract @NlsContexts.BorderTitle String getDocCommentPanelName();
 
   protected abstract String getExtractedSuperNameNotSpecifiedMessage();
 
@@ -68,15 +69,15 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected abstract String validateName(String name);
   
   @Nullable
-  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+  protected @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
-  protected abstract String getTopLabelText();
+  protected abstract @NlsContexts.Label String getTopLabelText();
 
-  protected abstract String getClassNameLabelText();
+  protected abstract @NlsContexts.Label String getClassNameLabelText();
 
-  protected abstract String getPackageNameLabelText();
+  protected abstract @NlsContexts.Label String getPackageNameLabelText();
 
   @NotNull
   protected abstract String getEntityName();
@@ -85,7 +86,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getDestinationPackageRecentKey();
 
-  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 
@@ -276,7 +277,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected static class OperationFailedException extends Exception {
-    public OperationFailedException(String message) {
+    public OperationFailedException(@NlsContexts.DialogMessage String message) {
       super(message);
     }
   }

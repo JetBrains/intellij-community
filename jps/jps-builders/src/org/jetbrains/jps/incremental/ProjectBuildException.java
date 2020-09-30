@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.Nls;
+
 /**
  * Use this exception to signal that the build must be stopped
  *
@@ -28,7 +30,7 @@ public class ProjectBuildException extends Exception{
    * Causes the build to be stopped and error message shown 
    * @param message a message to be shown as an error 
    */
-  public ProjectBuildException(String message) {
+  public ProjectBuildException(@Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     super(message);
   }
 
@@ -37,7 +39,7 @@ public class ProjectBuildException extends Exception{
    * @param message a message to be shown as an error
    * @param cause additional information that caused error; its stacktrace will be only logged and not shown in UI 
    */
-  public ProjectBuildException(String message, Throwable cause) {
+  public ProjectBuildException(@Nls(capitalization = Nls.Capitalization.Sentence) String message, Throwable cause) {
     super(message, cause);
   }
 

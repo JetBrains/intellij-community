@@ -17,8 +17,10 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -67,15 +69,18 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
           append((String)userObject, SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
         else if (userObject instanceof VirtualFile) {
-          append(((VirtualFile)userObject).getName());
-          append(" in ");
-          append(((VirtualFile)userObject).getParent().getPath(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          VirtualFile virtualFile = (VirtualFile)userObject;
+          append(virtualFile.getName() + " ");
+          append(JavaCompilerBundle.message("label.in.path.suffix", virtualFile.getParent().getPath()),
+                 SimpleTextAttributes.GRAY_ATTRIBUTES);
         } else if (userObject instanceof PsiFunctionalExpression) {
           append(ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)userObject, true));
         } else if (userObject instanceof PsiClass) {
           append(ClassPresentationUtil.getNameForClass((PsiClass)userObject, true));
         } else {
-          append(userObject.toString());
+          @NlsSafe
+          final String text = userObject.toString();
+          append(text);
         }
       }
     });

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,17 +120,19 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     return null;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral") // subclasses should override this method to provide localized name
   @Override
   @NotNull
   public String getAccessibleName() {
     return getAccessibleName(getIcon(), "icon: ");
   }
 
-  public final String getFeatureId() {
+  @NonNls
+  public final @NotNull String getFeatureId() {
     return getAccessibleName(getIcon(), "");
   }
 
-  private static String getAccessibleName(@Nullable Icon icon, @NotNull String prefix) {
+  private static @NotNull String getAccessibleName(@Nullable Icon icon, @NotNull String prefix) {
     if (icon instanceof RetrievableIcon) {
       return getAccessibleName(((RetrievableIcon)icon).retrieveIcon(), prefix);
     }

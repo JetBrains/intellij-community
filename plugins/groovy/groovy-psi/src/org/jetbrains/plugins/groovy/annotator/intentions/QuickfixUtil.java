@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -103,7 +104,7 @@ public final class QuickfixUtil {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  public static String shortenType(String typeText) {
+  public static @NlsSafe String shortenType(@NlsSafe String typeText) {
     if (typeText == null) return "";
     final int i = typeText.lastIndexOf(".");
     if (i != -1) {

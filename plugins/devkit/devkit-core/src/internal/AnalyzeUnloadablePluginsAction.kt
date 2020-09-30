@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -11,11 +11,13 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -24,6 +26,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 /**
  * @author yole
  */
+@Suppress("HardCodedStringLiteral")
 class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -56,18 +59,19 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             }
 
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
+            if (ideaPlugin.requireRestart.value == true) continue
             val status = analyzeUnloadable(ideaPlugin, pluginXmlFiles)
             result.add(status)
             pi.text = status.pluginId
           }
         }
-      }, "Analyzing Plugins (${dir?.name ?: "Project"})", true, e.project)
+      }, DevKitBundle.message("action.AnalyzeUnloadablePlugins.progress.title", dir?.name ?: "Project"), true, e.project)
 
     if (show) showReport(project, result)
   }
 
   private fun showReport(project: Project, result: List<PluginUnloadabilityStatus>) {
-    val report = buildString {
+    @NlsSafe val report = buildString {
       if (result.any { it.analysisErrors.isNotEmpty() }) {
         appendln("Analysis errors:")
         for (status in result.filter { it.analysisErrors.isNotEmpty() }) {
@@ -166,20 +170,20 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val components = mutableListOf<String>()
     analyzePluginFile(ideaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
 
-    for (dependency in ideaPlugin.dependencies) {
-      val configFileName = dependency.configFile.stringValue ?: continue
-      val depIdeaPlugin = resolvePluginDependency(dependency)
-      if (depIdeaPlugin == null) {
-        analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
-        continue
-      }
-      for (nestedDependency in depIdeaPlugin.dependencies) {
-        if (nestedDependency.configFile.stringValue != null) {
-          analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
+    fun analyzeDependencies(ideaPlugin: IdeaPlugin) {
+      for (dependency in ideaPlugin.dependencies) {
+        val configFileName = dependency.configFile.stringValue ?: continue
+        val depIdeaPlugin = resolvePluginDependency(dependency)
+        if (depIdeaPlugin == null) {
+          analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
+          continue
         }
+        analyzePluginFile(depIdeaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
+        analyzeDependencies(depIdeaPlugin)
       }
-      analyzePluginFile(depIdeaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
     }
+
+    analyzeDependencies(ideaPlugin)
 
     val componentsInOptionalDependencies = mutableListOf<String>()
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
@@ -258,7 +262,7 @@ enum class UnloadabilityStatus {
 }
 
 private data class PluginUnloadabilityStatus(
-  val pluginId: String,
+  @NlsSafe val pluginId: String,
   val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
   val nonDynamicEPsInDependencies: Map<String, Set<String>>,

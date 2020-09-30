@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 
 public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   @Override
@@ -111,11 +111,13 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
     final PsiClass containingClass = ReadAction.compute(method::getContainingClass);
     assert containingClass != null;
-    Collection<PsiMethod> result = new LinkedHashSet<>();
+    Collection<PsiMethod> result = new HashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
       PsiMethod found = ReadAction.compute(() -> findOverridingMethod(inheritor, method, containingClass));
       if (found != null) {
-        result.add(found);
+        synchronized (result) {
+          result.add(found);
+        }
       }
       return true;
     };

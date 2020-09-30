@@ -181,7 +181,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   }
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(final @NotNull ProcessHandler processHandler) {
     super.attachToProcess(processHandler);
     processHandler.addProcessListener(new MyProcessListener());
   }

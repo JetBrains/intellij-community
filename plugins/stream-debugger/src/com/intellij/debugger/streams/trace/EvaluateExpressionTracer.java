@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -49,7 +50,8 @@ public class EvaluateExpressionTracer implements StreamTracer {
                 interpretedResult = myResultInterpreter.interpret(chain, (ArrayReference)reference);
               }
               catch (Throwable t) {
-                callback.evaluationFailed(streamTraceExpression, "Cannot interpret trace result. " + t.getMessage());
+                callback.evaluationFailed(streamTraceExpression,
+                                          StreamDebuggerBundle.message("evaluation.failed.cannot.interpret.result", t.getMessage()));
                 throw t;
               }
               final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
@@ -76,7 +78,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
             }
           }
 
-          callback.evaluationFailed(streamTraceExpression, "Evaluation failed: unknown type of result value");
+          callback.evaluationFailed(streamTraceExpression, StreamDebuggerBundle.message("evaluation.failed.unknown.result.type"));
         }
 
         @Override

@@ -12,7 +12,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import java.awt.*;
 
-public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
+public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer<Object> {
   private final Font FONT;
   private static final Logger LOG = Logger.getInstance(FQNameCellRenderer.class);
 

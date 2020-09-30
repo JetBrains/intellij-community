@@ -182,6 +182,11 @@ public interface CaretModel {
   boolean supportsMultipleCarets();
 
   /**
+   * Maximum number of carets that can be created in the editor.
+   */
+  int getMaxCaretCount();
+
+  /**
    * Returns current caret - the one, query and update methods in the model operate at the moment. In the current implementation this is
    * either an iteration-current caret within the context of {@link #runForEachCaret(CaretAction)} method, or the 'primary' caret without that
    * context. Users {@link #runForEachCaret(CaretAction)} method should use caret parameter passed to
@@ -227,7 +232,8 @@ public interface CaretModel {
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
    * for the given document are trimmed automatically.
    * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
-   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * Does nothing if multiple carets are not supported, a maximum number of carets already exists in editor (see
+   * {@link #getMaxCaretCount()}), a caret already exists at specified location or selection of existing caret
    * includes the specified location, {@code null} is returned in this case.
    */
   @Nullable
@@ -237,7 +243,8 @@ public interface CaretModel {
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
    * for the given document are trimmed automatically.
    * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
-   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * Does nothing if multiple carets are not supported, a maximum number of carets already exists in editor (see
+   * {@link #getMaxCaretCount()}), a caret already exists at specified location or selection of existing caret
    * includes the specified location, {@code null} is returned in this case.
    */
   @Nullable
@@ -258,10 +265,12 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
+   * If the number of passed {@link CaretState} items is larger than {@link #getMaxCaretCount()}, excessive items will be ignored.
+   * Editor might display a user-visible notification in such a case.
+   * <p>
    * System selection will be updated, if such feature is supported by current editor.
    *
-   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
-   * support multiple carets
+   * @throws IllegalArgumentException if {@code caretStates} list is empty
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
@@ -273,11 +282,13 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
+   * If the number of passed {@link CaretState} items is larger than {@link #getMaxCaretCount()}, excessive items will be ignored.
+   * Editor might display a user-visible notification in such a case.
+   * <p>
    * System selection will be updated, if such feature is supported by current editor
    * and corresponding invocation parameter is set to {@code true}.
    *
-   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
-   * support multiple carets
+   * @throws IllegalArgumentException if {@code caretStates} list is empty
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,6 +8,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -243,7 +244,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   public interface ItemWithSeparatorAbove {
     boolean hasSeparatorAbove();
-    String getCaptionAboveOf();
+    @NlsContexts.Separator String getCaptionAboveOf();
   }
 
   public interface ItemWithCustomBackgroundColor {

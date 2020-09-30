@@ -3,20 +3,22 @@ package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import java.util.Objects;
-import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Maxim.Mossienko
  */
 public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> implements UsageGroup, NamedPresentably {
   private final SmartPsiElementPointer<T> myElementPointer;
-  private final String myName;
+  private final @NlsSafe String myName;
   private final Icon myIcon;
 
   public PsiElementUsageGroupBase(@NotNull T element, Icon icon) {

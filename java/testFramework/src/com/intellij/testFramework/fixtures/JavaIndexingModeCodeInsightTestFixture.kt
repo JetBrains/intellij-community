@@ -30,6 +30,7 @@ open class JavaIndexingModeCodeInsightTestFixture private constructor(private va
 
   @Throws(Exception::class)
   override fun tearDown() {
+    indexingMode.tearDownTest(project)
     delegate.tearDown()
   }
 

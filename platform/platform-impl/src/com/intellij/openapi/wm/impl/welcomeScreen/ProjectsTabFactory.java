@@ -4,6 +4,11 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectListActionProvider;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -17,9 +22,11 @@ import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +34,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.io.File;
+import java.util.List;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.ToolbarTextButtonWrapper;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createErrorsLink;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createEventLink;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public class ProjectsTabFactory implements WelcomeTabFactory {
@@ -42,30 +55,40 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
 
       @Override
       protected JComponent buildComponent() {
+        JPanel mainPanel;
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
-          return new EmptyStateProjectsPanel();
+          mainPanel = JBUI.Panels.simplePanel(new EmptyStateProjectsPanel(parentDisposable))
+            .addToBottom(createNotificationsPanel(parentDisposable))
+            .withBackground(getMainAssociatedComponentBackground());
         }
-        JPanel mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
-        final SearchTextField projectSearch = createSearchProjectsField();
-        NewRecentProjectPanel projectsPanel = createProjectsPanelWithExternalSearch(projectSearch);
-        projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
+        else {
+          mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
+          final SearchTextField projectSearch = createSearchProjectsField();
+          NewRecentProjectPanel projectsPanel = createProjectsPanelWithExternalSearch(projectSearch);
+          projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
 
-        JPanel northPanel =
-          JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(JBColor.border(), JBUI.insetsBottom(1)) {
-            @Override
-            public Insets getBorderInsets(Component c) {
-              return JBUI.insetsBottom(12);
-            }
-          });
+          JPanel northPanel =
+            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(JBColor.border(), JBUI.insetsBottom(1)) {
+              @Override
+              public Insets getBorderInsets(Component c) {
+                return JBUI.insetsBottom(12);
+              }
+            });
 
-        JComponent projectActionsPanel = createActionsToolbar().getComponent();
+          JComponent projectActionsPanel = createActionsToolbar().getComponent();
 
-        northPanel.add(projectSearch, BorderLayout.CENTER);
-        northPanel.add(projectActionsPanel, BorderLayout.EAST);
-        mainPanel.add(northPanel, BorderLayout.NORTH);
-        mainPanel.add(projectsPanel, BorderLayout.CENTER);
-        mainPanel.add(createNotificationsPanel(parentDisposable), BorderLayout.SOUTH);
-
+          northPanel.add(projectSearch, BorderLayout.CENTER);
+          northPanel.add(projectActionsPanel, BorderLayout.EAST);
+          mainPanel.add(northPanel, BorderLayout.NORTH);
+          mainPanel.add(projectsPanel, BorderLayout.CENTER);
+          mainPanel.add(createNotificationsPanel(parentDisposable), BorderLayout.SOUTH);
+        }
+        DnDNativeTarget target = createDropFileTarget();
+        DnDSupport.createBuilder(mainPanel)
+          .enableAsNativeTarget()
+          .setTargetChecker(target)
+          .setDropHandler(target)
+          .setDisposableParent(parentDisposable).install();
         return mainPanel;
       }
 
@@ -108,17 +131,21 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         SearchTextField projectSearch = new SearchTextField(false);
         projectSearch.setOpaque(false);
         projectSearch.setBorder(JBUI.Borders.empty());
-        projectSearch.getTextEditor().setOpaque(false);
-        projectSearch.getTextEditor().setBorder(JBUI.Borders.empty());
-        projectSearch.getTextEditor().getEmptyText().setText(IdeBundle.message("welcome.screen.search.projects.empty.text"));
+        JBTextField textEditor = projectSearch.getTextEditor();
+        textEditor.setOpaque(false);
+        textEditor.setBorder(JBUI.Borders.empty());
+        textEditor.getEmptyText().setText(IdeBundle.message("welcome.screen.search.projects.empty.text"));
+        projectSearch.getTextEditor()
+          .putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)editor -> editor.getText().isEmpty());
         return projectSearch;
       }
 
       @NotNull
       private ActionToolbar createActionsToolbar() {
         Couple<DefaultActionGroup> mainAndMore =
-          splitActionGroupToMainAndMore((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
-                                        PRIMARY_BUTTONS_NUM);
+          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+                              action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
+                              PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
           ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
         ActionGroup moreActionGroup = mainAndMore.getSecond();
@@ -141,14 +168,37 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           }
         };
         toolbar.setOpaque(false);
+        toolbar.setReservePlaceAutoPopupIcon(false);
         return toolbar;
       }
 
       private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
         JPanel notificationsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
         notificationsPanel.setBorder(JBUI.Borders.emptyTop(10));
+        Component eventLink = createEventLink("", parentDisposable);
         notificationsPanel.add(createErrorsLink(parentDisposable));
+        notificationsPanel.add(eventLink);
         return notificationsPanel;
+      }
+    };
+  }
+
+  @NotNull
+  private static DnDNativeTarget createDropFileTarget() {
+    return new DnDNativeTarget() {
+      @Override
+      public boolean update(DnDEvent event) {
+        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) return false;
+        event.setDropPossible(true);
+        return false;
+      }
+
+      @Override
+      public void drop(DnDEvent event) {
+        List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
+        if (!ContainerUtil.isEmpty(files)) {
+          ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
+        }
       }
     };
   }

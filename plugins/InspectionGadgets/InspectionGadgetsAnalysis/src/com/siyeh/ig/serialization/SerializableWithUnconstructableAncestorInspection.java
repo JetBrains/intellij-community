@@ -52,7 +52,7 @@ public class SerializableWithUnconstructableAncestorInspection extends BaseInspe
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       if (!SerializationUtils.isSerializable(aClass) || SerializationUtils.hasWriteReplace(aClass)) {

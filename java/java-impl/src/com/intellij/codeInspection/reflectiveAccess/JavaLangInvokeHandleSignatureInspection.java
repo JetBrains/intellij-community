@@ -352,18 +352,16 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
   }
 
   private static class SwitchStaticnessQuickFix implements LocalQuickFix {
-    private static final Map<String, String> STATIC_TO_NON_STATIC = ContainerUtil.<String, String>immutableMapBuilder()
-      .put(FIND_STATIC_GETTER, FIND_GETTER)
-      .put(FIND_STATIC_SETTER, FIND_SETTER)
-      .put(FIND_STATIC_VAR_HANDLE, FIND_VAR_HANDLE)
-      .put(FIND_STATIC, FIND_VIRTUAL)
-      .build();
-    private static final Map<String, String> NON_STATIC_TO_STATIC = ContainerUtil.<String, String>immutableMapBuilder()
-      .put(FIND_GETTER, FIND_STATIC_GETTER)
-      .put(FIND_SETTER, FIND_STATIC_SETTER)
-      .put(FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE)
-      .put(FIND_VIRTUAL, FIND_STATIC)
-      .build();
+    private static final Map<String, String> STATIC_TO_NON_STATIC = Map.of(
+      FIND_STATIC_GETTER, FIND_GETTER,
+      FIND_STATIC_SETTER, FIND_SETTER,
+      FIND_STATIC_VAR_HANDLE, FIND_VAR_HANDLE,
+      FIND_STATIC, FIND_VIRTUAL);
+    private static final Map<String, String> NON_STATIC_TO_STATIC = Map.of(
+      FIND_GETTER, FIND_STATIC_GETTER,
+      FIND_SETTER, FIND_STATIC_SETTER,
+      FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE,
+      FIND_VIRTUAL, FIND_STATIC);
 
     private final String myReplacementName;
 

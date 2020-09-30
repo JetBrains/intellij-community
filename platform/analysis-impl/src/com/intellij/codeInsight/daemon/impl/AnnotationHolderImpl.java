@@ -20,16 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,7 +155,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @Override
   public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message,
-                                     @Nullable String tooltip) {
+                                     @Nullable @NlsContexts.Tooltip String tooltip) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
     return annotation;
@@ -183,7 +181,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @NotNull
   @Override
-  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
+  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
     return new B(this, severity, message, myCurrentElement);
   }
   @NotNull

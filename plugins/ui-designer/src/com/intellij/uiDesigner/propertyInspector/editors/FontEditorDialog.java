@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -82,9 +83,9 @@ public class FontEditorDialog extends DialogWrapper {
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FontDescriptor descriptor = (FontDescriptor) value;
         clear();
-        append(descriptor.getSwingFont(),
-               selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        append(" (" + fontToString(UIManager.getFont(descriptor.getSwingFont())) + ")",
+        @NlsSafe String font = descriptor.getSwingFont();
+        append(font, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        append(" (" + fontToString(UIManager.getFont(font)) + ")",
                selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     });
@@ -121,7 +122,7 @@ public class FontEditorDialog extends DialogWrapper {
     });
   }
 
-  private static String fontToString(final Font font) {
+  private static @NlsSafe String fontToString(final Font font) {
     StringBuilder result = new StringBuilder(font.getFamily());
     result.append(" ").append(font.getSize());
     if ((font.getStyle() & Font.BOLD) != 0) {

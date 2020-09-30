@@ -16,9 +16,9 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.AbstractReparseTestCase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -36,7 +36,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setFileType(StdFileTypes.XML);
+    setFileType(XmlFileType.INSTANCE);
   }
 
   public void test1() {
@@ -172,7 +172,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   }
 
   public void testXml() {
-    setFileType(StdFileTypes.XML);
+    setFileType(XmlFileType.INSTANCE);
     String text2 = "</root>";
     final String text1 = "<root>/n";
     prepareFile(text1, text2);

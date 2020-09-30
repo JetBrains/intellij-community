@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -278,7 +279,8 @@ public final class BuildMain {
       }
 
       channel.writeAndFlush(
-        CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
+        CmdlineProtoUtil.toMessage(mySessionId,
+                                   CmdlineProtoUtil.createFailure(JpsBuildBundle.message("build.message.unsupported.message.type.0", type.name()), null)));
     }
 
     @Override

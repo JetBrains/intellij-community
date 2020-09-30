@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -64,35 +65,37 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
       if (manager.hasProblem(word)) {
         final List<String> suggestions = manager.getSuggestions(word);
         if (!suggestions.isEmpty() && prop instanceof IntroStringProperty) {
-          EditorQuickFixProvider changeToProvider = (editor, component1) -> new PopupQuickFix<String>(editor, "Change to...", component1) {
-            @Override
-            public void run() {
-              ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
-              popup.showUnderneathOf(component1.getDelegee());
-            }
+          EditorQuickFixProvider changeToProvider =
+            (editor, component1) -> new PopupQuickFix<String>(editor, UIDesignerBundle.message("inspection.editor.quick.fix.name"),
+                                                              component1) {
+              @Override
+              public void run() {
+                ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
+                popup.showUnderneathOf(component1.getDelegee());
+              }
 
-            @Override
-            public ListPopupStep<String> getPopupStep() {
-              return new BaseListPopupStep<String>("Select Replacement", suggestions) {
-                @Override
-                public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-                  FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty) prop, descriptor, selectedValue);
-                  return FINAL_CHOICE;
-                }
-              };
-            }
-          };
+              @Override
+              public ListPopupStep<String> getPopupStep() {
+                return new BaseListPopupStep<>(UIDesignerBundle.message("popup.title.select.replacement"), suggestions) {
+                  @Override
+                  public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+                    FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty)prop, descriptor, selectedValue);
+                    return FINAL_CHOICE;
+                  }
+                };
+              }
+            };
           EditorQuickFixProvider acceptProvider =
-            (editor, component1) -> new QuickFix(editor, "Save '" + word + "' to dictionary", component1) {
+            (editor, component1) -> new QuickFix(editor, UIDesignerBundle.message("intention.name.save.to.dictionary", word), component1) {
               @Override
               public void run() {
                 manager.acceptWordAsCorrect(word, editor.getProject());
               }
             };
-          collector.addError(getID(), component, prop, "Typo in word '" + word + "'", changeToProvider, acceptProvider);
+          collector.addError(getID(), component, prop, UIDesignerBundle.message("inspection.message.typo.in.word", word), changeToProvider, acceptProvider);
         }
         else {
-          collector.addError(getID(), component, prop, "Typo in word '" + word + "'");
+          collector.addError(getID(), component, prop, UIDesignerBundle.message("inspection.message.typo.in.word", word));
         }
       }
     });

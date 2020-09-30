@@ -45,7 +45,7 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
     @Override
     protected Object findAcceptableElement(PsiElement element) {
       // walk up the psi-tree until we find an element from the structure view
-      while (element != null && !PRESENTABLE_TYPES.contains(PsiUtilCore.getElementType(element))) {
+      while (element != null && !(element instanceof PsiFile) && !PRESENTABLE_TYPES.contains(PsiUtilCore.getElementType(element))) {
         IElementType parentType = PsiUtilCore.getElementType(element.getParent());
 
         final PsiElement previous = element.getPrevSibling();

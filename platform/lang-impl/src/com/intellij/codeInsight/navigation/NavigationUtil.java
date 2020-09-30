@@ -288,7 +288,7 @@ public final class NavigationUtil {
   }
 
   private static JBPopup getPsiElementPopup(final List<Object> elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
-                                           final String title, final boolean showContainingModules, final Processor<Object> processor) {
+                                            final @PopupTitle String title, final boolean showContainingModules, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {

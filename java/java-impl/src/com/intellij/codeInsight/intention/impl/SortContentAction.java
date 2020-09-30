@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class SortContentAction extends PsiElementBaseIntentionAction {
   public static final int MIN_ELEMENTS_COUNT = 3;
 
-  private static class Holder {
+  private static final class Holder {
     public static final SortingStrategy[] EXPRESSION_SORTING_STRATEGIES = {
       new StringLiteralSortingStrategy(),
       new IntLiteralSortingStrategy(),
@@ -184,7 +184,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static class SortableEntry {
+  private static final class SortableEntry {
     private final @NotNull PsiElement myElement;
     private final @NotNull List<PsiComment> myBeforeSeparator;
     private final @NotNull List<? extends PsiComment> myAfterSeparator;
@@ -235,7 +235,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static class SortableList {
+  private static final class SortableList {
     private final List<SortableEntry> myEntries;
     private final SortingStrategy mySortingStrategy;
     private final LineLayout myLineLayout;

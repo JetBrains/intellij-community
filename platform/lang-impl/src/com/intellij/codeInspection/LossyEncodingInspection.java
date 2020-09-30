@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -101,7 +102,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
     if (!isGoodCharset(virtualFile, charset)) {
       LocalQuickFix[] fixes = getFixes(file, virtualFile, charset);
-      descriptors.add(manager.createProblemDescriptor(file, InspectionsBundle.message("inspection.lossy.encoding.description", charset), true,
+      descriptors.add(manager.createProblemDescriptor(file, LangBundle.message("inspection.lossy.encoding.description", charset), true,
                                                       ProblemHighlightType.GENERIC_ERROR, isOnTheFly, fixes));
       return false;
     }

@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -30,7 +31,7 @@ public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiF
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve extension point property '" + s + "'";
+    return DevKitBundle.message("plugin.xml.convert.extension.property.cannot.resolve", s);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
@@ -83,7 +83,7 @@ public class KeepingExpandedExpander implements Expander {
     }
   }
 
-  private static class ChildrenData {
+  private static final class ChildrenData {
     private final boolean myExpanded;
     private final List<TreeNode> myChildren;
     private final NodeLoadState myChildrenState;

@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,6 +69,7 @@ public class VcsScopeItem implements ModelScopeItem {
     return myModel;
   }
 
+  @Nls
   private static String getAll() {
     return CodeInsightBundle.message("scope.option.uncommitted.files.all.changelists.choice");
   }

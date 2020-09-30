@@ -1,6 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -564,6 +568,34 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-43133
+  public void testHierarchyAgainstProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import Protocol\n" +
+        "\n" +
+        "class A:\n" +
+        "    def f1(self, x: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class B(A):\n" +
+        "    def f2(self, y: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class P(Protocol):\n" +
+        "    def f1(self, x: str): ...\n" +
+        "    def f2(self, y: str): ...\n" +
+        "\n" +
+        "def test(p: P):\n" +
+        "    pass\n" +
+        "\n" +
+        "b = B()\n" +
+        "test(b)"
+      )
+    );
+  }
+
   // PY-23161
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
@@ -1058,8 +1090,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "movie2 = Movie2()\n" +
                          "s: str = movie['address'][0]\n" +
                          "s: str = movie2['address'][0]\n" +
-                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n" +
-                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n"));
+                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n" +
+                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n"));
   }
 
   // PY-36008
@@ -1127,6 +1159,22 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "foo(MyCls())\n" +
                          "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
     );
+  }
+
+  public void testNewTypeInForeignUnstubbedFile() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+      myFixture.configureFromTempProjectFile("a.py");
+      VirtualFile foreignVFile = myFixture.findFileInTempDir("b.py");
+      assertNotNull(foreignVFile);
+      PsiFile foreignFilePsi = PsiManager.getInstance(myFixture.getProject()).findFile(foreignVFile);
+      assertNotNull(foreignFilePsi);
+      assertNotParsed(foreignFilePsi);
+      //noinspection ResultOfMethodCallIgnored
+      foreignFilePsi.getNode();
+      assertNotNull(((PsiFileImpl)foreignFilePsi).getTreeElement());
+      configureInspection();
+    });
   }
 
   // PY-42205

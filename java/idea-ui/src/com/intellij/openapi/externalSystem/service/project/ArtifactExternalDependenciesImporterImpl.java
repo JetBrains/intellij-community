@@ -65,7 +65,7 @@ public class ArtifactExternalDependenciesImporterImpl implements ArtifactExterna
       new ArrayList<>();
     for (Artifact artifact : artifactModel.getArtifacts()) {
       ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE,
-                                            new PackagingElementProcessor<ArtifactPackagingElement>() {
+                                            new PackagingElementProcessor<>() {
                                               @Override
                                               public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement,
                                                                      @NotNull PackagingElementPath path) {

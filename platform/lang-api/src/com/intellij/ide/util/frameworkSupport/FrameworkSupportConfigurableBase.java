@@ -20,6 +20,7 @@ import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   }
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model,
-                                          @NotNull List<FrameworkVersion> versions, @Nullable String versionLabelText) {
+                                          @NotNull List<FrameworkVersion> versions, @NlsContexts.Label @Nullable String versionLabelText) {
     myFrameworkSupportProvider = frameworkSupportProvider;
     myFrameworkSupportModel = model;
     myVersions = versions;

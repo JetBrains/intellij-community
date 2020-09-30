@@ -1,23 +1,24 @@
 package com.intellij.structuralsearch.plugin.util;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Reference to element have been matched
  */
 public class SmartPsiPointer {
-  private SmartPsiElementPointer pointer;
+  @NotNull 
+  private final SmartPsiElementPointer<?> pointer;
 
-  public SmartPsiPointer(PsiElement element) {
-    pointer = element != null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element):null;
+  public SmartPsiPointer(@NotNull PsiElement element) {
+    pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
   public VirtualFile getFile() {
-    return pointer != null ? pointer.getVirtualFile():null;
+    return pointer.getVirtualFile();
   }
 
   public int getOffset() {
@@ -31,16 +32,7 @@ public class SmartPsiPointer {
   }
 
   public PsiElement getElement() {
-    return pointer != null ? pointer.getElement():null;
-  }
-
-  public void clear() {
-    pointer = null;
-  }
-
-  public Project getProject() {
-    PsiElement element = getElement();
-    return element == null ? null : element.getProject();
+    return pointer.getElement();
   }
 
   public boolean equals(Object o) {

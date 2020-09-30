@@ -24,7 +24,8 @@ class HgCloneDialogComponent(project: Project, dialogStateListener: VcsCloneDial
     val validationInfo = CloneDvcsValidationUtils.createDestination(getDirectory())
     if (validationInfo != null) {
       LOG.error("Unable to create destination directory", validationInfo.message)
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.message("clone.dialog.clone.failed.error"),
+      VcsNotifier.getInstance(project).notifyError("hg.clone.destination.error",
+                                                   VcsBundle.message("clone.dialog.clone.failed.error"),
                                                    VcsBundle.message("clone.dialog.unable.create.destination.error"))
       return
     }

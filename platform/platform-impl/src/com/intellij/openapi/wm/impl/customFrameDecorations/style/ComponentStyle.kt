@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.style
 
+import org.jetbrains.annotations.NonNls
 import java.awt.MouseInfo
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -12,7 +13,7 @@ import javax.swing.SwingUtilities
 
 class ComponentStyle<T : JComponent>private constructor(private val default: Properties, private val styleMap: Map<ComponentStyleState, Properties>) {
   companion object {
-    const val ENABLED_PROPERTY = "enabled"
+    @NonNls const val ENABLED_PROPERTY = "enabled"
   }
 
   internal fun applyStyle(component: T) {

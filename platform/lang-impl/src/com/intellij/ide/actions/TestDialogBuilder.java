@@ -40,7 +40,8 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   }
 
   @Override
-  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                                                      @Nullable InputValidator extraValidator) {
     return this;
   }
 
@@ -54,8 +55,8 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
                                                  @Nullable String selectedItem,
                                                  @NotNull CreateFileFromTemplateDialog.FileCreator<T> creator) {
     if (myValidator != null) {
-      Preconditions.checkState(myValidator.checkInput(myAnswers.myName), "The answer '%s' is not valid.", myAnswers.myName);
-      Preconditions.checkState(myValidator.canClose(myAnswers.myName), "Can't close dialog with the answer '%s'.", myAnswers.myName);
+      Preconditions.checkState(myValidator.checkInput(myAnswers.myName), "The answer '%s' is not valid.", myAnswers.myName); //NON-NLS
+      Preconditions.checkState(myValidator.canClose(myAnswers.myName), "Can't close dialog with the answer '%s'.", myAnswers.myName); //NON-NLS
     }
     if (myAnswers.myName != null && myAnswers.myTemplateName != null) {
       return creator.createFile(myAnswers.myName, myAnswers.myTemplateName);

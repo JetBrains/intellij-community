@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
@@ -78,7 +79,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       runner.execute(env)
     }
 
-    latch.await()
-    esHandler.get().waitFor()
+    latch.await(1, TimeUnit.MINUTES)
+    esHandler.get().waitFor(TimeUnit.MINUTES.toMillis(1))
   }
 }

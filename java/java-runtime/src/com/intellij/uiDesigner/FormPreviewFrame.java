@@ -53,6 +53,7 @@ public class FormPreviewFrame {
       super(ourBundle.getString("form.menu.file.exit"));
     }
 
+    @Override
     public void actionPerformed(final ActionEvent e) {
       System.exit(0);
     }
@@ -66,6 +67,7 @@ public class FormPreviewFrame {
       myFrame = frame;
     }
 
+    @Override
     public void actionPerformed(final ActionEvent e) {
       myFrame.pack();
     }
@@ -76,11 +78,16 @@ public class FormPreviewFrame {
     private final UIManager.LookAndFeelInfo myInfo;
 
     MySetLafAction(final JFrame frame, final UIManager.LookAndFeelInfo info) {
-      super(info.getName());
+      this(frame, info, info.getName());
+    }
+
+    MySetLafAction(final JFrame frame, final UIManager.LookAndFeelInfo info, String name) {
+      super(name);
       myFrame = frame;
       myInfo = info;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       try{
         UIManager.setLookAndFeel(myInfo.getClassName());

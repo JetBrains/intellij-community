@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -36,7 +36,7 @@ import static org.gradle.internal.FileUtils.hasExtension;
 /**
  * @author Vladislav.Soroka
  */
-public class DistributionFactoryExt extends DistributionFactory {
+public final class DistributionFactoryExt extends DistributionFactory {
 
   private DistributionFactoryExt() {
     super(Time.clock());
@@ -127,7 +127,7 @@ public class DistributionFactoryExt extends DistributionFactory {
     }
   }
 
-  private static class ZippedDistribution implements Distribution {
+  private static final class ZippedDistribution implements Distribution {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final File distributionBaseDir;

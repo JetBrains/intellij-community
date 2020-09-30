@@ -45,6 +45,12 @@ public class ShHeredocImpl extends ShCompositeElementImpl implements ShHeredoc {
 
   @Override
   @Nullable
+  public PsiElement getHeredocContent() {
+    return findChildByType(HEREDOC_CONTENT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getHeredocMarkerEnd() {
     return findChildByType(HEREDOC_MARKER_END);
   }

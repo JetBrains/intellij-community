@@ -13,11 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
+public final class JpsServiceManagerImpl extends JpsServiceManager {
+  private final ConcurrentMap<Class<?>, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final Map<Class<?>, List<?>> myExtensions = new HashMap<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
-  private volatile JpsPluginManager myPluginManager;
+  private JpsPluginManager myPluginManager;
 
   @Override
   public <T> T getService(Class<T> serviceClass) {
@@ -51,22 +51,15 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
 
   @Override
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
-    List<?> cached = cleanupExtensionCache()? null : myExtensions.get(extensionClass);
-    if (cached == null) {
-      // confine costly service initialization to single thread for defined startup profile
-      synchronized (myExtensions) {
-        cached = myExtensions.get(extensionClass);
-        if (cached == null) {
-          final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
-          cached = myExtensions.putIfAbsent(extensionClass, extensions);
-          if (cached == null) {
-            cached = extensions;
-          }
-        }
+    // confine costly service initialization to single thread for defined startup profile
+    synchronized (myExtensions) {
+      List<?> cached = cleanupExtensionCache()? null : myExtensions.get(extensionClass);
+      if (cached == null) {
+        myExtensions.put(extensionClass, cached = new ArrayList<>(loadExtensions(extensionClass)));
       }
+      //noinspection unchecked
+      return (List<T>)cached;
     }
-    //noinspection unchecked
-    return (List<T>)cached;
   }
 
   @ApiStatus.Internal
@@ -112,7 +105,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     return pluginManager.loadExtensions(extensionClass);
   }
 
-  private static class SingleClassLoaderPluginManager extends JpsPluginManager {
+  private static final class SingleClassLoaderPluginManager extends JpsPluginManager {
     @NotNull
     @Override
     public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {

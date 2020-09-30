@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -33,8 +34,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -76,8 +79,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     init();
     updateOkActions();
-    setOKButtonText(DvcsBundle.getString("action.push"));
-    setOKButtonMnemonic('P');
+    setOKButtonText(DvcsBundle.message("action.push"));
     String title = allRepos.size() == 1
                    ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
                    : DvcsBundle.getString("push.dialog.push.commits.title");
@@ -89,29 +91,27 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     List<PushActionBase> additionalActions = ContainerUtil.findAll(group.getChildren(null), PushActionBase.class);
 
     PushActionBase simplePushAction = new SimplePushAction();
-    PushActionBase defaultPushAction = findDefaultPushAction(additionalActions);
+    PushActionBase.DefaultPushAction defaultPushAction = findDefaultPushAction(additionalActions);
     List<PushActionBase> pushActions = new ArrayList<>();
-    if (defaultPushAction == null) {
-      pushActions.add(simplePushAction);
-      pushActions.addAll(additionalActions);
-    }
-    else {
-      pushActions.addAll(additionalActions);
+    pushActions.add(simplePushAction);
+    pushActions.addAll(additionalActions);
+    if (defaultPushAction != null) {
       pushActions.remove(defaultPushAction);
-      pushActions.add(0, simplePushAction);
-      pushActions.add(0, defaultPushAction);
+      defaultPushAction.customize(pushActions);
     }
 
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private static @Nullable PushActionBase findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
-    List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions, action -> action instanceof PushActionBase.DefaultPushAction);
+  private @Nullable PushActionBase.DefaultPushAction findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
+    List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions,
+                                                                    action -> action instanceof PushActionBase.DefaultPushAction &&
+                                                                              action.isEnabled(this));
     if (defaultPushActions.isEmpty()) {
       return null;
     }
     if (defaultPushActions.size() == 1) {
-      return defaultPushActions.get(0);
+      return (PushActionBase.DefaultPushAction) defaultPushActions.get(0);
     }
     LOG.warn("There can be only one default push action, found: " + defaultPushActions);
     return null;
@@ -235,7 +235,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void push(boolean forcePush) {
     executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
       @Override
@@ -246,7 +246,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void executeAfterRunningPrePushHandlers(@NotNull Task.Backgroundable activity) {
     PrePushHandler.Result result = runPrePushHandlersInModalTask();
     if (result == PrePushHandler.Result.OK) {
@@ -261,7 +261,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
@@ -350,7 +350,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return null;
   }
 
-  private static class ComplexPushAction extends AbstractAction implements OptionAction {
+  private static final class ComplexPushAction extends AbstractAction implements OptionAction {
     private final ActionWrapper myDefaultAction;
     private final List<? extends ActionWrapper> myOptions;
 
@@ -379,8 +379,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  private class SimplePushAction extends PushActionBase {
-    SimplePushAction() {
+  @ApiStatus.Internal
+  public final class SimplePushAction extends PushActionBase {
+    private SimplePushAction() {
       super(DvcsBundle.getString("action.complex.push"));
     }
 
@@ -425,6 +426,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
+    @Nls
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());

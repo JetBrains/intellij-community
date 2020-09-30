@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -269,7 +269,7 @@ public final class SyntaxInfoBuilder {
       }
     }
 
-    private static class IteratorWrapper {
+    private static final class IteratorWrapper {
       private final RangeIterator iterator;
       private final int order;
 
@@ -285,7 +285,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  private static class MarkupModelRangeIterator implements RangeIterator {
+  private static final class MarkupModelRangeIterator implements RangeIterator {
     private final boolean myUnsupportedModel;
     private final int myStartOffset;
     private final int myEndOffset;
@@ -486,7 +486,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  private static class SegmentIterator {
+  private static final class SegmentIterator {
     private final FontFallbackIterator myIterator = new FontFallbackIterator();
     private final CharSequence myCharSequence;
     private int myEndOffset;

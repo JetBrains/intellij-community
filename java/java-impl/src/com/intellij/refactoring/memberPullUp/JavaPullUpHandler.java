@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -166,7 +167,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("pull.members.up.title");
   }
 }

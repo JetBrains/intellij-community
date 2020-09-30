@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.PyExecutionException
@@ -58,14 +59,16 @@ private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
 
 @Throws(ExecutionException::class)
 private fun findCondaExecutable(sdk: Sdk?): String {
-  return PyCondaPackageService.getCondaExecutable(sdk?.homePath) ?: throw ExecutionException("Cannot find conda executable")
+  return PyCondaPackageService.getCondaExecutable(sdk?.homePath) ?: throw ExecutionException(
+    PySdkBundle.message("python.sdk.flavor.cannot.find.conda"))
 }
 
 @Throws(PyExecutionException::class)
 private fun ProcessOutput.checkExitCode(executable: String, arguments: List<String>) {
   if (exitCode != 0) {
-    val message = if (StringUtil.isEmptyOrSpaces(stdout) && StringUtil.isEmptyOrSpaces(stderr)) "Permission denied"
-    else "Non-zero exit code"
+    val message = if (StringUtil.isEmptyOrSpaces(stdout) && StringUtil.isEmptyOrSpaces(stderr))
+      PySdkBundle.message("python.conda.permission.denied")
+    else PySdkBundle.message("python.conda.non.zero.exit.code")
     throw PyExecutionException(message, executable, arguments, this)
   }
 }

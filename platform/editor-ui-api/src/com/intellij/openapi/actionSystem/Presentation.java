@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -33,7 +19,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -92,13 +77,14 @@ public final class Presentation implements Cloneable {
    * The actual value is a Boolean.
    */
   @NonNls public static final String PROP_ENABLED = "enabled";
+  @NonNls public static final Key<@Nls String> PROP_VALUE = Key.create("value");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private PropertyChangeSupport myChangeSupport;
-  @NotNull private Supplier<String> myDescriptionSupplier = () -> null;
+  @NotNull private Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
   private Icon myIcon;
   private Icon myDisabledIcon;
   private Icon myHoveredIcon;
@@ -142,6 +128,11 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic == null ? null : textWithMnemonic.getText();
   }
 
+  public @ActionText String getText(boolean withSuffix) {
+    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    return textWithMnemonic == null ? null : textWithMnemonic.getText(withSuffix);
+  }
+
   /**
    * Sets the presentation text.
    *
@@ -166,16 +157,24 @@ public final class Presentation implements Cloneable {
   }
 
   @NotNull
-  public Supplier<TextWithMnemonic> getTextWithMnemonic(@Nls(capitalization = Nls.Capitalization.Title) @NotNull Supplier<String> text,
+  public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                         boolean mayContainMnemonic) {
-    if (!mayContainMnemonic) return () -> Optional.ofNullable(text.get()).map(TextWithMnemonic::fromPlainText).orElse(null);
-
-    UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-      return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it).dropMnemonic(removeMnemonics.getValue()))
-        .orElse(null);
+    if (mayContainMnemonic) {
+      UISettings uiSettings = UISettings.getInstanceOrNull();
+      boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
+      return () -> {
+        String s = text.get();
+        if (s == null) return null;
+        TextWithMnemonic parsed = TextWithMnemonic.parse(s);
+        return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
+      };
     }
-    return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it)).orElse(null);
+    else {
+      return () -> {
+        String s = text.get();
+        return s == null ? null : TextWithMnemonic.fromPlainText(s);
+      };
+    }
   }
 
   /**
@@ -211,6 +210,7 @@ public final class Presentation implements Cloneable {
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
+  @ActionText
   @Nullable
   public String getTextWithMnemonic() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
@@ -226,22 +226,11 @@ public final class Presentation implements Cloneable {
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
   }
 
-  public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
-    if (text == null) return null;
-    TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
-    for (int i = 0; i < text.length(); i++) {
-      if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-        return textWithMnemonic.setMnemonicAt(i).toString();
-      }
-    }
-    return textWithMnemonic.toString();
-  }
-
   public @ActionDescription String getDescription() {
     return myDescriptionSupplier.get();
   }
 
-  public void setDescription(@NotNull Supplier<String> dynamicDescription) {
+  public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
     Supplier<String> oldDescription = myDescriptionSupplier;
     myDescriptionSupplier = dynamicDescription;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());
@@ -425,6 +414,7 @@ public final class Presentation implements Cloneable {
   }
 
   @Override
+  @Nls
   public String toString() {
     return getText() + " (" + myDescriptionSupplier.get() + ")";
   }

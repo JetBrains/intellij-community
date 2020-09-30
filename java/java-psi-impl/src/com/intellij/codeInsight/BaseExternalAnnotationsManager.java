@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
@@ -283,7 +283,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return findExternalAnnotationsFiles(((PsiClassOwner)containingFile).getPackageName(), virtualFile, f -> getExternalAnnotationsRoots(f));
   }
 
-  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<T, List<VirtualFile>> roots) {
+  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<? super T, ? extends List<VirtualFile>> roots) {
     final List<PsiFile> files = myExternalAnnotationsCache.get(key);
     if (files == NULL_LIST) return null;
 
@@ -429,7 +429,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     });
   }
 
-  public static class AnnotationData {
+  public static final class AnnotationData {
     private final String annotationClassFqName;
     private final String annotationParameters;
 

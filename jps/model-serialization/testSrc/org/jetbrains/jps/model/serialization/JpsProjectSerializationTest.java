@@ -3,9 +3,6 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
@@ -16,19 +13,11 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
@@ -138,7 +127,6 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
     assertEquals("*.class", pattern.getPattern());
     assertEquals(assertOneElement(module.getContentRootsList().getUrls()), pattern.getBaseDirUrl());
-    doTestSaveModule(module, projectPath + "/excludePatterns.iml");
   }
 
   public void testProjectSdkWithoutType() {
@@ -209,7 +197,6 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     checkResourceRoot(roots.get(1), false, "");
     checkResourceRoot(roots.get(2), true, "");
     checkResourceRoot(roots.get(3), true, "foo");
-    doTestSaveModule(module, projectPath + "resourceRoots.iml");
   }
 
   public void testMissingModuleSourcesOrderEntry() {
@@ -229,24 +216,6 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(relativeOutput, properties.getRelativeOutputPath());
   }
 
-  public void testSaveProject() throws IOException {
-    loadProject(SAMPLE_PROJECT_PATH);
-    List<JpsModule> modules = myProject.getModules();
-    doTestSaveModule(modules.get(0), SAMPLE_PROJECT_PATH + "/main.iml");
-    doTestSaveModule(modules.get(1), SAMPLE_PROJECT_PATH + "/util/util.iml");
-    //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
-    //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
-
-    List<Path> libs = Files.list(getFileInSampleProject(".idea/libraries")).collect(Collectors.toList());
-    assertNotNull(libs);
-    for (Path libFile : libs) {
-      String libName = FileUtilRt.getNameWithoutExtension(libFile.getFileName().toString());
-      JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
-      assertNotNull(libName, library);
-      doTestSaveLibrary(libFile, libName, library);
-    }
-  }
-
   public void testUnloadedModule() {
     String projectPath = "/jps/model-serialization/testData/unloadedModule";
     loadProject(projectPath);
@@ -262,32 +231,6 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     loadProject("/jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
     JpsModule module = assertOneElement(myProject.getModules());
     assertEquals("missingContentUrlAttribute", module.getName());
-  }
-
-  private void doTestSaveLibrary(@NotNull Path libFile, String libName, JpsLibrary library) {
-    Element actual = new Element("library");
-    JpsLibraryTableSerializer.saveLibrary(library, actual, libName);
-    JpsMacroExpander
-      macroExpander = JpsProjectLoader.createProjectMacroExpander(Collections.emptyMap(), getFileInSampleProject(""));
-    Element rootElement = JpsLoaderBase.loadRootElement(libFile, macroExpander);
-    assertThat(actual).isEqualTo(rootElement.getChild("library"));
-  }
-
-  private void doTestSaveModule(JpsModule module, final String moduleFilePath) {
-    try {
-      Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
-      JpsModuleRootModelSerializer.saveRootModel(module, actual);
-      Path imlFile = getTestDataAbsoluteFile(moduleFilePath);
-      Element rootElement = loadModuleRootTag(imlFile);
-      assertThat(actual).isEqualTo(JDomSerializationUtil.findComponent(rootElement, "NewModuleRootManager"));
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Path getFileInSampleProject(String relativePath) {
-    return getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH + "/" + relativePath);
   }
 
   public void testLoadIdeaProject() {

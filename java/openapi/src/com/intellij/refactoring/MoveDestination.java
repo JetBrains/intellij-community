@@ -16,6 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -57,11 +58,11 @@ public interface MoveDestination {
   PsiDirectory getTargetIfExists(PsiDirectory source);
   PsiDirectory getTargetIfExists(@NotNull PsiFile source);
 
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String verify(PsiFile source);
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String verify(PsiDirectory source);
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String verify(PsiPackage source);
 
   void analyzeModuleConflicts(@NotNull Collection<? extends PsiElement> elements, @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);

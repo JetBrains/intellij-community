@@ -3,13 +3,13 @@ package git4idea.rebase.log
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitRebaseParams
 import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.rebase.GitRebaseProcess
 import git4idea.rebase.GitRebaseSpec
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInBackground
 
 internal abstract class GitCommitEditingOperation(protected val repository: GitRepository) {
   protected val project = repository.project
@@ -46,7 +46,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     private val initialHead = repository.currentRevision!!
     var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!

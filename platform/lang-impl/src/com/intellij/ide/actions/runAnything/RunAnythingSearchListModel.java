@@ -6,6 +6,7 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -35,8 +36,7 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
     RunAnythingGroup.shiftIndexes(getGroups(), baseIndex, shift);
   }
 
-  @Nullable
-  String getTitle(int titleIndex) {
+  @NlsContexts.PopupTitle @Nullable String getTitle(int titleIndex) {
     return RunAnythingGroup.getTitle(getGroups(), titleIndex);
   }
 

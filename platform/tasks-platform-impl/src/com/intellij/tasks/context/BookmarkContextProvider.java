@@ -3,6 +3,7 @@ package com.intellij.tasks.context;
 
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -19,7 +20,7 @@ public class BookmarkContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Bookmarks";
+    return TaskBundle.message("bookmarks");
   }
 
   @Override

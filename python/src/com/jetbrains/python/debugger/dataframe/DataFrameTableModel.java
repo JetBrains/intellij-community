@@ -21,6 +21,7 @@ import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
@@ -69,8 +70,6 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   @Override
   public String getColumnName(int col) {
-
-
     ArrayChunk.ColHeader header = myColHeaders.get(col);
     if (header != null && header.getLabel() != null) {
       return header.getLabel();
@@ -80,20 +79,31 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
     }
   }
 
+  @Nullable
+  public String getColumnType(int col) {
+    ArrayChunk.ColHeader header = myColHeaders.get(col);
+    if (header != null)
+      return header.getType();
+
+    return null;
+  }
 
   @Override
   protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
-
     myRowHeaderModel.handleChunkAdded(rowOffset, chunk);
-    boolean hasNewCols = false;
+    boolean structureChanged = false;
     List<ArrayChunk.ColHeader> chunkColHeaders = chunk.getColHeaders();
     if (chunkColHeaders != null) {
-      for (int i = 0; i < chunkColHeaders.size(); i++) {
-        ArrayChunk.ColHeader header = chunkColHeaders.get(i);
-        hasNewCols |= (myColHeaders.put(i + colOffset, header) == null);
+      int i = 0;
+      for (ArrayChunk.ColHeader header: chunkColHeaders) {
+        ArrayChunk.ColHeader old = myColHeaders.put(i + colOffset, header);
+        if (old == null || !old.getLabel().equals(header.getLabel())) {
+          structureChanged = true;
+        }
+        i++;
       }
     }
-    if (hasNewCols) {
+    if (structureChanged) {
       UIUtil.invokeLaterIfNeeded(super::fireTableStructureChanged);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -96,7 +96,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
       if (window == null) {
         for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
-          if (frameHelper.getFrame().isActive()) {
+          IdeFrameImpl frame = frameHelper.getFrameOrNullIfDisposed();
+          if (frame != null && frame.isActive()) {
             window = frameHelper.getFrame();
             break;
           }
@@ -899,7 +900,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    private class DialogRootPane extends JRootPane implements DataProvider {
+    private final class DialogRootPane extends JRootPane implements DataProvider {
 
       private final boolean myGlassPaneIsSet;
 

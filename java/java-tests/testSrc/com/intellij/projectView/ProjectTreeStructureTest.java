@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.function.Function;
 
 public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -69,7 +68,18 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.setShowMembers(false);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
                                                 " Class1\n" +
-                                                " Class2\n");
+                                                "  InnerClass\n" +
+                                                " Class2\n" +
+                                                "  InnerClass1\n" +
+                                                "   InnerClass12\n" +
+                                                "    InnerClass13\n" +
+                                                "     InnerClass14\n" +
+                                                "      InnerClass15\n" +
+                                                "  InnerClass2\n" +
+                                                "   InnerClass22\n" +
+                                                "    InnerClass23\n" +
+                                                "     InnerClass24\n" +
+                                                "      InnerClass25\n");
 
     myStructure.setShowMembers(true);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
@@ -145,13 +155,11 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.hideExcludedFiles();
 
     assertStructureEqual("Project\n" +
-                         " nested_module.iml\n" +
                          " noDuplicateModules\n" +
                          "  src\n" +
                          "   com\n" +
                          "    package1\n" +
-                         "     Test.java\n" +
-                         " testNoDuplicateModules.iml\n");
+                         "     Test.java\n");
   }
 
   public void testContentRootUnderExcluded() {
@@ -169,8 +177,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          "  exc\n" +
                          "   excluded.txt\n" +
                          "   gen\n" +
-                         "    A.java\n" +
-                         " testContentRootUnderExcluded.iml\n");
+                         "    A.java\n");
 
     myStructure.hideExcludedFiles();
     assertStructureEqual("Project\n" +
@@ -178,8 +185,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          "  contentRootUnderExcluded\n" +
                          "   B.txt\n" +
                          "  gen\n" +
-                         "   A.java\n" +
-                         " testContentRootUnderExcluded.iml\n");
+                         "   A.java\n");
   }
 
   public void testQualifiedModuleNames() {
@@ -213,9 +219,6 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     };
     String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
     assertEquals("testQualifiedModuleNames\n" +
-                 " a.foo.iml\n" +
-                 " a.iml\n" +
-                 " a.main.iml\n" +
                  " qualifiedModuleNames [testQualifiedModuleNames]\n" +
                  "  a\n" +
                  "   Foo\n" +
@@ -225,10 +228,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                  "   main\n" +
                  "    main.txt\n" +
                  "   util\n" +
-                 "    util.txt\n" +
-                 " testQualifiedModuleNames.iml\n" +
-                 " util.iml\n" +
-                 " x.b.iml\n",
+                 "    util.txt\n",
                  treeStructure);
   }
 }

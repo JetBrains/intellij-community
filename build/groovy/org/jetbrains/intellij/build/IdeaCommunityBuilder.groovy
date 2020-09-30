@@ -22,7 +22,7 @@ class IdeaCommunityBuilder {
 
   void buildFullUpdater() {
     def tasks = BuildTasks.create(buildContext)
-      tasks.compileModules(["intellij.platform.updater"])
+    tasks.compileModules(["updater"])
     tasks.buildFullUpdaterJar()
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.classMembers;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -22,11 +23,13 @@ import java.util.List;
  */
 public class GrMemberSelectionTable extends AbstractMemberSelectionTable<GrMember, GrMemberInfo> {
 
-  public GrMemberSelectionTable(final List<GrMemberInfo> memberInfos, String abstractColumnHeader) {
+  public GrMemberSelectionTable(final List<GrMemberInfo> memberInfos, @ColumnName String abstractColumnHeader) {
     this(memberInfos, null, abstractColumnHeader);
   }
 
-  public GrMemberSelectionTable(final List<GrMemberInfo> memberInfos, MemberInfoModel<GrMember, GrMemberInfo> memberInfoModel, String abstractColumnHeader) {
+  public GrMemberSelectionTable(final List<GrMemberInfo> memberInfos,
+                                MemberInfoModel<GrMember, GrMemberInfo> memberInfoModel,
+                                @ColumnName String abstractColumnHeader) {
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 

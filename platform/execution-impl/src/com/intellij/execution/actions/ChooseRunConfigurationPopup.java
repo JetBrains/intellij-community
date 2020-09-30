@@ -24,11 +24,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -199,26 +200,26 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     boolean confirmed;
     if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
       popup.myPopup.cancel();
-      confirmed = Messages.YES == Messages.showYesNoDialog(project,
-                                                           ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()),
-                                                           CommonBundle.message("title.confirmation"),
-                                                           Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption.Adapter() {
-          @Override
-          public void rememberChoice(boolean isSelected, int exitCode) {
-            runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
-          }
+      confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
+                                             ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
+                    .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+                      @Override
+                      public void rememberChoice(boolean isSelected, int exitCode) {
+                        runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
+                      }
 
-          @NotNull
-          @Override
-          public String getDoNotShowMessage() {
-            return ExecutionBundle.message("don.t.ask.again");
-          }
+                      @NotNull
+                      @Override
+                      public String getDoNotShowMessage() {
+                        return ExecutionBundle.message("don.t.ask.again");
+                      }
 
-          @Override
-          public boolean shouldSaveOptionsOnCancel() {
-            return true;
-          }
-        });
+                      @Override
+                      public boolean shouldSaveOptionsOnCancel() {
+                        return true;
+                      }
+                    })
+                    .ask(project);
     }
     else {
       confirmed = true;
@@ -270,7 +271,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     @Nullable
     public abstract Icon getIcon();
 
-    public abstract String getText();
+    public abstract @NlsActions.ActionText String getText();
 
     public boolean canBeDeleted() {
       return false;
@@ -674,7 +675,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class RunListElementRenderer extends PopupListElementRenderer {
+  private static final class RunListElementRenderer extends PopupListElementRenderer {
     private JLabel myLabel;
     private final ListPopupImpl myPopup1;
     private final boolean myHasSideBar;
@@ -857,7 +858,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class FolderWrapper extends ItemWrapper<String> {
+  private static final class FolderWrapper extends ItemWrapper<String> {
     private final Project myProject;
     private final ExecutorProvider myExecutorProvider;
     private final List<? extends RunnerAndConfigurationSettings> myConfigurations;

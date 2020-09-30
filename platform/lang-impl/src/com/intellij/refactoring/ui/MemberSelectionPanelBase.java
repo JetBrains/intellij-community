@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.ui.ScrollPaneFactory;
@@ -20,7 +21,7 @@ public class MemberSelectionPanelBase<Member extends PsiElement,
   /**
    * @param title if title contains 'm' - it would look and feel as mnemonic
    */
-  public MemberSelectionPanelBase(String title, Table table) {
+  public MemberSelectionPanelBase(@NlsContexts.Separator String title, Table table) {
     super();
     setLayout(new BorderLayout());
 

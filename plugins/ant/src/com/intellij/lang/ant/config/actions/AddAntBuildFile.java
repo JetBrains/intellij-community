@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -44,7 +45,7 @@ public class AddAntBuildFile extends AnAction {
     }
 
     int filesAdded = 0;
-    final StringBuilder errors = new StringBuilder();
+    @Nls final StringBuilder errors = new StringBuilder();
 
     for (VirtualFile file : files) {
       try {

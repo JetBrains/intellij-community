@@ -22,10 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -34,6 +31,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -87,7 +85,7 @@ public class EditorComposite implements Disposable {
   private final FileEditorManagerEx myFileEditorManager;
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<>();
-  private final Map<FileEditor, String> myDisplayNames = new HashMap<>();
+  private final Map<FileEditor, @NlsContexts.TabTitle String> myDisplayNames = new HashMap<>();
 
   private FileEditorProvider[] myProviders;
 
@@ -221,6 +219,8 @@ public class EditorComposite implements Disposable {
    */
   void setPinned(final boolean pinned){
     myPinned = pinned;
+    ObjectUtils.consumeIfCast(getComponent().getParent(), JComponent.class,
+                              component -> component.putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
   }
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
@@ -354,7 +354,7 @@ public class EditorComposite implements Disposable {
     return -1;
   }
 
-  public void setDisplayName(@NotNull FileEditor editor, @NotNull String name) {
+  public void setDisplayName(@NotNull FileEditor editor, @NlsContexts.TabTitle @NotNull String name) {
     int index = ContainerUtil.indexOfIdentity(ContainerUtil.immutableList(myEditors), editor);
     assert index != -1;
 
@@ -365,7 +365,7 @@ public class EditorComposite implements Disposable {
   }
 
   @NotNull
-  protected String getDisplayName(@NotNull FileEditor editor) {
+  protected @NlsContexts.TabTitle String getDisplayName(@NotNull FileEditor editor) {
     return ObjectUtils.notNull(myDisplayNames.get(editor), editor.getName());
   }
 
@@ -464,6 +464,10 @@ public class EditorComposite implements Disposable {
     }
   }
 
+  public static boolean isEditorComposite(@Nullable Component component) {
+    return component instanceof MyComponent;
+  }
+
   private class MyComponent extends JPanel implements DataProvider{
     private @NotNull Supplier<? extends JComponent> myFocusComponent;
 
@@ -547,7 +551,7 @@ public class EditorComposite implements Disposable {
     myFocusWatcher.install(myComponent);
   }
 
-  private static class TopBottomPanel extends JBPanelWithEmptyText {
+  private static final class TopBottomPanel extends JBPanelWithEmptyText {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }

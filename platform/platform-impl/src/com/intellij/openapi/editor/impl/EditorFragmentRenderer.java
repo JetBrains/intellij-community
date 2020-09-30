@@ -146,7 +146,7 @@ class EditorFragmentRenderer {
     }
   }
 
-  private class EditorFragmentPreviewPanel extends JPanel {
+  private final class EditorFragmentPreviewPanel extends JPanel {
     private static final int R = 6;
     private final int myContentInsets;
     private final List<? extends RangeHighlighterEx> myHighlighters;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -35,7 +21,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -75,8 +60,10 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
       DiffContent content1 = createContentWithTitle(getProject(), text1, file1, file2);
       DiffContent content2 = createContentWithTitle(getProject(), text2, file2, file1);
 
-      String title1 = getContentTitle("diff.content.expected.title", file1);
-      String title2 = getContentTitle("diff.content.actual.title", file2);
+      String title1 = file1 != null ? ExecutionBundle.message("diff.content.expected.title.with.file.url", file1.getPresentableUrl())
+                                    : ExecutionBundle.message("diff.content.expected.title");
+      String title2 = file2 != null ? ExecutionBundle.message("diff.content.actual.title.with.file.url", file2.getPresentableUrl())
+                                    : ExecutionBundle.message("diff.content.actual.title");
 
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
     }
@@ -103,15 +90,6 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     else {
       return DiffContentFactory.getInstance().create(project, content, highlightFile);
     }
-  }
-
-  @NotNull
-  private static String getContentTitle(@PropertyKey(resourceBundle = ExecutionBundle.PATH_TO_BUNDLE) @NotNull String titleKey, @Nullable VirtualFile file) {
-    String title = ExecutionBundle.message(titleKey);
-    if (file != null) {
-      title += " (" + file.getPresentableUrl() + ")";
-    }
-    return title;
   }
 
   //

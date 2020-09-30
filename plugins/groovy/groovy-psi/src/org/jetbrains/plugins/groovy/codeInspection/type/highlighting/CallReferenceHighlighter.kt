@@ -7,6 +7,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.util.containers.toArray
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
@@ -21,6 +22,7 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
 
   protected open val ambiguousMethodMessage: String get() = GroovyBundle.message("method.call.is.ambiguous")
 
+  @Nls
   protected open fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String {
     val typeText = containingType.internalCanonicalText
     val argumentsString = argumentsString(arguments)

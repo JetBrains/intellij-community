@@ -27,7 +27,7 @@ import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
 
-@State(name = "InspectionProfileManager", storages = [Storage("editor.xml")], additionalExportFile = InspectionProfileManager.INSPECTION_DIR)
+@State(name = "InspectionProfileManager", storages = [Storage("editor.xml")], additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
 open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : ApplicationInspectionProfileManagerBase(schemeManagerFactory),
                                                                                                                                   PersistentStateComponent<Element> {
   open val converter: InspectionProfileConvertor

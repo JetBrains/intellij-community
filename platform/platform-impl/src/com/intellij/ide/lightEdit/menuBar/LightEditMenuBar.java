@@ -4,6 +4,7 @@ package com.intellij.ide.lightEdit.menuBar;
 import com.intellij.ide.lightEdit.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         new LightEditNewFileAction(),
                         Separator.create(),
                         standardAction("OpenFile"),
-                        new RecentFileActionGroup(),
+                        new LightEditRecentFileActionGroup(),
                         Separator.create(),
                         new LightEditSaveAsAction(),
                         standardAction("SaveAll"),
@@ -53,6 +54,11 @@ public final class LightEditMenuBar extends IdeMenuBar {
       )
     );
     topGroup.add(
+      createActionGroup(ActionsBundle.message("group.WindowMenu.text"),
+                        standardAction("NextProjectWindow"),
+                        standardAction("PreviousProjectWindow"))
+    );
+    topGroup.add(
       createActionGroup(ActionsBundle.message("group.HelpMenu.text"),
                         standardAction("HelpTopics"),
                         standardAction("About"))
@@ -61,7 +67,7 @@ public final class LightEditMenuBar extends IdeMenuBar {
   }
 
   @NotNull
-  private static ActionGroup createActionGroup(@NotNull String title, AnAction... actions) {
+  private static ActionGroup createActionGroup(@NotNull @NlsActions.ActionText String title, AnAction... actions) {
     return new DefaultActionGroup(title, Arrays.asList(actions));
   }
 

@@ -1235,7 +1235,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-  //             HEREDOC_CONTENT*
+  //             HEREDOC_CONTENT?
   //             (HEREDOC_MARKER_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
@@ -1305,14 +1305,10 @@ public class ShParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // HEREDOC_CONTENT*
+  // HEREDOC_CONTENT?
   private static boolean heredoc_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_4")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!consumeToken(b, HEREDOC_CONTENT)) break;
-      if (!empty_element_parsed_guard_(b, "heredoc_4", c)) break;
-    }
+    consumeToken(b, HEREDOC_CONTENT);
     return true;
   }
 
@@ -1381,12 +1377,13 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // "in" w+ list_terminator newlines
+  // in w+ list_terminator newlines
   static boolean in_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "in_clause")) return false;
+    if (!nextTokenIs(b, IN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, "in");
+    r = consumeToken(b, IN);
     p = r; // pin = 1
     r = r && report_error_(b, in_clause_1(b, l + 1));
     r = p && report_error_(b, list_terminator(b, l + 1)) && r;

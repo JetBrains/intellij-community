@@ -5,6 +5,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +28,7 @@ public interface ApplicationStarter {
    *
    * @return command-line selector.
    */
-  String getCommandName();
-
-  /**
-   * @deprecated Use {@link #premain(List)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
+  @NonNls String getCommandName();
 
   /**
    * Called before application initialization.
@@ -43,13 +37,6 @@ public interface ApplicationStarter {
    */
   default void premain(@NotNull List<String> args) {
     premain(ArrayUtilRt.toStringArray(args));
-  }
-
-  /**
-   * @deprecated Use {@link #main(List)}
-   */
-  @Deprecated
-  default void main(String @NotNull [] args) {
   }
 
   /**
@@ -89,18 +76,25 @@ public interface ApplicationStarter {
     return allowAnyModalityState() ? ANY_MODALITY : NON_MODAL;
   }
 
-  /**
-   * @deprecated Use {@link #getRequiredModality()}.
-   */
+  /** @see #canProcessExternalCommandLine */
+  default @NotNull Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
+    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated Use {@link #premain(List)} */
+  @Deprecated
+  default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
+
+  /** @deprecated Use {@link #main(List)} */
+  @Deprecated
+  default void main(String @NotNull [] args) { }
+
+  /** @deprecated Use {@link #getRequiredModality()} */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   default boolean allowAnyModalityState() {
     return false;
   }
-
-  /** @see #canProcessExternalCommandLine */
-  @NotNull
-  default Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
-    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
-  }
+  //</editor-fold>
 }

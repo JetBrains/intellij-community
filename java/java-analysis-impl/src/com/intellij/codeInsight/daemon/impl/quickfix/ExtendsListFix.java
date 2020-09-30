@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   private final boolean myToAdd;
   @SafeFieldForPreview // we don't mo
   private final PsiClassType myTypeToExtendFrom;
-  private final String myName;
+  private final @IntentionName String myName;
 
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
     this(aClass, typeToExtendFrom.resolve(), typeToExtendFrom, toAdd);

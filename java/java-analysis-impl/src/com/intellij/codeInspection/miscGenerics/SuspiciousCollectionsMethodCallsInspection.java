@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -82,16 +83,21 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     return "SuspiciousMethodCalls";
   }
 
-  private static String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
-                                                       boolean reportConvertibleMethodCalls,
-                                                       List<SuspiciousMethodCallUtil.PatternMethod> patternMethods,
-                                                       PsiExpression arg,
-                                                       int i) {
+  private static @InspectionMessage String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
+                                                                          boolean reportConvertibleMethodCalls,
+                                                                          List<SuspiciousMethodCallUtil.PatternMethod> patternMethods,
+                                                                          PsiExpression arg,
+                                                                          int i) {
     PsiType argType = arg.getType();
     boolean exactType = arg instanceof PsiNewExpression;
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
+      String methodName = methodCall.getMethodExpression().getReferenceName();
+      if (SuspiciousMethodCallUtil.isCollectionAcceptingMethod(methodName)) {
+        // DFA works on raw types, so anyway we cannot narrow the argument type
+        return plainMessage;
+      }
       TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
       PsiType type = constraint.getPsiType(methodCall.getProject());
       if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {

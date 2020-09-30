@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.GraphCommitImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +208,14 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
           mySingleTaskController.taskCompleted(dataPack);
           break;
         }
-        dataPack = doRefresh(rootsToRefresh);
+
+        try {
+          dataPack = doRefresh(rootsToRefresh);
+        }
+        catch (ProcessCanceledException e) {
+          mySingleTaskController.taskCompleted(null);
+          throw e;
+        }
       }
     }
 
@@ -360,8 +368,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static class RefreshRequest {
     private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
+      @NonNls
       public String toString() {
-        return "RELOAD_ALL"; // NON-NLS
+        return "RELOAD_ALL";
       }
     };
     private final Collection<VirtualFile> rootsToRefresh;

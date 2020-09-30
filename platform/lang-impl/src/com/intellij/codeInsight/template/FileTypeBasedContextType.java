@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FileTypeBasedContextType extends TemplateContextType {
   private final LanguageFileType myFileType;
 
-  protected FileTypeBasedContextType(@NotNull @NonNls String id, @NotNull String presentableName, @NotNull LanguageFileType fileType) {
+  protected FileTypeBasedContextType(@NotNull @NonNls String id, @NotNull @NlsContexts.Label String presentableName, @NotNull LanguageFileType fileType) {
     super(id, presentableName);
     myFileType = fileType;
   }

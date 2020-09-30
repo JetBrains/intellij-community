@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
@@ -37,7 +37,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,7 +45,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(DarculaLaf.class);
 
   private static final Object SYSTEM = new Object();
-  public static final String NAME = "Darcula";
+  public static final @NlsSafe String NAME = "Darcula";
+  private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
   BasicLookAndFeel base;
 
   protected Disposable myDisposable;
@@ -355,7 +355,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Override
   public String getDescription() {
-    return "IntelliJ Dark Look and Feel";
+    return DESCRIPTION;
   }
 
   @Override

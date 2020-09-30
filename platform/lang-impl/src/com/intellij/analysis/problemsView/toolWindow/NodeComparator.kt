@@ -29,12 +29,12 @@ internal data class NodeComparator(
       if (result != 0) return result
     }
     return if (sortByName) {
-      val result = naturalCompare(problem1.description, problem2.description)
+      val result = naturalCompare(problem1.text, problem2.text)
       if (result != 0) result else problem1.offset.compareTo(problem2.offset)
     }
     else {
       val result = problem1.offset.compareTo(problem2.offset)
-      if (result != 0) result else naturalCompare(problem1.description, problem2.description)
+      if (result != 0) result else naturalCompare(problem1.text, problem2.text)
     }
   }
 }

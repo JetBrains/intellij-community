@@ -16,9 +16,8 @@ public final class UtilBundle extends BundleBase {
 
   private UtilBundle() { }
 
-  @Nls
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return message(getUtilBundle(), key, params);
   }
 

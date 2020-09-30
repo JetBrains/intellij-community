@@ -19,7 +19,7 @@ import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.util.IntList
 import com.intellij.diagnostic.hprof.util.UByteList
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
 class AnalysisContext(
   val navigator: ObjectNavigator,
@@ -31,5 +31,5 @@ class AnalysisContext(
   var histogram: Histogram
 ) {
   val classStore = navigator.classStore
-  val disposedObjectsIDs = TIntHashSet()
+  val disposedObjectsIDs = IntOpenHashSet()
 }

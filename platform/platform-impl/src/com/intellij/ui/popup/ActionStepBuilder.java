@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -19,8 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
-
 class ActionStepBuilder {
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
@@ -30,7 +30,7 @@ class ActionStepBuilder {
   private final boolean                         myShowDisabled;
   private       int                             myCurrentNumber;
   private       boolean                         myPrependWithSeparator;
-  private       String                          mySeparatorText;
+  private @NlsContexts.Separator String mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
   private Icon myEmptyIcon;
@@ -74,7 +74,7 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
+      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null, null));
     }
   }
 
@@ -115,7 +115,8 @@ class ActionStepBuilder {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, myPresentationFactory, myDataContext, myActionPlace);
+    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, myPresentationFactory, myDataContext,
+                                                               myActionPlace, null, true);
     for (AnAction action : newVisibleActions) {
       if (action instanceof Separator) {
         myPrependWithSeparator = true;
@@ -145,7 +146,9 @@ class ActionStepBuilder {
         myCurrentNumber++;
       }
       else if (myHonorActionMnemonics) {
-        text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
+        if (text != null) {
+          text = TextWithMnemonic.fromPlainText(text, (char)action.getTemplatePresentation().getMnemonic()).toString();
+        }
       }
 
       boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
@@ -179,7 +182,8 @@ class ActionStepBuilder {
       assert text != null : action + " has no presentation";
       myListModel.add(
         new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
+                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText,
+                                        presentation.getClientProperty(Presentation.PROP_VALUE)));
       myPrependWithSeparator = false;
       mySeparatorText = null;
     }

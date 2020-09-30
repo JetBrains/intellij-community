@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -75,16 +76,12 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
         final String moduleName = module1.getName();
         return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
       };
-      StringBuilder message = new StringBuilder("Tests were not found in module \"").append(module.getName()).append( "\".\nUse ");
-      if (modulesWithPackage.size() == 1) {
-        message.append("module \"").append(moduleNameRef.fun(modulesWithPackage.iterator().next())).append("\" ");
-      }
-      else {
-        message.append("one of\n").append(StringUtil.join(modulesWithPackage, moduleNameRef, "\n")).append("\n");
-      }
-      message.append("instead");
+      String message = JavaBundle.message("popup.content.tests.were.not.found.in.module.use.instead", module.getName(), 
+                                          modulesWithPackage.size() == 1 ? 0 : 1,
+                                          moduleNameRef.fun(modulesWithPackage.iterator().next()),
+                                          StringUtil.join(modulesWithPackage, moduleNameRef, "\n"));
       UIUtil.invokeLaterIfNeeded(() ->
-                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message.toString(), null, 
+                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
                                                                      new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId)));
       return true;
     }

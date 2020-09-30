@@ -50,7 +50,7 @@ public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     myDelegate.attachToProcess(processHandler);
   }
 

@@ -3,6 +3,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ import java.util.List;
 final class IdSet {
   private static final List<String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
 
-  String myTitle;
+  @Nls String myTitle;
   List<PluginId> myIds;
 
   IdSet(final PluginGroups pluginGroups, @NonNls String description) {
@@ -48,7 +49,7 @@ final class IdSet {
   }
 
   @Nullable
-  public String getTitle() {
+  public @Nls String getTitle() {
     return myTitle;
   }
 

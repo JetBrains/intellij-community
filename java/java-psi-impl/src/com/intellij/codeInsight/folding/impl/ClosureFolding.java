@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * @author peter
  */
-class ClosureFolding {
+final class ClosureFolding {
   @NotNull private final PsiAnonymousClass myAnonymousClass;
   @NotNull private final PsiNewExpression myNewExpression;
   @Nullable private final PsiClass myBaseClass;

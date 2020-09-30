@@ -11,8 +11,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -453,18 +454,18 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndTooltip(getName(), null);
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip) {
       setNameAndTooltip(name, tooltip, (String)null);
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip, @Nullable String hint) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip, @Nullable String hint) {
       setNameAndTooltip(name, tooltip, getPlainAttributes());
       if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
         addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip, SimpleTextAttributes attributes) {
       clearColoredText();
       addColoredFragment(name, prepareAttributes(attributes));
       getTemplatePresentation().setTooltip(tooltip);
@@ -724,7 +725,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                   MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                   XmlElement xmlElement = mavenDomProfile.getXmlElement();
                   if (xmlElement != null) {
-                    setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+                    setText(xmlElement.getContainingFile().getVirtualFile().getPresentableUrl());
                   }
                   return result;
                 }
@@ -767,7 +768,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final ModulesNode myModulesNode;
     private final RunConfigurationsNode myRunConfigurationsNode;
 
-    private String myTooltipCache;
+    private @NlsContexts.Tooltip String myTooltipCache;
 
     public ProjectNode(@NotNull MavenProject mavenProject) {
       super(null);
@@ -866,21 +867,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return super.getPlainAttributes();
     }
 
+    @NlsContexts.DetailedDescription
     private String makeDescription() {
       StringBuilder desc = new StringBuilder();
-      desc.append("<html>" +
-                  "<table>" +
-                  "<tr>" +
-                  "<td nowrap>" +
-                  "<table>" +
-                  "<tr>" +
-                  "<td nowrap>Project:</td>" +
-                  "<td nowrap>").append(myMavenProject.getMavenId())
-        .append("</td>" +
-                "</tr>" +
-                "<tr>" +
-                "<td nowrap>Location:</td>" +
-                "<td nowrap>").append(myMavenProject.getPath())
+      desc.append("<html>" + "<table>" + "<tr>" + "<td nowrap>" + "<table>" + "<tr>" + "<td nowrap>")
+        .append(MavenProjectBundle.message("detailed.description.project")).append("</td>").append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>" + "</tr>" + "<tr>" + "<td nowrap>")
+        .append(MavenProjectBundle.message("detailed.description.location")).append(":</td>").append("<td nowrap>").append(myMavenProject.getPath())
         .append("</td>" +
                 "</tr>" +
                 "</table>" +
@@ -891,7 +883,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       desc.append("</table></html>");
 
-      return desc.toString();
+      return desc.toString(); //NON-NLS
     }
 
     private void appendProblems(StringBuilder desc) {
@@ -907,7 +899,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         desc.append("<tr>");
         if (first) {
           desc.append("<td nowrap valign=top>").append(MavenUtil.formatHtmlImage(ERROR_ICON_URL)).append("</td>");
-          desc.append("<td nowrap valign=top>Problems:</td>");
+          desc.append("<td nowrap valign=top>").append(MavenProjectBundle.message("detailed.description.problems")).append("</td>");
           first = false;
         }
         else {
@@ -1452,7 +1444,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (RunnerAndConfigurationSettings cfg : settings) {
         MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
 
-        if (FileUtil.pathsEqual(directory, mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
+        if (PathUtil.pathEqualsTo(mavenProject.getDirectoryFile(), mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
           myChildren.add(new RunConfigurationNode(this, cfg));
         }
       }

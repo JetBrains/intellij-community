@@ -11,13 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public final class Executor {
-
-  protected static final Logger LOG = Logger.getInstance(Executor.class);
+  private static final Logger LOG = Logger.getInstance(Executor.class);
 
   private static String ourCurrentDir;
 
@@ -38,6 +38,10 @@ public final class Executor {
 
   public static void cd(@NotNull File dir) {
     cdAbs(dir.getAbsolutePath());
+  }
+
+  public static void cd(@NotNull Path dir) {
+    cdAbs(dir.toAbsolutePath().normalize().toString());
   }
 
   public static void cd(@NotNull String relativeOrAbsolutePath) {
@@ -114,8 +118,7 @@ public final class Executor {
     FileUtil.delete(file);
   }
 
-  @NotNull
-  public static File mkdir(@NotNull String dirName) {
+  public static @NotNull File mkdir(@NotNull String dirName) {
     File file = child(dirName);
     boolean dirMade = file.mkdir();
     LOG.assertTrue(dirMade, "Directory " + dirName + " was not created on [" + file.getPath() + "]. " +

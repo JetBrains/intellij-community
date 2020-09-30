@@ -5,6 +5,8 @@
     <property name="ideVersion">2019.1.0.0</property>
     <property name="modified">2018-11-06T13:11:49</property>
     <property name="originalScheme">_@user_High contrast</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">high.contrast.color.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="9924" />

@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +13,8 @@ public class LightEditPositionWidget extends PositionPanel implements LightEdito
   private final LightEditorManager myEditorManager;
   private @Nullable Editor myEditor;
 
-  public LightEditPositionWidget(@NotNull LightEditorManager editorManager) {
-    super(LightEditUtil.getProject());
+  public LightEditPositionWidget(@NotNull Project project, @NotNull LightEditorManager editorManager) {
+    super(project);
     myEditorManager = editorManager;
   }
 

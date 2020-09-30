@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +29,7 @@ public abstract class GistManager {
    * @return the gist object, where {@link VirtualFileGist#getFileData} can later be used to retrieve the cached data
    */
   @NotNull
-  public abstract <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull String id,
+  public abstract <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull @NonNls String id,
                                                                   int version,
                                                                   @NotNull DataExternalizer<Data> externalizer,
                                                                   @NotNull VirtualFileGist.GistCalculator<Data> calcData);
@@ -43,7 +44,7 @@ public abstract class GistManager {
    * @return the gist object, where {@link PsiFileGist#getFileData} can later be used to retrieve the cached data
    */
   @NotNull
-  public abstract <Data> PsiFileGist<Data> newPsiFileGist(@NotNull String id,
+  public abstract <Data> PsiFileGist<Data> newPsiFileGist(@NotNull @NonNls String id,
                                                           int version,
                                                           @NotNull DataExternalizer<Data> externalizer,
                                                           @NotNull NullableFunction<PsiFile, Data> calcData);

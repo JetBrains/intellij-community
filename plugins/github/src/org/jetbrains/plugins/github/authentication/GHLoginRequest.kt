@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages.*
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.createAccount
@@ -11,6 +13,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
 
 internal class GHLoginRequest(
+  @NlsContexts.DialogMessage
   val text: String? = null,
   val error: Throwable? = null,
 
@@ -48,9 +51,9 @@ internal fun GHLoginRequest.loginWithOAuth(project: Project?, parentComponent: C
 }
 
 internal fun GHLoginRequest.loginWithOAuthOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? =
-  when (promptOAuthLogin(project, parentComponent)) {
-    YES -> loginWithOAuth(project, parentComponent)
-    NO -> loginWithToken(project, parentComponent)
+  when (promptOAuthLogin(this, project, parentComponent)) {
+    Messages.YES -> loginWithOAuth(project, parentComponent)
+    Messages.NO -> loginWithToken(project, parentComponent)
     else -> null
   }
 
@@ -66,25 +69,19 @@ private fun GHLoginRequest.configure(dialog: BaseLoginDialog) {
 
 private fun BaseLoginDialog.getAuthData(): GHAccountAuthData? {
   DialogManager.show(this)
-
   return if (isOK) GHAccountAuthData(createAccount(login, server), login, token) else null
 }
 
-private fun GHLoginRequest.promptOAuthLogin(project: Project?, parentComponent: Component?): Int =
-  if (parentComponent != null) promptOAuthLogin(parentComponent) else promptOAuthLogin(project!!)
+private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentComponent: Component?): Int {
+  val builder = MessageDialogBuilder.yesNoCancel(message("login.to.github"), request.text ?: message("dialog.message.login.to.continue"))
+    .yesText(message("login.via.github.action"))
+    .noText(message("button.use.token"))
+    .icon(Messages.getWarningIcon())
+  if (parentComponent != null) {
+    return builder.show(parentComponent)
+  }
+  else {
+    return builder.show(project)
+  }
 
-private fun GHLoginRequest.promptOAuthLogin(project: Project): Int =
-  showYesNoCancelDialog(
-    project,
-    text ?: message("dialog.message.login.to.continue"), message("login.to.github"),
-    message("login.via.github.action"), message("button.use.token"), getCancelButton(),
-    getWarningIcon()
-  )
-
-private fun GHLoginRequest.promptOAuthLogin(parentComponent: Component): Int =
-  showYesNoCancelDialog(
-    parentComponent,
-    text ?: message("dialog.message.login.to.continue"), message("login.to.github"),
-    message("login.via.github.action"), message("button.use.token"), getCancelButton(),
-    getWarningIcon()
-  )
+}

@@ -63,7 +63,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
   }
 
-  private static class DuplicateCharacterInClassFix implements LocalQuickFix {
+  private static final class DuplicateCharacterInClassFix implements LocalQuickFix {
 
     private final String myText;
 

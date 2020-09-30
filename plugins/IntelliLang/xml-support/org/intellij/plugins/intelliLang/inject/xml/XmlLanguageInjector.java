@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.intelliLang.inject.xml;
 
 import com.intellij.lang.Language;
@@ -33,7 +32,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
-import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -55,7 +53,7 @@ import java.util.regex.Pattern;
  * <p/>
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
-public final class XmlLanguageInjector implements MultiHostInjector {
+final class XmlLanguageInjector implements MultiHostInjector {
   private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
 
@@ -235,7 +233,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
     Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
     if (index == null || myConfiguration.getModificationCount() != index.first.longValue()) {
-      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<>();
+      final Map<ElementPattern<?>, BaseInjection> map = new HashMap<>();
       for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;
@@ -259,5 +257,4 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     }
     return sb.length() == 0 ? null : Pattern.compile(sb.toString());
   }
-
 }

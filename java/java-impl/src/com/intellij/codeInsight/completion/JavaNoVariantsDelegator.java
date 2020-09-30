@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -41,7 +42,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author peter
  */
-public class JavaNoVariantsDelegator extends CompletionContributor {
+public class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     ResultTracker tracker = new ResultTracker(result) {
@@ -72,7 +73,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
-          JavaCompletionContributor.isClassNamePossible(parameters)) {
+          JavaCompletionContributor.isClassNamePossible(parameters) &&
+          !JavaCompletionContributor.isInPermitsList(parameters.getPosition())) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
       }
     }

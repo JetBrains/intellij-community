@@ -22,10 +22,12 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 final class LibraryDependentToolWindowManager implements StartupActivity {
@@ -51,10 +53,10 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
 
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
-    LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<LibraryDependentToolWindow>() {
+    LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LibraryDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkToolWindowStatuses(project, Collections.singletonList(extension));
+        checkToolWindowStatuses(project, extension.id);
       }
 
       @Override
@@ -67,35 +69,60 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
     }, project);
   }
 
-  private void checkToolWindowStatuses(@NotNull final Project project) {
-    checkToolWindowStatuses(project, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList());
+  private void checkToolWindowStatuses(@NotNull Project project) {
+    checkToolWindowStatuses(project, null);
   }
 
-  private void checkToolWindowStatuses(@NotNull Project project, @NotNull List<LibraryDependentToolWindow> extensions) {
+  private void checkToolWindowStatuses(@NotNull Project project, @Nullable String extensionId) {
     ModalityState currentModalityState = ModalityState.current();
     ReadAction
-      .nonBlocking(() -> new HashSet<>(ContainerUtil.findAll(extensions, ltw -> {
-        LibrarySearchHelper helper = ltw.getLibrarySearchHelper();
-        return helper != null && helper.isLibraryExists(project);
-      })))
-      .inSmartMode(project)
-      .coalesceBy(this)
-      .finishOnUiThread(currentModalityState, existing -> {
-        ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
-        for (LibraryDependentToolWindow libraryToolWindow : extensions) {
-          ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
-          if (existing.contains(libraryToolWindow)) {
-            if (toolWindow == null) {
-              toolWindowManagerEx.initToolWindow(libraryToolWindow);
-            }
-          }
-          else {
-            if (toolWindow != null) {
-              toolWindow.remove();
-            }
-          }
+      .nonBlocking(() -> {
+        List<LibraryDependentToolWindow> extensions = LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList();
+        if (extensionId != null) {
+          extensions = ContainerUtil.filter(extensions, ltw -> Objects.equals(ltw.id, extensionId));
         }
+
+        Set<LibraryDependentToolWindow> existing = new HashSet<>(ContainerUtil.findAll(extensions, ltw -> {
+          LibrarySearchHelper helper = ltw.getLibrarySearchHelper();
+          return helper != null && helper.isLibraryExists(project);
+        }));
+
+        return new LibraryWindowsState(project, extensions, existing);
       })
+      .inSmartMode(project)
+      .coalesceBy(this, project)
+      .finishOnUiThread(currentModalityState, LibraryDependentToolWindowManager::applyWindowsState)
       .submit(ourExecutor);
+  }
+
+  private static void applyWindowsState(LibraryWindowsState state) {
+    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(state.project);
+    for (LibraryDependentToolWindow libraryToolWindow : state.extensions) {
+      ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
+      if (state.existing.contains(libraryToolWindow)) {
+        if (toolWindow == null) {
+          toolWindowManagerEx.initToolWindow(libraryToolWindow);
+        }
+      }
+      else {
+        if (toolWindow != null) {
+          toolWindow.remove();
+        }
+      }
+    }
+  }
+
+  private static class LibraryWindowsState {
+    final @NotNull Project project;
+    final List<LibraryDependentToolWindow> extensions;
+    final Set<LibraryDependentToolWindow> existing;
+
+    private LibraryWindowsState(@NotNull Project project,
+                                List<LibraryDependentToolWindow> extensions,
+                                Set<LibraryDependentToolWindow> existing) {
+      this.project = project;
+      this.extensions = extensions;
+      this.existing = existing;
+    }
   }
 }

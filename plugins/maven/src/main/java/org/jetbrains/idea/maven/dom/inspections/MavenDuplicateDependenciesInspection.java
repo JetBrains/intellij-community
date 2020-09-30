@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import java.util.*;
 
@@ -140,7 +141,7 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
       if (set.size() <= 1) continue;
 
       for (MavenDomDependency dependency : set) {
-        holder.createProblem(dependency, HighlightSeverity.WARNING, "Duplicated dependency");
+        holder.createProblem(dependency, HighlightSeverity.WARNING, MavenProjectBundle.message("inspection.message.duplicated.dependency"));
       }
     }
   }

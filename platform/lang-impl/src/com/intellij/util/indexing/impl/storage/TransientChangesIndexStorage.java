@@ -21,7 +21,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
-  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
+  private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final VfsAwareIndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -54,9 +54,6 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
     assert wasEnabled != enabled;
 
     myBufferingEnabled = enabled;
-    if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-      FileBasedIndexImpl.LOG.info("buffering state changed: " + myIndexId + "; enabled = " + enabled);
-    }
     for (BufferingStateListener listener : myListeners) {
       listener.bufferingStateChanged(enabled);
     }
@@ -69,7 +66,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   }
 
   public boolean clearMemoryMapForId(Key key, int fileId) {
-    ChangeTrackingValueContainer<Value> container = myMap.get(key);
+    TransientChangeTrackingValueContainer<Value> container = myMap.get(key);
     if (container != null) {
       container.dropAssociatedValue(fileId);
       return true;
@@ -169,11 +166,11 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   }
 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
-    ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
+    TransientChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      valueContainer = new TransientChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<>() {
         @Override
-        public Object getLock() {
+        public @NotNull Object getLock() {
           return this;
         }
 

@@ -78,7 +78,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         final PsiElement declarationScope = ((PsiParameter)var).getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
-          final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+          final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method);
           if (superMethod == null) {
             return null;
           }
@@ -104,7 +104,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         return null;
       }
 
-      return SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+      return SuperMethodWarningUtil.checkSuperMethod(method);
     }
     return null;
   }

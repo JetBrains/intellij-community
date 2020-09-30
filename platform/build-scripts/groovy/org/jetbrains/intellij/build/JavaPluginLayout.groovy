@@ -10,7 +10,7 @@ class JavaPluginLayout {
       mainJarName = "java-impl.jar"
       excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
       withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
-      withModule("intellij.platform.jps.build", "jps-builders.jar")
+      withModule("intellij.platform.jps.build", "jps-builders.jar", null)
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
@@ -21,11 +21,10 @@ class JavaPluginLayout {
        "intellij.java.guiForms.compiler",
        "intellij.java.guiForms.rt",
        "intellij.java.compiler.instrumentationUtil",
-       "intellij.java.compiler.instrumentationUtil.java8",
-       "intellij.java.jps.javacRefScanner8"].
-        each {
-          withModule(it, "javac2.jar")
-        }
+       "intellij.java.compiler.instrumentationUtil.java8"
+      ].each {
+        withModule(it, "javac2.jar")
+      }
 
       [
         "intellij.java.compiler",
@@ -71,6 +70,7 @@ class JavaPluginLayout {
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("debugger-memory-agent")//todo nik: convert to module-level library instead
+      withProjectLibrary("jps-javac-extension")
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
       addition.delegate = delegate

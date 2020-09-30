@@ -58,9 +58,9 @@ public final class ValidationSimpleRuleFactory {
                             Pair.create(RULE_PREFIX,s -> getBooleanRule(s)),
                             Pair.create(UTIL_PREFIX,s -> getCustomUtilRule(s)),
                             Pair.create(ENUM_PREFIX, s -> new EnumValidationRule(StringUtil.split(s, ENUM_SEPARATOR, true, false))),
-                            Pair.create(ENUM_REF_PREFIX, s -> new EnumValidationRule(contextData.getEnum(s))),
+                            Pair.create(ENUM_REF_PREFIX, s -> contextData.getEnumValidationRule(s)),
                             Pair.create(REGEXP_PREFIX, s -> new RegexpValidationRule(s)),
-                            Pair.create(REGEXP_REF_PREFIX, s -> new RegexpValidationRule(contextData.getRegexp(s)))); }
+                            Pair.create(REGEXP_REF_PREFIX, s -> contextData.getRegexpValidationRule(s))); }
 
   @Nullable
   private static FUSRule getCustomUtilRule(String s) {
@@ -168,7 +168,7 @@ public final class ValidationSimpleRuleFactory {
       }
     }
     if (fusRule == null) return UNPARSED_EXPRESSION;
-    return new UtilExpressionValidationRule(fusRule, prefix, suffix);
+    return new ExpressionValidationRule(fusRule, prefix, suffix);
   }
 
   @NotNull

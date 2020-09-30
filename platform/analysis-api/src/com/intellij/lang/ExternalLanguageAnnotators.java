@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator> {
+public final class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator> {
   public static final ExtensionPointName<LanguageExtensionPoint<ExternalAnnotator>> EP_NAME = ExtensionPointName.create("com.intellij.externalAnnotator");
 
   public static final ExternalLanguageAnnotators INSTANCE = new ExternalLanguageAnnotators();

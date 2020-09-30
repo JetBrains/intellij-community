@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
@@ -728,7 +729,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
             @Override
             public void update(@NotNull AnActionEvent e) {
-              e.getPresentation().setEnabledAndVisible(Arrays.stream(thumbnailView.getSelection()).noneMatch(file -> tagManager.hasTag(tag, file)));
+              e.getPresentation().setEnabledAndVisible(!ContainerUtil.exists(thumbnailView.getSelection(), file -> tagManager.hasTag(tag, file)));
             }
           };
         }

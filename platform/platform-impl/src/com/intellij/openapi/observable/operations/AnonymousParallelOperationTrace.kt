@@ -2,8 +2,9 @@
 package com.intellij.openapi.observable.operations
 
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace.Companion.task
+import org.jetbrains.annotations.NonNls
 
-class AnonymousParallelOperationTrace(debugName: String? = null) {
+class AnonymousParallelOperationTrace(@NonNls debugName: String? = null) {
   private val delegate = CompoundParallelOperationTrace<Nothing?>(debugName)
 
   fun isOperationCompleted() = delegate.isOperationCompleted()

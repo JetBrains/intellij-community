@@ -40,14 +40,16 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(project)
-                .notifyError(result, HgBundle.message("hg4idea.branch.creation.error"),
+                .notifyError("hg.tag.creation.error",
+                             result,
+                             HgBundle.message("hg4idea.branch.creation.error"),
                              HgBundle.message("action.hg4idea.CreateTag.error.msg", dialog.getTagName()));
             }
           }
         });
       }
       catch (HgCommandException e) {
-        HgErrorUtil.handleException(project, e);
+        HgErrorUtil.handleException(project, "hg.tag.creation.failed", e);
       }
     }
   }

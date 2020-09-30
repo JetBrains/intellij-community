@@ -10,11 +10,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class LightEditGotoOpenedFileAction extends FileChooserAction implements LightEditCompatible {
 
   @Override
-  protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
+  protected void actionPerformed(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       VirtualFile file = ArrayUtil.getFirstElement(FileEditorManager.getInstance(project).getSelectedFiles());
@@ -25,12 +26,13 @@ public final class LightEditGotoOpenedFileAction extends FileChooserAction imple
   }
 
   @Override
-  protected void update(FileSystemTree fileChooser, AnActionEvent e) {
+  protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (!LightEdit.owns(project)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+    if (LightEdit.owns(project)) {
+      e.getPresentation().setEnabled(FileEditorManager.getInstance(project).hasOpenFiles());
     }
-    e.getPresentation().setEnabled(FileEditorManager.getInstance(project).hasOpenFiles());
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

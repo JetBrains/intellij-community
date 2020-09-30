@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -38,7 +25,7 @@ public class TargetActionStub extends AnAction implements Disposable {
   private final AtomicBoolean myActionInvoked = new AtomicBoolean(false);
 
   public TargetActionStub(String actionId, Project project) {
-    super("ant target action stub");
+    super(AntBundle.message("action.ant.target.action.stub.text"));
     myActionId = actionId;
     myProject = project;
     Disposer.register(AntDisposable.getInstance(project), this);
@@ -89,7 +76,7 @@ public class TargetActionStub extends AnAction implements Disposable {
     }
   }
 
-  private static class ListenerRemover implements Disposable {
+  private static final class ListenerRemover implements Disposable {
     private AntConfiguration myConfig;
     private AntConfigurationListener myListener;
 

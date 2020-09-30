@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,7 @@ final class ConfigurableGroupEP implements PluginAware {
    */
   @RequiredElement
   @Attribute("displayNameKey")
+  @NlsContexts.ConfigurableName
   public String displayNameKey;
 
   /**
@@ -87,6 +89,7 @@ final class ConfigurableGroupEP implements PluginAware {
    */
   @RequiredElement
   @Attribute("descriptionKey")
+  @NlsContexts.DetailedDescription
   public String descriptionKey;
 
   private PluginDescriptor myPluginDescriptor;
@@ -96,11 +99,11 @@ final class ConfigurableGroupEP implements PluginAware {
     myPluginDescriptor = descriptor;
   }
 
-  @NotNull String getDisplayName() {
+  @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return getResourceValue(displayNameKey);
   }
 
-  @NotNull String getDescription() {
+  @NlsContexts.DetailedDescription @NotNull String getDescription() {
     return getResourceValue(descriptionKey);
   }
 
@@ -116,7 +119,7 @@ final class ConfigurableGroupEP implements PluginAware {
     return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, classLoader);
   }
 
-  @NotNull String getResourceValue(@NotNull String key) {
+  @NotNull @NlsContexts.ConfigurableName String getResourceValue(@NotNull String key) {
     String message = AbstractBundle.messageOrNull(getResourceBundle(), key);
     return message != null ? message : OptionsBundle.message(key);
   }

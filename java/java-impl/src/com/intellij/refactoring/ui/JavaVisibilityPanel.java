@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
@@ -43,7 +44,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
 
   public JavaVisibilityPanel(boolean hasAsIs,
                              final boolean hasEscalate,
-                             String visibilityTitle) {
+                             @NlsContexts.BorderTitle String visibilityTitle) {
     setBorder(IdeBorderFactory.createTitledBorder(visibilityTitle, true,
                                                   JBUI.insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET, UIUtil.DEFAULT_HGAP,
                                                               IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,

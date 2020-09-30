@@ -24,8 +24,6 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.nullize
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
@@ -341,7 +339,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       return
     }
 
-    val runners = THashSet<ProgramRunner<*>>()
+    val runners = HashSet<ProgramRunner<*>>()
     runners.addAll(runnerSettings.settings.keys.mapNotNull { ProgramRunner.findRunnerById(it) })
     runners.addAll(configurationPerRunnerSettings.settings.keys.mapNotNull { ProgramRunner.findRunnerById(it) })
     executor?.let { ProgramRunner.getRunner(executor.id, configuration)?.let { runners.add(it) } }
@@ -350,18 +348,24 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       if (executor == null || runner.canRun(executor.id, configuration)) {
         val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner.runnerId], configurationPerRunnerSettings.settings[runner.runnerId]) }
         if (runnerWarning != null) {
-          if (warning == null) warning = runnerWarning
-        } else {
-          runnerFound = true // there is at least one runner to run specified configuration
+          if (warning == null) {
+            warning = runnerWarning
+          }
+        }
+        else {
+          // there is at least one runner to run specified configuration
+          runnerFound = true
         }
       }
     }
     if (executor != null && executor != DefaultRunExecutor.getRunExecutorInstance() && !runnerFound) {
-      throw RuntimeConfigurationError(executor.id + ": there are no runners for " + configuration)
+      throw RuntimeConfigurationError("${executor.id}: there are no runners for $configuration")
     }
     if (executor != null) {
       val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
-      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+      if (warning == null && beforeRunWarning != null) {
+        warning = beforeRunWarning
+      }
     }
 
     if (warning != null) {
@@ -461,11 +465,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
-    val settings = THashMap<String, T>()
+    val settings: MutableMap<String, T?> = HashMap()
 
     private var unloadedSettings: MutableList<Element>? = null
     // to avoid changed files
-    private val loadedIds = THashSet<String>()
+    private val loadedIds = HashSet<String>()
 
     fun loadState(element: Element) {
       settings.clear()

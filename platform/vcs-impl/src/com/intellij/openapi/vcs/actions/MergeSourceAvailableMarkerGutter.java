@@ -51,7 +51,7 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
     if (myTurnedOn) return "";
     final AnnotationSourceSwitcher switcher = myAnnotation.getAnnotationSourceSwitcher();
     if (switcher == null) return "";
-    return switcher.mergeSourceAvailable(line) ? "M" : "";
+    return switcher.mergeSourceAvailable(line) ? "M" : ""; //NON-NLS
   }
 
   @Override

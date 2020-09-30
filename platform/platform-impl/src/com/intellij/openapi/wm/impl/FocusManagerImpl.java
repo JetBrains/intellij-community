@@ -98,6 +98,13 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         LOG.assertTrue(value instanceof Window);
         myLastFocusedFrame = (IdeFrame)value;
       }
+      else {
+        Window window = getLastFocusedIdeWindow();
+        if (window != null && !window.isVisible()) {
+          // it is need to forget about the closed window
+          myLastFocusedFrame = null;
+        }
+      }
     });
   }
 
@@ -321,7 +328,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  private static class FurtherRequestor implements FocusRequestor {
+  private static final class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})

@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jdom.Element;
@@ -21,8 +22,8 @@ public class PythonUnitTestRunConfiguration extends
                                             AbstractPythonLegacyTestRunConfiguration<PythonUnitTestRunConfiguration>
                                               implements PythonUnitTestRunConfigurationParams {
   private boolean myIsPureUnittest = true;
-  protected String myTitle = "Unittest";
-  protected String myPluralTitle = "Unittests";
+  protected @NlsSafe String myTitle = "Unittest";
+  protected @NlsSafe String myPluralTitle = "Unittests";
 
   private String myParams = "";
   private boolean useParam = false;

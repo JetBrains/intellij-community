@@ -27,9 +27,9 @@ class SliceBackwardHandler extends SliceHandler {
   }
 
   @Override
-  public SliceAnalysisParams askForParams(PsiElement element,
-                                          SliceManager.StoredSettingsBean storedSettingsBean,
-                                          String dialogTitle) {
+  public SliceAnalysisParams askForParams(@NotNull PsiElement element,
+                                          @NotNull SliceManager.StoredSettingsBean storedSettingsBean,
+                                          @NotNull String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
 
@@ -41,10 +41,10 @@ class SliceBackwardHandler extends SliceHandler {
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     boolean supportFilter = provider.supportValueFilters(element);
     class BackwardHandlerDialog extends BaseAnalysisActionDialog {
-      JBTextField field;
+      private JBTextField field;
       
-      BackwardHandlerDialog() {
-        super(dialogTitle, "Analyze scope", myProject, items, analysisUIOptions, true);
+      private BackwardHandlerDialog() {
+        super(dialogTitle, LangBundle.message("separator.analyze.scope"), myProject, items, analysisUIOptions, true);
       }
 
       @Override

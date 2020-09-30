@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -164,7 +165,7 @@ public class ReplaceConstructorWithFactoryHandler
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 }

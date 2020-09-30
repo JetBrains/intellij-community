@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +51,7 @@ public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsContexts.Tooltip String getDescription() {
     return null;
   }
 

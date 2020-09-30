@@ -1,48 +1,88 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
-import com.intellij.ide.DataManager
+import com.intellij.ide.dnd.DnDActionInfo
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
-import com.intellij.util.OpenSourceUtil
-import com.intellij.util.Processor
+import com.intellij.util.containers.isEmpty
+import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
+import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
-import git4idea.index.vfs.GitIndexVirtualFile
+import git4idea.repo.GitConflict
+import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionListener
 import java.util.stream.Stream
+import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
 
-abstract class GitStageTree(project: Project) : ChangesTree(project, false, true) {
+abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
+  private var hoverNode: ChangesBrowserNode<*>? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        repaint()
+      }
+    }
   protected abstract val state: GitStageTracker.State
+  protected abstract val operations: List<StagingAreaOperation>
 
   init {
-    doubleClickHandler = Processor { e ->
-      if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
+    setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
+    addMouseMotionListener(MyMouseMotionListener())
+    MyClickListener().installOn(this)
+    MyDnDSupport().install(parentDisposable)
+  }
 
-      OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
-      true
-    }
+  abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
+
+  abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+
+  abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
+
+  override fun getComponentWidth(path: TreePath): Int {
+    val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return 0
+    return getFirstMatchingOperation(node)?.icon?.iconWidth ?: 0
+  }
+
+  internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
+    val statusNode = node.userObject as? GitFileStatusNode ?: return null
+    return operations.find { it.matches(statusNode) }
   }
 
   fun update() {
@@ -76,8 +116,11 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+        .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
+      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty()) VirtualFileDeleteProvider() else null
       else -> super.getData(dataId)
     }
   }
@@ -112,7 +155,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
 
     fun createKindNode(kind: NodeKind): ChangesBrowserKindNode {
       return parentNodes.getOrPut(kind) {
-        ChangesBrowserKindNode(project, kind).also { insertIntoRootNode(it) }
+        ChangesBrowserKindNode(kind).also { insertIntoRootNode(it) }
       }
     }
 
@@ -140,7 +183,10 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
   private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
+    private val conflict by lazy { getUserObject().createConflict() }
+
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
+
     override fun originText(userObject: GitFileStatusNode): String? {
       val originalPath = userObject.origPath ?: return null
       if (movedRelativePath != null) {
@@ -154,9 +200,23 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
       return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
     }
+
+    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+      super.render(renderer, selected, expanded, hasFocus)
+
+      conflict?.let { conflict ->
+        renderer.append(FontUtil.spaceAndThinSpace() + getConflictType(conflict), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
+
+    override fun appendParentPath(renderer: ChangesBrowserNodeRenderer, parentPath: FilePath?) {
+      if (conflict == null) {
+        super.appendParentPath(renderer, parentPath)
+      }
+    }
   }
 
-  private open class ChangesBrowserKindNode(val project: Project, kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+  private open inner class ChangesBrowserKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     internal val kind: NodeKind
       get() = userObject as NodeKind
 
@@ -171,11 +231,14 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
                         Runnable {
-                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map { it.filePath.virtualFile }.filter { it != null }.toList()
-                          AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
+                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map {
+                            it.filePath.virtualFile
+                          }.filter { it != null }.toList() as List<VirtualFile>
+                          showMergeDialog(conflictedFiles)
                         })
         appendCount(renderer)
-      } else {
+      }
+      else {
         super.render(renderer, selected, expanded, hasFocus)
       }
     }
@@ -198,6 +261,95 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     override fun compareUserObjects(o2: NodeKind?): Int {
       return Comparing.compare(sortOrder[NodeKind.UNTRACKED], sortOrder[o2])
     }
+  }
+
+  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) :
+    ChangesTreeCellRenderer<JBLabel>(textRenderer, JBLabel()) {
+
+    override fun JBLabel.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>) {
+      val baseIcon = (tree as? GitStageTree)?.getFirstMatchingOperation(node)?.icon
+      isVisible = baseIcon != null
+      icon = baseIcon?.let { it -> activeIcon(it, tree).apply { setActive(tree.hoverNode == node) } }
+    }
+
+    private fun activeIcon(icon: Icon, component: JComponent) = ActiveIcon(icon, IconLoader.getDisabledIcon(icon, component))
+  }
+
+  private inner class MyMouseMotionListener : MouseMotionListener {
+
+    override fun mouseMoved(e: MouseEvent?) {
+      if (e == null) return
+      val path = getPathIfInsideComponent(e.point)
+      val node = path?.lastPathComponent as? ChangesBrowserNode<*>
+      hoverNode = node
+
+      if (node != null) {
+        getFirstMatchingOperation(node)?.let {
+          toolTipText = it.actionText.get()
+        }
+      }
+    }
+
+    override fun mouseDragged(e: MouseEvent?) = Unit
+  }
+
+  private inner class MyClickListener : ClickListener() {
+    override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+      val path: TreePath = getPathIfInsideComponent(event.point) ?: return false
+      val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return false
+      getFirstMatchingOperation(node)?.let {
+        performStageOperation(listOf(node.userObject as GitFileStatusNode), it)
+      }
+      return false
+    }
+  }
+
+  private inner class MyDnDSupport : ChangesTreeDnDSupport(this@GitStageTree) {
+    override fun createDragStartBean(info: DnDActionInfo): DnDDragStartBean? {
+      if (info.isMove) {
+        val selection = selectedStatusNodes().toList()
+        if (selection.isNotEmpty()) {
+          return DnDDragStartBean(MyDragBean(this@GitStageTree, selection))
+        }
+      }
+      return null
+    }
+
+    override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>): Boolean {
+      val dragBean = aEvent.attachedObject
+      if (dragBean is MyDragBean) {
+        if (dragBean.sourceComponent === this@GitStageTree && canAcceptDrop(dropNode, dragBean)) {
+          dragBean.targetNode = dropNode
+          return true
+        }
+      }
+      return false
+    }
+
+    override fun drop(aEvent: DnDEvent) {
+      val dragBean = aEvent.attachedObject
+      if (dragBean is MyDragBean) {
+        val changesBrowserNode = dragBean.targetNode
+        changesBrowserNode?.let { acceptDrop(it, dragBean) }
+      }
+    }
+
+    private fun canAcceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean): Boolean {
+      val targetKind: NodeKind = node.userObject as? NodeKind ?: return false
+      val operation = getDndOperation(targetKind) ?: return false
+      return bean.nodes.all(operation::matches)
+    }
+
+    private fun acceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean) {
+      val targetKind: NodeKind = node.userObject as? NodeKind ?: return
+      val operation = getDndOperation(targetKind) ?: return
+      performStageOperation(bean.nodes, operation)
+    }
+  }
+
+  private class MyDragBean(val tree: ChangesTree, val nodes: List<GitFileStatusNode>) {
+    var targetNode: ChangesBrowserNode<*>? = null
+    val sourceComponent: JComponent get() = tree
   }
 }
 
@@ -239,9 +391,11 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   val origPath: FilePath? get() = kind.origPath(status)
   val fileStatus: FileStatus get() = kind.status(status)
 
-  override fun toString(): String {
+  override fun toString(): @NonNls String {
     return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
   }
 }
 
-private fun VirtualFile.kind() = if (this is GitIndexVirtualFile) NodeKind.STAGED else NodeKind.UNSTAGED
+internal fun GitFileStatusNode.createConflict(): GitConflict? {
+  return GitStagingAreaHolder.createConflict(root, status)
+}

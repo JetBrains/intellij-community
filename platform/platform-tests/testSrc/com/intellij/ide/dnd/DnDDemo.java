@@ -2,6 +2,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JTree source = new Tree();
+    TreeTestUtil.assertTreeUI(source);
     panel.add(source, BorderLayout.WEST);
     final DnDManager dndManager = new DnDManagerImpl();
     dndManager.registerSource(new DnDSource() {

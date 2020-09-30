@@ -27,13 +27,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyDocstringGenerator {
+public final class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";
 
@@ -230,11 +232,10 @@ public class PyDocstringGenerator {
     }
 
     // Sanitize parameters
-    // TODO: refactor out the dependency on PySignature
-    //PySignature signature = null;
-    //if (myDocStringOwner instanceof PyFunction && myUseTypesFromDebuggerSignature) {
-    //  signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
-    //}
+    PySignature signature = null;
+    if (myDocStringOwner instanceof PyFunction && myUseTypesFromDebuggerSignature) {
+      signature = PySignatureCacheManager.getInstance(myDocStringOwner.getProject()).findSignature((PyFunction)myDocStringOwner);
+    }
     final DocStringFormat format = myDocStringFormat;
     final ArrayList<DocstringParam> filtered = new ArrayList<>();
     final Set<Pair<String, Boolean>> processed = new HashSet<Pair<String, Boolean>>();
@@ -246,14 +247,14 @@ public class PyDocstringGenerator {
       if (param.getType() == null) {
         String type = paramTypes.get(paramCoordinates);
         if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          //if (signature != null) { TODO: restore this functionality after refactoring
-          //  type = StringUtil.notNullize(param.isReturnValue() ?
-          //                               signature.getReturnTypeQualifiedName() :
-          //                               signature.getArgTypeQualifiedName(param.getName()));
-          //}
-          //else {
+          if (signature != null) {
+            type = StringUtil.notNullize(param.isReturnValue() ?
+                                         signature.getReturnTypeQualifiedName() :
+                                         signature.getArgTypeQualifiedName(param.getName()));
+          }
+          else {
             type = "";
-          //}
+          }
         }
         if (type != null) {
           // Google and Numpy docstring formats combine type and description in single declaration, thus
@@ -489,7 +490,7 @@ public class PyDocstringGenerator {
     return myDocStringOwner;
   }
 
-  public static class DocstringParam {
+  public static final class DocstringParam {
 
     private final String myName;
     private final String myType;
@@ -561,7 +562,7 @@ public class PyDocstringGenerator {
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       myHasReturn = true;
     }
 

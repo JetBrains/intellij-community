@@ -15,7 +15,10 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.FoldingPopupManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -106,9 +109,9 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     if (action == null) return null;
     String text = action.getTemplateText();
     if (text == null) return null;
-    StringBuilder b = new StringBuilder().append("<a href='").append(href).append("'>").append(text).append("</a> <span style='color:#");
-    UIUtil.appendColor(UIUtil.getContextHelpForeground(), b);
-    return b.append("'>").append(KeymapUtil.getFirstKeyboardShortcutText(action)).append("</span>").toString();
+    HtmlChunk.Element shortcut = HtmlChunk.span("color:" + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()))
+      .addText(KeymapUtil.getFirstKeyboardShortcutText(action));
+    return new HtmlBuilder().appendLink(href, text).append(" ").append(shortcut).toString();
   }
 
   public static LightweightHint showTooltip(@NotNull Editor editor, @NotNull JComponent component, boolean tenacious) {

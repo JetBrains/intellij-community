@@ -29,6 +29,7 @@ import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -188,7 +189,7 @@ public final class TextDiffViewerUtil {
     protected abstract void setValue(@NotNull T option);
 
     @NotNull
-    protected abstract String getText(@NotNull T option);
+    protected abstract @Nls String getText(@NotNull T option);
 
     private class MyAction extends AnAction implements DumbAware {
       @NotNull private final T myOption;
@@ -281,6 +282,7 @@ public final class TextDiffViewerUtil {
       return Collections.singletonList(HighlightPolicy.BY_WORD);
     }
 
+    @Nls
     @NotNull
     @Override
     protected String getText(@NotNull HighlightPolicy option) {
@@ -322,6 +324,7 @@ public final class TextDiffViewerUtil {
       return Collections.singletonList(IgnorePolicy.DEFAULT);
     }
 
+    @Nls
     @NotNull
     @Override
     protected String getText(@NotNull IgnorePolicy option) {

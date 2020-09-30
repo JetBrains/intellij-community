@@ -26,18 +26,18 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/highlighting";
   }
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) {
+  private void doTest(boolean checkWarnings) {
     myFixture.configureByFile(getTestName(false) + ".properties");
     ((CodeInsightTestFixtureImpl)myFixture).setVirtualFileFilter(VirtualFileFilter.NONE);
-    myFixture.checkHighlighting(checkWarnings, checkInfos, false);
+    myFixture.checkHighlighting(checkWarnings, false, false);
   }
 
-  public void testDuplicate() { doTest(false, false); }
+  public void testDuplicate() { doTest(false); }
 
   public void testUnused() {
     myFixture.enableInspections(new UnusedPropertyInspection());
     myFixture.addClass("class C { String s = \"used.prop\"; }");
-    doTest(true, false);
+    doTest(true);
   }
 
   public void testPropertyUsedInLibrary() throws IOException {
@@ -56,7 +56,7 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(index.isInLibraryClasses(usage));
     assertFalse(index.isInSourceContent(usage));
 
-    //noinspection UnusedDeclaration,ConstantConditions
+    // noinspection UnusedDeclaration
     FileASTNode node = PsiManager.getInstance(getProject()).findFile(usage).getNode(); // load tree before assertions are enabled
 
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("Unused.properties", "src/a.properties"));
@@ -68,6 +68,6 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(usage, assertOneElement(references).getElement().getContainingFile().getVirtualFile());
   }
 
-  public void testOk() { doTest(false, false); }
-  public void testInvalidEscape() { doTest(true, false); }
+  public void testOk() { doTest(false); }
+  public void testInvalidEscape() { doTest(true); }
 }

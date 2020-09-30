@@ -2,7 +2,6 @@
 
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.RecentChangesPopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,10 +14,5 @@ public class RecentChangesAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     RecentChangesPopup.show(p, gw, Objects.requireNonNull(getVcs()));
-  }
-
-  @Override
-  protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
-    return true;
   }
 }

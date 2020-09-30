@@ -16,6 +16,7 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.io.DataInputOutputUtil;
 
 import java.io.DataInput;
@@ -25,7 +26,7 @@ import java.io.IOException;
 public class PutSystemLabelChange extends PutLabelChange {
   private final int myColor;
 
-  public PutSystemLabelChange(long id, String name, String projectId, int color) {
+  public PutSystemLabelChange(long id, @NlsContexts.Label String name, String projectId, int color) {
     super(id, name, projectId);
     myColor = color;
   }

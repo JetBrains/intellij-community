@@ -158,10 +158,10 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private void updatePanel() {
     if (myTarget != null) {
-      myRunTargetCheckBox.setText("Run Ant target '" + myTarget.getName() + "'");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.named.ant.target", myTarget.getDisplayName()));
     }
     else {
-      myRunTargetCheckBox.setText("Run Ant target <none>");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.unknown.ant.target"));
     }
     final boolean enabled = myTarget != null && myRunTargetCheckBox.isSelected();
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);
@@ -169,7 +169,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   @Override
   public String getTabName() {
-    return myPostProcessing ? POST_PROCESSING_TAB : PRE_PROCESSING_TAB;
+    return myPostProcessing ? POST_PROCESSING_TAB_POINTER.get() : PRE_PROCESSING_TAB_POINTER.get();
   }
 
   @Override

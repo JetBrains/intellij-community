@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +23,13 @@ public class ShRunLineMarkerContributor extends RunLineMarkerContributor impleme
   public Info getInfo(@NotNull PsiElement element) {
     if (!(element instanceof LeafElement) || element.getTextRange().getStartOffset() != 0) return null;
     PsiFile psiFile = element.getContainingFile();
-    if (!(psiFile instanceof ShFile)) return null;
+    if (!(psiFile instanceof ShFile) && !element.getText().startsWith("#!")) return null;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(psiFile)) return null;
 
     AnAction[] actions = {ActionManager.getInstance().getAction(ShRunFileAction.ID)};
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
-        psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> "Run " + psiElement.getContainingFile().getName()), "\n"));
+        psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> ShBundle
+          .message("line.marker.run.0", psiElement.getContainingFile().getName())), "\n"));
   }
 }

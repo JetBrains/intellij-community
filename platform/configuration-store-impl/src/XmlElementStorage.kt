@@ -15,10 +15,10 @@ import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.delete
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.safeOutputStream
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -81,7 +81,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
   }
 
   final override fun createSaveSessionProducer(): SaveSessionProducer? {
@@ -353,14 +353,14 @@ private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> 
   val existingKeys = keys()
 
   val bothStates = ArrayList<String>(min(newKeys.size, existingKeys.size))
-  val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else ObjectOpenHashSet(existingKeys)
+  val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else CollectionFactory.createSmallMemoryFootprintSet(existingKeys.asList())
   for (newKey in newKeys) {
     if (existingKeysSet.contains(newKey)) {
       bothStates.add(newKey)
     }
   }
 
-  val diffs = ObjectOpenHashSet<String>(newKeys.size + existingKeys.size)
+  val diffs = CollectionFactory.createSmallMemoryFootprintSet<String>(newKeys.size + existingKeys.size)
   diffs.addAll(newKeys)
   diffs.addAll(existingKeys)
   diffs.removeAll(bothStates)

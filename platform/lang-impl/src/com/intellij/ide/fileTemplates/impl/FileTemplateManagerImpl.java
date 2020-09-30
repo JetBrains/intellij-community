@@ -3,10 +3,10 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplatesScheme;
-import com.intellij.ide.fileTemplates.InternalTemplateBean;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ArrayUtil;
@@ -54,11 +53,11 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     myDefaultSettings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
     myProject = project;
 
-    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme("Project") {
+    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme(IdeBundle.message("project.scheme")) {
       @NotNull
       @Override
       public String getTemplatesDir() {
-        return FileUtilRt.toSystemDependentName(ProjectKt.getStateStore(project).getDirectoryStorePath(false) + "/" + TEMPLATES_DIR);
+        return ProjectKt.getStateStore(project).getProjectFilePath().getParent().resolve(TEMPLATES_DIR).toString();
       }
 
       @NotNull
@@ -67,6 +66,17 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
         return project;
       }
     };
+    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+        for (FileTemplate template : getAllTemplates()) {
+          if (FileTemplateUtil.findHandler(template).getClass().getClassLoader() == pluginClassLoader) {
+            removeTemplate(template);
+          }
+        }
+      }
+    });
   }
 
   private FileTemplateSettings getSettings() {

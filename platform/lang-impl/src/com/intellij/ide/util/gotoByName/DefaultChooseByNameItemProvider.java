@@ -465,7 +465,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return builder.build();
   }
 
-  protected static class PathProximityComparator implements Comparator<Object> {
+  protected static final class PathProximityComparator implements Comparator<Object> {
     @NotNull private final PsiProximityComparator myProximityComparator;
 
     private PathProximityComparator(@Nullable final PsiElement context) {

@@ -15,8 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NonNls;
 
 import java.net.URL;
 
@@ -34,7 +36,7 @@ public abstract class AntDomWhichResourceTask extends AntDomPropertyDefiningTask
   public abstract GenericAttributeValue<String> getResourceName();
 
   @Override
-  protected String calcPropertyValue(String propertyName) {
+  protected @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     String resName = getClassName().getStringValue();
     if (resName == null) {
       resName = getResourceName().getStringValue();

@@ -1,4 +1,4 @@
-// "Fix all 'Redundant 'compare' method call' problems in file" "true"
+// "Fix all 'Redundant 'compare()' method call' problems in file" "true"
 class CompareTest {
   int testInteger(int a, int b) {
     if(a < b) return 1;

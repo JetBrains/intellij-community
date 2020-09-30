@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -19,6 +20,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 public class JsonBuilderContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.json.JsonBuilder";
+  @NonNls
   static final String ORIGIN_INFO = "via JsonBuilder";
 
   @Nullable

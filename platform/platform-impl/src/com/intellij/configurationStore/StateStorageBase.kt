@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
@@ -81,8 +81,8 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 }
 
-inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
-  val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+inline fun <T> runBatchUpdate(project: Project, runnable: () -> T): T {
+  val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
   publisher.onBatchUpdateStarted()
   try {
     return runnable()

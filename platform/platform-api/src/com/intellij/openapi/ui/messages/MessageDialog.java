@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
 
 public class MessageDialog extends DialogWrapper {
-  protected String myMessage;
+  protected @NlsContexts.DialogMessage String myMessage;
   protected String[] myOptions;
   protected int myDefaultOptionIndex;
   protected int myFocusedOptionIndex;
@@ -249,7 +249,7 @@ public class MessageDialog extends DialogWrapper {
     return messagePanel;
   }
 
-  protected JTextPane createMessageComponent(final String message) {
+  protected JTextPane createMessageComponent(final @NlsContexts.DialogMessage String message) {
     final JTextPane messageComponent = new JTextPane();
     return Messages.configureMessagePaneUi(messageComponent, message);
   }

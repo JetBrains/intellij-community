@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
@@ -34,17 +20,14 @@ import java.util.List;
 import static com.intellij.formatting.templateLanguages.BlockUtil.buildChildWrappers;
 import static com.intellij.formatting.templateLanguages.BlockUtil.filterBlocksByRange;
 
-/**
- * @author Alexey Chmutov
- */
 public abstract class TemplateLanguageFormattingModelBuilder implements DelegatingFormattingModelBuilder, TemplateLanguageBlockFactory {
 
   @Override
-  @NotNull
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    final PsiFile file = element.getContainingFile();
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    final PsiFile file = formattingContext.getContainingFile();
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     Block rootBlock = getRootBlock(file, file.getViewProvider(), settings);
-    return new DocumentBasedFormattingModel(rootBlock, element.getProject(), settings, file.getFileType(), file);
+    return new DocumentBasedFormattingModel(rootBlock, formattingContext.getProject(), settings, file.getFileType(), file);
   }
 
   protected Block getRootBlock(PsiElement element, FileViewProvider viewProvider, CodeStyleSettings settings) {
@@ -59,7 +42,8 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
         return createDummyBlock(node);
       }
       if (builder != null) {
-        final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
+        final FormattingModel model =
+          builder.createModel(FormattingContext.create(viewProvider.getPsi(dataLanguage), settings));
         List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
         if (childWrappers.size() == 1) {
           childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());

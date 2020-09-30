@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.PsiMethod
@@ -268,7 +268,7 @@ class B {
 
   void 'test newify should not throw on incorrect regex'() {
     testHighlighting """
-@Newify(pattern = "*")
+@Newify(pattern = "<error>*</error>")
 class B {
   def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
 }"""
@@ -285,5 +285,22 @@ class Z {
         def aaa = <warning descr="Cannot resolve symbol 'Inner'">Inner</warning>()
     }
 }"""
+  }
+
+  void 'test no error for multiple constructors and named arguments'() {
+    testHighlighting """
+class Rr {
+    Rr() {}
+    Rr(s) {}
+}
+
+
+@Newify(pattern = /[A-Z].*/)
+class C {
+    static void main(String[] args) {
+        def x = Rr(a: 2)
+    }
+}
+"""
   }
 }

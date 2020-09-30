@@ -42,7 +42,7 @@
             </constraints>
             <properties>
               <labelFor value="6c531"/>
-              <text value="&amp;Name:"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="xml.tag.panel.label.name"/>
             </properties>
           </component>
           <component id="6c531" class="javax.swing.JTextField" binding="myNameTextField">

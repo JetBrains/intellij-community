@@ -177,7 +177,6 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length,
                                              ProblemHighlightType highlightType,
                                              Object... infos) {
-    assert !(location.getTextLength() == 0 || length == 0);
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     final TextRange range = new TextRange(offset, offset + length);
@@ -225,6 +224,10 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   public final void setProblemsHolder(ProblemsHolder holder) {
     this.holder = holder;
+  }
+
+  public PsiFile getCurrentFile() {
+    return holder.getFile();
   }
 
   protected boolean isVisibleHighlight(@NotNull PsiElement element) {

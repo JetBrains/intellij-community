@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,14 +103,14 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   /**
    * Pair(title, message) for message dialog
    */
-  Key<Couple<String>> MERGE_CANCEL_MESSAGE = Key.create("Diff.MergeCancelMessage");
+  Key<Couple<@Nls String>> MERGE_CANCEL_MESSAGE = Key.create("Diff.MergeCancelMessage");
   /**
    * Return {@code null} to use defaults.
    */
-  Key<Function<MergeResult, String>> MERGE_ACTION_CAPTIONS = Key.create("Diff.MergeActionCaptions");
+  Key<Function<MergeResult, @Nls String>> MERGE_ACTION_CAPTIONS = Key.create("Diff.MergeActionCaptions");
 
 
-  Key<String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
-  Key<String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
-  Key<String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
+  Key<@Nls String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
+  Key<@Nls String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
+  Key<@Nls String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
 }

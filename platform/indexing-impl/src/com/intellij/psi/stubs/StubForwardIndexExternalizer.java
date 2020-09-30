@@ -2,10 +2,12 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +21,14 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
+  @ApiStatus.Internal
+  public static final String USE_SHAREABLE_STUBS_PROP = "idea.uses.shareable.serialized.stubs";
+  @ApiStatus.Internal
+  public static final boolean USE_SHAREABLE_STUBS = SystemProperties.is(USE_SHAREABLE_STUBS_PROP);
+
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
-    if (System.getProperty("idea.uses.shareable.serialized.stubs") == null) {
+    if (!USE_SHAREABLE_STUBS) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
     return new FileLocalStubForwardIndexExternalizer();
@@ -80,7 +87,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
           }
         } else {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null;
+          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
         }
       }

@@ -263,7 +263,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
              : getClass();
   }
 
-  private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
+  private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
     private Comparator<Configurable> myComparator;

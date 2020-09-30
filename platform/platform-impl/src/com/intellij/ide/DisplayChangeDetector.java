@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class DisplayChangeDetector {
+public final class DisplayChangeDetector {
   private static final Logger LOG = Logger.getInstance(DisplayChangeDetector.class);
   private static final DisplayChangeDetector INSTANCE = new DisplayChangeDetector();
 

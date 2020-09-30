@@ -6,8 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.ui.EnumComboBoxModel;
@@ -46,7 +51,7 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myPromptsPanel;
 
 
-  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<>();
+  Map<PersistentVcsShowSettingOption, JCheckBox> myPromptOptions = new LinkedHashMap<>();
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
   private JComboBox<ShowPatchAfterCreation> myOnPatchCreation;
@@ -83,9 +88,9 @@ public class VcsGeneralConfigurationPanel {
 
     myPromptsPanel.setLayout(new GridLayout(3, 0));
 
-    List<VcsShowOptionsSettingImpl> options = ProjectLevelVcsManagerEx.getInstanceEx(project).getAllOptions();
+    List<PersistentVcsShowSettingOption> options = ProjectLevelVcsManagerEx.getInstanceEx(project).getAllOptions();
 
-    for (VcsShowOptionsSettingImpl setting : options) {
+    for (PersistentVcsShowSettingOption setting : options) {
       if (project.isDefault() || !setting.getApplicableVcses(project).isEmpty()) {
         final JCheckBox checkBox = new JCheckBox(setting.getDisplayName());
         myPromptsPanel.add(checkBox);
@@ -107,7 +112,7 @@ public class VcsGeneralConfigurationPanel {
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
     settings.ADD_EXTERNAL_FILES_SILENTLY = myAddExternalFiles.isSelected();
 
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
     }
 
@@ -190,7 +195,7 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
 
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       if (setting.getValue() != myPromptOptions.get(setting).isSelected()) return true;
     }
 
@@ -211,7 +216,7 @@ public class VcsGeneralConfigurationPanel {
                                                              ? 0
                                                              : value == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY ? 2 : 1);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
 
@@ -242,7 +247,7 @@ public class VcsGeneralConfigurationPanel {
   }
 
   public void updateAvailableOptions(final Collection<? extends AbstractVcs> activeVcses) {
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       final JCheckBox checkBox = myPromptOptions.get(setting);
       checkBox.setEnabled(setting.isApplicableTo(activeVcses) || myProject.isDefault());
       if (!myProject.isDefault()) {
@@ -253,12 +258,12 @@ public class VcsGeneralConfigurationPanel {
 
     if (!myProject.isDefault()) {
       final ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
-      final VcsShowConfirmationOptionImpl addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD);
+      PersistentVcsShowConfirmationOption addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD);
       UIUtil.setEnabled(myAddConfirmationPanel, addConfirmation.isApplicableTo(activeVcses), true);
       myAddConfirmationPanel.setToolTipText(
         VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(addConfirmation.getApplicableVcses(myProject))));
 
-      final VcsShowConfirmationOptionImpl removeConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+      PersistentVcsShowConfirmationOption removeConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
       UIUtil.setEnabled(myRemoveConfirmationPanel, removeConfirmation.isApplicableTo(activeVcses), true);
       myRemoveConfirmationPanel.setToolTipText(
         VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(removeConfirmation.getApplicableVcses(myProject))));

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -134,7 +134,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setExecutable(Sdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
       String binPath = jdk != null && jdk.getSdkType() instanceof JavaSdkType ? ((JavaSdkType)jdk.getSdkType()).getBinPath(jdk) : null;
       if (binPath == null) {
-        throw new CantRunException(JavaBundle.message("javadoc.generate.no.jdk.path"));
+        throw new CantRunException(JavaBundle.message("javadoc.generate.no.jdk"));
       }
 
       cmdLine.setWorkDirectory((File)null);
@@ -144,9 +144,10 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       if (!tool.exists()) {
         tool = new File(new File(binPath).getParent(), toolName);
         if (!tool.exists()) {
-          tool = new File(new File(System.getProperty("java.home")).getParent(), "bin/" + toolName);
+          File javaHomeBinPath = new File(new File(System.getProperty("java.home")).getParent(), "bin");
+          tool = new File(javaHomeBinPath, toolName);
           if (!tool.exists()) {
-            throw new CantRunException(JavaBundle.message("javadoc.generate.no.jdk.path"));
+            throw new CantRunException(JavaBundle.message("javadoc.generate.no.javadoc.tool", binPath, javaHomeBinPath));
           }
         }
       }
@@ -240,8 +241,7 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
 
           boolean hasJavaModules = sources.stream().anyMatch(f -> PsiJavaModule.MODULE_INFO_FILE.equals(f.getName()));
           if (hasJavaModules && modules.size() > 1) {
-            throw new CantRunException("At the moment, IDEA cannot generate Javadoc for multiple modules" +
-                                       " with module-info.java files in them. Sorry. We're working on this.");
+            throw new CantRunException(JavaBundle.message("javadoc.gen.error.multiple.modules.with.module.info"));
           }
 
           OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
@@ -385,11 +385,6 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
       if (buildTarget == null) {
         return;
       }
-
-      // Using 11 as source level makes the -bootclasspath stop working. Since the source level for Android code is currently 8,
-      // we ask javadoc to use that source level when Android modules are involved.
-      cmdLine.addParameter("-source");
-      cmdLine.addParameter("8");
 
       File androidJar = new File(sdkDir, "platforms" + File.separator + buildTarget + File.separator + "android.jar");
       if (androidJar.isFile()) {

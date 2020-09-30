@@ -34,7 +34,7 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     private void complain(PsiElement element, String name) {
-      registerProblem(element, PyPsiBundle.message("INSP.first.arg.$0.assigned", name));
+      registerProblem(element, PyPsiBundle.message("INSP.first.arg.assign.method.parameter.reassigned", name));
     }
 
     private void handleTarget(PyQualifiedExpression target, String name) {
@@ -75,12 +75,12 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       markNameDefiner(node);
     }
 
     @Override
-    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+    public void visitPyAugAssignmentStatement(@NotNull PyAugAssignmentStatement node) {
       final String first_param_name = extractFirstParamName(node);
       if (first_param_name != null) {
         PyExpression target = node.getTarget();
@@ -94,7 +94,7 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyForStatement(PyForStatement node) {
+    public void visitPyForStatement(@NotNull PyForStatement node) {
       markNameDefiner(node);
     }
 
@@ -113,12 +113,12 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction definer) {
+    public void visitPyFunction(@NotNull PyFunction definer) {
       markDefinition(definer);
     }
 
     @Override
-    public void visitPyClass(PyClass definer) {
+    public void visitPyClass(@NotNull PyClass definer) {
       markDefinition(definer);
     }
 

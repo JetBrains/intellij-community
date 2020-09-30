@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +36,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   private final CachedIntentions myCachedIntentions;
   @Nullable
-  private final IntentionHintComponent myIntentionHintComponent;
+  private final IntentionHintComponent.IntentionPopup myPopup;
 
   private Runnable myFinalRunnable;
   private final Project myProject;
@@ -42,12 +44,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Nullable
   private final Editor myEditor;
 
-  public IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
+  public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
                            @NotNull Project project,
                            CachedIntentions intentions) {
-    myIntentionHintComponent = intentionHintComponent;
+    myPopup = popup;
     myProject = project;
     myFile = file;
     myEditor = editor;
@@ -61,7 +63,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public boolean isSelectable(final IntentionActionWithTextCaching action) {
-    return true;
+    return action.isSelectable();
   }
 
   @Override
@@ -120,7 +122,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
 
   @NotNull
-  IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final String title) {
+  IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));
@@ -132,7 +134,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
 
-    return new IntentionListStep(myIntentionHintComponent, myEditor, myFile, myProject,
+    return new IntentionListStep(myPopup, myEditor, myFile, myProject,
                                  CachedIntentions.create(myProject, myFile, myEditor, intentions)){
       @Override
       public String getTitle() {
@@ -153,6 +155,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       IntentionAction action = cached.getAction();
       if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) continue;
 
+      if (!cached.isShowSubmenu()) {
+        result.put(action, Collections.emptyList());
+        continue;
+      }
+
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
       List<IntentionAction> options = subActions.stream()
           .map(IntentionActionWithTextCaching::getAction)
@@ -165,6 +172,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
+    if (!action.isShowSubmenu()) return false;
+
     return action.getOptionIntentions().size() + action.getOptionErrorFixes().size() > 0;
   }
 
@@ -186,13 +195,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public Icon getIconFor(final IntentionActionWithTextCaching value) {
+    if (!value.isShowIcon()) return null;
+
     return myCachedIntentions.getIcon(value);
   }
 
   @Override
   public void canceled() {
-    if (myIntentionHintComponent != null) {
-      myIntentionHintComponent.canceled(this);
+    if (myPopup != null) {
+      myPopup.cancelled(this);
     }
   }
 

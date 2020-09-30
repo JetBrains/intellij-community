@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,7 +14,7 @@ public final class SeparatorFactory {
   private SeparatorFactory() {
   }
 
-  public static TitledSeparator createSeparator(String text, @Nullable JComponent labelFor) {
+  public static TitledSeparator createSeparator(@NlsContexts.Separator String text, @Nullable JComponent labelFor) {
     return new TitledSeparator(text, labelFor);
   }
 }

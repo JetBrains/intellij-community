@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -44,6 +45,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     myCandidates.add(candidate);
   }
 
+  @NonNls
   @NotNull
   private static String getElementInfo(@NotNull PsiElement element) {
     String text;
@@ -106,6 +108,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "NameHint: '" +
            myName +

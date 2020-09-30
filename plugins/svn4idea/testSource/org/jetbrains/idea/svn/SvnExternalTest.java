@@ -25,8 +25,8 @@ public class SvnExternalTest extends SvnTestCase {
   private Url myExternalURL;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);

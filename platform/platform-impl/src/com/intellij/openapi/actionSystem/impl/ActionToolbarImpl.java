@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -284,7 +285,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryGroupUpdater = secondaryGroupUpdater;
   }
 
-  private void fillToolBar(@NotNull List<? extends AnAction> actions, boolean layoutSecondaries) {
+  protected void fillToolBar(@NotNull List<? extends AnAction> actions, boolean layoutSecondaries) {
     boolean isLastElementSeparator = false;
     List<AnAction> rightAligned = new ArrayList<>();
     for (int i = 0; i < actions.size(); i++) {
@@ -340,11 +341,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
+  final protected @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      customComponent = ((CustomComponentAction)action).createCustomComponent(presentation, myPlace);
+      customComponent = createCustomComponent((CustomComponentAction)action, presentation);
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
@@ -361,6 +362,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
     return customComponent;
+  }
+
+  protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+    return action.createCustomComponent(presentation, myPlace);
   }
 
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
@@ -404,11 +409,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
+
     actionButton.setLook(look);
+    actionButton.setBorder(myOrientation == SwingConstants.VERTICAL ? JBUI.Borders.empty(2, 1) : JBUI.Borders.empty(1, 2));
+
     return actionButton;
   }
 
-  private @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
+  final protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
     return createToolbarButton(
       action,
       myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new ActionButtonLook() {
@@ -952,6 +960,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
+  protected int getSeparatorHeight() {
+    return JBUIScale.scale(24);
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
@@ -965,7 +977,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       int gap = JBUIScale.scale(2);
       int center = JBUIScale.scale(3);
       int width = gap * 2 + center;
-      int height = JBUIScale.scale(24);
+      int height = getSeparatorHeight();
 
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {
@@ -1101,7 +1113,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private CancellablePromise<List<AnAction>> myLastUpdate;
 
-  private void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
+  protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
@@ -1362,7 +1374,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setSecondaryActionsTooltip(@NotNull String secondaryActionsTooltip) {
+  public void setSecondaryActionsTooltip(@NotNull @NlsContexts.Tooltip String secondaryActionsTooltip) {
     mySecondaryActions.getTemplatePresentation().setText(secondaryActionsTooltip);
   }
 

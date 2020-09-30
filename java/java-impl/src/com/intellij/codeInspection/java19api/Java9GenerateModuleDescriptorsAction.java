@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -33,6 +33,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -167,11 +168,11 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static String getTitle() {
+  private static @NlsContexts.DialogTitle String getTitle() {
     return JavaRefactoringBundle.message("generate.module.descriptors.title");
   }
 
-  private static String getCommandTitle() {
+  private static @NlsContexts.Command String getCommandTitle() {
     return JavaRefactoringBundle.message("generate.module.descriptors.command.title");
   }
 
@@ -188,7 +189,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       myPhases = phases;
     }
 
-    void startPhase(String text, int size) {
+    void startPhase(@NlsContexts.ProgressText String text, int size) {
       myIndicator.setText(text);
       myCount = 0;
       mySize = Math.min(size, 1);
@@ -249,7 +250,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       createFilesLater(moduleInfos);
     }
 
-    private void createFilesLater(List<? extends ModuleInfo> moduleInfos) {
+    private void createFilesLater(List<ModuleInfo> moduleInfos) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->
@@ -352,7 +353,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<? extends ModuleInfo> moduleInfos, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
       double total = moduleInfos.size();
@@ -524,7 +525,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  public static class NameConverter { // "public" is for tests
+  public static final class NameConverter { // "public" is for tests
     private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
     private static final Pattern SINGLE_DOT = Pattern.compile("\\.");
@@ -655,7 +656,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static class ModuleInfo {
+  private static final class ModuleInfo {
     final PsiDirectory myRootDir;
     final String myName;
     final List<String> myRequires;

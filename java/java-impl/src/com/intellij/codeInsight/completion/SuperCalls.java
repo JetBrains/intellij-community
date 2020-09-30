@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-class SuperCalls {
+final class SuperCalls {
   static Set<LookupElement> suggestQualifyingSuperCalls(PsiElement element,
                                                         PsiJavaReference javaReference,
                                                         ElementFilter elementFilter,
@@ -45,7 +45,7 @@ class SuperCalls {
 
   @NotNull
   private static LookupElement withQualifiedSuper(final String className, LookupElement item) {
-    return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<LookupElement>(item) {
+    return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<>(item) {
 
       @Override
       public void renderElement(LookupElementPresentation presentation) {
@@ -59,7 +59,7 @@ class SuperCalls {
         PsiJavaCodeReferenceElement ref = PsiTreeUtil
           .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null) {
-          context.getDocument().insertString(ref.getTextRange().getStartOffset(),  className + ".");
+          context.getDocument().insertString(ref.getTextRange().getStartOffset(), className + ".");
         }
 
         super.handleInsert(context);

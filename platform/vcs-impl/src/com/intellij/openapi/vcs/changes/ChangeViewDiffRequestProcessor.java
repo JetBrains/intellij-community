@@ -21,8 +21,8 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +120,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
    * current element should always be among allChanges and selection (if they are not empty)
    */
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void clear() {
     if (myCurrentChange != null) {
@@ -131,7 +131,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void refresh(boolean fromModelRefresh) {
     if (isDisposed()) return;
 
@@ -164,7 +164,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public String getCurrentChangeName() {
     if (myCurrentChange == null) {
       return null;
@@ -172,7 +172,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange.getPresentableName();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setCurrentChange(@Nullable Wrapper change) {
     myCurrentChange = change;
     updateRequest();

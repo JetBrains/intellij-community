@@ -152,7 +152,7 @@ public final class XDebuggerInlayUtil {
       }
     }
 
-    private static class ValueInfo implements Comparable<ValueInfo> {
+    private static final class ValueInfo implements Comparable<ValueInfo> {
       private final int refStartOffset;
       private final int refEndOffset;
       private final String value;
@@ -170,7 +170,7 @@ public final class XDebuggerInlayUtil {
     }
   }
 
-  private static class MyRenderer implements EditorCustomElementRenderer {
+  private static final class MyRenderer implements EditorCustomElementRenderer {
     private final String myText;
 
     private MyRenderer(String text) {

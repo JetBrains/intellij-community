@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +21,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   private VcsLogUserFilterTest myVcsLogUserFilterTest;
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     myVcsLogUserFilterTest = new VcsLogUserFilterTest(GitTestUtil.findGitLogProvider(myProject), myProject) {
       @Override
@@ -70,7 +70,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     myVcsLogUserFilterTest = null;
 
     super.tearDown();

@@ -32,6 +32,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -152,7 +153,7 @@ public final class MadTestingUtil {
   }
 
   private static void revertVfs(Label label, Project project) throws LocalHistoryException {
-    watchDocumentChanges(() -> label.revert(project, project.getBaseDir()),
+    watchDocumentChanges(() -> label.revert(project, PlatformTestUtil.getOrCreateProjectBaseDir(project)),
                                __ -> {
                                  PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
                                  if (documentManager.getUncommittedDocuments().length > 3) {

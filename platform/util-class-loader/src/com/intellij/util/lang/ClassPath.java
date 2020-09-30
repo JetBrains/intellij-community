@@ -3,6 +3,7 @@ package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
+import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -229,7 +230,7 @@ public final class ClassPath {
           List<URL> urls = new ArrayList<URL>(referencedJars.length);
           for (String referencedJar:referencedJars) {
             try {
-              urls.add(UrlClassLoader.internProtocol(new URI(referencedJar).toURL()));
+              urls.add(UrlUtilRt.internProtocol(new URI(referencedJar).toURL()));
             }
             catch (Exception e) {
               LoggerRt.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);

@@ -1,3 +1,0 @@
-class UiControl {
-  public static final Color COLOR = new Color(200, 220, 240);
-}

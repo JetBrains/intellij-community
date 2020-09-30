@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
@@ -21,6 +22,7 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,7 @@ public final class RunAnythingUtil {
     return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
   }
 
-  static JComponent createTitle(@NotNull String titleText, @NotNull Color background) {
+  static JComponent createTitle(@NlsContexts.PopupTitle @NotNull String titleText, @NotNull Color background) {
     JLabel titleLabel = new JLabel(StringUtil.capitalizeWords(titleText, true));
     titleLabel.setFont(getTitleFont());
     titleLabel.setForeground(UIUtil.getLabelDisabledForeground());
@@ -115,15 +117,15 @@ public final class RunAnythingUtil {
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
 
-  public static String getAdDebugText() {
+  public static @Nls String getAdDebugText() {
     return IdeBundle.message("run.anything.ad.run.with.debug", SHIFT_SHORTCUT_TEXT);
   }
 
-  public static String getAdDeleteCommandText() {
+  public static @Nls String getAdDeleteCommandText() {
     return IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   }
 
-  public static String getAdContextText() {
+  public static @Nls String getAdContextText() {
     return IdeBundle.message("run.anything.ad.run.in.context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   }
 }

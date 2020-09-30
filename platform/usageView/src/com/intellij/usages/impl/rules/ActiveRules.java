@@ -39,7 +39,7 @@ public final class ActiveRules {
       rules.add(DirectoryGroupingRule.getInstance(project));
     }
     if (usageViewSettings.isGroupByDirectoryStructure()) {
-      rules.add(new DirectoryStructureGroupingRule(project));
+      rules.add(new DirectoryStructureGroupingRule(project, usageViewSettings.isCompactMiddleDirectories()));
     }
     if (usageViewSettings.isGroupByFileStructure()) {
       for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
@@ -74,7 +74,7 @@ public final class ActiveRules {
 
     rules.add(DirectoryGroupingRule.getInstance(project));
 
-    rules.add(new DirectoryStructureGroupingRule(project));
+    rules.add(new DirectoryStructureGroupingRule(project, usageViewSettings.isCompactMiddleDirectories()));
 
     for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
       UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project, usageViewSettings);
@@ -90,7 +90,7 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private static class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private static final class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
     private FileStructureGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {

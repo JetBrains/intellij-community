@@ -21,7 +21,7 @@ import javax.swing.*
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
-  static final int SEARCH_TIMEOUT = 5000
+  static final int SEARCH_TIMEOUT = 50_000
 
   SearchEverywhereUIBase mySearchUI
 
@@ -39,7 +39,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def strBuffer = myFixture.addClass("class StrBuffer{ }")
     def stringBuffer = myFixture.findClass("java.lang.StringBuffer")
 
-    def ui = createTestUI([ChooseByNameTest.createClassContributor(project)])
+    def ui = createTestUI([ChooseByNameTest.createClassContributor(project, testRootDisposable)])
 
     def future = ui.findElementsForPattern("StrBuffer")
     assert waitForFuture(future, SEARCH_TIMEOUT) == [strBuffer]
@@ -55,8 +55,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def testFile = myFixture.addFileToProject("testClass.txt", "")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        ChooseByNameTest.createFileContributor(project)
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        ChooseByNameTest.createFileContributor(project, testRootDisposable)
       ])
 
       def future = ui.findElementsForPattern("TestClass")
@@ -96,8 +96,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        GotoActionTest.createActionContributor(project)
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable)
       ])
 
       def actions = ["ia1": action1, "ia2": action2]
@@ -128,8 +128,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        GotoActionTest.createActionContributor(project),
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable),
         new TopHitSEContributor(project, null, null)
       ])
 
@@ -157,24 +157,26 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   void "test abbreviations on top"() {
     def abbreviationManager = AbbreviationManager.getInstance()
     def actionManager = ActionManager.getInstance()
-    def ui = createTestUI([GotoActionTest.createActionContributor(project)])
+    def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
 
     try {
       abbreviationManager.register("cp", "CloseProject")
       def future = ui.findElementsForPattern("cp")
       def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
-      assert firstItem.value.action == actionManager.getAction("CloseProject")
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("CloseProject"), "cp")
+      assert firstItem == matchedAction
     }
     finally {
       abbreviationManager.remove("cp", "CloseProject")
     }
 
+    ui.clearResults()
     try {
       abbreviationManager.register("cp", "ScanSourceCommentsAction")
       def future = ui.findElementsForPattern("cp")
-      def res = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
-      def firstItem = res[0]
-      assert firstItem.value.action == actionManager.getAction("ScanSourceCommentsAction")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("ScanSourceCommentsAction"), "cp")
+      assert matchedAction == firstItem
     }
     finally {
       abbreviationManager.remove("cp", "ScanSourceCommentsAction")
@@ -191,9 +193,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
       def wrongFile = myFixture.addFileToProject("wrong.txt", "")
 
+      def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      Disposer.register(testRootDisposable, recentFilesContributor)
       def ui = createTestUI([
-        ChooseByNameTest.createFileContributor(project),
-        new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+        ChooseByNameTest.createFileContributor(project, testRootDisposable),
+        recentFilesContributor
       ])
 
       def future = ui.findElementsForPattern("appfile")

@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.importing.worktree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
@@ -30,9 +30,9 @@ class WorkspaceModuleImporter(private val project: Project,
   fun importModule() {
     val dependencies = collectDependencies();
     moduleEntity = diff.addModuleEntity(mavenProject.displayName, dependencies, MavenExternalSource.INSTANCE)
-    diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(), moduleEntity,
-                              MavenExternalSource.INSTANCE)
-    importFolders()
+    val contentRootEntity = diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(),
+                                                      moduleEntity)
+    importFolders(contentRootEntity)
     importLanguageLevel();
   }
 
@@ -150,7 +150,7 @@ class WorkspaceModuleImporter(private val project: Project,
                                  emptyList(), MavenExternalSource.INSTANCE)
   }
 
-  private fun importFolders() {
+  private fun importFolders(contentRootEntity: ContentRootEntity) {
     MavenFoldersImporter.getSourceFolders(mavenProject).forEach { entry ->
 
       val serializer = (JpsModelSerializerExtension.getExtensions()
@@ -158,13 +158,14 @@ class WorkspaceModuleImporter(private val project: Project,
         .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
                        ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
 
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
+      val sourceRootEntity = diff.addSourceRootEntity(contentRootEntity,
+                                                      virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
                                                       entry.value.isForTests,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)
       when (entry.value) {
-        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
-        is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
+        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "")
+        is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "")
         else -> TODO()
       }
     }

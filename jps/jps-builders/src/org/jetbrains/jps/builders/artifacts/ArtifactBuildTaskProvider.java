@@ -28,16 +28,7 @@ import java.util.List;
  */
 public abstract class ArtifactBuildTaskProvider {
   public enum ArtifactBuildPhase {
-    PRE_PROCESSING("pre-processing"), FINISHING_BUILD("finishing"), POST_PROCESSING("post-processing");
-    private final String myPresentableName;
-
-    ArtifactBuildPhase(String presentableName) {
-      myPresentableName = presentableName;
-    }
-
-    public String getPresentableName() {
-      return myPresentableName;
-    }
+    PRE_PROCESSING, FINISHING_BUILD, POST_PROCESSING
   }
 
   /**

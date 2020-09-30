@@ -3,8 +3,6 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.diff.util.Range
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
@@ -12,12 +10,14 @@ import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 
 private typealias TrackerState = ChangelistsLocalLineStatusTracker.State
 private typealias FullTrackerState = ChangelistsLocalLineStatusTracker.FullState
 
 @Service
 @State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
+@NonNls
 class PartialLineStatusTrackerManagerState(private val project: Project) : PersistentStateComponent<Element> {
   private val NODE_PARTIAL_FILE = "file"
   private val ATT_PATH = "path"

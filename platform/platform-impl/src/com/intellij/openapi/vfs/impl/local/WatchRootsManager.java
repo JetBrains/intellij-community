@@ -14,11 +14,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
@@ -38,7 +36,7 @@ final class WatchRootsManager {
   private final NavigableMap<String, List<WatchRequest>> myFlatWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
-  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();
+  private final Int2ObjectMap<SymlinkData> mySymlinksById = new Int2ObjectOpenHashMap<>();
   private final NavigableSet<Pair<String, String>> myPathMappings = WatchRootsUtil.createMappingsNavigableSet();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
@@ -83,11 +81,11 @@ final class WatchRootsManager {
       myOptimizedRecursiveWatchRoots.clear();
       myFlatWatchRoots.clear();
       myPathMappings.clear();
-      mySymlinksById.forEachValue(data -> { data.clear(); return true; });
+      mySymlinksById.values().forEach(SymlinkData::clear);
     }
   }
 
-  void updateSymlink(int fileId, String linkPath, @Nullable String linkTarget) {
+  void updateSymlink(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
@@ -220,7 +218,9 @@ final class WatchRootsManager {
     if (index >= 0) root = root.substring(0, index);
     try {
       Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
-      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
+      if (!rootPath.isAbsolute()) {
+        throw new InvalidPathException(root, "Watch roots should be absolute");
+      }
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {
@@ -409,6 +409,7 @@ final class WatchRootsManager {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
     }

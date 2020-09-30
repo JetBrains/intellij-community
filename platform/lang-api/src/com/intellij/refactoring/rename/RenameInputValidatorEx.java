@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -20,5 +21,5 @@ public interface RenameInputValidatorEx extends RenameInputValidator {
    * @return {@code null} if newName is a valid name, custom error message otherwise
    */
   @Nullable
-  String getErrorMessage(@NotNull String newName, @NotNull Project project);
+  @DialogMessage String getErrorMessage(@NotNull String newName, @NotNull Project project);
 }

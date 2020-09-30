@@ -7,28 +7,31 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 moduleListSerializers: List<JpsModuleListSerializer>,
@@ -41,7 +44,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal val moduleSerializers = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsModuleListSerializer>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   private val internalSourceToExternal = HashMap<JpsFileEntitySource, JpsFileEntitySource>()
-  internal val fileSerializersByUrl = MultiMap.create<String, JpsFileEntitiesSerializer<*>>()
+  internal val fileSerializersByUrl = BidirectionalMultiMap<String, JpsFileEntitiesSerializer<*>>()
   internal val fileIdToFileName = Int2ObjectOpenHashMap<String>()
 
   init {
@@ -50,10 +53,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     val enabledModuleListSerializers = moduleListSerializers.filter { enableExternalStorage || !it.isExternalStorage }
     val moduleFiles = enabledModuleListSerializers.flatMap { it.loadFileList(reader, virtualFileManager) }
-    for (moduleFile in moduleFiles) {
+    for ((moduleFile, moduleGroup) in moduleFiles) {
       val internalSource = createFileInDirectorySource(moduleFile.parent!!, moduleFile.file!!.name)
       for (moduleListSerializer in enabledModuleListSerializers) {
-        val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile)
+        val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile, moduleGroup)
         moduleSerializers[moduleSerializer] = moduleListSerializer
       }
     }
@@ -61,7 +64,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
                              serializerToDirectoryFactory.keys + moduleSerializers.keys
     allFileSerializers.forEach {
-      fileSerializersByUrl.putValue(it.fileUrl.url, it)
+      fileSerializersByUrl.put(it.fileUrl.url, it)
     }
   }
 
@@ -86,11 +89,21 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
   }
 
+  fun findModuleSerializer(modulePath: ModulePath): JpsFileEntitiesSerializer<*>? {
+    return fileSerializersByUrl.getValues(VfsUtilCore.pathToUrl(modulePath.path)).first()
+  }
+
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                                       reader: JpsFileContentReader): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder> {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
-    for (addedFileUrl in change.addedFileUrls) {
+
+    val addedFileUrls = change.addedFileUrls.flatMap {
+      val file = JpsPathUtil.urlToFile(it)
+      if (file.isDirectory) file.listFiles()?.map { JpsPathUtil.pathToUrl(it.canonicalPath) } ?: emptyList() else listOf(it)
+    }.toSet()
+
+    for (addedFileUrl in addedFileUrls) {
       val factory = directorySerializerFactoriesByUrl[PathUtil.getParentPath(addedFileUrl)]
       val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
         virtualFileManager.fromUrl(factory.directoryUrl), PathUtil.getFileName(addedFileUrl)), virtualFileManager)
@@ -106,11 +119,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val newFileUrls = serializerFactory.loadFileList(reader, virtualFileManager)
         val oldSerializers: List<JpsFileEntitiesSerializer<*>> = moduleSerializers.getKeysByValue(serializerFactory) ?: emptyList()
         val oldFileUrls = oldSerializers.mapTo(HashSet()) { it.fileUrl }
-        val newFileUrlsSet = newFileUrls.toSet()
+        val newFileUrlsSet = newFileUrls.mapTo(HashSet()) { it.first }
         val obsoleteSerializersForFactory = oldSerializers.filter { it.fileUrl !in newFileUrlsSet }
         obsoleteSerializersForFactory.forEach { moduleSerializers.remove(it, serializerFactory) }
-        val newFileSerializersForFactory = newFileUrls.filter { it !in oldFileUrls }.map {
-          serializerFactory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it)
+        val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
+          serializerFactory.createSerializer(createFileInDirectorySource(it.first.parent!!, it.first.file!!.name), it.first, it.second)
         }
         newFileSerializersForFactory.associateWithTo(moduleSerializers) { serializerFactory }
         obsoleteSerializers.addAll(obsoleteSerializersForFactory)
@@ -119,17 +132,29 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (newSerializer in newFileSerializers) {
-      fileSerializersByUrl.putValue(newSerializer.fileUrl.url, newSerializer)
+      fileSerializersByUrl.put(newSerializer.fileUrl.url, newSerializer)
     }
     for (obsoleteSerializer in obsoleteSerializers) {
       fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
     }
 
-    val affectedFileLoaders = (change.changedFileUrls + change.addedFileUrls).toCollection(HashSet()).flatMap { fileSerializersByUrl[it] }
+    val affectedFileLoaders = (change.changedFileUrls + addedFileUrls).toCollection(HashSet()).flatMap { fileSerializersByUrl.getValues(it) }
     val changedSources = affectedFileLoaders.mapTo(HashSet()) { it.internalEntitySource }
     for (fileUrl in change.removedFileUrls) {
-      val obsolete = fileSerializersByUrl.remove(fileUrl)
-      if (obsolete != null) {
+
+      val directorySerializer = directorySerializerFactoriesByUrl[fileUrl]
+      if (directorySerializer != null) {
+        val serializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer)?.toList() ?: emptyList()
+        for (serializer in serializers) {
+          fileSerializersByUrl.removeValue(serializer)
+
+          obsoleteSerializers.add(serializer)
+          serializerToDirectoryFactory.remove(serializer, directorySerializer)
+        }
+      } else {
+        val obsolete = fileSerializersByUrl.getValues(fileUrl)
+        fileSerializersByUrl.removeKey(fileUrl)
+
         obsoleteSerializers.addAll(obsolete)
         obsolete.forEach {
           serializerToDirectoryFactory.remove(it)
@@ -148,26 +173,47 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return Pair(changedSources, builder)
   }
 
-  private val lock = Any()
-
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
-      val tasks = fileSerializersByUrl.values().map { serializer ->
+      val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
           serializer.loadEntities(myBuilder, reader, virtualFileManager)
-          synchronized(lock) {
-            builder.addDiff(myBuilder)
-          }
+          myBuilder
         }
       }
 
-      ConcurrencyUtil.invokeAll(tasks, service)
+      val res = ConcurrencyUtil.invokeAll(tasks, service)
+      val squashedBuilder = squash(res)
+      builder.addDiff(squashedBuilder)
     }
     finally {
       service.shutdown()
     }
+  }
+
+  // This fancy logic allows to reduce the time spared by addDiff. This can be removed if addDiff won't do toStorage at the start of the method
+  private fun squash(builders: List<Future<WorkspaceEntityStorageBuilder>>): WorkspaceEntityStorageBuilder {
+    val builder = byPairs(builders.map { it.get() })
+    return builder.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
+  }
+
+  private tailrec fun byPairs(builders: List<WorkspaceEntityStorageBuilder>): List<WorkspaceEntityStorageBuilder> {
+    if (builders.isEmpty() || builders.size == 1) return builders
+    val resBuilder = ArrayList<WorkspaceEntityStorageBuilder>()
+    var i = 0
+    while (i < builders.size - 1) {
+      val left = builders[i]
+      left.addDiff(builders[i+1])
+      resBuilder += left
+      i += 2
+    }
+    if (i == builders.lastIndex) {
+      resBuilder += builders.last()
+    }
+
+    return byPairs(resBuilder)
   }
 
   @TestOnly
@@ -211,15 +257,16 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal fun getActualFileUrl(source: EntitySource) = getActualFileSource(source)?.let { getActualFileUrl(it) }
 
   override fun getAllModulePaths(): List<ModulePath> {
-    return fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
+    return fileSerializersByUrl.values.filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
   }
 
   override fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
     val affectedFileFactories = HashSet<JpsModuleListSerializer>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
-      val obsoleteSerializers = fileSerializersByUrl.remove(fileUrl)
-      obsoleteSerializers?.forEach {
+      val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
+      fileSerializersByUrl.removeKey(fileUrl)
+      obsoleteSerializers.forEach {
         val fileFactory = moduleSerializers.remove(it)
         if (fileFactory != null) {
           if (deleteObsoleteFilesFromFileFactories) {
@@ -228,7 +275,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           affectedFileFactories.add(fileFactory)
         }
       }
-      obsoleteSerializers?.forEach {
+      obsoleteSerializers.forEach {
         val directoryFactory = serializerToDirectoryFactory.remove(it)
         if (directoryFactory != null) {
           writer.saveComponent(fileUrl, directoryFactory.componentName, null)
@@ -237,11 +284,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val entitiesToSave = storage.entitiesBySource { it in affectedSources }
+    val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
+      it.internalFile
+    }
     val obsoleteSources = affectedSources - entitiesToSave.keys
     for (source in obsoleteSources) {
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
-        processObsoleteSource(fileUrl, false)
+        processObsoleteSource(fileUrl, source in internalSourceConvertedToImported)
         if (source is JpsFileEntitySource.FileInDirectory) {
           fileIdToFileName.remove(source.fileNameId)
         }
@@ -257,7 +307,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val newSerializers = createSerializersForDirectoryEntities(factory, added)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.first] = factory
-            fileSerializersByUrl.putValue(it.first.fileUrl.url, it.first)
+            fileSerializersByUrl.put(it.first.fileUrl.url, it.first)
           }
           serializersToRun.addAll(newSerializers)
         }
@@ -281,12 +331,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       val url = actualFileSource?.let { getActualFileUrl(it) }
       val internalSource = getInternalFileSource(source)
-      if (url != null && internalSource != null && url !in fileSerializersByUrl.keySet()
+      if (url != null && internalSource != null && url !in fileSerializersByUrl.keys
           && (ModuleEntity::class.java in entities || FacetEntity::class.java in entities)) {
         moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
           if (moduleListSerializer.entitySourceFilter(source)) {
-            val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url))
-            fileSerializersByUrl.putValue(url, newSerializer)
+            val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), null)
+            fileSerializersByUrl.put(url, newSerializer)
             moduleSerializers[newSerializer] = moduleListSerializer
             affectedFileFactories.add(moduleListSerializer)
           }
@@ -295,7 +345,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     entitiesToSave.forEach { (source, entities) ->
-      val serializers = fileSerializersByUrl[getActualFileUrl(source)]
+      val serializers = fileSerializersByUrl.getValues(getActualFileUrl(source))
       serializers.filter { it !is JpsFileEntityTypeSerializer }.mapTo(serializersToRun) {
         Pair(it, entities)
       }
@@ -393,7 +443,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
+class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
   private val projectPathMacroManager = ProjectPathMacroManagerBridge(JpsPathUtil.urlToPath(projectBaseDirUrl))
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
@@ -412,9 +462,9 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
     else {
       projectPathMacroManager
     }
-    val file = File(path)
-    if (!file.isFile) return emptyMap()
-    return loadStorageFile(file, macroManager)
+
+    val file = Paths.get(path)
+    return if (Files.isRegularFile(file)) loadStorageFile(file, macroManager) else emptyMap()
   }
 
   internal class ModulePathMacroManagerBridge(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(
@@ -455,3 +505,9 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
 // TODO Add more diagnostics: file path, line etc
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: error("Expected attribute $name under ${this.name} element")
+
+fun isExternalModuleFile(filePath: String): Boolean {
+  val parentPath = PathUtil.getParentPath(filePath)
+  return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
+         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
+}

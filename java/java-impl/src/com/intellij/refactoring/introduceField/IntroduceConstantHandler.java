@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -248,7 +249,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return true;
   }
 
-  public static String getRefactoringNameText() {
+  public static @NlsActions.ActionText String getRefactoringNameText() {
     return RefactoringBundle.message("introduce.constant.title");
   }
 }

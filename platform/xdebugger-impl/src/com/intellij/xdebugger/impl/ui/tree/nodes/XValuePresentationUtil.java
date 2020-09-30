@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class XValuePresentationUtil {
-  public static void renderValue(@NotNull String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
+  public static void renderValue(@NotNull @NlsSafe String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
                                  @Nullable String additionalCharsToEscape) {
     SimpleTextAttributes escapeAttributes = null;
     int lastOffset = 0;
@@ -62,7 +63,7 @@ public final class XValuePresentationUtil {
     }
   }
 
-  public static void appendSeparator(@NotNull ColoredTextContainer text, @NotNull String separator) {
+  public static void appendSeparator(@NotNull ColoredTextContainer text, @NotNull @NlsSafe String separator) {
     if (!separator.isEmpty()) {
       text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

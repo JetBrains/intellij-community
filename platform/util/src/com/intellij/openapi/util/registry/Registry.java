@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -106,7 +107,7 @@ public final class Registry  {
     return bundle;
   }
 
-  public String getBundleValue(@NonNls @NotNull String key, boolean mustExist) throws MissingResourceException {
+  public @NlsSafe String getBundleValue(@NonNls @NotNull String key, boolean mustExist) throws MissingResourceException {
     if (myContributedKeys.containsKey(key)) {
       return myContributedKeys.get(key).getDefaultValue();
     }

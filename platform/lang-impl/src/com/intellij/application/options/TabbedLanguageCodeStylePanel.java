@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
@@ -511,7 +512,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getTabTitle() {
+    protected @TabTitle @NotNull String getTabTitle() {
       return myConfigurable.getDisplayName();
     }
 
@@ -566,7 +567,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       }
 
       @Override
-      public Map<String, Set<String>> processListOptionsWithPaths() {
+      public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
         final Map<String,Set<String>> result = new HashMap<>();
         for (CodeStyleAbstractPanel tab : myTabs) {
           result.put(tab.getTabTitle(), tab.processListOptions());
@@ -682,7 +683,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getTabTitle() {
+    protected @TabTitle @NotNull String getTabTitle() {
       return ApplicationBundle.message("title.tabs.and.indents");
     }
 

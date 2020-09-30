@@ -16,6 +16,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.UpdateMethod
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateEnvironment.performUpdate
 
@@ -45,7 +46,7 @@ internal class GitUpdateExecutionProcess(private val project: Project,
                                  private val updateConfig: Map<GitRepository, GitBranchPair>,
                                  private val updateMethod: UpdateMethod,
                                  private val shouldSetAsUpstream: Boolean = false)
-    : AbstractCommonUpdateAction.Updater(project, roots, vcsToRoots, ActionInfo.UPDATE, "Update") {
+    : AbstractCommonUpdateAction.Updater(project, roots, vcsToRoots, ActionInfo.UPDATE, GitBundle.message("progress.title.update")) {
 
     override fun performUpdate(progressIndicator: ProgressIndicator, updateEnvironment: UpdateEnvironment?,
                                files: MutableCollection<FilePath>?, refContext: Ref<SequentialUpdatesContext>?): UpdateSession {

@@ -12,10 +12,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.doLoadApp
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.ide.DataManager
-import com.intellij.ide.GeneratedSourceFileChangeTracker
-import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
-import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.*
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
@@ -51,11 +48,12 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.UiInterceptors
+import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkUtils
 import junit.framework.AssertionFailedError
@@ -63,6 +61,8 @@ import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAutoShutdown
 import java.awt.EventQueue
 import java.awt.Toolkit
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.DelayQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -246,7 +246,7 @@ fun tearDownProjectAndApp(project: Project) {
     }
   }
 
-  l.throwIfNotEmpty()
+  throwIfNotEmpty(l)
 }
 
 /**
@@ -270,6 +270,11 @@ fun disposeApplicationAndCheckForLeaks() {
       println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
     }
 
+    l.catchAndStoreExceptions {
+      val app = ApplicationManager.getApplication() as? ApplicationImpl
+      app?.messageBus?.syncPublisher(AppLifecycleListener.TOPIC)?.appWillBeClosed(false)
+    }
+
     l.catchAndStoreExceptions { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) }
 
     l.catchAndStoreExceptions {
@@ -277,11 +282,11 @@ fun disposeApplicationAndCheckForLeaks() {
         LeakHunter.checkNonDefaultProjectLeak()
       }
       catch (e: AssertionError) {
-        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+        publishHeapDump("leakedProjects")
         throw e
       }
       catch (e: Exception) {
-        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+        publishHeapDump("leakedProjects")
         throw e
       }
     }
@@ -295,16 +300,16 @@ fun disposeApplicationAndCheckForLeaks() {
       Disposer.assertIsEmpty(true)
     }
     catch (e: AssertionError) {
-      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
+      publishHeapDump("disposerNonEmpty")
       throw e
     }
     catch (e: Exception) {
-      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
+      publishHeapDump("disposerNonEmpty")
       throw e
     }
   }
 
-  CompoundRuntimeException.throwIfNotEmpty(l)
+  throwIfNotEmpty(l)
 }
 
 @ReviseWhenPortedToJDK("9")
@@ -339,5 +344,22 @@ fun waitForProjectLeakingThreads(project: Project, timeout: Long = 10, timeUnit:
     project.stopServicePreloading()
   }
 
-  (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout, timeUnit)
+  (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout,
+                                                                                                                            timeUnit)
+}
+
+fun publishHeapDump(fileNamePrefix: String): String {
+  val fileName = "$fileNamePrefix.hprof.zip"
+  val dumpFile = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName)
+  try {
+    Files.deleteIfExists(dumpFile)
+    MemoryDumpHelper.captureMemoryDumpZipped(dumpFile)
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+  }
+
+  val dumpPath = dumpFile.toAbsolutePath().toString()
+  println("##teamcity[publishArtifacts '$dumpPath']")
+  return dumpPath
 }

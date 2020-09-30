@@ -178,9 +178,12 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
+          boolean isEnabled = isEnabledState();
+          updateEnabledStateIcon(isEnabled);
+
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.setSelected(isEnabledState());
+          myEnableDisableButton.setSelected(isEnabled);
           myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
         }
       }
@@ -203,7 +206,7 @@ public class ListPluginComponent extends JPanel {
       @Override
       public int getBaseline(int width, int height) {
         if (myBaseline == -1) {
-          JCheckBox checkBox = new JCheckBox("Foo", true);
+          JCheckBox checkBox = new JCheckBox("Foo", true);  // NON-NLS
           Dimension size = checkBox.getPreferredSize();
           myBaseline = checkBox.getBaseline(size.width, size.height) - JBUIScale.scale(1);
         }
@@ -262,7 +265,7 @@ public class ListPluginComponent extends JPanel {
       if (myMarketplace && !LicensePanel.isEA2Product(myPlugin.getPluginId().getIdString())) {
         List<String> tags = ((PluginNode)myPlugin).getTags();
         if (tags != null && tags.contains(Tags.Paid.name())) {
-          tag = Tags.Paid.name();
+          tag = Tags.Paid.name(); //NON-NLS
         }
       }
     }
@@ -299,7 +302,7 @@ public class ListPluginComponent extends JPanel {
     String stamp = instance.getConfirmationStamp(productCode);
     if (stamp == null) {
       if (ApplicationManager.getApplication().isEAP()) {
-        setTagTooltip("The license is not required for EAP version");
+        setTagTooltip(IdeBundle.message("label.text.plugin.eap.license.not.required"));
         return;
       }
       licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
@@ -414,12 +417,13 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
+      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
       if (!enabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
 
+    myNameComponent.setHorizontalTextPosition(SwingConstants.LEFT);
     myNameComponent.setForeground(nameForeground);
 
     if (myRating != null) {
@@ -437,10 +441,10 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateErrors() {
-    Ref<String> enableAction = new Ref<>();
+    Ref<@Nls String> enableAction = new Ref<>();
     String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -542,11 +546,24 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
+    boolean isEnabled = isEnabledState();
     if (!myUninstalled && myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(isEnabledState());
+      myEnableDisableButton.setSelected(isEnabled);
     }
+    updateEnabledStateIcon(isEnabled);
+
     updateErrors();
     setSelection(mySelection, false);
+  }
+
+  private void updateEnabledStateIcon(boolean isEnabled) {
+    boolean isEnabledForProject = isEnabled &&
+                                  !myPlugin.isEnabled();
+
+    Icon icon = isEnabledForProject ?
+                AllIcons.General.ProjectConfigurable :
+                null;
+    myNameComponent.setIcon(icon);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
@@ -824,7 +841,7 @@ public class ListPluginComponent extends JPanel {
     private final JButton[] myButtons;
 
     ButtonAnAction(JButton @NotNull ... buttons) {
-      super(buttons[0].getText());
+      super(buttons[0].getText()); //NON-NLS
       myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);
     }

@@ -6,7 +6,7 @@ import org.joni.Region;
 
 import java.util.Arrays;
 
-public class MatchData {
+public final class MatchData {
   public static final MatchData NOT_MATCHED = new MatchData(false, new int[0]);
 
   private final boolean matched;

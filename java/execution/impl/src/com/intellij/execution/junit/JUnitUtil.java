@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -30,7 +30,7 @@ import java.util.*;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-public class JUnitUtil {
+public final class JUnitUtil {
   public static final String TEST_CASE_CLASS = "junit.framework.TestCase";
   private static final String TEST_INTERFACE = "junit.framework.Test";
   private static final String TEST_SUITE_CLASS = "junit.framework.TestSuite";
@@ -141,6 +141,11 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass == null ||
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          return false;
+        }
         return !isOneOf(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }

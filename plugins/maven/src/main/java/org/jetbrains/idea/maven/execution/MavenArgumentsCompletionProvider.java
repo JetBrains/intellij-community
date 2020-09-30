@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -25,71 +26,74 @@ public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvi
     // Copy pasted from org.apache.maven.cli.CLIManager.<init>()
 
     Options options = new Options();
-    options.addOption(OptionBuilder.withLongOpt("help").withDescription("Display help information").create('h'));
+    options.addOption(OptionBuilder.withLongOpt("help").withDescription(RunnerBundle.message("maven.options.description.h")).create('h'));
     options.addOption(
-      OptionBuilder.withLongOpt("file").hasArg().withDescription("Force the use of an alternate POM file (or directory with pom.xml).")
-        .create(
-          'f'));
-    options.addOption(OptionBuilder.withLongOpt("define").hasArg().withDescription("Define a system property").create('D'));
-    options.addOption(OptionBuilder.withLongOpt("offline").withDescription("Work offline").create('o'));
-    options.addOption(OptionBuilder.withLongOpt("version").withDescription("Display version information").create('v'));
-    options.addOption(OptionBuilder.withLongOpt("quiet").withDescription("Quiet output - only show errors").create('q'));
-    options.addOption(OptionBuilder.withLongOpt("debug").withDescription("Produce execution debug output").create('X'));
-    options.addOption(OptionBuilder.withLongOpt("errors").withDescription("Produce execution error messages").create('e'));
-    options.addOption(OptionBuilder.withLongOpt("non-recursive").withDescription("Do not recurse into sub-projects").create('N'));
+      OptionBuilder.withLongOpt("file").hasArg().withDescription(RunnerBundle.message("maven.options.description.f")).create('f'));
+    options.addOption(
+      OptionBuilder.withLongOpt("define").hasArg().withDescription(RunnerBundle.message("maven.options.description.D")).create('D'));
+    options.addOption(OptionBuilder.withLongOpt("offline").withDescription(
+      RunnerBundle.message("maven.options.description.o")).create('o'));
+    options.addOption(OptionBuilder.withLongOpt("version").withDescription(
+      RunnerBundle.message("maven.options.description.v")).create('v'));
+    options.addOption(OptionBuilder.withLongOpt("quiet").withDescription(
+      RunnerBundle.message("maven.options.description.q")).create('q'));
+    options.addOption(OptionBuilder.withLongOpt("debug").withDescription(
+      RunnerBundle.message("maven.options.description.X")).create('X'));
+    options.addOption(OptionBuilder.withLongOpt("errors").withDescription(
+      RunnerBundle.message("maven.options.description.e")).create('e'));
+    options.addOption(OptionBuilder.withLongOpt("non-recursive").withDescription(
+      RunnerBundle.message("maven.options.description.N")).create('N'));
     options.addOption(OptionBuilder.withLongOpt("update-snapshots")
-                        .withDescription("Forces a check for updated releases and snapshots on remote repositories").create(
-        'U'));
+                        .withDescription(MavenConfigurableBundle.message("maven.settings.general.update.snapshots.tooltip")).create('U'));
     options.addOption(
-      OptionBuilder.withLongOpt("activate-profiles").withDescription("Comma-delimited list of profiles to activate").hasArg().create(
-        'P'));
-    options.addOption(OptionBuilder.withLongOpt("batch-mode").withDescription("Run in non-interactive (batch) mode").create('B'));
-    options.addOption(OptionBuilder.withLongOpt("no-snapshot-updates").withDescription("Suppress SNAPSHOT updates").create("nsu"));
-    options.addOption(OptionBuilder.withLongOpt("strict-checksums").withDescription("Fail the build if checksums don't match").create(
-      'C'));
-    options.addOption(OptionBuilder.withLongOpt("lax-checksums").withDescription("Warn if checksums don't match").create('c'));
-    options.addOption(OptionBuilder.withLongOpt("settings").withDescription("Alternate path for the user settings file").hasArg().create(
-      's'));
+      OptionBuilder.withLongOpt("activate-profiles").withDescription(RunnerBundle.message("maven.options.description.P")).hasArg()
+        .create('P'));
     options.addOption(
-      OptionBuilder.withLongOpt("global-settings").withDescription("Alternate path for the global settings file").hasArg().create(
-        "gs"));
+      OptionBuilder.withLongOpt("batch-mode").withDescription(RunnerBundle.message("maven.options.description.B")).create('B'));
+    options.addOption(OptionBuilder.withLongOpt("no-snapshot-updates").withDescription(
+      RunnerBundle.message("maven.options.description.nsu")).create("nsu"));
+    options.addOption(OptionBuilder.withLongOpt("strict-checksums").withDescription(
+      RunnerBundle.message("maven.options.description.C")).create('C'));
+    options.addOption(OptionBuilder.withLongOpt("lax-checksums").withDescription(
+      RunnerBundle.message("maven.options.description.c")).create('c'));
+    options.addOption(
+      OptionBuilder.withLongOpt("settings").withDescription(RunnerBundle.message("maven.options.description.s")).hasArg().create('s'));
+    options.addOption(
+      OptionBuilder.withLongOpt("global-settings").withDescription(RunnerBundle.message("maven.options.description.gs")).hasArg()
+        .create("gs"));
     options
-      .addOption(OptionBuilder.withLongOpt("toolchains").withDescription("Alternate path for the user toolchains file").hasArg().create(
-        't'));
-    options.addOption(OptionBuilder.withLongOpt("fail-fast").withDescription("Stop at first failure in reactorized builds").create(
-      "ff"));
+      .addOption(
+        OptionBuilder.withLongOpt("toolchains").withDescription(RunnerBundle.message("maven.options.description.t")).hasArg().create('t'));
+    options
+      .addOption(OptionBuilder.withLongOpt("fail-fast").withDescription(RunnerBundle.message("maven.options.description.ff")).create("ff"));
     options.addOption(
-      OptionBuilder.withLongOpt("fail-at-end").withDescription("Only fail the build afterwards; allow all non-impacted builds to continue")
-        .create(
-          "fae"));
-    options.addOption(OptionBuilder.withLongOpt("fail-never").withDescription("NEVER fail the build, regardless of project result").create(
-      "fn"));
-    options.addOption(OptionBuilder.withLongOpt("resume-from").hasArg().withDescription("Resume reactor from specified project").create(
-      "rf"));
+      OptionBuilder.withLongOpt("fail-at-end").withDescription(RunnerBundle.message("maven.options.description.fae"))
+        .create("fae"));
+    options
+      .addOption(
+        OptionBuilder.withLongOpt("fail-never").withDescription(RunnerBundle.message("maven.options.description.fn")).create("fn"));
+    options.addOption(OptionBuilder.withLongOpt("resume-from").hasArg().withDescription(
+      RunnerBundle.message("maven.options.description.rf")).create("rf"));
     options.addOption(OptionBuilder.withLongOpt("projects").withDescription(
-      "Comma-delimited list of specified reactor projects to build instead of all projects. A project can be specified by [groupId]:artifactId or by its relative path.")
-                        .hasArg().create(
-        "pl"));
+      RunnerBundle.message("maven.options.description.pl"))
+                        .hasArg().create("pl"));
     options.addOption(
-      OptionBuilder.withLongOpt("also-make").withDescription("If project list is specified, also build projects required by the list")
-        .create(
-          "am"));
+      OptionBuilder.withLongOpt("also-make").withDescription(RunnerBundle.message("maven.options.description.am"))
+        .create("am"));
     options.addOption(OptionBuilder.withLongOpt("also-make-dependents")
-                        .withDescription("If project list is specified, also build projects that depend on projects on the list").create(
-        "amd"));
-    options.addOption(OptionBuilder.withLongOpt("log-file").hasArg().withDescription("Log file to where all build output will go.").create(
-      "l"));
-    options
-      .addOption(OptionBuilder.withLongOpt("show-version").withDescription("Display version information WITHOUT stopping build").create(
-        'V'));
-    options
-      .addOption(OptionBuilder.withLongOpt("encrypt-master-password").hasArg().withDescription("Encrypt master security password").create(
-        "emp"));
-    options.addOption(OptionBuilder.withLongOpt("encrypt-password").hasArg().withDescription("Encrypt server password").create(
-      "ep"));
+                        .withDescription(RunnerBundle.message("maven.options.description.amd")).create("amd"));
     options.addOption(
-      OptionBuilder.withLongOpt("threads").hasArg().withDescription("Thread count, for instance 2.0C where C is core multiplied").create(
-        "T"));
+      OptionBuilder.withLongOpt("log-file").hasArg().withDescription(RunnerBundle.message("maven.options.description.l")).create("l"));
+    options
+      .addOption(
+        OptionBuilder.withLongOpt("show-version").withDescription(RunnerBundle.message("maven.options.description.V")).create('V'));
+    options
+      .addOption(OptionBuilder.withLongOpt("encrypt-master-password").hasArg().withDescription(
+        RunnerBundle.message("maven.options.description.emp")).create("emp"));
+    options.addOption(OptionBuilder.withLongOpt("encrypt-password").hasArg().withDescription(
+      RunnerBundle.message("maven.options.description.ep")).create("ep"));
+    options.addOption(
+      OptionBuilder.withLongOpt("threads").hasArg().withDescription(RunnerBundle.message("maven.options.description.T")).create("T"));
 
     ourOptions = options;
   }
@@ -113,6 +117,5 @@ public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvi
     }
 
     result.addAllElements(cachedElements);
-
   }
 }

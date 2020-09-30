@@ -13,6 +13,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -99,8 +100,9 @@ public class DataPack extends DataPackBase {
   }
 
   @Override
+  @NonNls
   public String toString() {
-    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}"; // NON-NLS
+    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
   }
 
   public static class ErrorDataPack extends DataPack {

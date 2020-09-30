@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
@@ -53,8 +54,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    * @return the class name, or null if the annotation is unresolved.
    */
   @Override
-  @Nullable
-  @NonNls
+  @Nullable @NlsSafe
   String getQualifiedName();
 
   /**

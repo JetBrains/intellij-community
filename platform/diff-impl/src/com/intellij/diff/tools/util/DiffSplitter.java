@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public class DiffSplitter extends Splitter {
     setOrientation(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setPainter(@Nullable Painter painter) {
     myPainter = painter;
   }

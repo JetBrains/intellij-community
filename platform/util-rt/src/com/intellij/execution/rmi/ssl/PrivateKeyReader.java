@@ -18,18 +18,20 @@ package com.intellij.execution.rmi.ssl;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAPrivateCrtKeySpec;
+import java.security.spec.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,23 +44,28 @@ public class PrivateKeyReader {
   public static final String P8_BEGIN_MARKER = "-----BEGIN PRIVATE KEY";
   public static final String P8_END_MARKER = "-----END PRIVATE KEY";
 
+  public static final String EP8_BEGIN_MARKER = "-----BEGIN ENCRYPTED PRIVATE KEY";
+  public static final String EP8_END_MARKER = "-----END ENCRYPTED PRIVATE KEY";
+
   private static final Map<String, PrivateKey> keyCache = Collections.synchronizedMap(new HashMap<String, PrivateKey>());
 
   @NotNull private final String myFileName;
+  @NotNull private final char[] myPassword;
 
-  public PrivateKeyReader(@NotNull String fileName) {
+  public PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
     myFileName = fileName;
+    myPassword = password;
   }
 
   public PrivateKey getPrivateKey() throws IOException {
     PrivateKey key = keyCache.get(myFileName);
     if (key != null) return key;
-    key = read(myFileName);
+    key = read(myFileName, myPassword);
     keyCache.put(myFileName, key);
     return key;
   }
 
-  private static PrivateKey read(String fileName) throws IOException {
+  private static PrivateKey read(String fileName, @Nullable char[] password) throws IOException {
     KeyFactory factory;
     try {
       factory = KeyFactory.getInstance("RSA");
@@ -69,36 +76,59 @@ public class PrivateKeyReader {
 
     List<String> lines = FileUtilRt.loadLines(fileName, "UTF-8");
     for (int i = 0; i < lines.size(); i++) {
-      String line = lines.get(i);
-      if (line.contains(P1_BEGIN_MARKER)) {
-        List<String> strings = lines.subList(i + 1, lines.size());
-        byte[] keyBytes = readKeyMaterial(P1_END_MARKER, strings);
-        RSAPrivateCrtKeySpec keySpec = getRSAKeySpec(keyBytes);
-
-        try {
-          return factory.generatePrivate(keySpec);
-        }
-        catch (InvalidKeySpecException e) {
-          throw new IOException("Invalid PKCS#1 PEM file: " + e.getMessage());
-        }
+      KeySpec keySpec = findRSAKeySpec(lines, i);
+      String enc = "PKCS#1";
+      if (keySpec == null) {
+        keySpec = findPKCS8EncodedKeySpec(lines, i);
+        enc = "PKCS#8";
       }
-
-      if (line.contains(P8_BEGIN_MARKER)) {
-        List<String> strings = lines.subList(i + 1, lines.size());
-        byte[] keyBytes = readKeyMaterial(P8_END_MARKER, strings);
-        EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
-
-        try {
-          return factory.generatePrivate(keySpec);
-        }
-        catch (InvalidKeySpecException e) {
-          throw new IOException("Invalid PKCS#8 PEM file: " + e.getMessage());
-        }
+      if (keySpec == null) {
+        keySpec = findEncryptedKeySpec(lines, i, password);
+        enc = "Encrypted key";
+      }
+      if (keySpec == null) continue;
+      try {
+        return factory.generatePrivate(keySpec);
+      }
+      catch (InvalidKeySpecException e) {
+        throw new IOException("Invalid " + enc + " PEM file: " + e.getMessage());
       }
     }
 
 
     throw new IOException("Invalid PEM file: no begin marker");
+  }
+
+  @Nullable
+  private static EncodedKeySpec findEncryptedKeySpec(List<String> lines, int i, @Nullable char[] password) throws IOException {
+    if (!lines.get(i).contains(EP8_BEGIN_MARKER)) return null;
+    List<String> strings = lines.subList(i + 1, lines.size());
+    byte[] keyBytes = readKeyMaterial(EP8_END_MARKER, strings);
+    EncryptedPrivateKeyInfo encrypted = new EncryptedPrivateKeyInfo(keyBytes);
+    PBEKeySpec encryptedKeySpec = new PBEKeySpec(password);
+    try {
+      SecretKeyFactory pbeKeyFactory = SecretKeyFactory.getInstance(encrypted.getAlgName());
+      return encrypted.getKeySpec(pbeKeyFactory.generateSecret(encryptedKeySpec));
+    }
+    catch (GeneralSecurityException e) {
+      throw new IOException("JCE error: " + e.getMessage());
+    }
+  }
+
+  @Nullable
+  private static EncodedKeySpec findPKCS8EncodedKeySpec(List<String> lines, int i) throws IOException {
+    if (!lines.get(i).contains(P8_BEGIN_MARKER)) return null;
+    List<String> strings = lines.subList(i + 1, lines.size());
+    byte[] keyBytes = readKeyMaterial(P8_END_MARKER, strings);
+    return new PKCS8EncodedKeySpec(keyBytes);
+  }
+
+  @Nullable
+  private static RSAPrivateCrtKeySpec findRSAKeySpec(List<String> lines, int i) throws IOException {
+    if (!lines.get(i).contains(P1_BEGIN_MARKER)) return null;
+    List<String> strings = lines.subList(i + 1, lines.size());
+    byte[] keyBytes = readKeyMaterial(P1_END_MARKER, strings);
+    return getRSAKeySpec(keyBytes);
   }
 
   private static byte[] readKeyMaterial(String endMarker, List<String> strings) throws IOException {

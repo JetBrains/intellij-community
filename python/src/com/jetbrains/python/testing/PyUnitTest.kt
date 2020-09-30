@@ -36,12 +36,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration,
-                            PyTestSharedForm.CustomOption(
-                              PyUnitTestConfiguration::pattern.name,
-                              PyBundle.message("python.testing.nose.custom.options.additional.arguments"),
-                              PyRunTargetVariant.PATH
-                            )
-    ))
+                            PyTestCustomOption(PyUnitTestConfiguration::pattern, PyRunTargetVariant.PATH)))
 
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
@@ -61,7 +56,7 @@ class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, env
 class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   PyAbstractTestConfiguration(project, factory,
                               PythonTestConfigurationsModel.getPythonsUnittestName()) { // Bare functions not supported in unittest: classes only
-  @ConfigField
+  @ConfigField("runcfg.unittest.config.pattern")
   var pattern: String? = null
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =

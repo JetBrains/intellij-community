@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.google.common.util.concurrent.Futures;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class ProcessInfoUtil {
+public final class ProcessInfoUtil {
   private static final Logger LOG = Logger.getInstance(ProcessInfoUtil.class);
   private static final int TIMEOUT_MILLIS = 2000;
   // restrict amount of concurrent cwd fetchings to not utilize all the threads in case of unpredicted hangings
@@ -62,7 +62,7 @@ public class ProcessInfoUtil {
     String procPath = "/proc/" + pid + "/cwd";
     try {
       File dir = Paths.get(procPath).toRealPath().toFile();
-      if (dir != null && dir.isDirectory()) {
+      if (dir.isDirectory()) {
         return dir.getAbsolutePath();
       }
     }
@@ -74,8 +74,8 @@ public class ProcessInfoUtil {
     return null;
   }
 
-  @NotNull
-  private static String getCwdOnUnix(int pid) throws ExecutionException {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NotNull String getCwdOnUnix(int pid) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine("lsof", "-a", "-d", "cwd", "-p", String.valueOf(pid), "-Fn");
     CapturingProcessRunner runner = new CapturingProcessRunner(new OSProcessHandler(commandLine));
     ProcessOutput output = runner.runProcess(TIMEOUT_MILLIS);

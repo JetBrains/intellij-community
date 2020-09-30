@@ -8,7 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
-public class PythonProcessRunner {
+public final class PythonProcessRunner {
   private PythonProcessRunner() {
   }
 

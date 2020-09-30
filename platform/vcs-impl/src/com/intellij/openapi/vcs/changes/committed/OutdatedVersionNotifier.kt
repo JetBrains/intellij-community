@@ -58,13 +58,8 @@ private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: 
 
 private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): String {
   val formattedDate = formatPrettyDateTime(changeList.commitDate)
-  val messageKey = when {
-    change.type == Change.Type.DELETED -> "outdated.version.text.deleted"
-    "/" !in formattedDate -> "outdated.version.pretty.date.text"
-    else -> "outdated.version.text"
-  }
-
-  return message(messageKey, changeList.committerName, formattedDate, changeList.comment.getSubject())
+  return message("outdated.version.text", changeList.committerName, formattedDate, changeList.comment.getSubject(),
+                 if (change.type == Change.Type.DELETED) 1 else 0)
 }
 
 private fun String.getSubject(): String {

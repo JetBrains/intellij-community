@@ -24,8 +24,9 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,19 +37,19 @@ import java.awt.*;
  * @author peter
  */
 public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor implements CommittablePanel, Highlightable {
-  private final String myName;
+  private final @Nls String myName;
   private final Factory<? extends T> myComponentFactory;
   private T myComponent;
 
-  public DomFileEditor(final DomElement element, final String name, final T component) {
+  public DomFileEditor(final DomElement element, final @Nls String name, final T component) {
     this(element.getManager().getProject(), DomUtil.getFile(element).getVirtualFile(), name, component);
   }
 
-  public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
+  public DomFileEditor(final Project project, final VirtualFile file, final @Nls String name, final T component) {
     this(project, file, name, () -> component);
   }
 
-  public DomFileEditor(final Project project, final VirtualFile file, final String name, final Factory<? extends T> component) {
+  public DomFileEditor(final Project project, final VirtualFile file, final @Nls String name, final Factory<? extends T> component) {
     super(project, file);
     myComponentFactory = component;
     myName = name;
@@ -153,7 +154,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     }
   }
 
-  public static DomFileEditor createDomFileEditor(final String name,
+  public static DomFileEditor createDomFileEditor(final @Nls String name,
                                                   @Nullable final Icon icon,
                                                   final DomElement element,
                                                   final Factory<? extends CommittablePanel> committablePanel) {
@@ -167,7 +168,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
       Disposer.register(component, captionComponent);
       return component;
     };
-    return new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
+    return new DomFileEditor<>(file.getProject(), file.getVirtualFile(), name, factory) {
       @Override
       public JComponent getPreferredFocusedComponent() {
         return null;
@@ -177,10 +178,10 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,
                                                                     final CaptionComponent captionComponent,
-                                                                    final DomElement element) {
+                                                                    final @Nullable DomElement element) {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(captionComponent, BorderLayout.NORTH);
-    panel.add(element.isValid() ? committablePanel.getComponent() : new JPanel(), BorderLayout.CENTER);
+    panel.add(element != null && element.isValid() ? committablePanel.getComponent() : new JPanel(), BorderLayout.CENTER);
 
     BasicDomElementComponent component = new BasicDomElementComponent(element) {
       @Override

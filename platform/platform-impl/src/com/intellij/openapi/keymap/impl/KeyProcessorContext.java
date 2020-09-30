@@ -50,7 +50,7 @@ public final class KeyProcessorContext {
     return myDataContext;
   }
 
-  public void setDataContext(DataContext dataContext) {
+  public void setDataContext(@NotNull DataContext dataContext) {
     myDataContext = dataContext;
   }
 

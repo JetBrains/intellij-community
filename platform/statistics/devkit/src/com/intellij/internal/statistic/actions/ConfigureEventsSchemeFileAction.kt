@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
-import com.intellij.internal.statistic.eventLog.validator.persistence.WhitelistPathSettings
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -40,17 +40,17 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
     })
   }
 
-  private fun updateSchemeSettings(recorderToSettings: MutableMap<String, EventsSchemeConfigurationModel.WhitelistPathSettings>) {
-    val settingsPersistence = EventLogWhitelistSettingsPersistence.getInstance()
+  private fun updateSchemeSettings(recorderToSettings: MutableMap<String, EventsSchemeConfigurationModel.EventsSchemePathSettings>) {
+    val settingsPersistence = EventLogMetadataSettingsPersistence.getInstance()
     for ((recorder, settings) in recorderToSettings) {
       val customPath = settings.customPath
       if (settings.useCustomPath && customPath != null) {
-        settingsPersistence.setPathSettings(recorder, WhitelistPathSettings(customPath, true))
+        settingsPersistence.setPathSettings(recorder, EventsSchemePathSettings(customPath, true))
       }
       else {
         val oldSettings = settingsPersistence.getPathSettings(recorder)
         if (oldSettings != null && oldSettings.isUseCustomPath) {
-          settingsPersistence.setPathSettings(recorder, WhitelistPathSettings(oldSettings.customPath, false))
+          settingsPersistence.setPathSettings(recorder, EventsSchemePathSettings(oldSettings.customPath, false))
         }
       }
       val validator = SensitiveDataValidator.getInstance(recorder)
@@ -63,7 +63,7 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
     super.update(event)
     val presentation = event.presentation
     presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
-    val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId)
+    val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId)
     presentation.icon = if (settings != null && settings.isUseCustomPath) customPathConfiguredIcon else AllIcons.General.Settings
   }
 

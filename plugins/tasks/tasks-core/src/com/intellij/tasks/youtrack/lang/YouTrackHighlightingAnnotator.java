@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -64,7 +65,7 @@ public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, 
     }
   }
 
-  public static class QueryInfo {
+  public static final class QueryInfo {
     private final int myCaretOffset;
     private final String myText;
     private final YouTrackIntellisense myIntellisense;

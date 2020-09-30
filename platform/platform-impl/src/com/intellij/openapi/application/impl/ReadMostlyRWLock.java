@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -67,6 +68,7 @@ class ReadMostlyRWLock {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "Reader{" +
              "thread=" + thread +

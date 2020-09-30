@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -13,10 +13,7 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 /**
  * @author peter
  */
-@State(name = "GantSettings", storages = {
-  @Storage("ant.xml"),
-  @Storage(value = "gant_config.xml", deprecated = true),
-})
+@State(name = "GantSettings", storages = @Storage("ant.xml"))
 public class GantSettings extends SdkHomeSettings {
   private final Project myProject;
 

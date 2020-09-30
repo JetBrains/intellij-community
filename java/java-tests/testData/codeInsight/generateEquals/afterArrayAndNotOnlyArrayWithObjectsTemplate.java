@@ -12,10 +12,7 @@ class A {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final A a = (A) o;
-        return i == a.i &&
-                s.equals(a.s) &&
-                Arrays.equals(a1, a.a1) &&
-                Arrays.equals(a2, a.a2);
+        return i == a.i && s.equals(a.s) && Arrays.equals(a1, a.a1) && Arrays.equals(a2, a.a2);
     }
 
     @Override

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class XmlIncludeHandler {
+public final class XmlIncludeHandler {
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
   public static boolean isXInclude(PsiElement element) {
     if (element instanceof XmlTag) {

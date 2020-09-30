@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +24,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +42,8 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
   private boolean useParam = false;
   private boolean useKeyword = false;
 
-  protected String myTitle = "pytest";
-  protected String myPluralTitle = "pytests";
+  protected @NlsSafe String myTitle = "pytest";
+  protected @NlsSafe String myPluralTitle = "pytests";
 
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
@@ -156,7 +158,7 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
-      throw new RuntimeConfigurationError("Please specify target folder or script");
+      throw new RuntimeConfigurationError(PyBundle.message("runcfg.testing.specify.target.folder.or.script"));
     }
     Sdk sdk = PythonSdkUtil.findSdkByPath(getInterpreterPath());
     if (sdk != null && !VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)) {
@@ -166,7 +168,8 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
 
   @Override
   public String suggestedName() {
-    return "pytest in " + getName();
+    //noinspection DialogTitleCapitalization
+    return PyBundle.message("runcfg.pytest.suggested.name", getName());
   }
 
   @Override

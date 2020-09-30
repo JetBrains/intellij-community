@@ -13,8 +13,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.util.function.Function
@@ -23,13 +21,12 @@ class BuildViewTest : LightPlatformTestCase() {
 
   private lateinit var buildViewTestFixture: BuildViewTestFixture
 
-  @Before
   override fun setUp() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
   }
-  @After
+
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })

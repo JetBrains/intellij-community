@@ -18,7 +18,10 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -289,8 +292,8 @@ public final class Match {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(getMatchStart());
     try {
       final Project project = getMatchStart().getProject();
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(project)
-          .getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), 
+                                                                        ControlFlowOptions.NO_CONST_EVALUATE);
       final int endOffset = controlFlow.getEndOffset(getMatchEnd());
       final int startOffset = controlFlow.getStartOffset(getMatchStart());
       final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, endOffset, controlFlow.getSize());

@@ -42,8 +42,4 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
     JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).setNotNullAnnotations(
       Collections.singletonList(NotNull.class.getName()));
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-  }
 }

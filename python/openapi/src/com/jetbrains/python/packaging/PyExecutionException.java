@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,15 +35,15 @@ public class PyExecutionException extends ExecutionException {
   private final int myExitCode;
   @NotNull private final List<? extends PyExecutionFix> myFixes;
 
-  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args) {
+  public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args) {
     this(message, command, args, "", "", 0, Collections.emptyList());
   }
 
-  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args, @NotNull ProcessOutput output) {
+  public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args, @NotNull ProcessOutput output) {
     this(message, command, args, output.getStdout(), output.getStderr(), output.getExitCode(), Collections.emptyList());
   }
 
-  public PyExecutionException(@NotNull String message, @NotNull String command, @NotNull List<String> args,
+  public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args,
                               @NotNull String stdout, @NotNull String stderr, int exitCode,
                               @NotNull List<? extends PyExecutionFix> fixes) {
     super(message);

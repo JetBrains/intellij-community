@@ -1,32 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
-public class XDependentBreakpointManager {
+public final class XDependentBreakpointManager {
   private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<>();
   private final MultiMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiMap<>();
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDependentBreakpointListener myEventPublisher;
 
-  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager) {
+  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager, @NotNull MessageBusConnection messageBusConnection) {
     myBreakpointManager = breakpointManager;
-    MessageBus messageBus = breakpointManager.getProject().getMessageBus();
-    myEventPublisher = messageBus.syncPublisher(XDependentBreakpointListener.TOPIC);
-    MessageBusConnection busConnection = messageBus.connect();
-    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    myEventPublisher = breakpointManager.getProject().getMessageBus().syncPublisher(XDependentBreakpointListener.TOPIC);
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);
@@ -77,7 +73,7 @@ public class XDependentBreakpointManager {
   }
 
   public void saveState() {
-    Map<XBreakpointBase<?,?,?>, String> breakpointToId = new THashMap<>();
+    Map<XBreakpointBase<?,?,?>, String> breakpointToId = new HashMap<>();
     int id = 0;
     for (XBreakpointBase breakpoint : myMaster2Info.keySet()) {
       breakpointToId.put(breakpoint, String.valueOf(id++));
@@ -159,7 +155,7 @@ public class XDependentBreakpointManager {
     return mySlave2Info.keySet();
   }
 
-  private static class XDependentBreakpointInfo {
+  private static final class XDependentBreakpointInfo {
     private XBreakpointBase myMasterBreakpoint;
     private final XBreakpointBase mySlaveBreakpoint;
     private boolean myLeaveEnabled;

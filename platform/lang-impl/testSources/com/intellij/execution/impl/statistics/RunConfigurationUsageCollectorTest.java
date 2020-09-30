@@ -391,7 +391,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
     return result;
   }
 
-  private static class TestUsageDescriptor {
+  private static final class TestUsageDescriptor {
     private final String myKey;
     private final FeatureUsageData myData;
 

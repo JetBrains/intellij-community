@@ -45,16 +45,19 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     }
   }
 
-  constructor(item: T, items: List<T>) : this(item, { link ->
+  @JvmOverloads
+  constructor(item: T, items: List<T>, onChoose: Consumer<T> = Consumer { }) : this(item, { link ->
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(items)
       .setRenderer(LinkCellRenderer(link))
-      .setItemChosenCallback { link.selectedItem = it }
+      .setItemChosenCallback {
+        onChoose.accept(it)
+        link.selectedItem = it
+      }
       .createPopup()
   })
 
-  @JvmOverloads
-  constructor(item: T, items: List<T>, onSelect: Consumer<T>, updateText: Boolean = true) : this(item, items) {
+  constructor(item: T, items: List<T>, onSelect: Consumer<T>, updateText: Boolean) : this(item, items) {
     addItemListener { event ->
       if (event.stateChange == ItemEvent.SELECTED) {
         @Suppress("UNCHECKED_CAST")

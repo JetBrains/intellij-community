@@ -12,7 +12,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import org.jdom.Element;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 @State(name = "EntryPointsManager")
 public class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
@@ -36,12 +36,14 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
     final List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
-    Condition<PsiClass> applicableToField = psiClass -> {
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      list, JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), true);
+    Predicate<PsiClass> applicableToField = psiClass -> {
       Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
       return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
     };
-    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly written if annotated by", false, applicableToField);
+    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      writeList, JavaBundle.message("separator.mark.field.as.implicitly.written.if.annotated.by"), false, applicableToField);
     new DialogWrapper(myProject) {
       {
         init();

@@ -25,8 +25,6 @@ import java.util.List;
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(ChangeTypeSignatureHandler.class);
 
-  public static final String REFACTORING_NAME = "Type Migration";
-
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -50,7 +48,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
                                         JavaRefactoringBundle.message("caret.position.warning.message"),
-                                        REFACTORING_NAME, "refactoring.migrateType");
+                                        JavaRefactoringBundle.message("type.migration.error.hint.title"), "refactoring.migrateType");
   }
 
   @Override

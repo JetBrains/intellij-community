@@ -55,7 +55,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       }
     }
 
-    NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<Set<String>>() {
+    NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<>() {
       @NotNull
       @Override
       protected Set<String> compute() {

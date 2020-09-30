@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
   }
 
-  protected abstract String getText(String varName);
+  protected abstract @IntentionName String getText(String varName);
 
   private boolean isAvailableInContext(@NotNull final PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();

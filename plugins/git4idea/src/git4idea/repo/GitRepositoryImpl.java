@@ -36,7 +36,7 @@ import java.util.Objects;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
+public final class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
 
   @NotNull private final GitVcs myVcs;

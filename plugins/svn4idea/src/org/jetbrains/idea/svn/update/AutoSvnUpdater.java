@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.ide.DataManager;
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -44,7 +31,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     myRoots = roots;
   }
 
-  public static void run(@NotNull AutoSvnUpdater updater, @NotNull String title) {
+  public static void run(@NotNull AutoSvnUpdater updater, @ActionText @NotNull String title) {
     JComponent frame = WindowManager.getInstance().getIdeFrame(updater.myProject).getComponent();
 
     updater.getTemplatePresentation().setText(title);
@@ -122,7 +109,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     }
   }
 
-  private static class AutoUpdateScope implements ScopeInfo {
+  private static final class AutoUpdateScope implements ScopeInfo {
     private final FilePath[] myRoots;
 
     private AutoUpdateScope(final FilePath[] roots) {
@@ -136,7 +123,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
 
     @Override
     public String getScopeName(VcsContext dataContext, ActionInfo actionInfo) {
-      return "Subversion";
+      return SvnVcs.VCS_DISPLAY_NAME;
     }
 
     @Override

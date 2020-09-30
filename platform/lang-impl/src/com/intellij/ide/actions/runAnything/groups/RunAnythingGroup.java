@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything.groups;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import gnu.trove.TIntArrayList;
@@ -38,7 +39,7 @@ public abstract class RunAnythingGroup {
    * @return Current group title in the main list.
    */
   @NotNull
-  public abstract String getTitle();
+  public abstract @NlsContexts.PopupTitle String getTitle();
 
   /**
    * @return Current group maximum number of items to be shown.
@@ -88,7 +89,7 @@ public abstract class RunAnythingGroup {
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+  public static @NlsContexts.PopupTitle String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
   }
 

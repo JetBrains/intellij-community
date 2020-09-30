@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -30,6 +31,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.impl.artifacts.ArtifactManagerImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -263,10 +265,14 @@ public class MavenProjectImporter {
         }
       });
 
+      if (projectsHaveChanges) {
+        setMavenizedModules(ContainerUtil.map(myProjectsToImportWithChanges.keySet(),
+                                              mavenProject -> myMavenProjectToModule.get(mavenProject)), true);
+      }
 
       List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
 
-      MavenUtil.runInBackground(myProject, "Configuring projects", false, indicator -> {
+      MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
         float count = 0;
         for (MavenProject mavenProject : myAllProjects) {
           Module module = myMavenProjectToModule.get(mavenProject);
@@ -274,7 +280,7 @@ public class MavenProjectImporter {
             continue;
           }
           indicator.setFraction(count++ / myAllProjects.size());
-          indicator.setText2("Configuring module " + module.getName());
+          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
           for (MavenModuleConfigurer configurer : configurers) {
             configurer.configure(mavenProject, myProject, module);
           }
@@ -512,7 +518,7 @@ public class MavenProjectImporter {
         @Override
         public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
           throws MavenProcessCanceledException {
-          indicator.setText("Refreshing files...");
+          indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"));
           doRefreshFiles(files);
         }
       });
@@ -554,7 +560,6 @@ public class MavenProjectImporter {
       }
     }
 
-    List<Module> modulesToMavenize = new ArrayList<>();
     List<MavenModuleImporter> importers = new ArrayList<>();
 
     for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
@@ -565,7 +570,6 @@ public class MavenProjectImporter {
       myModelsProvider.registerModulePublication(
         module, new ProjectId(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion()));
       MavenModuleImporter moduleImporter = createModuleImporter(module, project, each.getValue());
-      modulesToMavenize.add(module);
       importers.add(moduleImporter);
 
       MavenRootModelAdapter rootModelAdapter =
@@ -584,7 +588,6 @@ public class MavenProjectImporter {
     }
 
     configFacets(tasks, importers);
-    setMavenizedModules(modulesToMavenize, true);
   }
 
   private void configFacets(List<MavenProjectsProcessorTask> tasks, List<MavenModuleImporter> importers) {
@@ -614,11 +617,20 @@ public class MavenProjectImporter {
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
     deleteExistingImlFile(path);
+    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
+    deleteExistingModuleByName(moduleName);
 
     final Module module = myModuleModel.newModule(path, project.getModuleType().getId());
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
+  }
+
+  private void deleteExistingModuleByName(final String name) {
+    Module module = myModuleModel.findModuleByName(name);
+    if (module != null) {
+      myModuleModel.disposeModule(module);
+    }
   }
 
   private void deleteExistingImlFile(final String path) {

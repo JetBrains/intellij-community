@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -44,7 +45,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   public interface Fix extends Runnable {
-    String getTitle();
+    @NlsContexts.LinkLabel String getTitle();
   }
 
   private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
@@ -352,7 +353,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTable.repaint();
   }
 
-  protected void displayMessageAndFix(@Nullable Pair<String, Fix> messageAndFix) {
+  protected void displayMessageAndFix(@Nullable Pair<@NlsContexts.DialogMessage String, Fix> messageAndFix) {
     if (messageAndFix != null) {
       myMessageLabel.setText(messageAndFix.first);
       myMessageLabel.setIcon(WARNING_ICON);
@@ -380,9 +381,9 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
 
   private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
-    private final NullableComputable<String> myWarningProvider;
+    private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
 
-    WarningIconCellRenderer(NullableComputable<String> warningProvider) {
+    WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {
       myWarningProvider = warningProvider;
     }
 

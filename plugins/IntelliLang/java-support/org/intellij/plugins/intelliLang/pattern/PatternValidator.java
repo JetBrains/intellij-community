@@ -206,12 +206,12 @@ public class PatternValidator extends LocalInspectionTool {
           assert fqn != null;
 
           final String name = StringUtil.getShortName(fqn);
-          holder.registerProblem(expression, MessageFormat.format("Expression ''{0}'' doesn''t match ''{1}'' pattern: {2}", o, name,
-                                                                  pattern.pattern()));
+          holder.registerProblem(expression,
+                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern", o, name, pattern.pattern()));
         }
         else {
           holder.registerProblem(expression,
-                                 MessageFormat.format("Expression ''{0}'' doesn''t match pattern: {1}", o, pattern.pattern()));
+                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern2", o, pattern.pattern()));
         }
       }
     }

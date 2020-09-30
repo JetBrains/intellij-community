@@ -3,11 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.DefaultTreeExpander;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -29,6 +25,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -145,7 +143,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (allConflicts.isEmpty())
       return;
 
-    String htmlBody = "";
+    HtmlBuilder links = new HtmlBuilder();
     final Map<String, Runnable> href2linkAction = new HashMap<>();
     int count = 0;
     boolean empty = true;
@@ -159,8 +157,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final AnAction act = ActionManager.getInstance().getAction(actId);
       final String actText = act == null ? actId : act.getTemplateText();
       if (!empty)
-        htmlBody += ", ";
-      htmlBody += "<a href='" + actId + "'>" + actText + "</a>";
+        links.append(", ");
+      links.appendLink(actId, actText);
 
       empty = false;
       ++count;
@@ -168,21 +166,27 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         break;
     }
 
+    String shortcutsMessage;
     if (count > 2 && allConflicts.size() > count) {
-      final @NotNull String text = String.format("%d more", allConflicts.size() - count);
-      htmlBody += " and <a href='" + text + "'>" + text + "</a>";
+      String actionId = "show.more";
+      HtmlChunk.Element moreLink = HtmlChunk.link(actionId, IdeBundle.message("more.shortcuts.link.text.with.count", allConflicts.size() - count));
 
-      href2linkAction.put(text, ()->{
+      href2linkAction.put(actionId, ()->{
         myShowOnlyConflicts = true;
         myActionsTree.setBaseFilter(systemShortcuts.createKeymapConflictsActionFilter());
         myActionsTree.filter(null, myQuickLists);
         TreeUtil.expandAll(myActionsTree.getTree());
       });
+      shortcutsMessage = IdeBundle.message("macos.shortcut.conflict.many", links, moreLink);
+    } else {
+      shortcutsMessage = IdeBundle.message("macos.shortcut.conflict.few", links);
     }
 
-    htmlBody += " shortcuts conflict with the macOS system shortcuts.<br>Assign custom shortcuts or change the macOS system settings.</p></html>";
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.appendRaw(shortcutsMessage)
+      .br().append(IdeBundle.message("assign.custom.shortcuts.or.change.the.macos.system.settings"));
 
-    JBLabel jbLabel = new JBLabel(createWarningHtmlText(htmlBody)) {
+    JBLabel jbLabel = new JBLabel(createWarningHtmlText(builder.toString())) {
       @NotNull
       @Override
       protected HyperlinkListener createHyperlinkListener() {
@@ -201,24 +205,26 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
     jbLabel.setCopyable(true);
     jbLabel.setAllowAutoWrapping(true);
-    jbLabel.setIconWithAlignment(AllIcons.General.Warning, JLabel.LEFT, JLabel.TOP);
+    jbLabel.setIconWithAlignment(AllIcons.General.Warning, SwingConstants.LEFT, SwingConstants.TOP);
     mySystemShortcutConflictsPanel.add(jbLabel);
 
     validate();
     repaint();
   }
 
-  private static String createWarningHtmlText(@Nullable String htmlBody) {
+  private static @Nls String createWarningHtmlText(@Nullable @Nls String htmlBody) {
     if (htmlBody == null)
       return null;
 
-    final String css = "<head><style type=\"text/css\">\n" +
-                 "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
-                 "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
-                 "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
-                 "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
-                 "</style>\n</head>";
-    return String.format("<html>" + css + "<body><div>%s</div></body></html>", htmlBody);
+    return new HtmlBuilder()
+      .append(HtmlChunk.head().child(HtmlChunk.styleTag(
+        "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
+        "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
+        "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
+        "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n")))
+      .append(HtmlChunk.body().child(HtmlChunk.div().addRaw(htmlBody)))
+      .wrapWith("html")
+      .toString();
   }
 
   @Override
@@ -329,7 +335,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    group.add(new AnAction(IdeBundle.message("action.text.edit.shortcut"), IdeBundle.message("action.text.edit.shortcut"), AllIcons.Actions.Edit) {
+    group.add(new AnAction(KeyMapBundle.message("edit.shortcut.action.text"), KeyMapBundle.message("edit.shortcut.action.description"), AllIcons.Actions.Edit) {
       {
         registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
       }
@@ -346,13 +352,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    myShowOnlyConflictsButton =
-      new ToggleActionButton(KeyMapBundle.messagePointer("action.AnActionButton.text.show.conflicts.with.system.shortcuts"),
-                             AllIcons.General.ShowWarning) {
+    myShowOnlyConflictsButton = new ToggleActionButton(KeyMapBundle.messagePointer("keymap.show.system.conflicts"), AllIcons.General.ShowWarning) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         return myShowOnlyConflicts;
       }
+
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myShowOnlyConflicts = state;
@@ -361,7 +366,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         final JTree tree = myActionsTree.getTree();
         if (myShowOnlyConflicts) {
           TreeUtil.expandAll(tree);
-        } else {
+        }
+        else {
           TreeUtil.collapseAll(tree, 0);
         }
       }
@@ -402,7 +408,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                                         JBUI.insetsTop(8), 0, 0));
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
-                                  KeyMapBundle.message("filter.shortcut.action.text"),
+                                  KeyMapBundle.message("filter.shortcut.action.description"),
                                   AllIcons.Actions.ShortcutFilter) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -413,7 +419,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     });
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
-                                  KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
+                                  KeyMapBundle.message("filter.clear.action.description"),
+                                  AllIcons.Actions.GC) {
       @Override
       public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
@@ -756,7 +763,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     JCheckBox getCheckbox() { return myCheckbox; }
 
-    boolean isModified() { return myCheckbox == null ? false : myShowFnInitial != myCheckbox.isSelected(); }
+    boolean isModified() { return myCheckbox != null && myShowFnInitial != myCheckbox.isSelected(); }
 
     void applyChanges() {
       if (!TouchBarsManager.isTouchBarAvailable() || myCheckbox == null || !isModified())
@@ -850,9 +857,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       if (manager != null) manager.apply();
     }
   }
+
   private static @Nullable KeyboardShortcut findKeyboardShortcut(@NotNull Keymap keymap, @NotNull KeyStroke ks, @NotNull String actionId) {
-    final Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
-    if (actionShortcuts == null || actionShortcuts.length == 0)
+    Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
+    if (actionShortcuts.length == 0)
       return null;
 
     for (Shortcut sc: actionShortcuts) {

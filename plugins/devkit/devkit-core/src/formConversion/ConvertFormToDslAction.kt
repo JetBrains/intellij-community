@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.formConversion
 
 import com.intellij.codeInsight.hint.HintManager
@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.binding.FormClassIndex
 import com.intellij.uiDesigner.compiler.Utils.getRootContainer
 import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.uiDesigner.lw.*
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.toUElement
@@ -38,12 +39,12 @@ class ConvertFormToDslAction : AnAction() {
     val project = psiFile.project
     val element = psiFile.findElementAt(editor.caretModel.offset)
     val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: run {
-      HintManager.getInstance().showErrorHint(editor, "Please put a caret inside a Java class bound to a form")
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("convert.form.hint.caret.not.in.form.bound.class"))
       return
     }
     val qName = psiClass.qualifiedName ?: return
     val formFile = FormClassIndex.findFormsBoundToClass(project, qName).singleOrNull() ?: run {
-      HintManager.getInstance().showErrorHint(editor, "Can't find a form bound to ${qName}")
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("convert.form.hint.class.not.bound.to.form", qName))
       return
     }
 
@@ -56,6 +57,7 @@ class ConvertFormToDslAction : AnAction() {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
   val project = boundClass.project
   val psiFile = boundClass.containingFile as PsiJavaFile
@@ -166,6 +168,7 @@ private fun convertRootContainer(module: Module,
   return UiForm(module, call)
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
   val propertyName = call.binding
   val size = call.args.size
@@ -190,6 +193,7 @@ private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringB
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 class FormCall(
   val callee: String,
   val args: MutableList<String> = mutableListOf(),
@@ -248,6 +252,7 @@ class FormCall(
 
 data class ComponentBinding(val name: String, val type: String)
 
+@Suppress("HardCodedStringLiteral")
 class UiForm(module: Module, val root: FormCall) {
   private val _imports = sortedSetOf<String>()
   private val _componentBindings = mutableListOf<ComponentBinding>()
@@ -288,6 +293,7 @@ class UiForm(module: Module, val root: FormCall) {
 
 internal class PropertyBinding(val type: PsiType?, val bindingCallParameters: Array<String>)
 
+@Suppress("HardCodedStringLiteral")
 class FormToDslConverter(private val module: Module, private val boundInstanceUClass: UClass?) {
   fun convertContainer(container: LwContainer): FormCall {
     val row: FormCall
@@ -446,6 +452,7 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
   }
 }
 
+  @Suppress("HardCodedStringLiteral")
 private fun buildTypeParametersString(module: Module, className: String): String {
   val javaPsiFacade = JavaPsiFacade.getInstance(module.project)
   val componentClass = javaPsiFacade.findClass(className, module.moduleWithDependenciesScope)
@@ -480,6 +487,7 @@ fun FormCall.checkConvertButtonGroup(ids: Array<String>) {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun FormCall.isRadioButtonRow(ids: Array<String>): Boolean {
   return callee == "row" && contents.singleOrNull()?.origin?.id?.let { it in ids } == true
 }

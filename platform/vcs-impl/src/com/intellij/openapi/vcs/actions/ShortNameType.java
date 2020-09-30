@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +47,7 @@ public enum ShortNameType {
     myDescriptionKey = descriptionKey;
   }
 
+  @NlsActions.ActionText
   public String getDescription() {
     return VcsBundle.message(myDescriptionKey);
   }

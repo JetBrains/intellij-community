@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class EvaluatorBuilderImpl implements EvaluatorBuilder {
+public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
 
   private EvaluatorBuilderImpl() {
@@ -73,7 +74,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return new Builder(position).buildElement(codeFragment);
   }
 
-  private static class Builder extends JavaElementVisitor {
+  private static final class Builder extends JavaElementVisitor {
     private static final Logger LOG = Logger.getInstance(EvaluatorBuilderImpl.class);
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
@@ -578,7 +579,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       // unary numeric promotion if applicable
-      else if (operation == JavaTokenType.GTGT || operation == JavaTokenType.LTLT || operation == JavaTokenType.GTGTGT) {
+      else if (ExpressionParser.SHIFT_OPS.contains(operation)) {
         lResult = handleUnaryNumericPromotion(lType, lResult);
         rResult = handleUnaryNumericPromotion(rType, rResult);
       }

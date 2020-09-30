@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.MissingResourceException;
 
-class ShRenameAllOccurrencesHandler extends EditorActionHandler {
+final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
   static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 

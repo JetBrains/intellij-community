@@ -4,6 +4,10 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -15,7 +19,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +32,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
-
-  private final Map<AnAction, String> myOtherActions = ContainerUtil.createWeakMap();
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
@@ -87,7 +88,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
     String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
-    String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(info, action);
+    String actionId = getActionId(info, action);
     if (action instanceof ActionWithDelegate) {
       Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
       PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
@@ -114,7 +115,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
 
   @NotNull
-  private String getActionId(@NotNull PluginInfo pluginInfo, @NotNull AnAction action) {
+  private static String getActionId(@NotNull PluginInfo pluginInfo, @NotNull AnAction action) {
     if (!pluginInfo.isSafeToReport()) {
       return DEFAULT_ID;
     }
@@ -126,7 +127,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return action.getClass().getName();
     }
     if (actionId == null) {
-      actionId = myOtherActions.get(action);
+      actionId = ourWhitelist.getDynamicActionId(action);
     }
     return actionId != null ? actionId : action.getClass().getName();
   }
@@ -137,9 +138,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    if (canReportActionId(actionId)) {
-      myOtherActions.put(action, actionId);
-    }
+    ourWhitelist.registerDynamicActionId(action, actionId);
   }
 
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.images.sync.dotnet
 
 import org.jetbrains.intellij.build.images.generateIconsClasses
 import org.jetbrains.intellij.build.images.isImage
+import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
 import java.util.*
 
@@ -59,6 +60,7 @@ internal object DotnetIconSync {
       println("Done.")
     }
     finally {
+      shutdownAppScheduledExecutorService()
       cleanup(context.iconsRepo)
     }
   }

@@ -108,7 +108,7 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
   @NotNull
   public EditorTextField createEditor(Project project,
                                       final boolean shouldHaveBorder,
-                                      @Nullable final Consumer<Editor> editorConstructionCallback) {
+                                      final @Nullable Consumer<? super Editor> editorConstructionCallback) {
     return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType()) {
       @Override
       protected boolean shouldHaveBorder() {

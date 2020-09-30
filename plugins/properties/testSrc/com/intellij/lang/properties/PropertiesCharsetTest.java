@@ -191,8 +191,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
 
-    VirtualFile file =
-      createTempFile("properties", CharsetToolkit.UTF8_BOM, "general-notice=\\u062a\\u0648\\u062c\\u0647", StandardCharsets.UTF_8);
+    VirtualFile file = createVirtualFileWithBom("properties", "general-notice=\\u062a\\u0648\\u062c\\u0647");
     PropertiesFile propertiesFile = (PropertiesFile)getPsiManager().findFile(file);
     assertNotNull(propertiesFile);
 

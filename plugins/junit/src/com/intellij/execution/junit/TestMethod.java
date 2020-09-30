@@ -32,6 +32,12 @@ class TestMethod extends TestObject {
   }
 
   @Override
+  protected @NotNull String getForkMode() {
+    String forkMode = super.getForkMode();
+    return JUnitConfiguration.FORK_METHOD.equals(forkMode) ? JUnitConfiguration.FORK_REPEAT : forkMode;
+  }
+
+  @Override
   protected void collectPackagesToOpen(List<String> options) {
     options.add(StringUtil.getPackageName(getConfiguration().getPersistentData().getMainClassName()));
   }

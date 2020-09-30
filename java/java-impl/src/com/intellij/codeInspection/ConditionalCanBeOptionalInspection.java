@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -143,7 +143,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static class TernaryNullCheck {
+  private static final class TernaryNullCheck {
     final PsiVariable myVariable;
     final PsiExpression myNullBranch;
     final PsiExpression myNotNullBranch;

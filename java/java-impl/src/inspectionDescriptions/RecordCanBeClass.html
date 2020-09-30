@@ -1,0 +1,68 @@
+<html>
+<body>
+Suggests to replace records with ordinary classes.
+The inspection could be useful if you need to move a Java record
+to codebases that use earlier Java versions.
+<p>
+  Note that the resulting class is not completely equivalent to the original record:
+</p>
+<ul>
+  <li>the resulting class no longer extends <code>java.lang.Record</code>,
+    so <code>instanceof Record</code> returns false.</li>
+  <li>reflection methods like <code>Class.isRecord()</code> and
+    <code>Class.getRecordComponents()</code> produce different results.</li>
+  <li>the generated <code>hashCode()</code> implementation may produce a different result
+    because the formula to calculate record hashCode is deliberately not specified.</li>
+  <li>record serialization mechanism differs from that of ordinary classes.
+    Refer to Java Object Serialization Specification for details.</li>
+</ul>
+<!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  record Point(int x, int y) {}
+</pre>
+This record will be converted to
+<pre>
+  final class Point {
+    private final int x;
+    private final int y;
+
+    Point(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    public int x() {
+      return x;
+    }
+
+    public int y() {
+      return y;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (Point) obj;
+      return this.x == that.x &&
+              this.y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(x, y);
+    }
+
+    @Override
+    public String toString() {
+      return "Point[" +
+              "x=" + x + ", " +
+              "y=" + y + ']';
+    }
+  }
+</pre>
+<p>This inspection only applies to language level 14 preview and 15 preview.</p>
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

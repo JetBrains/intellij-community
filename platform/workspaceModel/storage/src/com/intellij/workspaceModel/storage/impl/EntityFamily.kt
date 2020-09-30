@@ -69,7 +69,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
   fun replaceById(entity: WorkspaceEntityData<E>) {
     val id = entity.id
-    if (availableSlots.contains(id)) error("Nothing to replace")
+    if (entities[id] == null) error("Nothing to replace. EntityData: $entity")
     startWrite()
 
     entities[id] = entity
@@ -124,7 +124,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   companion object {
     // Do not remove parameter. Kotlin fails with compilation without it
     @Suppress("RemoveExplicitTypeArguments")
-    fun createEmptyMutable() = MutableEntityFamily<WorkspaceEntity>(ArrayList(), false)
+    fun <T: WorkspaceEntity> createEmptyMutable() = MutableEntityFamily<T>(ArrayList(), false)
   }
 }
 

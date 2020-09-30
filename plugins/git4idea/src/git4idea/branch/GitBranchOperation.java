@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -89,7 +91,7 @@ abstract class GitBranchOperation {
   protected abstract void rollback();
 
   @NotNull
-  public abstract String getSuccessMessage();
+  public abstract @NlsContexts.NotificationContent String getSuccessMessage();
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -161,7 +163,7 @@ abstract class GitBranchOperation {
   }
 
   @NotNull
-  protected String successfulRepositoriesJoined() {
+  protected @NlsSafe String successfulRepositoriesJoined() {
     return GitUtil.joinToHtml(mySuccessfulRepositories);
   }
   
@@ -177,8 +179,8 @@ abstract class GitBranchOperation {
     return repositories;
   }
 
-  protected void notifySuccess(@NotNull String message) {
-    VcsNotifier.getInstance(myProject).notifySuccess(message);
+  protected void notifySuccess(@NotNull @NlsContexts.NotificationContent String message) {
+    VcsNotifier.getInstance(myProject).notifySuccess("git.branch.operation.success", "", message);
   }
 
   protected void notifySuccess() {
@@ -192,7 +194,7 @@ abstract class GitBranchOperation {
   /**
    * Show fatal error as a notification or as a dialog with rollback proposal.
    */
-  protected void fatalError(@NotNull String title, @NotNull String message) {
+  protected void fatalError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
     if (wereSuccessful())  {
       showFatalErrorDialogWithRollback(title, message);
     }
@@ -201,19 +203,20 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void showFatalErrorDialogWithRollback(@NotNull final String title, @NotNull final String message) {
+  protected void showFatalErrorDialogWithRollback(@NotNull @NlsContexts.DialogTitle String title,
+                                                  @NotNull @NlsContexts.DialogMessage String message) {
     boolean rollback = myUiHandler.notifyErrorWithRollbackProposal(title, message, getRollbackProposal());
     if (rollback) {
       rollback();
     }
   }
 
-  protected void showFatalNotification(@NotNull String title, @NotNull String message) {
+  protected void showFatalNotification(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
     notifyError(title, message);
   }
 
-  protected void notifyError(@NotNull String title, @NotNull String message) {
-    VcsNotifier.getInstance(myProject).notifyError(title, message);
+  protected void notifyError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
+    VcsNotifier.getInstance(myProject).notifyError("git.branch.operation.error", title, message);
   }
 
   @NotNull

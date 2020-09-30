@@ -33,7 +33,7 @@ object ApplicationOnlySdkScopeController : SdkScopeController {
   override var isProjectLevel: Boolean
     get() = false
     set(value) {
-      if (value) throw IllegalArgumentException("Project level of SDK is not supported")
+      if (value) throw IllegalArgumentException("Project level of SDK is not supported")//NON-NLS
     }
 
   /**

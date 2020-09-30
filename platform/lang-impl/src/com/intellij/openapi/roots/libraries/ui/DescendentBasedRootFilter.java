@@ -58,7 +58,7 @@ public class DescendentBasedRootFilter extends RootFilter {
     return !VfsUtilCore.processFilesRecursively(rootCandidate, virtualFile -> {
       progressIndicator.checkCanceled();
       if (virtualFile.isDirectory()) {
-        progressIndicator.setText2(virtualFile.getPath());
+        progressIndicator.setText2(virtualFile.getPresentableUrl());
         return true;
       }
       return !myCondition.test(virtualFile);

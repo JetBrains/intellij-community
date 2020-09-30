@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class YouTrackIntellisense {
   );
   private static final int CACHE_SIZE = 30;
 
-  private static class SizeLimitedCache<K, V> extends LinkedHashMap<K, V> {
+  private static final class SizeLimitedCache<K, V> extends LinkedHashMap<K, V> {
     private final int myMaxSize;
 
     private SizeLimitedCache(int max) {
@@ -111,7 +112,8 @@ public class YouTrackIntellisense {
     }
     LOG.debug("Cache " + (response != null? "hit" : "miss"));
     if (response == null) {
-      final String url = String.format("%s?filter=%s&caret=%d", INTELLISENSE_RESOURCE, URLEncoder.encode(query, "utf-8"), caret);
+      final String url = String.format("%s?filter=%s&caret=%d", INTELLISENSE_RESOURCE, URLEncoder.encode(query, StandardCharsets.UTF_8),
+                                       caret);
       final long startTime = System.currentTimeMillis();
       response = new Response(myRepository.doREST(url, false).getResponseBodyAsStream());
       LOG.debug(String.format("Intellisense request to YouTrack took %d ms to complete", System.currentTimeMillis() - startTime));

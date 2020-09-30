@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -695,7 +696,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     @NotNull
     @Override
     protected AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
-      return new AbstractSchemeActions<FileTemplatesScheme>(this) {
+      return new AbstractSchemeActions<>(this) {
         @Override
         protected void resetScheme(@NotNull FileTemplatesScheme scheme) {
           throw new UnsupportedOperationException();
@@ -786,19 +787,19 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  private static String getTemplatesTitle() {
+  private static @NlsContexts.TabTitle String getTemplatesTitle() {
     return IdeBundle.message("tab.filetemplates.templates");
   }
 
-  private static String getIncludesTitle() {
+  private static @NlsContexts.TabTitle String getIncludesTitle() {
     return IdeBundle.message("tab.filetemplates.includes");
   }
 
-  private static String getCodeTitle() {
+  private static @NlsContexts.TabTitle String getCodeTitle() {
     return IdeBundle.message("tab.filetemplates.code");
   }
 
-  private static String getOtherTitle() {
+  private static @NlsContexts.TabTitle String getOtherTitle() {
     return IdeBundle.message("tab.filetemplates.j2ee");
   }
 

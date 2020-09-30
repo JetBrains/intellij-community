@@ -23,6 +23,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
+import com.intellij.util.IdempotenceChecker.ResultWithLog;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -36,21 +37,16 @@ import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
-import static com.intellij.util.ObjectUtils.notNull;
-
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
-
   private static final Logger LOG = Logger.getInstance(XmlTagDelegate.class);
   @NonNls private static final String XML_NS_PREFIX = "xml";
-  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
-  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
+  private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
+  private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
 
   @NotNull
@@ -315,7 +311,9 @@ public abstract class XmlTagDelegate {
                                                                             @NotNull final Set<String> fileLocations,
                                                                             @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
                                                                             final boolean nsDecl) {
-    if (map == null) map = new THashMap<>();
+    if (map == null) {
+      map = new HashMap<>();
+    }
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, NullableLazyValue.createValue(() -> {
@@ -335,7 +333,7 @@ public abstract class XmlTagDelegate {
       XmlExtension extension = XmlExtension.getExtensionByElement(tag);
       if (extension != null) {
         String prefix = tag.getPrefixByNamespace(namespace);
-        descriptor = extension.wrapNSDescriptor(tag, notNull(prefix, ""), descriptor);
+        descriptor = extension.wrapNSDescriptor(tag, ObjectUtils.notNull(prefix, ""), descriptor);
       }
       return descriptor;
     }));
@@ -356,11 +354,12 @@ public abstract class XmlTagDelegate {
     if (currentFile == null) {
       final XmlDocument document = XmlUtil.getContainingFile(tag).getDocument();
       if (document != null) {
-        final String uri = XmlUtil.getDtdUri(document);
+        String uri = XmlUtil.getDtdUri(document);
         if (uri != null) {
-          final XmlFile containingFile = XmlUtil.getContainingFile(document);
-          final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
-          descriptor = xmlFile == null ? null : (XmlNSDescriptor)doIfNotNull(xmlFile.getDocument(), XmlDocument::getMetaData);
+          XmlFile containingFile = XmlUtil.getContainingFile(document);
+          XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
+          XmlDocument xmlDocument = xmlFile == null ? null : xmlFile.getDocument();
+          descriptor = (XmlNSDescriptor)(xmlDocument == null ? null : xmlDocument.getMetaData());
         }
 
         // We want to get fixed xmlns attr from dtd and check its default with requested namespace
@@ -551,7 +550,7 @@ public abstract class XmlTagDelegate {
   protected String getAttributeValue(String qname) {
     Map<String, String> map = myAttributeValueMap;
     if (map == null) {
-      map = new THashMap<>();
+      map = new HashMap<>();
       for (XmlAttribute attribute : myTag.getAttributes()) {
         cacheOneAttributeValue(attribute.getName(), attribute.getValue(), map);
       }
@@ -596,10 +595,10 @@ public abstract class XmlTagDelegate {
   }
 
   XmlTag @NotNull [] getSubTags(boolean processIncludes) {
-    Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
-    XmlTag[] cached = CachedValuesManager.getCachedValue(myTag, key, () ->
-      Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
-    return cached.clone();
+    Key<CachedValue<ResultWithLog<XmlTag[]>>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
+    ResultWithLog<XmlTag[]> cached = CachedValuesManager.getCachedValue(myTag, key, () ->
+      Result.create(IdempotenceChecker.computeWithLogging(() -> calcSubTags(processIncludes)), PsiModificationTracker.MODIFICATION_COUNT));
+    return cached.getResult().clone();
   }
 
   protected XmlTag @NotNull [] calcSubTags(boolean processIncludes) {
@@ -856,7 +855,7 @@ public abstract class XmlTagDelegate {
 
   @NotNull
   Map<String, String> getLocalNamespaceDeclarations() {
-    Map<String, String> namespaces = new THashMap<>();
+    Map<String, String> namespaces = new HashMap<>();
     for (final XmlAttribute attribute : myTag.getAttributes()) {
       if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
       // xmlns -> "", xmlns:a -> a

@@ -23,7 +23,7 @@ PyFile:FStringTerminatedByQuoteInsideNestedStringLiteralInFormatPart.py
                     PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                     PyStringLiteralExpression: 
                       PsiElement(Py:SINGLE_QUOTED_STRING)('"')
-                    PsiErrorElement:} expected
+                    PsiErrorElement:'}' expected
                       <empty list>
               PsiErrorElement:""" expected
                 <empty list>

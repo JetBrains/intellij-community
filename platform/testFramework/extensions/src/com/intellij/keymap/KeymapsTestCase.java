@@ -18,7 +18,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "DELETE",                   "$Delete", "DatabaseView.DropAction"},
     { "ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
                                   "EditorEnter", "Images.Thumbnails.EnterAction", "NextTemplateVariable",
-                                  "SearchEverywhere.SelectItem"},
+                                  "SearchEverywhere.SelectItem", "Git.Log.Branches.Change.Branch.Filter"},
     { "F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
@@ -95,8 +95,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt ENTER",          "Console.TableResult.EditValueMaximized", "JupyterDebugAction"},
     { "shift alt LEFT",           "Diff.ApplyRightSide", "PreviousEditorTab"},
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "NextEditorTab"},
-    { "shift alt A",              "JupyterInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
-    { "shift alt B",              "JupyterInsertCellBelowAction", "tasks.open.in.browser"},
+    { "shift alt A",              "NotebookInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
+    { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
@@ -454,6 +454,10 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   );
 
   @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = ContainerUtil.set(
-    "EditorDelete"
+    "EditorDelete",
+    "List-selectLastRowExtendSelection",
+    "List-selectLastRow",
+    "List-selectFirstRowExtendSelection",
+    "List-selectFirstRow"
   );
 }

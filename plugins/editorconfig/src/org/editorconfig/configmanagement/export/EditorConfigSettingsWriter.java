@@ -15,6 +15,7 @@ import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
+import org.editorconfig.configmanagement.extended.EditorConfigValueUtil;
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,13 +162,21 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
       CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
       String name = getEditorConfigName(mapper, property);
       if (isNameAllowed(name)) {
-        String value = accessor.getAsString();
+        String value = getEditorConfigValue(accessor);
         if (isValueAllowed(value) && (!(mapper instanceof LanguageCodeStylePropertyMapper && matchesGeneral(name, value)))) {
           optionValueList.add(new OutPair(name, value));
         }
       }
     }
     return optionValueList;
+  }
+
+  private static String getEditorConfigValue(@NotNull CodeStylePropertyAccessor<?> accessor) {
+    String value = accessor.getAsString();
+    if ((value == null || value.isEmpty()) && CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
+      return EditorConfigValueUtil.EMPTY_LIST_VALUE;
+    }
+    return value;
   }
 
   private boolean matchesGeneral(@NotNull String name, @NotNull String value) {

@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -19,7 +20,7 @@ public final class SymbolPresentationUtil {
   private SymbolPresentationUtil() {
   }
 
-  public static String getSymbolPresentableText(@NotNull PsiElement element) {
+  public static @NlsSafe String getSymbolPresentableText(@NotNull PsiElement element) {
     if (element instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){
@@ -32,7 +33,7 @@ public final class SymbolPresentationUtil {
   }
 
   @Nullable
-  public static String getSymbolContainerText(PsiElement element) {
+  public static @NlsSafe String getSymbolContainerText(PsiElement element) {
     if (element instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){
@@ -49,7 +50,7 @@ public final class SymbolPresentationUtil {
     return null;
   }
 
-  public static String getFilePathPresentation(PsiFile psiFile) {
+  public static @NlsSafe String getFilePathPresentation(PsiFile psiFile) {
     ProjectFileIndex index = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
     VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
     VirtualFile rootForFile = file != null ? index.getContentRootForFile(file):null;

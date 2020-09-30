@@ -9,12 +9,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -31,7 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 
-public class NotificationCollector {
+@SuppressWarnings("deprecation")
+public final class NotificationCollector {
   private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
   private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
   private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
@@ -40,7 +37,6 @@ public class NotificationCollector {
   private static final String NOTIFICATION_GROUP = "notification_group";
 
   private NotificationCollector() {
-    //noinspection deprecation
     ContainerUtil.concat(NotificationWhitelistEP.EP_NAME.getExtensionList(), NotificationAllowlistEP.EP_NAME.getExtensionList())
       .forEach(NotificationCollector::addNotificationsToWhitelist);
 
@@ -55,9 +51,8 @@ public class NotificationCollector {
         removeNotificationsFromWhitelist(extension);
       }
     };
-    //noinspection deprecation
-    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
-    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
+    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
+    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
   }
 
   public void logBalloonShown(@Nullable Project project,
@@ -85,7 +80,9 @@ public class NotificationCollector {
     FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "logged", data);
   }
 
-  public void logNotificationBalloonClosedByUser(@Nullable String notificationId, @Nullable String notificationDisplayId, @Nullable String groupId) {
+  public void logNotificationBalloonClosedByUser(@Nullable String notificationId,
+                                                 @Nullable String notificationDisplayId,
+                                                 @Nullable String groupId) {
     if (notificationId == null) return;
     FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "closed.by.user", data);
@@ -117,7 +114,9 @@ public class NotificationCollector {
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "event.log.balloon.shown", data);
   }
 
-  public void logNotificationSettingsClicked(@NotNull String notificationId, @Nullable String notificationDisplayId, @Nullable String groupId) {
+  public void logNotificationSettingsClicked(@NotNull String notificationId,
+                                             @Nullable String notificationDisplayId,
+                                             @Nullable String groupId) {
     FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "settings.clicked", data);
   }
@@ -189,7 +188,7 @@ public class NotificationCollector {
   }
 
   @NotNull
-  private static List<String> parseIds(@Nullable String entry) {
+  public static List<String> parseIds(@Nullable String entry) {
     if (entry == null) return Collections.emptyList();
     List<String> list = new ArrayList<>();
     String[] values = StringUtil.convertLineSeparators(entry, "").split(";");
@@ -211,6 +210,10 @@ public class NotificationCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
+      if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
+        return ValidationResultType.ACCEPTED;
+      }
       return ourNotificationGroupsWhitelist.containsKey(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
     }
   }
@@ -226,6 +229,9 @@ public class NotificationCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (NotificationGroupManager.getInstance().isRegisteredNotificationId(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
       return ourNotificationsWhitelist.contains(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
     }
   }

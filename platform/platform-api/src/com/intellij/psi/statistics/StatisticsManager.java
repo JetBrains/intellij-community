@@ -4,6 +4,7 @@ package com.intellij.psi.statistics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,5 +74,5 @@ public abstract class StatisticsManager {
   /**
    * @return infos by this context ordered by usage time: recent first
    */
-  public abstract StatisticsInfo[] getAllValues(String context);
+  public abstract StatisticsInfo[] getAllValues(@NonNls String context);
 }

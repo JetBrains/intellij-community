@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -1146,7 +1147,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     error("broken control flow for a scope");
   }
 
-  private void error(@NotNull String descr) {
+  private void error(@NonNls @NotNull String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
@@ -1276,7 +1277,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitElement(element);
   }
 
-  private static class ExceptionInfo {
+  private static final class ExceptionInfo {
     final GrCatchClause myClause;
 
     /**

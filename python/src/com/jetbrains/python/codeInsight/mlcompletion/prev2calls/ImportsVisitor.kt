@@ -6,9 +6,8 @@ import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 
 class ImportsVisitor(val fullNames: MutableMap<String, String> = mutableMapOf()): PyRecursiveElementVisitor() {
-  override fun visitPyFromImportStatement(node: PyFromImportStatement?) {
+  override fun visitPyFromImportStatement(node: PyFromImportStatement) {
     super.visitPyFromImportStatement(node)
-    if (node == null) return
 
     val fromName = node.importSourceQName
     node.importElements.forEach { importElement ->
@@ -19,9 +18,8 @@ class ImportsVisitor(val fullNames: MutableMap<String, String> = mutableMapOf())
     }
   }
 
-  override fun visitPyImportStatement(node: PyImportStatement?) {
+  override fun visitPyImportStatement(node: PyImportStatement) {
     super.visitPyImportStatement(node)
-    if (node == null) return
 
     node.importElements.forEach { importElement ->
       val importedQName = importElement.importedQName.toString()

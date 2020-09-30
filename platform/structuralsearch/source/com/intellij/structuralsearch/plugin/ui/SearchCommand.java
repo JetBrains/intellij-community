@@ -4,6 +4,8 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,16 +21,18 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class SearchCommand {
+  @NotNull
   protected final SearchContext mySearchContext;
+  @NotNull
   protected final Configuration myConfiguration;
-  private MatchingProcess process;
   private FindUsagesProcessPresentation myProcessPresentation;
 
-  public SearchCommand(Configuration configuration, SearchContext searchContext) {
+  public SearchCommand(@NotNull Configuration configuration, @NotNull SearchContext searchContext) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
   }
 
+  @NotNull
   protected UsageViewContext createUsageViewContext() {
     final Runnable searchStarter = () -> new SearchCommand(myConfiguration, mySearchContext).startSearching();
     return new UsageViewContext(myConfiguration, mySearchContext, searchStarter);
@@ -49,12 +53,7 @@ public class SearchCommand {
     ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
     UsageViewManager.getInstance(mySearchContext.getProject()).searchAndShowUsages(
       new UsageTarget[]{target},
-      () -> new UsageSearcher() {
-        @Override
-        public void generate(@NotNull final Processor<? super Usage> processor) {
-          findUsages(processor);
-        }
-      },
+      () -> processor -> findUsages(processor),
       myProcessPresentation,
       presentation,
       new UsageViewManager.UsageViewStateListener() {
@@ -70,7 +69,7 @@ public class SearchCommand {
     );
   }
 
-  public void findUsages(final Processor<? super Usage> processor) {
+  public void findUsages(@NotNull Processor<? super Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progress.setIndeterminate(false);
 
@@ -78,13 +77,12 @@ public class SearchCommand {
       int count;
 
       @Override
-      public void setMatchingProcess(MatchingProcess _process) {
-        process = _process;
+      public void setMatchingProcess(@NotNull MatchingProcess _process) {
         findStarted();
       }
 
       @Override
-      public void processFile(PsiFile element) {
+      public void processFile(@NotNull PsiFile element) {
         final VirtualFile virtualFile = element.getVirtualFile();
         if (virtualFile != null)
           progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
@@ -103,7 +101,7 @@ public class SearchCommand {
       }
 
       @Override
-      public void newMatch(MatchResult result) {
+      public void newMatch(@NotNull MatchResult result) {
         UsageInfo info;
 
         if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
@@ -150,13 +148,14 @@ public class SearchCommand {
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
+      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
       //noinspection InstanceofCatchParameter
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                                   .setContent(e instanceof StructuralSearchScriptException
-                                               ? SSRBundle.message("search.script.problem", e.getCause())
-                                               : SSRBundle.message("search.template.problem", e.getMessage()))
-                                   .setImportant(true)
-                                   .notify(mySearchContext.getProject());
+      notificationGroup.createNotification(NotificationType.ERROR)
+        .setContent(e instanceof StructuralSearchScriptException
+                    ? SSRBundle.message("search.script.problem", e.getCause())
+                    : SSRBundle.message("search.template.problem", e.getMessage()))
+        .setImportant(true)
+        .notify(mySearchContext.getProject());
     }
   }
 

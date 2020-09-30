@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -9,10 +9,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -30,7 +30,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
+    return GroovyBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
   }
 
   private static String calculateReplacementExpression(GrExpression expression) {
@@ -80,7 +80,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Simplify";
+      return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override

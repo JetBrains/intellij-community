@@ -156,6 +156,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
       myIgnoreFileRootNotificationShowFor = ignoreFileRoot;
       myNotification = VcsNotifier.getInstance(project).notifyMinorInfo(
+        "vcs.manage.ignored.files",
         true,
         "",
         VcsBundle.message("ignored.file.manage.message",
@@ -245,10 +246,8 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     return !askedToManageIgnores && !isManageIgnoreTurnOn(project);
   }
 
-  @State(name = "IgnoredFileRootStore", storages = {
-    @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-  })
-  static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
+  @State(name = "IgnoredFileRootStore", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+  final static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
     static class State {
       public Set<String> generatedRoots = new HashSet<>();
     }

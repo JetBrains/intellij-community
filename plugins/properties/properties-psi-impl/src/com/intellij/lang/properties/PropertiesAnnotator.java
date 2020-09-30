@@ -17,7 +17,10 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.editor.PropertiesValueHighlighter;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -33,6 +36,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -67,7 +71,7 @@ public class PropertiesAnnotator implements Annotator {
       IElementType elementType = lexer.getTokenType();
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);
       for (TextAttributesKey key : keys) {
-        Pair<String,HighlightSeverity> pair = PropertiesHighlighter.DISPLAY_NAMES.get(key);
+        Pair<@Nls String,HighlightSeverity> pair = PropertiesHighlighter.DISPLAY_NAMES.get(key);
         String displayName = pair.getFirst();
         HighlightSeverity severity = pair.getSecond();
         if (severity != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
@@ -16,8 +16,9 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Map;
+
+import static com.intellij.openapi.util.io.FileUtil.join;
 
 /**
  * @author irengrig
@@ -67,8 +68,9 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     myList.setCellRenderer(SimpleListCellRenderer.create("", o -> {
       VcsPathPresenter presenter = VcsPathPresenter.getInstance(project);
       VirtualFile file = o.getVirtualFile();
-      return file != null ? presenter.getPresentableRelativePathFor(file) :
-             presenter.getPresentableRelativePathFor(o.getVirtualFileParent()) + File.separator + o.getName();
+      return file != null
+             ? presenter.getPresentableRelativePathFor(file)
+             : join(presenter.getPresentableRelativePathFor(o.getVirtualFileParent()), o.getName());
     }));
     myList.addListSelectionListener(e -> {
       FilePath root = myList.getSelectedValue();

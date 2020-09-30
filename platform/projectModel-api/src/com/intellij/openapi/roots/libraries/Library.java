@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];
 
-  @Nullable
+  @Nullable @NlsSafe
   String getName();
 
   String @NotNull [] getUrls(@NotNull OrderRootType rootType);
@@ -56,6 +57,13 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
   boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType);
 
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
+
+  /**
+   * Compares the content of the current instance of the library with the given one.
+   * @param library to compare with
+   * @return true if the content is same
+   */
+  boolean hasSameContent(@NotNull Library library);
 
   interface ModifiableModel extends Disposable {
     String @NotNull [] getUrls(@NotNull OrderRootType rootType);

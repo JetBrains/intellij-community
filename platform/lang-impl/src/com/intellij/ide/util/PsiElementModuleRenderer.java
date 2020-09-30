@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ import java.io.File;
 import java.util.Set;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
-  private String myText;
+  private @Nls String myText;
 
   @Override
   public Component getListCellRendererComponent(
@@ -117,6 +118,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     }
   }
 
+  @Nls
   protected String getPresentableName(final OrderEntry order, final VirtualFile vFile) {
     return order.getPresentableName();
   }

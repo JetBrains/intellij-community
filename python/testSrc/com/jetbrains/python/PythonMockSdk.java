@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -26,7 +26,7 @@ import java.util.Comparator;
 /**
  * @author yole
  */
-public class PythonMockSdk {
+public final class PythonMockSdk {
   @NonNls private static final String MOCK_SDK_NAME = "Mock Python SDK";
 
   private PythonMockSdk() {
@@ -61,7 +61,7 @@ public class PythonMockSdk {
     return sdk.clone();
   }
 
-  private static class PyMockSdkType implements SdkTypeId {
+  private static final class PyMockSdkType implements SdkTypeId {
 
     @NotNull
     private final String myVersionString;

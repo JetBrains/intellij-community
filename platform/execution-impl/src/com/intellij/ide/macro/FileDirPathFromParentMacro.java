@@ -18,7 +18,6 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +62,7 @@ public class FileDirPathFromParentMacro extends Macro {
     int ind = lastIndexOf(surroundedDirPath,
                           surroundedSubDir,
                           surroundedDirPath.length(),
-                          !SystemInfo.isFileSystemCaseSensitive);
+                          !dir.isCaseSensitive());
     if (ind >= 0) {
       return FileUtil.toSystemDependentName(surroundedDirPath.substring(ind + surroundedSubDir.length()));
     }

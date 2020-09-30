@@ -21,7 +21,7 @@ PyFile:FStringTerminatedByLineBreakInNestedFormatPart.py
                 PyFStringFragmentFormatPart
                   PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
                   PsiElement(Py:FSTRING_TEXT)('bar')
-                PsiErrorElement:} expected
+                PsiErrorElement:'}' expected
                   <empty list>
               PsiErrorElement:' expected
                 <empty list>

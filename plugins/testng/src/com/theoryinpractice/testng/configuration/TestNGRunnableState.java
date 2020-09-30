@@ -16,7 +16,6 @@
 
 package com.theoryinpractice.testng.configuration;
 
-import com.beust.jcommander.JCommander;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestFrameworkRunnableState;
 import com.intellij.execution.configurations.JavaParameters;
@@ -37,6 +36,7 @@ import com.intellij.rt.testng.IDEATestNGListener;
 import com.intellij.rt.testng.RemoteTestNGStarter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +74,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters, Module module) {
     javaParameters.getClassPath().addFirst(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
   }
 
   @Override
@@ -86,7 +85,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       port = NetUtils.findAvailableSocketPort();
     }
     catch (IOException e) {
-      throw new ExecutionException("Unable to bind to port " + port, e);
+      throw new ExecutionException(TestngBundle.message("dialog.message.unable.to.bind.to.port", port), e);
     }
 
     final TestData data = getConfiguration().getPersistantData();

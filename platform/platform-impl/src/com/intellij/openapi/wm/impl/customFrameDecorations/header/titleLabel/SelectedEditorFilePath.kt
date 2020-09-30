@@ -41,7 +41,8 @@ import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
-open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null) {
+open class SelectedEditorFilePath {
+  var onBoundsChanged: (() -> Unit)? = null
   private val classKey = "ide.borderless.tab.caption.in.title"
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
@@ -123,9 +124,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     updatePath()
   }
 
-  open fun getView(): JComponent {
-    return pane
-  }
+  open val view: JComponent
+    get() {
+      return pane
+    }
 
   private var disposable: Disposable? = null
   var project: Project? = null
@@ -218,7 +220,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     updateProject()
     updatePath()
 
-    getView().addComponentListener(resizedListener)
+    view.addComponentListener(resizedListener)
     label.addAncestorListener(ancestorListener)
   }
 
@@ -239,7 +241,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     pane.invalidate()
 
-    getView().removeComponentListener(resizedListener)
+    view.removeComponentListener(resizedListener)
     label.removeAncestorListener(ancestorListener)
   }
 
@@ -259,7 +261,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private fun updatePath() {
-    classTitle.updatePath(getView())
+    classTitle.updatePath(view)
     update()
   }
 
@@ -284,8 +286,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private fun update() {
     updater.cancelAllRequests()
 
-    val insets = getView().getInsets(null)
-    val width: Int = getView().width - (insets.right + insets.left)
+    val insets = view.getInsets(null)
+    val width: Int = view.width - (insets.right + insets.left)
 
     val fm = label.getFontMetrics(label.font)
 

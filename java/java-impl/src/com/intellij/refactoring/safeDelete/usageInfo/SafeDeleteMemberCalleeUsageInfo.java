@@ -15,30 +15,31 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.util.IncorrectOperationException;
 
 public class SafeDeleteMemberCalleeUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
 
-  private final PsiMember myCalledMember;
+  private final PsiElement myCalledElement;
   private final PsiMember myCallerMember;
 
-  public SafeDeleteMemberCalleeUsageInfo(PsiMember calledMember, PsiMember callerMember) {
-    super(calledMember, calledMember);
-    myCalledMember = calledMember;
+  public SafeDeleteMemberCalleeUsageInfo(PsiElement calledElement, PsiMember callerMember) {
+    super(calledElement, calledElement);
+    myCalledElement = calledElement;
     myCallerMember = callerMember;
   }
 
   @Override
   public void performRefactoring() throws IncorrectOperationException {
-    final PsiMember callee = myCalledMember;
+    final PsiElement callee = myCalledElement;
     if (callee != null && callee.isValid()) {
       callee.delete();
     }
   }
 
-  public PsiMember getCalledMember() {
-    return myCalledMember;
+  public PsiElement getCalledElement() {
+    return myCalledElement;
   }
 
   public PsiMember getCallerMember() {

@@ -16,6 +16,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -27,7 +28,7 @@ public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescrip
   private final DomCollectionChildDescription myChildDescription;
 
   public DomCollectionProblemDescriptorImpl(final DomElement domElement,
-                                            final String message,
+                                            final @InspectionMessage String message,
                                             final HighlightSeverity type,
                                             final DomCollectionChildDescription childDescription) {
     super(domElement, message, type);
@@ -35,7 +36,7 @@ public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescrip
   }
 
   public DomCollectionProblemDescriptorImpl(final DomElement domElement,
-                                            final String message,
+                                            final @InspectionMessage String message,
                                             final HighlightSeverity type,
                                             final DomCollectionChildDescription childDescription,
                                             final LocalQuickFix... fixes) {

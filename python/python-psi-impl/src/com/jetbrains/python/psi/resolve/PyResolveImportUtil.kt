@@ -401,34 +401,6 @@ fun isInSkeletons(element: PsiElement): Boolean {
 private fun isInProvidedSdk(element: PsiElement): Boolean =
   PyThirdPartySdkDetector.EP_NAME.extensions().anyMatch { it.isInThirdPartySdk(element) }
 
-private fun isNamespacePackage(element: PsiElement): Boolean {
-  if (element is PsiDirectory) {
-    val level = LanguageLevel.forElement(element)
-    val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
-    val initLines = initFile.text.lineSequence()
-      .filterNot { line -> line.trim().let { it.isEmpty() || it.startsWith("#") } }
-      .take(2)
-      .toList()
-    return when (initLines.size) {
-      1 -> oneLineNamespaceDeclarations.any { it.matcher(initLines.first()).matches() }
-      2 -> multilineNamespaceDeclarations.any { it[0].matcher(initLines[0]).matches() && it[1].matcher(initLines[1]).matches() }
-      else -> false
-    }
-  }
-  return false
-}
-
-private val oneLineNamespaceDeclarations = listOf(
-  Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\).*"),
-  Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\).*"))
-
-private val multilineNamespaceDeclarations = listOf(
-  listOf(Pattern.compile("^from pkgutil import extend_path.*"), Pattern.compile("^__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^import pkgutil.*"), Pattern.compile("^__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^from pkg_resources import declare_namespace.*"), Pattern.compile("^declare_namespace\\(__name__\\).*")),
-  listOf(Pattern.compile("^import pkg_resources.*"), Pattern.compile("^pkg_resources.declare_namespace\\(__name__\\).*")))
-
-
 private fun isUserFile(element: PsiElement, module: Module?) =
   module != null &&
   element is PsiFileSystemItem &&

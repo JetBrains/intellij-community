@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.configuration;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.util.Objects;
@@ -15,6 +16,7 @@ public class BundleConfigBean implements Cloneable {
     this.enabled = enabled;
   }
 
+  @NlsSafe
   public String getName() {
     return name;
   }

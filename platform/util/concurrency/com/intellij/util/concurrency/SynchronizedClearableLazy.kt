@@ -1,57 +1,63 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency
 
-@Suppress("ClassName")
-private object UNINITIALIZED_VALUE
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Kotlin-friendly version of ClearableLazyValue
  */
 @Suppress("LocalVariableName")
 class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
-  @Volatile
-  private var _value: Any? = UNINITIALIZED_VALUE
+  private val computedValue = AtomicReference<Any?>(Sentinel())
 
   val valueIfInitialized: T?
     @Suppress("UNCHECKED_CAST")
     get() {
-      val value = _value
-      return if (value === UNINITIALIZED_VALUE) null else value as T?
+      val value = computedValue.get()
+      return if (value is Sentinel) null else value as T
     }
 
   override var value: T
     get() {
-      val _v1 = _value
-      if (_v1 !== UNINITIALIZED_VALUE) {
-        @Suppress("UNCHECKED_CAST")
-        return _v1 as T
-      }
-
-      return synchronized(this) {
-        val _v2 = _value
-        if (_v2 !== UNINITIALIZED_VALUE) {
-          @Suppress("UNCHECKED_CAST") (_v2 as T)
+      while (true) {
+        var currentValue = computedValue.get()
+        if (currentValue !is Sentinel) {
+          @Suppress("UNCHECKED_CAST")
+          return currentValue as T
         }
-        else {
-          val typedValue = initializer()
-          _value = typedValue
-          typedValue
+
+        // do not call initializer in parallel
+        synchronized(this) {
+          currentValue = computedValue.get()
+          if (currentValue !is Sentinel) {
+            @Suppress("UNCHECKED_CAST")
+            return currentValue as T
+          }
+
+          val result = initializer()
+          // set under lock to ensure that initializer is not called several times
+          if (computedValue.compareAndSet(currentValue, result)) {
+            return result
+          }
         }
       }
     }
     set(value) {
-      synchronized(this) {
-        _value = value
-      }
+      computedValue.set(value)
     }
 
-  override fun isInitialized() = _value !== UNINITIALIZED_VALUE
+  override fun isInitialized() = computedValue.get() !is Sentinel
 
-  override fun toString() = if (isInitialized()) value.toString() else "Lazy value not initialized yet."
+  override fun toString() = computedValue.get().toString()
 
   fun drop() {
-    synchronized(this) {
-      _value = UNINITIALIZED_VALUE
-    }
+    computedValue.set(Sentinel())
   }
+}
+
+private class Sentinel {
+  override fun toString() = "Lazy value not initialized yet."
+
+  override fun equals(other: Any?) = other === this
+  override fun hashCode() = System.identityHashCode(this)
 }

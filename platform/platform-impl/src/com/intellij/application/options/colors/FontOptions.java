@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -38,11 +40,11 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @Nullable
-  protected String getInheritedFontTitle() {
+  protected @NlsContexts.LinkLabel String getInheritedFontTitle() {
     return ApplicationBundle.message("settings.editor.font.default");
   }
 
-  protected String getOverwriteFontTitle() {
+  protected @NlsContexts.Checkbox String getOverwriteFontTitle() {
     return ApplicationBundle.message("settings.editor.font.overwrite");
   }
 
@@ -102,7 +104,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return label;
   }
 
-  private String getBaseFontInfo() {
+  private @NlsSafe String getBaseFontInfo() {
     FontPreferences basePrefs = getBaseFontPreferences();
     return basePrefs.getFontFamily() + ',' + basePrefs.getSize(basePrefs.getFontFamily());
   }

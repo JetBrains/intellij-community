@@ -24,6 +24,11 @@ public class PathUtilTest {
     assertThat(PathUtilRt.getFileName("/bar/foo.html")).isEqualTo("foo.html");
     assertThat(PathUtilRt.getFileName("bar/foo.html")).isEqualTo("foo.html");
     assertThat(PathUtilRt.getFileName("bar/foo.html/")).isEqualTo("foo.html");
+    assertThat(PathUtilRt.getFileName("bar/foo.html//")).isEqualTo("foo.html");
+    assertThat(PathUtilRt.getFileName("bar/foo.html///")).isEqualTo("foo.html");
+    assertThat(PathUtilRt.getFileName("/")).isEqualTo("");
+    assertThat(PathUtilRt.getFileName("")).isEqualTo("");
+    assertThat(PathUtilRt.getFileName("C")).isEqualTo("C");
   }
 
   @Test
@@ -32,6 +37,8 @@ public class PathUtilTest {
     assertThat(PathUtilRt.getFileExtension("foo.html/")).isEqualTo("html");
     assertThat(PathUtilRt.getFileExtension("/foo.html/")).isEqualTo("html");
     assertThat(PathUtilRt.getFileExtension("/bar/foo.html/")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("/bar/foo.html//")).isEqualTo("html");
+    assertThat(PathUtilRt.getFileExtension("/bar/foo.html///")).isEqualTo("html");
     assertThat(PathUtilRt.getFileExtension("")).isNull();
     assertThat(PathUtilRt.getFileExtension("foo")).isNull();
     assertThat(PathUtilRt.getFileExtension("foo.or.bar/bar")).isNull();

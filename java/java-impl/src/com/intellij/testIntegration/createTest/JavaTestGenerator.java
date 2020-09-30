@@ -55,6 +55,7 @@ public class JavaTestGenerator implements TestGenerator {
   public JavaTestGenerator() {
   }
 
+  @SuppressWarnings("Convert2Diamond")//due to internal java compiler error in corretto 11.0.7
   @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -105,7 +105,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
-  private static class UpDownInEditorHandler extends EditorActionHandler {
+  private static final class UpDownInEditorHandler extends EditorActionHandler {
     private final boolean myUp;
 
     private UpDownInEditorHandler(boolean up) {
@@ -128,9 +128,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       assert lookup != null;
       lookup.hideLookup(true);
-      EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP 
+      EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP
                                                               : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-        .execute(editor, caret, dataContext);      
+        .execute(editor, caret, dataContext);
     }
   }
 

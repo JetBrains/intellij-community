@@ -20,7 +20,7 @@ PyFile:FStringTerminatedByLineBreakInNestedExpression.py
                     PsiElement(Py:INTEGER_LITERAL)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(Py:PLUS)('+')
-                  PsiErrorElement:expression expected
+                  PsiErrorElement:Expression expected
                     <empty list>
               PsiErrorElement:' expected
                 <empty list>

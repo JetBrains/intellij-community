@@ -16,7 +16,10 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -66,7 +69,27 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspectionTest extend
            "}");
   }
 
+  public void testRecord() {
+    doTest("class A {" +
+           "  record R() implements java.io.Serializable {" +
+           "  }" +
+           "}");
+  }
+
   public void testTypeParameter() {
     doTest("class A<TypeParameter extends java.awt.Component> {}");
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package java.awt;" +
+      "public abstract class Component {}"
+    };
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 }

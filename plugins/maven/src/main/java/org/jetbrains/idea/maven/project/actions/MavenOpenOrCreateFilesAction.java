@@ -83,7 +83,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
           }
         }
         catch (IOException ex) {
-          MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+          MavenUtil.showError(project, MavenProjectBundle.message("notification.title.cannot.create", file.getName()), ex);
         }
       });
       return;

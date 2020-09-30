@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -98,7 +99,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
   }
 
 
-  public void setToggleActionTitle(@Nullable String title) {
+  public void setToggleActionTitle(@NlsActions.ActionText @Nullable String title) {
     myToggleChangeDiffAction.getTemplatePresentation().setText(title);
   }
 

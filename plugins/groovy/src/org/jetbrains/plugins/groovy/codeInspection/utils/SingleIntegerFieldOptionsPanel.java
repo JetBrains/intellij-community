@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -28,7 +29,7 @@ import java.text.NumberFormat;
 
 public class SingleIntegerFieldOptionsPanel extends JPanel {
 
-  public SingleIntegerFieldOptionsPanel(String labelString, final BaseInspection owner, @NonNls final String property) {
+  public SingleIntegerFieldOptionsPanel(@NlsContexts.Label String labelString, final BaseInspection owner, @NonNls final String property) {
     super(new GridBagLayout());
     final JLabel label = new JLabel(labelString);
     final NumberFormat formatter = NumberFormat.getIntegerInstance();

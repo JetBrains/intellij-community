@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -21,68 +22,70 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class TypeFilter extends FilterAction {
 
-  boolean showRegex;
+  boolean myShowRegex;
 
-  public TypeFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("type.filter.name"), filterTable);
+  public TypeFilter() {
+    super(SSRBundle.messagePointer("type.filter.name"));
   }
 
   @Override
   public boolean hasFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
-      return false;
-    }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    return !StringUtil.isEmpty(constraint.getNameOfExprType());
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    return variable != null && !StringUtil.isEmpty(variable.getNameOfExprType());
   }
 
   @Override
   public void clearFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
       return;
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    constraint.setNameOfExprType("");
-    constraint.setInvertExprType(false);
-    constraint.setExprTypeWithinHierarchy(false);
+    variable.setNameOfExprType("");
+    variable.setInvertExprType(false);
+    variable.setExprTypeWithinHierarchy(false);
   }
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+    if (myTable.getMatchVariable() == null) {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
-    showRegex = profile.isApplicableConstraint(UIUtil.TYPE_REGEX, nodes, completePattern, target);
+    myShowRegex = profile.isApplicableConstraint(UIUtil.TYPE_REGEX, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, target);
   }
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
-    final String s = constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes();
-    final String value = constraint.isInvertExprType() ? "!" + s : s;
+    final MatchVariableConstraint variable = myTable.getMatchVariable();
+    if (variable == null) {
+      return;
+    }
+    final String s = variable.isRegexExprType() ? variable.getNameOfExprType() : variable.getExpressionTypes();
+    final String value = variable.isInvertExprType() ? "!" + s : s;
     myLabel.append(SSRBundle.message("type.0.label", value));
-    if (constraint.isExprTypeWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"),
-                                                               SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (variable.isExprTypeWithinHierarchy()) {
+      myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
   }
 
   @Override
-  public FilterEditor getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JCheckBox myRegexCheckBox = new JCheckBox(SSRBundle.message("regex.check.box"), false);
       {
-        myRegexCheckBox.addActionListener(e -> myTextField.setFileType(myRegexCheckBox.isSelected()
-                                                                       ? RegExpFileType.INSTANCE
-                                                                       : PlainTextFileType.INSTANCE));
+        myRegexCheckBox.addActionListener(e -> {
+          final FileType fileType = myRegexCheckBox.isSelected() ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
+          final Document document = UIUtil.createDocument(fileType, myTextField.getText(), myTable.getProject());
+          myTextField.setDocument(document);
+        });
       }
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.help.text"));
 
@@ -127,12 +130,12 @@ public class TypeFilter extends FilterAction {
       @Override
       protected void loadValues() {
         final boolean regex = myConstraint.isRegexExprType();
-        myTextField.setFileType(showRegex && regex ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE);
+        myTextField.setFileType(myShowRegex && regex ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE);
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") +
                             (regex ? myConstraint.getNameOfExprType() : myConstraint.getExpressionTypes()))  ;
         myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
-        myRegexCheckBox.setSelected(showRegex && regex);
-        myRegexCheckBox.setVisible(showRegex);
+        myRegexCheckBox.setSelected(myShowRegex && regex);
+        myRegexCheckBox.setVisible(myShowRegex);
       }
 
       @Override
@@ -142,7 +145,7 @@ public class TypeFilter extends FilterAction {
         if (inverted) {
           text = text.substring(1);
         }
-        if (showRegex && myRegexCheckBox.isSelected()) {
+        if (myShowRegex && myRegexCheckBox.isSelected()) {
           myConstraint.setNameOfExprType(text);
         }
         else {

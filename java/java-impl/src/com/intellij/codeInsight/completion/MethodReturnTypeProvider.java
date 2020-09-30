@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -20,7 +20,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author peter
  */
-class MethodReturnTypeProvider {
+final class MethodReturnTypeProvider {
   protected static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
       .andNot(JavaKeywordCompletion.AFTER_DOT);
@@ -29,7 +29,7 @@ class MethodReturnTypeProvider {
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
     assert method != null;
 
-    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
+    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<>() {
       private final Set<PsiType> myProcessed = new HashSet<>();
 
       @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -66,14 +67,16 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
-      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+      session.registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean equal = Comparing.equal(myT, myS);
       if (!equal) {
-        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
       }
       return equal;
     }
@@ -106,7 +109,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }
           if (tSubstituted == null ^ sSubstituted == null) {
-            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+            session.registerIncompatibleErrorMessage(
+              JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
             return false;
           }
         }
@@ -118,7 +122,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
-    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(),
+                                             JavaPsiBundle.message("type.conforms.to.constraint", session.getPresentableText(myS), session.getPresentableText(myT)));
     return false;
   }
 

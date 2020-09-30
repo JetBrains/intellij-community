@@ -192,11 +192,11 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
     if (myOriginal != null) {
       String originalDebugName = myOriginal.getDebugName();
       if (originalDebugName == null) originalDebugName = myOriginal.getClass().getSimpleName();
-      return "wrapped " + originalDebugName; 
+      return "wrapped " + originalDebugName;
     }
     else {
       return null;
     }
   }
-  
+
 }

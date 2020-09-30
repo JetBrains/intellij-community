@@ -73,16 +73,21 @@
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
 
-    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check node test" groupName="XPath" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
-    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit type conversion" groupName="XPath" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion"/>
-    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant type conversion" groupName="XPath" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion"/>
-    <localInspection language="XPath" shortName="IndexZeroUsage" displayName="Use of index 0 in XPath predicates" groupName="XPath" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate"/>
-    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired namespace prefix" groupName="XPath" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix"/>
+    <localInspection language="XPath" shortName="CheckNodeTest" groupKey="inspections.xpath.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"
+                     key="inspection.xpath.check.node.test.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XPath" shortName="ImplicitTypeConversion" groupKey="inspections.xpath.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion"
+                     key="inspection.xpath.implicit.type.conversion.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XPath" shortName="RedundantTypeConversion" groupKey="inspections.xpath.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion"
+                     key="inspection.xpath.redundant.type.conversion.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XPath" shortName="IndexZeroUsage" groupKey="inspections.xpath.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate"
+                     key="inspection.xpath.index.zero.usage.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" groupKey="inspections.xpath.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix"
+                     key="inspection.xpath.hardwired.namespace.prefix.display.name" bundle="messages.XPathBundle"/>
 
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
     <quoteHandler fileType="XPath2" className="org.intellij.lang.xpath.XPathQuoteHandler" />
@@ -107,14 +112,18 @@
 
     <extendWordSelectionHandler implementation="org.intellij.lang.xpath.XPathStringLiteralSelectioner"/>
 
-    <localInspection language="XML" shortName="XsltUnusedDeclaration" displayName="Unused variable/parameter" groupName="XSLT" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
-    <localInspection language="XML" shortName="XsltTemplateInvocation" displayName="Template invocation problems" groupName="XSLT" enabledByDefault="true"
-                     level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"/>
-    <localInspection language="XML" shortName="XsltDeclarations" displayName="Declaration problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
-                     implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"/>
-    <localInspection language="XML" shortName="XsltVariableShadowing" displayName="Variable shadowing" groupName="XSLT" enabledByDefault="true"
-                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"/>
+    <localInspection language="XML" shortName="XsltUnusedDeclaration" groupKey="inspections.xslt.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"
+                     key="inspection.xslt.unused.declaration.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XML" shortName="XsltTemplateInvocation" groupKey="inspections.xslt.group.name" enabledByDefault="true"
+                     level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"
+                     key="inspection.xslt.template.invocation.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XML" shortName="XsltDeclarations" groupKey="inspections.xslt.group.name" enabledByDefault="true"
+                     level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"
+                     key="inspection.xslt.declarations.display.name" bundle="messages.XPathBundle"/>
+    <localInspection language="XML" shortName="XsltVariableShadowing" groupKey="inspections.xslt.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"
+                     key="inspection.xslt.variable.shadowing.display.name" bundle="messages.XPathBundle"/>
 
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
@@ -138,7 +147,7 @@
                              key="configurable.XPathConfigurable.display.name"/>
     <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
                              bundle="messages.XPathBundle"
-                             key="configurable.UIImpl.display.name"/>
+                             key="configurable.xslt.display.name"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
@@ -183,18 +192,13 @@
 
   <!-- Component's actions -->
   <actions>
-    <action id="XPathView.Actions.Evaluate" class="org.intellij.plugins.xpathView.XPathEvalAction"
-            text="Evaluate XPath..."
-            description="Evaluate an XPath expression and highlight the result in the XML-Document">
+    <action id="XPathView.Actions.Evaluate" class="org.intellij.plugins.xpathView.XPathEvalAction">
       <keyboard-shortcut first-keystroke="control alt X" second-keystroke="E" keymap="$default" />
     </action>
-    <action id="XPathView.Actions.ShowPath" class="org.intellij.plugins.xpathView.ShowXPathAction"
-            text="Show unique XPath" description="Show XPath expression that matches the current node">
+    <action id="XPathView.Actions.ShowPath" class="org.intellij.plugins.xpathView.ShowXPathAction">
       <keyboard-shortcut first-keystroke="control alt X" second-keystroke="P" keymap="$default" />
     </action>
-
-    <action id="XPathView.Actions.FindByExpression" class="org.intellij.plugins.xpathView.search.FindByXPathAction"
-            text="Find by XPath..." description="Find Files by XPath Expression">
+    <action id="XPathView.Actions.FindByExpression" class="org.intellij.plugins.xpathView.search.FindByXPathAction">
       <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" keymap="$default" />
     </action>
 
@@ -216,7 +220,7 @@
     </reference>
 
     <!-- Editor Popup -->
-    <group id="XPathView.EditorPopup" text="XPath Actions">
+    <group id="XPathView.EditorPopup">
       <separator />
       <reference id="XPathView.Actions.Evaluate" />
       <reference id="XPathView.Actions.ShowPath" />
@@ -225,7 +229,7 @@
     </group>
 
     <group id="XPathView.XSLT.Associations" popup="true"
-           class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup" text="File Associations" >
+           class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup">
       <add-to-group group-id="XPathView.EditorPopup" anchor="last"
                     relative-to-action="XPathView.Actions.ShowPathDescription" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddAntBuildFile" />

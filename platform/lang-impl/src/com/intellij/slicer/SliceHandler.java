@@ -7,16 +7,16 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SliceHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance(SliceHandler.class);
   final boolean myDataFlowToThis;
 
   SliceHandler(boolean dataFlowToThis) {
@@ -31,12 +31,6 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
       return;
     }
 
-    if (!expression.isPhysical()) {
-      PsiFile expressionFile = expression.getContainingFile();
-      LOG.error("Analyzed entity should be physical. " +
-                "Analyzed element: " + expression.getText() + " (class = " + expression.getClass() + "), file = " + file +
-                " expression file = " + expressionFile + " (class = " + expressionFile.getClass() + ")");
-    }
     SliceManager sliceManager = SliceManager.getInstance(project);
     sliceManager.slice(expression,myDataFlowToThis, this);
   }
@@ -47,7 +41,7 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public PsiElement getExpressionAtCaret(final Editor editor, final PsiFile file) {
+  public PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     if (offset == 0) {
       return null;
@@ -58,14 +52,19 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
     if (provider == null || atCaret == null) {
       return null;
     }
-    return provider.getExpressionAtCaret(atCaret, myDataFlowToThis);
+    PsiElement expression = provider.getExpressionAtCaret(atCaret, myDataFlowToThis);
+    if (expression != null && !expression.isPhysical()) {
+      return null;
+    }
+    return expression;
   }
 
-  public abstract SliceAnalysisParams askForParams(PsiElement element,
-                                                   SliceManager.StoredSettingsBean storedSettingsBean,
-                                                   String dialogTitle);
+  public abstract SliceAnalysisParams askForParams(@NotNull PsiElement element,
+                                                   @NotNull SliceManager.StoredSettingsBean storedSettingsBean,
+                                                   @NotNull @NlsContexts.DialogTitle String dialogTitle);
 
-  public static SliceHandler create(boolean dataFlowToThis) {
+  @Contract("_ -> new")
+  public static @NotNull SliceHandler create(boolean dataFlowToThis) {
     return dataFlowToThis ? new SliceBackwardHandler() : new SliceForwardHandler();
   }
 }

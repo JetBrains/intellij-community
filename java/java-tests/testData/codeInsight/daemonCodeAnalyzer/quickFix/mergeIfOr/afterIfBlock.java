@@ -1,4 +1,4 @@
-// "Merge sequential 'if's" "true"
+// "Merge with the next 'if' using ||" "true"
 
 class Test {
   public static void main(String[] args) {

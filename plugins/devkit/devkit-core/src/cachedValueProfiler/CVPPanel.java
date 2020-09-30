@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.cachedValueProfiler;
 
 import com.intellij.internal.cachedValueProfiler.CVPInfo;
@@ -14,6 +14,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CVPPanel extends JBPanel {
+
   public CVPPanel(@NotNull VirtualFile file, @NotNull Project project) {
     super(new BorderLayout());
 
@@ -48,7 +50,8 @@ public class CVPPanel extends JBPanel {
   }
 
   private static ColumnInfo[] getColumns(@NotNull Project project) {
-    return new ColumnInfo[]{new OriginColumnInfo(project), TOTAL_LIFE_TIME_COLUMN, TOTAL_USE_COUNT_COLUMN, CREATED_COUNT_COLUMN, RATIO_COLUMN};
+    return new ColumnInfo[]{new OriginColumnInfo(project), TOTAL_LIFE_TIME_COLUMN, TOTAL_USE_COUNT_COLUMN, CREATED_COUNT_COLUMN,
+      RATIO_COLUMN};
   }
 
   private static void increaseHeaderFontSize(TableView<CVPInfo> table, double ratio) {
@@ -59,7 +62,7 @@ public class CVPPanel extends JBPanel {
   }
 
   private static void registerSpeedSearch(TableView<CVPInfo> table) {
-    new TableViewSpeedSearch<CVPInfo>(table) {
+    new TableViewSpeedSearch<>(table) {
       @Override
       protected String getItemText(@NotNull CVPInfo element) {
         return element.getOrigin();
@@ -67,7 +70,8 @@ public class CVPPanel extends JBPanel {
     };
   }
 
-  private static final ColumnInfo<CVPInfo, String> TOTAL_LIFE_TIME_COLUMN = new ColumnInfo<CVPInfo, String>("Total Life Time") {
+  private static final ColumnInfo<CVPInfo, String> TOTAL_LIFE_TIME_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.total.life.time")) {
     @Override
     public String valueOf(CVPInfo o) {
       return String.valueOf(o.getTotalLifeTime());
@@ -79,7 +83,8 @@ public class CVPPanel extends JBPanel {
       return Comparator.comparing(o -> o.getTotalLifeTime());
     }
   };
-  private static final ColumnInfo<CVPInfo, String> TOTAL_USE_COUNT_COLUMN = new ColumnInfo<CVPInfo, String>("Total Use Count") {
+  private static final ColumnInfo<CVPInfo, String> TOTAL_USE_COUNT_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.total.use.count")) {
     @Override
     public String valueOf(CVPInfo o) {
       return String.valueOf(o.getTotalUseCount());
@@ -91,7 +96,8 @@ public class CVPPanel extends JBPanel {
       return Comparator.comparing(o -> o.getTotalUseCount());
     }
   };
-  private static final ColumnInfo<CVPInfo, String> CREATED_COUNT_COLUMN = new ColumnInfo<CVPInfo, String>("Created") {
+  private static final ColumnInfo<CVPInfo, String> CREATED_COUNT_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.created")) {
     @Override
     public String valueOf(CVPInfo o) {
       return String.valueOf(o.getCreatedCount());
@@ -103,7 +109,8 @@ public class CVPPanel extends JBPanel {
       return Comparator.comparing(o -> o.getCreatedCount());
     }
   };
-  private static final ColumnInfo<CVPInfo, String> RATIO_COLUMN = new ColumnInfo<CVPInfo, String>("Total Use Count / Created") {
+  private static final ColumnInfo<CVPInfo, String> RATIO_COLUMN = new ColumnInfo<>(
+    DevKitBundle.message("cached.value.profiler.column.total.use.count.created")) {
     @Override
     public String valueOf(CVPInfo o) {
       return String.valueOf(value(o));
@@ -120,10 +127,11 @@ public class CVPPanel extends JBPanel {
     }
   };
 
-  private static class OriginColumnInfo extends ColumnInfo<CVPInfo, String> {
+  private static final class OriginColumnInfo extends ColumnInfo<CVPInfo, String> {
     private final Project myProject;
 
-    private OriginColumnInfo(Project project) {super("Origin");
+    private OriginColumnInfo(Project project) {
+      super(DevKitBundle.message("cached.value.profiler.column.origin"));
       myProject = project;
     }
 

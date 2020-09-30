@@ -11,6 +11,7 @@ from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
 
@@ -253,6 +254,14 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
+
+    def execDataViewerAction(self, varName, action, args):
+        try:
+            tmp_var = pydevd_vars.eval_in_context(varName, self.get_namespace(), self.get_namespace())
+            return InternalDataViewerAction.act(tmp_var, action, args.split("\t"))
+
+        except Exception as e:
+            raise PythonUnhandledException(type(e).__name__ + "\n" + traceback.format_exc())
 
     def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression

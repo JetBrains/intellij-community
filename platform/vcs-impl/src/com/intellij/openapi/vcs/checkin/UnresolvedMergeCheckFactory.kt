@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus.*
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.util.PairConsumer
@@ -35,8 +36,9 @@ private class UnresolvedMergeCheckHandler(
   private fun performDefaultCheck(): ReturnResult = if (panel.hasUnresolvedConflicts()) askUser() else ReturnResult.COMMIT
 
   private fun askUser(): ReturnResult {
-    val answer = showYesNoDialog(panel.component, "Are you sure you want to commit changes with unresolved conflicts?",
-                                 "Unresolved Conflicts", getWarningIcon())
+    val answer = showYesNoDialog(panel.component, VcsBundle.message(
+      "checkin.unresolved.merge.are.you.sure.you.want.to.commit.changes.with.unresolved.conflicts"),
+                                 VcsBundle.message("checkin.unresolved.merge.unresolved.conflicts"), getWarningIcon())
     return if (answer != Messages.YES) ReturnResult.CANCEL else ReturnResult.COMMIT
   }
 

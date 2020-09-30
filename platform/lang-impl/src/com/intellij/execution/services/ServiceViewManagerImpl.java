@@ -58,10 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@State(name = "ServiceViewManager", storages = {
-  @Storage(value = StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "ServiceViewManager", storages = @Storage(value = StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
   @NonNls private static final String HELP_ID = "services.tool.window";
 

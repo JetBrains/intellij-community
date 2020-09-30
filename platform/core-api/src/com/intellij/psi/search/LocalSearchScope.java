@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class LocalSearchScope extends SearchScope {
 
   public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
 
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
 
   private final PsiElement[] myScope;
   private final VirtualFile[] myVirtualFiles;
@@ -43,7 +44,7 @@ public class LocalSearchScope extends SearchScope {
     this(scope, null);
   }
 
-  public LocalSearchScope(@NotNull PsiElement scope, @Nullable String displayName) {
+  public LocalSearchScope(@NotNull PsiElement scope, @Nullable @Nls String displayName) {
     this(new PsiElement[]{scope}, displayName);
   }
 
@@ -51,11 +52,11 @@ public class LocalSearchScope extends SearchScope {
     this(scope, null);
   }
 
-  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable String displayName) {
+  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable @Nls String displayName) {
     this(scope, displayName, false);
   }
 
-  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable String displayName, boolean ignoreInjectedPsi) {
+  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable @Nls String displayName, boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new LinkedHashSet<>(scope.length);

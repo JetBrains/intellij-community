@@ -242,7 +242,7 @@ public abstract class ToolWindowFixture {
       protected void executeInEDT() throws Throwable {
         Stream<Content> contentStream = Arrays.stream(myToolWindow.getContentManager().getContents());
         Optional<Content> contentOptional = contentStream.filter(content -> content.getTabName().equals(tabName)).findAny();
-        if (!contentOptional.isPresent()) {
+        if (contentOptional.isEmpty()) {
           throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
                                              "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
         }

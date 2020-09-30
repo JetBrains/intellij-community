@@ -113,6 +113,7 @@ public class EditorTestFixture {
 
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
       TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
+      ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, getEditorDataContext());
     });
 
   }

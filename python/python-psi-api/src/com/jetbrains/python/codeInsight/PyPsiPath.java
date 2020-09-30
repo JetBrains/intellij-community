@@ -96,7 +96,7 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       super.visitPyClass(node);
       if (myName.equals(node.getName())) {
         myResult = node;
@@ -145,7 +145,7 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
       if (myName.equals(node.getName())) {
         myResult = node;
@@ -227,7 +227,7 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       if (myResult != null) {
         return;
       }
@@ -287,7 +287,7 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhs = node.getLeftHandSideExpression();
       if (lhs != null && myAssignee.equals(lhs.getText())) {
         myResult = node;

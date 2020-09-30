@@ -48,6 +48,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageAnnotationNotInPackageInfo() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
   public void testTypeAnnotationsWithCStyleArrays() { doTest(); }
+  public void testTypeAnnotationsWithVar() { doTest(); }
   public void testRepeatable() { doTest(); }
   public void testEnumValues() { doTest(); }
   public void testReceiverParameters() { doTest(); }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
@@ -26,6 +27,7 @@ import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.MultiSourceFileLocator;
 import org.jacoco.report.html.HTMLFormatter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +39,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class JaCoCoCoverageRunner extends JavaCoverageRunner {
+public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
 
   @Override
@@ -191,7 +193,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      boolean collectLineInfo,
                                      boolean isSampling,
                                      String sourceMapPath) {
-    StringBuilder argument = new StringBuilder("-javaagent:");
+    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
     if (agentPath == null) return;
     argument.append(agentPath);

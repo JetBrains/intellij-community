@@ -122,7 +122,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
+ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -202,6 +203,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 <TEST_EXPRESSION> {
     "!="                          { return WORD; }
     ";"                           { popState(); return SEMI; }
+    ")" | "&&" | "||"             { popState(); yypushback(yylength()); }
+    "`"                           { if (isBackquoteOpen) { popState(); yypushback(yylength()); }
+                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
 
@@ -307,8 +311,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 }
 
 <PARAMETER_EXPANSION_EXPR> {
-  [^}/$`\"]*                               { popState(); return WORD; }
-  [^]                                  { popState(); yypushback(yylength()); }
+  {ParameterExpansionExpr}          { popState(); return WORD; }
+  [^]                                { popState(); yypushback(yylength()); }
 }
 
 <CASE_CONDITION> {
@@ -368,6 +372,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "else"                        { return ELSE; }
     "fi"                          { if (yystate() == IF_CONDITION) popState(); return FI; }
     "for"                         { pushState(OTHER_CONDITIONS); return FOR; }
+    "in"                          { return IN; }
     "function"                    { return FUNCTION; }
     "if"                          { pushState(IF_CONDITION); return IF; }
     "select"                      { pushState(OTHER_CONDITIONS); return SELECT; }

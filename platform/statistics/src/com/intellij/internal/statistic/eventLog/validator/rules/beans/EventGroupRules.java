@@ -7,7 +7,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
-public class EventGroupRules {
+public final class EventGroupRules {
   public static final EventGroupRules EMPTY =
     new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY);
 
@@ -136,13 +138,12 @@ public class EventGroupRules {
     return prevResult != null ? prevResult : REJECTED;
   }
 
-  public static @NotNull EventGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                @Nullable Map<String, Set<String>> globalEnums,
-                                                @Nullable Map<String, String> globalRegexps) {
-    FUStatisticsWhiteListGroupsService.WLRule rules = group.rules;
+  public static @NotNull EventGroupRules create(@NotNull EventGroupRemoteDescriptor group,
+                                                @NotNull GlobalRulesHolder globalRulesHolder) {
+    GroupRemoteRule rules = group.rules;
     return rules == null
            ? EMPTY
            : new EventGroupRules(rules.event_id, rules.event_data,
-                                 EventGroupContextData.create(rules.enums, globalEnums, rules.regexps, globalRegexps));
+                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder));
   }
 }

@@ -18,12 +18,14 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -52,7 +54,7 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
       calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
       if (classes.size() == 0) {
-        throw new CantRunException("No tests found in the package \"" + packageName + '\"');
+        throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.package", packageName));
       }
     }
   }
@@ -60,7 +62,7 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public String getGeneratedName() {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    return packageName.length() == 0 ? "<default>" : packageName;
+    return packageName.length() == 0 ? TestRunnerBundle.message("default.package.presentable.name") : packageName;
   }
 
   @Override
@@ -68,10 +70,10 @@ public class TestNGTestPackage extends TestNGTestObject {
     String s = myConfig.getName();
     if (!myConfig.isGeneratedName()) return '\"' + s + '\"';
     if (myConfig.getPersistantData().getPackageName().trim().length() > 0) {
-      return "Tests in \"" + myConfig.getPersistantData().getPackageName() + '\"';
+      return TestngBundle.message("action.text.tests.in.package", myConfig.getPersistantData().getPackageName());
     }
     else {
-      return "All Tests";
+      return TestRunnerBundle.message("all.tests.scope.presentable.text");
     }
   }
 
@@ -79,7 +81,8 @@ public class TestNGTestPackage extends TestNGTestObject {
   public void checkConfiguration() throws RuntimeConfigurationException {
     final TestData data = myConfig.getPersistantData();
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(data.getPackageName());
-    if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getPackageName() + "' not found");
+    if (psiPackage == null) throw new RuntimeConfigurationException(
+      TestngBundle.message("tetsng.dialog.message.package.not.found.exception", data.getPackageName()));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,17 +10,17 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 public interface TestDiscoveryProducer {
-  ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
+  ExtensionPointName<TestDiscoveryProducer> EP = new ExtensionPointName<>("com.intellij.testDiscoveryProducer");
 
   Logger LOG = Logger.getInstance(LocalTestDiscoveryProducer.class);
 
@@ -41,11 +41,11 @@ public interface TestDiscoveryProducer {
                                      byte frameworkId,
                                      @NotNull List<String> filePaths,
                                      @NotNull TestProcessor processor) {
-    MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
+    MultiMap<String, String> visitedTests = new MultiMap<>() {
       @NotNull
       @Override
       protected Collection<String> createCollection() {
-        return new THashSet<>();
+        return new HashSet<>();
       }
     };
     for (TestDiscoveryProducer producer : EP.getExtensionList()) {

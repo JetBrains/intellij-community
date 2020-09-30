@@ -248,8 +248,7 @@ public class InstalledPackagesPanel extends JPanel {
                   myNotificationArea.showSuccess(IdeBundle.message("package.successfully.upgraded", packageName));
                 }
                 else {
-                  myNotificationArea.showError(IdeBundle.message("upgrade.packages.failed") +
-                                               " <a href=\"xxx\">" + IdeBundle.message("upgrade.packages.failure.details") + "</a>",
+                  myNotificationArea.showError(IdeBundle.message("upgrade.packages.failed"),
                                                IdeBundle.message("upgrade.packages.failed.dialog.title"),
                                                errorDescription);
                 }
@@ -367,8 +366,7 @@ public class InstalledPackagesPanel extends JPanel {
               }
             }
             else {
-              myNotificationArea.showError(IdeBundle.message("uninstall.packages.failed") +
-                                           " <a href=\"xxx\">" + IdeBundle.message("uninstall.packages.failure.details") + "</a>",
+              myNotificationArea.showError(IdeBundle.message("uninstall.packages.failed"),
                                            IdeBundle.message("uninstall.packages.failed.dialog.title"),
                                            errorDescription);
             }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public abstract class InplaceAddEditRemovePanel<T> extends AddEditRemovePanel<T>
     super(model, data);
   }
 
-  public InplaceAddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable String label) {
+  public InplaceAddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable @NlsContexts.Label String label) {
     super(model, data, label);
   }
 

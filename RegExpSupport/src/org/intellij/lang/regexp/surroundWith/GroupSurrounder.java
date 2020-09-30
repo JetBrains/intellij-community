@@ -20,6 +20,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,15 +33,14 @@ import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.psi.RegExpAtom;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class GroupSurrounder implements Surrounder {
-    private final String myTitle;
+    private final @NlsActions.ActionText String myTitle;
     private final String myGroupStart;
 
-    GroupSurrounder(@Nls String title, String groupStart) {
+    GroupSurrounder(@NlsActions.ActionText String title, String groupStart) {
         myTitle = title;
         myGroupStart = groupStart;
     }

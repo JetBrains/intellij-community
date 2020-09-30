@@ -4,25 +4,25 @@ package org.jetbrains.plugins.github.pullrequest.comment
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface GHPRDiffReviewSupport {
 
-  @get:CalledInAwt
-  @set:CalledInAwt
+  @get:RequiresEdt
+  @set:RequiresEdt
   var showReviewThreads: Boolean
 
-  @get:CalledInAwt
-  @set:CalledInAwt
+  @get:RequiresEdt
+  @set:RequiresEdt
   var showResolvedReviewThreads: Boolean
 
-  @get:CalledInAwt
+  @get:RequiresEdt
   val isLoadingReviewData: Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun install(viewer: DiffViewerBase)
 
-  @CalledInAwt
+  @RequiresEdt
   fun reloadReviewData()
 
   companion object {

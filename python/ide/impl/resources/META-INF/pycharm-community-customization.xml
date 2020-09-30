@@ -71,6 +71,9 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.newProject.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.welcome.PyWelcomeCollector"/>
+    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Python interpreter configuring" displayType="BALLOON"/>
+    <notificationGroup id="Packaging" displayType="BALLOON"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
@@ -80,10 +83,8 @@
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"
-              icon="AllIcons.Welcome.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"
-              icon="AllIcons.Actions.Menu_open"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"/>
+      <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>

@@ -7,6 +7,8 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NonNls;
+
 public class IndentGuideDescriptor {
   public final int indentLevel;
   public final int codeConstructStartLine;
@@ -47,6 +49,7 @@ public class IndentGuideDescriptor {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return String.format("%d (%d-%d-%d)", indentLevel, codeConstructStartLine, startLine, endLine);
   }

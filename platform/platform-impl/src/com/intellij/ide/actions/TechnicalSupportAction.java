@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TechnicalSupportAction extends AnAction implements DumbAware {
@@ -51,6 +52,7 @@ public class TechnicalSupportAction extends AnAction implements DumbAware {
     Windows XP           - win-xp
     Windows XP 64-bit    - win-xp-64
    */
+  @NonNls
   private static String getOSName() {
     String name = "";
     if (SystemInfo.isWindows) {
@@ -82,7 +84,7 @@ public class TechnicalSupportAction extends AnAction implements DumbAware {
     return StringUtil.compareVersionNumbers(SystemInfo.OS_VERSION, version) == 0;
   }
 
-  private static String getWindowsVersion() {
+  @NonNls private static String getWindowsVersion() {
     if (isWindowsVersion("5.1")) return "xp";
     if (isWindowsVersion("5.2")) return "2003";
     if (isWindowsVersion("6.0")) return "vista";

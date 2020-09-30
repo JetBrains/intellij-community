@@ -18,16 +18,6 @@ import org.jetbrains.annotations.Nullable;
  * @author pegov
  */
 final class ToggleFullScreenAction extends DumbAwareAction implements LightEditCompatible {
-  private static class Holder {
-    private static String getTextEnterFullScreen() {
-      return ActionsBundle.message("action.ToggleFullScreen.text.enter");
-    }
-
-    private static String getTextExitFullScreen() {
-      return ActionsBundle.message("action.ToggleFullScreen.text.exit");
-    }
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     IdeFrameEx frame = getFrameHelper(e.getProject());
@@ -53,7 +43,8 @@ final class ToggleFullScreenAction extends DumbAwareAction implements LightEditC
     p.setEnabled(isApplicable);
 
     if (isApplicable) {
-      p.setText(frame.isInFullScreen() ? Holder.getTextExitFullScreen() : Holder.getTextEnterFullScreen());
+      p.setText(frame.isInFullScreen() ? ActionsBundle.message("action.ToggleFullScreen.text.exit")
+                                       : ActionsBundle.message("action.ToggleFullScreen.text.enter"));
     }
   }
 

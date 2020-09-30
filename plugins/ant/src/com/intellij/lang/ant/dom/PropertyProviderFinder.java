@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +198,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   @Nullable
-  protected AntDomTarget getTargetByName(String effectiveName) {
+  protected AntDomTarget getTargetByName(@NonNls String effectiveName) {
     return myTargetsResolveMap.get(effectiveName);
   }
 

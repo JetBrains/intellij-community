@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -134,7 +135,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
     return formFiles;
   }
 
-  private static String composeText(final List<PsiFile> formFiles) {
+  private static @NlsSafe String composeText(final List<PsiFile> formFiles) {
     @NonNls StringBuilder result = new StringBuilder("<html><body>");
     result.append(UIDesignerBundle.message("ui.is.bound.header"));
     @NonNls String sep = "";

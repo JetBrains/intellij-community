@@ -234,20 +234,20 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
   }
 
   protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
-                                                                                                WrappingRunConfiguration<RunConfigurationBase> {
+                                                                                                WrappingRunConfiguration<RunConfigurationBase<?>> {
     @Deprecated
-    public RunConfigurationBase getConfiguration() {
+    public RunConfigurationBase<?> getConfiguration() {
       return getPeer();
     }
 
     @Override
-    public @NotNull RunConfigurationBase getPeer() {
+    public @NotNull RunConfigurationBase<?> getPeer() {
       return myConfiguration;
     }
 
-    private final RunConfigurationBase myConfiguration;
+    private final RunConfigurationBase<?> myConfiguration;
 
-    public MyRunProfile(RunConfigurationBase configuration) {
+    public MyRunProfile(@NotNull RunConfigurationBase<?> configuration) {
       super(configuration.getProject(), configuration.getFactory(), ActionsBundle.message("action.RerunFailedTests.text"));
       myConfiguration = configuration;
     }

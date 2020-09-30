@@ -1,14 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization
 
-import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies
+import com.intellij.openapi.externalSystem.model.project.dependencies.*
+import io.github.classgraph.ClassGraph
+import io.github.classgraph.ClassInfo
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.artifacts.Dependency
 import org.gradle.util.GradleVersion
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
 import org.jeasy.random.FieldPredicates.*
+import org.jeasy.random.ObjectCreationException
+import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.Randomizer
+import org.jeasy.random.api.RandomizerContext
+import org.jeasy.random.util.CollectionUtils
+import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.plugins.gradle.model.DefaultExternalProject
 import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
@@ -22,10 +29,13 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.junit.Before
 import org.junit.Test
+import org.objenesis.Objenesis
+import org.objenesis.ObjenesisStd
 import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
+import kotlin.random.Random
 
 /**
  * @author Vladislav.Soroka
@@ -37,12 +47,14 @@ class ToolingSerializerTest {
   @Before
   fun setUp() {
     myRandomParameters = EasyRandomParameters()
-    myRandom = EasyRandom(myRandomParameters)
-    myRandomParameters
-      .collectionSizeRange(0, 3)
+      .seed(Random.nextLong())
+      .collectionSizeRange(Random.nextInt(0, 2), 3)
       .objectPoolSize(5)
+      .objectFactory(MyObjectFactory())
       .overrideDefaultInitialization(true)
       .scanClasspathForConcreteTypes(true)
+    myRandom = EasyRandom(myRandomParameters)
+    myRandomParameters
       .randomize(File::class.java) { File(myRandom.nextObject(String::class.java)) }
   }
 
@@ -132,7 +144,37 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `project dependencies serialization test`() {
-    doTest(ProjectDependencies::class.java)
+    doTest(ProjectDependenciesImpl::class.java)
+
+    val projectDependencies = ProjectDependenciesImpl()
+    val mainCompileDependencies = DependencyScopeNode(1, "compileClasspath", "project : (compileClasspath)", "")
+    val mainRuntimeDependencies = DependencyScopeNode(1, "runtimeClasspath", "project : (runtimeClasspath)", "")
+    val mainDependency = ArtifactDependencyNodeImpl(2, "dep", "dep", "1.0")
+    val mainNestedDependency = ArtifactDependencyNodeImpl(3, "nestedDep", "nestedDep", "1.1")
+    mainDependency.dependencies.add(mainNestedDependency)
+    mainRuntimeDependencies.dependencies.add(mainDependency)
+    mainRuntimeDependencies.dependencies.add(ReferenceNode(3))
+    val mainComponentDependencies = ComponentDependenciesImpl("main", mainCompileDependencies, mainRuntimeDependencies)
+    projectDependencies.add(mainComponentDependencies)
+
+    val testCompileDependencies = DependencyScopeNode(1, "testCompileClasspath", "project : (testCompileClasspath)", "")
+    val testRuntimeDependencies = DependencyScopeNode(1, "testRuntimeClasspath", "project : (testRuntimeClasspath)", "")
+    val testDependency = ArtifactDependencyNodeImpl(2, "dep", "dep", "1.0")
+    val testNestedDependency = ArtifactDependencyNodeImpl(3, "nestedDep", "nestedDep", "1.0")
+    testDependency.dependencies.add(testNestedDependency)
+    testRuntimeDependencies.dependencies.add(testDependency)
+    testRuntimeDependencies.dependencies.add(ReferenceNode(3))
+    val testComponentDependencies = ComponentDependenciesImpl("test", testCompileDependencies, testRuntimeDependencies)
+    projectDependencies.add(testComponentDependencies)
+
+    val bytes = ToolingSerializer().write(projectDependencies, ProjectDependenciesImpl::class.java)
+    val deserializedObject = ToolingSerializer().read(bytes, ProjectDependenciesImpl::class.java)
+
+    val deserializedMainNestedDependency = deserializedObject!!.componentsDependencies[0].runtimeDependenciesGraph.dependencies[0].dependencies[0]
+    assertThat(deserializedMainNestedDependency).isEqualToComparingFieldByField(mainNestedDependency)
+
+    val deserializedTestNestedDependency = deserializedObject.componentsDependencies[1].runtimeDependenciesGraph.dependencies[0].dependencies[0]
+    assertThat(deserializedTestNestedDependency).isEqualToComparingFieldByField(testNestedDependency)
   }
 
   @Throws(IOException::class)
@@ -210,6 +252,58 @@ class ToolingSerializerTest {
 
     private fun fixMapsKeys(externalProject: DefaultExternalProject) {
       fixChildProjectsMapsKeys(externalProject, Collections.newSetFromMap(IdentityHashMap()))
+    }
+
+    private class MyObjectFactory : ObjectFactory {
+      private val objenesis: Objenesis = ObjenesisStd()
+
+      override fun <T> createInstance(type: Class<T>, context: RandomizerContext?): T {
+        return if (context!!.parameters.isScanClasspathForConcreteTypes && ReflectionUtils.isAbstract(type)) {
+          val randomConcreteSubType = CollectionUtils.randomElementOf(searchForPublicConcreteSubTypesOf(type))
+          if (randomConcreteSubType == null) {
+            throw InstantiationError("Unable to find a matching concrete subtype of type: $type in the classpath")
+          }
+          else {
+            createNewInstance(randomConcreteSubType) as T
+          }
+        }
+        else {
+          try {
+            createNewInstance(type)
+          }
+          catch (e: Error) {
+            throw ObjectCreationException("Unable to create an instance of type: $type", e)
+          }
+        }
+      }
+
+      private fun <T> searchForPublicConcreteSubTypesOf(type: Class<T>): List<Class<*>>? {
+        ClassGraph()
+          .enableClassInfo()
+          .ignoreParentClassLoaders()
+          .acceptPackages(
+            "org.jetbrains.plugins.gradle.*",
+            "com.intellij.openapi.externalSystem.model.*"
+          )
+          .scan()
+          .use {
+            val subTypes = if (type.isInterface) it.getClassesImplementing(type.name) else it.getSubclasses(type.name)
+            return subTypes.filter { subType: ClassInfo -> subType.isPublic && !subType.isAbstract }.loadClasses(true)
+          }
+      }
+
+      private fun <T> createNewInstance(type: Class<T>): T {
+        return try {
+          val noArgConstructor = type.getDeclaredConstructor()
+          if (!noArgConstructor.isAccessible) {
+            noArgConstructor.isAccessible = true
+          }
+          noArgConstructor.newInstance()
+        }
+        catch (exception: java.lang.Exception) {
+          objenesis.newInstance(type)
+        }
+      }
     }
   }
 }

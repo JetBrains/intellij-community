@@ -16,14 +16,15 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.PushTarget;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgTarget implements PushTarget {
-  @NotNull String myTarget;
-  @NotNull String myBranchName;
+  @NotNull @NlsSafe String myTarget;
+  @NotNull @NlsSafe String myBranchName;
 
-  public HgTarget(@NotNull String name, @NotNull String branchName) {
+  public HgTarget(@NotNull @NlsSafe String name, @NotNull @NlsSafe String branchName) {
     myTarget = name;
     myBranchName = branchName;
   }
@@ -60,6 +61,7 @@ public class HgTarget implements PushTarget {
     return result;
   }
 
+  @NlsSafe
   @NotNull
   public String getBranchName() {
     return myBranchName;

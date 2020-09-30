@@ -301,7 +301,7 @@ public final class CodeStyle {
    */
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
-                                             @NotNull Consumer<CodeStyleSettings> tempSettingsConsumer) {
+                                             @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
     final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
     try {

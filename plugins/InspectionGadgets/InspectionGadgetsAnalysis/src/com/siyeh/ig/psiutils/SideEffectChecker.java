@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SideEffectChecker {
+public final class SideEffectChecker {
   private static final Set<String> ourSideEffectFreeClasses = ContainerUtil.set(
     Object.class.getName(),
     Short.class.getName(),

@@ -6,11 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 
-public class ProcessTerminatedListener extends ProcessAdapter {
+public final class ProcessTerminatedListener extends ProcessAdapter {
   protected static final String EXIT_CODE_ENTRY = "$EXIT_CODE$";
   protected static final String EXIT_CODE_REGEX = "\\$EXIT_CODE\\$";
 
@@ -49,7 +50,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   public void processTerminated(@NotNull ProcessEvent event) {
     ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
-    String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(Platform.current(), event.getExitCode()));
+    @NlsSafe String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(Platform.current(), event.getExitCode()));
     processHandler.notifyTextAvailable(message, ProcessOutputTypes.SYSTEM);
     if (myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> StatusBar.Info.set(message, myProject), myProject.getDisposed());

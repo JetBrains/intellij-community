@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
-  private static final String SELECTED_SCOPE = "TODO_SCOPE";
+  private static final @NonNls String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;
 

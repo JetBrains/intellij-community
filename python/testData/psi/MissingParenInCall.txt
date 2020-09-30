@@ -24,7 +24,7 @@ PyFile:MissingParenInCall.py
                 PsiElement(Py:DOT)('.')
                 PsiElement(Py:IDENTIFIER)('instance')
               PsiElement(Py:COMMA)(',')
-              PsiErrorElement:expression expected
+              PsiErrorElement:Expression expected
                 <empty list>
           PsiWhiteSpace('\n\n')
           PyStatementList

@@ -21,9 +21,9 @@ import java.util.List;
 public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTemplateExpressionSelector {
 
   @NotNull
-  protected final Condition<PsiElement> myAdditionalCondition;
+  protected final Condition<? super PsiElement> myAdditionalCondition;
 
-  public PostfixTemplateExpressionSelectorBase(@Nullable Condition<PsiElement> condition) {
+  public PostfixTemplateExpressionSelectorBase(@Nullable Condition<? super PsiElement> condition) {
     myAdditionalCondition = condition != null ? condition : Conditions.alwaysTrue();
   }
 

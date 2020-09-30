@@ -10,18 +10,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.NoSuchFileException;
@@ -216,7 +221,7 @@ public class GitExecutableManager {
    * Version identification is done under progress because it can hang in rare cases
    * Usually this takes milliseconds because version is cached
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public GitVersion getVersionUnderModalProgressOrCancel(@NotNull Project project) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -250,7 +255,7 @@ public class GitExecutableManager {
   }
 
   static <T> T runUnderProgressIfNeeded(@Nullable Project project,
-                                        @NotNull String title,
+                                        @NotNull @NlsContexts.ProgressTitle String title,
                                         @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(task, title, true, project);
@@ -260,7 +265,7 @@ public class GitExecutableManager {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread(generateAssertion = false)
   @NotNull
   public GitVersion identifyVersion(@NotNull String pathToGit) throws GitVersionIdentificationException {
     return identifyVersion(getExecutable(pathToGit));
@@ -271,7 +276,7 @@ public class GitExecutableManager {
    *
    * @throws GitVersionIdentificationException if there is a problem running executable or parsing version output
    */
-  @CalledInBackground
+  @RequiresBackgroundThread(generateAssertion = false)
   @NotNull
   public GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
     CachingFileTester<GitVersion>.TestResult result = myVersionCache.getResultFor(executable);
@@ -296,7 +301,7 @@ public class GitExecutableManager {
    *
    * @return {@code true} is executable is valid, {@code false} otherwise
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   public boolean testGitExecutableVersionValid(@NotNull Project project) {
     GitExecutable executable = getExecutable(project);
     GitVersion version = identifyVersionOrDisplayError(project, executable);
@@ -313,7 +318,7 @@ public class GitExecutableManager {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Nullable
   private GitVersion identifyVersionOrDisplayError(@NotNull Project project, @NotNull GitExecutable executable) {
     try {

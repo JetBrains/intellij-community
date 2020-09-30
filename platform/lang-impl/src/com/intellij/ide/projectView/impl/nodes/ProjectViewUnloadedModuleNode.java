@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -58,7 +59,7 @@ public final class ProjectViewUnloadedModuleNode extends ProjectViewNode<Unloade
     presentation.setPresentableText(module.getName());
     presentation.addText(module.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     presentation.setIcon(AllIcons.Modules.UnloadedModule);
-    presentation.setTooltip("Unloaded module");
+    presentation.setTooltip(LangBundle.message("unloaded.module.tooltip"));
   }
 
   @NotNull

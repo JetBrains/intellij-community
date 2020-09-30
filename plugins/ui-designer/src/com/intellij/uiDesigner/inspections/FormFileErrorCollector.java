@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -32,13 +33,11 @@ import java.util.List;
  * @author yole
  */
 public class FormFileErrorCollector extends FormErrorCollector {
-  private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
   private final List<ProblemDescriptor> myProblems = new ArrayList<>();
 
   FormFileErrorCollector(final PsiFile file, final InspectionManager manager, boolean onTheFly) {
-    myManager = manager;
     myFile = file;
     myOnTheFly = onTheFly;
   }

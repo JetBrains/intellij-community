@@ -2,12 +2,6 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
 import com.intellij.ide.IdeBundle;
@@ -17,18 +11,7 @@ import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,22 +26,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -72,37 +46,24 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.FontMetrics;
+import org.jetbrains.annotations.*;
+
+import javax.accessibility.AccessibleContext;
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.accessibility.AccessibleContext;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
-import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
@@ -313,9 +274,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof MatchedValue)) return false;
       MatchedValue value1 = (MatchedValue)o;
       return Objects.equals(value, value1.value) &&
              Objects.equals(pattern, value1.pattern);
@@ -474,6 +435,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     else if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
       return MatchMode.DESCRIPTION;
     }
+    for (Supplier<String> synonym : anAction.getSynonyms()) {
+      if (matcher.matches(synonym.get())) {
+        return MatchMode.SYNONYM;
+      }
+    }
     if (text == null) {
       return MatchMode.NONE;
     }
@@ -529,7 +495,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public enum MatchMode {
-    NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
+    NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU, SYNONYM
   }
 
   @Override
@@ -546,7 +512,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     private final boolean myShowNonPopupGroups;
     private final List<List<ActionGroup>> myPaths = new ArrayList<>();
 
-    @Nullable private String myBestGroupName;
+    @Nullable @ActionText private String myBestGroupName;
     private boolean myBestNameComputed;
 
     public GroupMapping() {
@@ -558,7 +524,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @NotNull
-    public static GroupMapping createFromText(String text) {
+    public static GroupMapping createFromText(@ActionText String text) {
       GroupMapping mapping = new GroupMapping();
       mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
       return mapping;
@@ -574,12 +540,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
     }
 
+    @ActionText
     @Nullable
     public String getBestGroupName() {
       if (myBestNameComputed) return myBestGroupName;
       return getFirstGroupName();
     }
 
+    @Nls
     @Nullable
     private String getFirstGroupName() {
       List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
@@ -604,6 +572,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return ContainerUtil.map(myPaths, path -> getPathName(path));
     }
 
+    @Nls
     @Nullable
     private String getPathName(@NotNull List<? extends ActionGroup> path) {
       String name = "";
@@ -613,6 +582,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return StringUtil.nullize(name);
     }
 
+    @Nls
     @Nullable
     private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
       String name = "";
@@ -624,8 +594,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return StringUtil.nullize(name);
     }
 
+    @Nls
     @NotNull
-    private String appendGroupName(@NotNull String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
+    private String appendGroupName(@NotNull @Nls String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
       if (group.isPopup() || myShowNonPopupGroups) {
         String groupName = getActionGroupName(presentation);
         if (!StringUtil.isEmptyOrSpaces(groupName)) {
@@ -637,6 +608,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return prefix;
     }
 
+    @ActionText
     @Nullable
     private static String getActionGroupName(@NotNull Presentation presentation) {
       String text = presentation.getText();
@@ -731,6 +703,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return myPresentation != null;
     }
 
+    @ActionText
     @Nullable
     public String getGroupName() {
       if (myGroupMapping == null) return null;
@@ -763,7 +736,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @DirtyUI
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
-    private final Function<? super OptionDescription, String> myGroupNamer;
+    private final Function<? super OptionDescription, @ActionText String> myGroupNamer;
     private final boolean myUseListFont;
 
     public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
@@ -891,6 +864,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return panel;
     }
 
+    @ActionText
     @NotNull
     private static String calcHit(@NotNull OptionDescription value) {
       if (value instanceof RegistryTextOptionDescriptor) {
@@ -902,7 +876,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         .replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
     }
 
-    private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+    @ActionText
+    private static String cutName(@ActionText String name, @NlsSafe String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
@@ -960,16 +935,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       panel.setBorder(TOGGLE_BUTTON_BORDER);
     }
 
+    @ActionText
     @NotNull
-    private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
+    private static String getName(@Nullable @ActionText String text, @Nullable @ActionText String groupName, boolean toggle) {
       return toggle && StringUtil.isNotEmpty(groupName)
              ? StringUtil.isNotEmpty(text) ? groupName + ": " + text
                                            : groupName : StringUtil.notNullize(text);
     }
 
     private static void appendWithColoredMatches(SimpleColoredComponent nameComponent,
-                                                 @NotNull String name,
-                                                 @NotNull String pattern,
+                                                 @NotNull @ActionText String name,
+                                                 @NotNull @NlsSafe String pattern,
                                                  Color fg,
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);

@@ -7,36 +7,8 @@
  Note that this script is for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
  create a gant script for it, see javadoc for org.jetbrains.intellij.build package for details.
  -->
-<project name="IntelliJ IDEA Community Edition" xmlns:if="ant:if" xmlns:unless="ant:unless" default="build">
+<project name="IntelliJ IDEA Community Edition" default="build">
   <property name="project.home" value="${basedir}"/>
-  <condition property="intellij.build.output.root" else="${project.home}/out/studio">
-    <isset property="intellij.build.output.root"/>
-  </condition>
-
-  <!-- References to Bazel workspace and Bazel commandline to use -->
-  <dirname property="workspace" file="${project.home}/../"/>
-  <condition property="bazel" value="${workspace}/tools/base/bazel/bazel.cmd" else="${workspace}/tools/base/bazel/bazel">
-    <os family="windows" />
-  </condition>
-  <macrodef name="bazel">
-    <attribute name="action" />
-    <attribute name="target" />
-    <attribute name="config" />
-    <sequential>
-      <echo>${bazel} @{action} @{target} --config=@{config}</echo>
-      <exec executable="${bazel}" dir="${workspace}" failonerror="true" taskname="bazel">
-        <arg value="@{action}" />
-        <arg value="@{target}" />
-        <arg value="--config=@{config}" />
-      </exec>
-    </sequential>
-  </macrodef>
-  <propertyset id="intellij.build.properties">
-    <propertyref name="build.number"/>
-    <propertyref prefix="intellij.build."/>
-    <propertyref prefix="custom.project."/>
-    <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
-  </propertyset>
 
   <target name="init">
     <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
@@ -48,7 +20,10 @@
       <arg value="--no-daemon"/>
       <arg value="setupKotlinPlugin"/>
     </exec>
-    <propertyset refid="intellij.build.properties"/>
+    <propertyset id="intellij.build.properties">
+      <propertyref name="build.number"/>
+      <propertyref prefix="intellij.build."/>
+    </propertyset>
   </target>
 
   <macrodef name="call_gant">
@@ -56,10 +31,9 @@
     <attribute name="target" default="default"/>
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx2048m -XX:MaxPermSize=512m"/>
+        <jvmarg line="-Xmx1500m"/>
         <sysproperty key="jna.nosys" value="true" />
         <sysproperty key="java.awt.headless" value="true"/>
-        <sysproperty key="compile.parallel" value="true" />
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="gant.target" value="@{target}"/>
         <syspropertyset refid="intellij.build.properties"/>

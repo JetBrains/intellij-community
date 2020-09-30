@@ -22,7 +22,7 @@ class EditorConfigAddRequiredDeclarationsQuickFix(
     EditorConfigDescriptorUtil.getParentOfType<EditorConfigQualifiedKeyDescriptor>(it)
   }
 
-  override fun getFamilyName() = EditorConfigBundle["quickfix.declaration.add-required.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.declaration.add-required.description")
 
   override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
     val element = problemDescriptor.psiElement as? EditorConfigDescribableElement ?: return

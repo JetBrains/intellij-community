@@ -6,9 +6,11 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -45,7 +47,13 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
       final PyExpression leftHandSideExpression = ((PyAssignmentStatement)expression).getLeftHandSideExpression();
       assert leftHandSideExpression != null;
       builder.replaceElement(leftHandSideExpression, "var");
-      builder.run();
+
+      final Editor editor = PythonUiService.getInstance().openTextEditor(project, expression);
+      if (editor != null) {
+        builder.run(editor, false);
+      } else {
+        builder.runNonInteractively(false);
+      }
     }
   }
 }

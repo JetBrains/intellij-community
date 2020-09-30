@@ -67,11 +67,6 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-
-  public Project getProject() {
-    return myProject;
-  }
-
   @Nullable
   @Override
   public M getModelByConfigFile(@Nullable XmlFile file) {
@@ -136,5 +131,9 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
     final M firstModel = models.get(0);
     return createCombinedModel(configFiles, mergedModel, firstModel, s);
+  }
+
+  protected Project getProject() {
+    return myProject;
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.tracing;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +30,7 @@ public class MethodTracer {
     private final ThreadLocal<Long>    currentCalculationStart = ThreadLocal.withInitial(() -> null);
     private final ThreadLocal<Integer> currentRecursionDepth   = ThreadLocal.withInitial(() -> 0);
 
-    private MethodTracer(String id, String className, String methodName) {
+    private MethodTracer(@NonNls String id, @NonNls String className, @NonNls String methodName) {
         myId = id;
         myClassName = className;
         myMethodName = methodName;

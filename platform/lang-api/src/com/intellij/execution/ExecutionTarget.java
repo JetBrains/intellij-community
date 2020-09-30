@@ -4,6 +4,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public abstract class ExecutionTarget {
    * Id is used to save selected target between restarts
    */
   @NotNull
+  @NonNls
   public abstract String getId();
 
   @NotNull

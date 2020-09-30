@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.RemoteCredentialsHandler
 import com.intellij.testFramework.LightPlatformTestCase
@@ -58,6 +59,7 @@ class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
     override fun createCredentials(): TestCredentialsType = throwUnsupportedOperationException()
 
     companion object {
+      @NlsSafe
       private const val TEST_CREDENTIALS_TYPE_NAME = "Test Credentials Type"
 
       private const val TEST_CREDENTIALS_TYPE_PREFIX = "test://"

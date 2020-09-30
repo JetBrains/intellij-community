@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.DumbAwareSearchParameters;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiReference
  * @see ReferenceSearcher
  */
-public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
+public final class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
 

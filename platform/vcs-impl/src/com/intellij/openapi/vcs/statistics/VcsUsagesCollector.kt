@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.util.text.nullize
 import com.intellij.vcsUtil.VcsUtil
@@ -21,7 +21,7 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
     val set = HashSet<MetricEvent>()
 
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
-    val clm = ChangeListManagerImpl.getInstanceImpl(project)
+    val clm = ChangeListManager.getInstance(project)
     val projectBaseDir = project.basePath?.let { VcsUtil.getVirtualFile(it) }
 
     for (vcs in vcsManager.allActiveVcss) {
@@ -74,8 +74,8 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
 
     set.add(newCounterMetric("mapped.roots", vcsManager.allVcsRoots.size))
     set.add(newCounterMetric("changelists", clm.changeListsNumber))
-    set.add(newCounterMetric("unversioned.files", clm.unversionedFiles.size))
-    set.add(newCounterMetric("ignored.files", clm.ignoredFiles.size))
+    set.add(newCounterMetric("unversioned.files", clm.unversionedFilesPaths.size))
+    set.add(newCounterMetric("ignored.files", clm.ignoredFilePaths.size))
 
     return set
   }

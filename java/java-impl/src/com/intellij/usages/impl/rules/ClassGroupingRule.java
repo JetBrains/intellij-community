@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -89,7 +90,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
   private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final SmartPsiElementPointer<PsiClass> myClassPointer;
-    private final String myText;
+    private final @NlsSafe String myText;
     private final String myQName;
     private final Icon myIcon;
 
@@ -104,7 +105,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     public void update() {
     }
 
-    private static String createText(PsiClass aClass) {
+    private static @NlsSafe String createText(PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {

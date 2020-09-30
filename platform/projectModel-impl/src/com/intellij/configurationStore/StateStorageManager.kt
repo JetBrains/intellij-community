@@ -4,7 +4,9 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
 
 interface StateStorageManager {
   val macroSubstitutor: PathMacroSubstitutor?
@@ -18,16 +20,21 @@ interface StateStorageManager {
 
   fun removeStreamProvider(clazz: Class<out StreamProvider>)
 
-  /**
-   * Rename file
-   * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
-   * @param newName Only new file name (foo.iml)
-   */
-  fun rename(path: String, newName: String)
-
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
-  fun expandMacros(path: String): String
+  fun expandMacro(collapsedPath: String): Path
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
+  fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).systemIndependentPath
+}
+
+interface RenameableStateStorageManager {
+  /**
+   * @param newName Only new file name (foo.iml)
+   */
+  fun rename(newName: String)
+
+  fun pathRenamed(newPath: Path, event: VFileEvent?)
 }
 
 interface StorageCreator {

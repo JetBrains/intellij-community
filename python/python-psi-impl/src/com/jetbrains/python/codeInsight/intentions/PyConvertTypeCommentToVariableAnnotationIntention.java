@@ -67,14 +67,14 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
   @NotNull
   @Override
   public String getText() {
-    return PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation.text");
+    return PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation");
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation.family");
+    return PyPsiBundle.message("INTN.NAME.convert.type.comment.to.variable.annotation");
   }
 
   @Override

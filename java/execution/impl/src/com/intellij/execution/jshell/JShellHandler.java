@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -56,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellHandler {
+public final class JShellHandler {
   private static final Logger LOG = Logger.getInstance(JShellHandler.class);
   private static final int DEBUG_PORT = -1;
   public static final Key<JShellHandler> MARKER_KEY = Key.create("JShell console key");
@@ -146,7 +147,7 @@ public class JShellHandler {
                                      @Nullable Sdk alternateSdk) throws Exception{
     final OSProcessHandler processHandler = launchProcess(project, module, alternateSdk);
 
-    final String title = "JShell " + contentFile.getNameWithoutExtension();
+    final String title = JShellDiagnostic.TITLE + " " + contentFile.getNameWithoutExtension();
 
     final ConsoleViewImpl consoleView = new MyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
@@ -360,7 +361,7 @@ public class JShellHandler {
               droppedCount++;
             }
           }
-          JShellDiagnostic.notifyInfo("Dropped " + droppedCount + " code snippets", myProject);
+          JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.dropped.x.code.snippets", droppedCount), myProject);
         }
         else {
           for (Event event : events) {
@@ -483,7 +484,7 @@ public class JShellHandler {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
         @NotNull
         @Override
-        public ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler) {
+        public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
           // do not automatically display all the text that is sent/recieved between processes
           // the ootput from console will be formatted and sent to console view
           return new ConsoleViewRunningState(console, processHandler, this, false, false);

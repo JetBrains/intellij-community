@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 
@@ -219,11 +218,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
   @Override
   public Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
                                                   @NotNull VcsRevisionNumber revNum) throws VcsException {
-
-    final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(fileOrDir);
-    if (repo == null) {
-      throw new VcsException("Couldn't find Git Repository for " + fileOrDir.getName());
-    }
+    final GitRepository repo = GitUtil.getRepositoryForFile(myProject, fileOrDir);
     FilePath filePath = VcsUtil.getFilePath(fileOrDir);
 
     final Collection<Change> changes = GitChangeUtils.getDiffWithWorkingDir(myProject, repo.getRoot(), revNum.asString(),

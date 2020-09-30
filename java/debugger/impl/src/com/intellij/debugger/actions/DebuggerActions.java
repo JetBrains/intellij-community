@@ -35,17 +35,11 @@ public interface DebuggerActions extends XDebuggerActions {
   @NonNls String WATCH_PANEL_POPUP = "Debugger.WatchesPanelPopup";
   @Deprecated @NonNls String DEBUGGER_TREE = DebuggerTree.DATA_KEY.getName();
   @Deprecated @NonNls String DEBUGGER_TREE_PANEL = DebuggerTreePanel.DATA_KEY.getName();
-  @NonNls String REMOVE_WATCH = "Debugger.RemoveWatch";
-  @NonNls String NEW_WATCH = "Debugger.NewWatch";
-  @NonNls String EDIT_WATCH = "Debugger.EditWatch";
-  @NonNls String COPY_VALUE = "Debugger.CopyValue";
-  @NonNls String SET_VALUE = "Debugger.SetValue";
   @NonNls String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   @NonNls String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";
   @NonNls String REPRESENTATION_LIST = "Debugger.Representation";
   @NonNls String CUSTOMIZE_VIEWS = "Debugger.CustomizeContextView";
   @NonNls String CUSTOMIZE_THREADS_VIEW = "Debugger.CustomizeThreadsView";
-  @NonNls String INSPECT = "Debugger.Inspect";
   @NonNls String EXPORT_THREADS = "ExportThreads";
   @NonNls String DUMP_THREADS = "DumpThreads";
 

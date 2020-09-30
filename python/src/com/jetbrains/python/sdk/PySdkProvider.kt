@@ -2,11 +2,13 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.PyFile
@@ -56,7 +58,7 @@ interface PySdkProvider {
   fun createEnvironmentAssociationFix(module: Module,
                                       sdk: Sdk,
                                       isPyCharm: Boolean,
-                                      associatedModulePath: String?): PyInterpreterInspectionQuickFixData?
+                                      associatedModulePath: @NlsSafe String?): PyInterpreterInspectionQuickFixData?
 
   fun createInstallPackagesQuickFix(module: Module): LocalQuickFix?
 
@@ -76,4 +78,4 @@ interface PySdkProvider {
 }
 
 @ApiStatus.Experimental
-data class PyInterpreterInspectionQuickFixData(val quickFix: LocalQuickFix, val message: String)
+data class PyInterpreterInspectionQuickFixData(val quickFix: LocalQuickFix, @InspectionMessage val message: @InspectionMessage String)

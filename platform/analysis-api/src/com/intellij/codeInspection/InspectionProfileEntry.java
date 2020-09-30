@@ -24,8 +24,8 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -101,9 +101,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
-    Set<SuppressQuickFix> fixes = new THashSet<>(new TObjectHashingStrategy<SuppressQuickFix>() {
+    Set<SuppressQuickFix> fixes = new ObjectOpenCustomHashSet<>(new Hash.Strategy < SuppressQuickFix > () {
       @Override
-      public int computeHashCode(SuppressQuickFix object) {
+      public int hashCode(@Nullable SuppressQuickFix object) {
+        if (object == null) {
+          return 0;
+        }
         int result = object instanceof InjectionAwareSuppressQuickFix
                      ? ((InjectionAwareSuppressQuickFix)object).isShouldBeAppliedToInjectionHost().hashCode()
                      : 0;
@@ -112,6 +115,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
       @Override
       public boolean equals(SuppressQuickFix o1, SuppressQuickFix o2) {
+        if (o1 == o2) {
+          return true;
+        }
+        if (o1 == null || o2 == null) {
+          return false;
+        }
+
         if (o1 instanceof InjectionAwareSuppressQuickFix && o2 instanceof InjectionAwareSuppressQuickFix) {
           if (((InjectionAwareSuppressQuickFix)o1).isShouldBeAppliedToInjectionHost() !=
               ((InjectionAwareSuppressQuickFix)o2).isShouldBeAppliedToInjectionHost()) {
@@ -429,7 +439,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return hard-coded inspection description.
    */
-  public @Nullable String getStaticDescription() {
+  public @Nullable @Nls String getStaticDescription() {
     return null;
   }
 
@@ -453,7 +463,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  public @Nullable String loadDescription() {
+  public @Nullable @Nls String loadDescription() {
     final String description = getStaticDescription();
     if (description != null) return description;
 
@@ -463,6 +473,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       if (fileName != null) {
         descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
       }
+      //noinspection HardCodedStringLiteral(IDEA-249976)
       return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) {
@@ -471,7 +482,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  public static String getGeneralGroupName() {
+  public static @Nls String getGeneralGroupName() {
     return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -46,10 +47,10 @@ public class TestNGTestClass extends TestNGTestObject {
       .findPsiClass(PsiManager.getInstance(myConfig.getProject()), data.getMainClassName().replace('/', '.'), null, true,
                     getSearchScope()));
     if (psiClass == null) {
-      throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.class", data.getMainClassName()));
     }
     if (null == ReadAction.compute(() -> psiClass.getQualifiedName())) {
-      throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.cannot.test.anonymous.or.local.class2", data.getMainClassName()));
     }
     calculateDependencies(null, classes, getSearchScope(), psiClass);
   }
@@ -69,12 +70,13 @@ public class TestNGTestClass extends TestNGTestObject {
     final TestData data = myConfig.getPersistantData();
     final SourceScope scope = data.getScope().getSourceScope(myConfig);
     if (scope == null) {
-      throw new RuntimeConfigurationException("Invalid scope specified");
+      throw new RuntimeConfigurationException(TestngBundle.message("testng.test.class.dialog.message.invalid.scope.specified.exception"));
     }
     final PsiManager manager = PsiManager.getInstance(myConfig.getProject());
     String testClassName = data.getMainClassName();
     final PsiClass psiClass = ClassUtil.findPsiClass(manager, testClassName, null, true, scope.getGlobalSearchScope());
-    if (psiClass == null) throw new RuntimeConfigurationException("Class '" + testClassName + "' not found");
+    if (psiClass == null) throw new RuntimeConfigurationException(
+      TestngBundle.message("testng.dialog.message.class.not.found.exception", testClassName));
     if (!TestNGUtil.isTestNGClass(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
     }

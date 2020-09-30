@@ -32,7 +32,9 @@ public abstract class TestClassesFilter {
     for (String aFilter : filterList) {
       String filter = aFilter.trim();
       if (filter.length() == 0) continue;
-      filter = filter.replace("$", "\\$").replace("*", ".*");
+      if (shouldEscape()) {
+        filter = filter.replace("$", "\\$").replace("*", ".*");
+      }
       Pattern pattern = Pattern.compile(filter);
       patterns.add(pattern);
     }
@@ -46,6 +48,10 @@ public abstract class TestClassesFilter {
       }
     }
     return false;
+  }
+
+  private static boolean shouldEscape() {
+    return !"true".equals(System.getProperty("intellij.build.test.patterns.escaped"));
   }
 
   public static class And extends TestClassesFilter {

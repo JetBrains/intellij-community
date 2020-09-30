@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -122,7 +122,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
       final PsiElement result = node.getReference().resolve();
       if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
@@ -269,7 +269,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
            !isInStaticMethod(element);
   }
 
-  private static class AddFieldDeclaration implements Function<String, PyStatement> {
+  private static final class AddFieldDeclaration implements Function<String, PyStatement> {
     private final PsiElement myDeclaration;
 
     private AddFieldDeclaration(PsiElement declaration) {
@@ -324,7 +324,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
+      super(target, operation.getEditor(), operation.getProject(), RefactoringBundle.message("introduce.field.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myOperation = operation;

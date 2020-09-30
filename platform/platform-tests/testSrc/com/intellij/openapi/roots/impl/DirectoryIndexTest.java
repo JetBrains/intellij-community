@@ -936,12 +936,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertIteratedContent(myModule2, null, Collections.singletonList(sourceFile));
   }
 
-  public void testSourceRootFromUnsupportedFileSystem() {
-    VirtualFile httpFile = Objects.requireNonNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
-    PsiTestUtil.addSourceRoot(myModule, httpFile);
-    assertNotInProject(httpFile);
-  }
-
   private void checkInfo(VirtualFile file,
                          @Nullable Module module,
                          boolean isInLibraryClasses,

@@ -142,7 +142,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     List<NamedScope> namedScopes = new ArrayList<>();
     for (NamedScopesHolder holder : getScopeHolders()) {
       for (NamedScope scope : holder.getEditableScopes()) {
-        if (!usedNames.contains(scope.getName())) {
+        if (!usedNames.contains(scope.getScopeId())) {
           namedScopes.add(scope);
         }
       }
@@ -191,7 +191,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     if (scopesDialog.isOK()) {
       NamedScope scope = scopesDialog.getSelectedScope();
       if (scope != null) {
-        String newName = scope.getName();
+        String newName = scope.getScopeId();
         FileSetDescriptor newDesciptor = null;
         if (selectedName == null) {
           newDesciptor = findDescriptor(newName);

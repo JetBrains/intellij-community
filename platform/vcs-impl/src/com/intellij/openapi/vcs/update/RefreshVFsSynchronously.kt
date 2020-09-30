@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NonNls
 import java.io.File
 
 interface FilePathChange {
@@ -21,7 +22,7 @@ object RefreshVFsSynchronously {
   private val TRACE_LOG = Logger.getInstance("#trace.RefreshVFsSynchronously")
 
   @JvmStatic
-  fun trace(message: String) {
+  fun trace(message: @NonNls String) {
     if (TRACE_LOG.isDebugEnabled) {
       TRACE_LOG.debug("RefreshVFsSynchronously: $message")
     }

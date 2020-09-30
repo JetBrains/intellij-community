@@ -4,6 +4,7 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -16,11 +17,11 @@ import javax.swing.*;
 import java.util.List;
 
 public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private final Object2IntMap<Object> myStepId2Index = new Object2IntOpenHashMap<>();
   private final Int2ObjectMap<AbstractWizardStepEx> myIndex2Step = new Int2ObjectOpenHashMap<>();
 
-  public AbstractWizardEx(String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
+  public AbstractWizardEx(@NlsContexts.DialogTitle String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
     super(title, project);
     myTitle = title;
 

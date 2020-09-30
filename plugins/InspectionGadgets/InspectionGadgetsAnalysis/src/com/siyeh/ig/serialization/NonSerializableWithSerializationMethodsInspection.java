@@ -84,7 +84,7 @@ public class NonSerializableWithSerializationMethodsInspection extends BaseInspe
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);

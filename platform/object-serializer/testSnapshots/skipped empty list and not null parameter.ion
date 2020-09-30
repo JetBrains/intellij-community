@@ -1,5 +1,5 @@
 {
-  '@id':0,
-  someParameter:foo,
-  intList:0
+  '@id': 0,
+  someParameter: foo,
+  intList: 0
 }

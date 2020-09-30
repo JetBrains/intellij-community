@@ -43,7 +43,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +98,8 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
-        if ((ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null || HtmlUtil.supportsXmlTypedHandlers(psiFile)) &&
-            !(language instanceof TemplateLanguage)) {
+        if ((ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null) && !(language instanceof TemplateLanguage) ||
+            XmlTypedHandlersAdditionalSupport.supportsTypedHandlers(psiFile, language)) {
           return language;
         }
       }

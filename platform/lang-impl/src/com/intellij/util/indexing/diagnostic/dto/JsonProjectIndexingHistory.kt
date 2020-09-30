@@ -38,6 +38,7 @@ data class JsonProjectIndexingHistory(
     val indexId: String,
     val partOfTotalIndexingTime: JsonPercentages,
     val totalNumberOfFiles: Int,
+    val totalNumberOfFilesIndexedByExtensions: Int,
     val totalFilesSize: JsonFileSize,
     val indexingSpeed: JsonProcessingSpeed
   )

@@ -32,6 +32,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          boolean useSelectionFromEditor) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, true);
   }
@@ -181,7 +182,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
@@ -195,7 +196,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
                                          final DefaultChooseByNameItemProvider itemProvider) {
@@ -205,7 +206,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
                                          final ChooseByNameItemProvider itemProvider) {
@@ -221,13 +222,13 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          final ChooseByNamePopup popup) {
     showNavigationPopup(callback, findUsagesTitle, popup, true);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
-                                         @Nullable final String findUsagesTitle,
+                                         @Nullable @Nls final String findUsagesTitle,
                                          final ChooseByNamePopup popup,
                                          final boolean allowMultipleSelection) {
 

@@ -18,10 +18,19 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.style.MissortedModifiersInspection;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15;
 
 public class CreateConstructorParameterFromFieldTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

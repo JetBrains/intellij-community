@@ -4,33 +4,20 @@ package com.intellij.openapi.project.impl;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.idea.ApplicationLoader;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-
-import javax.swing.*;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public abstract class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   protected static final Logger LOG = Logger.getInstance(ProjectImpl.class);
@@ -38,35 +25,14 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   @TestOnly
+  @NonNls
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
-  protected String myName;
   static boolean ourClassesAreLoaded;
   private final String creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
 
   protected ProjectImpl(@NotNull ComponentManagerImpl parent) {
     super(parent);
-  }
-
-  @Override
-  public void setProjectName(@NotNull String projectName) {
-    if (projectName.equals(myName)) {
-      return;
-    }
-
-    myName = projectName;
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      StartupManager.getInstance(this).runAfterOpened(() -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          JFrame frame = WindowManager.getInstance().getFrame(this);
-          String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
-          if (frame != null && title != null) {
-            frame.setTitle(title);
-          }
-        }, ModalityState.NON_MODAL, getDisposed());
-      });
-    }
   }
 
   @Override
@@ -76,68 +42,18 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
   }
 
   @Override
-  public boolean isInitialized() {
-    return getComponentCreated() && !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
-  }
-
-  @Override
   protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     return pluginDescriptor.getProject();
   }
 
-  @Override
-  public @NotNull String getName() {
-    if (myName == null) {
-      return getStateStore().getProjectName();
-    }
-    return myName;
-  }
-
   protected abstract IProjectStore getStateStore();
 
-  public void init(@Nullable ProgressIndicator indicator) {
-    Application application = ApplicationManager.getApplication();
-
-    // before components
-    CompletableFuture<?> servicePreloadingFuture;
-    //noinspection rawtypes
-    List plugins = PluginManagerCore.getLoadedPlugins();
-    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    //noinspection TestOnlyProblems,unchecked
-    servicePreloadingFuture = ApplicationLoader
-      .preloadServices(plugins, this, /* activityPrefix = */ "project ", /* onlyIfAwait = */ isLight());
-
-    createComponents(indicator);
-
-    servicePreloadingFuture.join();
-
-    if (indicator != null && !application.isHeadlessEnvironment()) {
-      distributeProgress(indicator);
-    }
-
-    if (myName == null) {
-      myName = getStateStore().getProjectName();
-    }
-
-    ProjectLoadHelper.notifyThatComponentCreated(this);
+  public void init(boolean preloadServices, @Nullable ProgressIndicator indicator) {
   }
 
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
-  }
-
-  private void distributeProgress(@NotNull ProgressIndicator indicator) {
-    ModuleManager moduleManager = ModuleManager.getInstance(this);
-    if (!(moduleManager instanceof ModuleManagerImpl)) {
-      return;
-    }
-
-    double toDistribute = 1 - indicator.getFraction();
-    int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
-    if (modulesCount != 0) {
-      ((ModuleManagerImpl)moduleManager).setProgressStep(toDistribute / modulesCount);
-    }
   }
 
   @Override

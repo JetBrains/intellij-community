@@ -7,7 +7,9 @@
 
 package com.intellij.tasks.mantis.model;
 
-public class IssueHeaderData  implements java.io.Serializable {
+import org.jetbrains.annotations.Nls;
+
+public class IssueHeaderData implements java.io.Serializable {
     private java.math.BigInteger id;
 
     private java.math.BigInteger view_state;
@@ -256,7 +258,7 @@ public class IssueHeaderData  implements java.io.Serializable {
      * 
      * @return summary
      */
-    public java.lang.String getSummary() {
+    public java.lang.@Nls String getSummary() {
         return summary;
     }
 

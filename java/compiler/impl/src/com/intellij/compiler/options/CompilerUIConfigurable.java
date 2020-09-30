@@ -73,12 +73,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
 
-    myPatternLegendLabel.setText(XmlStringUtil.wrapInHtml(
-                                   "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
-                                   "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
-                                   "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
-                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name"
-    ));
+    myPatternLegendLabel.setText(XmlStringUtil.wrapInHtml(JavaCompilerBundle.message("compiler.ui.pattern.legend.text")));
 
     /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
     myWarningLabel.setText(JavaCompilerBundle.message("settings.warning"));

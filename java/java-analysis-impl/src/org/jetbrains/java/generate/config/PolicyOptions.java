@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Options for the various policies.
  */
-public class PolicyOptions {
+public final class PolicyOptions {
 
     private static final transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
 

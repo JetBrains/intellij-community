@@ -28,7 +28,7 @@ import org.jetbrains.java.generate.GenerateToStringActionHandler;
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class GenerateToStringQuickFix implements LocalQuickFix {
+public final class GenerateToStringQuickFix implements LocalQuickFix {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 

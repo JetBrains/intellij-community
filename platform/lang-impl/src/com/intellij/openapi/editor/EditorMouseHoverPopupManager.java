@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -63,6 +63,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -523,7 +524,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
         }
       }
 
-      String quickDocMessage = null;
+      @Nls String quickDocMessage = null;
       PsiElement targetElement = null;
       PsiElement element = getElementForQuickDoc();
       if (element != null) {
@@ -569,15 +570,15 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class Info {
+  private static final class Info {
     private final HighlightInfo highlightInfo;
     private final TooltipAction tooltipAction;
 
-    private final String quickDocMessage;
+    private final @Nls String quickDocMessage;
     private final WeakReference<PsiElement> quickDocElement;
 
 
-    private Info(HighlightInfo highlightInfo, TooltipAction tooltipAction, String quickDocMessage, PsiElement quickDocElement) {
+    private Info(HighlightInfo highlightInfo, TooltipAction tooltipAction, @Nls String quickDocMessage, PsiElement quickDocElement) {
       assert highlightInfo != null || quickDocMessage != null;
       this.highlightInfo = highlightInfo;
       this.tooltipAction = tooltipAction;
@@ -693,7 +694,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
         }
         return null;
       }
-      class MyDocComponent extends DocumentationComponent {
+      final class MyDocComponent extends DocumentationComponent {
         private MyDocComponent() {
           super(documentationManager, false);
           if (deEmphasize) {
@@ -756,7 +757,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
   private static class PopupBridge {
     private AbstractPopup popup;
-    private List<Consumer<AbstractPopup>> consumers = new ArrayList<>();
+    private List<Consumer<? super AbstractPopup>> consumers = new ArrayList<>();
 
     private void setPopup(@NotNull AbstractPopup popup) {
       assert this.popup == null;
@@ -770,7 +771,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       return popup;
     }
 
-    private void performWhenAvailable(@NotNull Consumer<AbstractPopup> consumer) {
+    private void performWhenAvailable(@NotNull Consumer<? super AbstractPopup> consumer) {
       if (popup == null) {
         consumers.add(consumer);
       }
@@ -789,7 +790,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class WrapperPanel extends JPanel implements WidthBasedLayout {
+  private static final class WrapperPanel extends JPanel implements WidthBasedLayout {
     private WrapperPanel(JComponent content) {
       super(new BorderLayout());
       setBorder(null);
@@ -816,7 +817,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class CombinedPopupLayout implements LayoutManager {
+  private static final class CombinedPopupLayout implements LayoutManager {
     private final JComponent highlightInfoComponent;
     private final DocumentationComponent quickDocComponent;
 

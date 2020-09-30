@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.MethodSignature;
@@ -151,8 +152,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull  String getName() {
     return myMethod.getName();
   }
 

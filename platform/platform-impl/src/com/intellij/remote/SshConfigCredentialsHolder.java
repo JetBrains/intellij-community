@@ -3,15 +3,16 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SshConfigCredentialsHolder {
 
-  private static final String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
-  private static final String SSH_CONFIG_NAME = "SSH_CONFIG_NAME";
-  private static final String SSH_CONFIG_ID = "SSH_CONFIG_ID";
-  public static final String SSH_CONFIG_PREFIX = "sshConfig://";
+  private static final @NonNls String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
+  private static final @NonNls String SSH_CONFIG_NAME = "SSH_CONFIG_NAME";
+  private static final @NonNls String SSH_CONFIG_ID = "SSH_CONFIG_ID";
+  public static final @NonNls String SSH_CONFIG_PREFIX = "sshConfig://";
 
   private @NotNull String myCredentialsId;
   private @Nullable PresentableId mySshId;
@@ -60,6 +61,7 @@ public class SshConfigCredentialsHolder {
     myCredentialsId = constructCredentialsId();
   }
 
+  @NonNls
   @NotNull
   private String constructCredentialsId() {
     return SSH_CONFIG_PREFIX + ((mySshId == null || mySshId.getName() == null) ? "<unknown>" : mySshId.getName());

@@ -20,14 +20,15 @@ import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilin
 * @author Eugene.Kudelevsky
 */
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
-  final GlobalCompilingVisitor myCompilingVisitor;
+  @NotNull
+  private final GlobalCompilingVisitor myCompilingVisitor;
   private final XmlWordOptimizer myOptimizer = new XmlWordOptimizer();
 
-  public XmlCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
+  public XmlCompilingVisitor(@NotNull GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
   }
 
-  public void compile(PsiElement[] topLevelElements) {
+  public void compile(PsiElement @NotNull [] topLevelElements) {
     final CompileContext context = myCompilingVisitor.getContext();
     final CompiledPattern pattern = context.getPattern();
     final MatchOptions options = context.getOptions();
@@ -39,12 +40,11 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
     }
   }
 
-  public void optimize(PsiElement element) {
+  public void optimize(@NotNull PsiElement element) {
     element.accept(myOptimizer);
   }
 
   private class XmlWordOptimizer extends XmlRecursiveElementWalkingVisitor implements WordOptimizer {
-
     @Override
     public void visitXmlTag(XmlTag tag) {
       if (!handleWord(tag.getName(), CODE, myCompilingVisitor.getContext())) return;

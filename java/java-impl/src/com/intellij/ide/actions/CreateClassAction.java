@@ -59,7 +59,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       @Override
       public String getErrorText(String inputString) {
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
-          return "This is not a valid Java qualified name";
+          return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
         if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
@@ -109,11 +109,18 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected PsiElement getNavigationElement(@NotNull PsiClass createdElement) {
+    if (createdElement.isRecord()) {
+      PsiRecordHeader header = createdElement.getRecordHeader();
+      if (header != null) {
+        return header.getLastChild();
+      }
+    }
     return createdElement.getLBrace();
   }
 
   @Override
-  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
+  protected void postProcess(@NotNull PsiClass createdElement, String templateName, Map<String, String> customProperties) {
+    // This override is necessary for plugin compatibility
     super.postProcess(createdElement, templateName, customProperties);
   }
 }

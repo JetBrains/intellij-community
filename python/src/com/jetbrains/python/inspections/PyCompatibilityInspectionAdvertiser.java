@@ -33,7 +33,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -176,7 +177,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
     }
   }
 
-  private static void showSingletonNotification(@NotNull Project project, String msg) {
+  private static void showSingletonNotification(@NotNull Project project, @NotificationContent String msg) {
     showSingletonNotification(
       project,
       PyBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
@@ -194,8 +195,8 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   }
 
   private static void showSingletonNotification(@NotNull Project project,
-                                                @NotNull @NlsContexts.NotificationTitle String title,
-                                                @NotNull @NlsContexts.NotificationContent String htmlContent,
+                                                @NotNull @NotificationTitle String title,
+                                                @NotNull @NotificationContent String htmlContent,
                                                 @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
     project.putUserData(DONT_SHOW_BALLOON, true);

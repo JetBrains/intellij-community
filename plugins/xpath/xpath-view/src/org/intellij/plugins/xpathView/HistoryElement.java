@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.intellij.plugins.xpathView.util.Copyable;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
@@ -26,7 +27,7 @@ import java.util.Collections;
 public final class HistoryElement implements Copyable<HistoryElement> {
     public static final HistoryElement EMPTY = new HistoryElement();
 
-    public final String expression;
+    public final @NlsSafe String expression;
     public final Collection<Variable> variables;
     public final Collection<Namespace> namespaces;
 

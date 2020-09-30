@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     });
 
     if (!exceptions.isEmpty()) {
-      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
+      @Nls StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
       for (VcsException ex : exceptions) {
         message.append("\n").append(ex.getMessage());
       }

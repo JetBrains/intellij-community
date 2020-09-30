@@ -1,4 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
+
 package org.jetbrains.builtInWebServer
 
 import com.google.common.cache.CacheBuilder
@@ -34,7 +36,7 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.orInSafeMode
+import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
@@ -267,7 +269,7 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
           .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
-          .show() == Messages.YES) {
+          .guessWindowAndAsk()) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }
     }

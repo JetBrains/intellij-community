@@ -22,6 +22,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -219,7 +220,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NlsContexts.Command String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 

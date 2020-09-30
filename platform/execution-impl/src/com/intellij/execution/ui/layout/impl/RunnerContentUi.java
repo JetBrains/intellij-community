@@ -1398,7 +1398,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private static class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = ColorUtil.mix(JBColor.BLUE, JBColor.WHITE, .3);
+    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
+
 
     @Override
     public boolean needsRepaint() {
@@ -1720,7 +1721,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     });
   }
 
-  private static class TwoSideComponent extends NonOpaquePanel {
+  private static final class TwoSideComponent extends NonOpaquePanel {
     private TwoSideComponent(JComponent left, JComponent right) {
       setLayout(new CommonToolbarLayout(left, right));
       add(left);
@@ -1985,7 +1986,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private static class TopToolbarContextActions {
+  private static final class TopToolbarContextActions {
     public final AnAction[] left;
     public final AnAction[] middle;
     public final AnAction[] right;
@@ -1997,7 +1998,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private static class TopToolbarWrappers {
+  private static final class TopToolbarWrappers {
     public final Wrapper left;
     public final Wrapper middle;
     public final Wrapper right;

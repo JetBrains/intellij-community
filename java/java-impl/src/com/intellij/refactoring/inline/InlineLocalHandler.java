@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.find.FindBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
@@ -408,10 +410,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         Shortcut shortcut = KeymapUtil.getPrimaryShortcut("FindNext");
         String message;
         if (shortcut != null) {
-          message = "Press " + KeymapUtil.getShortcutText(shortcut) + " to go through " + exprs.size() + " inlined occurrences";
+          message =
+            JavaBundle.message("hint.text.press.to.go.through.inlined.occurrences", KeymapUtil.getShortcutText(shortcut), exprs.size());
         }
         else {
-          message = exprs.size() + " occurrences were inlined";
+          message = JavaBundle.message("hint.text.occurrences.were.inlined", exprs.size());
         }
         HintManagerImpl.getInstanceImpl().showInformationHint(editor, message, HintManager.UNDER);
       }
@@ -510,7 +513,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return getRefactoringName(element);
   }
 
-  private static String getRefactoringName(PsiElement variable) {
+  private static @NlsContexts.DialogTitle String getRefactoringName(PsiElement variable) {
     return variable instanceof PsiPatternVariable
                      ? JavaRefactoringBundle.message("inline.pattern.variable.title")
                      : RefactoringBundle.message("inline.variable.title");

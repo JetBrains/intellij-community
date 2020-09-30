@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,6 +31,7 @@ public final class RollbackUtil {
    * @return name for the "rollback" operation to be used in the UI.
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public static String getRollbackOperationName(@NotNull Collection<? extends AbstractVcs> vcses) {
     String operationName = null;
     for (AbstractVcs vcs : vcses) {
@@ -52,6 +54,7 @@ public final class RollbackUtil {
    * @see #getRollbackOperationName(Collection)
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public static String getRollbackOperationName(@NotNull Project project) {
     return getRollbackOperationName(asList(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()));
   }

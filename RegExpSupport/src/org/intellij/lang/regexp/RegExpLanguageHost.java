@@ -112,6 +112,10 @@ public interface RegExpLanguageHost {
     return true;
   }
 
+  default boolean belongsToConditionalExpression(@NotNull PsiElement element) {
+    return false;
+  }
+
   enum Lookbehind {
     /** Lookbehind not supported. */
     NOT_SUPPORTED,

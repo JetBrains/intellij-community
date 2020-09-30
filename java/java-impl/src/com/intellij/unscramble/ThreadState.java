@@ -3,6 +3,7 @@ package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +36,15 @@ public class ThreadState {
     myState = state.trim();
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public String getState() {
+  public @NlsSafe String getState() {
     return myState;
   }
 
-  public String getStackTrace() {
+  public @NlsSafe String getStackTrace() {
     return myStackTrace;
   }
 
@@ -82,7 +83,7 @@ public class ThreadState {
     return myJavaThreadState;
   }
 
-  public String getThreadStateDetail() {
+  public @NlsSafe String getThreadStateDetail() {
     if (myOperation != null) {
       return myOperation.toString();
     }
@@ -93,7 +94,7 @@ public class ThreadState {
     return myEmptyStackTrace;
   }
 
-  public String getExtraState() {
+  public @NlsSafe String getExtraState() {
     return myExtraState;
   }
 

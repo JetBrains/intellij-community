@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.google.common.annotations.VisibleForTesting
@@ -24,7 +24,9 @@ import com.intellij.util.gist.GistManager
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.EnumeratorStringDescriptor
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -49,9 +51,7 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
 }
 
 @VisibleForTesting
-val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property",
-                                                                      1,
-                                                                      SimplePropertiesExternalizer()) { file ->
+val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 1, SimplePropertiesExternalizer()) { file ->
   findSimplePropertyCandidates(file.node.lighterAST)
 }
 
@@ -59,8 +59,8 @@ private val allowedExpressions by lazy {
   TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
 }
 
-private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<PropertyIndexValue> {
-  val result = TIntObjectHashMap<PropertyIndexValue>()
+private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<PropertyIndexValue> {
+  val result = Int2ObjectOpenHashMap<PropertyIndexValue>()
 
   object : RecursiveLighterASTNodeWalkingVisitor(tree) {
     var methodIndex = 0
@@ -116,8 +116,7 @@ private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<Pr
           JavaTokenType.IDENTIFIER -> {
             if (isConstructor) return null
             val name = RecordUtil.intern(tree.charTable, child)
-            val flavour = PropertyUtil.getMethodNameGetterFlavour(name)
-            when (flavour) {
+            when (PropertyUtil.getMethodNameGetterFlavour(name)) {
               PropertyUtilBase.GetterFlavour.NOT_A_GETTER -> {
                 if (PropertyUtil.isSetterName(name)) {
                   isGetter = false
@@ -176,21 +175,23 @@ private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<Pr
 @VisibleForTesting
 data class PropertyIndexValue(val propertyRefText: String, val getter: Boolean)
 
-private class SimplePropertiesExternalizer : DataExternalizer<TIntObjectHashMap<PropertyIndexValue>> {
-  override fun save(out: DataOutput, values: TIntObjectHashMap<PropertyIndexValue>) {
-    DataInputOutputUtil.writeINT(out, values.size())
-    values.forEachEntry { id, value ->
-      DataInputOutputUtil.writeINT(out, id)
-      EnumeratorStringDescriptor.INSTANCE.save(out, value.propertyRefText)
-      out.writeBoolean(value.getter)
-      return@forEachEntry true
+private class SimplePropertiesExternalizer : DataExternalizer<Int2ObjectMap<PropertyIndexValue>> {
+  override fun save(out: DataOutput, values: Int2ObjectMap<PropertyIndexValue>) {
+    DataInputOutputUtil.writeINT(out, values.size)
+    for (entry in Int2ObjectMaps.fastIterable(values)) {
+      DataInputOutputUtil.writeINT(out, entry.intKey)
+      EnumeratorStringDescriptor.INSTANCE.save(out, entry.value.propertyRefText)
+      out.writeBoolean(entry.value.getter)
     }
   }
 
-  override fun read(input: DataInput): TIntObjectHashMap<PropertyIndexValue> {
+  override fun read(input: DataInput): Int2ObjectMap<PropertyIndexValue> {
     val size = DataInputOutputUtil.readINT(input)
-    if (size == 0) return TIntObjectHashMap()
-    val values = TIntObjectHashMap<PropertyIndexValue>(size)
+    if (size == 0) {
+      return Int2ObjectOpenHashMap()
+    }
+
+    val values = Int2ObjectOpenHashMap<PropertyIndexValue>(size)
     repeat(size) {
       val id = DataInputOutputUtil.readINT(input)
       val value = PropertyIndexValue(EnumeratorStringDescriptor.INSTANCE.read(input), input.readBoolean())

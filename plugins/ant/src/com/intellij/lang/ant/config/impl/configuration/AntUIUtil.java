@@ -30,7 +30,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class AntUIUtil {
+public final class AntUIUtil {
 
   private static final Logger LOG = Logger.getInstance(AntUIUtil.class);
 

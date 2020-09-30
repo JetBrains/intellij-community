@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
 import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfoSimple;
@@ -11,7 +12,8 @@ import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSe
 /**
 * @author Bas Leijdekkers
 */
-class JavaPredefinedConfigurations {
+final class JavaPredefinedConfigurations {
+  @NotNull
   public static Configuration[] createPredefinedTemplates() {
     return new Configuration[] {
       // Expression patterns
@@ -50,7 +52,7 @@ class JavaPredefinedConfigurations {
                                getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( statement in if )]LOG.debug('_Argument*);",
                                getOperatorType()),
-      createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", getOperatorType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.statement.in.if"), "if('_condition) { 'statement*; }", getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assert.without.description"), "assert '_condition : '_description{0};",
                                getOperatorType()),
 
@@ -372,7 +374,7 @@ class JavaPredefinedConfigurations {
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("types used","'_:[ref('Type)] '_;", INTERESTING_TYPE),
 
-      createSearchTemplateInfo("xml attribute references java class", "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", SSRBundle.message("xml_html.category"), StdFileTypes.XML),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", SSRBundle.message("xml_html.category"), StdFileTypes.XML),
     };
   }
 

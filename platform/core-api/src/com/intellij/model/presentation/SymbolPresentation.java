@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.presentation;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +25,7 @@ public interface SymbolPresentation {
   /**
    * @return how the symbol is named, e.g. "Foo", "bar", etc.
    */
-  @Nls @NotNull String getShortNameString();
+  @NlsSafe @NotNull String getShortNameString();
 
   /**
    * @return string describing what is the symbol and how it's named,
@@ -35,28 +37,28 @@ public interface SymbolPresentation {
    * @return string describing what is the symbol, how it's named and where it's located,
    * e.g. "Method 'hello(String, int)' of class 'com.foo.World'"
    */
-  default @Nls(capitalization = Sentence) @NotNull String getLongDescription() {
+  default @NlsContexts.DetailedDescription @NotNull String getLongDescription() {
     return getShortDescription();
   }
 
   @Contract("_, _ -> new")
-  static @NotNull SymbolPresentation create(@Nls @NotNull String shortNameString,
+  static @NotNull SymbolPresentation create(@NlsSafe @NotNull String shortNameString,
                                             @Nls(capitalization = Sentence) @NotNull String shortDescription) {
     return create(null, shortNameString, shortDescription, shortDescription);
   }
 
   @Contract("_, _, _ -> new")
   static @NotNull SymbolPresentation create(@Nullable Icon icon,
-                                            @Nls @NotNull String shortNameString,
+                                            @NlsSafe @NotNull String shortNameString,
                                             @Nls(capitalization = Sentence) @NotNull String shortDescription) {
     return create(icon, shortNameString, shortDescription, shortDescription);
   }
 
   @Contract("_, _, _, _ -> new")
   static @NotNull SymbolPresentation create(@Nullable Icon icon,
-                                            @Nls @NotNull String shortNameString,
+                                            @NlsSafe @NotNull String shortNameString,
                                             @Nls(capitalization = Sentence) @NotNull String shortDescription,
-                                            @Nls(capitalization = Sentence) @NotNull String longDescription) {
+                                            @NlsContexts.DetailedDescription @NotNull String longDescription) {
     return new SymbolPresentationImpl(icon, shortNameString, shortDescription, longDescription);
   }
 }

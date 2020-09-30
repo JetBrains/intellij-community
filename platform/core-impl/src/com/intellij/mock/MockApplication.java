@@ -12,14 +12,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -108,6 +109,10 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public void assertIsNonDispatchThread() {
+  }
+
+  @Override
   public void assertIsWriteThread() {
   }
 
@@ -139,13 +144,13 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return PooledThreadExecutor.INSTANCE.submit(action);
+    return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return PooledThreadExecutor.INSTANCE.submit(action);
+    return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
   @Override
@@ -323,7 +328,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void load(@Nullable String path) {
+  public void load(@Nullable Path path) {
   }
 
   @Override

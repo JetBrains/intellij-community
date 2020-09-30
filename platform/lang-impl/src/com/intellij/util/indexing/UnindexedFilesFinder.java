@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-class UnindexedFilesFinder implements VirtualFileFilter {
+final class UnindexedFilesFinder implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
   private final Project myProject;
@@ -49,7 +49,7 @@ class UnindexedFilesFinder implements VirtualFileFilter {
   }
 
   @Override
-  public boolean accept(VirtualFile file) {
+  public boolean accept(@NotNull VirtualFile file) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return false;
@@ -80,8 +80,8 @@ class UnindexedFilesFinder implements VirtualFileFilter {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, fileContent)) == FileIndexingState.OUT_DATED) {
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndexFile.set(true);
-
-          } else {
+          }
+          else {
             final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
@@ -106,8 +106,10 @@ class UnindexedFilesFinder implements VirtualFileFilter {
                     if (myDoTraceForFilesToBeIndexed) {
                       LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
-                    shouldIndexFile.set(true);
-                    break;
+                    if (!tryIndexWithoutContentViaInfrastructureExtension(fileContent, inputId, indexId)) {
+                      shouldIndexFile.set(true);
+                      break;
+                    }
                   }
                 }
               }
@@ -141,5 +143,15 @@ class UnindexedFilesFinder implements VirtualFileFilter {
       });
       return shouldIndexFile.get();
     });
+  }
+
+  private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
+    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
+        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        return true;
+      }
+    }
+    return false;
   }
 }

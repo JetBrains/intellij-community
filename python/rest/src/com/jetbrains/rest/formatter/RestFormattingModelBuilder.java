@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.formatter;
 
 import com.intellij.formatting.*;
@@ -20,8 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.rest.RestLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : ktisha
  */
-public class RestFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
+public class RestFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
 
   @Override
   public boolean isEngagedToFormat(PsiElement context) {
@@ -37,29 +21,11 @@ public class RestFormattingModelBuilder implements FormattingModelBuilderEx, Cus
     return file != null && file.getLanguage() == RestLanguage.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
-                                                                     @NotNull FormatTextRanges ranges,
-                                                                     @NotNull CodeStyleSettings settings)
-  {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public FormattingModel createModel(@NotNull PsiElement element,
-                                     @NotNull CodeStyleSettings settings,
-                                     @NotNull FormattingMode mode) {
-
-    final RestBlock block = new RestBlock(element.getNode(), null, Indent.getNoneIndent(), null);
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
-  }
-
-  @NotNull
-  @Override
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    return createModel(element, settings, FormattingMode.REFORMAT);
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    final RestBlock block = new RestBlock(formattingContext.getNode(), null, Indent.getNoneIndent(), null);
+    return FormattingModelProvider
+      .createFormattingModelForPsiFile(formattingContext.getContainingFile(), block, formattingContext.getCodeStyleSettings());
   }
 
   @Nullable

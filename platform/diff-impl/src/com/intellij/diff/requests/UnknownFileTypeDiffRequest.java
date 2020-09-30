@@ -23,7 +23,9 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +33,13 @@ import javax.swing.*;
 
 public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Nullable private final String myFileName;
-  @Nullable private final String myTitle;
+  @Nullable private final @Nls String myTitle;
 
-  public UnknownFileTypeDiffRequest(@NotNull VirtualFile file, @Nullable String title) {
+  public UnknownFileTypeDiffRequest(@NotNull VirtualFile file, @Nullable @NlsContexts.DialogTitle String title) {
     this(file.getName(), title);
   }
 
-  public UnknownFileTypeDiffRequest(@NotNull String fileName, @Nullable String title) {
+  public UnknownFileTypeDiffRequest(@NotNull String fileName, @Nullable @NlsContexts.DialogTitle String title) {
     boolean knownFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName) != UnknownFileType.INSTANCE;
     myFileName = knownFileType ? null : fileName;
     myTitle = title;

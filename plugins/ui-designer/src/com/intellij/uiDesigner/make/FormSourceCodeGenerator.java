@@ -324,16 +324,21 @@ public final class FormSourceCodeGenerator {
       String getFontMethod =
         "/** @noinspection ALL */ " +
         "private java.awt.Font " + myGetFontMethod +
-        "(String fontName, int style, int size, java.awt.Font currentFont) {" +
+        "(java.lang.String fontName, int style, int size, java.awt.Font currentFont) {" +
         "if (currentFont == null) return null;" +
-        "String resultName;" +
+        "java.lang.String resultName;" +
         "if (fontName == null) {resultName = currentFont.getName();}" +
         "else {" +
         "  java.awt.Font testFont = new java.awt.Font(fontName, java.awt.Font.PLAIN, 10);" +
         "  if (testFont.canDisplay('a') && testFont.canDisplay('1')) {resultName = fontName;}" +
         "  else {resultName = currentFont.getName();}" +
         "}" +
-        "return new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());}";
+        "java.awt.Font font = new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());" +
+        "boolean isMac = java.lang.System.getProperty(\"os.name\", \"\").toLowerCase(java.util.Locale.ENGLISH).startsWith(\"mac\");" +
+        "java.awt.Font fontWithFallback = isMac" +
+        "? new java.awt.Font(font.getFamily(), font.getStyle(), font.getSize())" +
+        ": new javax.swing.text.StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());" +
+        "return fontWithFallback instanceof javax.swing.plaf.FontUIResource ? fontWithFallback : new javax.swing.plaf.FontUIResource(fontWithFallback);}";
 
       generateMethodIfRequired(newClass, method, myGetFontMethod, getFontMethod, true);
     }

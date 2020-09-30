@@ -8,18 +8,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.JavaIdentifier;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -76,15 +76,17 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
+import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
@@ -96,7 +98,7 @@ public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
   public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<>("Java Identifier");
-  public static final Set<String> OPERATOR_METHOD_NAMES = ContainerUtil.newHashSet(
+  public static final @NonNls Set<String> OPERATOR_METHOD_NAMES = Set.of(
     "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
     "isCase", "bitwiseNegate", "negative", "positive", "call"
   );
@@ -297,7 +299,7 @@ public final class PsiUtil {
 
   @Nullable
   public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(resolved.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, scope);
+    return JavaPsiFacade.getInstance(resolved.getProject()).findClass(JAVA_LANG_CLASS, scope);
   }
 
   public static boolean isValidReferenceName(@NotNull String text) {
@@ -307,7 +309,7 @@ public final class PsiUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiMember member) {
-    if (member instanceof LightElement) {
+    if (DynamicMemberUtils.isDynamicElement(member)) {
       return true;
     }
 
@@ -543,12 +545,12 @@ public final class PsiUtil {
     final PsiType qualifierType = qualifier.getType();
     if (qualifierType instanceof PsiClassType) {
 
-      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_LIST)) {
+      if (InheritanceUtil.isInheritor(qualifierType, JAVA_UTIL_LIST)) {
         return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(qualifierType, false) == null;
       }
 
-      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_MAP)) {
-        return com.intellij.psi.util.PsiUtil.substituteTypeParameter(qualifierType, CommonClassNames.JAVA_UTIL_MAP, 1, false) == null;
+      if (InheritanceUtil.isInheritor(qualifierType, JAVA_UTIL_MAP)) {
+        return com.intellij.psi.util.PsiUtil.substituteTypeParameter(qualifierType, JAVA_UTIL_MAP, 1, false) == null;
       }
       PsiClassType classType = (PsiClassType)qualifierType;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
@@ -1103,7 +1105,7 @@ public final class PsiUtil {
         PsiElement resolved = ((GrReferenceExpression)parent).resolve();
         if (resolved instanceof PsiMember) {
           PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-          return containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
+          return containingClass != null && JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
         }
       }
       return true;
@@ -1204,7 +1206,7 @@ public final class PsiUtil {
   }
 
   public static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false, GrAnnotation.class);
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 
@@ -1234,6 +1236,35 @@ public final class PsiUtil {
       }
     }
     return false;
+  }
+
+  public static boolean isMapConstructorResult(@NotNull GroovyResolveResult result) {
+    if (result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor()) return true;
+    PsiElement method = result.getElement();
+    if (method instanceof PsiMethod) {
+      PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();
+      PsiClass containingClass = ((PsiMethod)method).getContainingClass();
+      if (containingClass == null) return false;
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
+      if (parameters.length == 1 &&
+          containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) &&
+          TypesUtil.isAssignableByMethodCallConversion(parameters[0].getType(), factory.createTypeByFQClassName(JAVA_UTIL_MAP), method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static @NotNull List<@NotNull PsiAnnotation> getAllAnnotations(@NotNull PsiElement element, @NotNull String annotationNameFq) {
+    List<PsiModifierListOwner> parents = PsiTreeUtil.collectParents(element, PsiModifierListOwner.class, true, __ -> false);
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    for (PsiModifierListOwner parent : parents) {
+      PsiAnnotation annotation = parent.getAnnotation(annotationNameFq);
+      if (annotation != null) {
+        annotations.add(annotation);
+      }
+    }
+    return annotations;
   }
 
   @Nullable

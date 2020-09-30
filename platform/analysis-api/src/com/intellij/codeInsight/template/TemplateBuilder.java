@@ -4,7 +4,6 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +62,14 @@ public interface TemplateBuilder {
    */
   @Deprecated
   void run();
+
+  /**
+   * Run the template without any interactivity - no UI, no editor is requested.
+   * Consider using this method in the backend applications.
+   * It simply fills the variables with provided replacements and commit the document.
+   * @param inline if true then inline template will be created, regular otherwise
+   */
+  void runNonInteractively(boolean inline);
 
   /**
    * Shows the live template and initiates editing process.

@@ -2,5 +2,5 @@
 arg="${arg//\\/\\\\}"
 printf "%s\n" "${arg}"
 
-arg="${arg//\\/\\\\\}"
-printf "%s\n" "${arg} ff}"
+#IDEA-243118
+"\"${string//\"/\\\"}\""

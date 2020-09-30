@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public enum StatusType {
   @XmlEnumValue("incomplete") STATUS_INCOMPLETE("incomplete", '!'),
   @XmlEnumValue("external") STATUS_EXTERNAL("external", 'X');
 
-  private static final String STATUS_PREFIX = "STATUS_";
+  private static final @NonNls String STATUS_PREFIX = "STATUS_";
 
   @NotNull private static final Map<String, StatusType> ourOtherStatusTypes = new HashMap<>();
   @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = new HashMap<>();

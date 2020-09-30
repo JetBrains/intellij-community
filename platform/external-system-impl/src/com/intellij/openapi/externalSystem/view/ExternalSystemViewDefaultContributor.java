@@ -404,7 +404,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
                                      @Nullable ExternalSystemNode parent,
                                      @Nullable DataNode<T> dataNode) {
       super(externalProjectsView, parent, dataNode);
-      myNavigatable = new OrderEntryNavigatable(getProject(), () -> getOrderEntry());
+      myNavigatable = new OrderEntryModuleDependenciesNavigatable(getProject(), () -> getOrderEntry());
     }
 
     @Nullable
@@ -455,13 +455,13 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       return node.getName();
     }
 
-    private static class OrderEntryNavigatable implements Navigatable {
-      @NotNull private final Supplier<OrderEntry> myProvider;
+    private static class OrderEntryModuleDependenciesNavigatable implements Navigatable {
+      private final @NotNull Supplier<? extends OrderEntry> myProvider;
       @Nullable private final Project myProject;
       @Nullable private OrderEntry myOrderEntry;
 
-      OrderEntryNavigatable(@Nullable Project project,
-                            @NotNull Supplier<OrderEntry> provider) {
+      OrderEntryModuleDependenciesNavigatable(@Nullable Project project,
+                                              @NotNull Supplier<? extends OrderEntry> provider) {
         myProject = project;
         myProvider = provider;
       }

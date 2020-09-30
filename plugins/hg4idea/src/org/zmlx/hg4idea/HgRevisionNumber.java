@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,11 +91,13 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     mySubject = HgBaseLogParser.extractSubject(commitMessage);
   }
 
+  @NlsSafe
   @NotNull
   public String getChangeset() {
     return changeset;
   }
 
+  @NlsSafe
   @NotNull
   public String getRevision() {
     return revision;
@@ -104,21 +107,25 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return java.lang.Long.parseLong(revision);
   }
 
+  @NlsSafe
   @NotNull
   public String getCommitMessage() {
     return commitMessage;
   }
 
+  @NlsSafe
   @NotNull
   public String getName() {
     return author;
   }
 
+  @NlsSafe
   @NotNull
   public String getEmail() {
     return email;
   }
 
+  @NlsSafe
   @NotNull
   public String getAuthor() {
     return VcsUserUtil.getUserName(author, email);

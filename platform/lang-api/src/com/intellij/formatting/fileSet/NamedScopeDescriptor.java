@@ -13,16 +13,16 @@ import org.jetbrains.annotations.Nullable;
 public class NamedScopeDescriptor implements FileSetDescriptor {
   public final static String NAMED_SCOPE_TYPE = "namedScope";
 
-  private final String myScopeName;
+  private final String myScopeId;
   private @Nullable PackageSet myFileSet;
 
   public NamedScopeDescriptor (@NotNull NamedScope scope) {
-    myScopeName = scope.getName();
+    myScopeId = scope.getScopeId();
     myFileSet = scope.getValue();
   }
 
-  public NamedScopeDescriptor(@NotNull String scopeName) {
-    myScopeName = scopeName;
+  public NamedScopeDescriptor(@NotNull String scopeId) {
+    myScopeId = scopeId;
   }
 
   @Override
@@ -56,10 +56,10 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
 
   private Pair<NamedScopesHolder,NamedScope> resolveScope(@NotNull Project project) {
     NamedScopesHolder holder = DependencyValidationManager.getInstance(project);
-    NamedScope scope = holder.getScope(myScopeName);
+    NamedScope scope = holder.getScope(myScopeId);
     if (scope == null) {
       holder = NamedScopeManager.getInstance(project);
-      scope = holder.getScope(myScopeName);
+      scope = holder.getScope(myScopeId);
     }
     return scope != null ? Pair.create(holder, scope) : null;
   }
@@ -67,7 +67,7 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
   @NotNull
   @Override
   public String getName() {
-    return myScopeName;
+    return myScopeId;
   }
 
   @NotNull
@@ -89,6 +89,6 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
 
   @Override
   public String toString() {
-    return "scope: " + myScopeName;
+    return "scope: " + myScopeId;
   }
 }

@@ -17,21 +17,23 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.HtmlChunk.Element.html
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitPullSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
@@ -39,7 +41,7 @@ import git4idea.merge.dialog.*
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.util.GitUIUtil
+import git4idea.ui.ComboBoxWithAutoCompletion
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -53,8 +55,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
-import javax.swing.event.DocumentEvent
-import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitPullDialog(private val project: Project,
                     private val roots: List<VirtualFile>,
@@ -81,10 +81,14 @@ class GitPullDialog(private val project: Project,
 
   private val fetchSupport = project.service<GitFetchSupport>()
 
+  private val pullSettings = project.service<GitPullSettings>()
+
   init {
     updateTitle()
     setOKButtonText(GitBundle.message("pull.button"))
+    loadSettings()
     updateRemotesField()
+    updateUi()
     init()
   }
 
@@ -111,13 +115,36 @@ class GitPullDialog(private val project: Project,
     return mutableListOf()
   }
 
+  override fun doOKAction() {
+    try {
+      saveSettings()
+    }
+    finally {
+      super.doOKAction()
+    }
+  }
+
   fun gitRoot() = getSelectedRepository().root
 
   fun getSelectedRemote(): GitRemote = remoteField.item
 
-  fun getSelectedBranches() = listOf(branchField.item)
+  fun getSelectedBranch(): GitRemoteBranch {
+    val branchName = "${getSelectedRemote().name}/${branchField.item}"
+    return getSelectedRepository().branches.findRemoteBranch(branchName)
+           ?: error("Unable to find remote branch: $branchName")
+  }
 
   fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
+
+  private fun loadSettings() {
+    branchField.item = pullSettings.branch
+    selectedOptions += pullSettings.options
+  }
+
+  private fun saveSettings() {
+    pullSettings.branch = branchField.item
+    pullSettings.options = selectedOptions
+  }
 
   private fun collectBranches() = repositories.associateWith { repository -> getBranchesInRepo(repository) }
 
@@ -127,7 +154,7 @@ class GitPullDialog(private val project: Project,
 
   private fun validateBranchField(): ValidationInfo? {
     val item = branchField.item ?: ""
-    val text = GitUIUtil.getTextField(branchField).text
+    val text = branchField.getText()
     val value = if (item == text) item else text
 
     if (value.isNullOrEmpty()) {
@@ -151,24 +178,26 @@ class GitPullDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val repository = getSelectedRepository()
-    val remote = getSelectedRemote()
+    var branchToSelect = branchField.item
 
-    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
+    val repository = getSelectedRepository()
+
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, getSelectedRemote()))
 
     val model = branchField.model as MutableCollectionComboBoxModel
-
     model.update(branches)
 
-    val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
-                         ?: branches.find { branch -> branch == repository.currentBranchName }
-                         ?: ""
+    if (branchToSelect == null || branchToSelect !in branches) {
+      branchToSelect = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+                       ?: branches.find { branch -> branch == repository.currentBranchName }
+                       ?: ""
+    }
 
-    if (matchingBranch.isEmpty()) {
+    if (branchToSelect.isEmpty()) {
       startTrackingValidation()
     }
 
-    model.selectedItem = matchingBranch
+    branchField.selectedItem = branchToSelect
   }
 
   private fun getRemoteBranches(repository: GitRepository, remote: GitRemote): List<String> {
@@ -218,7 +247,9 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("pull.options.modify")) { createOptionsPopup() }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+    mnemonic = KeyEvent.VK_M
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
@@ -380,7 +411,7 @@ class GitPullDialog(private val project: Project,
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0)))
 
-    item = repositories.find { repo -> repo.root == defaultRoot }
+    item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
 
     addActionListener {
       updateTitle()
@@ -390,7 +421,9 @@ class GitPullDialog(private val project: Project,
 
   private fun createRemoteField() = ComboBox<GitRemote>(MutableCollectionComboBoxModel()).apply {
     isSwingPopup = false
-    renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
+    renderer = SimpleListCellRenderer.create(
+      HtmlChunk.text(GitBundle.message("util.remote.renderer.none")).italic().wrapWith(html()).toString()
+    ) { it.name }
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
@@ -405,20 +438,8 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createBranchField() = ComboBox<String>(MutableCollectionComboBoxModel()).apply {
-    isSwingPopup = false
-    isEditable = true
-    editor = object : BasicComboBoxEditor() {
-      override fun createEditorComponent() = JBTextField().apply {
-        emptyText.text = GitBundle.message("pull.branch.field.placeholder")
-
-        document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            startTrackingValidation()
-          }
-        })
-      }
-    }
+  private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
+    setPlaceholder(GitBundle.message("pull.branch.field.placeholder"))
 
     object : RefreshAction() {
       override fun actionPerformed(e: AnActionEvent) {
@@ -431,6 +452,7 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
+    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),
@@ -470,8 +492,8 @@ class GitPullDialog(private val project: Project,
 
   companion object {
     private val FETCH_ACTION_SHORTCUT = if (SystemInfo.isMac)
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_MASK))
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_DOWN_MASK))
     else
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_MASK))
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_DOWN_MASK))
   }
 }

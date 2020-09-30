@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
@@ -42,7 +43,7 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
  */
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(SvnChangeProvider.class);
-  public static final String PROPERTY_LAYER = "Property";
+  public static final @NonNls String PROPERTY_LAYER = "Property";
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;

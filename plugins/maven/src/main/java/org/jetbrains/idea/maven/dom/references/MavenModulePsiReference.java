@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -93,7 +94,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
-  private static class CreateModuleFix extends LocalQuickFixOnPsiElement {
+  private static final class CreateModuleFix extends LocalQuickFixOnPsiElement {
 
     private final boolean myWithParent;
     private final String myModulePath;
@@ -134,7 +135,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                      true);
       }
       catch (IOException e) {
-        MavenUtil.showError(project, "Cannot create a module", e);
+        MavenUtil.showError(project, MavenProjectBundle.message("notification.title.cannot.create.module"), e);
       }
     }
 

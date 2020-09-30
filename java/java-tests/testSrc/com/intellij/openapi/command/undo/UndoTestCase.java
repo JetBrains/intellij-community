@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -123,11 +122,8 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     }
   }
 
-  protected void addContentRoot() throws IOException {
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile root = fs.refreshAndFindFileByIoFile(createTempDirectory());
-
-    PsiTestUtil.addContentRoot(getModule(), root);
+  protected void addContentRoot() {
+    PsiTestUtil.addContentRoot(getModule(), getTempDir().createVirtualDir());
   }
 
   protected void executeCommand(@NotNull Runnable command, String name) {

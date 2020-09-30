@@ -32,6 +32,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -70,7 +71,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1073,7 +1073,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return new MyPass(myProject);
       }
 
-      class MyPass extends TextEditorHighlightingPass {
+      final class MyPass extends TextEditorHighlightingPass {
         private MyPass(final Project project) {
           super(project, getEditor().getDocument(), false);
           creation[0]++;
@@ -1311,7 +1311,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testErrorInTheEndOutsideVisibleArea() {
     String text = "<xml> \n" + StringUtil.repeatSymbol('\n', 1000) + "</xml>\nxxxxx<caret>";
-    configureByText(StdFileTypes.XML, text);
+    configureByText(XmlFileType.INSTANCE, text);
 
     ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000), myEditor);
     assertTrue(visibleRange.getStartOffset() > 0);
@@ -1459,7 +1459,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
-      final VirtualFile alienRoot = PsiTestUtil.createTestProjectStructure(alienProject, alienModule, myFilesToDelete);
+      VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
+      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
       OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
         VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
         setFileText(alienFile, "class Alien { }");
@@ -1804,7 +1805,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
     final AtomicBoolean run = new AtomicBoolean();
     final int SLEEP = 2_000;
-    ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<Integer, Integer>() {
+    ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<>() {
       @Override
       public Integer collectInformation(@NotNull PsiFile file) {
         return 0;

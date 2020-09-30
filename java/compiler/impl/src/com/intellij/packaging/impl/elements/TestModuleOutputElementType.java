@@ -13,11 +13,11 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 
-public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<TestModuleOutputPackagingElement> {
+public final class TestModuleOutputElementType extends ModuleOutputElementTypeBase<TestModuleOutputPackagingElement> {
   public static final TestModuleOutputElementType ELEMENT_TYPE = new TestModuleOutputElementType();
 
   private TestModuleOutputElementType() {
-    super("module-test-output", JavaCompilerBundle.message("element.type.name.module.test.output"));
+    super("module-test-output", JavaCompilerBundle.messagePointer("element.type.name.module.test.output"));
   }
 
   @NotNull

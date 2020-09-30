@@ -16,6 +16,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.impl.TaskUtil;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +28,13 @@ import javax.swing.*;
  */
 abstract class TaskListItem {
 
-  private final String myText;
+  private final @NlsContexts.ListItem String myText;
   private final Icon myIcon;
-  private final String mySeparator;
+  private final @NlsContexts.Separator String mySeparator;
   private final boolean myTemp;
   private final LocalTask myTask;
 
-  TaskListItem(String text, Icon icon) {
+  TaskListItem(@NlsContexts.ListItem String text, Icon icon) {
     myText = text;
     myIcon = icon;
     mySeparator = null;
@@ -41,7 +42,7 @@ abstract class TaskListItem {
     myTemp = false;
   }
 
-  protected TaskListItem(LocalTask task, String separator, boolean temp) {
+  protected TaskListItem(LocalTask task, @NlsContexts.Separator String separator, boolean temp) {
     myTask = task;
     mySeparator = separator;
     myTemp = temp;
@@ -49,7 +50,7 @@ abstract class TaskListItem {
     myIcon = temp ? IconLoader.getTransparentIcon(task.getIcon(), 0.5f) : task.getIcon();
   }
 
-  public String getText() {
+  public @NlsContexts.ListItem String getText() {
     return myText;
   }
 
@@ -58,7 +59,7 @@ abstract class TaskListItem {
   }
 
   @Nullable
-  public String getSeparator() {
+  public @NlsContexts.Separator String getSeparator() {
     return mySeparator;
   }
 

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -39,7 +39,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private var isDisposed = false
   private val mutex = Any()
   private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
-  private var sourceFoldersByModule = Object2ObjectOpenHashMap<String, ModuleModel>()
+  private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
   private val operationsStates = mutableListOf<Future<*>>()
 
@@ -195,14 +195,16 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   override fun getState(): SourceFolderManagerState? {
     synchronized(mutex) {
-      return SourceFolderManagerState(sourceFolders.values.map { model ->
-        val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@map null
-        SourceFolderModelState(model.module.name,
-                               model.url,
-                               modelTypeName,
-                               model.packagePrefix,
-                               model.generated)
-      }.filterNotNull())
+      return SourceFolderManagerState(sourceFolders.valueSequence
+                                        .mapNotNull { model ->
+                                          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@mapNotNull null
+                                          SourceFolderModelState(model.module.name,
+                                                                 model.url,
+                                                                 modelTypeName,
+                                                                 model.packagePrefix,
+                                                                 model.generated)
+                                        }
+                                        .toList())
     }
   }
 
@@ -213,7 +215,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         return
       }
       sourceFolders = PathPrefixTreeMap()
-      sourceFoldersByModule = Object2ObjectOpenHashMap()
+      sourceFoldersByModule = HashMap()
 
       val moduleManager = ModuleManager.getInstance(project)
 
@@ -270,8 +272,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 }
 
-data class SourceFolderManagerState(var sourceFolders: Collection<SourceFolderModelState>) {
-  constructor() : this(listOf<SourceFolderModelState>())
+data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
+  constructor() : this(mutableListOf())
 }
 
 data class SourceFolderModelState(var moduleName: String,

@@ -17,6 +17,7 @@
 package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -51,7 +52,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
 
   protected abstract ResolveResult @NotNull [] multiResolveReference(@Nullable final T t, final ConvertContext context);
 
-  protected abstract String getUnresolvedMessage(String value);
+  protected abstract @InspectionMessage String getUnresolvedMessage(String value);
 
   @Override
   @NotNull
@@ -149,7 +150,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
-      return myBadQuotation ? XmlDomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
+      return myBadQuotation ? XmlDomBundle.message("dom.inspections.invalid.value.quotation") : getUnresolvedMessage(getValue());
     }
   }
 }

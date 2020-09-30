@@ -180,10 +180,10 @@ public final class SdkListModelBuilder {
   }
 
   private boolean isApplicableSuggestedItem(@NotNull SuggestedItem item) {
-    if (!mySdkTypeFilter.value(item.getSdkType())) return false;
+    if (!mySdkTypeFilter.value(item.sdkType)) return false;
 
     for (Sdk sdk : mySdkModel.getSdks()) {
-      if (FileUtil.pathsEqual(sdk.getHomePath(), item.getHomePath())) return false;
+      if (FileUtil.pathsEqual(sdk.getHomePath(), item.homePath)) return false;
     }
     return true;
   }
@@ -232,7 +232,7 @@ public final class SdkListModelBuilder {
     return new SdkItem(sdk) {
       @Override
       boolean hasSameSdk(@NotNull Sdk value) {
-        return Objects.equals(getSdk(), value) || Objects.equals(mySdkModel.findSdk(getSdk()), value);
+        return Objects.equals(sdk, value) || Objects.equals(mySdkModel.findSdk(sdk), value);
       }
     };
   }
@@ -264,14 +264,14 @@ public final class SdkListModelBuilder {
     };
 
     if (item instanceof ActionItem) {
-      NewSdkAction action = ((ActionItem)item).myAction;
+      NewSdkAction action = ((ActionItem)item).action;
       action.actionPerformed(null, parent, onNewSdkAdded);
       return true;
     }
 
     if (item instanceof SuggestedItem) {
       SuggestedItem suggestedItem = (SuggestedItem)item;
-      String homePath = suggestedItem.getHomePath();
+      String homePath = suggestedItem.homePath;
 
       ProgressManager.getInstance().run(new Task.Modal(myProject,
                                                        ProjectBundle.message("progress.title.jdk.combo.box.resolving.jdk.home"),
@@ -286,7 +286,7 @@ public final class SdkListModelBuilder {
         }
       });
 
-      mySdkModel.addSdk(suggestedItem.getSdkType(), homePath, onNewSdkAdded);
+      mySdkModel.addSdk(suggestedItem.sdkType, homePath, onNewSdkAdded);
       return true;
     }
 

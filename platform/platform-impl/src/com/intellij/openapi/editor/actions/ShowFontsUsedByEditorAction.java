@@ -18,11 +18,13 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.font.CompositeFont;
@@ -55,11 +57,11 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       new Task.Modal(editor.getProject(), EditorBundle.message("fonts.used.by.editor.progress"), true) {
-        private String textToShow;
+        private @Nls String textToShow;
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          Set<String> fontNames = ReadAction.compute(() -> collectFontNames((EditorEx)editor));
+          Set<@NlsSafe String> fontNames = ReadAction.compute(() -> collectFontNames((EditorEx)editor));
           textToShow = StringUtil.join(fontNames, "\n");
         }
 
@@ -72,7 +74,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       }.queue();
     }
 
-    private static Set<String> collectFontNames(@NotNull EditorEx editor) {
+    private static Set<@NlsSafe String> collectFontNames(@NotNull EditorEx editor) {
       Set<String> result = new TreeSet<>();
       Document document = editor.getDocument();
       CharSequence text = document.getImmutableCharSequence();
@@ -130,10 +132,10 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       }
     }
 
-    private static class MyDialog extends DialogWrapper {
+    private static final class MyDialog extends DialogWrapper {
       private final JBTextArea myTextArea;
 
-      private MyDialog(String text) {
+      private MyDialog(@Nls String text) {
         super(false);
         setTitle(EditorBundle.message("fonts.used.by.editor.title"));
         myTextArea = new JBTextArea(text, 10, 50);

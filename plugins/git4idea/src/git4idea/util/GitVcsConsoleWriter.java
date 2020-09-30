@@ -5,6 +5,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,21 +36,21 @@ public final class GitVcsConsoleWriter {
   /**
    * Shows a plain message in the Version Control Console.
    */
-  public void showMessage(@NotNull String message) {
+  public void showMessage(@NotNull @NlsSafe String message) {
     showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT);
   }
 
   /**
    * Shows error message in the Version Control Console
    */
-  public void showErrorMessage(@NotNull String line) {
+  public void showErrorMessage(@NotNull @NlsSafe String line) {
     showMessage(line, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   /**
    * Shows a command line message in the Version Control Console
    */
-  public void showCommandLine(@NotNull String cmdLine) {
+  public void showCommandLine(@NotNull @NlsSafe String cmdLine) {
     SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
     showMessage(f.format(new Date()) + ": " + cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT);
   }
@@ -60,7 +61,7 @@ public final class GitVcsConsoleWriter {
    * @param message     a message to show
    * @param contentType a style to use
    */
-  public void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+  public void showMessage(@NotNull @NlsSafe String message, @NotNull ConsoleViewContentType contentType) {
     String shortMessage = StringUtil.shortenPathWithEllipsis(message, MAX_CONSOLE_OUTPUT_SIZE);
     ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(shortMessage, contentType);
   }

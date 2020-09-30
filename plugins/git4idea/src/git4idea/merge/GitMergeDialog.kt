@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -12,19 +13,19 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
-import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
@@ -36,26 +37,24 @@ import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepository
-import git4idea.util.GitUIUtil
+import git4idea.repo.GitRepositoryManager
+import git4idea.ui.ComboBoxWithAutoCompletion
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.Collections.synchronizedMap
-import java.util.function.Function
 import java.util.regex.Pattern
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-import javax.swing.event.DocumentEvent
-import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
@@ -63,9 +62,7 @@ class GitMergeDialog(private val project: Project,
 
   val selectedOptions = mutableSetOf<GitMergeOption>()
 
-  private val repositoryManager = GitUtil.getRepositoryManager(project)
-
-  private val rootsByNames = roots.associateBy { it.name }
+  private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
   private val allBranches = collectAllBranches()
 
@@ -92,8 +89,8 @@ class GitMergeDialog(private val project: Project,
     loadUnmergedBranchesInBackground()
     updateTitle()
     setOKButtonText(GitBundle.message("merge.action.name"))
-    updateBranchesField()
     loadSettings()
+    updateBranchesField()
     updateUi()
     init()
   }
@@ -133,33 +130,33 @@ class GitMergeDialog(private val project: Project,
     }
   }
 
+  @NlsSafe
   fun getCommitMessage(): String = commitMsgField.text
 
-  fun getSelectedRoot(): VirtualFile = rootsByNames[rootField.item] ?: defaultRoot
+  fun getSelectedRoot(): VirtualFile = rootField.item.root
 
-  fun getSelectedBranches() = listOf(branchField.item)
+  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.item)
+                            ?: error("Unable to find branch: ${branchField.item}")
 
   fun shouldCommitAfterMerge() = GitMergeOption.NO_COMMIT !in selectedOptions
 
   private fun saveSettings() {
+    mergeSettings.branch = branchField.item
     mergeSettings.options = selectedOptions
   }
 
-  private fun loadSettings() = mergeSettings.options
-    .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
-    .forEach { option -> selectedOptions += option }
+  private fun loadSettings() {
+    branchField.item = mergeSettings.branch
+    mergeSettings.options
+      .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
+      .forEach { option -> selectedOptions += option }
+  }
 
-  private fun collectAllBranches(): Map<GitRepository, List<String>?> {
+  private fun collectAllBranches(): Map<GitRepository, List<@NlsSafe String>?> {
     val branches = mutableMapOf<GitRepository, List<String>?>()
 
-    for (root in roots) {
-      val repository = repositoryManager.getRepositoryForFileQuick(root)
-      if (repository == null) {
-        LOG.error("Unable to find repository with root: ${root}")
-        continue
-      }
-
-      branches[repository] = repository.branches
+    for (repo in repositories) {
+      branches[repo] = repo.branches
         .let { it.localBranches + it.remoteBranches }
         .map { it.name }
     }
@@ -191,8 +188,8 @@ class GitMergeDialog(private val project: Project,
       })
   }
 
-  @CalledInBackground
-  private fun loadUnmergedBranches(root: VirtualFile): List<String>? {
+  @RequiresBackgroundThread
+  private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
 
     val handler = GitLineHandler(project, root, GitCommand.BRANCH).apply {
@@ -213,7 +210,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun validateBranchField(): ValidationInfo? {
     val item = branchField.item ?: ""
-    val text = GitUIUtil.getTextField(branchField).text
+    val text = branchField.getText()
     val value = if (item == text) item else text
 
     if (value.isNullOrEmpty()) {
@@ -229,24 +226,28 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
+    var branchToSelect = branchField.item
+
     val branches = splitAndSortBranches(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
 
-    val repository = getSelectedRepository()
-    val currentRemoteBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+    if (branchToSelect == null || branchToSelect !in branches) {
+      val repository = getSelectedRepository()
+      val currentRemoteBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
 
-    val matchingBranch = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
+      branchToSelect = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
+    }
 
-    if (matchingBranch.isEmpty()) {
+    if (branchToSelect.isEmpty()) {
       startTrackingValidation()
     }
 
-    model.selectedItem = matchingBranch
+    branchField.selectedItem = branchToSelect
   }
 
-  private fun splitAndSortBranches(branches: List<String>): List<String> {
+  private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
     val local = mutableListOf<String>()
     val remote = mutableListOf<String>()
 
@@ -262,12 +263,13 @@ class GitMergeDialog(private val project: Project,
     return GitBranchUtil.sortBranchNames(local) + GitBranchUtil.sortBranchNames(remote)
   }
 
-  private fun getBranches(): List<String> {
+  private fun getBranches(): List<@NlsSafe String> {
     val repository = getSelectedRepository()
     return unmergedBranches[repository] ?: allBranches[repository] ?: emptyList()
   }
 
-  private fun getRepository(root: VirtualFile) = allBranches.keys.find { repo -> repo.root == root }!!
+  private fun getRepository(root: VirtualFile) = repositories.find { repo -> repo.root == root }
+                                                 ?: error("Unable to find repository for root: ${root.presentableUrl}")
 
   private fun getSelectedRepository() = getRepository(getSelectedRoot())
 
@@ -326,11 +328,12 @@ class GitMergeDialog(private val project: Project,
           .growX())
   }
 
-  private fun createRootField(): ComboBox<String> {
-    val model = CollectionComboBoxModel(rootsByNames.keys.toList())
+  private fun createRootField(): ComboBox<GitRepository> {
+    val model = CollectionComboBoxModel(repositories)
     return ComboBox(model).apply {
-      item = defaultRoot.name
+      item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
       isSwingPopup = false
+      renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
       @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
 
@@ -348,23 +351,10 @@ class GitMergeDialog(private val project: Project,
                                           Insets(1, if (showRootField()) 0 else 1, 1, 0),
                                           JBDimension(JBUI.scale(100), branchField.preferredSize.height, true))
 
-  private fun createBranchField(): ComboBox<String> {
+  private fun createBranchField(): ComboBoxWithAutoCompletion<String> {
     val model = MutableCollectionComboBoxModel(mutableListOf<String>())
-    return ComboBox(model).apply<ComboBox<String>> {
-      isSwingPopup = false
-      isEditable = true
-      editor = object : BasicComboBoxEditor() {
-        override fun createEditorComponent() = JBTextField().apply {
-          emptyText.text = GitBundle.message("merge.branch.field.placeholder")
-
-          document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-              startTrackingValidation()
-            }
-          })
-        }
-      }
-
+    return ComboBoxWithAutoCompletion(model, project).apply {
+      setPlaceholder(GitBundle.message("merge.branch.field.placeholder"))
       @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
@@ -390,7 +380,9 @@ class GitMergeDialog(private val project: Project,
           .minHeight("${JBUI.scale(75)}px"))
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+    mnemonic = KeyEvent.VK_M
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
@@ -505,6 +497,8 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+
+    @NlsSafe
     private const val REMOTE_REF = "remotes/"
   }
 }

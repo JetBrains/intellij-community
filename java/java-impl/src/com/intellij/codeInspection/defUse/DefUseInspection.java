@@ -249,7 +249,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return new OptionsPanel();
   }
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends JPanel {
     private final JCheckBox myReportPrefix;
     private final JCheckBox myReportPostfix;
     private final JCheckBox myReportInitializer;
@@ -299,7 +299,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
 
-  private static class FieldWrite {
+  private static final class FieldWrite {
     final boolean myDefinitely;
     final List<PsiAssignmentExpression> myAssignments;
 

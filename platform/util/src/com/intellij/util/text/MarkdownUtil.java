@@ -136,7 +136,7 @@ public final class MarkdownUtil {
     new CodeBlockProcessor(lines).process();
   }
 
-  private static class CodeBlockProcessor {
+  private static final class CodeBlockProcessor {
 
     private static final String START_TAGS = "<pre><code>";
     private static final String END_TAGS = "</code></pre>";
@@ -202,7 +202,7 @@ public final class MarkdownUtil {
     new ListItemProcessor(lines).process();
   }
 
-  private static class ListItemProcessor {
+  private static final class ListItemProcessor {
 
     private final List<String> myLines;
 
@@ -303,7 +303,7 @@ public final class MarkdownUtil {
     return null;
   }
 
-  private static class ListItem {
+  private static final class ListItem {
 
     private final boolean myUnordered;
     private final String myBody;

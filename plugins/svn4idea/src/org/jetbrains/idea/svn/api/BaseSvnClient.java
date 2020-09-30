@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +12,9 @@ import org.jetbrains.idea.svn.commandLine.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public abstract class BaseSvnClient implements SvnClient {
   protected SvnVcs myVcs;
@@ -82,7 +70,7 @@ public abstract class BaseSvnClient implements SvnClient {
   protected void validateFormat(@NotNull WorkingCopyFormat format, @NotNull Collection<WorkingCopyFormat> supported) throws VcsException {
     if (!supported.contains(format)) {
       throw new VcsException(
-        String.format("%s format is not supported. Supported formats are: %s.", format.getName(), StringUtil.join(supported, ",")));
+        message("error.format.is.not.supported", format.getDisplayName(), join(supported, it -> it.getDisplayName(), ",")));
     }
   }
 

@@ -225,7 +225,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   @Override
   public String getPresentableName() {
     final String name = super.getPresentableName();
-    return name + (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : "");
+    return name + (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : ""); //NON-NLS
   }
 
   @Override

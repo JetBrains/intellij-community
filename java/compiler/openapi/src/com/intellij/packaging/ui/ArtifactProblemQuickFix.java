@@ -15,18 +15,21 @@
  */
 package com.intellij.packaging.ui;
 
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.NlsContexts;
+
 public abstract class ArtifactProblemQuickFix {
-  private final String myActionName;
+  private final @NlsContexts.Label String myActionName;
 
   protected ArtifactProblemQuickFix() {
-    this("Fix");
+    this(JavaBundle.message("intention.create.test.dialog.fix.library"));
   }
 
-  protected ArtifactProblemQuickFix(String actionName) {
+  protected ArtifactProblemQuickFix(@NlsContexts.Label String actionName) {
     myActionName = actionName;
   }
 
-  public String getActionName() {
+  public @NlsContexts.Label String getActionName() {
     return myActionName;
   }
 

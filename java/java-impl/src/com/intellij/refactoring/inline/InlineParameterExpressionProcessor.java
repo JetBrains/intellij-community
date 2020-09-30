@@ -2,6 +2,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -219,7 +220,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       for (PsiReference ref : ReferencesSearch.search(var)) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
-          conflicts.putValue(element, "Parameter initializer depends on value which is not available inside method and cannot be inlined");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.parameter.initializer.depends.on.inaccessible.value"));
           break;
         }
       }
@@ -344,14 +345,15 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       final PsiElement element = expression.resolve();
       if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
         if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          myConflicts.putValue(expression, "Parameter initializer depends on " + RefactoringUIUtil.getDescription(element, false) + " which is not available inside the static method");
+          myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.static.method",
+                                                                         RefactoringUIUtil.getDescription(element, false)));
         }
       }
       if (element instanceof PsiMethod || element instanceof PsiField) {
         if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-          myConflicts.putValue(expression, "Parameter initializer depends on non static member from some other class");
+          myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static"));
         } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
-          myConflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
+          myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.value"));
         }
       } else if (element instanceof PsiParameter) {
         boolean bound = false;
@@ -362,7 +364,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
           }
         }
         if (!bound) {
-          myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+          myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.caller.parameter"));
         }
       }
     }
@@ -381,10 +383,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       final PsiClass methodContainingClass = myMethod.getContainingClass();
       LOG.assertTrue(methodContainingClass != null);
       if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
-        myConflicts.putValue(thisExpression,
-                           "Parameter initializer depends on this which is not available inside the method and cannot be inlined");
+        myConflicts.putValue(thisExpression, JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.element.inside.method", "this"));
       } else if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        myConflicts.putValue(thisExpression, "Parameter initializer depends on this which is not available inside the static method");
+        myConflicts.putValue(thisExpression, JavaRefactoringBundle.message("inline.parameter.depends.on.this.inside.static.method"));
       }
     }
 
@@ -394,7 +395,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          myConflicts.putValue(reference, "Parameter initializer depends on non static class which is not available inside static method");
+          myConflicts.putValue(reference, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static.class"));
         }
       }
     }
@@ -407,9 +408,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiClass) {
           final PsiClass refClass = (PsiClass)resolved;
-          final String classUnavailableMessage = "Parameter initializer depends on " +
-                                                 RefactoringUIUtil.getDescription(refClass, true) +
-                                                 " which is not available inside method and cannot be inlined";
+          final String classUnavailableMessage =
+            JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.element.inside.method",
+                                          RefactoringUIUtil.getDescription(refClass, true));
           if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
             myConflicts.putValue(expression, classUnavailableMessage);
           }

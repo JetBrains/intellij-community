@@ -24,10 +24,12 @@ import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 // TODO: more detailed error descriptions
 
 @SuppressWarnings({"SimplifiableIfStatement"})
+final
 class XsltPatternValidator {
   private XsltPatternValidator() {
   }
@@ -36,10 +38,10 @@ class XsltPatternValidator {
     final XPathExpression expression = ((XPathFile)file).getExpression();
     if (expression != null) {
       if (!checkPattern(expression)) {
-        annotationHolder.newAnnotation(HighlightSeverity.ERROR, "Bad pattern").range(expression).create();
+        annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.bad.pattern")).range(expression).create();
       }
     } else {
-      annotationHolder.newAnnotation(HighlightSeverity.ERROR, "Missing pattern").range(TextRange.from(0, 1)).create();
+      annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.missing.pattern")).range(TextRange.from(0, 1)).create();
     }
   }
 

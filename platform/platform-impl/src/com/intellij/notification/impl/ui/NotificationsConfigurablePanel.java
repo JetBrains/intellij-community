@@ -275,6 +275,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
                                                   int row,
                                                   boolean hasFocus) {
       setForeground(selected ? myTable.getSelectionForeground() : myTable.getForeground());
+      //noinspection HardCodedStringLiteral
       setText(value.toString());
       return this;
     }

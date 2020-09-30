@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-public class InstanceOfUtils {
+public final class InstanceOfUtils {
 
   private InstanceOfUtils() {}
 
@@ -149,11 +149,11 @@ public class InstanceOfUtils {
     if (condition == null) return false;
     checker.negate = true;
     OptionalInt argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(true), true);
-    if (!argNum.isPresent()) {
+    if (argNum.isEmpty()) {
       checker.negate = false;
       argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(false), true);
     }
-    if (!argNum.isPresent()) return false;
+    if (argNum.isEmpty()) return false;
     int index = argNum.getAsInt();
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (index >= args.length) return false;
@@ -175,7 +175,7 @@ public class InstanceOfUtils {
     }
     return false;
   }
-  
+
   /**
    * @param cast a cast expression to find parent instanceof for
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
@@ -297,8 +297,8 @@ public class InstanceOfUtils {
     if (statement == null) return true;
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(statement.getProject()).getControlFlow(
-        parent, new LocalsControlFlowPolicy(parent), false, false);
+      flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent), 
+                                               ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return true;
@@ -309,8 +309,8 @@ public class InstanceOfUtils {
   }
 
   @Contract("null, _, _ -> null")
-  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition, 
-                                                        @NotNull PsiTypeCastExpression cast, 
+  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition,
+                                                        @NotNull PsiTypeCastExpression cast,
                                                         boolean whenTrue) {
     if (condition == null) return null;
     if (condition instanceof PsiParenthesizedExpression) {

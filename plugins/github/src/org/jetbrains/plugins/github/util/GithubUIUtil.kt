@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
@@ -30,7 +32,10 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.*
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -119,32 +124,7 @@ object GithubUIUtil {
     }
   }
 
-  object Lists {
-    fun installSelectionOnFocus(list: JList<*>): FocusListener {
-      val listener: FocusListener = object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent) {
-          if (list.isSelectionEmpty && list.model.size > 0) list.selectedIndex = 0
-        }
-      }
-      list.addFocusListener(listener)
-      return listener
-    }
-
-    fun installSelectionOnRightClick(list: JList<*>): MouseListener {
-      val listener: MouseListener = object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent) {
-          if (SwingUtilities.isRightMouseButton(e)) {
-            val row = list.locationToIndex(e.point)
-            if (row != -1) list.selectedIndex = row
-          }
-        }
-      }
-      list.addMouseListener(listener)
-      return listener
-    }
-  }
-
-  fun <T> showChooserPopup(popupTitle: String, parentComponent: JComponent,
+  fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
                            cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
                            currentList: List<T>,
                            availableListFuture: CompletableFuture<List<T>>)
@@ -297,6 +277,7 @@ object GithubUIUtil {
       return this
     }
 
+    @NlsContexts.Label
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
@@ -319,4 +300,5 @@ object GithubUIUtil {
   }
 }
 
+@NlsActions.ActionText
 fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()

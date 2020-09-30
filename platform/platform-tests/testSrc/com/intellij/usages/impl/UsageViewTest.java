@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -49,6 +48,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
@@ -56,7 +56,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
     Set<Object> alreadyLeaking = new ReferenceOpenHashSet<>();
-    Condition<Object> isReallyLeak = file -> {
+    Predicate<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {
           return false;

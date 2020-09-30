@@ -8,5 +8,5 @@ Groovy script
     Traditional FOR clause
       Reference expression
         PsiElement(identifier)('foo')
-      PsiErrorElement:';' or identifier expected
+      PsiErrorElement:';' expected
         <empty list>

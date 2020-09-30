@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ClassLoadingUtils {
+public final class ClassLoadingUtils {
   private static final Logger LOG = Logger.getInstance(ClassLoadingUtils.class);
   private static final int BATCH_SIZE = 4096;
   private ClassLoadingUtils() {}
@@ -86,9 +86,9 @@ public class ClassLoadingUtils {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
           // need to define
           ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          try (InputStream stream = cls.getResourceAsStream("/" + name.replaceAll("[.]", "/") + ".class")) {
+          try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
             if (stream == null) return null;
-            defineClass(name, StreamUtil.loadFromStream(stream), evaluationContext, process, classLoader);
+            defineClass(name, StreamUtil.readBytes(stream), evaluationContext, process, classLoader);
             ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
             return (ClassType)process.findClass(evaluationContext, name, classLoader);
           }

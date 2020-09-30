@@ -28,7 +28,9 @@ import java.util.Set;
 /**
  * Represents a module's content root.
  * You can get existing entries with {@link ModuleRootModel#getContentEntries()} or
- * create a new one with {@link ModifiableRootModel#addContentEntry(VirtualFile)}.
+ * create a new one with {@link ModifiableRootModel#addContentEntry(VirtualFile)}. Note that methods which change the state can be called
+ * only on instances of {@link ContentEntry} obtained from {@link ModifiableRootModel}. Calling these methods on instances obtained from
+ * {@code ModuleRootManager.getInstance(module).getContentEntries()} may lead to failed assertion at runtime.
  *
  * @author dsl
  * @see ModuleRootModel#getContentEntries()
@@ -104,7 +106,7 @@ public interface ContentEntry extends Synthetic {
   VirtualFile @NotNull [] getExcludeFolderFiles();
 
   /**
-   * Adds a source or test source root under the content root.
+   * Adds a source or test source root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param file         the file or directory to add as a source root.
    * @param isTestSource true if the file or directory is added as a test source root.
@@ -114,7 +116,8 @@ public interface ContentEntry extends Synthetic {
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource);
 
   /**
-   * Adds a source or test source root with the specified package prefix under the content root.
+   * Adds a source or test source root with the specified package prefix under the content root. This method may be called only on an
+   * instance obtained from {@link ModifiableRootModel}.
    *
    * @param file          the file or directory to add as a source root.
    * @param isTestSource  true if the file or directory is added as a test source root.
@@ -125,43 +128,58 @@ public interface ContentEntry extends Synthetic {
   @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
 
-  @NotNull
-  <P extends JpsElement>
+  /**
+   * Adds a source root of the given type with the given properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement>
   SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
-  @NotNull
-  <P extends JpsElement>
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement>
   SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type);
 
   /**
-   * Adds a source or test source root under the content root.
+   * Adds a source or test source root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
-   * @param  url the file or directory url to add as a source root.
+   * @param url          the file or directory url to add as a source root.
    * @param isTestSource true if the file or directory is added as a test source root.
    * @return the object representing the added root.
    */
   @NotNull
   SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource);
 
-  @NotNull
-  <P extends JpsElement>
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement>
   SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
 
-  @NotNull
-  <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull  P properties);
+  /**
+   * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
   /**
-   * Removes a source or test source root from this content root.
+   * Removes a source or test source root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param sourceFolder the source root to remove (must belong to this content root).
    */
   void removeSourceFolder(@NotNull SourceFolder sourceFolder);
 
+  /**
+   * Removes all source roots. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void clearSourceFolders();
 
   /**
-   * Adds an exclude root under the content root.
+   * Adds an exclude root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param file the file or directory to add as an exclude root.
    * @return the object representing the added root.
@@ -170,7 +188,7 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder addExcludeFolder(@NotNull VirtualFile file);
 
   /**
-   * Adds an exclude root under the content root.
+   * Adds an exclude root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param url the file or directory url to add as an exclude root.
    * @return the object representing the added root.
@@ -179,19 +197,23 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder addExcludeFolder(@NotNull String url);
 
   /**
-   * Removes an exclude root from this content root.
+   * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param excludeFolder the exclude root to remove (must belong to this content root).
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
 
   /**
-   * Removes an exclude root from this content root.
+   * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   *
    * @param url url of the exclude root
    * @return {@code true} if the exclude root was removed
    */
   boolean removeExcludeFolder(@NotNull String url);
 
+  /**
+   * Removes all excluded folders. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void clearExcludeFolders();
 
   /**
@@ -202,8 +224,19 @@ public interface ContentEntry extends Synthetic {
   @NotNull
   List<String> getExcludePatterns();
 
+  /**
+   * Adds a pattern for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void addExcludePattern(@NotNull String pattern);
+
+  /**
+   * Removes a pattern for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void removeExcludePattern(@NotNull String pattern);
+
+  /**
+   * Sets patterns for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void setExcludePatterns(@NotNull List<String> patterns);
 
   @NotNull

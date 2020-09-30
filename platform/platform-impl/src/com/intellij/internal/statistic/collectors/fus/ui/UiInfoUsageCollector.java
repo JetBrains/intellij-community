@@ -14,12 +14,11 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
@@ -28,8 +27,7 @@ import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetr
 /**
  * @author Konstantin Bulenkov
  */
-public class UiInfoUsageCollector extends ApplicationUsagesCollector {
-
+final class UiInfoUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
@@ -38,7 +36,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   @NotNull
@@ -49,7 +47,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @NotNull
   public static Set<MetricEvent> getDescriptors() {
-    Set<MetricEvent> set = new THashSet<>();
+    Set<MetricEvent> set = new HashSet<>();
 
     addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
     addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");
@@ -92,9 +90,12 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
   }
 
   private static void addScreenResolutions(Set<MetricEvent> set) {
-    Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices())
-      .map(UiInfoUsageCollector::getDeviceScreenInfo)
-      .forEach(x -> addValue(set, "Screen.Resolution", x));
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    for (int i = 0; i < devices.length; i++) {
+      String info = getDeviceScreenInfo(devices[i]);
+      FeatureUsageData data = new FeatureUsageData().addValue(info).addData("display_id", i);
+      set.add(newMetric("Screen.Resolution", data));
+    }
   }
 
   private static void addNumberOfMonitors(Set<MetricEvent> set) {

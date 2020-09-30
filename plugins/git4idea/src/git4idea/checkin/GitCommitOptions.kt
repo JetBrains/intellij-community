@@ -72,7 +72,7 @@ class GitCommitOptionsUi(
 
   private var authorDate: Date? = null
   private var currentChangeList: LocalChangeList? = null
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())

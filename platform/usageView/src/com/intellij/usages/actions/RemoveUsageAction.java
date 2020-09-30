@@ -45,9 +45,7 @@ public class RemoveUsageAction extends AnAction {
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
 
-    for (Usage usage : usages) {
-      usageView.removeUsage(usage);
-    }
+    usageView.removeUsagesBulk(Arrays.asList(usages));
 
     if (nextToSelect != null) {
       usageView.selectUsages(new Usage[]{nextToSelect});

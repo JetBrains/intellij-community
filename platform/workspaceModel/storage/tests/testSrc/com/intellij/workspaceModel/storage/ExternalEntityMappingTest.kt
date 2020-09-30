@@ -8,12 +8,14 @@ import com.intellij.workspaceModel.storage.entities.SampleEntitySource
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
 
 class ExternalEntityMappingTest {
   companion object {
     private const val INDEX_ID = "ExternalEntityIndexTest"
+    private const val ANOTHER_INDEX_ID = "AnotherExternalEntityIndexTest"
   }
 
   @Test
@@ -140,7 +142,7 @@ class ExternalEntityMappingTest {
     assertEquals(1, mapping.getDataByEntity(entity))
 
     builder.addDiff(diff)
-    assertEquals(1, mapping.getDataByEntity(entity))
+    assertNull(mapping.getDataByEntity(entity))
     assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
 
     val storage = builder.toStorage()
@@ -264,5 +266,220 @@ class ExternalEntityMappingTest {
     val entitiesFromStorage = storage.entities(SampleEntity::class.java).sortedBy { it.stringProperty }.toList()
     assertEquals(1, builderMapping.getDataByEntity(entitiesFromStorage[0]))
     assertEquals(2, builderMapping.getDataByEntity(entitiesFromStorage[1]))
+  }
+
+  @Test
+  fun `merge mapping added after builder was created`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    initialBuilder.addSampleEntity("foo")
+    val initialStorage = initialBuilder.toStorage()
+    val diff1 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    diff1.addSampleEntity("bar")
+
+    val diff2 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(initialStorage.singleSampleEntity(), 1)
+    val updatedBuilder = WorkspaceEntityStorageBuilder.from(initialStorage)
+    updatedBuilder.addDiff(diff2)
+    val updatedStorage = updatedBuilder.toStorage()
+
+    val newBuilder = WorkspaceEntityStorageBuilder.from(updatedStorage)
+    newBuilder.addDiff(diff1)
+    val newStorage = newBuilder.toStorage()
+    val entities = newStorage.entities(SampleEntity::class.java).sortedByDescending { it.stringProperty }.toList()
+    assertEquals(2, entities.size)
+    val (foo, bar) = entities
+    assertEquals("foo", foo.stringProperty)
+    assertEquals("bar", bar.stringProperty)
+    assertEquals(1, newStorage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(foo))
+  }
+
+  @Test
+  fun `replace by source add new mapping`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    initialBuilder.addSampleEntity("foo")
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    val entity = initialBuilder.singleSampleEntity()
+    replacement.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity, 1)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+    assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+  }
+
+  @Test
+  fun `replace by source add new mapping with new entity`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    val barEntity = replacement.addSampleEntity("bar")
+    var externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+    externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
+    externalMapping.addMapping(barEntity, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    assertEquals(2, initialBuilder.getExternalMapping<Int>(ANOTHER_INDEX_ID).getDataByEntity(barEntity))
+    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
+  }
+
+  @Test
+  fun `replace by source update mapping for old entity`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertEquals(2, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+  }
+
+  @Test
+  fun `replace by source update mapping for new entity`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    val barEntity = replacement.addSampleEntity("bar")
+    externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
+    externalMapping.addMapping(barEntity, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    assertEquals(2, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
+  }
+
+  @Test
+  fun `replace by source remove from mapping`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    val barEntity = replacement.addSampleEntity("bar")
+    externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
+    externalMapping.addMapping(barEntity, 2)
+    externalMapping.removeMapping(barEntity)
+    externalMapping.removeMapping(fooEntity)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
+  }
+
+  @Test
+  fun `replace by source cleanup mapping by entity remove`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.from(initialBuilder)
+    replacement.removeEntity(fooEntity)
+    assertNull(replacement.getMutableExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+  }
+
+  @Test
+  fun `replace by source replace one mapping to another`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.create()
+    var barEntity = replacement.addSampleEntity("bar")
+    externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
+    externalMapping.addMapping(barEntity, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    barEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "bar" }
+    assertEquals(2, initialBuilder.getExternalMapping<Int>(ANOTHER_INDEX_ID).getDataByEntity(barEntity))
+    val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
+    assertEquals(0, mapping.size())
+  }
+
+  @Test
+  fun `replace by source replace mappings`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.create()
+    var barEntity = replacement.addSampleEntity("bar")
+    externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(barEntity, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    barEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "bar" }
+
+    val mapping = initialBuilder.getExternalMapping<Int>(INDEX_ID) as ExternalEntityMappingImpl
+    assertEquals(1, mapping.size())
+    assertEquals(2, mapping.getDataByEntity(barEntity))
+  }
+
+  @Test
+  fun `replace by source update mapping content and type`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    var fooEntity = initialBuilder.addSampleEntity("foo")
+    val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.create()
+    val secondFooEntity = replacement.addSampleEntity("foo")
+    val newExternalMapping = replacement.getMutableExternalMapping<String>(INDEX_ID)
+    newExternalMapping.addMapping(secondFooEntity, "test")
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    fooEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "foo" }
+    val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
+    assertEquals(1, mapping.size())
+    assertEquals("test", mapping.getDataByEntity(fooEntity))
+  }
+
+  @Test
+  fun `replace by source empty mapping`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
+    externalMapping.addMapping(fooEntity, 1)
+
+    val replacement = WorkspaceEntityStorageBuilder.create()
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
+    assertEquals(0, mapping.size())
+  }
+
+  @Test
+  fun `replace by source update id in the mapping`() {
+    val initialBuilder = WorkspaceEntityStorageBuilder.create()
+    val fooEntity = initialBuilder.addSampleEntity("foo")
+    initialBuilder.addSampleEntity("baz")
+    val barEntity = initialBuilder.addSampleEntity("bar")
+
+    val replacement = WorkspaceEntityStorageBuilder.create()
+    val externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
+    val fooEntity1 = replacement.addSampleEntity("foo")
+    val barEntity1 = replacement.addSampleEntity("bar")
+    externalMapping.addMapping(fooEntity1, 1)
+    externalMapping.addMapping(barEntity1, 2)
+    initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
+
+    assertNotEquals(barEntity.id, barEntity1.id)
+    val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
+    assertEquals(2, mapping.size())
+    assertEquals(1, mapping.getDataByEntity(fooEntity))
+    assertEquals(2, mapping.getDataByEntity(barEntity))
   }
 }

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public class CaptureSettingsProvider {
+public final class CaptureSettingsProvider {
   private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
 
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");

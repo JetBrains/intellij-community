@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
-import com.google.common.html.HtmlEscapers;
 import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -15,16 +15,16 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.Language;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -34,11 +34,7 @@ import java.net.URL;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-/**
- * Created by Denis Fokin
- */
-public class SheetController implements Disposable {
-
+public final class SheetController implements Disposable {
   private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
   private static final Logger LOG = Logger.getInstance(SheetController.class);
@@ -66,7 +62,7 @@ public class SheetController implements Disposable {
 
   private static final int GAP_BETWEEN_BUTTONS = 5;
 
-  private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.getProperty("line.separator") + "]|(<br\\s*/?>))+";
+  @NonNls private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.getProperty("line.separator") + "]|(<br\\s*/?>))+";
 
   // SHEET
   public int SHEET_WIDTH = 400;
@@ -90,8 +86,8 @@ public class SheetController implements Disposable {
   private final JEditorPane headerLabel = new JEditorPane();
 
   SheetController(final SheetMessage sheetMessage,
-                  final String title,
-                  final String message,
+                  @Nls final String title,
+                  @Nls final String message,
                   final Icon icon,
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
@@ -166,7 +162,7 @@ public class SheetController implements Disposable {
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
 
-  private void handleMnemonics(int i, String title) {
+  private void handleMnemonics(int i, @NlsContexts.Button String title) {
     buttons[i].setName(title);
 
     if (!setButtonTextAndMnemonic(i, title, '_') &&
@@ -176,7 +172,7 @@ public class SheetController implements Disposable {
     }
   }
 
-  private boolean setButtonTextAndMnemonic(int i, String title, char mnemonics) {
+  private boolean setButtonTextAndMnemonic(int i, @NlsContexts.Button String title, char mnemonics) {
     int mIdx;
     if ((mIdx = title.indexOf(mnemonics)) >= 0) {
       String text = title.substring(0, mIdx) + title.substring(mIdx + 1);
@@ -211,15 +207,14 @@ public class SheetController implements Disposable {
     }
   }
 
-  void setResultAndStartClose(String result) {
+  private void setResultAndStartClose(String result) {
     if (result != null)
       myResult = result;
     mySheetMessage.startAnimation(false);
   }
 
-  JPanel getPanel(final JDialog w) {
-    w.getRootPane().setDefaultButton(myDefaultButton);
-
+  JPanel getPanel(@NotNull RootPaneContainer container) {
+    container.getRootPane().setDefaultButton(myDefaultButton);
 
     ActionListener actionListener = new ActionListener() {
       @Override
@@ -243,8 +238,7 @@ public class SheetController implements Disposable {
     return .95f;
   }
 
-  // The message parameter may be either html or plain text.
-  private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
+  private JPanel createSheetPanel(@Nls String title, @Nls String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
       @Override
       protected void paintComponent(@NotNull Graphics g2d) {
@@ -339,14 +333,8 @@ public class SheetController implements Disposable {
       widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);
     }
 
-    String text = message;
-    if (!BasicHTML.isHTMLString(text)) {
-      // if the message is not html, escape the text to retain special characters in html
-      text = HtmlEscapers.htmlEscaper().escape(text);
-    }
-
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
-    messageTextPane.setText(handleBreaks(text));
+    messageTextPane.setText(handleBreaks(message));
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
@@ -391,8 +379,7 @@ public class SheetController implements Disposable {
     return sheetPanel;
   }
 
-  @Language("HTML")
-  private static String handleBreaks(@Language("HTML") final String message) {
+  private static String handleBreaks(final String message) {
     return message == null ? "" : message.replaceAll("(\r\n|\n)", "<br/>");
   }
 
@@ -429,7 +416,6 @@ public class SheetController implements Disposable {
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
-
     //int widestButtonWidth = 0;
     int buttonWidth = 0;
     SHEET_HEIGHT += GAP_BETWEEN_LINES;

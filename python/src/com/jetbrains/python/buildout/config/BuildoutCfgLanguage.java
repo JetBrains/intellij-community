@@ -5,7 +5,7 @@ import com.intellij.lang.Language;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class BuildoutCfgLanguage extends Language {
+public final class BuildoutCfgLanguage extends Language {
   public static final BuildoutCfgLanguage INSTANCE = new BuildoutCfgLanguage();
 
   private BuildoutCfgLanguage() {

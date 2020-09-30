@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.help.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -11,17 +11,17 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class KeymapGenerator implements ApplicationStarter {
+final class KeymapGenerator implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "keymap";
@@ -41,7 +41,7 @@ public class KeymapGenerator implements ApplicationStarter {
         if (!StringUtil.isEmpty(shortcuts)) {
           AnAction action = actionManager.getAction(id);
           xml.append("    <Action id=\"").append(id).append("\">\n");
-          Set<String> addedShortcuts = new THashSet<>();
+          Set<String> addedShortcuts = new HashSet<>();
           for (Shortcut shortcut : keymap.getShortcuts(id)) {
             // Different shortcuts may have equal display strings (e.g. shift+minus and shift+subtract)
             // We don't want them do be duplicated for users

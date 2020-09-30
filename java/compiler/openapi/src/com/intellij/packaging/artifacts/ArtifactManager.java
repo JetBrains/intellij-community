@@ -34,10 +34,10 @@ public abstract class ArtifactManager implements ArtifactModel {
   @NotNull
   public abstract Artifact addArtifact(@NonNls @NotNull String name, @NotNull ArtifactType type, @Nullable CompositePackagingElement<?> root);
 
-  public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath,
+  public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull @NonNls String relativePath,
                                               @NotNull Collection<? extends PackagingElement<?>> elements);
 
-  public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull String relativePath,
+  public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull @NonNls String relativePath,
                                               @NotNull PackagingElement<?> element);
 
   public abstract ModificationTracker getModificationTracker();

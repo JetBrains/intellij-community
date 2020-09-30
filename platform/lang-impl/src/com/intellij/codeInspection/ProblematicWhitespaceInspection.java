@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -42,7 +43,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("problematic.whitespace.show.whitespaces.quickfix");
+      return LangBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
     @Override
@@ -151,8 +152,8 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
         return false;
       }
       final String description = tab
-                                 ? InspectionsBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
-                                 : InspectionsBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
+                                 ? LangBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
+                                 : LangBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
       if (myIsOnTheFly) {
         myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ShowWhitespaceFix());
       }

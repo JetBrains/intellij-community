@@ -29,10 +29,11 @@ public final class StringToConstraintsTransformer {
   @NonNls private static final String WITHIN = "within";
   @NonNls private static final String CONTEXT = "context";
 
-  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
+  private static final Set<String> knownOptions =
+    ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static void transformCriteria(@NotNull String criteria, MatchOptions options) {
+  public static void transformCriteria(@NotNull String criteria, @NotNull MatchOptions options) {
     final StringBuilder pattern = new StringBuilder();
     int anonymousTypedVarsCount = 0;
     boolean targetFound = false;
@@ -40,7 +41,7 @@ public final class StringToConstraintsTransformer {
     final MatchVariableConstraint context = options.addNewVariableConstraint(Configuration.CONTEXT_VAR_NAME);
 
     final int length = criteria.length();
-    for(int index = 0; index < length; ++index) {
+    for (int index = 0; index < length; ++index) {
       char ch = criteria.charAt(index);
 
       if (index == 0 && ch == '[') {
@@ -51,7 +52,7 @@ public final class StringToConstraintsTransformer {
       if (ch == '\\' && index + 1 < length) {
         ch = criteria.charAt(++index);
       }
-      else if (ch=='\'') {
+      else if (ch == '\'') {
         final int newIndex = handleCharacterLiteral(criteria, index, pattern);
         if (newIndex != index) {
           index = newIndex;
@@ -65,14 +66,15 @@ public final class StringToConstraintsTransformer {
 
         boolean target = true;
         final String typedVar;
-        if (criteria.charAt(index)=='_')  {
+        if (criteria.charAt(index) == '_') {
           target = false;
 
-          if(endIndex == index + 1) {
+          if (endIndex == index + 1) {
             // anonymous var, make it unique for the case of constraints
             anonymousTypedVarsCount++;
             typedVar = "_" + anonymousTypedVarsCount;
-          } else {
+          }
+          else {
             typedVar = criteria.substring(index + 1, endIndex);
           }
         }
@@ -100,14 +102,17 @@ public final class StringToConstraintsTransformer {
           if (ch == '+') {
             maxOccurs = Integer.MAX_VALUE;
             ++index;
-          } else if (ch == '?') {
+          }
+          else if (ch == '?') {
             minOccurs = 0;
             ++index;
-          } else if (ch == '*') {
+          }
+          else if (ch == '*') {
             minOccurs = 0;
             maxOccurs = Integer.MAX_VALUE;
             ++index;
-          } else if (ch == '{') {
+          }
+          else if (ch == '{') {
             ++index;
             minOccurs = -1;
             maxOccurs = -1;
@@ -118,7 +123,7 @@ public final class StringToConstraintsTransformer {
               ++index;
             }
 
-            if (ch==',') {
+            if (ch == ',') {
               ++index;
 
               while (index < length && (ch = criteria.charAt(index)) >= '0' && ch <= '9') {
@@ -127,25 +132,36 @@ public final class StringToConstraintsTransformer {
                 if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
                 ++index;
               }
-            } else {
+            }
+            else {
               maxOccurs = -2;
             }
 
             if (ch != '}') {
               if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.digit"));
-              if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
-              else throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
+              if (maxOccurs < 0) {
+                throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
+              }
+              else {
+                throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
+              }
             }
-            if (minOccurs < 0 && maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.empty.quantifier"));
-            else if (minOccurs == -1) minOccurs = 0;
-            else if (maxOccurs == -1) maxOccurs = Integer.MAX_VALUE;
+            if (minOccurs < 0 && maxOccurs < 0) {
+              throw new MalformedPatternException(SSRBundle.message("error.empty.quantifier"));
+            }
+            else if (minOccurs == -1) {
+              minOccurs = 0;
+            }
+            else if (maxOccurs == -1) {
+              maxOccurs = Integer.MAX_VALUE;
+            }
             else if (maxOccurs == -2) maxOccurs = minOccurs;
             ++index;
           }
 
           if (index < length) {
             ch = criteria.charAt(index);
-            if (ch=='?') {
+            if (ch == '?') {
               greedy = false;
               ++index;
             }
@@ -175,8 +191,9 @@ public final class StringToConstraintsTransformer {
             pattern.append(ch);
           }
           else {
-            if (!constraintCreated)
+            if (!constraintCreated) {
               throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));
+            }
             index = handleTypedVarCondition(index, criteria, constraint);
           }
         }
@@ -197,21 +214,27 @@ public final class StringToConstraintsTransformer {
     options.setSearchPattern(pattern.toString());
   }
 
-  public static int handleCharacterLiteral(String criteria, int index, StringBuilder pattern) {
+  public static int handleCharacterLiteral(@NotNull String criteria, int index, @NotNull StringBuilder pattern) {
     final int length = criteria.length();
     if (index + 1 < length && criteria.charAt(index + 1) == '\'') {
       // ignore next '
       pattern.append('\'');
       return index + 1;
-    } else if (index + 2 < length && criteria.charAt(index + 2) == '\'') {
+    }
+    else if (index + 2 < length && criteria.charAt(index + 2) == '\'') {
       // eat simple character
       pattern.append(criteria, index, index + 3);
       return index + 2;
-    } else if (index + 3 < length && criteria.charAt(index + 1) == '\\' && criteria.charAt(index + 3) == '\'') {
+    }
+    else if (index + 3 < length && criteria.charAt(index + 1) == '\\' && criteria.charAt(index + 3) == '\'') {
       // eat simple escape character
       pattern.append(criteria, index, index + 4);
       return index + 3;
-    } else if (index + 7 < length && criteria.charAt(index + 1) == '\\' && criteria.charAt(index + 2) == 'u' && criteria.charAt(index + 7) == '\'') {
+    }
+    else if (index + 7 < length &&
+             criteria.charAt(index + 1) == '\\' &&
+             criteria.charAt(index + 2) == 'u' &&
+             criteria.charAt(index + 7) == '\'') {
       // eat unicode escape character
       pattern.append(criteria, index, index + 8);
       return index + 7;
@@ -219,7 +242,7 @@ public final class StringToConstraintsTransformer {
     return index;
   }
 
-  private static int handleTypedVarCondition(int index, String criteria, MatchVariableConstraint constraint) {
+  private static int handleTypedVarCondition(int index, @NotNull String criteria, @NotNull MatchVariableConstraint constraint) {
     final int length = criteria.length();
 
     char ch = criteria.charAt(index);
@@ -231,7 +254,7 @@ public final class StringToConstraintsTransformer {
     }
     if (ch == '+' || ch == '*') {
       // this is type axis navigation relation
-      switch(ch) {
+      switch (ch) {
         case '+':
           constraint.setStrictlyWithinHierarchy(true);
           break;
@@ -252,7 +275,9 @@ public final class StringToConstraintsTransformer {
       while (++endIndex < length) {
         if (criteria.charAt(endIndex - 1) != '\\') {
           ch = criteria.charAt(endIndex);
-          if (ch == '"') quoted = !quoted;
+          if (ch == '"') {
+            quoted = !quoted;
+          }
           else if (ch == ']' && !quoted) break;
         }
       }
@@ -267,7 +292,7 @@ public final class StringToConstraintsTransformer {
     }
   }
 
-  private static int handleRegExp(int index, String criteria, MatchVariableConstraint constraint) {
+  private static int handleRegExp(int index, @NotNull String criteria, @NotNull MatchVariableConstraint constraint) {
     final int length = criteria.length();
     int endIndex = index;
     while (endIndex < length && !Character.isWhitespace(criteria.charAt(endIndex))) {
@@ -275,8 +300,12 @@ public final class StringToConstraintsTransformer {
     }
 
     if (endIndex == index) {
-      if (criteria.charAt(index - 1) == ':') throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ":"));
-      else return endIndex;
+      if (criteria.charAt(index - 1) == ':') {
+        throw new MalformedPatternException(SSRBundle.message("error.expected.condition", ":"));
+      }
+      else {
+        return endIndex;
+      }
     }
     final String regexp = criteria.substring(index, endIndex);
 
@@ -292,7 +321,7 @@ public final class StringToConstraintsTransformer {
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")
-  private static void parseCondition(MatchVariableConstraint constraint, String condition) {
+  private static void parseCondition(@NotNull MatchVariableConstraint constraint, @NotNull String condition) {
     final int length = condition.length();
     final StringBuilder text = new StringBuilder();
     boolean invert = false;
@@ -307,7 +336,7 @@ public final class StringToConstraintsTransformer {
       else if (c == '(') {
         if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
         final String option = text.toString();
-        if (!knownOptions.contains(option)) {
+        if (!option.startsWith("_") && !knownOptions.contains(option)) {
           throw new MalformedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
         }
         text.setLength(0);
@@ -319,7 +348,9 @@ public final class StringToConstraintsTransformer {
         while (++i < length) {
           c = condition.charAt(i);
           if (condition.charAt(i - 1) != '\\') {
-            if (c == '"') quoted = !quoted;
+            if (c == '"') {
+              quoted = !quoted;
+            }
             else if (c == ')' && !quoted) {
               int j = 1;
               while (j <= spaces && condition.charAt(i - j) == ' ') j++;
@@ -333,8 +364,10 @@ public final class StringToConstraintsTransformer {
         }
         if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
         if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-        if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value",
-                                                                           StringUtil.repeatSymbol(' ', spaces) + ")"));
+        if (!closed) {
+          throw new MalformedPatternException(SSRBundle.message("error.expected.value",
+                                                                StringUtil.repeatSymbol(' ', spaces) + ")"));
+        }
         handleOption(constraint, option, text.toString(), invert);
         text.setLength(0);
         invert = false;
@@ -345,8 +378,9 @@ public final class StringToConstraintsTransformer {
           handleOption(constraint, text.toString(), "", invert);
           optionExpected = false;
         }
-        if (++i == length || condition.charAt(i) != '&' || optionExpected)
+        if (++i == length || condition.charAt(i) != '&' || optionExpected) {
           throw new MalformedPatternException(SSRBundle.message("error.unexpected.value", "&"));
+        }
         text.setLength(0);
         invert = false;
         optionExpected = true;
@@ -365,18 +399,20 @@ public final class StringToConstraintsTransformer {
     if (text.length() != 0) {
       handleOption(constraint, text.toString(), "", invert);
     }
-    else if (invert) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "!"));
+    else if (invert) {
+      throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "!"));
+    }
     else if (optionExpected) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", length == 0 ? "[" : "&&"));
   }
 
   private static void handleOption(@NotNull MatchVariableConstraint constraint, @NotNull String option, @NotNull String argument,
                                    boolean invert) {
     argument = argument.trim();
-    if (option.equalsIgnoreCase(REF)) {
+    if (option.equals(REF)) {
       constraint.setReferenceConstraint(argument);
       constraint.setInvertReference(invert);
     }
-    else if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
+    else if (option.equals(REGEX) || option.equals(REGEXW)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setWithinHierarchy(true);
@@ -384,11 +420,11 @@ public final class StringToConstraintsTransformer {
       checkRegex(argument);
       constraint.setRegExp(argument);
       constraint.setInvertRegExp(invert);
-      if (option.equalsIgnoreCase(REGEXW)) {
+      if (option.equals(REGEXW)) {
         constraint.setWholeWordsOnly(true);
       }
     }
-    else if (option.equalsIgnoreCase(EXPRTYPE)) {
+    else if (option.equals(EXPRTYPE)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
@@ -397,7 +433,7 @@ public final class StringToConstraintsTransformer {
       constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
-    else if (option.equalsIgnoreCase(FORMAL)) {
+    else if (option.equals(FORMAL)) {
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
@@ -406,24 +442,31 @@ public final class StringToConstraintsTransformer {
       constraint.setExpectedTypes(argument);
       constraint.setInvertFormalType(invert);
     }
-    else if (option.equalsIgnoreCase(SCRIPT)) {
+    else if (option.equals(SCRIPT)) {
       if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
       constraint.setScriptCodeConstraint(argument);
     }
-    else if (option.equalsIgnoreCase(CONTAINS)) {
+    else if (option.equals(CONTAINS)) {
       constraint.setContainsConstraint(argument);
       constraint.setInvertContainsConstraint(invert);
     }
-    else if (option.equalsIgnoreCase(WITHIN)) {
-      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
+    else if (option.equals(WITHIN)) {
+      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
+      }
       constraint.setWithinConstraint(argument);
       constraint.setInvertWithinConstraint(invert);
     }
-    else if (option.equalsIgnoreCase(CONTEXT)) {
-      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
+    else if (option.equals(CONTEXT)) {
+      if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
+      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
+      }
       constraint.setContextConstraint(argument);
+    }
+    else if (option.startsWith("_")) {
+      if (invert) throw new MalformedPatternException(SSRBundle.message("error.cannot.invert", option));
+      constraint.putAdditionalConstraint(option.substring(1), argument);
     }
     else {
       assert false;
@@ -439,7 +482,8 @@ public final class StringToConstraintsTransformer {
     }
   }
 
-  private static String unescape(String s) {
+  @NotNull
+  private static String unescape(@NotNull String s) {
     final StringBuilder result = new StringBuilder();
     boolean escaped = false;
     for (int i = 0, length = s.length(); i < length; i++) {

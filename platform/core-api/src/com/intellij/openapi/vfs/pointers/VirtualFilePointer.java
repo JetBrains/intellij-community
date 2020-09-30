@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vfs.pointers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +31,9 @@ public interface VirtualFilePointer {
   VirtualFile getFile();
 
   @NotNull
-  String getUrl();
+  @NonNls String getUrl();
 
-  @NotNull
-  String getPresentableUrl();
+  @NlsSafe @NotNull String getPresentableUrl();
 
   /**
    * @return true if the file exists

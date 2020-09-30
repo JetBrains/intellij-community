@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.isFile
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
 import java.nio.file.Path
@@ -13,7 +13,7 @@ fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
   assertThat(path2).isDirectory()
 
-  val notFound = ObjectOpenHashSet<Path>()
+  val notFound = CollectionFactory.createSmallMemoryFootprintSet<Path>()
   path1.directoryStreamIfExists({ !it.endsWith(Constants.DOT_GIT) && !localExcludes.contains(it.fileName.toString()) }) {
     notFound.addAll(it)
   }

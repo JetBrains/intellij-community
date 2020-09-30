@@ -77,7 +77,7 @@ internal class FrameInfoHelper {
 private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
   val frame = frameHelper.frame
   var extendedState = frame.extendedState
-  if (SystemInfo.isMacOSLion) {
+  if (SystemInfo.isMac) {
     // java 11
     @Suppress("USELESS_CAST")
     val peer = AWTAccessor.getComponentAccessor().getPeer(frame) as ComponentPeer?

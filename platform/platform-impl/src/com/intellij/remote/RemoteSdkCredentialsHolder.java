@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   public static String constructSshCredentialsSdkFullPath(@NotNull RemoteSdkCredentials cred) {
-    StringBuilder builder = new StringBuilder();
+    @NlsSafe StringBuilder builder = new StringBuilder();
     if (cred.isRunAsRootViaSudo()) {
       builder.append("sudo+");
     }
@@ -151,7 +153,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
-      for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+      for (CredentialsType<?> type : CredentialsManager.getInstance().getAllTypes()) {
         if (type.hasPrefix(path)) {
           return true;
         }
@@ -218,6 +220,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "RemoteSdkDataHolder" +
            "{getHost()='" +

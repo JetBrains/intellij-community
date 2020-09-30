@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -14,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +97,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
         if (myDescriptionTextField.isShowing()) {
           GraphicsUtil.setupAntialiasing(g);
           g.setColor(JBColor.GRAY);
-          g.drawString(EditableSchemesCombo.EDITING_HINT, 0, -JBUIScale.scale(5));
+          g.drawString(IdeBundle.message("hint.scheme.editing"), 0, -JBUIScale.scale(5));
         }
       }
     };
@@ -103,7 +106,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   @Override
-  public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showMessage(@Nullable @NlsContexts.Label String message, @NotNull MessageType messageType) {
     showMessage(message, messageType, myWarningLabel);
     myLayout.show(myInfoComponent, ERROR_CARD);
   }
@@ -146,7 +149,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   private static class DescriptionLabel extends JBLabel {
-    private String myAllText = "";
+    private @Nls String myAllText = "";
 
     DescriptionLabel() {
       setForeground(JBColor.GRAY);
@@ -160,7 +163,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
       });
     }
 
-    public void setAllText(String allText) {
+    public void setAllText(@Nls String allText) {
       myAllText = allText;
       calculateText();
       revalidate();

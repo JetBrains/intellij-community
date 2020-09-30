@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -216,7 +217,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
 
   @NotNull
-  protected String wrapProgressText(@NotNull String text) {
+  protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
   }
 

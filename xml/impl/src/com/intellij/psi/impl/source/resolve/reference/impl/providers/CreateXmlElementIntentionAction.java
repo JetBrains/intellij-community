@@ -61,7 +61,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("xml.create.xml.declaration.intention.type");
+    return XmlBundle.message("xml.intention.create.xml.declaration");
   }
 
   @Override

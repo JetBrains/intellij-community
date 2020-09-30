@@ -4,6 +4,7 @@ package com.intellij.lang.java;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -76,15 +77,13 @@ public class JavaImportOptimizer implements ImportOptimizer {
       @Override
       public String getUserNotificationInfo() {
         if (myImportsRemoved == 0) {
-          return "rearranged imports";
+          return JavaBundle.message("hint.text.rearranged.imports");
         }
-        final StringBuilder notification = new StringBuilder("removed ").append(myImportsRemoved).append(" import");
-        if (myImportsRemoved > 1) notification.append('s');
+        String notification = JavaBundle.message("hint.text.removed.imports", myImportsRemoved, myImportsRemoved == 1 ? 0 : 1);
         if (myImportsAdded > 0) {
-          notification.append(", added ").append(myImportsAdded).append(" import");
-          if (myImportsAdded > 1) notification.append('s');
+          notification += JavaBundle.message("hint.text.added.imports", myImportsAdded, myImportsAdded == 1 ? 0 : 1);
         }
-        return notification.toString();
+        return notification;
       }
     };
   }

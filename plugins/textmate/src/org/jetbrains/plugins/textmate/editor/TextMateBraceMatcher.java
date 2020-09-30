@@ -12,12 +12,12 @@ import org.jetbrains.annotations.Nullable;
 public class TextMateBraceMatcher implements BraceMatcher {
 
   @Override
-  public int getBraceTokenGroupId(IElementType tokenType) {
+  public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     return BraceMatchingUtil.UNDEFINED_TOKEN_GROUP;
   }
 
   @Override
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     if (iterator.getStart() == iterator.getEnd()) return false;
     IElementType tokenType = iterator.getTokenType();
     String currentSelector = tokenType != null ? tokenType.toString() : null;
@@ -25,7 +25,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     int end = iterator.getEnd();
     if (end == 0 || end == iterator.getStart()) return false;
 
@@ -35,12 +35,12 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
+  public boolean isPairBraces(@NotNull IElementType tokenType, @NotNull IElementType tokenType2) {
     return true;
   }
 
   @Override
-  public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
+  public boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType) {
     return false;
   }
 
@@ -56,7 +56,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

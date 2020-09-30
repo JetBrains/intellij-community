@@ -45,7 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class PsiImplUtil {
+public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
 
   private PsiImplUtil() { }

@@ -2,9 +2,10 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -25,13 +26,16 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ShowSettingsUtil.getSettingsMenuName
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
@@ -41,9 +45,12 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import javax.swing.plaf.FontUIResource
+import javax.swing.plaf.LabelUI
 
 private val settings get() = UISettings.instance
 private val fontOptions get() = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
+private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
 private val laf get() = LafManager.getInstance()
 private val keymapManager get() = KeymapManager.getInstance() as KeymapManagerImpl
@@ -59,7 +66,7 @@ private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { laf.currentLookAndFeelReference }
+  private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
@@ -67,15 +74,15 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
   init {
-    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), false) }, parentDisposable)
+    lafProperty.afterChange({ laf.lookAndFeelReference = it }, parentDisposable)
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
-                                  updateFontSettings()
+                                  updateFontSettingsLater()
                                 }, parentDisposable)
     editorFontProperty.afterChange({
                                      fontOptions.setSize(fontOptions.fontFamily, it)
-                                     updateFontSettings()
+                                     updateFontSettingsLater()
                                    }, parentDisposable)
     keymapProperty.afterChange({ keymapManager.activeKeymap = it }, parentDisposable)
     adjustColorsProperty.afterChange({ updateColorBlindness() }, parentDisposable)
@@ -99,9 +106,11 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     })
   }
 
-  private fun updateFontSettings() {
-    laf.updateUI()
-    settings.fireUISettingsChanged()
+  private fun updateFontSettingsLater() {
+    ApplicationManager.getApplication().invokeLater {
+      laf.updateUI()
+      settings.fireUISettingsChanged()
+    }
   }
 
   private fun <T> updateProperty(property: GraphProperty<T>, settingGetter: () -> T) {
@@ -125,7 +134,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         row {
-          comboBox<LafManager.LafReference>(laf.lafComboBoxModel, lafProperty)
+          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          component(laf.settingsToolbar)
+            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+            .withLeftGap()
         }
       }.largeGapAfter()
       blockRow {
@@ -146,14 +158,20 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
-          component(Link(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
+          component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
         }
       }
       blockRow {
-        component(Link(IdeBundle.message("welcome.screen.all.settings.link"))
-                  { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+        val action = ActionManager.getInstance().getAction("WelcomeScreen.Configure.Import")
+        component(ActionLink(action.templateText, null, action).apply { isFocusable = true })
+        row {
+          component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link")) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
+                                                              *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
+          })
+        }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
@@ -173,7 +191,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
             PlatformEditorBundle.message(it?.key ?: "")
           }).comment(UIBundle.message("color.blindness.combobox.comment")).enableIf(checkBox.selected)
         }
-        component(Link(UIBundle.message("color.blindness.link.to.help"))
+        component(focusableLink(UIBundle.message("color.blindness.link.to.help"))
                   { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
           .withLargeLeftGap()
       }
@@ -182,14 +200,27 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
 
   private fun Row.header(@Nls title: String) {
     fullRow {
-      label(title).apply { component.font = component.font.deriveFont(JBUIScale.scale(16)).deriveFont(Font.BOLD) }
+      component(HeaderLabel(title))
     }.largeGapAfter()
   }
 
+  private class HeaderLabel(@Nls title: String) : JBLabel(title) {
+    override fun setUI(ui: LabelUI?) {
+      super.setUI(ui)
+      if (font != null) {
+        font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(3)).deriveFont(Font.BOLD))
+      }
+    }
+  }
+
+  private fun focusableLink(@NlsContexts.Label text: String, action: () -> Unit): JComponent {
+    return Link(text, null, action).apply { isFocusable = true }
+  }
+
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
-    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }
+    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
+    fontSizes.add(fontProperty.get())
     val model = DefaultComboBoxModel(fontSizes.toTypedArray())
-    model.addElement(fontProperty.get())
     return comboBox(model, fontProperty).applyToComponent {
       isEditable = true
     }

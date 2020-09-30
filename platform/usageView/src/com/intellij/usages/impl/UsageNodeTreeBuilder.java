@@ -9,9 +9,9 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 
 class UsageNodeTreeBuilder {
@@ -42,12 +42,13 @@ class UsageNodeTreeBuilder {
   }
 
   public boolean isVisible(@NotNull Usage usage) {
-    return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
+    return ContainerUtil.and(myFilteringRules, rule -> rule.isVisible(usage, myTargets));
   }
 
   UsageNode appendOrGet(@NotNull Usage usage,
                         boolean filterDuplicateLines,
-                        @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
+                        @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue,
+                        @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
     if (!isVisible(usage)) return null;
 
     final boolean dumb = DumbService.isDumb(myProject);
@@ -59,10 +60,10 @@ class UsageNodeTreeBuilder {
 
       List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
       for (UsageGroup group : groups) {
-        groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
+        groupNode = groupNode.addOrGetGroup(group, i, edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
       }
     }
 
-    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtInsertedUnderQueue);
+    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
   }
 }

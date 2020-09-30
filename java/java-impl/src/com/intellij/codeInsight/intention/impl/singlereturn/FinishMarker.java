@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
@@ -27,7 +27,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Represents a way to indicate whether method execution is already finished
  */
-public class FinishMarker {
+public final class FinishMarker {
   /**
    * Type of finish marker
    */
@@ -62,7 +62,7 @@ public class FinishMarker {
 
   /**
    * Checks whether we may need a marker value to indicate premature exit from given return statement.
-   * 
+   *
    * @param returnStatement return statement to check
    * @param block method body (ancestor of return statement).
    * @return false if it's possible to transform the code removing given return statement without introducing a marker;

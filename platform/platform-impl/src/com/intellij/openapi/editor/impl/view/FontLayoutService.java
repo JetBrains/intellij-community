@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,11 +22,11 @@ public abstract class FontLayoutService {
 
   private static final FontLayoutService DEFAULT_INSTANCE = new DefaultFontLayoutService();
   private static FontLayoutService INSTANCE = DEFAULT_INSTANCE;
-  
+
   public static FontLayoutService getInstance() {
     return INSTANCE;
   }
-  
+
   @NotNull
   public abstract GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext,
                                                 char @NotNull [] chars, int start, int end, boolean isRtl);
@@ -54,15 +40,15 @@ public abstract class FontLayoutService {
   public abstract int stringWidth(@NotNull FontMetrics fontMetrics, @NotNull String str);
 
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
-  
+
   public abstract int getDescent(@NotNull FontMetrics fontMetrics);
-  
+
   @TestOnly
   public static void setInstance(@Nullable FontLayoutService fontLayoutService) {
     INSTANCE = fontLayoutService == null ? DEFAULT_INSTANCE : fontLayoutService;
   }
-  
-  private static class DefaultFontLayoutService extends FontLayoutService {
+
+  private static final class DefaultFontLayoutService extends FontLayoutService {
     // this flag is supported by JetBrains Runtime
     private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
 

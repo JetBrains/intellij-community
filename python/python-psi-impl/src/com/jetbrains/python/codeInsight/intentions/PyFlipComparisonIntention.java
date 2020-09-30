@@ -38,7 +38,7 @@ public class PyFlipComparisonIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.flip.comparison");
+    return PyPsiBundle.message("INTN.NAME.flip.comparison");
   }
 
   @Override
@@ -55,10 +55,10 @@ public class PyFlipComparisonIntention extends PyBaseIntentionAction {
         String operatorText = binaryExpression.getPsiOperator().getText();
         String flippedOperatorText = FLIPPED_OPERATORS.get(operator);
         if (flippedOperatorText.equals(operatorText)) {
-          setText(PyPsiBundle.message("INTN.flip.$0", operatorText));
+          setText(PyPsiBundle.message("INTN.flip.comparison", operatorText));
         }
         else {
-          setText(PyPsiBundle.message("INTN.flip.$0.to.$1", operatorText, flippedOperatorText));
+          setText(PyPsiBundle.message("INTN.flip.comparison.to.operator", operatorText, flippedOperatorText));
         }
         return true;
       }

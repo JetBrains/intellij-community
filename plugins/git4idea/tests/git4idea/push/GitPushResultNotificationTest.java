@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
@@ -32,6 +32,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GitPushResultNotificationTest extends GitPlatformTest {
+  private static final String UPDATE_WITH_RESOLVED_CONFLICTS = "Push has been cancelled, because there were conflicts during update.<br/>" +
+                                                               "Check that conflicts were resolved correctly, and invoke push again.";
 
   private static Project ourProject; // for static map initialization
 
@@ -42,7 +44,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     ourProject = null;
     super.tearDown();
   }
@@ -68,7 +70,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("community"), repoResult(ERROR, "master", "origin/master", "Permission denied"));
     }});
     assertPushNotification(NotificationType.ERROR, "Push partially failed",
-                       "ultimate: pushed 1 commit to origin/master<br/>" +
+                       "ultimate: Pushed 1 commit to origin/master<br/>" +
                        "community: Permission denied", notification);
   }
 
@@ -78,8 +80,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: pushed 1 commit to origin/master<br/>" +
-                       "community: push to origin/master was rejected", notification);
+                       "ultimate: Pushed 1 commit to origin/master<br/>" +
+                       "community: Push to origin/master was rejected", notification);
   }
 
   public void test_success_with_update() {
@@ -94,9 +96,9 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: pushed 1 commit to origin/master<br/>" +
-                       "community: " + GitPushResultNotification.UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
-                       "contrib: " + GitPushResultNotification.UPDATE_WITH_RESOLVED_CONFLICTS,
+                       "ultimate: Pushed 1 commit to origin/master<br/>" +
+                       "community: " + UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
+                       "contrib: " + UPDATE_WITH_RESOLVED_CONFLICTS,
                            notification);
 
   }
@@ -137,8 +139,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     }});
 
     assertPushNotification(NotificationType.INFORMATION, "Push successful",
-                       "community: pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
-                       "ultimate: pushed tag v0.1 to origin", notification);
+                       "community: Pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
+                       "ultimate: Pushed tag v0.1 to origin", notification);
   }
 
   public void test_two_tags() {
@@ -219,7 +221,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static MockGitRepository repo(final String name) {
     final Ref<VirtualFile> root = Ref.create();
-    EdtTestUtil.runInEdtAndWait(() -> root.set(createChildData(PlatformTestUtil.getOrCreateProjectTestBaseDir(ourProject), name)));
+    EdtTestUtil.runInEdtAndWait(() -> root.set(createChildData(PlatformTestUtil.getOrCreateProjectBaseDir(ourProject), name)));
     return new MockGitRepository(ourProject, root.get());
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -52,6 +53,7 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   @Nullable
+  @NlsSafe
   public String getMessage() {
     String text = myMessage.getText();
     if (mySubMessage.isVisible()) {

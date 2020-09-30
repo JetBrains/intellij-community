@@ -14,11 +14,13 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.MoreObjects;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -55,6 +57,7 @@ public class HgFile {
     return file;
   }
 
+  @NlsSafe
   @Nullable
   public String getRelativePath() {
     if (relativePath == null) {
@@ -95,6 +98,7 @@ public class HgFile {
     return Objects.hash(vcsRoot, file);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(HgFile.class)

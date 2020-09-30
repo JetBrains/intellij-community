@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public enum HighlightingFeature {
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
@@ -62,6 +64,8 @@ public enum HighlightingFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
 
+  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
+
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
   final String key;
@@ -69,6 +73,10 @@ public enum HighlightingFeature {
   HighlightingFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
     this.level = level;
     this.key = key;
+  }
+
+  public LanguageLevel getLevel() {
+    return level;
   }
 
   /**
@@ -88,5 +96,40 @@ public enum HighlightingFeature {
    */
   LanguageLevel getStandardLevel() {
     return level.isPreview() ? null : level;
+  }
+
+  @Nullable
+  @Contract(value = "null -> null", pure = true)
+  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
+    if (annotation == null) return null;
+    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
+
+    final PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
+    if (feature == null) return null;
+
+    final PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
+
+    final PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
+    if (enumConstant == null) return null;
+
+    return convertFromPreviewFeatureName(enumConstant.getName());
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls final String feature) {
+    switch (feature) {
+      case "PATTERN_MATCHING_IN_INSTANCEOF":
+        return PATTERNS;
+      case "TEXT_BLOCKS":
+        return TEXT_BLOCKS;
+      case "RECORDS":
+        return RECORDS;
+      case "SEALED_CLASSES":
+        return SEALED_CLASSES;
+      default:
+        return null;
+    }
   }
 }

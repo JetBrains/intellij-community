@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,7 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
   @NotNull
   @Override
   public String getDescription() {
-    return "Scratch";
+    return LangBundle.message("scratch.file.type.description");
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import gnu.trove.THashMap;
@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class ModulePath {
-
   public interface Builder {
     Builder add(String moduleName, File pathElement);
     ModulePath create();
@@ -19,7 +18,7 @@ public abstract class ModulePath {
   public abstract Collection<? extends File> getPath();
 
   /**
-   * @param pathElement a single module path enntry
+   * @param pathElement a single module path entry
    * @return a JPMS module name associated with the passed module path element.
    *   null value does not necessarily mean the entry cannot be treated as a JPMS module. null only
    *   means that there is no module name information stored for the file in this ModulePath object

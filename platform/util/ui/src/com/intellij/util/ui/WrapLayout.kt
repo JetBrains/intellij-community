@@ -6,11 +6,13 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
+import kotlin.math.floor
+import kotlin.math.max
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.
  */
-class WrapLayout : FlowLayout {
+open class WrapLayout : FlowLayout {
 
   /**
    * Constructs a new `WrapLayout` with a left
@@ -41,6 +43,8 @@ class WrapLayout : FlowLayout {
    * @param vgap the vertical gap between components
    */
   constructor(align: Int, hgap: Int, vgap: Int) : super(align, hgap, vgap)
+
+  var fillWidth: Boolean = false
 
   /**
    * Returns the preferred dimensions for this layout given the
@@ -121,7 +125,7 @@ class WrapLayout : FlowLayout {
           }
 
           rowWidth += d.width
-          rowHeight = Math.max(rowHeight, d.height)
+          rowHeight = max(rowHeight, d.height)
         }
       }
 
@@ -152,12 +156,132 @@ class WrapLayout : FlowLayout {
    *  @param rowHeight the height of the row to add
    */
   private fun addRow(dim: Dimension, rowWidth: Int, rowHeight: Int) {
-    dim.width = Math.max(dim.width, rowWidth)
+    dim.width = max(dim.width, rowWidth)
 
     if (dim.height > 0) {
       dim.height += vgap
     }
 
     dim.height += rowHeight
+  }
+
+  override fun layoutContainer(target: Container) {
+    synchronized(target.treeLock) {
+      val insets = target.insets
+      val maxwidth = target.width - (insets.left + insets.right + hgap * 2)
+      val nmembers = target.componentCount
+      var x = 0
+      var y = insets.top + vgap
+      var rowh = 0
+      var start = 0
+      val ltr = target.componentOrientation.isLeftToRight
+      val useBaseline = alignOnBaseline
+      val ascent = IntArray(nmembers)
+      val descent = IntArray(nmembers)
+      for (i in 0 until nmembers) {
+        val m = target.getComponent(i)
+        if (m.isVisible) {
+          val d = m.preferredSize
+          m.setSize(d.width, d.height)
+          if (useBaseline) {
+            val baseline = m.getBaseline(d.width, d.height)
+            if (baseline >= 0) {
+              ascent[i] = baseline
+              descent[i] = d.height - baseline
+            }
+            else {
+              ascent[i] = -1
+            }
+          }
+          if (x == 0 || x + d.width <= maxwidth) {
+            if (x > 0) {
+              x += hgap
+            }
+            x += d.width
+            rowh = max(rowh, d.height)
+          }
+          else {
+            rowh = moveComponents(target, insets.left + hgap, y,
+                                  maxwidth - x, rowh, start, i, ltr,
+                                  useBaseline, ascent, descent)
+            x = d.width
+            y += vgap + rowh
+            rowh = d.height
+            start = i
+          }
+        }
+      }
+      moveComponents(target, insets.left + hgap, y, maxwidth - x, rowh,
+                     start, nmembers, ltr, useBaseline, ascent, descent)
+    }
+  }
+
+  private fun moveComponents(target: Container, _x: Int, y: Int, width: Int, _height: Int,
+                                  rowStart: Int, rowEnd: Int, ltr: Boolean,
+                                  useBaseline: Boolean, ascent: IntArray,
+                                  descent: IntArray): Int {
+    var x = _x
+    var height = _height
+    when (alignment) {
+      LEFT -> x += if (ltr) 0 else width
+      CENTER -> x += width / 2
+      RIGHT -> x += if (ltr) width else 0
+      LEADING -> {
+      }
+      TRAILING -> x += width
+    }
+    var maxAscent = 0
+    var nonBaselineHeight = 0
+    var baselineOffset = 0
+    if (useBaseline) {
+      var maxDescent = 0
+      for (i in rowStart until rowEnd) {
+        val m = target.getComponent(i)
+        if (m.isVisible) {
+          if (ascent[i] >= 0) {
+            maxAscent = max(maxAscent, ascent[i])
+            maxDescent = max(maxDescent, descent[i])
+          }
+          else {
+            nonBaselineHeight = max(m.height, nonBaselineHeight)
+          }
+        }
+      }
+      height = max(maxAscent + maxDescent, nonBaselineHeight)
+      baselineOffset = (height - maxAscent - maxDescent) / 2
+    }
+
+    var expand = 1.0
+    if (fillWidth) {
+      var sum = 0.0
+      for (i in rowStart until rowEnd) {
+        val m = target.getComponent(i)
+        if (m.isVisible) {
+          sum += m.minimumSize.width
+        }
+      }
+      expand = target.width.toDouble() / sum
+    }
+
+    for (i in rowStart until rowEnd) {
+      val m = target.getComponent(i)
+      if (m.isVisible) {
+        val cy: Int = if (useBaseline && ascent[i] >= 0) {
+          y + baselineOffset + maxAscent - ascent[i]
+        }
+        else {
+          y + (height - m.height) / 2
+        }
+        val w = if (fillWidth) floor(m.minimumSize.width * expand).toInt() else m.width
+        if (ltr) {
+          m.setBounds(x, cy, w, m.height)
+        }
+        else {
+          m.setBounds(target.width - x - w, cy, w, m.height)
+        }
+        x += m.width + hgap
+      }
+    }
+    return height
   }
 }

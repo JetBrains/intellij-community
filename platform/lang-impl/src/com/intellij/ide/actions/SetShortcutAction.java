@@ -55,7 +55,7 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
 
     Optional<JBPopup> seDialog = getPopup(e);
-    if (!seDialog.isPresent()) {
+    if (seDialog.isEmpty()) {
       presentation.setEnabled(false);
       return;
     }

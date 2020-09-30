@@ -8,17 +8,17 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,19 +29,15 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
-import com.intellij.project.ProjectStoreOwner;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -156,10 +151,10 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   protected static void initProject(@NotNull Path file,
                                     @NotNull ProjectImpl project,
                                     boolean isRefreshVfsNeeded,
+                                    boolean preloadServices,
                                     @Nullable Project template,
                                     @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
-    boolean succeed = false;
     try {
       if (indicator != null) {
         indicator.setIndeterminate(false);
@@ -174,20 +169,23 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
       ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
-      project.init(indicator);
-      succeed = true;
+      project.init(preloadServices, indicator);
     }
-    finally {
-      if (!succeed) {
+    catch (Throwable initThrowable) {
+      try {
         WriteAction.runAndWait(() -> Disposer.dispose(project));
       }
+      catch (Throwable disposeThrowable) {
+        initThrowable.addSuppressed(disposeThrowable);
+      }
+      throw initThrowable;
     }
   }
 
   @Override
   public @NotNull Project loadProject(@NotNull Path file) {
     ProjectImpl project = new ProjectExImpl(file, null);
-    initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+    initProject(file, project, /* isRefreshVfsNeeded = */ true, true, null, ProgressManager.getInstance().getProgressIndicator());
     return project;
   }
 
@@ -200,7 +198,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   public @NotNull Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
     // call instance method to reset timeout
-    LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
+    MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
+    LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
   }
@@ -218,24 +217,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return ArrayUtil.contains(project, myOpenProjects);
     }
   }
-
-  @Override
-  public boolean openProject(@NotNull Project project) {
-    IProjectStore store = project instanceof ProjectStoreOwner ? ((ProjectStoreOwner)project).getComponentStore() : null;
-    if (store != null) {
-      Path projectFilePath = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getDirectoryStorePath() : Paths.get(store.getProjectFilePath());
-      for (Project p : getOpenProjects()) {
-        if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);
-          return false;
-        }
-      }
-    }
-
-    return doOpenProject(project);
-  }
-
-  abstract boolean doOpenProject(@NotNull Project project);
 
   protected final boolean addToOpened(@NotNull Project project) {
     assert !project.isDisposed() : "Must not open already disposed project";
@@ -554,7 +535,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return true;
     }
 
-    StringBuilder message = new StringBuilder();
+    @NlsContexts.DialogMessage StringBuilder message = new StringBuilder();
     message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                  ApplicationNamesInfo.getInstance().getProductName()));
 

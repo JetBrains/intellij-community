@@ -1,5 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntArrayList;
@@ -22,7 +24,7 @@ public class GithubTagInfo {
   }
 
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -50,7 +52,7 @@ public class GithubTagInfo {
   @NotNull
   private Version createVersionComponents() {
     String tagName = myName;
-    if (tagName.startsWith("v.")) {
+    if (tagName.startsWith("v.")) { //NON-NLS
       tagName = tagName.substring(2);
     } else if (StringUtil.startsWithChar(tagName, 'v')) {
       tagName = tagName.substring(1);

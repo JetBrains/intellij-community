@@ -2,6 +2,8 @@
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 
 public class SearchResult {
 
@@ -9,9 +11,9 @@ public class SearchResult {
 
   public final Position startPosition;
   public final Position endPostion;
-  public final String contextPrefix;
-  public final String foundString;
-  public final String contextPostfix;
+  public final @NlsSafe String contextPrefix;
+  public final @NlsSafe String foundString;
+  public final @NlsSafe String contextPostfix;
 
   public SearchResult(long startPageNumber,
                       int startOffsetInPage,
@@ -28,7 +30,7 @@ public class SearchResult {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("p%ds%d-p%ds%d: pref{%s},orig{%s},post{%s}",
                          startPosition.pageNumber, startPosition.symbolOffsetInPage,
                          endPostion.pageNumber, endPostion.symbolOffsetInPage,

@@ -23,6 +23,9 @@
   </item>
   <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true" />
+    </annotation>
   </item>
   <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />

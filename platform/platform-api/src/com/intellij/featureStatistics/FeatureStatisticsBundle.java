@@ -3,6 +3,7 @@ package com.intellij.featureStatistics;
 
 import com.intellij.AbstractBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -16,7 +17,7 @@ import java.util.ResourceBundle;
 
 public final class FeatureStatisticsBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return AbstractBundle.message(getBundle(key), key, params);
   }
 
@@ -48,7 +49,8 @@ public final class FeatureStatisticsBundle {
     private ProvidersBundles() {
       for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
         try {
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), bundleEP.getLoaderForClass());
+          ClassLoader pluginClassLoader = bundleEP.getPluginDescriptor().getPluginClassLoader();
+          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), pluginClassLoader);
           for (String key : bundle.keySet()) {
             put(key, bundle);
           }

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Map;
 
-public class FinalUtils {
+public final class FinalUtils {
 
   private FinalUtils() {}
 

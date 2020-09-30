@@ -2,11 +2,11 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author peter
  * @see ProcessingContext
  */
-public class SharedProcessingContext {
+public final class SharedProcessingContext {
   private final Map<Object, Object> myMap = new ConcurrentHashMap<>();
 
   public Object get(@NonNls final @NotNull String key) {
@@ -44,11 +44,7 @@ public class SharedProcessingContext {
   }
 
   public <T> void put(@NotNull Key<T> key, Object element, T value) {
-    Map map = (Map)myMap.get(key);
-    if (map == null) {
-      map = new THashMap();
-      myMap.put(key, map);
-    }
-    map.put(element, value);
+    //noinspection unchecked
+    ((Map)myMap.computeIfAbsent(key, __ -> new HashMap<>())).put(element, value);
   }
 }

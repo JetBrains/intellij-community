@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -178,7 +179,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   private static class MyNavigateAction extends AnAction {
     private final PsiElement myElement;
 
-    MyNavigateAction(final String name, PsiElement element) {
+    MyNavigateAction(final @NlsSafe String name, PsiElement element) {
       super(name);
       myElement = element;
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ConcurrencyUtil;
@@ -36,8 +37,8 @@ public class UrlClassLoaderTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
+  @ReviseWhenPortedToJDK("9")
   public void testBootstrapResources() {
-    //noinspection SpellCheckingInspection
     String name = JavaVersion.current().feature > 8 ? "META-INF/services/java.nio.file.spi.FileSystemProvider"
                                                     : "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
     assertNotNull(ClassLoader.getSystemResourceAsStream(name));

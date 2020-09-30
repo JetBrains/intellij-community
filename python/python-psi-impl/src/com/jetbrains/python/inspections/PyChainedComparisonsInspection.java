@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.ChainedComparisonsQuickFix;
@@ -47,14 +48,14 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyChainedComparisonsInspection extends PyInspection {
 
-  protected static final String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JCheckBox checkBox = PythonUiService.getInstance().createInspectionCheckBox(ourIgnoreConstantOptionText, this, "ignoreConstantInTheMiddle");
+    JCheckBox checkBox = PythonUiService.getInstance().createInspectionCheckBox(
+      PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"), this, "ignoreConstantInTheMiddle");
     final JPanel rootPanel = new JPanel(new BorderLayout());
     if (checkBox != null) {
       rootPanel.add(checkBox,
@@ -88,7 +89,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node) {
+    public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
       myIsLeft = false;
       myIsRight = false;
       myOperator = null;
@@ -118,12 +119,12 @@ public class PyChainedComparisonsInspection extends PyInspection {
         if (applicable) {
           if (isConstantInTheMiddle) {
             if (!ignoreConstantInTheMiddle) {
-              registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
+              registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"), new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
                               new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
             }
           }
           else {
-            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+            registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"), new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
           }
         }
       }
@@ -240,7 +241,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return ourIgnoreConstantOptionText;
+      return PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle");
     }
 
     @Override

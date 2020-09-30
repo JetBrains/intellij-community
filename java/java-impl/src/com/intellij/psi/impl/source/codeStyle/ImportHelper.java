@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
@@ -33,6 +34,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -132,7 +134,9 @@ public class ImportHelper{
       }
       String ext = JavaFileType.INSTANCE.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
-      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, JavaFileType.INSTANCE, text);
+      PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, JavaLanguage.INSTANCE, text, false, false);
+      PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(dummyFile, file.getLanguageLevel());
+      PsiFileFactoryImpl.markGenerated(dummyFile);
       CodeStyle.reformatWithFileContext(dummyFile, file);
 
       PsiImportList newImportList = dummyFile.getImportList();
@@ -167,7 +171,7 @@ public class ImportHelper{
     }
 
 
-    class MyVisitorProcedure implements TObjectIntProcedure<String> {
+    final class MyVisitorProcedure implements TObjectIntProcedure<String> {
       private final boolean myIsVisitingPackages;
 
       private MyVisitorProcedure(boolean isVisitingPackages) {
@@ -364,8 +368,8 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            if (fqn != null && 
-                !PsiTreeUtil.isAncestor(file, element, true) && 
+            if (fqn != null &&
+                !PsiTreeUtil.isAncestor(file, element, true) &&
                 !packageName.equals(StringUtil.getPackageName(fqn))) {
               outNamesToUseSingle.add(fqn);
             }
@@ -556,7 +560,7 @@ public class ImportHelper{
   private static boolean containsInCurrentPackage(@NotNull PsiJavaFile file, PsiClass curRefClass) {
     if (curRefClass != null) {
       final String curRefClassQualifiedName = curRefClass.getQualifiedName();
-      if (curRefClassQualifiedName != null && 
+      if (curRefClassQualifiedName != null &&
           ArrayUtil.find(file.getImplicitlyImportedPackages(), StringUtil.getPackageName(curRefClassQualifiedName)) < 0) {
          return true;
       }
@@ -577,24 +581,19 @@ public class ImportHelper{
     if (aPackage == null) {
       return;
     }
-    PsiDirectory[] dirs = aPackage.getDirectories();
     GlobalSearchScope resolveScope = file.getResolveScope();
-    for (PsiDirectory dir : dirs) {
-      PsiFile[] files = dir.getFiles(); // do not iterate classes - too slow when not loaded
-      for (PsiFile aFile : files) {
-        if (!(aFile instanceof PsiJavaFile)) continue;
-        String name = aFile.getVirtualFile().getNameWithoutExtension();
-        for (String refName : onDemandRefs) {
-          String conflictClassName = refName + "." + name;
-          PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
-          if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
-          String conflictClassName2 = packageName + "." + name;
-          PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
-          if (conflictClass2 != null &&
-              helper.isAccessible(conflictClass2, file, null) &&
-              ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
-            outClassesToReimport.add(conflictClass);
-          }
+    for (PsiClass aClass : aPackage.getClasses(resolveScope)) {
+      String name = aClass.getName();
+      for (String refName : onDemandRefs) {
+        String conflictClassName = refName + "." + name;
+        PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
+        if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
+        String conflictClassName2 = packageName + "." + name;
+        PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
+        if (conflictClass2 != null &&
+            helper.isAccessible(conflictClass2, file, null) &&
+            ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
+          outClassesToReimport.add(conflictClass);
         }
       }
     }
@@ -669,7 +668,7 @@ public class ImportHelper{
     }
     return null;
   }
-  
+
   public static boolean isAlreadyImported(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
     String className = extractClassName(file, fullyQualifiedName);
 

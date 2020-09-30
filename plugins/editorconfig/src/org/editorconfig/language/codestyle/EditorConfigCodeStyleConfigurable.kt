@@ -4,9 +4,10 @@ package org.editorconfig.language.codestyle
 import com.intellij.application.options.CodeStyleAbstractConfigurable
 import com.intellij.application.options.CodeStyleAbstractPanel
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import org.editorconfig.Utils
 
 class EditorConfigCodeStyleConfigurable(settings: CodeStyleSettings, originalSettings: CodeStyleSettings)
-  : CodeStyleAbstractConfigurable(settings, originalSettings, "EditorConfig") {
+  : CodeStyleAbstractConfigurable(settings, originalSettings, Utils.EDITOR_CONFIG_NAME) {
 
   override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel =
     EditorConfigCodeStyleSettingsPanel(currentSettings, settings)

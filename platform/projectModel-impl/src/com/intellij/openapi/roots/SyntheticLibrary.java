@@ -99,7 +99,7 @@ public abstract class SyntheticLibrary {
   public abstract int hashCode();
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<VirtualFile> sourceRoots) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots) {
     return newImmutableLibrary(sourceRoots, Collections.emptySet(), null);
   }
 
@@ -109,22 +109,22 @@ public abstract class SyntheticLibrary {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<? extends VirtualFile> sourceRoots) {
     return newImmutableLibrary(asList(sourceRoots), Collections.emptySet(), null);
   }
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<VirtualFile> sourceRoots,
-                                                     @NotNull Set<VirtualFile> excludedRoots,
-                                                     @Nullable Condition<VirtualFile> excludeCondition) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                     @NotNull Set<? extends VirtualFile> excludedRoots,
+                                                     @Nullable Condition<? super VirtualFile> excludeCondition) {
     return newImmutableLibrary(sourceRoots, Collections.emptyList(), excludedRoots, excludeCondition);
   }
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull List<VirtualFile> sourceRoots,
-                                                     @NotNull List<VirtualFile> binaryRoots,
-                                                     @NotNull Set<VirtualFile> excludedRoots,
-                                                     @Nullable Condition<VirtualFile> excludeCondition) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                     @NotNull List<? extends VirtualFile> binaryRoots,
+                                                     @NotNull Set<? extends VirtualFile> excludedRoots,
+                                                     @Nullable Condition<? super VirtualFile> excludeCondition) {
     return new ImmutableSyntheticLibrary(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
   }
 
@@ -165,12 +165,12 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<T> collection) {
+  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<? extends T> collection) {
     return collection instanceof Set ? (Set<T>)collection : new THashSet<>(collection);
   }
 
   @NotNull
-  static <T extends VirtualFile> List<T> asList(@NotNull Collection<T> collection) {
+  static <T extends VirtualFile> List<T> asList(@NotNull Collection<? extends T> collection) {
     return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
   }
 }

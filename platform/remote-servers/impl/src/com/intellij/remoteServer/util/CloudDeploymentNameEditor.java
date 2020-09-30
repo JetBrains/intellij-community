@@ -4,6 +4,8 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Factory;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,15 +13,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * @author michael.golubev
+ * @deprecated obsolete utility, about to be removed
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated
 public class CloudDeploymentNameEditor<T extends DeploymentNameConfiguration> extends SettingsEditor<T> {
 
   private JTextField myNameTextField;
   private JCheckBox myCustomNameCheckBox;
   private JPanel myMainPanel;
 
-  public CloudDeploymentNameEditor(Factory<T> deploymentModelFactory, String labelCaption) {
+  public CloudDeploymentNameEditor(Factory<T> deploymentModelFactory, @Nls String labelCaption) {
     super(deploymentModelFactory);
     myCustomNameCheckBox.setText(labelCaption);
     myCustomNameCheckBox.addActionListener(new ActionListener() {

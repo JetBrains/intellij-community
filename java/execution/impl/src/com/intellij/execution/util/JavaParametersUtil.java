@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * @author lex
  */
-public class JavaParametersUtil {
+public final class JavaParametersUtil {
   private JavaParametersUtil() { }
 
   public static void configureConfiguration(SimpleJavaParameters parameters, CommonJavaRunConfigurationParameters configuration) {

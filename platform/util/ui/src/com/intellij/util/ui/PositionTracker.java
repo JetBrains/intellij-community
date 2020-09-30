@@ -70,7 +70,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
     myClient.revalidate(this);
   }
 
-  public abstract RelativePoint recalculateLocation(T object);
+  public abstract RelativePoint recalculateLocation(@NotNull T object);
 
   @Override
   public final void dispose() {
@@ -89,7 +89,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
     }
 
     @Override
-    public RelativePoint recalculateLocation(Object object) {
+    public RelativePoint recalculateLocation(@NotNull Object object) {
       return myPoint;
     }
   }

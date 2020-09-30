@@ -1,13 +1,13 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer$MyFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" />
-  </projectListeners>
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
     <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="vcsLogCustomColumn"
+                    interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -79,7 +79,7 @@
 
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
-    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorTabTitleProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.VcsLogBundle">
@@ -92,7 +92,7 @@
       <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log">
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>

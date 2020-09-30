@@ -100,7 +100,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testNewInMethodRefs() {
     doTest(1, "new", "null", "true", "false");
-    LookupElementPresentation presentation = LookupElementPresentation.renderElement(myItems[0]);
+    LookupElementPresentation presentation = NormalCompletionTestCase.renderElement(myItems[0]);
     assertEquals("new", presentation.getItemText());
     assertEmpty(presentation.getTailText());
     selectItem(myItems[0]);
@@ -199,6 +199,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
   public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
   public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
+  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(0, "permits"); }
+  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
+  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
 
   public void testOverwriteCatch() {
     configureByTestName();
@@ -207,6 +210,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testFinalAfterAnnotationAttributes() { doTest(); }
+  
+  public void testAbstractLocalClass() { doTest(); }
 
   @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {

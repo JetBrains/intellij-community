@@ -39,7 +39,7 @@ public class ProjectTemplateList extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<ProjectTemplate>(new ListItemDescriptorAdapter<ProjectTemplate>() {
+    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<ProjectTemplate>(new ListItemDescriptorAdapter<>() {
       @NotNull
       @Override
       public String getTextFor(ProjectTemplate value) {
@@ -77,7 +77,8 @@ public class ProjectTemplateList extends JPanel {
       String description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
         description = "<html><body><font " + //NON-NLS
-                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
+                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + // NON-NLS
+                      description +
                       "</font></body></html>"; //NON-NLS
         myDescriptionPane.setText(description);
       }

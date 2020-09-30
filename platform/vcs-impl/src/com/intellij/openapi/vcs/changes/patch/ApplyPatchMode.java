@@ -26,7 +26,7 @@ public enum ApplyPatchMode {
   UNSHELVE(VcsBundle.message("unshelve.changes.dialog.title"), false),
   APPLY_PATCH_IN_MEMORY(VcsBundle.message("patch.apply.dialog.title"), false);
 
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private final boolean myCanChangePatchFile;
 
   ApplyPatchMode(@NlsContexts.DialogTitle String title, boolean canChangePatchFile) {
@@ -34,6 +34,7 @@ public enum ApplyPatchMode {
     myCanChangePatchFile = canChangePatchFile;
   }
 
+  @NlsContexts.DialogTitle
   public String getTitle() {
     return myTitle;
   }

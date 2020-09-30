@@ -33,14 +33,6 @@
 #define HELP_MSG \
     "Try 'fsnotifier --help' for more information.\n"
 
-#define INSTANCE_LIMIT_TEXT \
-    "The <b>inotify</b>(7) instances limit reached. " \
-    "<a href=\"https://confluence.jetbrains.com/display/IDEADEV/Inotify+Instances+Limit\">More details.</a>\n"
-
-#define WATCH_LIMIT_TEXT \
-    "The current <b>inotify</b>(7) watch limit is too low. " \
-    "<a href=\"https://confluence.jetbrains.com/display/IDEADEV/Inotify+Watches+Limit\">More details.</a>\n"
-
 #define MISSING_ROOT_TIMEOUT 1
 
 #define UNFLATTEN(root) (root[0] == '|' ? root + 1 : root)
@@ -152,16 +144,8 @@ static void init_log() {
 }
 
 
-void message(MSG id) {
-  if (id == MSG_INSTANCE_LIMIT) {
-    output("MESSAGE\n" INSTANCE_LIMIT_TEXT);
-  }
-  else if (id == MSG_WATCH_LIMIT) {
-    output("MESSAGE\n" WATCH_LIMIT_TEXT);
-  }
-  else {
-    userlog(LOG_ERR, "unknown message: %d", id);
-  }
+void message(const char *text) {
+  output("MESSAGE\n%s\n", text);
 }
 
 

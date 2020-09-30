@@ -135,7 +135,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }
     myTestKind.setModel(testKindModel);
-    myTestKind.addActionListener(e -> TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem()));
+    myTestKind.addActionListener(e -> this.model.setType((TestType)myTestKind.getSelectedItem()));
     myTestKind.setRenderer(SimpleListCellRenderer.create("", value -> value.getPresentableName()));
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(e -> evaluateModuleClassPath());
@@ -183,7 +183,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
+    if (!project.isDefault()) {
+      myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
+    }
   }
 
   private void evaluateModuleClassPath() {
@@ -518,7 +520,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
+        .createWithInnerClassesScopeChooser(TestngBundle.message("testng.config.editor.dialog.title.choose.listener.class"), filter.getScope(), filter, null);
       chooser.showDialog();
       PsiClass psiclass = chooser.getSelected();
       if (psiclass == null) {

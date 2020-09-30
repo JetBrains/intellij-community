@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -20,10 +6,10 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 import java.util.function.Supplier;
@@ -47,10 +33,9 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   private FactoryMap(boolean safe) {
   }
 
-
   @NotNull
   protected Map<K, V> createMap() {
-    return new THashMap<>();
+    return new HashMap<>();
   }
 
   @Nullable
@@ -120,7 +105,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final java.util.HashSet<K> hashSet = new HashSet<>(ts);
+      Set<K> hashSet = new HashSet<>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
@@ -131,9 +116,8 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public boolean removeValue(Object value) {
     Object t = notNull(value);
     //noinspection SuspiciousMethodCalls
-    return getMap().values().remove(t);                                                                                
+    return getMap().values().remove(t);
   }
-
 
   @Override
   public void clear() {

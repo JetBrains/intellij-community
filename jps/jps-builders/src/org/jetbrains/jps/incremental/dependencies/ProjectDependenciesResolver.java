@@ -18,6 +18,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Downloads missing Maven repository libraries from all modules in the project. The corresponding {@link ProjectDependenciesResolvingTarget target}
+ * isn't included into regular builds so this builder isn't used (and {@link DependencyResolvingBuilder} is used instead). However in build
+ * scripts we may need to download libraries without compiling project (e.g. if compiled class-files are provided by another build) and
+ * therefore may use this target to download the libraries (see org.jetbrains.intellij.build.impl.JpsCompilationRunner).
+ */
 public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDescriptor, ProjectDependenciesResolver.ProjectDependenciesResolvingTarget> {
   public static final String TARGET_TYPE_ID = "project-dependencies-resolving";
 
@@ -30,7 +36,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, ProjectDependenciesResolvingTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) {
-    context.processMessage(new ProgressMessage("Resolving repository libraries in the project..."));
+    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.repository.libraries.in.the.project")));
     try {
       DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(),
                                                             BuildTargetChunk.forSingleTarget(target));
@@ -43,7 +49,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Project Dependencies Resolver";
+    return JpsBuildBundle.message("builder.name.project.dependencies.resolver");
   }
 
   public static class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {

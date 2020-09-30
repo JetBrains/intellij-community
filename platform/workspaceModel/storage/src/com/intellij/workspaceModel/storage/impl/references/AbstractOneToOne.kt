@@ -10,11 +10,11 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class OneToAbstractOneChild<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T> {
+class OneToAbstractOneChild<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val parentClass: Class<Parent>) : ReadOnlyProperty<Child, Parent> {
 
   private var connectionId: ConnectionId? = null
 
-  override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
+  override fun getValue(thisRef: Child, property: KProperty<*>): Parent {
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false,
                                          true)
@@ -23,21 +23,21 @@ class OneToAbstractOneChild<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>
   }
 }
 
-class MutableOneToAbstractOneChild<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODSUBT : ModifiableWorkspaceEntityBase<SUBT>>(
-  private val childClass: Class<SUBT>,
-  private val parentClass: Class<T>
-) : ReadWriteProperty<MODSUBT, T> {
+class MutableOneToAbstractOneChild<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifChild : ModifiableWorkspaceEntityBase<Child>>(
+  private val childClass: Class<Child>,
+  private val parentClass: Class<Parent>
+) : ReadWriteProperty<ModifChild, Parent> {
 
   private var connectionId: ConnectionId? = null
 
-  override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
+  override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent {
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, true)
     }
     return thisRef.diff.extractOneToAbstractOneParent(connectionId!!, thisRef.id)!!
   }
 
-  override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
+  override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }

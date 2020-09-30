@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ public class HeadlessLafManagerImpl extends LafManager {
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
     defaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
+    defaults.put("TreeUI", DefaultTreeUI.class.getName());
   }
 
   @Override
@@ -29,8 +31,22 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public LafReference getCurrentLookAndFeelReference() {
+  public LafReference getLookAndFeelReference() {
     return null;
+  }
+
+  @Override
+  public void setLookAndFeelReference(LafReference reference) {}
+
+  @Override
+  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
+    return null;
+  }
+
+  @Override
+  @NotNull
+  public JComponent getSettingsToolbar() {
+    return new JComponent() {};
   }
 
   @Override
@@ -51,6 +67,11 @@ public class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public void repaintUI() { }
+
+  @Override
+  public boolean isAutoDetect() {
+    return false;
+  }
 
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }

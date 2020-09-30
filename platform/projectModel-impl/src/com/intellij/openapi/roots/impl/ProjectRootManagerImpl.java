@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,7 @@ import java.util.*;
 @State(name = "ProjectRootManager")
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ProjectRootManagerImpl.class);
+  private static final ProjectExtensionPointName<ProjectExtension> EP_NAME = new ProjectExtensionPointName<>("com.intellij.projectExtension");
 
   private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
@@ -51,7 +53,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
-  private boolean myStateLoaded = false;
+  private boolean myStateLoaded;
 
   private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -102,7 +104,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected final BatchSession myRootsChanged = new BatchSession(false);
   protected final BatchSession myFileTypesChanged = new BatchSession(true);
-  private final VirtualFilePointerListener myRootsValidityChangedListener = new VirtualFilePointerListener(){};
+  private final VirtualFilePointerListener myEmptyRootsValidityChangedListener = new VirtualFilePointerListener(){};
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -123,8 +125,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public List<String> getContentRootUrls() {
-    final List<String> result = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
+    Module[] modules = getModuleManager().getModules();
+    List<String> result = new ArrayList<>(modules.length);
+    for (Module module : modules) {
       ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getContentRootUrls());
     }
     return result;
@@ -132,8 +135,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentRoots() {
-    final List<VirtualFile> result = new ArrayList<>();
     Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length);
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       if (modules.length == 1) {
@@ -147,10 +150,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentSourceRoots() {
-    final List<VirtualFile> result = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
-      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      ContainerUtil.addAll(result, sourceRoots);
+    Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length);
+    for (Module module : modules) {
+      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -158,8 +161,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    List<VirtualFile> roots = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
+    Module[] modules = getModuleManager().getModules();
+    List<VirtualFile> roots = new ArrayList<>(modules.length);
+    for (Module module : modules) {
       roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
     }
     return roots;
@@ -179,8 +183,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile @NotNull [] getContentRootsFromAllModules() {
-    List<VirtualFile> result = new ArrayList<>();
-    for (Module module : getModuleManager().getSortedModules()) {
+    Module[] modules = getModuleManager().getSortedModules();
+    List<VirtualFile> result = new ArrayList<>(modules.length + 1);
+    for (Module module : modules) {
       Collections.addAll(result, ModuleRootManager.getInstance(module).getContentRoots());
     }
     ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
@@ -232,7 +237,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     incModificationCount();
     mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
     Sdk sdk = getProjectSdk();
-    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
+    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
     }
   }
@@ -273,7 +278,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void loadState(@NotNull Element element) {
-    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
+    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
       extension.readExternal(element);
     }
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
@@ -298,7 +303,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public Element getState() {
     Element element = new Element("state");
     element.setAttribute(ATTRIBUTE_VERSION, "2");
-    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
+    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
       extension.writeExternal(element);
     }
     if (myProjectSdkName != null) {
@@ -361,7 +366,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
-    if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return;
+    if (myProject.isDisposed()) return;
     BatchSession session = getBatchSession(fileTypes);
     try {
       if (fireEvents) session.beforeRootsChanged();
@@ -404,7 +409,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
   private boolean fireRootsChanged(boolean fileTypes) {
-    if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return false;
+    if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -680,6 +685,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @NotNull
   public VirtualFilePointerListener getRootsValidityChangedListener() {
-    return myRootsValidityChangedListener;
+    return myEmptyRootsValidityChangedListener;
   }
 }

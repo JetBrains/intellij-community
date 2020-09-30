@@ -10,7 +10,9 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -46,7 +48,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author peter
  */
-public class JavaClassNameCompletionContributor extends CompletionContributor {
+public class JavaClassNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
@@ -131,7 +133,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     }
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
-    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
+    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<>() {
       @Override
       public void consume(PsiClass psiClass) {
         processClass(psiClass, null, "");
@@ -148,7 +150,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
             JavaPsiClassReferenceElement element = AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING);
             element.setLookupString(prefix + element.getLookupString());
             consumer.consume(element);
-          } else {
+          }
+          else {
             Condition<PsiClass> condition = eachClass ->
               filter.isAcceptable(eachClass, insertedElement) &&
               AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
@@ -159,7 +162,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                 e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
             }
           }
-        } else {
+        }
+        else {
           String name = psiClass.getName();
           if (name != null) {
             PsiClass[] innerClasses = psiClass.getInnerClasses();
@@ -246,7 +250,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
 
   @Override
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     if (shouldShowSecondSmartCompletionHint(parameters)) {

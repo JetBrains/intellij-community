@@ -129,21 +129,22 @@ private fun waitForConstraint(ctx: CoroutineContext, constraint: ContextConstrai
 
 private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
   suspendCancellableCoroutine<Unit> { continuation ->
-    val runnable = ResumeContinuationRunnable(continuation)
-    continuation.invokeOnCancellation {
-      runnable.forgetContinuation() // it's not possible to unschedule the runnable, so we make it do nothing instead
-    }
-    schedule(runnable)
+    schedule(ResumeContinuationRunnable(continuation))
   }
 }
 
-private class ResumeContinuationRunnable(@Volatile private var continuation: CancellableContinuation<Unit>?) : Runnable {
+private class ResumeContinuationRunnable(continuation: CancellableContinuation<Unit>) : Runnable {
 
-  fun forgetContinuation() {
-    continuation = null
+  @Volatile
+  private var myContinuation: CancellableContinuation<Unit>? = continuation
+
+  init {
+    continuation.invokeOnCancellation {
+      myContinuation = null // it's not possible to unschedule the runnable, so we make it do nothing instead
+    }
   }
 
   override fun run() {
-    continuation?.resume(Unit)
+    myContinuation?.resume(Unit)
   }
 }

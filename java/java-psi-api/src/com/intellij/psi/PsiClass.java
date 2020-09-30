@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
@@ -38,7 +39,7 @@ public interface PsiClass
    * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
    */
   @Override
-  @Nullable
+  @Nullable @NlsSafe
   String getQualifiedName();
 
   /**

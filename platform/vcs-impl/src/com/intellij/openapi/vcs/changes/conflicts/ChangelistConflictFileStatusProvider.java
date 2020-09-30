@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -18,28 +18,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ChangelistConflictFileStatusProvider implements FileStatusProvider {
   public static final FileStatus MODIFIED_OUTSIDE = FileStatusFactory.getInstance()
-    .createFileStatus("modifiedOutside", VcsBundle.message("settings.file.status.color.modified.in.not.active.changelist"));
+    .createFileStatus("modifiedOutside", VcsBundle.messagePointer("settings.file.status.color.modified.in.not.active.changelist"), null);
   public static final FileStatus ADDED_OUTSIDE = FileStatusFactory.getInstance()
-    .createFileStatus("addedOutside", VcsBundle.message("settings.file.status.color.added.in.not.active.changelist"));
+    .createFileStatus("addedOutside", VcsBundle.messagePointer("settings.file.status.color.added.in.not.active.changelist"), null);
   public static final FileStatus CHANGELIST_CONFLICT = FileStatusFactory.getInstance()
-    .createFileStatus("changelistConflict", VcsBundle.message("settings.file.status.color.changelist.conflict"));
+    .createFileStatus("changelistConflict", VcsBundle.messagePointer("settings.file.status.color.changelist.conflict"), null);
 
-  private final ChangeListManagerImpl myChangeListManager;
+  private final Project myProject;
 
   public ChangelistConflictFileStatusProvider(@NotNull Project project) {
-    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    myProject = project;
   }
 
   @Override
   @Nullable
   public FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
-    ChangelistConflictTracker conflictTracker = myChangeListManager.getConflictTracker();
+    ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
     ChangelistConflictTracker.Options options = conflictTracker.getOptions();
     if (options.HIGHLIGHT_CONFLICTS && conflictTracker.hasConflict(virtualFile)) {
       return CHANGELIST_CONFLICT;
     }
     else if (options.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
-      FileStatus status = myChangeListManager.getStatus(virtualFile);
+      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
       if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) {
         if (!conflictTracker.isFromActiveChangelist(virtualFile)) {
           return status == FileStatus.MODIFIED ? MODIFIED_OUTSIDE : ADDED_OUTSIDE;

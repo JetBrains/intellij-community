@@ -23,6 +23,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -191,7 +192,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("migration.title");
   }
 }

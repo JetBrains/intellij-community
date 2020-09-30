@@ -21,11 +21,6 @@ internal object GrazieFUSCounter {
     addData("fixes", typo.fixes.size)
   }
 
-  fun quickfixApplied(ruleId: String, cancelled: Boolean) = log("quickfix.applied") {
-    addData("id", ruleId)
-    addData("cancelled", cancelled)
-  }
-
   private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {
     FUCounterUsageLogger.getInstance().logEvent("grazie.count", eventId, FeatureUsageData().apply(body))
   }

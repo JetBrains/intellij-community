@@ -15,23 +15,34 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author vlan
  */
 public class PyiVisitorFilter implements PythonVisitorFilter {
+
+  @NotNull
+  private static final Set<Class<?>> disabledVisitors = ImmutableSet.of(
+    PyUnusedLocalInspection.class,
+    PyStatementEffectInspection.class,
+    PyCompatibilityInspection.class,
+    PyMissingOrEmptyDocstringInspection.class,
+    PyTypeCheckerInspection.class,
+    PyPropertyDefinitionInspection.class,
+    PyMissingConstructorInspection.class,
+    PyShadowingBuiltinsInspection.class
+  );
+
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
-    if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyStatementEffectInspection.class ||
-        visitorClass == PyCompatibilityInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class ||
-        visitorClass == PyTypeCheckerInspection.class || visitorClass == PyPropertyDefinitionInspection.class) {
-      return false;
-    }
-    return true;
+    return !disabledVisitors.contains(visitorClass);
   }
 }

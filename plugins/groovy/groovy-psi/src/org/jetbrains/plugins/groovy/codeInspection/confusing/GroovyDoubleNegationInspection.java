@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -39,7 +40,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Double negation #ref #loc";
+    return GroovyBundle.message("inspection.message.double.negation.ref");
   }
 
   @Override
@@ -53,7 +54,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove double negation";
+      return GroovyBundle.message("intention.family.name.remove.double.negation");
     }
 
     @Override

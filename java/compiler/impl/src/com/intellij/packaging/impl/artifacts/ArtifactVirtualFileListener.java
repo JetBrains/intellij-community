@@ -37,7 +37,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
   private MultiValuesMap<String, Artifact> computeParentPathToArtifactMap() {
     final MultiValuesMap<String, Artifact> result = new MultiValuesMap<>();
     for (final Artifact artifact : myArtifactManager.getArtifacts()) {
-      ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
+      ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<>() {
         @Override
         public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath pathToElement) {
           String path = element.getFilePath();
@@ -70,7 +70,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
       final ModifiableArtifactModel model = myArtifactManager.createModifiableModel();
       for (Artifact artifact : artifacts) {
         final Artifact copy = model.getOrCreateModifiableArtifact(artifact);
-        ArtifactUtil.processFileOrDirectoryCopyElements(copy, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
+        ArtifactUtil.processFileOrDirectoryCopyElements(copy, new PackagingElementProcessor<>() {
           @Override
           public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath pathToElement) {
             final String path = element.getFilePath();

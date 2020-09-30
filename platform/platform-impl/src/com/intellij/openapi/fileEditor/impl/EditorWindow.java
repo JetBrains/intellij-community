@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,19 +19,18 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
@@ -40,7 +38,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +55,7 @@ public final class EditorWindow {
 
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
 
-  protected JPanel myPanel;
+  JPanel myPanel;
   private final @NotNull EditorTabbedContainer myTabbedPane;
   @NotNull
   private final EditorsSplitters myOwner;
@@ -75,7 +72,7 @@ public final class EditorWindow {
     }
   };
 
-  protected EditorWindow(@NotNull EditorsSplitters owner, @NotNull Disposable parentDisposable) {
+  EditorWindow(@NotNull EditorsSplitters owner, @NotNull Disposable parentDisposable) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setOpaque(false);
@@ -311,11 +308,7 @@ public final class EditorWindow {
     myTabbedPane.setWaveColor(index, color);
   }
 
-  private void setIconAt(int index, Icon icon) {
-    myTabbedPane.setIconAt(index, icon);
-  }
-
-  private void setTitleAt(int index, @NotNull String text) {
+  private void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
     myTabbedPane.setTitleAt(index, text);
   }
 
@@ -323,7 +316,7 @@ public final class EditorWindow {
     myTabbedPane.setBackgroundColorAt(index, color);
   }
 
-  private void setToolTipTextAt(int index, @Nullable String text) {
+  private void setToolTipTextAt(int index, @Nullable @NlsContexts.Tooltip String text) {
     myTabbedPane.setToolTipTextAt(index, text);
   }
 
@@ -529,7 +522,8 @@ public final class EditorWindow {
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
-        myOwner.updateFileIconImmediately(file);
+        myOwner.updateFileIconImmediately(file, IconUtil.computeBaseFileIcon(file));
+        myOwner.updateFileIconLater(file);
         myOwner.updateFileColor(file);
       }
       myOwner.setCurrentWindow(this, false);
@@ -542,6 +536,10 @@ public final class EditorWindow {
   }
 
   public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
+    return split(orientation, forceSplit, virtualFile, focusNew, true);
+  }
+
+  public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew, boolean fileIsSecondaryComponent) {
     checkConsistency();
     if (!splitAvailable()) {
       return null;
@@ -570,9 +568,17 @@ public final class EditorWindow {
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
-      splitter.setFirstComponent(myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setFirstComponent(myPanel);
+      } else {
+        splitter.setSecondComponent(myPanel);
+      }
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-      splitter.setSecondComponent(res.myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setSecondComponent(res.myPanel);
+      } else {
+        splitter.setFirstComponent(res.myPanel);
+      }
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedEditor.getFile();
       if (virtualFile == null) {
@@ -671,10 +677,23 @@ public final class EditorWindow {
     }
   }
 
-  void updateFileIcon(@NotNull VirtualFile file) {
-    int index = findEditorIndex(findFileComposite(file));
+  private void updateFileIconDecoration(@NotNull VirtualFile file) {
+    EditorWithProviderComposite composite = Objects.requireNonNull(findFileComposite(file));
+    int index = findEditorIndex(composite);
     LOG.assertTrue(index != -1);
-    setIconAt(index, getFileIcon(file));
+    Icon current = myTabbedPane.getIconAt(index);
+    if (current instanceof DecoratedTabIcon) {
+      current = ((DecoratedTabIcon)current).fileIcon;
+    }
+    myTabbedPane.setIconAt(index, decorateFileIcon(composite, current));
+  }
+
+  void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
+    EditorWithProviderComposite composite = findFileComposite(file);
+    if (composite == null) return;
+    int index = findEditorIndex(composite);
+    if (index < 0) return;
+    myTabbedPane.setIconAt(index, decorateFileIcon(composite, icon));
   }
 
   void updateFileName(@NotNull VirtualFile file) {
@@ -688,22 +707,13 @@ public final class EditorWindow {
   }
 
   /**
-   * @return icon which represents file's type and modification status
+   * @return baseIcon augmented with pin/modification status
    */
-  private Icon getFileIcon(@NotNull VirtualFile file) {
-    if (!file.isValid()) {
-      Icon fakeIcon = FileTypes.UNKNOWN.getIcon();
-      assert fakeIcon != null : "Can't find the icon for unknown file type";
-      return fakeIcon;
-    }
-
-    Icon baseIcon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().getProject());
-
+  private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
     int count = 1;
 
     Icon pinIcon;
-    EditorComposite composite = findFileComposite(file);
-    if (composite != null && composite.isPinned()) {
+    if (composite.isPinned()) {
       count++;
       pinIcon = AllIcons.Nodes.TabPin;
     }
@@ -715,7 +725,7 @@ public final class EditorWindow {
     UISettings settings = UISettings.getInstance();
     if (settings.getMarkModifiedTabsWithAsterisk()) {
       Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? crop : new EmptyIcon(7, 7);
+      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : new EmptyIcon(7, 7);
       count++;
     }
     else {
@@ -725,12 +735,21 @@ public final class EditorWindow {
     if (count == 1) return baseIcon;
 
     int i = 0;
-    LayeredIcon result = new LayeredIcon(count);
+    DecoratedTabIcon result = new DecoratedTabIcon(count, baseIcon);
     result.setIcon(baseIcon, i++);
     if (pinIcon != null) result.setIcon(pinIcon, i++);
-    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth() / 2, 0);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i, -modifiedIcon.getIconWidth() / 2, 0);
 
     return JBUI.scale(result);
+  }
+
+  private static class DecoratedTabIcon extends LayeredIcon {
+    final Icon fileIcon;
+
+    DecoratedTabIcon(int layerCount, Icon fileIcon) {
+      super(layerCount);
+      this.fileIcon = fileIcon;
+    }
   }
 
   public void unsplit(boolean setCurrent) {
@@ -872,7 +891,8 @@ public final class EditorWindow {
     boolean wasPinned = editorComposite.isPinned();
     editorComposite.setPinned(pinned);
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
-      updateFileIcon(file);
+      updateFileIconDecoration(file);
+      ObjectUtils.consumeIfCast(getTabbedPane().getTabs(), JBTabsImpl.class, JBTabsImpl::doLayout);
     }
   }
 

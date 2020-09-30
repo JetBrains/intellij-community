@@ -15,8 +15,18 @@
  */
 package com.jetbrains.python.refactoring.surround.surrounders.expressions;
 
+import com.intellij.openapi.util.NlsSafe;
+
 public class PyIsNoneSurrounder extends PyBinaryConditionSurrounder{
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "if expr is None";
+
   public PyIsNoneSurrounder() {
-    super("if expr is None:\n pass", "if expr is None");
+    super("if expr is None:\n pass");
+  }
+
+  @Override
+  public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features
 
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.FileFeaturesComputationResult
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -9,33 +8,33 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 internal object FilePredictionFeaturesHelper {
-  private val EP_NAME = ExtensionPointName<FilePredictionFeatureProvider>("com.intellij.filePrediction.featureProvider")
+  internal val EP_NAME = ExtensionPointName<FilePredictionFeatureProvider>("com.intellij.filePrediction.featureProvider")
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
-                            refs: ExternalReferencesResult,
+                            cache: FilePredictionFeaturesCache,
                             prevFile: VirtualFile?): FileFeaturesComputationResult {
     val start = System.currentTimeMillis()
     val result = HashMap<String, FilePredictionFeature>()
     for (provider in EP_NAME.extensionList) {
       val prefix = calculateProviderPrefix(provider)
-      val features = provider.calculateFileFeatures(project, newFile, prevFile, refs).mapKeys { prefix + it.key }
+      val features = provider.calculateFileFeatures(project, newFile, prevFile, cache).mapKeys { prefix + it.key }
       result.putAll(features)
     }
     return FileFeaturesComputationResult(result, start)
   }
 
-  fun getFeatureCodes(): Map<String, Int> {
-    val codes = hashMapOf<String, Int>()
-    for ((index, provider) in EP_NAME.extensionList.withIndex()) {
+  fun getFeaturesByProviders(): List<List<String>> {
+    val orderedFeatures = arrayListOf<List<String>>()
+    for (provider in getOrderedFeatureProviders()) {
       val prefix = calculateProviderPrefix(provider)
-      for ((featureIndex, feature) in provider.getFeatures().withIndex()) {
-        val key = prefix + feature
-        val value = 100 * index + featureIndex
-        codes[key] = value
-      }
+      orderedFeatures.add(provider.getFeatures().map { prefix + it }.toList())
     }
-    return codes
+    return orderedFeatures
+  }
+
+  private fun getOrderedFeatureProviders(): List<FilePredictionFeatureProvider> {
+    return EP_NAME.extensionList.sortedBy { it.getName() }
   }
 
   private fun calculateProviderPrefix(provider: FilePredictionFeatureProvider) =
@@ -46,10 +45,10 @@ internal object FilePredictionFeaturesHelper {
 interface FilePredictionFeatureProvider {
   fun getName(): String
 
-  fun getFeatures(): Array<String>
+  fun getFeatures(): List<String>
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
                             prevFile: VirtualFile?,
-                            refs: ExternalReferencesResult): Map<String, FilePredictionFeature>
+                            cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature>
 }

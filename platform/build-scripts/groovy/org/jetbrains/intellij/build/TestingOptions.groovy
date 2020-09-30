@@ -13,8 +13,6 @@ class TestingOptions {
    */
   String testGroups = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
 
-  String uiTestGroups = System.getProperty("ui.test.groups", "")
-
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
    * {@link #testGroups} will be ignored.
@@ -31,6 +29,11 @@ class TestingOptions {
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
    */
   String platformPrefix = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
+
+  /**
+   * Enables debug for testing process
+   */
+  boolean debugEnabled = SystemProperties.getBooleanProperty("intellij.build.test.debug.enabled", true)
 
   /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
@@ -86,6 +89,21 @@ class TestingOptions {
    */
   String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
+  /**
+   * If {@code true} causal profiler agent will be attached to the testing process.
+   */
+  boolean enableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
+
+  /**
+   * Pattern to match tests in {@link #mainModule} or default main module tests compilation outputs.
+   * Tests from each matched class will be executed in a fresh JVM.
+   *
+   * E.g. "com/intellij/util/ui/standalone/**Test.class"
+   */
+  String batchTestIncludes = System.getProperty("intellij.build.test.batchTest.includes")
+
+  boolean performanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
+
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -96,4 +114,5 @@ class TestingOptions {
   private static final String OLD_MAIN_MODULE = System.getProperty("module.to.make")
 
   public static final String BOOTSTRAP_SUITE_DEFAULT = "com.intellij.tests.BootstrapTests"
+  public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests"
 }

@@ -23,14 +23,18 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 public class JavaFxApplicationArtifactType extends ArtifactType {
   public static JavaFxApplicationArtifactType getInstance() {
@@ -38,7 +42,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   }
   
   protected JavaFxApplicationArtifactType() {
-    super("javafx", "JavaFx Application");
+    super("javafx", JavaFXBundle.messagePointer("javafx.application.title"));
   }
 
   @NotNull
@@ -84,9 +88,9 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
     @Override
     public String getPresentableName() {
       if (myModules.size() == 1) {
-        return "From module '" + myModules.get(0).getName() + "'";
+        return JavaFXBundle.message("action.from.modules.artifact.text", myModules.get(0).getName());
       }
-      return "From module...";
+      return JavaFXBundle.message("action.from.module.artifact.text");
     }
 
     @Override
@@ -96,8 +100,9 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
         module = myModules.get(0);
       } else {
         final ChooseModulesDialog dialog = new ChooseModulesDialog(myModules.get(0).getProject(), myModules,
-                                                                   "Select Module",
-                                                                   "Selected module output would to be included in the artifact");
+                                                                   JavaFXBundle.message("dialog.title.select.module.for.artifact"),
+                                                                   JavaFXBundle.message(
+                                                                     "label.selected.module.output.would.to.be.included.in.artifact"));
         dialog.setSingleSelectionMode();
         if (dialog.showAndGet()) {
           final List<Module> elements = dialog.getChosenElements();

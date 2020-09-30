@@ -711,4 +711,11 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().clickAtXY(50, getEditor().getLineHeight() / 2);
     checkResultByText("<selection>text<caret></selection>");
   }
+
+  public void testWordSelectionOnMouseDragAroundPunctuation() {
+    initText("((some (text)))");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 12).release();
+    checkResultByText("((<selection>some (text)<caret></selection>))");
+  }
 }

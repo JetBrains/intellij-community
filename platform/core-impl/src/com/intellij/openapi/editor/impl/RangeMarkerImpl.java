@@ -17,7 +17,9 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,6 +210,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    doChangeUpdate(e);
+  }
+
+  private void doChangeUpdate(@NotNull DocumentEvent e) {
     if (!isValid()) return;
 
     TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
@@ -218,6 +224,47 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
     setIntervalStart(newRange.getStartOffset());
     setIntervalEnd(newRange.getEndOffset());
+  }
+
+  protected int persistentHighlighterUpdate(@NotNull DocumentEvent e, int line, boolean wholeLineRange) {
+    DocumentEventImpl event = (DocumentEventImpl)e;
+    boolean viaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, getStartOffset(), getEndOffset());
+    if (viaDiff) {
+      try {
+        line = translatedViaDiff(event, line);
+      }
+      catch (FilesTooBigForDiffException exception) {
+        viaDiff = false;
+      }
+    }
+    if (!viaDiff) {
+      doChangeUpdate(e);
+      if (isValid()) {
+        line = getDocument().getLineNumber(getStartOffset());
+        int endLine = getDocument().getLineNumber(getEndOffset());
+        if (endLine != line) {
+          setIntervalEnd(getDocument().getLineEndOffset(line));
+        }
+      }
+    }
+    if (isValid() && wholeLineRange) {
+      setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line));
+      setIntervalEnd(getDocument().getLineEndOffset(line));
+    }
+    return line;
+  }
+
+  private int translatedViaDiff(@NotNull DocumentEventImpl e, int line) throws FilesTooBigForDiffException {
+    line = e.translateLineViaDiff(line);
+    if (line < 0 || line >= getDocument().getLineCount()) {
+      invalidate(e);
+    }
+    else {
+      DocumentEx document = getDocument();
+      setIntervalStart(document.getLineStartOffset(line));
+      setIntervalEnd(document.getLineEndOffset(line));
+    }
+    return line;
   }
 
   // Called after the range was shifted from e.getMoveOffset() to e.getOffset()

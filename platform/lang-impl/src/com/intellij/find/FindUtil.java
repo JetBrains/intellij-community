@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -35,10 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -740,7 +738,7 @@ public final class FindUtil {
     return result;
   }
 
-  private static class MyListener implements CaretListener {
+  private static final class MyListener implements CaretListener {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
@@ -900,7 +898,7 @@ public final class FindUtil {
   public static <T> UsageView showInUsageView(@Nullable PsiElement sourceElement,
                                               T @NotNull [] targets,
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
-                                              @NotNull String title,
+                                              @NlsContexts.TabTitle @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
                                               @NotNull Project project) {
     if (targets.length == 0) return null;
@@ -939,7 +937,7 @@ public final class FindUtil {
   @Nullable
   public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
                                           PsiElement @NotNull [] targets,
-                                          @NotNull String title,
+                                          @NotNull @NlsContexts.TabTitle String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
     PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
@@ -964,9 +962,6 @@ public final class FindUtil {
   public static void selectSearchResultsInEditor(@NotNull Editor editor,
                                                  @NotNull Iterator<? extends FindResult> resultIterator,
                                                  int caretShiftFromSelectionStart) {
-    if (!editor.getCaretModel().supportsMultipleCarets()) {
-      return;
-    }
     ArrayList<CaretState> caretStates = new ArrayList<>();
     while (resultIterator.hasNext()) {
       FindResult findResult = resultIterator.next();
@@ -980,10 +975,12 @@ public final class FindUtil {
                                      editor.offsetToLogicalPosition(selectionStartOffset),
                                      editor.offsetToLogicalPosition(selectionEndOffset)));
     }
-    if (caretStates.isEmpty()) {
-      return;
+    if (caretStates.size() > editor.getCaretModel().getMaxCaretCount()) {
+      EditorUtil.notifyMaxCarets(editor);
     }
-    editor.getCaretModel().setCaretsAndSelections(caretStates);
+    else if (!caretStates.isEmpty()){
+      editor.getCaretModel().setCaretsAndSelections(caretStates);
+    }
   }
 
   /**
@@ -995,7 +992,7 @@ public final class FindUtil {
    * exists at target position
    */
   public static boolean selectSearchResultInEditor(@NotNull Editor editor, @NotNull FindResult result, int caretShiftFromSelectionStart) {
-    if (!editor.getCaretModel().supportsMultipleCarets()) {
+    if (!editor.getCaretModel().supportsMultipleCarets() || EditorUtil.checkMaxCarets(editor)) {
       return false;
     }
     int caretOffset = getCaretPosition(result, caretShiftFromSelectionStart);

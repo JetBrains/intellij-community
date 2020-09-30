@@ -16,9 +16,11 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -26,7 +28,9 @@ import com.jetbrains.python.psi.PyElement;
 public class PySuppressInspectionFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private final Class<? extends PyElement> myContainerClass;
 
-  public PySuppressInspectionFix(final String ID, final String text, final Class<? extends PyElement> containerClass) {
+  public PySuppressInspectionFix(final String ID,
+                                 final @IntentionName @NotNull String text,
+                                 final Class<? extends PyElement> containerClass) {
     super(ID, false);
     setText(text);
     myContainerClass = containerClass;

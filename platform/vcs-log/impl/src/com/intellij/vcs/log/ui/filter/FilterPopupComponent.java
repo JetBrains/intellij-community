@@ -4,7 +4,8 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   /**
    * Special value that indicates that no filtering is on.
    */
-  protected static final Supplier<@Nls String> ALL = VcsBundle.messagePointer("vcs.log.filter.all");
+  protected static final Supplier<@Nls String> ALL = VcsLogBundle.messagePointer("vcs.log.filter.all");
   @NotNull protected final Model myFilterModel;
 
   FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {
@@ -43,10 +44,11 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   protected abstract String getText(@NotNull Filter filter);
 
   @Nullable
-  @Nls
+  @NlsContexts.Tooltip
   protected abstract String getToolTip(@NotNull Filter filter);
 
   @Override
+  @NlsContexts.Tooltip
   public String getToolTipText() {
     Filter filter = myFilterModel.getFilter();
     return filter == null ? null : getToolTip(filter);

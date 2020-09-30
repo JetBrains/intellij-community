@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class LightJavaModule extends LightElement implements PsiJavaModule {
+public final class LightJavaModule extends LightElement implements PsiJavaModule {
   private final LightJavaModuleReferenceElement myRefElement;
   private final VirtualFile myRoot;
   private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = AtomicNotNullLazyValue.createValue(() -> findExports());
@@ -166,7 +166,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return "PsiJavaModule:" + getName();
   }
 
-  private static class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {
+  private static final class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {
     private final String myText;
 
     private LightJavaModuleReferenceElement(@NotNull PsiManager manager, @NotNull String text) {

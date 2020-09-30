@@ -14,16 +14,18 @@ import javax.swing.Icon
 import javax.swing.JFrame
 
 class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
-  private val customDecorationTitle: CustomDecorationTitle = CustomDecorationTitle(frame) {updateCustomDecorationHitTestSpots()}
+  private val customDecorationTitle: CustomDecorationTitle = CustomDecorationTitle(frame).apply {
+    updateCustomDecorationHitTestSpots()
+  }
 
   init {
     layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")
 
     productIcon.border = JBUI.Borders.empty(V, H, V, H)
-    customDecorationTitle.getView().border = JBUI.Borders.empty(V, 0, V, H)
+    customDecorationTitle.view.border = JBUI.Borders.empty(V, 0, V, H)
 
     add(productIcon)
-    add(customDecorationTitle.getView(), "wmin 0, left, growx, center")
+    add(customDecorationTitle.view, "wmin 0, left, growx, center")
     add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
@@ -39,7 +41,7 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
 
     hitTestSpots.add(RelativeRectangle(productIcon))
     hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
-    hitTestSpots.addAll(customDecorationTitle.getListenerBounds())
+    hitTestSpots.addAll(customDecorationTitle.getBoundList())
 
     return hitTestSpots
   }

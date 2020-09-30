@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -14,15 +15,13 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
+final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
 
   private final List<Node.Clazz> myTestClasses = new SmartList<>();
@@ -32,7 +31,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node.Clazz) {
-      return new ArrayList<>((Collection<? extends Node.Method>)myTests.get((Node.Clazz)parent));
+      return new ArrayList<>(myTests.get((Node.Clazz)parent));
     }
     return Collections.emptyList();
   }
@@ -136,13 +135,13 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
         myPackageName = PsiUtil.getPackageName(psi);
       }
 
-      String getPackageName() {
+      @NlsSafe String getPackageName() {
         return myPackageName;
       }
     }
 
-    static class Method extends Node<PsiMethod> {
-      private final Collection<String> myParameters = new THashSet<>();
+    static final class Method extends Node<PsiMethod> {
+      private final Collection<String> myParameters = new HashSet<>();
 
       private Method(@NotNull PsiMethod method) {
         super(method);
@@ -173,7 +172,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       return myPointer;
     }
 
-    String getName() {
+    @NlsSafe String getName() {
       return myName;
     }
 

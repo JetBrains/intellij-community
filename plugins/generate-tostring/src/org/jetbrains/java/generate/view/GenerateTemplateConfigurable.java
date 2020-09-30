@@ -24,6 +24,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -39,7 +40,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
     private final List<String> availableImplicits = new ArrayList<>();
-  private String myHint;
+  private @Nls String myHint;
 
   public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
     this(template, contextMap, project, true);
@@ -77,7 +78,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
-    public void setHint(String hint) {
+    public void setHint(@Nls String hint) {
       myHint = hint;
     }
 

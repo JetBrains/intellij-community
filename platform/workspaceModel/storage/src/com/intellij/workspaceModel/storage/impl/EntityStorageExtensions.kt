@@ -5,28 +5,28 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 // ------------------------- Updating references ------------------------
 
-internal fun <SUBT : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
+internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                                                                             parentId: EntityId,
-                                                                                                            children: Sequence<SUBT>) {
+                                                                                                            children: Sequence<Child>) {
   refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, children)
 }
 
 
-internal fun <SUBT : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
+internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                                                                                     parentId: EntityId,
-                                                                                                                    children: Sequence<SUBT>) {
+                                                                                                                    children: Sequence<Child>) {
   refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, children)
 }
 
-internal fun <T : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
+internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
                                                                                                              childId: EntityId,
-                                                                                                             parent: T) {
+                                                                                                             parent: Parent) {
   refs.updateOneToAbstractOneParentOfChild(connectionId, childId, parent)
 }
 
-internal fun <SUBT : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneChildOfParent(connectionId: ConnectionId,
+internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneChildOfParent(connectionId: ConnectionId,
                                                                                                         parentId: EntityId,
-                                                                                                        child: SUBT?) {
+                                                                                                        child: Child?) {
   if (child != null) {
     refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, child)
   }
@@ -35,9 +35,9 @@ internal fun <SUBT : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.upda
   }
 }
 
-internal fun <T : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToManyParentOfChild(connectionId: ConnectionId,
+internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToManyParentOfChild(connectionId: ConnectionId,
                                                                                                       childId: EntityId,
-                                                                                                      parent: T?) {
+                                                                                                      parent: Parent?) {
   if (parent != null) {
     refs.updateOneToManyParentOfChild(connectionId, childId.arrayId, parent)
   }
@@ -46,9 +46,9 @@ internal fun <T : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateO
   }
 }
 
-internal fun <T : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneParentOfChild(connectionId: ConnectionId,
+internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneParentOfChild(connectionId: ConnectionId,
                                                                                                      childId: EntityId,
-                                                                                                     parent: T?) {
+                                                                                                     parent: Parent?) {
   if (parent != null) {
     refs.updateOneToOneParentOfChild(connectionId, childId.arrayId, parent)
   }
@@ -59,46 +59,46 @@ internal fun <T : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateO
 
 // ------------------------- Extracting references references ------------------------
 
-internal fun <SUBT : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
-                                                                                     parentId: EntityId): Sequence<SUBT> {
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
+                                                                                     parentId: EntityId): Sequence<Child> {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
-  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } as? Sequence<SUBT>
+  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } as? Sequence<Child>
          ?: emptySequence()
 }
 
-internal fun <SUBT : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
-                                                                                             parentId: EntityId): Sequence<SUBT> {
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
+                                                                                             parentId: EntityId): Sequence<Child> {
   return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
     entityDataByIdOrDie(pid).createEntity(this)
-  } as? Sequence<SUBT> ?: emptySequence()
+  } as? Sequence<Child> ?: emptySequence()
 }
 
-internal fun <SUBT : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChildren(connectionId: ConnectionId,
-                                                                                            parentId: EntityId): Sequence<SUBT> {
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChildren(connectionId: ConnectionId,
+                                                                                            parentId: EntityId): Sequence<Child> {
   return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { pid ->
     sequenceOf(entityDataByIdOrDie(pid).createEntity(this))
-  } as? Sequence<SUBT> ?: emptySequence()
+  } as? Sequence<Child> ?: emptySequence()
 }
 
-internal fun <T : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneParent(connectionId: ConnectionId,
-                                                                                       childId: EntityId): T? {
-  return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it).createEntity(this) as T }
+internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneParent(connectionId: ConnectionId,
+                                                                                       childId: EntityId): Parent? {
+  return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it).createEntity(this) as Parent }
 }
 
-internal fun <SUBT : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId,
-                                                                                 parentId: EntityId): SUBT? {
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId,
+                                                                                 parentId: EntityId): Child? {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return null
-  return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) as? SUBT }
+  return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) as? Child }
 }
 
-internal fun <T : WorkspaceEntity> AbstractEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
-                                                                               childId: EntityId): T? {
+internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
+                                                                               childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? T }
+  return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? Parent }
 }
 
-internal fun <T : WorkspaceEntity> AbstractEntityStorage.extractOneToManyParent(connectionId: ConnectionId, childId: EntityId): T? {
+internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToManyParent(connectionId: ConnectionId, childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? T }
+  return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? Parent }
 }
 

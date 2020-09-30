@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
   private static final Logger LOG = Logger.getInstance(EntryPoint.class);
 
-  @NotNull
-  @Nls
-  public abstract String getDisplayName();
+  public abstract @NotNull @Nls String getDisplayName();
   public abstract boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement);
   public abstract boolean isEntryPoint(@NotNull PsiElement psiElement);
   public abstract boolean isSelected();

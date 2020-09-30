@@ -8,24 +8,23 @@ import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.PsiReferenceProcessorAdapter;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -44,6 +43,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -140,7 +140,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     assertEquals(0, ReferencesSearch.search(unusedCtr).findAll().size());
   }
 
-  private static void addReference(PsiReference ref, ArrayList<PsiFile> filesList, IntArrayList startsList, IntArrayList endsList) {
+  private static void addReference(@NotNull PsiReference ref, @NotNull List<? super PsiFile> filesList, @NotNull IntArrayList startsList, @NotNull IntArrayList endsList) {
     PsiElement element = ref.getElement();
     filesList.add(element.getContainingFile());
     TextRange range = element.getTextRange();
@@ -159,7 +159,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
     doTest(aClass, new String[]{"Test.xml"}, new int[]{32}, new int[]{35});
 
-    final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "<root action='com.Foo'/>", 0, true);
+    final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "<root action='com.Foo'/>", 0, true);
     assertTrue(new UsageInfo(nonCodeUsage, 14, 21, true).getNavigationOffset() > 0);
   }
 
@@ -230,12 +230,10 @@ public class FindUsagesTest extends JavaPsiTestCase {
     final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
-    ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject()), false).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
-        @Override
-        public boolean execute(PsiReference ref) {
-          addReference(ref, filesList, startsList, endsList);
-          return true;
-        }
+    ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject()), false).forEach(new PsiReferenceProcessorAdapter(
+      ref -> {
+        addReference(ref, filesList, startsList, endsList);
+        return true;
       }));
 
     checkResult(fileNames, filesList, starts, startsList, ends, endsList);
@@ -282,7 +280,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     }
   }
 
-  private static void checkResult(String[] fileNames, final ArrayList<PsiFile> filesList, int[] starts, final IntArrayList startsList, int[] ends, final IntArrayList endsList) {
+  private static void checkResult(String @NotNull [] fileNames, final List<? extends PsiFile> filesList, int[] starts, final IntArrayList startsList, int[] ends, final IntArrayList endsList) {
     List<SearchResult> expected = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
       String fileName = fileNames[i];
@@ -312,7 +310,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         String text = String.valueOf(((PsiLiteralExpression)element).getValue());
         if (text.equals("ref")) {
-          return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
+          return new PsiReference[]{new PsiReferenceBase<>(element, false) {
             @Override
             public PsiElement resolve() {
               return field;
@@ -341,19 +339,16 @@ public class FindUsagesTest extends JavaPsiTestCase {
     toSleepMs.set(1_000_000);
     try {
       AtomicReference<Collection<PsiReference>> usages = new AtomicReference<>();
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        ProgressManager.getInstance().runProcess(() -> {
-          usages.set(ReferencesSearch.search(field, GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile())).findAll());
-        }, new EmptyProgressIndicator());
-      });
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+        ProgressManager.getInstance().runProcess(() ->
+          usages.set(ReferencesSearch.search(field, GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile())).findAll()), new EmptyProgressIndicator())
+      );
 
       while(!resolveStarted.get()) {
         UIUtil.dispatchAllInvocationEvents();
       }
 
-      WriteAction.run(() -> {
-        toSleepMs.set(0);
-      });
+      WriteAction.run(() -> toSleepMs.set(0));
 
       future.get();
       assertEquals(2, usages.get().size());
@@ -361,5 +356,24 @@ public class FindUsagesTest extends JavaPsiTestCase {
     finally {
       registrar.unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
     }
+  }
+
+  public void testFindUsagesMustNotSwallow/*IndexNotReadyException*/() throws ExecutionException, InterruptedException {
+    PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
+    PsiField field = Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    SearchScope scope = new LocalSearchScope(aClass);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+        ProgressManager.getInstance().runProcess(() ->
+            assertThrows(IndexNotReadyException.class, () -> {
+              SearchRequestCollector collector = new SearchRequestCollector(new SearchSession(field));
+              collector.searchWord(field.getName(), scope, true, field);
+              PsiSearchHelper.getInstance(getProject()).processRequests(collector, reference -> {
+                  throw IndexNotReadyException.create();
+                });
+            })
+          , new EmptyProgressIndicator())
+      );
+
+    future.get();
   }
 }

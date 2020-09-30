@@ -24,7 +24,6 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
@@ -38,6 +37,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
@@ -132,8 +132,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       Project project = psiFile.getProject();
       action = IntentionActionDelegate.unwrap(action);
 
-      if (LightEdit.owns(project) && !(action instanceof LightEditCompatible)) return false;
-
       if (action instanceof SuppressIntentionActionFromFix) {
         final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
         if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
@@ -205,7 +203,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable final Editor hostEditor,
                                               @NotNull final IntentionAction action,
-                                              @NotNull String commandName) {
+                                              @NotNull @NlsContexts.Command String commandName) {
     final Project project = hostFile.getProject();
     return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, project);
   }
@@ -213,7 +211,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                        @Nullable final Editor hostEditor,
                                        @NotNull final IntentionAction action,
-                                       @NotNull String commandName,
+                                       @NotNull @NlsContexts.Command String commandName,
                                        @NotNull final Project project) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();

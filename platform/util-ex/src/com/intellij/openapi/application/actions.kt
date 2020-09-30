@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
+import com.intellij.util.lang.CompoundRuntimeException
 
 inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
   return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })

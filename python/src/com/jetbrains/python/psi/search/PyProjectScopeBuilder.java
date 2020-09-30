@@ -8,8 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
- *
  * @author yole
  */
 public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
@@ -28,7 +29,15 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
-    return new ProjectAndLibrariesScope(myProject);
+    return new ProjectAndLibrariesScope(myProject) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof ProjectAwareVirtualFile) {
+          return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
+        }
+        return super.contains(file);
+      }
+    };
   }
 
   /**
@@ -45,6 +54,9 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
     return new ProjectScopeImpl(myProject, fileIndex) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof ProjectAwareVirtualFile) {
+          return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
+        }
         if (file instanceof VirtualFileWindow) return true;
         return fileIndex.isInContent(file);
       }

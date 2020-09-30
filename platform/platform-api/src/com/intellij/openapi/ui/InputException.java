@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.UIBundle;
 
@@ -24,10 +25,10 @@ import javax.swing.*;
  * author: lesya
  */
 public class InputException extends RuntimeException{
-  private final String myMessage;
+  private final @NlsContexts.DialogMessage String myMessage;
   private final JComponent myComponent;
 
-  public InputException(String message, JComponent component) {
+  public InputException(@NlsContexts.DialogMessage String message, JComponent component) {
     myMessage = message;
     myComponent = component;
   }

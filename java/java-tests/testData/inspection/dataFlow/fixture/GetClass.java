@@ -101,4 +101,30 @@ class GetClass {
       }
     }
   }
+  
+  void testAnonymous() {
+    Runnable r = new Runnable() {
+      public void run() {
+        if (<warning descr="Condition 'getClass().getSimpleName().isEmpty()' is always 'true'">getClass().getSimpleName().isEmpty()</warning>) {}
+        if (getClass().getName().isEmpty()) {}
+        if (getClass().getCanonicalName().<warning descr="Method invocation 'isEmpty' will produce 'NullPointerException'">isEmpty</warning>()) {}
+      }
+    };
+  }
+  
+  static final class X {}
+  
+  void testNested(X x) {
+    if (<warning descr="Condition 'x.getClass().getSimpleName().equals(\"X\")' is always 'true'">x.getClass().getSimpleName().equals("X")</warning>) {}
+    if (<warning descr="Condition 'x.getClass().getName().equals(\"GetClass$X\")' is always 'true'">x.getClass().getName().equals("GetClass$X")</warning>) {}
+    if (<warning descr="Condition 'x.getClass().getCanonicalName().equals(\"GetClass.X\")' is always 'true'">x.getClass().getCanonicalName().equals("GetClass.X")</warning>) {}
+  }
+  
+  void testLocal() {
+    class X {}
+    X x = new X();
+    if (<warning descr="Condition 'x.getClass().getSimpleName().equals(\"X\")' is always 'true'">x.getClass().getSimpleName().equals("X")</warning>) {}
+    if (x.getClass().getName().equals("GetClass$X")) {}
+    if (x.getClass().getCanonicalName().<warning descr="Method invocation 'equals' will produce 'NullPointerException'">equals</warning>("GetClass.X")) {}
+  }
 }

@@ -25,6 +25,10 @@ public class LinkPanel {
     parent.add(myLinkLabel, linkConstraints);
   }
 
+  public LinkPanel(@NotNull JPanel parent) {
+    this(parent, true, null, null);
+  }
+
   @NotNull
   private JLabel createLink(boolean icon) {
     LinkLabel<Object> linkLabel = new LinkLabel<>(null, icon ? AllIcons.Ide.External_link_arrow : null, (__, ___) -> myRunnable.run());

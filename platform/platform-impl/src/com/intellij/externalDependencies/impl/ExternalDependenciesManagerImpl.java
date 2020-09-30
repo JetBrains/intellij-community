@@ -61,8 +61,8 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
   @Override
   public ExternalDependenciesState getState() {
     ExternalDependenciesState state = new ExternalDependenciesState();
-    for (ProjectExternalDependency dependency : myDependencies) {
-      state.myDependencies.add(new DependencyOnPluginState((DependencyOnPlugin)dependency));
+    for (DependencyOnPlugin dependency : getDependencies(DependencyOnPlugin.class)) {
+      state.myDependencies.add(new DependencyOnPluginState(dependency));
     }
     return state;
   }

@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -30,7 +32,7 @@ import java.util.Set;
 
 public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
-  private static final Set<String> METHOD_NAMES = new HashSet<>();
+  private static final Set<@NlsSafe String> METHOD_NAMES = new HashSet<>();
 
   static {
     METHOD_NAMES.add("stop");
@@ -41,7 +43,7 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Call to Thread.'#ref' #loc";
+    return GroovyBundle.message("inspection.message.call.to.thread.ref");
 
   }
 

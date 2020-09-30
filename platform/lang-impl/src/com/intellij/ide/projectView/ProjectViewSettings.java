@@ -23,9 +23,11 @@ public interface ProjectViewSettings extends ViewSettings {
    * shown as nested, for example generated {@code foo.js} and {@code foo.js.map} file nodes will be shown as children of the
    * original {@code foo.ts} node in the Project View.
    */
-  default boolean isUseFileNestingRules() {return true;}
+  default boolean isUseFileNestingRules() {
+    return true;
+  }
 
-  class Immutable extends ViewSettings.Immutable implements ProjectViewSettings {
+  final class Immutable extends ViewSettings.Immutable implements ProjectViewSettings {
     public static final ProjectViewSettings DEFAULT = new ProjectViewSettings.Immutable(null);
 
     private final boolean myShowExcludedFiles;

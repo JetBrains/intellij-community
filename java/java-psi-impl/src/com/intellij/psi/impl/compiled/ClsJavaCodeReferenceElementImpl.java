@@ -30,7 +30,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +43,16 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private final String myCanonicalText;
   private final String myQualifiedName;
   private final PsiReferenceParameterList myRefParameterList;
+  private final TypeAnnotationContainer myAnnotations;
+  private final ClsJavaCodeReferenceElementImpl myQualifier;
 
   public ClsJavaCodeReferenceElementImpl(@NotNull PsiElement parent, @NotNull String canonicalText) {
+    this(parent, canonicalText, TypeAnnotationContainer.EMPTY);
+  }
+  
+  public ClsJavaCodeReferenceElementImpl(@NotNull PsiElement parent,
+                                         @NotNull String canonicalText,
+                                         @NotNull TypeAnnotationContainer annotations) {
     myParent = parent;
 
     String canonical = TypeInfo.internFrequentType(canonicalText);
@@ -54,12 +61,19 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myQualifiedName = qName.equals(canonical) ? canonical : qName;
 
     String[] classParameters = PsiNameHelper.getClassParametersText(canonicalText);
-    myRefParameterList = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters);
+    myRefParameterList = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters, annotations);
+    myAnnotations = annotations;
+    String prefix = PsiNameHelper.getOuterClassReference(canonicalText);
+    TypeAnnotationContainer container = prefix.isEmpty() ? TypeAnnotationContainer.EMPTY : annotations.forEnclosingClass();
+    myQualifier = container.isEmpty() ? null : new ClsJavaCodeReferenceElementImpl(this, prefix, container);
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return PsiElement.EMPTY_ARRAY;
+    if (myQualifier != null) {
+      return myRefParameterList != null ? new PsiElement[] {myQualifier, myRefParameterList} : new PsiElement[] {myQualifier};
+    }
+    return myRefParameterList != null ? new PsiElement[] {myRefParameterList} : PsiElement.EMPTY_ARRAY;
   }
 
   @Override
@@ -96,16 +110,27 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
     StringBuilder sb = new StringBuilder();
 
-    String prefix = getOuterClassRef(text);
-    int tailStart = 0;
+    String prefix = PsiNameHelper.getOuterClassReference(text);
+    int simpleNamePos = 0;
     if (!StringUtil.isEmpty(prefix)) {
-      sb.append(prefix).append('.');
-      tailStart = prefix.length() + 1;
+      if (myQualifier != null) {
+        sb.append(myQualifier.getCanonicalText(true, myQualifier.myAnnotations.getProvider(myQualifier).getAnnotations()));
+      } else {
+        sb.append(prefix);
+      }
+      sb.append('.');
+      simpleNamePos = prefix.length() + 1;
     }
 
     PsiNameHelper.appendAnnotations(sb, Arrays.asList(annotations), true);
 
-    sb.append(text, tailStart, text.length());
+    int typeArgPos = text.indexOf('<', simpleNamePos);
+    if (typeArgPos == -1) {
+      sb.append(text, simpleNamePos, text.length());
+    } else {
+      sb.append(text, simpleNamePos, typeArgPos);
+      PsiNameHelper.appendTypeArgs(sb, getTypeParameters(), true, true);
+    }
 
     return sb.toString();
   }
@@ -149,9 +174,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
     if (containingClass != null) {
-      final String outerClassRef = getOuterClassRef(canonicalText);
+      final String outerClassRef = PsiNameHelper.getOuterClassReference(canonicalText);
       final String[] classParameters = PsiNameHelper.getClassParametersText(outerClassRef);
-      final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
+      final PsiType[] args = classParameters.length == 0 ? null : 
+                             new ClsReferenceParameterListImpl(this, classParameters, TypeAnnotationContainer.EMPTY).getTypeArguments();
       final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
       for (int i = 0; i < typeParameters.length; i++) {
         if (args != null) {
@@ -167,27 +193,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
         collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
       }
     }
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  private static String getOuterClassRef(String ref) {
-    int stack = 0;
-    for (int i = ref.length() - 1; i >= 0; i--) {
-      char c = ref.charAt(i);
-      switch (c) {
-        case '<':
-          stack--;
-          break;
-        case '>':
-          stack++;
-          break;
-        case '.':
-          if (stack == 0) return ref.substring(0, i);
-      }
-    }
-
-    return "";
   }
 
   @Override

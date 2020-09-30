@@ -2,6 +2,7 @@
 package git4idea.index
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import git4idea.GitVcs
 
 class GitStageManager(val project: Project) : Disposable {
@@ -20,6 +22,12 @@ class GitStageManager(val project: Project) : Disposable {
           GitStageTracker.getInstance(project).scheduleUpdateAll()
         }
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+      }
+    }, this)
+    stageLineStatusTrackerRegistryOption().addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
       }
     }, this)
   }
@@ -43,6 +51,7 @@ class GitStageStartupActivity : StartupActivity.Background {
 }
 
 fun stageRegistryOption() = Registry.get("git.enable.stage")
+fun stageLineStatusTrackerRegistryOption() = Registry.get("git.enable.stage.line.status.tracker")
 
 fun isStageAvailable(project: Project): Boolean {
   return stageRegistryOption().asBoolean() &&

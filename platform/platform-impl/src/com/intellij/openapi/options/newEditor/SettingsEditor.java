@@ -16,6 +16,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -379,7 +380,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Nullable
-  Collection<String> getPathNames() {
+  Collection<@NlsContexts.ConfigurableName String> getPathNames() {
     return myTreeView == null ? null : myTreeView.getPathNames(myFilter.myContext.getCurrentConfigurable());
   }
 

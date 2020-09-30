@@ -15,6 +15,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public abstract class InlineOptionsDialog extends RefactoringDialog implements InlineOptions {
@@ -172,15 +174,21 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return getNumberOfOccurrences(nameIdentifierOwner, this::ignoreOccurrence);
   }
 
-  private static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
-                                            Predicate<? super PsiReference> ignoreOccurrence) {
+  protected static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
+                                              Predicate<? super PsiReference> ignoreOccurrence) {
+    return getNumberOfOccurrences(nameIdentifierOwner, ignoreOccurrence, scope -> ReferencesSearch.search(nameIdentifierOwner, scope));
+  }
+
+  protected static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
+                                              Predicate<? super PsiReference> ignoreOccurrence,
+                                              Function<? super GlobalSearchScope, ? extends Query<PsiReference>> searcher) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(nameIdentifierOwner.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
      name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    return isCheapToSearch ? (int)ReferencesSearch.search(nameIdentifierOwner, scope).findAll().stream().filter(ignoreOccurrence).count() : - 1;
+    return isCheapToSearch ? (int)searcher.apply(scope).findAll().stream().filter(ignoreOccurrence).count() : - 1;
   }
 
 }

@@ -53,8 +53,8 @@ class SvnMergeInfoTest : SvnTestCase() {
       return provider.getCommittedChanges(provider.createDefaultSettings(), SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0)
     }
 
-  override fun setUp() {
-    super.setUp()
+  override fun before() {
+    super.before()
 
     myTrunkUrl = "$myRepoUrl/trunk"
     myBranchUrl = "$myRepoUrl/branch"

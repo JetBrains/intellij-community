@@ -6,8 +6,8 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -117,7 +117,7 @@ public class BreakpointManager {
   }
 
   public void addListeners(@NotNull MessageBusConnection busConnection) {
-    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> xBreakpoint) {
         Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);

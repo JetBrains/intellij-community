@@ -9,11 +9,8 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "XmlFoldingSettings", storages = {
-  @Storage("editor.xml"),
-  @Storage(value = "editor.codeinsight.xml", deprecated = true),
-})
-public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
+@State(name = "XmlFoldingSettings", storages = @Storage("editor.xml"))
+public final class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
   private final XmlFoldingSettings.State myState = new State();
 
   public static XmlFoldingSettings getInstance() {

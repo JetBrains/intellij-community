@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SmartList
@@ -41,9 +42,11 @@ class LogFileOptions : BaseState {
   }
 
   @get:Attribute("alias")
+  @get:NlsSafe
   var name: String? by string()
 
   @get:Attribute(value = "path", converter = PathConverter::class)
+  @get:NlsSafe
   var pathPattern: String? by string()
 
   @get:Attribute("checked")

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -33,14 +33,9 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
     }
   }
 
-  protected final void compileAndIndexData(final String... fileNames) {
-    try {
-      for (String fileName : fileNames) {
-        myFixture.addFileToProject(fileName, FileUtil.loadFile(new File(getTestDataPath() + getName() + "/" + fileName))).getVirtualFile();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+  protected final void compileAndIndexData(String... fileNames) throws IOException {
+    for (String fileName : fileNames) {
+      myFixture.addFileToProject(fileName, FileUtil.loadFile(new File(getTestDataPath() + getName() + "/" + fileName))).getVirtualFile();
     }
     rebuildProject();
   }

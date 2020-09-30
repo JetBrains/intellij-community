@@ -7,6 +7,7 @@ import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.features.ConstFileFeaturesProducer
 import com.intellij.filePrediction.features.FileFeaturesProducer
+import com.intellij.filePrediction.features.FilePredictionFeaturesCache
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
 import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
@@ -32,7 +33,8 @@ class FilePredictionContextFeaturesTest : FilePredictionHistoryBaseTest() {
     assertTrue("Cannot open main file because it's already opened", prevFile != file)
 
     val provider = FilePredictionContextFeatures()
-    val actual = provider.calculateFileFeatures(myFixture.project, file!!, prevFile, FAILED_COMPUTATION)
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
+    val actual = provider.calculateFileFeatures(myFixture.project, file!!, prevFile, emptyCache)
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {
       assertTrue("Cannot find feature '${feature.key}' in $actual", actual.containsKey(feature.key))

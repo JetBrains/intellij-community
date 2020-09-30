@@ -26,37 +26,43 @@
        <psi.referenceContributor language="XML" implementation="com.theoryinpractice.testng.TestNGSuiteReferenceContributor"/>
       <library.dependencyScopeSuggester implementation="com.theoryinpractice.testng.configuration.TestNGDependencyScopeSuggester"/>
 
-      <localInspection groupPath="Java" language="JAVA" shortName="JUnitTestNG" groupName="TestNG" enabledByDefault="false"
+      <localInspection groupPath="Java" language="JAVA" shortName="JUnitTestNG" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="false"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.JUnitConvertTool"
                        key="inspection.junit.testNG.display.name" bundle="messages.TestngBundle"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="ConvertOldAnnotations" groupName="TestNG"
+      <localInspection groupPath="Java" language="JAVA" shortName="ConvertOldAnnotations" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspection"
                        key="inspection.convert.old.annotations.display.name" bundle="messages.TestngBundle"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="ConvertJavadoc" groupName="TestNG"
+      <localInspection groupPath="Java" language="JAVA" shortName="ConvertJavadoc" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertJavadocInspection"
                        key="inspection.convert.javadoc.display.name" bundle="messages.TestngBundle"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="dependsOnMethodTestNG" groupName="TestNG" enabledByDefault="true"
+      <localInspection groupPath="Java" language="JAVA" shortName="dependsOnMethodTestNG" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.DependsOnMethodInspection"
                        key="inspection.depends.on.method.testNG.display.name" bundle="messages.TestngBundle"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="groupsTestNG" groupName="TestNG" enabledByDefault="true" level="WARNING"
+      <localInspection groupPath="Java" language="JAVA" shortName="groupsTestNG" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.DependsOnGroupsInspection"
                        key="inspection.groups.testNG.display.name" bundle="messages.TestngBundle"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="UndeclaredTests" groupName="TestNG" enabledByDefault="false" level="WARNING"
+      <localInspection groupPath="Java" language="JAVA" shortName="UndeclaredTests" 
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.UndeclaredTestInspection"
                        key="inspection.undeclared.tests.display.name" bundle="messages.TestngBundle"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ExpectedExceptionNeverThrownTestNG"
-                       groupName="TestNG" enabledByDefault="false" level="WARNING"
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ExpectedExceptionNeverThrownTestNGInspection"
                        key="inspection.expected.exception.never.thrown.testNG.display.name" bundle="messages.TestngBundle"/>
       <naming.convention.method implementation="com.theoryinpractice.testng.inspection.TestNGMethodNamingConvention" id="TestNGMethodNamingConvention" order="first"/>
       <localInspection groupPath="Java" language="JAVA" shortName="DuplicatedDataProviderNames"
-                       groupName="TestNG" enabledByDefault="true" level="ERROR"
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DuplicatedDataProviderNamesInspection"
                        key="inspection.duplicated.data.provider.names.display.name" bundle="messages.TestngBundle"/>
       <localInspection groupPath="Java" language="JAVA" shortName="DataProviderReturnType"
-                       groupName="TestNG" enabledByDefault="true" level="ERROR"
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DataProviderReturnTypeInspection"
                        key="inspection.data.provider.return.type.display.name" bundle="messages.TestngBundle"/>
 
@@ -72,7 +78,7 @@
       <stacktrace.fold substring="at org.testng.TestNG.run"/>
       <localInspection groupPath="Java" language="JAVA" shortName="TestNGDataProvider"
                        implementationClass="com.theoryinpractice.testng.inspection.TestNGDataProviderInspection"
-                       groupName="TestNG" enabledByDefault="true" level="WARNING" key="inspection.testNG.data.provider.display.name"
+                       groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true" level="WARNING" key="inspection.testNG.data.provider.display.name"
                        bundle="messages.TestngBundle"/>
       <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
       <runConfigurationProducer

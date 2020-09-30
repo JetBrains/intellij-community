@@ -75,7 +75,7 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
 
-    <group id="tasks.toolbar.group">
+    <group id="tasks.toolbar">
       <separator/>
       <reference id="tasks.switch"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
@@ -147,7 +147,7 @@
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
-    <notificationAllowlist groupIds="Task Group;Tasks"/>
+    <notificationGroup id="Task Group" displayType="BALLOON"/>
   </extensions>
 
 </idea-plugin>

@@ -5,7 +5,6 @@ package com.intellij.codeInsight;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author ven
@@ -61,7 +61,7 @@ public final class PsiEquivalenceUtil {
                                               @NotNull PsiElement element2,
                                               @NotNull Comparator<? super PsiReference> referenceComparator,
                                               @Nullable Comparator<? super PsiElement> leafElementsComparator,
-                                              @Nullable Condition<? super PsiElement> isElementSignificantCondition,
+                                              @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
                                               boolean areCommentsSignificant) {
     if(element1 == element2) return true;
     ASTNode node1 = element1.getNode();
@@ -103,14 +103,14 @@ public final class PsiEquivalenceUtil {
   }
 
   public static PsiElement @NotNull [] getFilteredChildren(@NotNull final PsiElement element,
-                                                           @Nullable Condition<? super PsiElement> isElementSignificantCondition,
+                                                           @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
                                                            boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<>();
     for (ASTNode node : children1) {
       final PsiElement child = node.getPsi();
       if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment)) &&
-          (isElementSignificantCondition == null || isElementSignificantCondition.value(child))) {
+          (isElementSignificantCondition == null || isElementSignificantCondition.test(child))) {
         array.add(child);
       }
     }

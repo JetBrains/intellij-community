@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
+import com.intellij.internal.statistic.eventLog.LogEventSerializer;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter;
-import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
+import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -190,14 +193,14 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     updateResultRequest("{}");
 
     try {
-      StatisticsWhitelistConditions scheme = StatisticsWhitelistLoader.parseApprovedGroups(myEventsSchemeEditor.getDocument().getText());
-      String parsed = parseLogAndFilter(new LogEventWhitelistFilter(scheme), myEventLogPanel.getText());
+      EventGroupsFilterRules scheme = EventLogMetadataUtils.parseGroupFilterRules(myEventsSchemeEditor.getDocument().getText());
+      String parsed = parseLogAndFilter(new LogEventMetadataFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }
     catch (EventLogMetadataParseException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Events Scheme");
     }
-    catch (IOException | ParseEventLogWhitelistException e) {
+    catch (IOException | ParseEventLogMetadataException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Applying Events Scheme to Event Log");
     }
   }
@@ -212,7 +215,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
 
   @NotNull
   private static String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
-    throws IOException, ParseEventLogWhitelistException {
+    throws IOException, ParseEventLogMetadataException {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
@@ -224,7 +227,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       );
 
       if (request == null) {
-        throw new ParseEventLogWhitelistException("Failed parsing event log");
+        throw new ParseEventLogMetadataException("Failed parsing event log");
       }
       return LogEventSerializer.INSTANCE.toString(request);
     }
@@ -267,8 +270,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public static class ParseEventLogWhitelistException extends Exception {
-    public ParseEventLogWhitelistException(String s) {
+  public static class ParseEventLogMetadataException extends Exception {
+    public ParseEventLogMetadataException(String s) {
       super(s);
     }
   }

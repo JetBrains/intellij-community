@@ -2,6 +2,7 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
@@ -11,6 +12,7 @@ import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@NlsSafe
 private val VARIABLE_NAMES = arrayOf("AUTH_TYPE", "CONTENT_LENGTH", "CONTENT_TYPE", "DOCUMENT_NAME", "DOCUMENT_URI", "GATEWAY_INTERFACE",
   "HTTP_ACCEPT", "HTTP_ACCEPT_ENCODING", "HTTP_ACCEPT_LANGUAGE", "HTTP_CONNECTION", "HTTP_HOST", "HTTP_REFERER", "HTTP_USER_AGENT", "PATH_INFO",
   "PATH_TRANSLATED", "QUERY_STRING", "QUERY_STRING_UNESCAPED", "REMOTE_ADDR", "REMOTE_HOST", "REMOTE_PORT", "REMOTE_USER", "REQUEST_METHOD",

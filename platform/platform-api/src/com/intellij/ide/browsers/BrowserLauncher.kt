@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.components.ServiceManager
@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil
 
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 abstract class BrowserLauncher {
   companion object {
@@ -18,6 +19,8 @@ abstract class BrowserLauncher {
   abstract fun open(url: String)
 
   abstract fun browse(file: File)
+
+  abstract fun browse(file: Path)
 
   fun browse(uri: URI): Unit = browse(uri.toString(), null, null)
 

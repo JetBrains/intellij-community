@@ -4,6 +4,7 @@ package com.intellij.usages.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
@@ -18,10 +19,13 @@ public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usag
   private final String myExplanationText;
 
   public UnknownUsagesInUnloadedModules(Collection<UnloadedModuleDescription> unloadedModules) {
-    String modulesText = unloadedModules.size() > 1 ? unloadedModules.size() + " unloaded modules"
-                                                    : "unloaded module '" + Objects
-                                                      .requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
-    myExplanationText = "There may be usages in " + modulesText + ". Load all modules and repeat refactoring to ensure that all the usages will be updated.";
+    String modulesText = unloadedModules.size() > 1
+                         ? UsageViewBundle.message("message.part.number.of.unloaded.modules", unloadedModules.size())
+                         : UsageViewBundle.message("message.part.unloaded.module.0",
+                                                   Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName());
+    myExplanationText = UsageViewBundle.message(
+      "message.there.may.be.usages.in.0.load.all.modules.and.repeat.refactoring.to.ensure.that.all.the.usages.will.be.updated",
+      modulesText);
   }
 
   @NotNull

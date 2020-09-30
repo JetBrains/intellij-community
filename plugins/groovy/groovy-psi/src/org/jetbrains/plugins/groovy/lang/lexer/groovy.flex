@@ -140,6 +140,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "import"        { return storeToken(KW_IMPORT); }
   "static"        { return storeToken(KW_STATIC); }
   "def"           { return storeToken(KW_DEF); }
+  "var"           { return storeToken(KW_VAR); }
   "class"         { return storeToken(KW_CLASS); }
   "interface"     { return storeToken(KW_INTERFACE); }
   "enum"          { return storeToken(KW_ENUM); }

@@ -8,6 +8,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +26,12 @@ final class PathBasedJdomXIncluder<T> {
 
   public static final PathResolver<Path> DEFAULT_PATH_RESOLVER = new BasePathResolver();
 
-  private static final String INCLUDE = "include";
-  private static final String HREF = "href";
-  private static final String BASE = "base";
-  private static final String PARSE = "parse";
-  private static final String XML = "xml";
-  private static final String XPOINTER = "xpointer";
+  private static final @NonNls String INCLUDE = "include";
+  private static final @NonNls String HREF = "href";
+  private static final @NonNls String BASE = "base";
+  private static final @NonNls String PARSE = "parse";
+  private static final @NonNls String XML = "xml";
+  private static final @NonNls String XPOINTER = "xpointer";
 
   private final DescriptorListLoadingContext context;
   private final PathResolver<T> pathResolver;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
@@ -28,7 +14,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
 import git4idea.test.*
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 
 /**
@@ -117,12 +103,12 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
     mainRepo = createRepository(projectPath)
     val parent = prepareRemoteRepo(mainRepo)
     git("push -u origin master")
-    main = RepositoryAndParent("parent", File(projectPath), parent)
+    main = RepositoryAndParent("parent", projectNioRoot, parent)
 
     elderRepo = addSubmoduleInProject(elder.remote, elder.name)
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     mainRepo.git("submodule update --init --recursive") // this initializes the grandchild submodule
-    grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
+    grandchildRepo = registerRepo(project, projectNioRoot.resolve("elder/grandchild"))
     cd(grandchildRepo)
     setupDefaultUsername()
     grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
@@ -132,26 +118,26 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
    * Adds the submodule to the given repository, pushes this change to the upstream,
    * and registers the repository as a VCS mapping.
    */
-  private fun addSubmoduleInProject(submoduleUrl: File, moduleName: String, relativePath: String? = null): GitRepository {
-    addSubmodule(File(projectPath), submoduleUrl, relativePath)
-    val rootPath = "${projectPath}/${relativePath ?: moduleName}"
+  private fun addSubmoduleInProject(submoduleUrl: Path, moduleName: String, relativePath: String? = null): GitRepository {
+    addSubmodule(projectNioRoot, submoduleUrl, relativePath)
+    val rootPath = projectNioRoot.resolve(relativePath ?: moduleName)
     cd(rootPath)
-    refresh(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!)
+    refresh(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootPath)!!)
     setupDefaultUsername()
     return registerRepo(project, rootPath)
   }
 
   // second clone of the whole project with submodules
-  private fun prepareSecondClone(): File {
+  private fun prepareSecondClone(): Path {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    val broDir = File(testRoot, "bro")
+    val broDir = testNioRoot.resolve("bro")
     cd(broDir)
     setupDefaultUsername()
     return broDir
   }
 
-  private fun commitAndPushFromSecondClone(bro: File) {
+  private fun commitAndPushFromSecondClone(bro: Path) {
     listOf(grandchild.local, elder.local, younger.local, bro).forEach {
       cd(it)
       tacp("g.txt")

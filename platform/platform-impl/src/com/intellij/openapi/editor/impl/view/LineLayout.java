@@ -355,7 +355,7 @@ abstract class LineLayout {
 
   abstract BidiRun[] getRunsInVisualOrder();
 
-  private static class SingleChunk extends LineLayout {
+  private static final class SingleChunk extends LineLayout {
     private final Chunk myChunk;
 
     private SingleChunk(Chunk chunk) {
@@ -400,7 +400,7 @@ abstract class LineLayout {
     }
   }
 
-  private static class MultiChunk extends LineLayout {
+  private static final class MultiChunk extends LineLayout {
     private final BidiRun[] myBidiRunsInLogicalOrder;
     private final BidiRun[] myBidiRunsInVisualOrder;
 
@@ -475,7 +475,7 @@ abstract class LineLayout {
     }
   }
 
-  private static class WithSize extends LineLayout {
+  private static final class WithSize extends LineLayout {
     private final LineLayout myDelegate;
     private final float myWidth;
 
@@ -528,7 +528,7 @@ abstract class LineLayout {
     }
   }
 
-  private static class BidiRun {
+  private static final class BidiRun {
     public static final BidiRun[] EMPTY_ARRAY = new BidiRun[0];
     private static final int CHUNK_CHARACTERS = 1024;
 
@@ -691,7 +691,7 @@ abstract class LineLayout {
     }
   }
 
-  private static class SyntheticChunk extends Chunk {
+  private static final class SyntheticChunk extends Chunk {
     private SyntheticChunk(int startOffset, int endOffset) {
       super(startOffset, endOffset);
     }
@@ -702,7 +702,7 @@ abstract class LineLayout {
     }
   }
 
-  private static class VisualOrderIterator implements Iterator<VisualFragment> {
+  private static final class VisualOrderIterator implements Iterator<VisualFragment> {
     private final EditorView myView;
     private final CharSequence myText;
     private final int myLine;
@@ -855,10 +855,6 @@ abstract class LineLayout {
 
     float getEndX() {
       return delegate.offsetToX(startX, 0, getLength());
-    }
-
-    float getWidth() {
-      return getEndX() - getStartX();
     }
 
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment

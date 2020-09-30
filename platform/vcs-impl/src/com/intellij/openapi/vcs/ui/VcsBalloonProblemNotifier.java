@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
   public static final NotificationGroup
     NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID);
   private final Project myProject;
-  private final String myMessage;
+  private final @NotificationContent String myMessage;
   private final MessageType myMessageType;
   private final NamedRunnable @Nullable [] myNotificationListener;
 
@@ -69,10 +70,10 @@ public class VcsBalloonProblemNotifier implements Runnable {
   public void run() {
     final Notification notification;
     if (myNotificationListener != null && myNotificationListener.length > 0) {
-      final StringBuilder sb = new StringBuilder(myMessage);
+      @Nls StringBuilder sb = new StringBuilder(myMessage);
       for (NamedRunnable runnable : myNotificationListener) {
         final String name = runnable.toString();
-        sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>");
+        sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>"); // NON-NLS
       }
       NotificationListener listener = (currentNotification, event) -> {
         if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {

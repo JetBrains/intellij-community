@@ -12,7 +12,7 @@ XmlFile:test.xml
         PsiWhiteSpace(' ')
         PsiElement(XML_ATTRIBUTE)
           XmlToken:XML_NAME('ajsdg')
-          PsiErrorElement:'=' expected
+          PsiErrorElement:= expected
             <empty list>
       XmlTag:a
         XmlToken:XML_START_TAG_START('<')

@@ -47,7 +47,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GitShowCommitInLogAction.class);
 
   public GitShowCommitInLogAction() {
-    super(GitBundle.getString("vcs.history.action.gitlog"));
+    super(GitBundle.messagePointer("vcs.history.action.gitlog"));
   }
 
   @Override

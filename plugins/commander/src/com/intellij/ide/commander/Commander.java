@@ -295,20 +295,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private CommanderPanel createPanel() {
     final CommanderPanel panel = new CommanderPanel(myProject, true, false);
 
-    panel.getList().addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(final KeyEvent e) {
-        if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-          if (e.isConsumed()) return;
-          final PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
-          final boolean[] isCopied = new boolean[1];
-          if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-            copyPasteManager.clear();
-            e.consume();
-          }
-        }
-      }
-    });
+    panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
     panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));

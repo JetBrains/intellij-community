@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.task.ProjectTask;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ public final class ProjectTaskList extends SmartList<ProjectTask> implements Pro
 
   @NotNull
   @Override
+  @NlsSafe
   public String getPresentableName() {
     return toString();
   }

@@ -70,13 +70,14 @@ public final class PsiTestUtil {
     return vDir;
   }
 
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull String tempName,
-                                                       @Nullable Module module,
-                                                       String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete,
-                                                       boolean addProjectRoots) {
-    return HeavyTestHelper.createTestProjectStructure(tempName, module, rootPath, filesToDelete, addProjectRoots);
+  public static @NotNull VirtualFile createTestProjectStructure(@NotNull String tempName,
+                                                                @Nullable Module module,
+                                                                String rootPath,
+                                                                @NotNull Collection<Path> filesToDelete,
+                                                                boolean addProjectRoots) {
+    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, tempName);
+    filesToDelete.add(dir);
+    return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
   }
 
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
@@ -118,10 +119,12 @@ public final class PsiTestUtil {
                                                                   @NotNull VirtualFile vDir,
                                                                   @NotNull JpsModuleSourceRootType<P> rootType,
                                                                   @NotNull P properties) {
-    Ref<SourceFolder> result = Ref.create();
+    Ref<SourceFolder> result = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntry(model, vDir);
-      if (entry == null) entry = model.addContentEntry(vDir);
+      if (entry == null) {
+        entry = model.addContentEntry(vDir);
+      }
       result.set(entry.addSourceFolder(vDir, rootType, properties));
     });
     return result.get();
@@ -143,7 +146,6 @@ public final class PsiTestUtil {
         if (entry instanceof ContentEntryImpl) {
           Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
         }
-
         return entry;
       }
     }
@@ -487,7 +489,7 @@ public final class PsiTestUtil {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
       try {
-        moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
+        moduleName = moduleModel.newModule(root.toNioPath().resolve(name + ".iml"), type.getId()).getName();
         moduleModel.commit();
       }
       catch (Throwable t) {

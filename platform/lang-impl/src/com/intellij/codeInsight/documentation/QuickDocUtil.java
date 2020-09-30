@@ -28,10 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -45,7 +42,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
  */
 public final class QuickDocUtil {
 
-  public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable final String documentation) {
+  public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -126,7 +123,7 @@ public final class QuickDocUtil {
   public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
                                                       PsiElement element,
                                                       PsiElement originalElement,
-                                                      @Nullable String navigationInfo) {
+                                                      @Nullable @Nls String navigationInfo) {
     if (navigationInfo != null) {
       String fqn = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
       String fullText = provider.generateDoc(element, originalElement);

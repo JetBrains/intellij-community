@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractFilterChildren;
@@ -25,6 +26,8 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
@@ -66,7 +69,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   private static long validateRevisionNumber(long revision) throws VcsException {
     if (revision < 0) {
-      throw new VcsException("Wrong committed revision number: " + revision);
+      throw new VcsException(message("error.wrong.committed.revision.number", revision));
     }
 
     return revision;
@@ -164,7 +167,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
       }
     }
 
-    private void parseLine(String line) throws SvnBindException {
+    private void parseLine(@NlsSafe String line) throws SvnBindException {
       if (StringUtil.isEmptyOrSpaces(line)) return;
       if (line.startsWith(CommitEventType.transmittingDeltas.getText())) {
         if (myHandler != null) {
@@ -208,14 +211,12 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
               myHandler.committedRevision(myCommittedRevision);
             }
           } catch (NumberFormatException e) {
-            final String message = "Wrong committed revision number: " + num + ", string: " + line;
-            LOG.info(message, e);
-            throw new SvnBindException(message);
+            LOG.info("Wrong committed revision number: " + num + ", " + line, e);
+            throw new SvnBindException(message("error.wrong.committed.revision.number", num) + ", " + line);
           }
         } else {
-          final String message = "Missing committed revision number: " + num + ", string: " + line;
-          LOG.info(message);
-          throw new SvnBindException(message);
+          LOG.info("Missing committed revision number: " + num + ", " + line);
+          throw new SvnBindException(message("error.missing.committed.revision.number", num) + ", " + line);
         }
       } else {
         if (myHandler == null) return;

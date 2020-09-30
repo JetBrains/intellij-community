@@ -37,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
      *                      It's allowed to check imprecisely (return true even if output type is not acceptable) as more
      *                      expensive type check will be performed automatically.
      */
-    Wrapper(String template, Predicate<? super PsiType> inTypeFilter, Predicate<? super PsiType> outTypeFilter) {
+    Wrapper(@NonNls String template, Predicate<? super PsiType> inTypeFilter, Predicate<? super PsiType> outTypeFilter) {
       myInTypeFilter = inTypeFilter;
       myOutTypeFilter = outTypeFilter;
       myTemplate = template;
@@ -114,7 +115,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     }
 
     @NotNull
-    private PsiExpression createReplacement(PsiElement context, String replacement) {
+    private PsiExpression createReplacement(PsiElement context, @NonNls String replacement) {
       return JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(
         myTemplate.replace("{0}", replacement), context);
     }
@@ -174,7 +175,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))
   };
 
-  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<LanguageLevel> level) {
+  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<? super LanguageLevel> level) {
     if (!(psiType instanceof PsiClassType)) return true;
     return level.test(((PsiClassType)psiType).getLanguageLevel());
   }

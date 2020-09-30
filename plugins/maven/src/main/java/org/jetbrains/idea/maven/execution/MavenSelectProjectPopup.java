@@ -29,6 +29,7 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProjectNamer;
 
@@ -86,7 +87,8 @@ public class MavenSelectProjectPopup {
       public void actionPerformed(ActionEvent e) {
         List<MavenProject> projectList = projectsManager.getProjects();
         if (projectList.isEmpty()) {
-          JBPopupFactory.getInstance().createMessage("Maven projects not found").showUnderneathOf(button);
+          JBPopupFactory.getInstance().createMessage(
+            MavenProjectBundle.message("popup.content.maven.projects.not.found")).showUnderneathOf(button);
           return;
         }
 

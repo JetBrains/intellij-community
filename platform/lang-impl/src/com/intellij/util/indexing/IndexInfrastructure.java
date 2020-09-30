@@ -21,7 +21,6 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -152,7 +151,7 @@ public final class IndexInfrastructure {
 
       if (ourDoParallelIndicesInitialization) {
         ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-          "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
+          "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", AppExecutorUtil.getAppExecutorService(),
           UnindexedFilesUpdater.getNumberOfIndexingThreads());
 
         for (ThrowableRunnable<?> callable : myNestedInitializationTasks) {

@@ -17,6 +17,7 @@ import java.util.List;
  * Global context of matching process
  */
 public class MatchContext {
+
   private final Stack<MatchedElementsListener> myMatchedElementsListenerStack = new Stack<>(2);
 
   private MatchResultSink sink;
@@ -24,11 +25,16 @@ public class MatchContext {
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
-  private GlobalMatchingVisitor matcher;
+  @NotNull
+  private final GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
   private final Stack<List<PsiElement>> mySavedMatchedNodes = new Stack<>();
   private List<PsiElement> myMatchedNodes = new SmartList<>();
+
+  public MatchContext(@NotNull GlobalMatchingVisitor visitor) {
+    matcher = visitor;
+  }
 
   public void addMatchedNode(PsiElement node) {
     myMatchedNodes.add(node);
@@ -53,14 +59,10 @@ public class MatchContext {
 
   @FunctionalInterface
   public interface MatchedElementsListener {
-    void matchedElements(@NotNull Collection<PsiElement> matchedElements);
+    void matchedElements(@NotNull Collection<? extends PsiElement> matchedElements);
   }
 
-  public void setMatcher(GlobalMatchingVisitor matcher) {
-    this.matcher = matcher;
-  }
-
-  public GlobalMatchingVisitor getMatcher() {
+  public @NotNull GlobalMatchingVisitor getMatcher() {
     return matcher;
   }
 
@@ -68,7 +70,7 @@ public class MatchContext {
     return options;
   }
 
-  public void setOptions(MatchOptions options) {
+  public void setOptions(@NotNull MatchOptions options) {
     this.options = options;
   }
 
@@ -87,6 +89,7 @@ public class MatchContext {
     }
   }
 
+  @NotNull
   public MatchResultImpl getResult() {
     if (result==null) result = new MatchResultImpl();
     return result;
@@ -116,7 +119,7 @@ public class MatchContext {
     return pattern;
   }
 
-  public void setPattern(CompiledPattern pattern) {
+  public void setPattern(@NotNull CompiledPattern pattern) {
     this.pattern = pattern;
   }
 
@@ -124,7 +127,7 @@ public class MatchContext {
     return sink;
   }
 
-  public void setSink(MatchResultSink sink) {
+  public void setSink(@NotNull MatchResultSink sink) {
     this.sink = sink;
   }
 
@@ -140,7 +143,7 @@ public class MatchContext {
     this.shouldRecursivelyMatch = shouldRecursivelyMatch;
   }
 
-  public void pushMatchedElementsListener(MatchedElementsListener matchedElementsListener) {
+  public void pushMatchedElementsListener(@NotNull MatchedElementsListener matchedElementsListener) {
     myMatchedElementsListenerStack.push(matchedElementsListener);
   }
 
@@ -148,50 +151,44 @@ public class MatchContext {
     myMatchedElementsListenerStack.pop();
   }
 
-  public void notifyMatchedElements(Collection<PsiElement> matchedElements) {
+  public void notifyMatchedElements(@NotNull Collection<? extends PsiElement> matchedElements) {
     if (!myMatchedElementsListenerStack.isEmpty()) {
       myMatchedElementsListenerStack.peek().matchedElements(matchedElements);
     }
   }
 
   public void dispatchMatched() {
-    if (myMatchedNodes.isEmpty()) {
-      return;
+    if (!myMatchedNodes.isEmpty() && !dispatchTargetMatch(getResult())) {
+      dispatchCompleteMatch();
     }
-    final MatchResultImpl result = getResult();
-    if (doDispatch(result)) return;
-
-    // There is no substitutions so show the context
-
-    processNoSubstitutionMatch(myMatchedNodes, result);
-    getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResult result) {
-    boolean ret = false;
+  private boolean dispatchTargetMatch(@NotNull MatchResult result) {
+    boolean dispatched = false;
 
     for (MatchResult r : result.getChildren()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r);
+        dispatched |= dispatchTargetMatch(r);
       }
       else if (r.isTarget()) {
         getSink().newMatch(r);
-        ret = true;
+        dispatched = true;
       }
     }
-    return ret;
+    return dispatched;
   }
 
-  private static void processNoSubstitutionMatch(List<PsiElement> matchedNodes, MatchResultImpl result) {
-    final boolean complexMatch = matchedNodes.size() > 1;
-    final PsiElement match = matchedNodes.get(0);
+  private void dispatchCompleteMatch() {
+    final MatchResultImpl result = getResult();
+    final boolean complexMatch = myMatchedNodes.size() > 1;
+    final PsiElement match = myMatchedNodes.get(0);
 
     if (!complexMatch) {
       result.setMatchRef(new SmartPsiPointer(match));
       result.setMatchImage(match.getText());
     }
     else {
-      for (final PsiElement matchStatement : matchedNodes) {
+      for (final PsiElement matchStatement : myMatchedNodes) {
         result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
       }
 
@@ -199,5 +196,6 @@ public class MatchContext {
       result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }
+    getSink().newMatch(result);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -28,7 +29,7 @@ final class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "XDebugger breakpoints";
+    return TaskBundle.message("xdebugger.breakpoints");
   }
 
   @Override

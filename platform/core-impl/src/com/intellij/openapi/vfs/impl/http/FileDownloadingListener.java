@@ -15,20 +15,21 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface FileDownloadingListener {
 
   void fileDownloaded(@NotNull VirtualFile localFile);
 
-  void errorOccurred(@NotNull String errorMessage);
+  void errorOccurred(@NlsContexts.DialogMessage @NotNull String errorMessage);
 
   void downloadingStarted();
 
   void downloadingCancelled();
 
-  void progressMessageChanged(final boolean indeterminate, @NotNull String message);
+  void progressMessageChanged(final boolean indeterminate, @NlsContexts.ProgressText @NotNull String message);
 
   void progressFractionChanged(double fraction);
 }

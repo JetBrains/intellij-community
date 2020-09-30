@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -13,23 +15,22 @@ import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+
+import static com.intellij.util.ui.UIUtil.BR;
 
 /**
  * Utilities for git plugin user interface
  */
-public class GitUIUtil {
+public final class GitUIUtil {
   /**
    * Text containing in the label when there is no current branch
    * @deprecated Use {@link #getNoCurrentBranch()} instead
@@ -43,77 +44,24 @@ public class GitUIUtil {
   private GitUIUtil() {
   }
 
-  public static void notifyMessages(@NotNull Project project,
-                                    @Nls @NotNull String title,
-                                    @Nls @Nullable String description,
-                                    boolean important,
-                                    @Nullable Collection<String> messages) {
-    String desc = (description != null ? description.replace("\n", "<br/>") : "");
-    if (messages != null && !messages.isEmpty()) {
-      desc += StringUtil.join(messages, "<hr/><br/>");
-    }
-    VcsNotifier notificator = VcsNotifier.getInstance(project);
-    if (important) {
-      notificator.notifyError(title, desc);
-    }
-    else {
-      notificator.notifyImportantWarning(title, desc);
-    }
-  }
-
-  public static void notifyMessage(Project project,
-                                   @Nls @NotNull String title,
-                                   @Nls @Nullable String description,
-                                   boolean important,
-                                   @Nullable Collection<? extends Exception> errors) {
-    Collection<String> errorMessages;
-    if (errors == null) {
-      errorMessages = null;
-    }
-    else {
-      errorMessages = new HashSet<>(errors.size());
-      for (Exception error : errors) {
-        if (error instanceof VcsException) {
-          for (String message : ((VcsException)error).getMessages()) {
-            errorMessages.add(message.replace("\n", "<br/>"));
-          }
-        }
-        else {
-          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
-        }
-      }
-    }
-    notifyMessages(project, title, description, important, errorMessages);
-  }
-
+  /**
+   * @deprecated use {@link VcsNotifier} instead
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
   public static void notifyError(Project project,
                                  @Nls @NotNull String title,
                                  @Nls @Nullable String description,
                                  boolean important,
                                  @Nullable Exception error) {
-    notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
-  }
-
-  /**
-   * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
-   * Line separator is also replaced by &lt;br/&gt;
-   */
-  @NotNull
-  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
-    if (errors == null) {
-      return "";
+    if (important) {
+      VcsNotifier.getInstance(project)
+        .notifyError(null, title, StringUtil.notNullize(description), Collections.singleton(error));
     }
-    StringBuilder content = new StringBuilder();
-    for (VcsException e : errors) {
-      for (String message : e.getMessages()) {
-        content.append(message.replace("\n", "<br/>")).append("<br/>");
-      }
+    else {
+      VcsNotifier.getInstance(project)
+        .notifyImportantWarning(null, title, StringUtil.notNullize(description), Collections.singleton(error));
     }
-    return content.toString();
-  }
-
-  public static void notifyImportantError(Project project, @Nls @NotNull String title, @Nls @Nullable String description) {
-    notifyMessage(project, title, description, true, null);
   }
 
   /**
@@ -122,6 +70,7 @@ public class GitUIUtil {
    * @param comboBox a combobox to examine
    * @return the text field reference
    */
+  @SuppressWarnings("rawtypes")
   public static JTextField getTextField(JComboBox comboBox) {
     return (JTextField)comboBox.getEditor().getEditorComponent();
   }
@@ -135,6 +84,7 @@ public class GitUIUtil {
    * @param gitRootChooser     git root selector
    * @param currentBranchLabel current branch label (might be null)
    */
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public static void setupRootChooser(@NotNull final Project project,
                                       @NotNull final List<? extends VirtualFile> roots,
                                       @Nullable final VirtualFile defaultRoot,
@@ -143,7 +93,8 @@ public class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl));
+    gitRootChooser.setRenderer(SimpleListCellRenderer.create(GitBundle.message("combobox.item.file.invalid"),
+                                                             VirtualFile::getPresentableUrl));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
@@ -174,7 +125,7 @@ public class GitUIUtil {
    * @param ex        the exception
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final VcsException ex, @NonNls @NotNull final String operation) {
+  public static void showOperationError(final Project project, final VcsException ex, @Nls @NotNull final String operation) {
     showOperationError(project, operation, ex.getMessage());
   }
 
@@ -187,7 +138,7 @@ public class GitUIUtil {
    */
   public static void showOperationErrors(final Project project,
                                          final Collection<? extends VcsException> exs,
-                                         @NonNls @NotNull final String operation) {
+                                         @Nls @NotNull final String operation) {
     if (exs.size() == 1) {
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
@@ -208,44 +159,8 @@ public class GitUIUtil {
    * @param message   the error description
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final String operation, final String message) {
+  public static void showOperationError(final Project project, final String operation, @Nls final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
-  }
-
-  /**
-   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
-   * checkbox and change its state to {@code impliedState}. When the {@code checked} checkbox changes states to other state,
-   * than enable {@code changed} and restore its state. Note that the each checkbox should be implied by only one other checkbox.
-   *
-   * @param checked      the checkbox to monitor
-   * @param checkedState the state that triggers disabling changed state
-   * @param changed      the checkbox to change
-   * @param impliedState the implied state of checkbox
-   */
-  public static void imply(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
-    ActionListener l = new ActionListener() {
-      Boolean previousState;
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (checked.isSelected() == checkedState) {
-          if (previousState == null) {
-            previousState = changed.isSelected();
-          }
-          changed.setEnabled(false);
-          changed.setSelected(impliedState);
-        }
-        else {
-          changed.setEnabled(true);
-          if (previousState != null) {
-            changed.setSelected(previousState);
-            previousState = null;
-          }
-        }
-      }
-    };
-    checked.addActionListener(l);
-    l.actionPerformed(null);
   }
 
   /**
@@ -291,42 +206,6 @@ public class GitUIUtil {
     l.actionPerformed(null);
   }
 
-  /**
-   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
-   * text field and clean it. When the {@code checked} checkbox changes states to other state,
-   * than enable {@code changed} and restore its state. Note that the each text field should be implied by
-   * only one other checkbox.
-   *
-   * @param checked      the checkbox to monitor
-   * @param checkedState the state that triggers disabling changed state
-   * @param changed      the checkbox to change
-   */
-  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextComponent changed) {
-    ActionListener l = new ActionListener() {
-      String previousState;
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (checked.isSelected() == checkedState) {
-          if (previousState == null) {
-            previousState = changed.getText();
-          }
-          changed.setEnabled(false);
-          changed.setText("");
-        }
-        else {
-          changed.setEnabled(true);
-          if (previousState != null) {
-            changed.setText(previousState);
-            previousState = null;
-          }
-        }
-      }
-    };
-    checked.addActionListener(l);
-    l.actionPerformed(null);
-  }
-
   public static String bold(String s) {
     return surround(s, "b");
   }
@@ -339,7 +218,8 @@ public class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
+  @Nls
   public static String getNoCurrentBranch() {
-    return GitBundle.getString("common.no.active.branch");
+    return GitBundle.message("common.no.active.branch");
   }
 }

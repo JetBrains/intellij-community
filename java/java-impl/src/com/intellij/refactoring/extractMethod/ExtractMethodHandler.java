@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -77,7 +78,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    final Pass<PsiElement[]> callback = new Pass<PsiElement[]>() {
+    final Pass<PsiElement[]> callback = new Pass<>() {
       @Override
       public void pass(final PsiElement[] selectedValue) {
         invokeOnElements(project, editor, file, selectedValue);
@@ -99,7 +100,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         return;
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
           @Override
           public void pass(PsiExpression psiExpression) {
             callback.pass(new PsiElement[]{psiExpression});
@@ -174,7 +175,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       return;
     }
 
-    getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
+    getProcessor(elements, project, file, editor, true, new Pass<>() {
       @Override
       public void pass(ExtractMethodProcessor processor) {
         invokeOnElements(project, editor, processor, true);
@@ -313,7 +314,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return FileEditorManager.getInstance(project).openTextEditor(fileDescriptor, false);
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("extract.method.title");
   }
 }

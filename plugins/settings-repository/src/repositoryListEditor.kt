@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -27,7 +27,7 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
     override fun clone(item: RepositoryItem, forInPlaceEditing: Boolean) = RepositoryItem(item.url)
   })
 
-  val deleteButton = JButton("Delete")
+  val deleteButton = JButton(IcsBundle.message("repository.editor.delete.button"))
   deleteButton.addActionListener {
     editor.model.selected?.let { selected ->
       editor.model.remove(selected)
@@ -42,9 +42,9 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
 
     override fun buildUi(builder: LayoutBuilder) {
       builder.apply {
-        repositoryRow = row("Repository:") {
+        repositoryRow = row(icsMessage("repository.editor.repository.label")) {
           cell {
-            editor.comboBox(comment = "Use File -> Manage IDE Settings -> Settings Repository... to configure")
+            editor.comboBox(comment = icsMessage("repository.editor.combobox.comment"))
             deleteButton()
           }
         }
@@ -78,7 +78,7 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
 
 private fun deleteRepository(icsManager: IcsManager) {
   // as two tasks, - user should be able to cancel syncing before delete and continue to delete
-  runModalTask("Syncing before delete Repository", cancellable = true) { indicator ->
+  runModalTask(IcsBundle.message("progress.syncing.before.deleting.repository"), cancellable = true) { indicator ->
     indicator.isIndeterminate = true
 
     val repositoryManager = icsManager.repositoryManager
@@ -103,7 +103,7 @@ private fun deleteRepository(icsManager: IcsManager) {
     }
   }
 
-  runModalTask("Deleting Repository", cancellable = false) { indicator ->
+  runModalTask(IcsBundle.message("progress.deleting.repository"), cancellable = false) { indicator ->
     val repositoryManager = icsManager.repositoryManager
 
     indicator.isIndeterminate = true

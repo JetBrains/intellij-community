@@ -18,6 +18,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -127,7 +128,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true));
-      throw new ConfigurationException("Please, specify artifactId");
+      throw new ConfigurationException(GradleInspectionBundle.message("dialog.message.please.specify.artifactid"));
     }
 
     return true;

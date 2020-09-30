@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Application;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -181,24 +184,29 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       action.fixSilently(editor);
     }
   }
+
+  /**
+   * Run syntax highlighting and extract hint actions from resulting quick fixes. e.g. import suggestions.
+   * Must be run outside EDT.
+   */
   @NotNull
   public static List<HintAction> getImportHints(@NotNull PsiFile file) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // really can't run highlighting from within EDT
       // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      return Collections.emptyList();
+      throw new IllegalStateException("Must not be run from within EDT"); //return Collections.emptyList();
     }
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null || !hasUnresolvedReferences(file)) return Collections.emptyList();
+    if (document == null || InjectedLanguageManager.getInstance(project).isInjectedFragment(file) || !hasUnresolvedReferences(file)) {
+      return Collections.emptyList();
+    }
 
     DaemonProgressIndicator progress = new DaemonProgressIndicator();
     AtomicReference<List<HighlightInfo>> infos = new AtomicReference<>(Collections.emptyList());
-    ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
-        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-          infos.set(DaemonCodeAnalyzerEx.getInstanceEx(project).runMainPasses(file, document, progress));
-        }, progress);
-    });
+    ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
+      ProgressManager.getInstance().executeProcessUnderProgress(() ->
+        infos.set(DaemonCodeAnalyzerEx.getInstanceEx(project).runMainPasses(file, document, progress)), progress));
 
     List<HintAction> result = new ArrayList<>(infos.get().size());
     for (HighlightInfo info : infos.get()) {
@@ -212,13 +220,17 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return false;
     Ref<Boolean> result = new Ref<>(false);
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
-          result.set(true);
-          stopWalking();
+        for (PsiReference reference : element.getReferences()) {
+          if (reference.resolve() == null) {
+            result.set(true);
+            stopWalking();
+            break;
+          }
         }
         super.visitElement(element);
       }
@@ -248,10 +260,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
 
   @NotNull
-  public static String getMessage(final boolean multiple, @NotNull String name) {
+  public static @NlsContexts.HintText String getMessage(final boolean multiple, @NotNull String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
-    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText +=
+      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -179,7 +180,7 @@ public class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
 
     CheckoutRevisionActions(Project project, List<GitRepository> repositories) {
-      super(GitBundle.message("branches.checkout.tag.or.revision"));
+      super(GitBundle.messagePointer("branches.checkout.tag.or.revision"));
       myProject = project;
       myRepositories = repositories;
     }
@@ -214,12 +215,14 @@ public class GitBranchPopupActions {
 
     protected final Project myProject;
     protected final List<GitRepository> myRepositories;
-    protected final String myBranchName;
+    protected final @NlsSafe String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
-    public LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+    public LocalBranchActions(@NotNull Project project,
+                              @NotNull List<? extends GitRepository> repositories,
+                              @NotNull @NlsSafe String branchName,
                               @NotNull GitRepository selectedRepository) {
       myProject = project;
       myRepositories = immutableList(repositories);
@@ -227,14 +230,9 @@ public class GitBranchPopupActions {
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
-      getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
+      getTemplatePresentation().setText(myBranchName, false); // no mnemonics
       getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
-    }
-
-    @NotNull
-    private String calcBranchText() {
-      return myBranchName;
     }
 
     @NotNull
@@ -452,11 +450,13 @@ public class GitBranchPopupActions {
 
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
-    private final String myBranchName;
+    private final @NlsSafe String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     @NotNull private final GitBranchManager myGitBranchManager;
 
-    public RemoteBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+    public RemoteBranchActions(@NotNull Project project,
+                               @NotNull List<? extends GitRepository> repositories,
+                               @NotNull @NlsSafe String branchName,
                                @NotNull GitRepository selectedRepository) {
 
       myProject = project;
@@ -829,7 +829,7 @@ public class GitBranchPopupActions {
     private final List<? extends GitRepository> myRepositories;
     private final String myTagName;
 
-    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName) {
+    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull @NlsSafe String tagName) {
       myProject = project;
       myRepositories = repositories;
       myTagName = tagName;
@@ -850,7 +850,7 @@ public class GitBranchPopupActions {
       private final String myTagName;
 
       DeleteTagAction(Project project, List<? extends GitRepository> repositories, String tagName) {
-        super(IdeBundle.message("button.delete"));
+        super(IdeBundle.messagePointer("button.delete"));
         myProject = project;
         myRepositories = repositories;
         myTagName = tagName;

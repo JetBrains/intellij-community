@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -23,6 +23,7 @@ import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.LOG
@@ -79,7 +80,7 @@ fun Repository.disableAutoCrLf(): Repository {
   return this
 }
 
-fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
+fun Repository.commit(@NonNls message: String? = null, @NonNls reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
     @Suppress("UsePropertyAccessSyntax")

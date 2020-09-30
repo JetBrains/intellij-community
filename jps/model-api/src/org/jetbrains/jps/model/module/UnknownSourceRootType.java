@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourceRootTypeProperties<?>> implements JpsModuleSourceRootType<UnknownSourceRootTypeProperties<?>> {
+public final class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourceRootTypeProperties<?>> implements JpsModuleSourceRootType<UnknownSourceRootTypeProperties<?>> {
   private static final Map<String, UnknownSourceRootType> ourTypeNameToInstanceMap = new ConcurrentHashMap<>();
   private final String myUnknownTypeId;
 

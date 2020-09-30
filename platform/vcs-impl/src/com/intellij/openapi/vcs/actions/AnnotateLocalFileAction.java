@@ -89,7 +89,7 @@ public class AnnotateLocalFileAction {
           Messages.showErrorDialog(project,
                                    VcsBundle.message("dialog.message.can.t.create.text.editor.for", selectedFile.getPresentableUrl()),
                                    VcsBundle.message("message.title.annotate"));
-          LOG.warn(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
+          LOG.warn(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s", //NON-NLS
                                  selectedFile.isValid(), selectedFile.getFileType().getName(), Arrays.toString(fileEditors)));
 
           return;

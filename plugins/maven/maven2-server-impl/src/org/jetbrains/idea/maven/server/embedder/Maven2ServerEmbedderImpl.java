@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -65,7 +65,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
+public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
   private final Maven2ServerConsoleWrapper myConsoleWrapper;
   private volatile MavenServerProgressIndicator myCurrentIndicator;

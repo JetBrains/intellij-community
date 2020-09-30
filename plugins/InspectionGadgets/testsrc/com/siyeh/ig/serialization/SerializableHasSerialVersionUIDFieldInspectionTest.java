@@ -15,7 +15,7 @@ public class SerializableHasSerialVersionUIDFieldInspectionTest extends LightJav
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_15;
   }
 
   private void doTest() {

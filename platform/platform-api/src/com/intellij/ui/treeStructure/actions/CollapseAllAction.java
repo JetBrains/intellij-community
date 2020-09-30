@@ -28,16 +28,22 @@ import javax.swing.*;
 public class CollapseAllAction extends AnAction implements DumbAware {
 
   protected JTree myTree;
+  protected final int collapseToLevel;
 
   public CollapseAllAction(JTree tree) {
+    this(tree, 0);
+  }
+
+  public CollapseAllAction(JTree tree, int collapseToLevel) {
     super(IdeBundle.messagePointer("action.CollapseAllAction.text.collapse.all"), () -> "", AllIcons.Actions.Collapseall);
+    this.collapseToLevel = collapseToLevel;
     myTree = tree;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     int row = getTree().getRowCount() - 1;
-    while (row >= 0) {
+    while (row >= collapseToLevel) {
       getTree().collapseRow(row);
       row--;
     }

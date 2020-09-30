@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
@@ -14,6 +15,7 @@ import com.intellij.ui.StringComboboxEditor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,7 @@ public class PyIntroduceDialog extends DialogWrapper {
   private final String myHelpId;
 
   public PyIntroduceDialog(@NotNull final Project project,
-                           @NotNull final String caption,
+                           @NotNull final @DialogTitle String caption,
                            @NotNull final IntroduceValidator validator,
                            final String helpId,
                            final IntroduceOperation operation) {
@@ -91,7 +93,7 @@ public class PyIntroduceDialog extends DialogWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    for (String possibleName : possibleNames) {
+    for (@Nls String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
     }
   }

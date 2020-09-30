@@ -303,7 +303,7 @@ public final class GitConfig {
     return new UrlsAndPushUrls(urls, pushUrls);
   }
 
-  private static class UrlsAndPushUrls {
+  private static final class UrlsAndPushUrls {
     final List<String> myUrls;
     final Collection<String> myPushUrls;
 
@@ -351,7 +351,7 @@ public final class GitConfig {
     return null;
   }
 
-  private static class Remote {
+  private static final class Remote {
 
     @NotNull private final String myName;
     @NotNull List<String> myFetchSpecs;
@@ -392,7 +392,7 @@ public final class GitConfig {
     }
   }
 
-  private static class Url {
+  private static final class Url {
     private final String myName;
     @Nullable private final String myInsteadof;
     @Nullable private final String myPushInsteadof;
@@ -416,7 +416,7 @@ public final class GitConfig {
     }
   }
 
-  private static class BranchConfig {
+  private static final class BranchConfig {
     private final String myName;
     @Nullable private final String myRemote;
     @Nullable private final String myMerge;

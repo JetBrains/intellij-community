@@ -71,7 +71,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
       }
     }, null);
 
-    helper.showErrors(exceptions, vcs.getName());
+    helper.showErrors(exceptions, vcs.getDisplayName());
   }
 
   @Override

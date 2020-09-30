@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -110,6 +110,7 @@ public class SingleClassesTest {
   @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
   @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
   @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
+  @Test public void testInvertedFloatComparison() { doTest("pkg/TestInvertedFloatComparison"); }
   @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
   @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
@@ -128,6 +129,11 @@ public class SingleClassesTest {
   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
+  @Test public void testRecordEmpty() { doTest("records/TestRecordEmpty"); }
+  @Test public void testRecordSimple() { doTest("records/TestRecordSimple"); }
+  @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
+  @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
+  @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

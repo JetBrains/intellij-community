@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.config.SvnIniFile.isTurned;
 
 public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private JPanel myMainPanel;
@@ -115,8 +118,9 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private void initBrowseActions() {
     InsertPathAction.addTo(myPathToCertificatesField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     myClientCertificatePathField.addBrowseFolderListener(
-        SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, new FileChooserDescriptor(true, false, false, false, false, false));
+      message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
+      null, null, new FileChooserDescriptor(true, false, false, false, false, false)
+    );
   }
 
   private void initNumericValidation() {
@@ -134,16 +138,16 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private void fillMappings() {
-    addToKeyMappings(myServerField, SvnServerFileKeys.SERVER);
-    addToKeyMappings(myUserField, SvnServerFileKeys.USER);
-    addToKeyMappings(myPortField, SvnServerFileKeys.PORT);
-    addToKeyMappings(myPasswordField, SvnServerFileKeys.PASSWORD);
-    addToKeyMappings(myExceptions, SvnServerFileKeys.EXCEPTIONS);
-    addToKeyMappings(myTimeoutField, SvnServerFileKeys.TIMEOUT);
-    addToKeyMappings(myTrustDefaultCAsCheckBox, SvnServerFileKeys.SSL_TRUST_DEFAULT_CA);
-    addToKeyMappings(myClientCertificatePasswordField, SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD);
-    addToKeyMappings(myPathToCertificatesField, SvnServerFileKeys.SSL_AUTHORITY_FILES);
-    addToKeyMappings(myClientCertificatePathField, SvnServerFileKeys.SSL_CLIENT_CERT_FILE);
+    addToKeyMappings(myServerField, ServersFileKeys.SERVER);
+    addToKeyMappings(myUserField, ServersFileKeys.USER);
+    addToKeyMappings(myPortField, ServersFileKeys.PORT);
+    addToKeyMappings(myPasswordField, ServersFileKeys.PASSWORD);
+    addToKeyMappings(myExceptions, ServersFileKeys.EXCEPTIONS);
+    addToKeyMappings(myTimeoutField, ServersFileKeys.TIMEOUT);
+    addToKeyMappings(myTrustDefaultCAsCheckBox, ServersFileKeys.SSL_TRUST_DEFAULT_CA);
+    addToKeyMappings(myClientCertificatePasswordField, ServersFileKeys.SSL_CLIENT_CERT_PASSWORD);
+    addToKeyMappings(myPathToCertificatesField, ServersFileKeys.SSL_AUTHORITY_FILES);
+    addToKeyMappings(myClientCertificatePathField, ServersFileKeys.SSL_CLIENT_CERT_FILE);
   }
 
   private void addToKeyMappings(final JComponent component, final String key) {
@@ -176,6 +180,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     @Override
     public void focusGained(final FocusEvent e) {
     }
+
     @Override
     public void focusLost(final FocusEvent e) {
       myValidator.run();
@@ -186,22 +191,27 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       final JComponent component = myKey2Component.get(entry.getKey());
       if (component != null) {
-        JTextComponent textComponent = null;
-        if (component instanceof JTextComponent) {
-          textComponent = (JTextComponent) component;
-        } else if (component instanceof TextFieldWithBrowseButton) {
-          textComponent = ((TextFieldWithBrowseButton) component).getTextField();
-        }
-        if (textComponent != null) {
-          textComponent.setText(entry.getValue());
-          textComponent.selectAll();
-        }
-        component.setToolTipText(entry.getKey());
+        setProperty(component, entry.getKey(), entry.getValue());
       }
     }
 
-    myTrustDefaultCAsCheckBox.setSelected(booleanPropertySelected(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox))));
+    myTrustDefaultCAsCheckBox.setSelected(isTurned(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox)), false));
     repositoryUrlsRecalculation();
+  }
+
+  private static void setProperty(@NotNull JComponent component, @NlsSafe String name, @NlsSafe String value) {
+    JTextComponent textComponent = null;
+    if (component instanceof JTextComponent) {
+      textComponent = (JTextComponent)component;
+    }
+    else if (component instanceof TextFieldWithBrowseButton) {
+      textComponent = ((TextFieldWithBrowseButton)component).getTextField();
+    }
+    if (textComponent != null) {
+      textComponent.setText(value);
+      textComponent.selectAll();
+    }
+    component.setToolTipText(name);
   }
 
   public void copyStringProperties(Map<String, String> map) {
@@ -209,9 +219,10 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
       final JComponent component = entry.getValue();
       String value = null;
       if (component instanceof JTextComponent) {
-        value = ((JTextComponent) component).getText();
-      } else if (component instanceof TextFieldWithBrowseButton) {
-        value = ((TextFieldWithBrowseButton) component).getTextField().getText();
+        value = ((JTextComponent)component).getText();
+      }
+      else if (component instanceof TextFieldWithBrowseButton) {
+        value = ((TextFieldWithBrowseButton)component).getTextField().getText();
       } else if (component instanceof JCheckBox) {
         value = ((JCheckBox) component).isSelected() ? "yes" : "no";
       }
@@ -220,10 +231,6 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
         map.put(entry.getKey(), value);
       }
     }
-  }
-
-  private static boolean booleanPropertySelected(final String value) {
-    return value != null && SvnServerFileKeys.YES_OPTIONS.contains(StringUtil.toLowerCase(value));
   }
 
   public boolean isDefault() {

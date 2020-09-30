@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -13,21 +14,21 @@ import javax.swing.*;
 public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx {
   private Icon myIcon;
   private final SimpleTextAttributes myTextAttributes;
-  private final String myText;
+  private final @NlsContexts.Label String myText;
 
-  public static SimpleTextCellAppearance regular(@NotNull final String text, @Nullable final Icon icon) {
+  public static SimpleTextCellAppearance regular(@NotNull final @NlsContexts.Label String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public static SimpleTextCellAppearance invalid(@NotNull final String text, @Nullable final Icon icon) {
+  public static SimpleTextCellAppearance invalid(@NotNull final @NlsContexts.Label String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
-  public static SimpleTextCellAppearance synthetic(@NotNull final String text, @Nullable final Icon icon) {
+  public static SimpleTextCellAppearance synthetic(@NotNull final @NlsContexts.Label String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
   }
 
-  public SimpleTextCellAppearance(@NotNull final String text,
+  public SimpleTextCellAppearance(@NotNull final @NlsContexts.Label String text,
                                   @Nullable final Icon icon,
                                   @NotNull final SimpleTextAttributes textAttributes) {
     myIcon = icon;

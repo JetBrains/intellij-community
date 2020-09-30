@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -222,7 +223,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   @Override
-  public final String getBinding() {
+  public final @NlsSafe String getBinding() {
     return myBinding;
   }
 
@@ -300,7 +301,7 @@ public abstract class RadComponent implements IComponent {
 
   @Override
   @NotNull
-  public String getComponentClassName() {
+  public @NlsSafe String getComponentClassName() {
     return myClass.getName();
   }
 
@@ -795,7 +796,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   @Nullable
-  public String getComponentTitle() {
+  public @NlsSafe String getComponentTitle() {
     Palette palette = Palette.getInstance(getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(this);
     for (IntrospectedProperty prop : props) {

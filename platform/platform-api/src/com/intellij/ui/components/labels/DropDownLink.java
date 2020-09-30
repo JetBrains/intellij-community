@@ -22,6 +22,7 @@ import java.util.function.Function;
 /**
  * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
  */
+@SuppressWarnings("HardCodedStringLiteral")
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class DropDownLink<T> extends LinkLabel<Object> {
@@ -58,7 +59,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
             linkLabel.setText(t.toString());
           }
 
-          if (itemChosenAction != null && !linkLabel.chosenItem.equals(t)) {
+          if (itemChosenAction != null && (!linkLabel.chosenItem.equals(t) || !updateLabel)) {
             itemChosenAction.consume(t);
           }
           linkLabel.chosenItem = t;
@@ -81,7 +82,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     return myPopupState;
   }
 
-  private static class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
+  private static final class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
     private final JComponent owner;
 
     private LinkCellRenderer(JComponent owner) {

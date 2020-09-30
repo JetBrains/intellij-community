@@ -134,7 +134,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
                                                                      : Arrays.asList(((PsiClass)parent).getFields());
         boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
-        if (!hasSubClass) {
+        if (hasSubClass) {
+          implicitModifiers.add(SEALED);
+        }
+        else {
           implicitModifiers.add(FINAL);
         }
 
@@ -233,6 +236,18 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           setModifierProperty(PROTECTED, false);
         }
         if (type == null) return;
+      }
+
+      if (type == JavaTokenType.SEALED_KEYWORD || type == JavaTokenType.FINAL_KEYWORD || type == JavaTokenType.NON_SEALED_KEYWORD) {
+        if (type != JavaTokenType.SEALED_KEYWORD) {
+          setModifierProperty(SEALED, false);
+        }
+        if (type != JavaTokenType.NON_SEALED_KEYWORD) {
+          setModifierProperty(NON_SEALED, false);
+        }
+        if (type != JavaTokenType.FINAL_KEYWORD) {
+          setModifierProperty(FINAL, false);
+        }
       }
 
       if (parent instanceof PsiField && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {

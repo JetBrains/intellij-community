@@ -13,7 +13,7 @@ class EditorConfigRootDeclarationCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitRootDeclaration(declaration: EditorConfigRootDeclaration) {
       if (declaration.isValidRootDeclaration) return
-      val message = EditorConfigBundle["inspection.root-declaration.correctness.message"]
+      val message = EditorConfigBundle.get("inspection.root-declaration.correctness.message")
       holder.registerProblem(
         declaration,
         message,

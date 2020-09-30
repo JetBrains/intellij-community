@@ -85,7 +85,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     ArtifactUtil.processDirectoryChildren(rootElement, PackagingElementPath.EMPTY, relativePath, getContext(), PlainArtifactType.getInstance(), processor);
   }
 
-  private static class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
+  private static final class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
     private final StringBuilder myBuilder = new StringBuilder();
     private final boolean myAddParentPaths;
 

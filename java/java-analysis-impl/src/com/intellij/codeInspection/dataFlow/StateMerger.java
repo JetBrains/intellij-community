@@ -456,7 +456,7 @@ class StateMerger {
     }
   }
 
-  private static class Replacements {
+  private static final class Replacements {
     private final @NotNull List<DfaMemoryStateImpl> myAllStates;
     private final Set<DfaMemoryStateImpl> myRemovedStates = ContainerUtil.newIdentityTroveSet();
     private final List<DfaMemoryStateImpl> myMerged = new ArrayList<>();

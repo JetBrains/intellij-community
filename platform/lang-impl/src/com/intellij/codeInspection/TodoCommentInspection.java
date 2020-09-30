@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -51,7 +52,7 @@ public class TodoCommentInspection extends LocalInspectionTool {
       if (element != null) {
         final int elementStart = element.getTextRange().getStartOffset();
         final TextRange range = new TextRange(todoStart - elementStart, todoEnd - elementStart);
-        result.add(manager.createProblemDescriptor(element, range, InspectionsBundle.message("todo.comment.problem.descriptor"),
+        result.add(manager.createProblemDescriptor(element, range, LangBundle.message("todo.comment.problem.descriptor"),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
         lastEndOffset = todoEnd;
       }

@@ -23,11 +23,10 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
-public class ScriptFilter extends FilterAction {
+class ScriptFilter extends FilterAction {
 
-  public ScriptFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("script.filter.name"), filterTable);
+  ScriptFilter() {
+    super(SSRBundle.messagePointer("script.filter.name"));
   }
 
   @Override
@@ -52,7 +51,7 @@ public class ScriptFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
+  public FilterEditor<NamedScriptableDefinition> getEditor() {
     return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));

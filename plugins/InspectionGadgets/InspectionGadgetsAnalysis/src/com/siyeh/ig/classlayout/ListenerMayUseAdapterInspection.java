@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -150,7 +151,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         return;
       }
       final PsiClass implementsClass = (PsiClass)target;
-      final String className = implementsClass.getQualifiedName();
+      @NonNls final String className = implementsClass.getQualifiedName();
       if (className == null || !className.endsWith("Listener")) {
         return;
       }
@@ -168,7 +169,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       if (allDefault) {
         return;
       }
-      final String adapterName = className.substring(0, className.length() - 8) + "Adapter";
+      @NonNls final String adapterName = className.substring(0, className.length() - 8) + "Adapter";
       final GlobalSearchScope scope = implementsClass.getResolveScope();
       final PsiClass adapterClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(adapterName, scope);
       if (adapterClass == null || adapterClass.equals(aClass) || !adapterClass.hasModifierProperty(PsiModifier.ABSTRACT) ||

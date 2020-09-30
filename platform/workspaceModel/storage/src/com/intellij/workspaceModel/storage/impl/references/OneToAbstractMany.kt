@@ -11,11 +11,11 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class OneToAbstractMany<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>(private val childClass: Class<SUBT>) : ReadOnlyProperty<T, Sequence<SUBT>> {
+class OneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val childClass: Class<Child>) : ReadOnlyProperty<Parent, Sequence<Child>> {
 
   private var connectionId: ConnectionId? = null
 
-  override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
+  override fun getValue(thisRef: Parent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
       connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, true, false)
     }
@@ -23,21 +23,21 @@ class OneToAbstractMany<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase>(pri
   }
 }
 
-class MutableOneToAbstractMany<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODT : ModifiableWorkspaceEntityBase<T>>(
-  private val parentClass: Class<T>,
-  private val childClass: Class<SUBT>
-) : ReadWriteProperty<MODT, Sequence<SUBT>> {
+class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
+  private val parentClass: Class<Parent>,
+  private val childClass: Class<Child>
+) : ReadWriteProperty<ModifParent, Sequence<Child>> {
 
   private var connectionId: ConnectionId? = null
 
-  override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
+  override fun getValue(thisRef: ModifParent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true, false)
     }
     return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id)
   }
 
-  override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
+  override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Sequence<Child>) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }

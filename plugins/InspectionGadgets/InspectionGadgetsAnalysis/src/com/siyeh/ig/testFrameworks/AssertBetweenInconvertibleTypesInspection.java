@@ -10,6 +10,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,11 +103,11 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
     }
   }
 
-  private static boolean isAssertNotEqualsMethod(@NotNull String methodName) {
+  private static boolean isAssertNotEqualsMethod(@NotNull @NonNls String methodName) {
     return "assertNotEquals".equals(methodName) || "isNotEqualTo".equals(methodName);
   }
 
-  private static boolean isAssertNotSameMethod(@NotNull String methodName) {
+  private static boolean isAssertNotSameMethod(@NotNull @NonNls String methodName) {
     return "assertNotSame".equals(methodName) || "isNotSameAs".equals(methodName);
   }
 }

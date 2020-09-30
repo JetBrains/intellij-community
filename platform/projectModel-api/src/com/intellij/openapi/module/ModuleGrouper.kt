@@ -16,6 +16,7 @@
 package com.intellij.openapi.module
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
@@ -38,6 +39,7 @@ abstract class ModuleGrouper {
   /**
    * Returns name which should be used for a module when it's shown under its group
    */
+  @NlsSafe
   abstract fun getShortenedName(module: Module): String
 
   /**

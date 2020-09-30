@@ -20,8 +20,6 @@ PsiJavaFile:Errors1.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiErrorElement:'{' expected
       PsiIdentifier:n('n')
     PsiWhiteSpace(' ')

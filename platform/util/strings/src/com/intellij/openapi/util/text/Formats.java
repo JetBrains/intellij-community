@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
-import com.intellij.util.text.OrdinalFormat;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.Contract;
@@ -122,13 +121,5 @@ public final class Formats {
   @Contract(pure = true)
   public static @NotNull String formatDurationApproximate(long duration) {
     return formatDuration(duration, " ", 2);
-  }
-
-  /**
-   * Appends English ordinal suffix to the given number.
-   */
-  @Contract(pure = true)
-  public static @NotNull String formatOrdinal(long num) {
-    return OrdinalFormat.formatEnglish(num);
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.BooleanFunction;
@@ -26,7 +27,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     this(null, null, 0, 0);
   }
 
-  public JBTextArea(String text) {
+  public JBTextArea(@NlsContexts.DetailedDescription String text) {
     this(null, text, 0, 0);
   }
 
@@ -34,7 +35,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     this(null, null, rows, columns);
   }
 
-  public JBTextArea(String text, int rows, int columns) {
+  public JBTextArea(@NlsContexts.DetailedDescription String text, int rows, int columns) {
     this(null, text, rows, columns);
   }
 
@@ -42,7 +43,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     this(doc, null, 0, 0);
   }
 
-  public JBTextArea(Document doc, String text, int rows, int columns) {
+  public JBTextArea(Document doc, @NlsContexts.DetailedDescription String text, int rows, int columns) {
     super(doc, text, rows, columns);
 
     myEmptyText = new TextComponentEmptyText(this) {

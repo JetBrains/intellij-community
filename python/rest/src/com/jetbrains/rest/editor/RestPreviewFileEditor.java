@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.jetbrains.rest.RestBundle;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +87,7 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
   @NotNull
   @Override
   public String getName() {
-    return "ReStructuredText HTML Preview";
+    return RestBundle.message("restructuredtext.html.preview.editor.name");
   }
 
   @Override

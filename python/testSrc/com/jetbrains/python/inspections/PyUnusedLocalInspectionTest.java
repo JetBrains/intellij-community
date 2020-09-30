@@ -193,6 +193,16 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-44102
+  public void testUnusedMultiAssignmentTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-44102
+  public void testUnusedAssignmentExpression() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -5,23 +5,19 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
-public class PropertiesGrouper implements Grouper{
+public final class PropertiesGrouper implements Grouper {
   @NonNls public static final String ID = "SHOW_PROPERTIES";
 
   @Override
   @NotNull
   public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
-    Map<Group,Group> result = new THashMap<>();
+    Map<Group,Group> result = new HashMap<>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {
         PsiElement element = ((JavaClassTreeElementBase)o).getElement();

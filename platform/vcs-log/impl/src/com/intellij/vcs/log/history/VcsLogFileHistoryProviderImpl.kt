@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.content.TabGroupId
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -16,18 +17,16 @@ import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.NonNls
 import java.util.function.Function
-
-@NonNls
-private const val TAB_GROUP_ID = "History"
 
 fun isNewHistoryEnabled() = Registry.`is`("vcs.new.history")
 
 class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
+  private val tabGroupId: TabGroupId = TabGroupId("History", VcsBundle.messagePointer("file.history.tab.name"), false)
 
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (!isNewHistoryEnabled()) return false
@@ -59,7 +58,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
         ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
       }
       else if (firstTime) {
-        ui.jumpToRow(0, true)
+        jumpToRow(ui, 0, true)
       }
     }
 
@@ -99,8 +98,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_GROUP_ID,
-                                                   VcsBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
                                                    FileHistoryUiFactory(path, root, hash), true)
     }
     consumer(fileHistoryUi!!, firstTime)

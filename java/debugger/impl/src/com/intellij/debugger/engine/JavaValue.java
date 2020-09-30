@@ -14,7 +14,8 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.MemoryAgent;
-import com.intellij.debugger.memory.agent.MemoryAgentReferringObjectsProvider;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
+import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -26,9 +27,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -93,7 +92,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public String getTypeName() {
-    return ObjectUtils.doIfNotNull(myValueDescriptor.getType(), Type::name);
+    Type type = myValueDescriptor.getType();
+    return type == null ? null : type.name();
   }
 
   @Override
@@ -567,9 +567,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       public XValue getReferringObjectsValue() {
         ReferringObjectsProvider provider = ReferringObjectsProvider.BASIC_JDI;
 
-        if (MemoryAgent.get(getEvaluationContext().getDebugProcess()).capabilities().canGetReferringObjects()) {
-          provider = new MemoryAgentReferringObjectsProvider(MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
+        MemoryAgentCapabilities capabilities = MemoryAgent.get(getEvaluationContext().getDebugProcess()).capabilities();
+        if (capabilities.canFindPathsToClosestGcRoots()) {
+          provider = new MemoryAgentPathsToClosestGCRootsProvider(MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
         }
+
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);
       }
     };
@@ -604,7 +606,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               callback.evaluated(create(inspectDescriptor, evaluationContext, myNodeManager));
             }
             else {
-              callback.errorOccurred("Context is not available");
+              callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"));
             }
           }
         });

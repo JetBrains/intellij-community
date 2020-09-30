@@ -17,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -150,13 +150,13 @@ public class GroovyGenerateEqualsHelper {
     final PsiType fieldType = field.getType();
     if (isNestedArray(fieldType)) {
       buffer.append(" ");
-      buffer.append(GroovyCodeInsightBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
+      buffer.append(GroovyBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
       buffer.append("\n");
       return;
     }
     if (isArrayOfObjects(fieldType)) {
       buffer.append(" ");
-      buffer.append(GroovyCodeInsightBundle.message("generate.equals.compare.arrays.comment"));
+      buffer.append(GroovyBundle.message("generate.equals.compare.arrays.comment"));
       buffer.append("\n");
     }
 

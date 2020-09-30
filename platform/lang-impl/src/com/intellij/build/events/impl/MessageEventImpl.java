@@ -4,9 +4,9 @@ package com.intellij.build.events.impl;
 import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.MessageEventResult;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
                           @Nullable @BuildEventsNls.Description String detailedMessage) {
     super(new Object(), parentId, System.currentTimeMillis(), message);
     myKind = kind;
-    myGroup = group == null ? "Other messages" : group;
+    myGroup = group == null ? LangBundle.message("build.event.title.other.messages") : group;
     setDescription(detailedMessage);
   }
 

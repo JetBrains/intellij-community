@@ -97,7 +97,7 @@ public final class FileHistoryUtil {
     return diffHandler.createContentRevision(path, commitHash);
   }
 
-  private static class MyVcsChangesMerger extends VcsChangesMerger {
+  private static final class MyVcsChangesMerger extends VcsChangesMerger {
     @NotNull private final Hash myCommit;
     @NotNull private final Hash myFirstParent;
     @NotNull private final VcsLogDiffHandler myDiffHandler;

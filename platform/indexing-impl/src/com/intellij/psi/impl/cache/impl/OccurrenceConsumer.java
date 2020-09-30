@@ -33,19 +33,17 @@ public final class OccurrenceConsumer {
     if (myIndexDataConsumer == null) return;
     if (charArray != null) {
       myIndexDataConsumer.addOccurrence(charArray, start, end, occurrenceMask);
-    } else {
+    }
+    else {
       myIndexDataConsumer.addOccurrence(charSequence, start, end, occurrenceMask);
     }
   }
 
   public void incTodoOccurrence(final IndexPattern pattern) {
-    if (myTodoOccurrences == null) {
-      myTodoOccurrences = new TObjectIntHashMap<>();
-      for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-        myTodoOccurrences.put(indexPattern, 0);
-      }
+    if (myTodoOccurrences == null) myTodoOccurrences = new TObjectIntHashMap<>();
+    if (!myTodoOccurrences.increment(pattern)) {
+      myTodoOccurrences.put(pattern, 1);
     }
-    myTodoOccurrences.adjustValue(pattern, 1);
   }
 
   public int getOccurrenceCount(IndexPattern pattern) {

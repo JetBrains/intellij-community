@@ -35,7 +35,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public PsiFile @NotNull [] getFilesByName(@NotNull String name) {
+  public @NotNull PsiFile @NotNull [] getFilesByName(@NotNull String name) {
     Merger<PsiFile> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiFile[] classes = cache.getFilesByName(name);
@@ -48,7 +48,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public String @NotNull [] getAllFileNames() {
+  public @NotNull String @NotNull [] getAllFileNames() {
     Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : getCaches()) {
       merger.add(cache.getAllFileNames());
@@ -56,13 +56,13 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return getMergerResult(merger, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  private static <T> T @NotNull [] getMergerResult(@Nullable Merger<T> merger, T[] emptyArray) {
+  private static <T> @NotNull T @NotNull [] getMergerResult(@Nullable Merger<T> merger, T[] emptyArray) {
     if (merger == null || merger.myAllItems == null && merger.mySingleItem == null) return emptyArray;
     return merger.myAllItems == null ? merger.mySingleItem : merger.myAllItems.toArray(emptyArray);
   }
 
   @Override
-  public PsiClass @NotNull [] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  public @NotNull PsiClass @NotNull [] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiClass> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiClass[] classes = cache.getClassesByName(name, scope);
@@ -75,7 +75,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public String @NotNull [] getAllClassNames() {
+  public @NotNull String @NotNull [] getAllClassNames() {
     Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : getCaches()) {
       String[] names = cache.getAllClassNames();
@@ -126,7 +126,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public PsiMethod @NotNull [] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  public @NotNull PsiMethod @NotNull [] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiMethod[] methods = cache.getMethodsByName(name, scope);
@@ -139,7 +139,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+  public @NotNull PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);
@@ -153,7 +153,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public PsiField @NotNull [] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+  public @NotNull PsiField @NotNull [] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
     Merger<PsiField> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiField[] fields = cache.getFieldsByNameIfNotMoreThan(name, scope, maxCount);
@@ -185,7 +185,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public String @NotNull [] getAllMethodNames() {
+  public @NotNull String @NotNull [] getAllMethodNames() {
     Merger<String> merger = new Merger<>();
     for (PsiShortNamesCache cache : getCaches()) {
       merger.add(cache.getAllMethodNames());
@@ -194,7 +194,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public PsiField @NotNull [] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  public @NotNull PsiField @NotNull [] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiField> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiField[] classes = cache.getFieldsByName(name, scope);
@@ -207,7 +207,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public String @NotNull [] getAllFieldNames() {
+  public @NotNull String @NotNull [] getAllFieldNames() {
     Merger<String> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       String[] classes = cache.getAllFieldNames();

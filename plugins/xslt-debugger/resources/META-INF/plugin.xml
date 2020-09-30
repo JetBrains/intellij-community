@@ -29,4 +29,5 @@
     <xsltRunnerExtension implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerExtension"/>
   </extensions>
 
+  <resource-bundle>messages.XsltDebuggerBundle</resource-bundle>
 </idea-plugin>

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,13 +28,13 @@ public class CompilationException extends Exception {
     @NotNull
     private final CompilerMessageCategory myCategory;
     @NotNull
-    private final String myMessage;
+    private final @Nls String myMessage;
     @Nullable
     private final String myUrl;
     private final int myLine;
     private final int myColumn;
 
-    public Message(@NotNull CompilerMessageCategory category, @NotNull String message, @Nullable String url, int line, int column) {
+    public Message(@NotNull CompilerMessageCategory category, @NotNull @Nls String message, @Nullable String url, int line, int column) {
       myCategory = category;
       myMessage = message;
       myUrl = url;
@@ -46,7 +47,7 @@ public class CompilationException extends Exception {
       return myCategory;
     }
 
-    @NotNull
+    @NotNull @Nls
     public String getText() {
       return myMessage;
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
@@ -57,6 +58,12 @@ class TableToolbarDecorator extends ToolbarDecorator {
         updateButtons();
       }
     });
+  }
+
+  @Override
+  public @NotNull ToolbarDecorator initPosition() {
+    setToolbarPosition(ActionToolbarPosition.BOTTOM);
+    return this;
   }
 
   @Override

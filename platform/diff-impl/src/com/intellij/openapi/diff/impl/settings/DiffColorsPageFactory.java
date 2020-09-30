@@ -26,6 +26,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     return DisplayPriority.COMMON_SETTINGS;
   }
 
+  @Nls
   public static String getDiffGroup() {
     return ApplicationBundle.message("title.diff");
   }

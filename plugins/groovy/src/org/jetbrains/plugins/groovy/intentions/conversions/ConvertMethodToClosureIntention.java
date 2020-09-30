@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,8 +15,8 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -67,7 +67,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     final PsiField field = containingClass.findFieldByName(methodName, true);
 
     if (field != null) {
-      conflicts.putValue(field, GroovyIntentionsBundle.message("field.already.exists", methodName));
+      conflicts.putValue(field, GroovyBundle.message("field.already.exists", methodName));
     }
 
     final Collection<PsiReference> references = MethodReferencesSearch.search(method).findAll();
@@ -75,7 +75,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
       if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
-        conflicts.putValue(psiElement, GroovyIntentionsBundle.message("method.is.used.outside.of.groovy"));
+        conflicts.putValue(psiElement, GroovyBundle.message("method.is.used.outside.of.groovy"));
       }
       else if (!PsiUtil.isMethodUsage(psiElement)) {
         if (psiElement instanceof GrReferenceExpression) {

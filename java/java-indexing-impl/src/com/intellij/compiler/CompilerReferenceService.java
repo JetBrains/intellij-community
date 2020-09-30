@@ -24,6 +24,10 @@ public interface CompilerReferenceService {
     return project.getService(CompilerReferenceService.class);
   }
 
+  static @Nullable CompilerReferenceService getInstanceIfEnabled(@NotNull Project project) {
+    return isEnabled() ? project.getService(CompilerReferenceService.class) : null;
+  }
+
   /**
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.
    */

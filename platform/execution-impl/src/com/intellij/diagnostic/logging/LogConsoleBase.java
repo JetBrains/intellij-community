@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
@@ -68,7 +69,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private int myLineOffset = -1;
   private LogContentPreprocessor myContentPreprocessor;
   private final Project myProject;
-  private String myTitle = null;
+  private @NlsContexts.TabTitle String myTitle = null;
   private boolean myWasInitialized;
   private final JPanel myTopComponent = new JPanel(new BorderLayout());
   private ActionGroup myActions;
@@ -92,16 +93,16 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   };
 
-  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
+  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model) {
     this(project, reader, title, buildInActions, model, GlobalSearchScope.allScope(project));
   }
 
-  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model,
+  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model,
                         @NotNull GlobalSearchScope scope){
     this(project, reader, title, buildInActions, model, scope, new DefaultLogFormatter());
   }
 
-  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model,
+  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model,
                         @NotNull GlobalSearchScope scope, LogFormatter formatter) {
     super(new BorderLayout());
     myProject = project;

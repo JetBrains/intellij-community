@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author Alexey Chmutov
  */
-public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
+public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
   private final Block myOriginal;
   @Nullable private final Language myLanguage;
   private List<Block> myBlocks;

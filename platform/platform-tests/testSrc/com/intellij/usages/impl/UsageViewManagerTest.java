@@ -27,7 +27,7 @@ public class UsageViewManagerTest {
 
   @Test
   public void scopeCreatedForFindInDirectory() {
-    VirtualFile dir = temporaryDirectory.newVirtualDirectory();
+    VirtualFile dir = temporaryDirectory.createVirtualDir();
     FindModel findModel = new FindModel();
     findModel.setDirectoryName(dir.getPath());
     findModel.setWithSubdirectories(true);

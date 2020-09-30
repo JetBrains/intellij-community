@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -74,8 +75,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
         .parameterTypes("T"));
-  private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
-    .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
+  private static final Set<String> IGNORE_ANNOTATIONS = Set.of(
+    "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
+  private static final Set<String> CHECK_ANNOTATIONS = Set.of(
+    "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
   protected final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
@@ -104,6 +107,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.math.BigDecimal",".*")
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
+      .add("java.nio.channels.AsynchronousChannelGroup",".*")
       .add("java.util.Arrays", ".*")
       .add("java.util.List", "of")
       .add("java.util.Set", "of")
@@ -112,7 +116,17 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.UUID",".*")
       .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
+      .add("java.util.concurrent.CountDownLatch","await|getCount")
+      .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
+      .add("java.util.concurrent.ForkJoinPool","awaitQuiescence")
+      .add("java.util.concurrent.Semaphore","tryAcquire|availablePermits|isFair|hasQueuedThreads|getQueueLength|getQueuedThreads")
+      .add("java.util.concurrent.locks.Condition","await|awaitNanos|awaitUntil")
+      .add("java.util.concurrent.locks.Lock","tryLock|newCondition")
       .add("java.util.stream.BaseStream",".*")
+      .add("java.util.stream.Stream",".*")
+      .add("java.util.stream.DoubleStream",".*")
+      .add("java.util.stream.IntStream",".*")
+      .add("java.util.stream.LongStream",".*")
       .finishDefault();
   }
 
@@ -123,7 +137,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
+    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
     panel.add(tablePanel, BorderLayout.CENTER);
@@ -204,6 +218,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
+      if (call instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
+      }
       if (PropertyUtil.isSimpleGetter(method)) {
         return !isIgnored(method, null);
       }
@@ -223,7 +241,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         return !isIgnored(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+      PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
       if (annotation == null) {
         annotation = getAnnotationByShortNameCheckReturnValue(method);
       }
@@ -291,10 +309,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
-      if (call instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
-        if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
-      }
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
       if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);

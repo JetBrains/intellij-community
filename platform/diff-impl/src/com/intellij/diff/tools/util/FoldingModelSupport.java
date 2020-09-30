@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -35,10 +35,14 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import gnu.trove.TIntFunction;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -152,7 +156,7 @@ public class FoldingModelSupport {
     });
   }
 
-  private static class FoldingBuilder extends FoldingBuilderBase {
+  private static final class FoldingBuilder extends FoldingBuilderBase {
     private final EditorEx @NotNull [] myEditors;
 
     private FoldingBuilder(EditorEx @NotNull [] editors, @NotNull Settings settings) {
@@ -292,7 +296,7 @@ public class FoldingModelSupport {
     return new FoldedRangeDescription(description, anchorLine);
   }
 
-  protected static class FoldedRangeDescription {
+  protected static final class FoldedRangeDescription {
     @NotNull private final String description;
     private final int anchorLine;
 
@@ -662,7 +666,7 @@ public class FoldingModelSupport {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
@@ -670,7 +674,7 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private FoldingCache getFoldingCache(@NotNull Settings settings) {
     //noinspection unchecked
     List<FoldedGroupState>[] result = new List[myCount];
@@ -730,7 +734,7 @@ public class FoldingModelSupport {
     }
   }
 
-  public static class Data {
+  public static final class Data {
     @NotNull private final List<Group> groups;
     @NotNull private final DescriptionComputer descriptionComputer;
 
@@ -739,7 +743,7 @@ public class FoldingModelSupport {
       this.descriptionComputer = descriptionComputer;
     }
 
-    private static class Group {
+    private static final class Group {
       @NotNull public final List<Block> blocks;
 
       private Group(@NotNull List<Block> blocks) {
@@ -747,7 +751,7 @@ public class FoldingModelSupport {
       }
     }
 
-    private static class Block {
+    private static final class Block {
       public final LineRange @NotNull [] ranges;
 
       /**
@@ -947,7 +951,7 @@ public class FoldingModelSupport {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       public String compute() {
         if (!myLoadingStarted) {
           myLoadingStarted = true;
@@ -972,7 +976,7 @@ public class FoldingModelSupport {
       }
 
       @Nullable
-      @CalledInBackground
+      @RequiresBackgroundThread
       private String computeDescription() {
         try {
           ProgressManager.checkCanceled();
@@ -1000,14 +1004,14 @@ public class FoldingModelSupport {
       }
 
       @Nullable
-      @CalledInAwt
+      @RequiresEdt
       public String get() {
         return myDescription.description;
       }
     }
   }
 
-  private static class RangeDescription {
+  private static final class RangeDescription {
     @Nullable public final String description;
 
     private RangeDescription(@Nullable String description) {

@@ -8,7 +8,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.WeakReferenceDisposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;

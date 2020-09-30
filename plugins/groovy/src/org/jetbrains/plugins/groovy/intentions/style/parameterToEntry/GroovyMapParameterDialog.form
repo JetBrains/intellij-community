@@ -21,7 +21,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/GroovyIntentionsBundle" key="map.param.name"/>
+              <text resource-bundle="messages/GroovyBundle" key="map.param.name"/>
             </properties>
           </component>
           <component id="3b592" class="javax.swing.JCheckBox" binding="myCbTypeSpec">
@@ -29,7 +29,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Specify type explicitly"/>
+              <text resource-bundle="messages/GroovyBundle" key="map.parameter.dialog.explicit.type.checkbox"/>
             </properties>
           </component>
           <component id="c38f6" class="javax.swing.JCheckBox" binding="myCreateNew" default-binding="true">
@@ -37,7 +37,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/GroovyIntentionsBundle" key="create.first.new"/>
+              <text resource-bundle="messages/GroovyBundle" key="map.parameter.dialog.create.new.checkbox"/>
             </properties>
           </component>
           <component id="f06a2" class="com.intellij.openapi.ui.ComboBox" binding="myNameComboBox">

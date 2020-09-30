@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class IdeConsoleScriptBindings {
-
-  public static final Binding<IDE> IDE = Binding.create("IDE", IDE.class);
+  public static final Binding<IDE> IDE = new Binding<>("IDE", IDE.class);
 
   public static void ensureIdeIsBound(@Nullable Project project, @NotNull IdeScriptEngine engine) {
     IDE oldIdeBinding = IDE.get(engine);
@@ -20,11 +19,11 @@ public final class IdeConsoleScriptBindings {
   private IdeConsoleScriptBindings() {
   }
 
-  public static class Binding<T> {
+  public static final class Binding<T> {
     private final String myName;
     private final Class<T> myClass;
 
-    private Binding(@NotNull String name, @NotNull Class<T> clazz) {
+    Binding(@NotNull String name, @NotNull Class<T> clazz) {
       myName = name;
       myClass = clazz;
     }
@@ -35,10 +34,6 @@ public final class IdeConsoleScriptBindings {
 
     public T get(@NotNull IdeScriptEngine engine) {
       return ObjectUtils.tryCast(engine.getBinding(myName), myClass);
-    }
-
-    static <T> Binding<T> create(@NotNull String name, @NotNull Class<T> clazz) {
-      return new Binding<>(name, clazz);
     }
   }
 }

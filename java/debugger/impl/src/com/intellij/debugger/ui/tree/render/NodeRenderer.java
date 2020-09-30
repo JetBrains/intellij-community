@@ -16,11 +16,12 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 
 public interface NodeRenderer extends ChildrenRenderer, ValueLabelRenderer {
   ExtensionPointName<NodeRenderer> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nodeRenderer");
 
-  String getName();
+  @Nls String getName();
 
   void setName(String text);
 

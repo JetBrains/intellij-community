@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
@@ -24,6 +26,7 @@ import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.*;
@@ -37,8 +40,8 @@ import java.util.List;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
-  private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
+  private final FileAttributes FAKE_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
@@ -91,7 +94,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isUnix) { // avoid opening fifo files
       FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
       if (attributes != null && !attributes.isFile()) {
-        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.type + ')');
+        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.getType() + ')');
       }
     }
 
@@ -463,7 +466,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
-    boolean sameName = !isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
+    boolean sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
 
     if (!file.exists()) {
       throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
@@ -592,7 +595,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (isCaseSensitive()) {
+    if (file.isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 
@@ -656,9 +659,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    else {
-      return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
-    }
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
   }
 
   private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
@@ -683,5 +684,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     catch (InvalidPathException | IOException | SecurityException e) {
       return true;
     }
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    PersistentFS.getInstance().clearIdCache();
   }
 }

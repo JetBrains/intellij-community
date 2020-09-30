@@ -60,11 +60,13 @@ public enum Side {
   }
 
   @NotNull
+  @Contract(pure = true)
   public Side other() {
     return isLeft() ? RIGHT : LEFT;
   }
 
   @NotNull
+  @Contract(pure = true)
   public Side other(boolean other) {
     return other ? other() : this;
   }
@@ -78,58 +80,68 @@ public enum Side {
   }
 
   @Nullable
-  @Contract("!null, !null -> !null; null, null -> null")
+  @Contract(value = "!null, !null -> !null; null, null -> null", pure = true)
   public <T> T select(@Nullable T left, @Nullable T right) {
     return isLeft() ? left : right;
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(@NotNull T left, @NotNull T right) {
     return isLeft() ? left : right;
   }
 
+  @Contract(pure = true)
   public boolean select(boolean @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
+  @Contract(pure = true)
   public int select(int @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
+  @Contract(pure = true)
   public <T> T select(T @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
+  @Contract(pure = true)
   public <T> T select(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
   }
 
+  @Contract(pure = true)
   public <T> T select(@NotNull Couple<T> region) {
     return isLeft() ? region.first : region.second;
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(@NotNull Couple<T> region) {
     return isLeft() ? region.first : region.second;
   }
 
   @Nullable
+  @Contract(pure = true)
   public static <T> Side fromValue(@NotNull List<? extends T> list, @Nullable T value) {
     assert list.size() == 2;
     int index = list.indexOf(value);

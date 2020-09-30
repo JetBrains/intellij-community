@@ -135,6 +135,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertNull(ExceptionWorker.parseExceptionLine(line + "\n"));
   }
 
+  public void testNativeMethod() {
+    assertParsed("at java.base/java.security.AccessController.doPrivileged(Native Method)\n",
+                 "java.security.AccessController", "doPrivileged", null, -1);
+  }
+
   public void testColumnFinder() {
     @Language("JAVA") String classText =
       "/** @noinspection ALL*/\n" +

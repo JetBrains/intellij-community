@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -119,7 +119,7 @@ public class ActionUrl implements JDOMExternalizable {
     for (Object o : element.getChildren(PATH)) {
       myGroupPath.add(((Element)o).getAttributeValue(VALUE));
     }
-    final String attributeValue = element.getAttributeValue(VALUE);
+    @NlsSafe final String attributeValue = element.getAttributeValue(VALUE);
     if (element.getAttributeValue(IS_ACTION) != null) {
       myComponent = attributeValue;
     }
@@ -268,6 +268,7 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "ActionUrl{" +
            "myGroupPath=" + myGroupPath +

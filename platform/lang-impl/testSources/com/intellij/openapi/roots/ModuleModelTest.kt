@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
@@ -292,6 +293,77 @@ class ModuleModelTest {
     val moduleManager = projectModel.moduleManager
     assertThat(moduleManager.modules).containsExactly(a)
     assertThat(ModuleRootManager.getInstance(a).contentRoots).containsExactly(root, root2)
+  }
+
+  @Test
+  fun `twice module rename`() {
+    val antModuleName = "ant"
+    val mavenModuleName = "maven"
+    val gradleModuleName = "gradle"
+    val moduleManager = ModuleManager.getInstance(projectModel.project)
+
+    val antModule = projectModel.createModule(antModuleName)
+    var modules = moduleManager.modules
+    assertThat(modules.size).isEqualTo(1)
+    assertThat(modules[0].name).isEqualTo(antModuleName)
+
+    runWriteActionAndWait {
+      moduleManager.modifiableModel.let { model ->
+        model.renameModule(antModule, mavenModuleName)
+        model.renameModule(antModule, gradleModuleName)
+        model.commit()
+      }
+    }
+    assertThat(antModule.name).isEqualTo(gradleModuleName)
+
+    modules = moduleManager.modules
+    assertThat(modules.size).isEqualTo(1)
+    assertThat(modules[0].name).isEqualTo(gradleModuleName)
+  }
+
+  @Test
+  fun `set and remove module group`() {
+    val module = projectModel.createModule()
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isFalse()
+    edit { model ->
+      assertThat(model.hasModuleGroups()).isFalse()
+      model.setModuleGroupPath(module, arrayOf("foo", "bar"))
+      assertThat(model.hasModuleGroups()).isTrue()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isTrue()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).containsExactly("foo", "bar")
+    edit { model ->
+      assertThat(model.hasModuleGroups()).isTrue()
+      model.setModuleGroupPath(module, null)
+      assertThat(model.hasModuleGroups()).isFalse()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isFalse()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).isNull()
+  }
+
+  @Test
+  fun `set module group after changing module name`() {
+    val module = projectModel.createModule("foo")
+    edit { model ->
+      model.renameModule(module, "bar")
+      model.setModuleGroupPath(module, arrayOf("group"))
+      assertThat(model.hasModuleGroups()).isTrue()
+    }
+    assertThat(projectModel.moduleManager.hasModuleGroups()).isTrue()
+    assertThat(projectModel.moduleManager.getModuleGroupPath(module)).containsExactly("group")
+  }
+
+  @Test
+  fun `remove module and add module with same name`() {
+    val module = projectModel.createModule("foo")
+    edit { model ->
+      model.disposeModule(module)
+      val updatedModule = projectModel.createModule("foo", model)
+      assertThat(model.modules).containsExactly(updatedModule)
+    }
+    val updatedModule = projectModel.moduleManager.modules.single()
+    assertThat(updatedModule.name).isEqualTo("foo")
+    assertThat(module).isNotSameAs(updatedModule)
   }
 
   class ModifiableModuleModelAccessor(private val moduleModel: ModifiableModuleModel) : RootConfigurationAccessor() {

@@ -5,6 +5,7 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.internal.statistic.BookmarkCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
@@ -156,15 +157,26 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public String getTitle() {
-    return "Bookmarks";
+    return LangBundle.message("popup.title.bookmarks");
   }
 
   @Override
   public void handleMnemonic(KeyEvent e, Project project, JBPopup popup) {
-    char mnemonic = e.getKeyChar();
+    char mnemonic = Character.toUpperCase(e.getKeyChar());
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
+      BookmarkCounterCollector.MnemonicType mnemonicType;
+      if (mnemonic >= '0' && mnemonic <= '9') {
+        mnemonicType = BookmarkCounterCollector.MnemonicType.Number;
+      }
+      else if (mnemonic >= 'A' && mnemonic <= 'Z') {
+        mnemonicType = BookmarkCounterCollector.MnemonicType.Letter;
+      }
+      else {
+        mnemonicType = BookmarkCounterCollector.MnemonicType.None;
+      }
+      BookmarkCounterCollector.bookmarkNavigate.log(mnemonicType, bookmark.getLine() >= 0);
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
     }
   }
@@ -205,6 +217,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (item instanceof BookmarkItem && withEnterOrDoubleClick) {
       Bookmark bookmark = ((BookmarkItem)item).getBookmark();
       popup.cancel();
+      BookmarkCounterCollector.bookmarkNavigate.log(BookmarkCounterCollector.MnemonicType.None, bookmark.getLine() >= 0);
       bookmark.navigate(true);
     }
   }
@@ -288,7 +301,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   static boolean notFiltered(JList<BookmarkItem> list) {
     ListModel<BookmarkItem> model = list.getModel();
     return !(model instanceof FilteringListModel) ||
-           ((FilteringListModel)model).getOriginalModel().getSize() == model.getSize();
+           ((FilteringListModel<BookmarkItem>)model).getOriginalModel().getSize() == model.getSize();
   }
 
   private static class MyDetailView extends DetailViewImpl {

@@ -23,7 +23,7 @@ import java.io.IOException;
 
 public abstract class ConsoleState {
   @NotNull
-  public abstract ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler);
+  public abstract ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler);
   @NotNull
   public abstract ConsoleState dispose();
 

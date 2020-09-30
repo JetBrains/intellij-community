@@ -37,14 +37,8 @@ public interface VcsRootError {
   Type getType();
 
   /**
-   * @return affected directory mapping string
+   * @return affected directory mapping
    */
   @NotNull
-  String getMapping();
-
-  /**
-   * @return vcsKey for affected mapping
-   */
-  @NotNull
-  VcsKey getVcsKey();
+  VcsDirectoryMapping getMapping();
 }

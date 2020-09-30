@@ -247,8 +247,8 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final boolean success = update(sdk, sdkModificator, project, ownerComponent);
     if (!success) {
       Messages.showErrorDialog(project,
-                               PyBundle.message("MSG.cant.setup.sdk.$0", getSdkPresentableName(sdk)),
-                               PyBundle.message("MSG.title.bad.sdk"));
+                               PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
+                               PyBundle.message("python.sdk.invalid.python.sdk"));
     }
   }
 
@@ -483,7 +483,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
-                                           @NotNull Processor<SdkModificator> processor) {
+                                           @NotNull Processor<? super SdkModificator> processor) {
     final String key = PythonSdkType.getSdkKey(sdk);
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {

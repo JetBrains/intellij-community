@@ -102,7 +102,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.auto.import.family");
+    return PyPsiBundle.message("QFIX.NAME.auto.import");
   }
 
   @NotNull
@@ -184,7 +184,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       @NotNull
       @Override
       public String getFamilyName() {
-        return PyPsiBundle.message("QFIX.local.auto.import.family");
+        return PyPsiBundle.message("QFIX.NAME.local.auto.import");
       }
 
       @NotNull

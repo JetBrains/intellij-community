@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class HgRepositorySelectorComponent {
     repositorySelector.addActionListener(actionListener);
   }
 
-  public void setTitle(@NotNull String title) {
+  public void setTitle(@NotNull @NlsContexts.BorderTitle String title) {
     mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
   }
 

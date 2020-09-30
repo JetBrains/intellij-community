@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,10 +36,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
@@ -148,7 +146,7 @@ public final class PythonSdkType extends SdkType {
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
-            throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", files[0].getName()));
           }
         }
       }
@@ -182,7 +180,7 @@ public final class PythonSdkType extends SdkType {
   @Override
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull final JComponent parentComponent,
-                                 @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+                                 final @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
       if (sdk != null) {
@@ -217,11 +215,21 @@ public final class PythonSdkType extends SdkType {
    * @param commandLine what to patch
    * @param sdk         SDK we're using
    */
-  public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
+  public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine,
+                                                   @NotNull Sdk sdk) {
+    patchEnvironmentVariablesForVirtualenv(commandLine.getEnvironment(), sdk);
+  }
+
+  /**
+   * Alters PATH so that a virtualenv is activated, if present.
+   *
+   * @param environment the environment to patch
+   * @param sdk         SDK we're using
+   */
+  public static void patchEnvironmentVariablesForVirtualenv(@NotNull Map<String, String> environment,
+                                                            @NotNull Sdk sdk) {
     final Map<String, String> virtualEnv = activateVirtualEnv(sdk);
     if (!virtualEnv.isEmpty()) {
-      final Map<String, String> environment = commandLine.getEnvironment();
-
       for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
         final String key = entry.getKey();
         final String value = entry.getValue();
@@ -366,11 +374,10 @@ public final class PythonSdkType extends SdkType {
             restartAction.run();
           }
         };
-      @NonNls
-      final String before = "\n<a href=\"#\">";
-      @NonNls
-      final String after = "</a>";
-      notificationMessage = e.getMessage() + before + PyBundle.message("python.vagrant.refresh.skeletons") + after;
+      notificationMessage = new HtmlBuilder()
+        .append(e.getMessage())
+        .appendLink("#", PyBundle.message("python.vagrant.refresh.skeletons"))
+        .toString();
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
@@ -454,9 +461,8 @@ public final class PythonSdkType extends SdkType {
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                activateVirtualEnv(sdk), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
-      throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
-                                                  runResult.getStdout(),
-                                                  runResult.getStderr()));
+      throw new InvalidSdkException(PySdkBundle.message("python.sdk.failed.to.determine.sys.path",
+                                                        runResult.getStdout(), runResult.getStderr()));
     }
     return runResult.getStdoutLines();
   }

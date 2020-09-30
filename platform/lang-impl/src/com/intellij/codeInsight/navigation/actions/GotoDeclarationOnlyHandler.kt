@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiElementProcessor
@@ -77,7 +78,7 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
     }
   }
 
-  private fun chooseAmbiguousTarget(editor: Editor, title: String, elements: Array<PsiElement>, processor: (PsiElement) -> Unit) {
+  private fun chooseAmbiguousTarget(editor: Editor, @NlsContexts.PopupTitle title: String, elements: Array<PsiElement>, processor: (PsiElement) -> Unit) {
     require(elements.isNotEmpty())
     if (elements.size == 1) {
       val element = elements[0]

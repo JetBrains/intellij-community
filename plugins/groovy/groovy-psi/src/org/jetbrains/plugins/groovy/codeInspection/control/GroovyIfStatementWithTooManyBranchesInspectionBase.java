@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -34,7 +35,7 @@ public class GroovyIfStatementWithTooManyBranchesInspectionBase extends BaseInsp
   protected String buildErrorString(Object... args) {
     final GrIfStatement statement = (GrIfStatement) args[0];
     final int branches = calculateNumBranches(statement);
-    return "'#ref' statement with too many branches (" + branches + ") #loc";
+    return GroovyBundle.message("inspection.message.ref.statement.with.too.many.branches", branches);
   }
 
   @NotNull

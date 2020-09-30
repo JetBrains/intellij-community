@@ -13,6 +13,8 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EventListener;
+
 @ApiStatus.Experimental
 public interface VcsLogFilterUiEx extends VcsLogFilterUi {
 
@@ -45,13 +47,19 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
 
   /**
    * Customizes the empty text which is shown in the middle of the table, if there are no commits to display.
-   * <p/>
-   * Returns true if the custom empty text has been set by this filter UI, returns false if general rules should be applied.
-   * <p/>
    * NB: In the case of error this method is not called, and the general logic is used to show the error in the empty space.
    */
   default void setCustomEmptyText(@NotNull StatusText text) {
     text.setText(VcsLogBundle.message("vcs.log.no.commits.matching.status"));
     VcsLogUiUtil.appendResetFiltersActionToEmptyText(this, text);
+  }
+
+  /**
+   * Adds a listener for filters change.
+   */
+  void addFilterListener(@NotNull VcsLogFilterListener listener);
+
+  interface VcsLogFilterListener extends EventListener {
+    void onFiltersChanged();
   }
 }

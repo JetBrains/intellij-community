@@ -1,21 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.processAllImplementationClasses
-import com.intellij.serviceContainer.processComponentInstancesOfType
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.isEmpty
 import com.intellij.util.write
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
@@ -109,13 +105,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
-      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { ObjectOpenHashSet() }.add(stateAnnotation.name)
-    }
-  }
-
-  processComponentInstancesOfType(defaultProject.picoContainer, PersistentStateComponent::class.java) {
-    LOG.runAndLogException {
-      processComponents(it.javaClass)
+      else -> storageNameToComponentNames.computeIfAbsent(storagePathResolver(storagePath)) { HashSet() }.add(stateAnnotation.name)
     }
   }
 
@@ -137,13 +127,13 @@ internal fun moveComponentConfiguration(defaultProject: Project,
 
     for ((storageName, componentNames) in storageNameToComponentNames) {
       if (componentNames.contains(name)) {
-        storagePathToComponentStates.getOrPut(fileResolver(storageName)) { SmartList() }.add(componentElement)
+        storagePathToComponentStates.computeIfAbsent(fileResolver(storageName)) { SmartList() }.add(componentElement)
         continue@cI
       }
     }
 
     // ok, just save it to misc.xml
-    storagePathToComponentStates.getOrPut(fileResolver("misc.xml")) { SmartList() }.add(componentElement)
+    storagePathToComponentStates.computeIfAbsent(fileResolver("misc.xml")) { SmartList() }.add(componentElement)
   }
 
   for ((storageFile, componentStates) in storagePathToComponentStates) {

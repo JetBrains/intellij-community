@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -332,7 +333,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return false;
   }
 
-  private static void reportCorruptedJdkAnnotations(@NotNull VirtualFile root, @NotNull String reason) {
+  private static void reportCorruptedJdkAnnotations(@NotNull VirtualFile root, @NotNull @NlsSafe String reason) {
     LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 

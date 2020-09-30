@@ -26,9 +26,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunsInEdt;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.After;
 import org.junit.Before;
@@ -42,14 +40,12 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-@RunsInEdt
 @RunWith(Parameterized.class)
 public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest {
 
   public static final String CLASS_NAME = "a.Test1";
   private static final String METHOD_NAME = "simple";
   
-  @Rule public final EdtRule edtRule = new EdtRule();
   @Rule public final TestName myNameRule = new TestName();
 
   @Parameterized.Parameters(name = "{0}")
@@ -73,7 +69,6 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
 
   @Before
   public void before() throws Exception {
-    setUp();
     Module module = createEmptyModule();
     String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
     String methodName = myNameRule.getMethodName();
@@ -94,14 +89,8 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
   }
 
   @After
-  public void after() throws Exception {
+  public void after() {
     JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    tearDown();
-  }
-
-  @Override
-  public String getName() {
-    return myNameRule.getMethodName();
   }
 
   @Test

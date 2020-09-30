@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
@@ -16,6 +16,7 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -207,7 +208,7 @@ private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
 }
 
 private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterListText: String?, omitBody: Boolean): Pair<String, Int>? {
-  val text = method.containingFile.text
+  val text = method.containingFile?.takeIf { it is GroovyFile }?.text ?: return null
   val containingClasses = getContainingClasses(method.containingClass)
   val classRepresentations = mutableListOf<String>()
   val fieldRepresentations = mutableListOf<String>()

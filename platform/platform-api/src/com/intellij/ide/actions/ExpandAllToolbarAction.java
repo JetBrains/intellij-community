@@ -19,6 +19,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsActions;
 
 public class ExpandAllToolbarAction extends TreeExpandAllActionBase {
   private TreeExpander myTreeExpander;
@@ -28,7 +29,7 @@ public class ExpandAllToolbarAction extends TreeExpandAllActionBase {
     ActionUtil.copyFrom(this, IdeActions.ACTION_EXPAND_ALL);
   }
 
-  public ExpandAllToolbarAction(TreeExpander treeExpander, String description) {
+  public ExpandAllToolbarAction(TreeExpander treeExpander, @NlsActions.ActionDescription String description) {
     this(treeExpander);
     getTemplatePresentation().setDescription(description);
   }

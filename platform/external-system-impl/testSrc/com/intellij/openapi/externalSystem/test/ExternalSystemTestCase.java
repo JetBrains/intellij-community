@@ -35,10 +35,7 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
@@ -46,8 +43,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.concurrency.Promise;
-import org.junit.After;
-import org.junit.Before;
 
 import java.awt.*;
 import java.io.File;
@@ -82,7 +77,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
   protected boolean useProjectTaskManager;
 
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -162,7 +156,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
   }
 
-  @After
   @Override
   public void tearDown() throws Exception {
     new RunAll(
@@ -175,6 +168,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
       () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(null),
+      () -> ExternalSystemProgressNotificationManagerImpl.cleanupListeners(),
       () -> super.tearDown(),
       () -> resetClassFields(getClass())
     ).run();
@@ -215,18 +209,18 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
       if (runInWriteAction()) {
         try {
-          WriteAction.runAndWait(() -> super.runTest());
+          WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
         }
         catch (Throwable throwable) {
           ExceptionUtil.rethrowAllAsUnchecked(throwable);
         }
       }
       else {
-        super.runTest();
+        super.runTestRunnable(testRunnable);
       }
     }
     catch (Exception throwable) {
@@ -240,11 +234,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       while ((each = each.getCause()) != null);
       throw throwable;
     }
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run();
   }
 
   protected boolean runInWriteAction() {
@@ -532,11 +521,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, Collection<? extends T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, Collection<? extends T> expected) {
     assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
 
@@ -549,15 +538,15 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, T... expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
     assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, T... expected) {
     assertOrderedElementsAreEqual(equalsPredicate(), actual, expected);
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<U, T> predicate, Collection<U> actual, T... expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<? super U, ? super T> predicate, Collection<? extends U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
     assertEquals(s, expected.length, actual.size());
 
@@ -574,7 +563,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
 
-  protected static <T> void assertDoNotContain(java.util.List<T> actual, T... expected) {
+  protected static <T> void assertDoNotContain(List<? extends T> actual, T... expected) {
     java.util.List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());

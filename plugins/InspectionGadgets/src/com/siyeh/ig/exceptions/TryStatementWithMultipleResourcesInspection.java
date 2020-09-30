@@ -13,6 +13,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    final StringBuilder newTryStatementText = new StringBuilder();
+    @NonNls final StringBuilder newTryStatementText = new StringBuilder();
     int count = 0;
     for (PsiResourceListElement resource : resourceList) {
       if (count > 0) {

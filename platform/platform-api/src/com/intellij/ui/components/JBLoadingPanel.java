@@ -23,6 +23,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public class JBLoadingPanel extends JPanel {
     text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
   }
 
-  public void setLoadingText(String text) {
+  public void setLoadingText(@Nls String text) {
     myDecorator.setLoadingText(text);
   }
 

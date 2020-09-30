@@ -86,7 +86,7 @@ public final class EditorConfigPsiImplUtils {
       .filter(child -> child instanceof EditorConfigDescribableElement)
       .findFirst();
 
-    if (!first.isPresent()) {
+    if (first.isEmpty()) {
       throw new IllegalStateException();
     }
 
@@ -100,7 +100,7 @@ public final class EditorConfigPsiImplUtils {
       .skip(1)
       .findFirst();
 
-    if (!second.isPresent()) {
+    if (second.isEmpty()) {
       throw new IllegalStateException();
     }
 

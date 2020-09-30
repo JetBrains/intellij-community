@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeList
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
@@ -34,8 +33,11 @@ class RemoveChangeListAction : AbstractChangeListAction() {
     val hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))
     if (hasChanges) {
       val containsActiveChangelist = changeLists.any { it is LocalChangeList && it.isDefault }
+      val changeListName =
+        if (containsActiveChangelist) VcsBundle.message("changes.another.change.list")
+        else VcsBundle.message("changes.default.change.list")
       presentation.description = ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
-                                                       changeLists.size, if (containsActiveChangelist) "another" else "default")
+                                                       changeLists.size, changeListName)
     }
     else {
       presentation.description = null
@@ -61,7 +63,7 @@ class RemoveChangeListAction : AbstractChangeListAction() {
   }
 
   private fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
-    val manager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+    val manager = ChangeListManagerEx.getInstanceEx(project)
 
     val toRemove = mutableListOf<LocalChangeList>()
     val toAsk = mutableListOf<LocalChangeList>()

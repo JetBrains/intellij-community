@@ -41,7 +41,6 @@ public class MarkdownParserAdapter implements PsiParser {
 
     final org.intellij.markdown.ast.ASTNode parsedTree = MarkdownParserManager.parseContent(builder.getOriginalText(), myFlavour);
 
-    assert builder.getCurrentOffset() == 0;
     new PsiBuilderFillingVisitor(builder).visitNode(parsedTree);
     assert builder.eof();
 

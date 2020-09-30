@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -159,7 +160,7 @@ public class GrAccessibilityChecker {
     return true;
   }
 
-  private static String checkConstructorCall(GrConstructorCall constructorCall) {
+  private static @DetailedDescription String checkConstructorCall(GrConstructorCall constructorCall) {
     GroovyResolveResult result = constructorCall.advancedResolve();
     if (checkResolveResult(result)) {
       return GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)result.getElement(), PsiSubstitutor.EMPTY,
@@ -177,7 +178,7 @@ public class GrAccessibilityChecker {
   @Nullable
   private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                       boolean strongError,
-                                                      @NotNull String message) {
+                                                      @DetailedDescription @NotNull String message) {
     HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR
                                                      : GroovyAccessibilityInspection.getHighlightDisplayLevel(ref.getProject(), ref);
     return GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message);

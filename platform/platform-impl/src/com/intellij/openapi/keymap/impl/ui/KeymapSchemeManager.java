@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +195,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
    * @return the error message if changes cannot be applied
    * @see KeymapPanel#apply()
    */
-  String apply() {
+  @NlsContexts.DialogMessage String apply() {
     HashSet<String> set = new HashSet<>();
     for (KeymapScheme scheme : list) {
       String name = scheme.getName();

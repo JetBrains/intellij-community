@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import org.xmlpull.mxp1.MXParser
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
@@ -219,6 +220,7 @@ internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boole
   consumer(preload(isOldSchemeNaming, parser), parser)
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
   var eventType = parser.eventType
 
@@ -281,7 +283,7 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
 
   fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
 
-  fun scheduleDelete(filesToDelete: MutableSet<String>, reason: String) {
+  fun scheduleDelete(filesToDelete: MutableSet<String>, @NonNls reason: String) {
     LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }
     filesToDelete.add(fileName)
   }

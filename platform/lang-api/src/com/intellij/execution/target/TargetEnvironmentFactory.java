@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * can be used
  * <p>
  * The creating of an environment happens in two phases:
- * 1. first, environment request should be created and fulfilled – {@link this#createRequest()};
+ * 1. first, environment request should be created and fulfilled, see {@link this#createRequest()};
  * 2. then fulfilled request should be used for preparing target environment.
  * <p>
  * Usually, the client will look like this:

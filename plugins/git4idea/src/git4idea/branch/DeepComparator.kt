@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
@@ -38,7 +39,6 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 
 class DeepComparator(private val project: Project,
@@ -93,7 +93,7 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (comparedBranch != null) {
@@ -112,14 +112,14 @@ class DeepComparator(private val project: Project,
     startTask(dataPack)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun stopTaskAndUnhighlight() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     stopTask()
     unhighlight()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun hasHighlightingOrInProgress(): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
     return comparedBranch != null
@@ -209,7 +209,8 @@ class DeepComparator(private val project: Project,
     override fun onSuccess() {
       if (exception != null) {
         nonPickedCommits = null
-        VcsNotifier.getInstance(project).notifyError(GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
+        VcsNotifier.getInstance(project).notifyError("git.could.not.compare.with.branch",
+                                                     GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
                                                      exception!!.message)
         return
       }

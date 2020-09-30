@@ -2,11 +2,18 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
 
-fun main() = generateIconsClasses()
+fun main() = try {
+  generateIconsClasses()
+}
+finally {
+  shutdownAppScheduledExecutorService()
+}
 
 internal abstract class IconsClasses {
   open val homePath: String get() = PathManager.getHomePath()
@@ -45,4 +52,18 @@ internal fun generateIconsClasses(config: IconsClasses = IntellijIconsClasses())
 
   println()
   println("Done")
+}
+
+/**
+ * Initialized in [com.intellij.util.SVGLoader]
+ */
+internal fun shutdownAppScheduledExecutorService() {
+  try {
+    (AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService)
+      .shutdownAppScheduledExecutorService()
+  }
+  catch (e: Exception) {
+    System.err.println("Failed during executor service shutdown:")
+    e.printStackTrace(System.err)
+  }
 }

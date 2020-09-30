@@ -43,7 +43,7 @@ public class PyRemoteProcessStarter {
       if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
         throw new RuntimeException(e);
       }
-      throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
+      throw new ExecutionException(PyBundle.message("python.remote.process.starter.can.t.run.remote.interpreter", e.getMessage()), e);
     }
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;

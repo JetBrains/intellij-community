@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -39,8 +41,11 @@ public class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.message("hg4idea.file.status.copied"));
-  public static final FileStatus RENAMED = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.message("hg4idea.file.status.renamed"));
+  private static final PluginId OUR_PLUGIN_ID = PluginManagerCore.getPluginByClassName(HgChangeProvider.class.getName());
+  public static final FileStatus COPIED
+    = FileStatusFactory.getInstance().createFileStatus("COPIED",HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
+  public static final FileStatus RENAMED
+    = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
     new EnumMap<>(HgFileStatusEnum.class);

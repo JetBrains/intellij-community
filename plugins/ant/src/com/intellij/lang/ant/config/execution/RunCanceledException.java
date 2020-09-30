@@ -18,13 +18,15 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.execution.CantRunException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
 public class RunCanceledException extends CantRunException {
-  public RunCanceledException(String message) {
+  public RunCanceledException(@NlsContexts.DialogMessage String message) {
     super(message);
   }
 
-  public void showMessage(Project project, String title) {
+  public void showMessage(Project project, @NotNull @NlsContexts.DialogTitle String title) {
     Messages.showInfoMessage(project, getMessage(), title);
   }
 }

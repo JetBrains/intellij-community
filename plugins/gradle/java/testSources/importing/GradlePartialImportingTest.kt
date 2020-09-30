@@ -11,22 +11,17 @@ import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.testFramework.registerServiceInstance
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.BuildModel
-import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.ProjectModel
-import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
-import java.io.Serializable
 import java.util.function.Predicate
 
 class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
@@ -327,47 +322,9 @@ class TestPartialProjectResolverExtension : AbstractProjectResolverExtension() {
     }
   }
 
-  override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider? {
-    return object : ProjectImportModelProvider {
-      override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
-      ) {
-        val model = controller.getModel(projectModel, ProjectProperties::class.java)
-        modelConsumer.consume(ProjectLoadedModel(model.propertiesMap.filterKeys { it == "name" || it.startsWith("prop_loaded_") }),
-                              ProjectLoadedModel::class.java)
-      }
+  override fun getProjectsLoadedModelProvider() = ProjectLoadedModelProvider()
 
-      override fun populateBuildModels(
-        controller: BuildController,
-        buildModel: GradleBuild,
-        consumer: ProjectImportModelProvider.BuildModelConsumer
-      ) {
-      }
-    }
-  }
-
-  override fun getModelProvider(): ProjectImportModelProvider? {
-    return object : ProjectImportModelProvider {
-      override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
-      ) {
-        val model = controller.getModel(projectModel, ProjectProperties::class.java)
-        modelConsumer.consume(BuildFinishedModel(model.propertiesMap.filterKeys { it == "name" || it.startsWith("prop_finished_") }),
-                              BuildFinishedModel::class.java)
-      }
-
-      override fun populateBuildModels(
-        controller: BuildController,
-        buildModel: GradleBuild,
-        consumer: ProjectImportModelProvider.BuildModelConsumer
-      ) {
-      }
-    }
-  }
+  override fun getModelProvider() = BuildFinishedModelProvider()
 }
 
 internal class TestProjectModelContributor : ProjectModelContributor {
@@ -388,6 +345,3 @@ internal data class ModelConsumer(
   val projectLoadedModels: MutableList<Pair<Project, ProjectLoadedModel>> = mutableListOf(),
   val buildFinishedModels: MutableList<Pair<Project, BuildFinishedModel>> = mutableListOf()
 )
-
-data class ProjectLoadedModel(val map: Map<*, *>) : Serializable
-data class BuildFinishedModel(val map: Map<*, *>) : Serializable

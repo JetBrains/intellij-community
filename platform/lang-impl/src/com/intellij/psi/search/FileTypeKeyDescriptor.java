@@ -64,7 +64,7 @@ class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
         return myIndex.getValue().getFileTypeName(fileTypeId);
     }
 
-    private static class OutDatedFileType implements FileType {
+    private static final class OutDatedFileType implements FileType {
         @NotNull
         private final String myName;
 

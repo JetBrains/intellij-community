@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -29,7 +30,7 @@ public final class CopyHandler {
     return canCopy(elements, null);
   }
 
-  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<String> actionName) {
+  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<@NlsActions.ActionText String> actionName) {
     if (elements.length > 0) {
       for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
         if (delegate instanceof CopyHandlerDelegateBase ? ((CopyHandlerDelegateBase)delegate).canCopy(elements, true) : delegate.canCopy(elements)) {

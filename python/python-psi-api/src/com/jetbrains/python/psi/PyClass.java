@@ -178,14 +178,14 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @param context   loose context will be used if no context provided
    * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
    */
-  boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable TypeEvalContext context);
+  boolean visitMethods(Processor<? super PyFunction> processor, boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Consider using {@link PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)}
    *
    * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
    */
-  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
+  boolean visitClassAttributes(Processor<? super PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments inside the class body.
@@ -244,7 +244,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @return a property that processor accepted, or null.
    */
   @Nullable
-  Property scanProperties(Processor<Property> processor, boolean inherited);
+  Property scanProperties(Processor<? super Property> processor, boolean inherited);
 
   /**
    * Non-recursively searches for a property for which the given function is a getter, setter or deleter.

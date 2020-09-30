@@ -10,9 +10,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +54,9 @@ public abstract class RootType {
   }
 
   private final String myId;
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
 
-  protected RootType(@NotNull String id,
+  protected RootType(@NonNls @NotNull String id,
                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String displayName) {
     myId = id;
     myDisplayName = displayName;
@@ -97,6 +99,7 @@ public abstract class RootType {
   }
 
   @Nullable
+  @NlsSafe
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
   }

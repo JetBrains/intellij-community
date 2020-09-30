@@ -102,14 +102,12 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
         if (!previewLevels.isEmpty() &&
             !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
           Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
-          assert languageLevel.isPresent();
           int previewFeature = languageLevel.get().toJavaVersion().feature;
           Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
-            JavaBundle.message("java.preview.features.notification.message"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
-            NotificationType.WARNING);
-          notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+            NotificationType.WARNING, null);
+          notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
               PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);

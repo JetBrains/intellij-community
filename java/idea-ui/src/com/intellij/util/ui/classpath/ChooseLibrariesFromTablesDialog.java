@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +34,14 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   private @Nullable final Project myProject;
   private final boolean myShowCustomLibraryTables;
 
-  protected ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
+  protected ChooseLibrariesFromTablesDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Project project, final boolean showCustomLibraryTables) {
     super(project, title);
     myShowCustomLibraryTables = showCustomLibraryTables;
     myProject = project;
   }
 
   protected ChooseLibrariesFromTablesDialog(@NotNull JComponent parentComponent,
-                                            @NotNull String title,
+                                            @NotNull @NlsContexts.DialogTitle String title,
                                             @Nullable Project project,
                                             final boolean showCustomLibraryTables) {
     super(parentComponent, title);
@@ -48,7 +49,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     myProject = project;
   }
 
-  public static ChooseLibrariesFromTablesDialog createDialog(@NotNull String title,
+  public static ChooseLibrariesFromTablesDialog createDialog(@NotNull @NlsContexts.DialogTitle String title,
                                                              @NotNull Project project,
                                                              final boolean showCustomLibraryTables) {
     final ChooseLibrariesFromTablesDialog dialog = new ChooseLibrariesFromTablesDialog(title, project, showCustomLibraryTables);

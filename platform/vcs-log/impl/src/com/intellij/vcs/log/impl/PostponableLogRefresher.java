@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -122,8 +123,9 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     }
 
     @Override
+    @NonNls
     public String toString() {
-      return "VcsLogWindow '" + myId + "'"; // NON-NLS
+      return "VcsLogWindow '" + myId + "'";
     }
   }
 }

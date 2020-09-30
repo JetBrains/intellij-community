@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -124,7 +124,7 @@ public final class CoreIconManager implements IconManager {
     return new LayeredIcon(icons);
   }
 
-  private static class IconLayer {
+  private static final class IconLayer {
     private final int flagMask;
     @NotNull
     private final Icon icon;
@@ -136,7 +136,7 @@ public final class CoreIconManager implements IconManager {
     }
   }
 
-  private static class IconDescriptionLoader implements Supplier<String> {
+  private static final class IconDescriptionLoader implements Supplier<String> {
     private final String myPath;
     private String myResult;
     private boolean myCalculated;

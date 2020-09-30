@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentPlacesListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -25,6 +26,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.ScrollPaneConstants
@@ -54,11 +56,11 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
 
   private val changedPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, true)
 
-  private val navigationPlacesBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, String> by lazy {
+  private val navigationPlacesBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> by lazy {
     collectBreadcrumbs(project, navigationPlaces.value)
   }
 
-  private val changedPlacedBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, String> by lazy {
+  private val changedPlacedBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> by lazy {
     collectBreadcrumbs(project, changedPlaces.value)
   }
 
@@ -66,16 +68,17 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
     return if (changed) changedPlaces.value else navigationPlaces.value
   }
 
-  fun getBreadcrumbsMap(changed: Boolean): Map<IdeDocumentHistoryImpl.PlaceInfo, String> {
+  fun getBreadcrumbsMap(changed: Boolean): Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> {
     return if (changed) changedPlacedBreadcrumbsMap else navigationPlacesBreadcrumbsMap
   }
 
-  private fun collectBreadcrumbs(project: Project, items: List<RecentLocationItem>): Map<IdeDocumentHistoryImpl.PlaceInfo, String> {
+  private fun collectBreadcrumbs(project: Project, items: List<RecentLocationItem>): Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> {
     return items.stream()
       .map(RecentLocationItem::info)
       .collect(Collectors.toMap({ it }, { getBreadcrumbs(project, it) }))
   }
 
+  @Nls
   private fun getBreadcrumbs(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): String {
     val rangeMarker = placeInfo.caretPosition
     val fileName = placeInfo.file.name
@@ -90,7 +93,11 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
       return fileName
     }
 
-    return crumbs.joinToString(" > ") { it.text }
+    @NlsSafe
+    val separator = " > "
+    @NlsSafe
+    val result = crumbs.joinToString(separator) { it.text }
+    return result
   }
 
   private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {

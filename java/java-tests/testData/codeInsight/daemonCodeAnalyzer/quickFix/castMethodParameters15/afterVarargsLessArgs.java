@@ -2,7 +2,7 @@
 class a {
     void f(Long l, String... s) {}
     void g() {
-        f((long) 0);
+        f(0L);
     }
 }
 

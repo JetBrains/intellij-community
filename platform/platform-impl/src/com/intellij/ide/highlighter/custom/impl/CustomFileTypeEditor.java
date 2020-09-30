@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -38,7 +38,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
 
   private final JTextField myLineComment = new JTextField(5);
-  private final JCheckBox myCommentAtLineStart = new JCheckBox(UIUtil.replaceMnemonicAmpersand("&Only at line start"));
+  private final JCheckBox myCommentAtLineStart = new JCheckBox(UIUtil.replaceMnemonicAmpersand(IdeBundle.message("only.at.line.start")));
   private final JTextField myBlockCommentStart = new JTextField(5);
   private final JTextField myBlockCommentEnd = new JTextField(5);
   private final JTextField myHexPrefix = new JTextField(5);

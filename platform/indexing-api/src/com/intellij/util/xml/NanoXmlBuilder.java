@@ -2,11 +2,13 @@
 package com.intellij.util.xml;
 
 import net.n3.nanoxml.IXMLBuilder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 
 @SuppressWarnings("RedundantThrows")
+@NonNls
 public interface NanoXmlBuilder extends IXMLBuilder {
   @Override
   default void startBuilding(String systemID, int lineNr) throws Exception { }

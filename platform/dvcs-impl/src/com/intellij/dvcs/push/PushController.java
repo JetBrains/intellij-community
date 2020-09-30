@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
@@ -22,10 +23,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -232,7 +230,7 @@ public final class PushController implements Disposable {
       }
 
       @Override
-      public void onTargetInEditMode(@NotNull String currentValue) {
+      public void onTargetInEditMode(@NotNull @Nls String currentValue) {
         myPushLog.fireEditorUpdated(currentValue);
       }
     });
@@ -240,6 +238,7 @@ public final class PushController implements Disposable {
   }
 
   // TODO This logic shall be moved to some common place and used instead of DvcsUtil.getShortRepositoryName
+  @Nls
   @NotNull
   private String getDisplayedRepoName(@NotNull Repository repository) {
     String name = DvcsUtil.getShortRepositoryName(repository);
@@ -581,7 +580,7 @@ public final class PushController implements Disposable {
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
         @NonNls
-        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent("<a href='loadMore'>...</a>", new VcsLinkListener() {
+        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), new VcsLinkListener() {
           @Override
           public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
             TreeNode parent = sourceNode.getParent();
@@ -607,7 +606,7 @@ public final class PushController implements Disposable {
     return result;
   }
 
-  private static class PushInfoImpl implements PushInfo {
+  private static final class PushInfoImpl implements PushInfo {
 
     private final Repository myRepository;
     private final PushSpec<PushSource, PushTarget> myPushSpec;

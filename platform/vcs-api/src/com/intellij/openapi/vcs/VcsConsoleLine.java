@@ -6,13 +6,14 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-public class VcsConsoleLine {
+public final class VcsConsoleLine {
   private final List<Pair<String, ConsoleViewContentType>> myChunks;
 
   private VcsConsoleLine(@NotNull List<Pair<String, ConsoleViewContentType>> chunks) {
@@ -29,12 +30,12 @@ public class VcsConsoleLine {
   }
 
   @Nullable
-  public static VcsConsoleLine create(@Nullable String message, @NotNull ConsoleViewContentType contentType) {
+  public static VcsConsoleLine create(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType) {
     return create(Collections.singletonList(Pair.create(message, contentType)));
   }
 
   @Nullable
-  public static VcsConsoleLine create(@NotNull List<Pair<String, ConsoleViewContentType>> lineChunks) {
+  public static VcsConsoleLine create(@NotNull List<Pair<@Nls String, ConsoleViewContentType>> lineChunks) {
     List<Pair<String, ConsoleViewContentType>> chunks = ContainerUtil.filter(lineChunks, it -> !StringUtil.isEmptyOrSpaces(it.first));
     if (chunks.isEmpty()) return null;
     return new VcsConsoleLine(chunks);

@@ -5,7 +5,9 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
@@ -18,7 +20,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 @Deprecated
 public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
   public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, String @NotNull ... annotationToRemove) {
-    super(fqn, owner, PsiNameValuePair.EMPTY_ARRAY, annotationToRemove);
+    super(fqn, owner, annotationToRemove);
   }
 
   @Override

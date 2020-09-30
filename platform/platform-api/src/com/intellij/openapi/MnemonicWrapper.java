@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -135,7 +136,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       int code = KeyEvent.VK_UNDEFINED;
       int index = -1;
       int length = text.length();
-      StringBuilder sb = new StringBuilder(length);
+      @Nls StringBuilder sb = new StringBuilder(length);
       for (int i = 0; i < length; i++) {
         char ch = text.charAt(i);
         if (ch != UIUtil.MNEMONIC) {
@@ -183,9 +184,9 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return UISettings.getShadowInstance().getDisableMnemonicsInControls();
   }
 
-  abstract String getText();
+  abstract @Nls String getText();
 
-  abstract void setText(String text);
+  abstract void setText(@Nls String text);
 
   abstract int getMnemonicCode();
 
@@ -209,7 +210,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return stroke;
   }
 
-  private static class MenuWrapper extends AbstractButtonWrapper {
+  private static final class MenuWrapper extends AbstractButtonWrapper {
     private KeyStroke myStrokePressed;
 
     private MenuWrapper(AbstractButton component) {
@@ -222,7 +223,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static class ButtonWrapper extends AbstractButtonWrapper {
+  private static final class ButtonWrapper extends AbstractButtonWrapper {
     private KeyStroke myStrokePressed;
     private KeyStroke myStrokeReleased;
 
@@ -273,7 +274,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static class LabelWrapper extends MnemonicWrapper<JLabel> {
+  private static final class LabelWrapper extends MnemonicWrapper<JLabel> {
     private KeyStroke myStrokePress;
     private KeyStroke myStrokeRelease;
 

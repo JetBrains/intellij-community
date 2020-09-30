@@ -14,6 +14,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
 import com.intellij.util.Restarter;
@@ -323,7 +324,7 @@ public class WindowsDefenderChecker {
     });
   }
 
-  public String getNotificationText(Set<? extends Path> nonExcludedPaths) {
+  public @NlsContexts.NotificationContent String getNotificationText(Set<? extends Path> nonExcludedPaths) {
     return DiagnosticBundle.message("virus.scanning.warn.message", StringUtil.join(nonExcludedPaths, "<br/>"));
   }
 

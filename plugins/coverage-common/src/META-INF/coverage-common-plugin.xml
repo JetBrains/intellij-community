@@ -22,7 +22,7 @@
   <applicationListeners>
     <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
-  <actions>
+  <actions resource-bundle="messages.CoverageBundle">
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
@@ -35,5 +35,4 @@
       <add-to-group group-id="RunTestGroup" anchor="last"/>
     </group>
   </actions>
-  <resource-bundle>messages.CoverageBundle</resource-bundle>
 </idea-plugin>

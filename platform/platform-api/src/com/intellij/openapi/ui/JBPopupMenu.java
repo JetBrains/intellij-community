@@ -2,12 +2,15 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,6 +27,9 @@ import java.awt.event.MouseWheelEvent;
  * @author ignatov
  */
 public class JBPopupMenu extends JPopupMenu {
+
+  private static final Logger LOG = Logger.getInstance(JBPopupMenu.class);
+
   private final MyLayout myLayout;
 
   public JBPopupMenu() {
@@ -70,6 +76,19 @@ public class JBPopupMenu extends JPopupMenu {
     if (layout instanceof MyLayout) {
       ((MyLayout)layout).paintIfNeeded(g);
     }
+  }
+
+  public static void showAbove(@NotNull Component component, @NotNull JPopupMenu menu) {
+    menu.show(component, 0, 0);
+    UiNotifyConnector.doWhenFirstShown(menu, () -> {
+      Window window = UIUtil.getWindow(menu);
+      if (window == null) {
+        LOG.error("Cannot find window for menu popup " + menu + ", " + menu.isShowing());
+      }
+      else {
+        window.setLocation(window.getX(), window.getY() - window.getHeight());
+      }
+    });
   }
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {

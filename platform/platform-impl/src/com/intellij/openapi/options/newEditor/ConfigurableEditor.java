@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,6 +18,7 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
@@ -228,12 +230,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   void postUpdateCurrent(Configurable configurable) {
   }
 
-  final boolean updateIfCurrent(Configurable configurable) {
-    if (myConfigurable != configurable) {
-      return false;
+  final void updateIfCurrent(Configurable configurable) {
+    if (myConfigurable == configurable) {
+      updateCurrent(configurable, false);
     }
-    updateCurrent(configurable, false);
-    return true;
   }
 
   @NotNull
@@ -258,7 +258,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       return true;
     }
     if (myErrorLabel.isEnabled()) {
-      myErrorLabel.setText("<html><body><strong>" + exception.getTitle() + "</strong>:<br>" + exception.getMessage());
+      myErrorLabel.setText(HtmlChunk.body().children(
+        HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
+        HtmlChunk.text(":"),
+        HtmlChunk.br(),
+        HtmlChunk.text(exception.getMessage())
+      ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }
     else {
@@ -281,7 +286,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     SortedConfigurableGroup group = configurable instanceof SortedConfigurableGroup ? (SortedConfigurableGroup)configurable : null;
     String description = group == null ? null : group.getDescription();
     if (description == null) {
-      description = "Select configuration element in the tree to edit its settings";
+      description = IdeBundle.message("label.select.configuration.element");
       content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
       content.setPreferredSize(JBUI.size(800, 600));
     }
@@ -293,7 +298,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       content.add(BorderLayout.CENTER, panel);
       panel.add(Box.createVerticalStrut(10));
       for (Configurable current : group.getConfigurables()) {
-        LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
+        //noinspection DialogTitleCapitalization (title case is OK here)
+        LinkLabel<?> label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
         label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
         panel.add(label);
       }

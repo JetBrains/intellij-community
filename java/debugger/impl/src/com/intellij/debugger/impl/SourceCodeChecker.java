@@ -39,7 +39,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-public class SourceCodeChecker {
+public final class SourceCodeChecker {
   private static final Logger LOG = Logger.getInstance(SourceCodeChecker.class);
 
   private SourceCodeChecker() {

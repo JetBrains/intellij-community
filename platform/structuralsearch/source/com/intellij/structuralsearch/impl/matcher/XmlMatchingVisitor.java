@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Eugene.Kudelevsky
@@ -19,7 +20,7 @@ import com.intellij.xml.util.XmlUtil;
 public class XmlMatchingVisitor extends XmlElementVisitor {
   private final GlobalMatchingVisitor myMatchingVisitor;
 
-  public XmlMatchingVisitor(GlobalMatchingVisitor matchingVisitor) {
+  public XmlMatchingVisitor(@NotNull GlobalMatchingVisitor matchingVisitor) {
     myMatchingVisitor = matchingVisitor;
   }
 

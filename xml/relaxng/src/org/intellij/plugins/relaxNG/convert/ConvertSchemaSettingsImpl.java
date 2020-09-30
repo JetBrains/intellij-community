@@ -17,11 +17,12 @@
 package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +66,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   private JRadioButton myOutputXsd;
   private JRadioButton myOutputDtd;
 
-  private ComboBox myEncoding;
+  private ComboBox<String> myEncoding;
 
   private JTextField myIndent;
   private JTextField myLineLength;
@@ -80,7 +82,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
       case RNG:
         myOutputRng.setVisible(false);
         myOutputXsd.setSelected(true);
-        type = StdFileTypes.XML;
+        type = XmlFileType.INSTANCE;
         break;
       case RNC:
         myOutputRnc.setVisible(false);
@@ -90,16 +92,16 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
       case XSD:
         myOutputXsd.setVisible(false);
         myOutputRng.setSelected(true);
-        type = StdFileTypes.XML;
+        type = XmlFileType.INSTANCE;
         break;
       case DTD:
         myOutputDtd.setVisible(false);
         myOutputRng.setSelected(true);
-        type = StdFileTypes.DTD;
+        type = DTDFileType.INSTANCE;
         break;
       case XML:
         myOutputRng.setSelected(true);
-        type = StdFileTypes.XML;
+        type = XmlFileType.INSTANCE;
         break;
       default:
         assert false;
@@ -115,9 +117,9 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
       }
     }
 
-    myEncoding.setModel(new DefaultComboBoxModel(suggestions.toArray()));
+    myEncoding.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(suggestions)));
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    myEncoding.setSelectedItem(charset.name());
+    myEncoding.setSelectedItem(charset.name()); //NON-NLS
 
     final CodeStyleSettings styleSettings = CodeStyle.getSettings(project);
     final int indent = styleSettings.getIndentSize(type);
@@ -131,8 +133,8 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstFile);
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, module);
 
-    myOutputDestination.addBrowseFolderListener(RelaxngBundle.message("schema.conversion.destination"),
-                                                RelaxngBundle.message("please.select.the.destination.the.generated.file.s.should.be.placed.at"), project, descriptor);
+    myOutputDestination.addBrowseFolderListener(RelaxngBundle.message("relaxng.convert-schema.settings.destination.title"),
+                                                RelaxngBundle.message("relaxng.convert-schema.settings.destination.message"), project, descriptor);
 
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {

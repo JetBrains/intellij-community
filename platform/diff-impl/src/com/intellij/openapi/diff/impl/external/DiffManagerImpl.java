@@ -3,14 +3,10 @@ package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffTool;
 
 @Deprecated
 public class DiffManagerImpl extends DiffManager {
-  private static final MarkupEditorFilter DIFF_EDITOR_FILTER = editor -> DiffUtil.isDiffEditor(editor);
-
   @Override
   public DiffTool getIdeaDiffTool() {
     return MigrateDiffTool.INSTANCE;
@@ -19,10 +15,5 @@ public class DiffManagerImpl extends DiffManager {
   @Override
   public DiffTool getDiffTool() {
     return MigrateDiffTool.INSTANCE;
-  }
-
-  @Override
-  public MarkupEditorFilter getDiffEditorFilter() {
-    return DIFF_EDITOR_FILTER;
   }
 }

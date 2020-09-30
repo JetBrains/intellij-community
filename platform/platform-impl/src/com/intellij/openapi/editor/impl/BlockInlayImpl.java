@@ -108,6 +108,6 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
            ", width=" + myWidthInPixels +
            ", height=" + myHeightInPixels +
            ", renderer=" + myRenderer +
-           "]";
+           "]" + (isValid() ? "" : "(invalid)");
   }
 }

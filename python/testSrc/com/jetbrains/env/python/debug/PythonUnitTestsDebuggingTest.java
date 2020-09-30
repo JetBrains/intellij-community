@@ -3,7 +3,6 @@ package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.PyTestFactory;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testUnitTestFalseIsNotTrue() {
     runPythonTest(new PyUnitTestDebuggingTask("test_case_2.py", "MyTestCase") {
@@ -56,7 +54,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testPyTestFalseIsNotTrue() {
     runPythonTest(new PyTestDebuggingTask("test_case_2.py", "MyTestCase") {
@@ -130,7 +127,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testPyTestExceptionInTearDown() {
     runPythonTest(new PyTestDebuggingTask("test_case_7.py") {
@@ -151,7 +147,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testPyTestDontStopOnFailuresMarkedWithSkipAndXfail() {
     runPythonTest(new PyTestDebuggingTask("test_case_9.py") {
@@ -187,7 +182,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testErrorInUserCodeCalledFromSetUp() {
     runPythonTest(new PyUnitTestDebuggingTask("test_case_12.py", "MyTestCase") {
@@ -214,7 +208,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testTestWithImportError() {
     runPythonTest(new PyUnitTestDebuggingTask("test_case_14.py", "MyTestCase") {
@@ -276,7 +269,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testUnitTestUnexpectedExceptionInTestPython2() {
     runPythonTest(new PyUnitTestDebuggingTask("test_case_16.py", "TestCase") {
@@ -292,7 +284,6 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testStopOnExceptionNotListedInXfailDecorator() {
     runPythonTest(new PyTestDebuggingTask("test_case_17.py") {

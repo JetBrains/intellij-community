@@ -9,10 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class PluginManagerConfigurableProxy extends PluginManagerConfigurable {
+
   public static void showPluginConfigurable(@Nullable Component parent,
                                             @Nullable Project project,
                                             IdeaPluginDescriptor @NotNull ... descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     Runnable init = () -> configurable.select(descriptors);
     ShowSettingsUtil util = ShowSettingsUtil.getInstance();
 

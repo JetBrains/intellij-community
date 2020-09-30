@@ -11,6 +11,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -162,26 +163,33 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     compileModules("project.main");
 
-    String langPart = isGradleOlderThen("4.0") ? "build/classes" : "build/classes/java";
+    String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
     List<String> expected = newArrayList(path(langPart + "/main"),
                                          path("api/" + langPart + "/main"),
                                          path("impl/" + langPart + "/main"),
                                          path("api/build/libs/api.jar"),
                                          path("impl/build/libs/impl.jar"));
 
-    if (isGradleOlderThen("3.3")) {
+    if (isGradleOlderThan("3.3")) {
       expected.addAll(asList(path("build/dependency-cache"),
                              path("api/build/dependency-cache"),
                              path("impl/build/dependency-cache")));
     }
 
-    if (!isGradleOlderThen("5.2")) {
+    if (!isGradleOlderThan("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("api/build/generated/sources/annotationProcessor/java/main"),
                              path("impl/build/generated/sources/annotationProcessor/java/main")));
     }
 
-    assertSameElements(dirtyOutputRoots, expected);
+    if (isGradleNewerOrSameAs("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("api/build/generated/sources/headers/java/main"),
+                             path("impl/build/generated/sources/headers/java/main")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertNotCopied(langPart + "/test/my/pack/AppTest.class");
@@ -204,14 +212,21 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     expected = newArrayList(path(langPart + "/main"),
                             path(langPart + "/test"));
 
-    if (isGradleOlderThen("3.3")) {
+    if (isGradleOlderThan("3.3")) {
       expected.add(path("build/dependency-cache"));
     }
-    if (!isGradleOlderThen("5.2")) {
+    if (!isGradleOlderThan("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("build/generated/sources/annotationProcessor/java/test")));
     }
-    assertUnorderedElementsAreEqual(dirtyOutputRoots, expected);
+
+    if (isGradleNewerOrSameAs("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("build/generated/sources/headers/java/test")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertCopied(langPart + "/test/my/pack/AppTest.class");

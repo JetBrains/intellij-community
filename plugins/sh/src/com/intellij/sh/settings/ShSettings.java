@@ -3,11 +3,14 @@ package com.intellij.sh.settings;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.sh.ShBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class ShSettings {
-  public static final String I_DO_MIND = "I do mind";
+  public static final Supplier<String> I_DO_MIND_SUPPLIER = ShBundle.messagePointer("i.do.mind.path.placeholder");
 
   private static final String SHELLCHECK_PATH = "SHELLCHECK.PATH";
   private static final String SHELLCHECK_SKIPPED_VERSION = "SHELLCHECK.SKIPPED.VERSION";

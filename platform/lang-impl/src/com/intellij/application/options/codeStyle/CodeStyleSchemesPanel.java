@@ -1,5 +1,4 @@
 /*
-/*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +19,11 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -143,7 +144,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     myBottomPanel.add(Box.createRigidArea(new JBDimension(5,0)));
     myBottomLabel = new JLabel();
     myBottomPanel.add(myBottomLabel);
-    LinkLabel<Object> disableHyperLink = new LinkLabel<>(LangBundle.message("action.link.disable"), null, new LinkListener<Object>() {
+    LinkLabel<Object> disableHyperLink = new LinkLabel<>(LangBundle.message("action.link.disable"), null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         disableOverriding();
@@ -190,16 +191,14 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     myBottomPanel.setVisible(false);
   }
 
-  private static String getMessage(CodeStyleSettingsModifier @NotNull [] modifiers) {
-    final StringBuilder messageBuilder = new StringBuilder();
-    messageBuilder.append("Settings may be overridden by ");
+  private static @NlsContexts.Label String getMessage(CodeStyleSettingsModifier @NotNull [] modifiers) {
+    final StringBuilder modifiersListBuilder = new StringBuilder();
     boolean isList = false;
     for (CodeStyleSettingsModifier modifier : modifiers) {
-      if (isList) messageBuilder.append(", ");
-      messageBuilder.append(modifier.getName());
+      if (isList) modifiersListBuilder.append(", ");
+      modifiersListBuilder.append(modifier.getName());
       isList = true;
     }
-    messageBuilder.append('.');
-    return messageBuilder.toString();
+    return CodeInsightBundle.message("code.style.possibly.overridden.message", modifiersListBuilder.toString());
   }
 }

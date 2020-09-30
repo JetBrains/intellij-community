@@ -27,7 +27,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
 
   public static final @NotNull Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
-  private static final String PROFILE_NAME = "Commit Dialog";
+  private static final String PROFILE_NAME = "Commit Dialog"; // NON-NLS
   public static final InspectionProfileImpl DEFAULT =
     new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
 

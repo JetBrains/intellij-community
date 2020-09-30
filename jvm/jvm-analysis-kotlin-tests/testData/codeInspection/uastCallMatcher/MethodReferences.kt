@@ -4,7 +4,7 @@ import java.util.stream.IntStream
 
 class MethodReferences {
   fun foo(list: List<String>) {
-    list.stream().map(String::toUpperCase)
+    list.stream().map(java.lang.String::toUpperCase)
     list.stream().map<IntStream>(String::chars)
     list.stream().map(Objects::hashCode) // static method
 

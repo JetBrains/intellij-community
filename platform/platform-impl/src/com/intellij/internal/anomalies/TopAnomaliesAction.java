@@ -169,10 +169,6 @@ public class TopAnomaliesAction extends ActionGroup {
 
     private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
   }
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText("Top " + LIMIT);
-  }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {

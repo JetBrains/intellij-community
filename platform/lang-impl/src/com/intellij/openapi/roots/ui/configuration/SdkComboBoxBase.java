@@ -11,9 +11,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.AttributeSet;
 
 import java.awt.*;
@@ -122,30 +121,5 @@ public abstract class SdkComboBoxBase<T> extends ComboBox<T> {
   @Deprecated
   public void removeAllItems() {
     LOG.warn("removeAllItems() is deprecated!", new RuntimeException());
-  }
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
-      accessibleContext = new AccessibleSDKComboboxBaseDelegate(super.getAccessibleContext());
-    }
-    return accessibleContext;
-  }
-
-  private class AccessibleSDKComboboxBaseDelegate extends AccessibleContextDelegate {
-
-    AccessibleSDKComboboxBaseDelegate(AccessibleContext context) {
-      super(context);
-    }
-
-    @Override
-    protected Container getDelegateParent() {
-      return null;
-    }
-
-    @Override
-    public int getAccessibleChildrenCount() {
-      return getComponentCount();
-    }
   }
 }

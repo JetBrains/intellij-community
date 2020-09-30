@@ -3,7 +3,15 @@ package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,21 +29,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.HgBundle;
-import org.zmlx.hg4idea.HgUpdater;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.mq.HgQDeleteCommand;
-import org.zmlx.hg4idea.command.mq.HgQRenameCommand;
-import org.zmlx.hg4idea.mq.HgMqAdditionalPatchReader;
-import org.zmlx.hg4idea.mq.MqPatchDetails;
-import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.util.HgUtil;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -46,6 +41,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.AbstractTableModel;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgUpdater;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.mq.HgQDeleteCommand;
+import org.zmlx.hg4idea.command.mq.HgQRenameCommand;
+import org.zmlx.hg4idea.mq.HgMqAdditionalPatchReader;
+import org.zmlx.hg4idea.mq.MqPatchDetails;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater, Disposable {
 
@@ -118,7 +129,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return toolbar.getComponent();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updatePatchSeriesInBackground(@Nullable final Runnable runAfterUpdate) {
     final String newContent = myNeedToUpdateFileContent ? getContentFromModel() : null;
     myNeedToUpdateFileContent = false;
@@ -147,7 +158,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private String getContentFromModel() {
     StringBuilder content = new StringBuilder();
     String separator = "\n";
@@ -160,7 +171,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return content.toString();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private String getPatchName(int i) {
     return myPatchTable.getModel().getPatchName(i);
   }
@@ -190,7 +201,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   public List<String> getSelectedPatchNames() {
     return getPatchNames(myPatchTable.getSelectedRows());
   }
@@ -296,7 +307,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     @Override
     public String getColumnName(int col) {
-      return myColumnNames[col].toString();
+      return myColumnNames[col].getColumnName();
     }
 
     @Override

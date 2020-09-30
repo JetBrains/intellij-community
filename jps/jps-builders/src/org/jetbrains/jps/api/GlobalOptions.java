@@ -49,4 +49,10 @@ public interface GlobalOptions {
    * The path to external project config directory (used for external system projects).
    */
   String EXTERNAL_PROJECT_CONFIG = "external.project.config";
+
+  /**
+   * The path to optional localization language bundle currently used by IDE.
+   * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
+   */
+  String LANGUAGE_BUNDLE = "jps.language.bundle";
 }

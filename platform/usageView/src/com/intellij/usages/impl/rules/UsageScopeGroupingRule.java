@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
@@ -60,7 +61,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Test";
+      return UsageViewBundle.message("list.item.test");
     }
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
@@ -72,7 +73,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Production";
+      return UsageViewBundle.message("list.item.production");
     }
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
@@ -84,7 +85,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Library";
+      return UsageViewBundle.message("list.item.library");
     }
   };
   private abstract static class UsageScopeGroup implements UsageGroup {

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.BrowserUtil;
@@ -9,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +44,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   @NotNull
-  protected abstract String getDisplayName();
+  protected abstract @Nls String getDisplayName();
 
   @NotNull
   public abstract String getGithubUserName();
@@ -54,7 +56,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @Nullable
   public abstract String getDescription();
 
-  private String getTitle() {
+  private @NlsContexts.ProgressTitle String getTitle() {
     return getDisplayName();
   }
 

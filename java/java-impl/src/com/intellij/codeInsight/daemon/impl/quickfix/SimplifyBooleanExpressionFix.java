@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -138,7 +138,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private static boolean isBreakOrContinue(PsiElement e, PsiDoWhileStatement doWhileLoop) {
-    return e instanceof PsiBreakStatement && doWhileLoop == ((PsiBreakStatement)e).findExitedStatement() || 
+    return e instanceof PsiBreakStatement && doWhileLoop == ((PsiBreakStatement)e).findExitedStatement() ||
            e instanceof PsiContinueStatement && doWhileLoop == ((PsiContinueStatement)e).findContinuedStatement();
   }
 

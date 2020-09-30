@@ -7,14 +7,14 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
+import org.jetbrains.idea.maven.execution.MavenSpyEventsBuffer;
 
 @ApiStatus.Experimental
 public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
   private final MavenBuildEventProcessor myEventParser;
   private final boolean myProcessText;
   private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
-  private final MavenExternalExecutor.MavenSpyEventsBuffer myMavenSpyEventsBuffer;
+  private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
 
 
   /**
@@ -25,7 +25,7 @@ public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
     myEventParser = eventParser;
     myProcessText = processText;
     if (processText) {
-      myMavenSpyEventsBuffer = new MavenExternalExecutor.MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myEventParser));
+      myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myEventParser));
     }
     else {
       myMavenSpyEventsBuffer = null;

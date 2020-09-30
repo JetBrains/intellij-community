@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.containers.ContainerUtil;
@@ -532,7 +533,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     @Nullable
-    public String getTooltipText() {
+    public @NlsContexts.Tooltip String getTooltipText() {
       final BreadcrumbsItem element = getItem();
       if (element != null) {
         return element.getTooltip();

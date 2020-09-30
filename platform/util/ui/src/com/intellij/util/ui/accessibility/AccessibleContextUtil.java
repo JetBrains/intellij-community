@@ -16,6 +16,7 @@
 package com.intellij.util.ui.accessibility;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +205,7 @@ public final class AccessibleContextUtil {
     return null;
   }
 
-  private static void setAccessibleName(@NotNull Component component, String name) {
+  private static void setAccessibleName(@NotNull Component component, @Nls String name) {
     if (component instanceof Accessible) {
       component.getAccessibleContext().setAccessibleName(name);
     }

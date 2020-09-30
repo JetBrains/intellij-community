@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.compiled;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * An API to extend default IDEA .class file decompiler and handle files compiled from sources other than Java.
@@ -84,13 +82,11 @@ public final class ClassFileDecompilers {
   public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
-    Application app = ApplicationManager.getApplication();
-    if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
-      EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange(), null);
-    }
+    EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange(), null);
   }
 
-  public @Nullable Decompiler find(@NotNull VirtualFile file) {
-    return EP_NAME.findFirstSafe(decompiler -> (decompiler instanceof Light || decompiler instanceof Full) && decompiler.accepts(file));
+  @SuppressWarnings("unchecked")
+  public <D extends Decompiler> D find(@NotNull VirtualFile file, @NotNull Class<D> decompilerClass) {
+    return (D)EP_NAME.findFirstSafe(d -> decompilerClass.isInstance(d) && d.accepts(file));
   }
 }

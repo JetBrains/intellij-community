@@ -53,7 +53,7 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     if (!isIncomingChangesAvailable) return null
 
     return if (incomingChangesCount > 0) message("incoming.changes.indicator.tooltip", incomingChangesCount)
-    else "No incoming changelists available"
+    else message("changes.no.incoming.changelists.available")
   }
 
   override fun getClickConsumer(): Consumer<MouseEvent> =

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
@@ -129,6 +130,7 @@ class GrUAnnotation(val grElement: GrAnnotation,
 
 class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression {
 
+  @NonNls
   override fun asLogString(): String = "GrUnknownUExpression(grElement)"
 
   override val uAnnotations: List<UAnnotation> = emptyList() //not implemented

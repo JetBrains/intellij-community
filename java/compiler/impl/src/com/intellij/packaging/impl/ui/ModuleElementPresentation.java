@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.impl.elements.ModuleElementTypeBase;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -87,7 +88,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       moduleName = "<unknown>";
     }
 
-    String text = myElementType.getElementText(moduleName);
+    @NlsSafe String text = myElementType.getElementText(moduleName);
     presentationData.addText(text, module != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 

@@ -1,51 +1,30 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ExactFileNameMatcher implements FileNameMatcher {
   private final String myFileName;
   private final boolean myIgnoreCase;
 
-  public ExactFileNameMatcher(@NotNull @NonNls final String fileName) {
+  public ExactFileNameMatcher(@NotNull String fileName) {
     myFileName = fileName;
     myIgnoreCase = false;
   }
 
-  public ExactFileNameMatcher(@NotNull @NonNls final String fileName, final boolean ignoreCase) {
+  public ExactFileNameMatcher(@NotNull String fileName, final boolean ignoreCase) {
     myFileName = fileName;
     myIgnoreCase = ignoreCase;
   }
 
   @Override
-  public boolean acceptsCharSequence(@NonNls @NotNull CharSequence fileName) {
+  public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
     return Comparing.equal(fileName, myFileName, !myIgnoreCase);
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getPresentableString() {
+  public @NotNull String getPresentableString() {
     return myFileName;
   }
 
@@ -58,7 +37,7 @@ public class ExactFileNameMatcher implements FileNameMatcher {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

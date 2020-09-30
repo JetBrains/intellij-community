@@ -17,8 +17,10 @@ package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.run.PythonScriptExecution;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,15 +31,10 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
-class PyToxCommandLineState extends PythonTestCommandLineStateBase {
-  @NotNull
-  private final PyToxConfiguration myConfiguration;
-
-
+class PyToxCommandLineState extends PythonTestCommandLineStateBase<PyToxConfiguration> {
   PyToxCommandLineState(@NotNull final PyToxConfiguration configuration,
                         @NotNull final ExecutionEnvironment environment) {
     super(configuration, environment);
-    myConfiguration = configuration;
   }
 
   @Nullable
@@ -49,6 +46,16 @@ class PyToxCommandLineState extends PythonTestCommandLineStateBase {
   @Override
   protected HelperPackage getRunner() {
     return PythonHelper.TOX;
+  }
+
+  @Override
+  protected void addTestSpecsAsParameters(@NotNull PythonScriptExecution testScriptExecution, @NotNull List<String> testSpecs) {
+    if (!testSpecs.isEmpty()) {
+      testScriptExecution.addParameter(String.format("-e %s", StringUtil.join(testSpecs, ",")));
+    }
+    for (String argument : myConfiguration.getArguments()) {
+      testScriptExecution.addParameter(argument);
+    }
   }
 
   @NotNull

@@ -33,6 +33,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,16 +175,25 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchQualifiers(@NotNull MinusculeMatcher qualifierMatcher,
-                                                                           @NotNull Iterable<? extends PsiFileSystemItem> iterable) {
+                                                                           JBIterable<FoundItemDescriptor<PsiFileSystemItem>> iterable,
+                                                                           @NotNull String completePattern) {
     List<FoundItemDescriptor<PsiFileSystemItem>> matching = new ArrayList<>();
-    for (PsiFileSystemItem item : iterable) {
+    for (FoundItemDescriptor<PsiFileSystemItem> descriptor : iterable) {
+      PsiFileSystemItem item = descriptor.getItem();
       ProgressManager.checkCanceled();
+
+      String fullName = myModel.getFullName(item);
+      if (fullName != null && isSubpath(fullName, completePattern)) {
+        matching.add(new FoundItemDescriptor<>(item, EXACT_MATCH_DEGREE));
+        continue;
+      }
+
       String qualifier = Objects.requireNonNull(getParentPath(item));
       FList<TextRange> fragments = qualifierMatcher.matchingFragments(qualifier);
       if (fragments != null) {
         int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.get(fragments.size() - 1).getEndOffset();
-        int degree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty;
-        matching.add(new FoundItemDescriptor<>(item, degree));
+        int qualifierDegree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty;
+        matching.add(new FoundItemDescriptor<>(item, qualifierDegree));
       }
     }
     if (matching.size() > 1) {
@@ -192,6 +202,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       matching.sort(comparator);
     }
     return matching;
+  }
+
+  private static boolean isSubpath(@NotNull String path, String subpath) {
+    path = FileUtilRt.toSystemIndependentName(path);
+    subpath = FileUtilRt.toSystemIndependentName(subpath);
+    return path.endsWith(subpath);
   }
 
   @Nullable
@@ -336,6 +352,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "SuffixMatches{" +
              "patternSuffix='" + patternSuffix + '\'' +
@@ -374,7 +391,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchedFiles =
           parameters.getLocalPatternName().isEmpty()
           ? filesMatchingPath
-          : matchQualifiers(qualifierMatcher, filesMatchingPath.map(res -> res.getItem()));
+          : matchQualifiers(qualifierMatcher, filesMatchingPath, parameters.getCompletePattern());
 
         matchedFiles = moveDirectoriesToEnd(matchedFiles);
         Processor<FoundItemDescriptor<PsiFileSystemItem>> trackingProcessor = res -> {

@@ -6,9 +6,10 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,15 +40,14 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val testSchemeStorage = WhitelistTestGroupStorage.getTestStorage(recorderId)
+    val testSchemeStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)
     if (testSchemeStorage == null) {
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
       return
     }
-    val scheme = loadEventsScheme(project, testSchemeStorage)
-    if (scheme == null) return
+    val scheme = loadEventsScheme(project, testSchemeStorage) ?: return
 
-    val editTestSchemePanel = EditEventsTestSchemePanel(project, scheme.localGroups, scheme.productionGroups)
+    val editTestSchemePanel = EditEventsTestSchemePanel(project, scheme.testScheme, scheme.productionGroups, scheme.generatedScheme)
     val dialog = dialog(
       StatisticsBundle.message("stats.edit.test.scheme"),
       panel = editTestSchemePanel,
@@ -71,21 +71,22 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
     }
   }
 
-  private fun loadEventsScheme(project: Project, testSchemeStorage: WhitelistTestGroupStorage): EventsTestScheme? {
+  private fun loadEventsScheme(project: Project, testSchemeStorage: ValidationTestRulesPersistedStorage): EventsTestScheme? {
     return ProgressManager.getInstance().run(object : Task.WithResult<EventsTestScheme?, IOException>(
       project, StatisticsBundle.message("stats.loading.test.scheme"), true) {
       override fun compute(indicator: ProgressIndicator): EventsTestScheme? {
-        val localGroups = testSchemeStorage.loadLocalWhitelistGroups()
+        val localGroups = testSchemeStorage.loadValidationTestRules()
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        return EventsTestScheme(localGroups, productionGroups)
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+        return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })
   }
 
   override fun update(e: AnActionEvent) {
-    val testSchemeSize = WhitelistTestGroupStorage.getTestStorage(recorderId)?.size() ?: 0
+    val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
     sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
@@ -103,7 +104,8 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   }
 
   class EventsTestScheme(
-    val localGroups: List<LocalWhitelistGroup>,
-    val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups
+    val testScheme: List<GroupValidationTestRule>,
+    val productionGroups: EventGroupRemoteDescriptors,
+    val generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>
   )
 }

@@ -17,8 +17,9 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import org.jetbrains.annotations.NonNls;
 
-public class SynchronizationUtil {
+public final class SynchronizationUtil {
 
   private SynchronizationUtil() {}
 
@@ -56,7 +57,7 @@ public class SynchronizationUtil {
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final String name = methodExpression.getReferenceName();
+    @NonNls final String name = methodExpression.getReferenceName();
     if (!"holdsLock".equals(name)) {
       return false;
     }

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.JBUI;
@@ -14,6 +15,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +23,13 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
+public final class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final JPanel myEditorPanel;
   private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;
   private final int myNameOffset;
 
-  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final @NlsSafe String nodeName) {
     super(node, "setValue");
     myValueNode = node;
     myModifier = myValueNode.getValueContainer().getModifier();
@@ -89,7 +91,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void doOKAction() {
     if (myModifier == null) return;
 
-    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression(), errorMessage -> {
+    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression(), (@Nls var errorMessage) -> {
       Editor editor = getEditor();
       if (editor != null) {
         HintManager.getInstance().showErrorHint(editor, errorMessage);

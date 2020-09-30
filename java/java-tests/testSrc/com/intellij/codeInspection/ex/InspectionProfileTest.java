@@ -364,7 +364,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     for (ScopeToolState toolState : tools.getTools()) {
       NamedScope scope = toolState.getScope(getProject());
       assertNotNull(scope);
-      String scopeName = scope.getName();
+      String scopeName = scope.getScopeId();
       NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)toolState.getTool().getTool();
       if ("Production".equals(scopeName)) {
         assertTrue(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));

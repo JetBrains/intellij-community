@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,14 +31,15 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class SuppressInspectionAction extends SuppressIntentionAction {
     private final String myToolId;
-    private final String myMsg;
+    private final @IntentionName String myMsg;
 
-    SuppressInspectionAction(String toolId, String msg) {
+    SuppressInspectionAction(String toolId, @IntentionName String msg) {
         myToolId = toolId;
         myMsg = msg;
     }
@@ -51,7 +53,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Suppress Inspection";
+        return XPathBundle.message("intention.family.name.suppress.inspection");
     }
 
     @Nullable

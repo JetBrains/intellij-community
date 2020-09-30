@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -22,13 +22,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,6 +34,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +66,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
                                    @Nullable E expr,
                                    @Nullable V localVariable,
                                    E[] occurrences,
-                                   String title,
+                                   @NlsContexts.Command String title,
                                    final FileType languageFileType) {
     super(null, editor, project, title, occurrences, expr);
     myLocalVariable = localVariable;
@@ -124,7 +122,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    *
    * @return action ID
    */
-  protected abstract String getActionName();
+  protected abstract @Nullable @NonNls String getActionName();
 
   /**
    * Creates an initial version of the declaration for the introduced element. Note that this method is not called in a write action
@@ -413,7 +411,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   protected void restoreState(@NotNull final V psiField) {
-    if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageUtil.getTopLevelEditor(myEditor).getDocument())) return;
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument())) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       final PsiFile containingFile = psiField.getContainingFile();
       final RangeMarker exprMarker = getExprMarker();

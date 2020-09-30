@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
@@ -14,11 +15,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +47,11 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  public static void processProjectConfigurables(@NotNull Project project, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -242,6 +243,12 @@ public final class SearchUtil {
   }
 
   private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path) {
+    int headStart = title.indexOf("<head>");
+    int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
+    if (headEnd > headStart) {
+      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length());
+    }
+
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
@@ -256,7 +263,7 @@ public final class SearchUtil {
     }
   }
 
-  private static int getSelection(String tabIdx, int tabCount, Function<Integer,String> titleGetter) {
+  private static int getSelection(String tabIdx, int tabCount, Function<? super Integer, String> titleGetter) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     for (int i = 0; i < tabCount; i++) {
       final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
@@ -460,7 +467,7 @@ public final class SearchUtil {
   }
 
   public static void appendFragments(String filter,
-                                     String text,
+                                     @NlsSafe String text,
                                      @SimpleTextAttributes.StyleAttributeConstant int style,
                                      final Color foreground,
                                      final Color background,
@@ -475,7 +482,7 @@ public final class SearchUtil {
     else {
       textRenderer.setDynamicSearchMatchHighlighting(true);
       //markup
-      ObjectOpenHashSet<String> quoted = new ObjectOpenHashSet<>();
+      Set<String> quoted = CollectionFactory.createSmallMemoryFootprintSet();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
       final Int2ObjectRBTreeMap<String> indexToString = new Int2ObjectRBTreeMap<>();
       for (String stripped : quoted) {
@@ -510,7 +517,7 @@ public final class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        final String before = text.substring(0, text.indexOf(word));
+        @NlsSafe final String before = text.substring(0, text.indexOf(word));
         if (before.length() > 0) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
@@ -520,7 +527,7 @@ public final class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      final String after = text.substring(idx);
+      @NlsSafe final String after = text.substring(idx);
       if (after.length() > 0) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }

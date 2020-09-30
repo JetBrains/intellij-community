@@ -18,6 +18,7 @@ import org.junit.Test;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -93,7 +94,7 @@ public class JBCefLoadHtmlTest {
 
     writeJS(jsQuery.inject("'hello'"));
 
-    SwingUtilities.invokeLater(() -> {
+    JBCefTestHelper.loadAndWait(LATCH, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
@@ -101,18 +102,13 @@ public class JBCefLoadHtmlTest {
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowOpened(WindowEvent e) {
-          browser.loadHTML(HTML, "file://" + JS_FILE_PATH);
+          // on MS Windows the path should start with a slash, like "/c:/path"
+          browser.loadHTML(HTML, "file://" + new File(JS_FILE_PATH).toURI().getPath());
         }
       });
       frame.setVisible(true);
     });
 
-    try {
-      LATCH.await(5, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      e.printStackTrace();
-    }
     TestCase.assertTrue(testPassed);
   }
 

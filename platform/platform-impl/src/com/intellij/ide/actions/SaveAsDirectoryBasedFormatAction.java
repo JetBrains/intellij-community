@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public final class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
@@ -38,7 +37,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
     }
 
     IProjectStore store = ProjectKt.getStateStore(project);
-    Path baseDir = Paths.get(store.getProjectFilePath()).getParent();
+    Path baseDir = store.getProjectFilePath().getParent();
     Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
     try {
       if (Files.isDirectory(ideaDir)) {
@@ -56,7 +55,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
       projectManager.openProject(ideaDir.getParent(), new OpenProjectTask());
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s): " + e.getMessage(), ideaDir),
+      Messages.showErrorDialog(project, String.format(IdeBundle.message("dialog.message.unable.to.create.idea.directory", e.getMessage()), ideaDir),
                                IdeBundle.message("dialog.title.error.saving.project"));
     }
   }

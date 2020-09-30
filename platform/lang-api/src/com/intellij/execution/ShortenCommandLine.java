@@ -1,11 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * <p>Command line has length limit depending on used OS. In order to allow java command lines of any length for any OS,
@@ -15,26 +19,26 @@ import org.jetbrains.annotations.Nullable;
  * e.g. {@link com.intellij.execution.application.JvmMainMethodRunConfigurationOptions#getShortenClasspath()}.</p>
  */
 public enum ShortenCommandLine {
-  NONE("none", "java [options] className [args]"),
-  MANIFEST("JAR manifest", "java -cp classpath.jar className [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile className [args]") {
+  NONE("shorten.command.line.method.none", "java [options] className [args]"),
+  MANIFEST("shorten.command.line.method.jar.manifest", "java -cp classpath.jar className [args]"),
+  CLASSPATH_FILE("shorten.command.line.method.classpath.file", "java WrapperClass classpathFile className [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
       return jreRoot == null || !JdkUtil.isModularRuntime(jreRoot);
     }
   },
-  ARGS_FILE("@argfile (Java 9+)", "java @argfile className [args]") {
+  ARGS_FILE("shorten.command.line.method.argfile", "java @argfile className [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
       return jreRoot != null && JdkUtil.isModularRuntime(jreRoot);
     }
   };
 
-  private final String myPresentableName;
-  private final String myDescription;
+  private final @PropertyKey(resourceBundle = LangBundle.BUNDLE) String myNameKey;
+  private final @NlsSafe String myDescription;
 
-  ShortenCommandLine(String presentableName, String description) {
-    myPresentableName = presentableName;
+  ShortenCommandLine(@PropertyKey(resourceBundle = LangBundle.BUNDLE) String nameKey, @NlsSafe String description) {
+    myNameKey = nameKey;
     myDescription = description;
   }
 
@@ -42,12 +46,12 @@ public enum ShortenCommandLine {
     return true;
   }
 
-  public String getDescription() {
+  public @NlsContexts.Label String getDescription() {
     return myDescription;
   }
 
-  public String getPresentableName() {
-    return myPresentableName;
+  public @NlsContexts.Label String getPresentableName() {
+    return LangBundle.message(myNameKey);
   }
 
   public static @NotNull ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {

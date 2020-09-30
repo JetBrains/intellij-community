@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -19,22 +18,28 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-class ExportToHTMLManager {
+final class ExportToHTMLManager {
   private static final Logger LOG = Logger.getInstance(ExportToHTMLManager.class);
-  private FileNotFoundException myLastException;
+  private IOException myLastException;
 
   /**
    * Should be invoked in event dispatch thread
    */
-  void executeExport(@NotNull final DataContext dataContext) throws FileNotFoundException {
-    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+  void executeExport(@NotNull DataContext dataContext) throws NoSuchFileException {
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     PsiDirectory psiDirectory = null;
     if (psiFile != null) {
       psiDirectory = psiFile.getContainingDirectory();
@@ -83,6 +88,7 @@ class ExportToHTMLManager {
     if (!exportToHTMLDialog.showAndGet()) {
       return;
     }
+
     try {
       exportToHTMLDialog.apply();
     }
@@ -91,23 +97,23 @@ class ExportToHTMLManager {
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
+    Path outDir = Paths.get(exportToHTMLSettings.OUTPUT_DIRECTORY);
     try {
       if (exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
         if (psiFile == null || psiFile.getText() == null) {
           return;
         }
-        final String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
-        HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, exportToHTMLSettings.PRINT_LINE_NUMBERS);
-        if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
-            editor != null &&
-            editor.getSelectionModel().hasSelection()) {
-          int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
-          textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine);
-        }
 
         try {
-          String htmlFile = doPaint(dirName, textPainter, null);
+          HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, exportToHTMLSettings.PRINT_LINE_NUMBERS);
+          if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
+              editor != null &&
+              editor.getSelectionModel().hasSelection()) {
+            int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
+            textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine);
+          }
+
+          Path htmlFile = doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), textPainter, null);
           if (exportToHTMLSettings.OPEN_IN_BROWSER) {
             BrowserUtil.browse(htmlFile);
           }
@@ -118,37 +124,38 @@ class ExportToHTMLManager {
       }
       else {
         myLastException = null;
-        ExportRunnable exportRunnable =
-          new ExportRunnable(exportToHTMLSettings, psiDirectory, outputDirectoryName, project);
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(exportRunnable, EditorBundle.message("export.to.html.title"), true, project);
-        if (myLastException != null) {
-          throw myLastException;
+        Runnable exportRunnable = new ExportRunnable(exportToHTMLSettings, psiDirectory, outDir, project);
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable, EditorBundle.message("export.to.html.title"), true, project);
+        IOException exception = myLastException;
+        if (exception != null) {
+          if (exception instanceof NoSuchFileException) {
+            throw (NoSuchFileException)exception;
+          }
+          else {
+            LOG.error(exception);
+          }
         }
       }
     }
     finally {
-      VfsUtil.markDirtyAndRefresh(true, true, false, new File(outputDirectoryName));
+      VfsUtil.markDirtyAndRefresh(true, true, false, new File(exportToHTMLSettings.OUTPUT_DIRECTORY));
     }
   }
 
-  @NotNull
-  protected static String doPaint(@NotNull String dirName,
-                                  @NotNull HTMLTextPainter textPainter,
-                                  @Nullable Int2ObjectRBTreeMap<PsiReference> refMap) throws IOException {
-    String htmlFile = dirName + File.separator + getHTMLFileName(textPainter.getPsiFile());
-    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(htmlFile), StandardCharsets.UTF_8)) {
+  private static @NotNull Path doPaint(@NotNull Path outDir,
+                                       @NotNull HTMLTextPainter textPainter,
+                                       @Nullable Int2ObjectSortedMap<PsiReference> refMap) throws IOException {
+    Path htmlFile = outDir.resolve(getHTMLFileName(textPainter.getPsiFile()));
+    try (BufferedWriter writer = Files.newBufferedWriter(htmlFile)) {
       textPainter.paint(refMap, writer, true);
     }
     return htmlFile;
   }
 
-  private boolean exportPsiFile(final PsiFile psiFile,
-                                final String outputDirectoryName,
-                                final Project project,
-                                final HashMap<PsiFile, PsiFile> filesMap) {
-    final ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
-
+  private boolean exportPsiFile(@NotNull PsiFile psiFile,
+                                @NotNull Path outDir,
+                                Project project,
+                                Map<PsiFile, PsiFile> filesMap) {
     if (psiFile instanceof PsiBinaryFile) {
       return true;
     }
@@ -157,19 +164,19 @@ class ExportToHTMLManager {
       if (!psiFile.isValid()) {
         return;
       }
+
       Int2ObjectRBTreeMap<PsiReference> refMap = null;
       for (PrintOption printOption : PrintOption.EP_NAME.getExtensionList()) {
-        final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
+        TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
           refMap = new Int2ObjectRBTreeMap<>(map);
         }
       }
 
-      String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
       try {
-        doPaint(dirName, new HTMLTextPainter(psiFile, project, exportToHTMLSettings.PRINT_LINE_NUMBERS), refMap);
+        doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), new HTMLTextPainter(psiFile, project, ExportToHTMLSettings.getInstance(project).PRINT_LINE_NUMBERS), refMap);
       }
-      catch (FileNotFoundException e) {
+      catch (NoSuchFileException e) {
         myLastException = e;
       }
       catch (IOException e) {
@@ -179,113 +186,107 @@ class ExportToHTMLManager {
     return myLastException == null;
   }
 
-  private static String constructOutputDirectory(PsiFile psiFile, String outputDirectoryName) {
-    return constructOutputDirectory(psiFile.getContainingDirectory(), outputDirectoryName);
-  }
-
-  private static String constructOutputDirectory(@NotNull final PsiDirectory directory, final String outputDirectoryName) {
+  private static @NotNull Path constructOutputDirectory(@NotNull PsiDirectory directory, @NotNull Path outDir) throws IOException {
     String qualifiedName = PsiDirectoryFactory.getInstance(directory.getProject()).getQualifiedName(directory, false);
-    String dirName = outputDirectoryName;
-    if(!qualifiedName.isEmpty()) {
-      dirName += File.separator + qualifiedName.replace('.', File.separatorChar);
+    Path dir = outDir;
+    if (!qualifiedName.isEmpty()) {
+      dir = dir.resolve(qualifiedName.replace('.', File.separatorChar));
     }
-    File dir = new File(dirName);
-    dir.mkdirs();
-    return dirName;
+    Files.createDirectories(dir);
+    return dir;
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory,
-                                       List<? super PsiFile> filesList,
+  private static void addToPsiFileList(@NotNull PsiDirectory psiDirectory,
+                                       @NotNull List<PsiFile> fileList,
                                        boolean isRecursive,
-                                       final String outputDirectoryName) throws FileNotFoundException {
+                                       @NotNull Path outputDirectoryName) throws IOException {
     if (!psiDirectory.isValid()) {
       return;
     }
-    PsiFile[] files = psiDirectory.getFiles();
-    Collections.addAll(filesList, files);
+
+    Collections.addAll(fileList, psiDirectory.getFiles());
     generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
     if (isRecursive) {
-      PsiDirectory[] directories = psiDirectory.getSubdirectories();
-      for (PsiDirectory directory : directories) {
-        addToPsiFileList(directory, filesList, true, outputDirectoryName);
+      for (PsiDirectory directory : psiDirectory.getSubdirectories()) {
+        addToPsiFileList(directory, fileList, true, outputDirectoryName);
       }
     }
   }
 
-  private static void generateIndexHtml(final PsiDirectory psiDirectory, final boolean recursive, final String outputDirectoryName)
-    throws FileNotFoundException {
-    String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
-    final String title = PsiDirectoryFactory.getInstance(psiDirectory.getProject()).getQualifiedName(psiDirectory, true);
-    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), StandardCharsets.UTF_8)) {
+  private static void generateIndexHtml(PsiDirectory psiDirectory, boolean recursive, @NotNull Path outDir)
+    throws IOException {
+    Path indexHtmlName = constructOutputDirectory(psiDirectory, outDir).resolve("index.html");
+    String title = PsiDirectoryFactory.getInstance(psiDirectory.getProject()).getQualifiedName(psiDirectory, true);
+    try (BufferedWriter writer = Files.newBufferedWriter(indexHtmlName)) {
       writer.write("<html><head><title>" + title + "</title></head><body>");
       if (recursive) {
         PsiDirectory[] directories = psiDirectory.getSubdirectories();
-        for(PsiDirectory directory: directories) {
+        for (PsiDirectory directory : directories) {
           writer.write("<a href=\"" + directory.getName() + "/index.html\"><b>" + directory.getName() + "</b></a><br />");
         }
       }
       PsiFile[] files = psiDirectory.getFiles();
-      for(PsiFile file: files) {
+      for (PsiFile file : files) {
         if (!(file instanceof PsiBinaryFile)) {
           writer.write("<a href=\"" + getHTMLFileName(file) + "\">" + file.getVirtualFile().getName() + "</a><br />");
         }
       }
       writer.write("</body></html>");
     }
-    catch (FileNotFoundException e) {
-      throw e;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
   }
 
-  private class ExportRunnable implements Runnable {
+  private final class ExportRunnable implements Runnable {
     private final ExportToHTMLSettings myExportToHTMLSettings;
     private final PsiDirectory myPsiDirectory;
-    private final String myOutputDirectoryName;
+    private final Path outDir;
     private final Project myProject;
 
     ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
                           PsiDirectory psiDirectory,
-                          String outputDirectoryName,
+                          @NotNull Path outputDirectoryName,
                           Project project) {
       myExportToHTMLSettings = exportToHTMLSettings;
       myPsiDirectory = psiDirectory;
-      myOutputDirectoryName = outputDirectoryName;
+      outDir = outputDirectoryName;
       myProject = project;
     }
 
     @Override
     public void run() {
-      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
-      final ArrayList<PsiFile> filesList = new ArrayList<>();
-      final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
+      List<PsiFile> filesList = new ArrayList<>();
+      boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
       ApplicationManager.getApplication().runReadAction(() -> {
         try {
-          addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
+          addToPsiFileList(myPsiDirectory, filesList, isRecursive, outDir);
         }
-        catch (FileNotFoundException e) {
-          myLastException = e;
+        catch (IOException e) {
+          if (myLastException == null) {
+            myLastException = e;
+          }
+          else {
+            LOG.error(e);
+          }
         }
       });
+
       if (myLastException != null) {
         return;
       }
-      HashMap<PsiFile, PsiFile> filesMap = new HashMap<>();
+
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      Map<PsiFile, PsiFile> filesMap = new HashMap<>();
       for (PsiFile psiFile : filesList) {
         filesMap.put(psiFile, psiFile);
       }
-      for(int i = 0; i < filesList.size(); i++) {
+      for (int i = 0; i < filesList.size(); i++) {
         PsiFile psiFile = filesList.get(i);
-        if(progressIndicator.isCanceled()) {
+        if (progressIndicator.isCanceled()) {
           return;
         }
         progressIndicator.setText(EditorBundle.message("export.to.html.generating.file.progress", getHTMLFileName(psiFile)));
         progressIndicator.setFraction((double)i / filesList.size());
-        if (!exportPsiFile(psiFile, myOutputDirectoryName, myProject, filesMap)) {
+        if (!exportPsiFile(psiFile, outDir, myProject, filesMap)) {
           return;
         }
       }
@@ -300,7 +301,7 @@ class ExportToHTMLManager {
     }
   }
 
-  static String getHTMLFileName(PsiFile psiFile) {
-    return psiFile.getVirtualFile().getName() + ".html";
+  static String getHTMLFileName(@NotNull PsiFileSystemItem psiFile) {
+    return psiFile.getVirtualFile().getNameSequence() + ".html";
   }
 }

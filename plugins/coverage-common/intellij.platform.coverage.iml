@@ -15,11 +15,11 @@
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" exported="" name="intellij-coverage" level="project" />
     <orderEntry type="library" exported="" name="intellij-test-discovery" level="project" />
-    <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

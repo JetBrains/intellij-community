@@ -24,7 +24,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, final MatchContext matchContext) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, final @NotNull MatchContext matchContext) {
     if (patternNode == null || matchedNode == null || matchedNode.getClass() == patternNode.getClass()) {
       return myDelegate.match(patternNode, matchedNode, matchContext);
     }
@@ -43,7 +43,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Override
-  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean canMatch(@NotNull PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     final PsiElement newPatternNode = skipNodeIfNecessary(patternNode);
     if (newPatternNode != patternNode) {
       return context.getPattern().getHandler(newPatternNode).canMatch(newPatternNode, matchedNode, context);
@@ -52,12 +52,12 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Override
-  public boolean matchSequentially(final NodeIterator patternNodes, final NodeIterator matchNodes, final MatchContext context) {
+  public boolean matchSequentially(final @NotNull NodeIterator patternNodes, final @NotNull NodeIterator matchNodes, final @NotNull MatchContext context) {
     return myDelegate.matchSequentially(patternNodes, matchNodes, context);
   }
 
   @Override
-  protected boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+  protected boolean isMatchSequentiallySucceeded(final @NotNull NodeIterator matchNodes) {
     return myDelegate.isMatchSequentiallySucceeded(matchNodes);
   }
 

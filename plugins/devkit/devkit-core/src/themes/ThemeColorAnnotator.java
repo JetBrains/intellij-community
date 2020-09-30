@@ -81,7 +81,7 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
 
-  private static class MyRenderer extends GutterIconRenderer {
+  private static final class MyRenderer extends GutterIconRenderer {
     private static final int ICON_SIZE = 12;
 
     private final String myColorText;
@@ -111,7 +111,7 @@ public class ThemeColorAnnotator implements Annotator {
     @Nullable
     @Override
     public String getTooltipText() {
-      return canChooseColor() ? "Choose Color" : null;
+      return canChooseColor() ? DevKitBundle.message("theme.choose.color.tooltip") : null;
     }
 
     @Nullable

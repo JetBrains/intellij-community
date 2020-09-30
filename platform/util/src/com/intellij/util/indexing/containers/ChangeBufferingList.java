@@ -57,7 +57,7 @@ public class ChangeBufferingList implements Cloneable {
     return new int[] {min, max};
   }
 
-  public void add(int value) {
+  public synchronized void add(int value) {
     ensureCapacity(1);
     
     RandomAccessIntContainer intContainer = randomAccessContainer;
@@ -77,7 +77,7 @@ public class ChangeBufferingList implements Cloneable {
     changes[length++] = value;
   }
 
-  public void remove(int value) {
+  public synchronized void remove(int value) {
     ensureCapacity(1);
     
     RandomAccessIntContainer intContainer = randomAccessContainer;
@@ -91,7 +91,7 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   @Override
-  public Object clone() {
+  public synchronized Object clone() {
     try {
       ChangeBufferingList clone = (ChangeBufferingList)super.clone();
       if (changes != null) clone.changes = changes.clone();
@@ -202,9 +202,13 @@ public class ChangeBufferingList implements Cloneable {
       length = (short)lastIndex;
     }
     mayHaveDupes = false;
+
+    if (intLength != 0 && length == 0) {
+      throw new AssertionError("ids list is empty after sorting and duplicates elimination");
+    }
   }
 
-  public void ensureCapacity(int diff) {
+  public synchronized void ensureCapacity(int diff) {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (length == MAX_FILES) {
       intContainer = getRandomAccessContainer(); // transform into more compact storage
@@ -229,7 +233,7 @@ public class ChangeBufferingList implements Cloneable {
     );
   }
 
-  public boolean isEmpty() {
+  public synchronized boolean isEmpty() {
     if (randomAccessContainer == null) {
       if (changes == null) {
         return true;
@@ -243,12 +247,12 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public ValueContainer.IntPredicate intPredicate() {
+  public synchronized ValueContainer.IntPredicate intPredicate() {
     RandomAccessIntContainer container = getRandomAccessContainer();
     return container::contains;
   }
 
-  public IntIdsIterator intIterator() {
+  public synchronized IntIdsIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && !hasRemovals) {
       int[] currentChanges = changes;
@@ -264,7 +268,7 @@ public class ChangeBufferingList implements Cloneable {
     return getRandomAccessContainer().intIterator();
   }
 
-  public IntIdsIterator sortedIntIterator() {
+  public synchronized IntIdsIterator sortedIntIterator() {
     IntIdsIterator intIterator = intIterator();
 
     if (!intIterator.hasAscendingOrder()) {

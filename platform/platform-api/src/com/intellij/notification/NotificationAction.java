@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,7 +17,6 @@ import static com.intellij.openapi.util.NlsContexts.NotificationContent;
  * @see Notification#addAction(AnAction)
  */
 public abstract class NotificationAction extends DumbAwareAction {
-
   public NotificationAction(@Nullable @NotificationContent String text) {
     super(text);
   }
@@ -65,7 +64,7 @@ public abstract class NotificationAction extends DumbAwareAction {
     }, performAction);
   }
 
-  public static class Simple extends NotificationAction {
+  public static final class Simple extends NotificationAction {
     private @NotNull final BiConsumer<? super AnActionEvent, ? super Notification> myPerformAction;
     private @NotNull final Object myActionInstance; // for FUS
 

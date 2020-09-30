@@ -10,6 +10,7 @@ import com.intellij.lang.ant.dom.TargetResolver;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -54,7 +56,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Override
   @Nullable
-  public String getName() {
+  public @NlsSafe String getName() {
     final AntDomProject project = getAntProject();
     return project != null? project.getName().getRawText() : null;
   }
@@ -78,7 +80,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Override
   @Nullable
-  public String getDefaultTargetActionId() {
+  public @NonNls String getDefaultTargetActionId() {
     if (getDefaultTargetName() == null) {
       return null;
     }

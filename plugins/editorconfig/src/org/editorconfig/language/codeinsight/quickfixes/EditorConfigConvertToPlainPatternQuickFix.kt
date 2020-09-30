@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.EditorConfigCharClass
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigConvertToPlainPatternQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.charclass.convert.to.plain.pattern.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.charclass.convert.to.plain.pattern.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val charClass = descriptor.psiElement as? EditorConfigCharClass ?: return

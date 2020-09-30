@@ -1,22 +1,22 @@
 {
-  '@id':0,
-  list:null,
-  children:[
+  '@id': 0,
+  list: null,
+  children: [
     {
-      '@id':1,
-      short:4,
-      long:9223372036854775807,
-      counter:42,
-      intAsObject:null,
-      foo:foo
+      '@id': 1,
+      short: 4,
+      long: 9223372036854775807,
+      counter: 42,
+      intAsObject: null,
+      foo: foo
     },
     {
-      '@id':2,
-      short:4,
-      long:9223372036854775807,
-      counter:42,
-      intAsObject:null,
-      foo:'or bar'
+      '@id': 2,
+      short: 4,
+      long: 9223372036854775807,
+      counter: 42,
+      intAsObject: null,
+      foo: 'or bar'
     }
   ]
 }

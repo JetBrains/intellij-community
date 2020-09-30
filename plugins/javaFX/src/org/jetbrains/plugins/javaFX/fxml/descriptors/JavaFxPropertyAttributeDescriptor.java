@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -9,8 +10,10 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -120,7 +123,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Nullable
-  protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+  protected @Nls String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
     final PsiElement parent = xmlAttributeValue.getParent();
     if (parent instanceof XmlAttribute && JavaFxPsiUtil.isEventHandlerProperty((XmlAttribute)parent)) {
       return validateAttributeHandler(xmlAttributeValue, value);
@@ -129,7 +132,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       return validatePropertyExpression(xmlAttributeValue, value);
     }
     else if (StringUtil.trimLeading(value).startsWith("$")) {
-      return "Spaces aren't allowed before property or expression";
+      return JavaFXBundle.message("spaces.not.allowed.before.property.or.expression");
     }
     else if (value.startsWith("%")) {
       return null;
@@ -140,30 +143,30 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Nullable
-  private static String validateAttributeHandler(@NotNull XmlElement context, @NotNull String value) {
+  private static @Nls String validateAttributeHandler(@NotNull XmlElement context, @NotNull String value) {
     if (value.startsWith("#")) {
       if (JavaFxPsiUtil.getControllerClass(context.getContainingFile()) == null) {
-        return "No controller specified for top level element";
+        return JavaFXBundle.message("no.controller.specified.for.top.level.element");
       }
     }
     else {
       if (JavaFxPsiUtil.parseInjectedLanguages((XmlFile)context.getContainingFile()).isEmpty()) {
-        return "Page language not specified.";
+        return JavaFXBundle.message("javafx.annotator.page.language.not.specified");
       }
     }
     return null;
   }
 
   @Nullable
-  private static String validatePropertyExpression(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+  private static @Nls String validatePropertyExpression(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
     if (JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
-      return "Incorrect expression syntax";
+      return JavaFXBundle.message("incorrect.expression.syntax");
     }
     final List<String> propertyNames = JavaFxPsiUtil.isExpressionBinding(value)
                                        ? StringUtil.split(value.substring(2, value.length() - 1), ".", true, false)
                                        : Collections.singletonList(value.substring(1));
     if (isIncompletePropertyChain(propertyNames)) {
-      return "Incorrect expression syntax";
+      return JavaFXBundle.message("incorrect.expression.syntax");
     }
     if (FxmlConstants.NULL_EXPRESSION.equals(value)) return null;
 
@@ -171,7 +174,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     final PsiType targetPropertyType = JavaFxPsiUtil.getWritablePropertyType(xmlAttributeValue);
     if (FxmlConstants.isNullValue(value)) {
       if (JavaFxPsiUtil.isPrimitiveOrBoxed(targetPropertyType)) {
-        return "Unable to coerce to " + targetPropertyType.getPresentableText();
+        return JavaFXBundle.message("unable.to.coerce", targetPropertyType.getPresentableText());
       }
       return null;
     }
@@ -190,7 +193,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
         aClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(member), xmlAttributeValue);
       }
       if (aClass != null && !InheritanceUtil.isInheritorOrSelf(aClass, targetPropertyClass, true)) {
-        return "Invalid value: unable to coerce to " + targetPropertyClass.getQualifiedName();
+        return JavaFXBundle.message("invalid.value.unable.to.coerce", targetPropertyClass.getQualifiedName());
       }
     }
     return null;
@@ -201,7 +204,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Nullable
-  protected static String validateLiteral(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+  protected static @Nls String validateLiteral(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
     final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
     final PsiElement declaration = JavaFxPsiUtil.getAttributeDeclaration(xmlAttributeValue);
     final String boxedQName;
@@ -235,7 +238,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
               }
             }
           }
-          return "Invalid value: unable to coerce to " + boxedQName;
+          return JavaFXBundle.message("invalid.value.unable.to.coerce", boxedQName);
         }
       }
       catch (Throwable ignore) {
@@ -244,6 +247,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     return null;
   }
 
+  @InspectionMessage
   @Nullable
   public static String validateLiteralOrEnumConstant(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
     final PsiElement parent = xmlAttributeValue.getParent();
@@ -254,7 +258,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
         if (aClass != null) {
           final PsiField field = aClass.findFieldByName(value, true);
           if (field == null || !((JavaFxPropertyAttributeDescriptor)descriptor).isConstant(field)) {
-            return "Invalid enumerated value";
+            return JavaFXBundle.message("invalid.enumerated.value");
           }
           return null;
         }

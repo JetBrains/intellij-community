@@ -7,8 +7,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -20,6 +18,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
@@ -29,7 +28,6 @@ import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +38,7 @@ import kotlin.properties.Delegates
 private val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
+@RunsInActiveStoreMode
 internal class ModuleStoreRenameTest {
   companion object {
     @JvmField
@@ -59,16 +58,17 @@ internal class ModuleStoreRenameTest {
   @JvmField
   val ruleChain = RuleChain(
     tempDirManager,
+    ActiveStoreRule(projectRule),
     object : ExternalResource() {
       override fun before() {
-        runInEdtAndWait {
+        ApplicationManager.getApplication().invokeAndWait {
           val moduleFileParent = tempDirManager.newPath()
           module = projectRule.createModule(moduleFileParent.resolve("m.iml"))
           dependentModule = projectRule.createModule(moduleFileParent.resolve("dependent-module.iml"))
           ModuleRootModificationUtil.addDependency(dependentModule, module)
         }
 
-        module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+        projectRule.project.messageBus.connect(module).subscribe(ProjectTopics.MODULES, object : ModuleListener {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
@@ -89,15 +89,6 @@ internal class ModuleStoreRenameTest {
     DisposeModulesRule(projectRule)
   )
 
-  @After
-  fun tearDown() {
-    ApplicationManager.getApplication().invokeAndWait {
-      val undoManager = UndoManager.getInstance(projectRule.project) as UndoManagerImpl
-      undoManager.dropHistoryInTests()
-      undoManager.flushCurrentCommandMerger()
-    }
-  }
-
   // project structure
   @Test
   fun `rename module using model`() = runBlocking<Unit> {
@@ -113,7 +104,7 @@ internal class ModuleStoreRenameTest {
     withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
       projectRule.project.modifyModules { renameModule(module, newName) }
     }
-    assertRename(newName, oldFile)
+    assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
 
@@ -137,13 +128,13 @@ internal class ModuleStoreRenameTest {
           .rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
       }
     }
-    assertRename(newName, oldFile)
+    assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
 
   // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
 
-  private suspend fun assertRename(newName: String, oldFile: Path) {
+  private suspend fun assertModuleFileRenamed(newName: String, oldFile: Path) {
     val newFile = module.storage.file
     assertThat(newFile.fileName.toString()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
@@ -152,10 +143,13 @@ internal class ModuleStoreRenameTest {
     assertThat(newFile).isRegularFile
 
     // ensure that macro value updated
-    assertThat(module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+    assertThat(module.stateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile)
+    assertThat(module.moduleNioFile).isEqualTo(newFile)
 
     saveProjectState()
     assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
+    assertThat(projectRule.project.stateStore.projectFilePath.readText()).contains(
+      """<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${module.storage.file.parent.fileName}/$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"""")
   }
 
   @Test
@@ -172,7 +166,7 @@ internal class ModuleStoreRenameTest {
 
     val newFile = parentVirtualDir.toNioPath().resolve("${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(newFile).isRegularFile
-    assertRename(module.name, oldFile)
+    assertModuleFileRenamed(module.name, oldFile)
     assertThat(oldModuleNames).isEmpty()
 
     testRenameModule()

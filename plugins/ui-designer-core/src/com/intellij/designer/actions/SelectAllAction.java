@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
@@ -32,7 +33,7 @@ public class SelectAllAction extends AnAction {
   protected final EditableArea myArea;
 
   public SelectAllAction(EditableArea area) {
-    super("Select All", "Select All", null);
+    super(DesignerBundle.message("action.select.all.text"), DesignerBundle.message("action.select.all.description"), null);
     myArea = area;
   }
 

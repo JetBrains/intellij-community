@@ -5,8 +5,7 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-
-class LazyFileContentImpl extends FileContentImpl {
+final class LazyFileContentImpl extends FileContentImpl {
   @NotNull
   private final NotNullComputable<byte[]> myContentComputable;
   private boolean myContentComputed;

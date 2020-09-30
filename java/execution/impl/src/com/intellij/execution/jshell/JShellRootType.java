@@ -18,6 +18,7 @@ package com.intellij.execution.jshell;
 import com.intellij.execution.console.ConsoleRootType;
 import com.intellij.ide.highlighter.JShellFileType;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -31,7 +32,7 @@ public final class JShellRootType extends ConsoleRootType {
   public static final String CONTENT_ID = "jshell_console";
 
   public JShellRootType() {
-    super("jshell", "JShell Console");
+    super("jshell", JavaCompilerBundle.message("jshell.console"));
   }
 
   @NotNull

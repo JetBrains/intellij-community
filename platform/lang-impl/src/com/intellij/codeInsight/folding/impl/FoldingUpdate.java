@@ -325,7 +325,7 @@ public final class FoldingUpdate {
     editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, null);
   }
 
-  static class RegionInfo {
+  static final class RegionInfo {
     @NotNull
     final FoldingDescriptor descriptor;
     final PsiElement element;

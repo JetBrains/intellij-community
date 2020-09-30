@@ -319,7 +319,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   /**
    * needed to track in which changes non-local files live
    */
-  private class ChangesListCreationHelper {
+  private final class ChangesListCreationHelper {
     private final List<Change> myList;
     private final Map<String, Change> myPathToChangeMapping;
     private List<Change> myDetailedList;

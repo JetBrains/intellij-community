@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
@@ -86,7 +87,7 @@ final class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLi
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getChangesIn(actualNumber);
       if (pair == null || pair.getFirst() == null || pair.getSecond() == null) {
-        throw new DiffRequestProducerException("Can not load data to show diff");
+        throw new DiffRequestProducerException(VcsBundle.message("show.diff.from.annotation.action.error.can.not.load.data.to.show.diff"));
       }
 
       FilePath targetPath = pair.getSecond();

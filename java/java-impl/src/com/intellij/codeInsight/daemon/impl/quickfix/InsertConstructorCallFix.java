@@ -25,13 +25,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InsertConstructorCallFix implements IntentionAction, HighPriorityAction {
   protected final PsiMethod myConstructor;
   private final String myCall;
 
-  public InsertConstructorCallFix(@NotNull PsiMethod constructor, String call) {
+  public InsertConstructorCallFix(@NotNull PsiMethod constructor, @NonNls String call) {
     myConstructor = constructor;
     myCall = call;
   }

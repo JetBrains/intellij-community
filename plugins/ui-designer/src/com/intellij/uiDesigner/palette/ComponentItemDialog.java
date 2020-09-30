@@ -29,6 +29,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -374,12 +375,12 @@ public final class ComponentItemDialog extends DialogWrapper {
     private final Project myProject;
     private final TreeFileChooser.PsiFileFilter myFilter;
     private final TextFieldWithBrowseButton myTextField;
-    private final String myTitle;
+    private final @Nls String myTitle;
 
     MyChooseFileActionListener(final Project project,
                                       final TreeFileChooser.PsiFileFilter filter,
                                       final TextFieldWithBrowseButton textField,
-                                      final String title) {
+                                      final @Nls String title) {
       myProject = project;
       myFilter = filter;
       myTextField = textField;

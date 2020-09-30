@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,6 +14,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
 import org.intellij.lang.xpath.xslt.quickfix.RenameVariableFix;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableShadowingInspection extends XsltInspection {
@@ -37,17 +38,18 @@ public class VariableShadowingInspection extends XsltInspection {
         if (XsltSupport.isVariableOrParam(tag)) {
           final XmlTag shadowedVariable = DeclarationChecker.getInstance((XmlFile)tag.getContainingFile()).getShadowedVariable(tag);
           if (shadowedVariable != null) {
-            final String innerKind = XsltSupport.isParam(tag) ? "Parameter" : "Variable";
-            final String outerKind = XsltSupport.isParam(shadowedVariable) ? "parameter" : "variable";
 
-            final LocalQuickFix fix1 = new RenameVariableFix(tag, "local").createQuickFix(isOnTheFly);
-            final LocalQuickFix fix2 = new RenameVariableFix(shadowedVariable, "outer").createQuickFix(isOnTheFly);
+            final LocalQuickFix fix1 = new RenameVariableFix(tag, XPathBundle.message("variable.place.local")).createQuickFix(isOnTheFly);
+            final LocalQuickFix fix2 = new RenameVariableFix(shadowedVariable, XPathBundle.message("variable.place.outer")).createQuickFix(isOnTheFly);
 
             final PsiElement token = XsltSupport.getAttValueToken(nameAttr);
             if (token == null) return;
-            holder.registerProblem(token,
-                    innerKind + " '" + nameAttr.getValue() + "' shadows " + outerKind,
-                    AbstractFix.createFixes(fix1, fix2));
+            final String message = XPathBundle.message("inspection.message.variable.shadows.variable",
+                                                       XsltSupport.isParam(tag) ? 0 : 1,
+                                                       nameAttr.getValue(),
+                                                       XsltSupport.isParam(shadowedVariable) ? 0 : 1);
+            //noinspection DialogTitleCapitalization
+            holder.registerProblem(token, message, AbstractFix.createFixes(fix1, fix2));
           }
         }
       }

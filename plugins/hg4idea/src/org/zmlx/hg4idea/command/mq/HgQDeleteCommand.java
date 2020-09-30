@@ -39,7 +39,9 @@ public class HgQDeleteCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qdelete", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QDelete.error"),
+        .notifyError("hg.qdelete.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QDelete.error"),
                      HgBundle.message("action.hg4idea.QDelete.error.msg", patchNames.size()));
     }
     myRepository.update();

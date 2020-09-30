@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -302,7 +303,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myTargetComboBox = new MyComboBox();
   }
 
-  private void setTargetComboBoxValue(String text) {
+  private void setTargetComboBoxValue(@NlsContexts.Label String text) {
     myTargetComboBox.setText(text + ":");
   }
 
@@ -314,9 +315,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
         @Override
         public void mouseClicked(MouseEvent e) {
           JBPopupFactory.getInstance().createListPopup(
-            new BaseListPopupStep<String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
+            new BaseListPopupStep<@Nls String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
-              public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              public PopupStep onChosen(@Nls String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
                 updateRunModuleMode();
                 return FINAL_CHOICE;

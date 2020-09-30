@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -47,7 +48,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   public boolean ignoreSwitchStatementsWithDefault = true;
 
   @NotNull
-  static String buildErrorString(String enumName, Set<String> names) {
+  static @InspectionMessage String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());

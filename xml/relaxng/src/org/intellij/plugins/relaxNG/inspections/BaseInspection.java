@@ -20,8 +20,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -115,7 +115,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element1 = descriptor.getPsiElement();
         PsiFile file = element1 == null ? null : element1.getContainingFile();
-        if (file == null || file.getFileType() != StdFileTypes.XML) return;
+        if (file == null || file.getFileType() != XmlFileType.INSTANCE) return;
         action.applyFix(project, descriptor);
       }
 
@@ -180,7 +180,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return RelaxngBundle.message("suppress.for.0", myLocation);
+      return RelaxngBundle.message("relaxng.suppress.action.name", myLocation);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,7 +38,7 @@ public class ShowInstancesByClassAction extends DebuggerTreeAction {
     final ObjectReference ref = getObjectReference(node);
     final boolean enabled = ref != null && ref.virtualMachine().canGetInstanceInfo();
     if (enabled) {
-      final String text = String.format("Show %s Objects...", StringUtil.getShortName(ref.referenceType().name()));
+      final String text = JavaDebuggerBundle.message("action.show.objects.text", StringUtil.getShortName(ref.referenceType().name()));
       e.getPresentation().setText(text);
     }
 

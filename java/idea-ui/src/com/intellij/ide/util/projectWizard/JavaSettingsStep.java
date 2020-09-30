@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -51,7 +52,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private       TextFieldWithBrowseButton mySourcePath;
   private       JPanel                    myPanel;
 
-  public JavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public JavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<? super SdkTypeId> sdkFilter) {
     super(settingsStep, moduleBuilder, sdkFilter);
     mySourcePath.setText(PropertiesComponent.getInstance().getValue(MODULE_SOURCE_ROOT_KEY, DEFAULT_MODULE_SOURCE_ROOT_PATH));
     myModuleBuilder = moduleBuilder;
@@ -103,7 +104,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   }
 
   @TestOnly
-  public void setSourcePath(String path) {
+  public void setSourcePath(@Nls String path) {
     mySourcePath.setText(path);
   }
 }

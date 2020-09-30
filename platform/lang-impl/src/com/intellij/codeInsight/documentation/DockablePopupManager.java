@@ -8,11 +8,13 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,16 +40,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   private final static Logger LOG = Logger.getInstance(DockablePopupManager.class);
   protected ToolWindow myToolWindow;
   private Runnable myAutoUpdateRequest;
+  private boolean myAutoUpdateMuted;
   @NotNull protected final Project myProject;
 
   public DockablePopupManager(@NotNull Project project) {
     myProject = project;
   }
 
-  @Nls
+  @NonNls
   protected abstract String getShowInToolWindowProperty();
 
-  @Nls
+  @NonNls
   protected abstract String getAutoUpdateEnabledProperty();
 
   protected boolean getAutoUpdateDefault() {
@@ -65,8 +69,15 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected abstract T createComponent();
 
   protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture, PsiElement originalElement, T component) {
+    doUpdateComponent(elementFuture, originalElement, component, false);
+  }
+
+  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture,
+                                   PsiElement originalElement,
+                                   T component,
+                                   boolean onAutoUpdate) {
     try {
-      doUpdateComponent(elementFuture.get(), originalElement, component);
+      doUpdateComponent(elementFuture.get(), originalElement, component, onAutoUpdate);
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.debug("Cannot update component", e);
@@ -75,13 +86,25 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, T component);
 
+  protected void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, T component, boolean onAutoUpdate) {
+    doUpdateComponent(element, originalElement, component);
+  }
+
   protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) { doUpdateComponent(editor, psiFile); }
+
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus, boolean onAutoUpdate) {
+    doUpdateComponent(editor, psiFile, requestFocus);
+  }
 
   protected abstract void doUpdateComponent(Editor editor, PsiFile psiFile);
 
   protected abstract void doUpdateComponent(@NotNull PsiElement element);
 
-  protected abstract String getTitle(PsiElement element);
+  protected void doUpdateComponent(@NotNull PsiElement element, boolean onAutoUpdate) {
+    doUpdateComponent(element);
+  }
+
+  protected abstract @NlsContexts.TabTitle String getTitle(PsiElement element);
 
   protected abstract String getToolwindowId();
 
@@ -128,7 +151,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     toolWindow.setToHideOnEmptyContent(false);
 
-    setToolwindowDefaultState();
+    setToolwindowDefaultState(myToolWindow);
 
     ContentManager contentManager = toolWindow.getContentManager();
     String displayName = element != null ? getTitle(element) : "";
@@ -158,21 +181,21 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     PropertiesComponent.getInstance().setValue(getShowInToolWindowProperty(), Boolean.TRUE.toString());
     restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), true));
     if (element != null) {
-      doUpdateComponent(element, originalElement, component);
+      doUpdateComponent(element, originalElement, component, false);
     }
     else {
       //noinspection ConstantConditions
-      doUpdateComponent(elementFuture, originalElement, component);
+      doUpdateComponent(elementFuture, originalElement, component, false);
     }
   }
 
   protected void installComponentActions(@NotNull ToolWindow toolWindow, T component) {
-    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
   }
 
-  protected void setToolwindowDefaultState() {
+  protected void setToolwindowDefaultState(@NotNull ToolWindow toolWindow) {
     Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
-    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
+    toolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
   }
 
   protected AnAction[] createActions() {
@@ -204,9 +227,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   void restartAutoUpdate(final boolean state) {
-    if (state && myToolWindow != null) {
+    boolean enabled = state && myToolWindow != null && !myAutoUpdateMuted;
+    if (enabled) {
       if (myAutoUpdateRequest == null) {
-        myAutoUpdateRequest = this::updateComponent;
+        myAutoUpdateRequest = () -> updateComponent(false, true);
 
         UIUtil.invokeLaterIfNeeded(() -> IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500));
       }
@@ -219,6 +243,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     }
   }
 
+  public void muteAutoUpdateTill(@NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myAutoUpdateMuted = true;
+    resetAutoUpdateState();
+    Disposer.register(disposable, () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myAutoUpdateMuted = false;
+      resetAutoUpdateState();
+    });
+  }
+
   public void resetAutoUpdateState() {
     restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
   }
@@ -228,6 +263,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   public void updateComponent(boolean requestFocus) {
+    updateComponent(requestFocus, false);
+  }
+
+  protected void updateComponent(boolean requestFocus, boolean onAutoUpdate) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -236,11 +275,11 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       .getDataContextFromFocusAsync()
       .onSuccess(dataContext -> {
         if (!myProject.isOpen()) return;
-        updateComponentInner(dataContext, requestFocus);
+        updateComponentInner(dataContext, requestFocus, onAutoUpdate);
       });
   }
 
-  private void updateComponentInner(@NotNull DataContext dataContext, boolean requestFocus) {
+  private void updateComponentInner(@NotNull DataContext dataContext, boolean requestFocus, boolean onAutoUpdate) {
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) {
       return;
     }
@@ -249,7 +288,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     if (editor == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
-        doUpdateComponent(element);
+        doUpdateComponent(element, onAutoUpdate);
       }
       return;
     }
@@ -263,10 +302,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
       PsiFile injectedFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
       if (injectedFile != null) {
-        doUpdateComponent(injectedEditor, injectedFile, requestFocus);
+        doUpdateComponent(injectedEditor, injectedFile, requestFocus, onAutoUpdate);
       }
       else if (file != null) {
-        doUpdateComponent(editor, file, requestFocus);
+        doUpdateComponent(editor, file, requestFocus, onAutoUpdate);
       }
     });
   }

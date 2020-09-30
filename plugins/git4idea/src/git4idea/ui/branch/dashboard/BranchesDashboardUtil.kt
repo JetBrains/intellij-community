@@ -29,8 +29,9 @@ internal object BranchesDashboardUtil {
     }
     val gitBranchManager = project.service<GitBranchManager>()
     val local = localMap.map { (branchName, repos) ->
-      BranchInfo(branchName, true, repos.any { it.currentBranch?.name == branchName }, repos.toList())
-        .apply { isFavorite = repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branchName) } }
+      BranchInfo(branchName, true, repos.any { it.currentBranch?.name == branchName },
+                 repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branchName) },
+                 repos.toList())
     }.toHashSet()
 
     return local
@@ -45,8 +46,9 @@ internal object BranchesDashboardUtil {
     }
     val gitBranchManager = project.service<GitBranchManager>()
     return remoteMap.map { (branchName, repos) ->
-      BranchInfo(branchName, false, false, repos)
-        .apply { isFavorite = repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branchName) } }
+      BranchInfo(branchName, false, false,
+                 repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branchName) },
+                 repos)
     }.toHashSet()
   }
 

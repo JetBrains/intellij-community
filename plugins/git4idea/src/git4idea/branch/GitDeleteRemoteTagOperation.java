@@ -4,6 +4,7 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,7 +100,8 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
       String title = GitBundle.message("delete.remote.tag.operation.failed.to.delete.tag.on.remotes",
                                        myTagName,
                                        remotesCount);
-      VcsNotifier.getInstance(myProject).notifyError(title, result.getErrorOutputWithReposIndication(), true);
+      VcsNotifier.getInstance(myProject)
+        .notifyError("git.tag.remote.deletion.error", title, result.getErrorOutputWithReposIndication(), true);
     }
   }
 
@@ -112,8 +114,9 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
     });
   }
 
-  private void notifySuccessWithEmptyTitle(@NotNull String message) {
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
+  private void notifySuccessWithEmptyTitle(@NotNull @NlsContexts.NotificationContent String message) {
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null,
+                                                                         "git.tag.remote.deletion.success");
     VcsNotifier.getInstance(myProject).notify(notification);
   }
 

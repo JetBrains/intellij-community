@@ -29,7 +29,7 @@ class KotlinXmlSerializerTest {
 
   @Tag("profile-state")
   private class VisibleTreeState : BaseState() {
-    internal var foo by string()
+    var foo by string()
   }
 
   private class VisibleTreeStateComponent : BaseState() {
@@ -38,7 +38,7 @@ class KotlinXmlSerializerTest {
     @get:MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
     var profileNameToState by map<String, VisibleTreeState>()
 
-    fun getVisibleTreeState(profile: String) = profileNameToState.getOrPut(profile) {
+    fun getVisibleTreeState(profile: String) = profileNameToState.computeIfAbsent(profile) {
       incrementModificationCount()
       VisibleTreeState()
     }

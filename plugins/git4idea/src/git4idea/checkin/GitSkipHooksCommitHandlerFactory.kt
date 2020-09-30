@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.commitProperty
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.GitVcs
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.awt.event.KeyEvent
@@ -46,9 +47,9 @@ private class GitSkipHooksConfigurationPanel(
     CheckinChangeListSpecificComponent {
 
   private val vcs = GitVcs.getInstance(panel.project)
-  private val runHooks = NonFocusableCheckBox("Run Git hooks").apply {
+  private val runHooks = NonFocusableCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
     mnemonic = KeyEvent.VK_H
-    toolTipText = "<html>If unchecked, Git hook will be skipped with the '--no-verify' parameter</html>"
+    toolTipText = GitBundle.message("tooltip.run.git.hooks")
   }
   private var selectedState = true
 

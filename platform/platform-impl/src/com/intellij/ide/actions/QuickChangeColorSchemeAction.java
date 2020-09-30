@@ -15,7 +15,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -62,7 +62,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
 
     UIManager.LookAndFeelInfo suitableLaf = null;
-    String schemeName = SchemeManager.getBaseName(scheme);
+    String schemeName = Scheme.getBaseName(scheme.getName());
     for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
       if (laf instanceof UIThemeBasedLookAndFeelInfo &&
                schemeName.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {

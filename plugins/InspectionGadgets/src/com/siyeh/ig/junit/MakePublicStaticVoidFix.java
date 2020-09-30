@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -31,13 +32,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 class MakePublicStaticVoidFix extends InspectionGadgetsFix {
-  private final String myName;
+  private final @IntentionName String myName;
   private final boolean myMakeStatic;
   private final String myNewVisibility;
 
@@ -46,13 +48,16 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   }
 
   MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @PsiModifier.ModifierConstant String newVisibility) {
+    final int formatOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_MODIFIERS
+                              | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE;
+    final String methodBefore = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, formatOptions, PsiFormatUtilBase.SHOW_TYPE);
+
     String presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
-    myName = "Change signature of '" +
-             PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_MODIFIERS |
-                                        PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE, PsiFormatUtilBase.SHOW_TYPE) +
-             "' to '" + (presentableVisibility.isEmpty() ? "" : presentableVisibility + " ") + (makeStatic ? "static " : "") +
-             "void " + method.getName() + "()'";
+    final @NonNls String methodAfter = (presentableVisibility.isEmpty() ? presentableVisibility : presentableVisibility + " ") +
+                                       (makeStatic ? "static " : "") +
+                                       "void " + method.getName() + "()";
+
+    myName = InspectionGadgetsBundle.message("make.public.static.void.fix.name", methodBefore, methodAfter);
     myMakeStatic = makeStatic;
     myNewVisibility = newVisibility;
   }

@@ -83,12 +83,12 @@ public final class XmlSerializer {
   /**
    * Use only if it is a hot spot, otherwise use {@link #deserializeInto(Object, Element)} or {@link #serializeInto(Object, Element)}.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static @NotNull BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
     return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
   }
 
-  public static void serializeInto(final Object bean, final Element element) {
+  public static void serializeInto(@NotNull Object bean, @NotNull Element element) {
     serializeInto(bean, element, null);
   }
 

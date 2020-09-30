@@ -4,12 +4,14 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
@@ -83,9 +85,13 @@ public class ClassInnerStuffCache {
 
   @Nullable
   PsiMethod getValuesMethod() {
-    return myClass.isEnum() && !isAnonymousClass()
+    return myClass.isEnum() && !isAnonymousClass() && !classNameIsSealed()
            ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValuesMethod))
            : null;
+  }
+
+  private boolean classNameIsSealed() {
+    return PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_15_PREVIEW) && PsiKeyword.SEALED.equals(myClass.getName());
   }
 
   @Nullable

@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import org.jetbrains.annotations.Contract
 import sun.swing.SwingUtilities2
 import java.awt.FontMetrics
 import java.io.File
@@ -12,6 +13,7 @@ open class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultP
   companion object {
     const val ellipsisSymbol = "\u2026"
 
+    @Contract(pure = true)
     fun clipString(component: JComponent, string: String, maxWidth: Int, fileSeparatorChar: String = File.separator): String {
       val fm = component.getFontMetrics(component.font)
       val symbolWidth = SwingUtilities2.stringWidth(component, fm, ellipsisSymbol)

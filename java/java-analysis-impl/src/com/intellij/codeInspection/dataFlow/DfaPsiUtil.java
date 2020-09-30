@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class DfaPsiUtil {
+public final class DfaPsiUtil {
 
   private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
     staticCall(JAVA_UTIL_LIST, "of"),
@@ -291,7 +291,7 @@ public class DfaPsiUtil {
     final PsiCodeBlock body = constructor.getBody();
     if (body == null) return Collections.emptySet();
 
-    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
+    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
@@ -345,15 +345,17 @@ public class DfaPsiUtil {
           }
 
           @Override
-          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
+                                                                      @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (currentBlock == body &&
                 (isCallExposingNonInitializedFields(instruction) ||
-                instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
+                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
                 if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
-                } else if (!map.containsKey(field)) {
+                }
+                else if (!map.containsKey(field)) {
                   map.put(field, true);
                 }
               }
@@ -392,7 +394,7 @@ public class DfaPsiUtil {
       return MultiMap.empty();
     }
 
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
+    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<MultiMap<PsiField, PsiExpression>> compute() {

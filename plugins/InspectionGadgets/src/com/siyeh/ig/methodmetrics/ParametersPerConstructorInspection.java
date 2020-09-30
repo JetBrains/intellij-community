@@ -16,6 +16,7 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
@@ -73,7 +74,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
   }
 
   @Override
-  protected String getConfigurationLabel() {
+  protected @NlsContexts.Label String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("parameter.limit.option");
   }
 

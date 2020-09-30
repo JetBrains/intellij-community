@@ -4,12 +4,13 @@ package com.intellij.notification;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +23,10 @@ public final class LogModel  {
   public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<>();
-  private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
-  private Trinity<Notification, String, Long> myStatusMessage;
+  private final Map<Notification, @NlsContexts.StatusBarText String> myStatuses = CollectionFactory.createConcurrentWeakIdentityMap();
+  private Trinity<Notification, @NlsContexts.StatusBarText String, Long> myStatusMessage;
   private final Project myProject;
-  final Map<Notification, Runnable> removeHandlers = new THashMap<>();
+  final Map<Notification, Runnable> removeHandlers = new HashMap<>();
 
   LogModel(@Nullable Project project) {
     myProject = project;
@@ -72,7 +73,7 @@ public final class LogModel  {
   }
 
   @Nullable
-  Trinity<Notification, String, Long> getStatusMessage() {
+  Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage() {
     synchronized (myNotifications) {
       return myStatusMessage;
     }

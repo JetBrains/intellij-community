@@ -54,7 +54,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       final String name = node.getName();
@@ -101,7 +101,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
             !inheritedProperties.contains(attributeName) &&
             !localProperties.containsKey(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
-          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.$0.outside.init", attributeName),
+          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
         }
       }

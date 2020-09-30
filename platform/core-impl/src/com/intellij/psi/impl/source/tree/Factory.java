@@ -3,6 +3,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -50,7 +51,7 @@ public final class Factory  {
   }
 
   @NotNull
-  public static CompositeElement createErrorElement(@NotNull String description) {
+  public static CompositeElement createErrorElement(@NotNull @NlsContexts.DetailedDescription String description) {
     return new PsiErrorElementImpl(description);
   }
 

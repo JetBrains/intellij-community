@@ -4,6 +4,7 @@ package com.intellij.build.events.impl;
 import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEventResult;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,7 +48,7 @@ public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssu
   @NotNull
   @Override
   public String getGroup() {
-    return "Build issues";
+    return LangBundle.message("build.event.title.build.issues");
   }
 
   @Nullable

@@ -7,7 +7,6 @@ import com.intellij.util.Processor
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.jvm.JvmStatic
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -29,7 +28,6 @@ data class ClientId(val value: String) {
 
     companion object {
 
-        val logger = Logger.getInstance(ClientId::class.java)
         /**
          * Default client id for local application
          */
@@ -51,7 +49,6 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         var localId = defaultLocalId
-            get
             private set
 
         /**
@@ -76,15 +73,14 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val currentOrNull: ClientId?
-            get() = ClientIdValueStoreService.tryGetInstance()?.value?.let(::ClientId)
+            get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
 
         /**
          * Overrides the ID that is considered to be local to this process. Can be only invoked once.
          */
         @JvmStatic
         fun overrideLocalId(newId: ClientId) {
-            require(
-                localId == defaultLocalId)
+            require(localId == defaultLocalId)
             localId = newId
         }
 
@@ -119,29 +115,31 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-            val clientIdStore = ClientIdValueStoreService.tryGetInstance() ?: return action()
+            val clientIdService = ClientIdService.tryGetInstance() ?: return action()
 
-            val foreignMainThreadActivity = ApplicationManager.getApplication().isDispatchThread && !clientId.isLocal
-            val old = clientIdStore.value
+            val foreignMainThreadActivity = clientIdService.checkLongActivity &&
+                                            ApplicationManager.getApplication().isDispatchThread &&
+                                            !clientId.isLocal
+            val old = clientIdService.clientIdValue
             try {
-                clientIdStore.value = clientId?.value
+                clientIdService.clientIdValue = clientId?.value
                 if (foreignMainThreadActivity) {
                     val beforeActionTime = System.currentTimeMillis()
                     val result = action()
                     val delta = System.currentTimeMillis() - beforeActionTime
                     if (delta > 300) {
-                        logger.warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
+                        Logger.getInstance(ClientId::class.java).warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
                     }
                     return result
                 } else
                     return action()
             } finally {
-                clientIdStore.value = old
+                clientIdService.clientIdValue = old
             }
         }
 
         @JvmStatic
-        fun decorateRunnable(runnable: java.lang.Runnable) : java.lang.Runnable {
+        fun decorateRunnable(runnable: Runnable) : Runnable {
             if (!propagateAcrossThreads) return runnable
             val currentId = currentOrNull
             return Runnable { withClientId(currentId, runnable) }
@@ -174,6 +172,19 @@ data class ClientId(val value: String) {
             val currentId = currentOrNull
             return Processor { withClientId(currentId) { processor.process(it) } }
         }
+
+        /** Sets current ClientId.
+         * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
+         * In most cases it's convenient and preferable to use [withClientId].
+         */
+        @JvmStatic
+        fun trySetCurrentClientId(clientId: ClientId?) {
+            val clientIdService = ClientIdService.tryGetInstance()
+            if (clientIdService != null) {
+                clientIdService.clientIdValue = clientId?.value
+            }
+        }
+
     }
 }
 

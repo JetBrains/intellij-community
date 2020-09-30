@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.JBColor;
@@ -9,6 +10,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +19,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.DEFAULT_PROJECT_PRESENTATION_PATH;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
@@ -77,16 +78,16 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   private void updateLabelInfo() {
     myInfoLabel.setText((myProject.isDefault() ? VcsBundle.message("settings.default.location")
                                                : VcsBundle.message("settings.current.location")) +
-                        (myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? toSystemDependentName(
-                          Objects.requireNonNull(myVcsConfiguration.CUSTOM_SHELF_PATH)) : getDefaultShelfPresentationPath(myProject)));
+                        (myVcsConfiguration.USE_CUSTOM_SHELF_PATH
+                         ? FileUtil.toSystemDependentName(Objects.requireNonNull(myVcsConfiguration.CUSTOM_SHELF_PATH))
+                         : getDefaultShelfPresentationPath(myProject)));
   }
 
   /**
    * System dependent path to default shelf dir
    */
-  @NotNull
-  static String getDefaultShelfPresentationPath(@NotNull Project project) {
-    return toSystemDependentName(project.isDefault() ? DEFAULT_PROJECT_PRESENTATION_PATH : getDefaultShelfPath(project));
+  static @NotNull @Nls String getDefaultShelfPresentationPath(@NotNull Project project) {
+    return project.isDefault() ? DEFAULT_PROJECT_PRESENTATION_PATH : getDefaultShelfPath(project).toString();
   }
 
   private JComponent createStoreBaseRevisionOption() {

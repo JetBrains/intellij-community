@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 public interface JavaElementType {
-  class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
+  final class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Supplier<? extends ASTNode> myConstructor;
 
     private JavaCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> constructor) {
@@ -139,7 +139,7 @@ public interface JavaElementType {
   IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
   IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
 
-  class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
+  final class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {
       super("CODE_BLOCK", JavaLanguage.INSTANCE);
     }
@@ -250,7 +250,7 @@ public interface JavaElementType {
     }
   }
 
-  class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
+  final class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
     private JavaDummyElementType() {
       super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
     }

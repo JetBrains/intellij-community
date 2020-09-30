@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl.httpclient;
 
 import com.google.gson.Gson;
@@ -21,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
@@ -41,23 +26,22 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Mikhail Golubev
  */
-public class TaskResponseUtil {
+public final class TaskResponseUtil {
   public static final Logger LOG = Logger.getInstance(TaskResponseUtil.class);
 
-  public static final String DEFAULT_CHARSET_NAME = CharsetToolkit.UTF8;
-  public final static Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
+  public final static Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * Utility class
    */
-  private TaskResponseUtil() {
-  }
+  private TaskResponseUtil() { }
 
   public static Reader getResponseContentAsReader(@NotNull HttpResponse response) throws IOException {
     Header header = response.getEntity().getContentEncoding();
@@ -83,7 +67,10 @@ public class TaskResponseUtil {
     }
     else {
       InputStream stream = response.getResponseBodyAsStream();
-      return stream == null ? "" : StreamUtil.readText(stream, DEFAULT_CHARSET);
+      if (stream == null) return "";
+      try (Reader reader = new InputStreamReader(stream, DEFAULT_CHARSET)) {
+        return StreamUtil.readText(reader);
+      }
     }
   }
 
@@ -103,7 +90,7 @@ public class TaskResponseUtil {
         }
       }
     }
-    return new InputStreamReader(stream, charsetName == null ? DEFAULT_CHARSET_NAME : charsetName);
+    return charsetName != null ? new InputStreamReader(stream, charsetName) : new InputStreamReader(stream, DEFAULT_CHARSET);
   }
 
   @NotNull

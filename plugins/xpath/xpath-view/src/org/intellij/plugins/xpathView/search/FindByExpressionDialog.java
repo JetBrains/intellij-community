@@ -36,7 +36,7 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
 
     public FindByExpressionDialog(Project parent, Config settings, HistoryElement[] history, Module module) {
         super(parent, settings, history, new FindFormPanel(parent, module, settings.SEARCH_SCOPE));
-        setTitle("Find by XPath Expression");
+        setTitle(XPathBundle.message("dialog.title.find.by.xpath.expression"));
         setOKButtonText(XPathBundle.message("find.button"));
     }
 

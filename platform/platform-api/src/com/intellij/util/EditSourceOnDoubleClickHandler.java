@@ -2,22 +2,31 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public final class EditSourceOnDoubleClickHandler {
+  private static final Key<Boolean> INSTALLED = Key.create("EditSourceOnDoubleClickHandlerInstalled");
+
   private EditSourceOnDoubleClickHandler() { }
 
   public static void install(final JTree tree, @Nullable final Runnable whenPerformed) {
@@ -76,10 +85,30 @@ public final class EditSourceOnDoubleClickHandler {
   }
 
   public static boolean isToggleEvent(@NotNull JTree tree, @NotNull MouseEvent e) {
-    TreePath selectionPath = tree.getSelectionPath();
-    if (selectionPath == null) return false;
+    if (!SwingUtilities.isLeftMouseButton(e)) return false;
+    int count = tree.getToggleClickCount();
+    if (count <= 0 || e.getClickCount() % count != 0) return false;
+    return isExpandPreferable(tree, tree.getSelectionPath());
+  }
 
-    return !tree.getModel().isLeaf(selectionPath.getLastPathComponent()) && tree.getToggleClickCount() == e.getClickCount();
+  /**
+   * @return {@code true} to expand/collapse the node, {@code false} to navigate to source if possible
+   */
+  public static boolean isExpandPreferable(@NotNull JTree tree, @Nullable TreePath path) {
+    if (path == null || Registry.is("ide.tree.expand.on.double.click.disabled", false)) return false;
+
+    TreeModel model = tree.getModel();
+    if (model == null || model.isLeaf(path.getLastPathComponent())) return false;
+    if (!UIUtil.isClientPropertyTrue(tree, INSTALLED)) return true; // expand by default if handler is not installed
+
+    // navigate to source is preferred if the tree provides a navigatable object for the given path
+    if (!Registry.is("ide.tree.expand.navigatable.on.double.click.disabled", false)) {
+      Navigatable navigatable = TreeUtil.getNavigatable(tree, path);
+      if (navigatable != null && navigatable.canNavigateToSource()) return false;
+    }
+    // for backward compatibility
+    NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
+    return descriptor == null || descriptor.expandOnDoubleClick();
   }
 
   public static class TreeMouseListener extends DoubleClickListener {
@@ -93,6 +122,18 @@ public final class EditSourceOnDoubleClickHandler {
     public TreeMouseListener(final JTree tree, @Nullable final Runnable whenPerformed) {
       myTree = tree;
       myWhenPerformed = whenPerformed;
+    }
+
+    @Override
+    public void installOn(@NotNull Component c, boolean allowDragWhileClicking) {
+      super.installOn(c, allowDragWhileClicking);
+      myTree.putClientProperty(INSTALLED, true);
+    }
+
+    @Override
+    public void uninstall(Component c) {
+      super.uninstall(c);
+      myTree.putClientProperty(INSTALLED, null);
     }
 
     @Override

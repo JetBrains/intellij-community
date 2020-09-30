@@ -15,7 +15,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManagerKt;
@@ -97,7 +96,7 @@ public class _LastInSuiteTest extends TestCase {
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
     System.gc();
-    String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
+    String heapDump = TestApplicationManagerKt.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {

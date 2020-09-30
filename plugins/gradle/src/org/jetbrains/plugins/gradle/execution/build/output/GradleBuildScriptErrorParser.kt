@@ -10,6 +10,8 @@ import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
@@ -46,7 +48,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     if (location != null) {
       description.appendln(location).appendln()
     }
-    var reason = reader.readLine() ?: return false
+    @NlsSafe var reason = reader.readLine() ?: return false
     val parentId: Any
     if (reason.startsWith("Execution failed for task '")) {
       parentId = reason.substringAfter("Execution failed for task '").substringBefore("'.")
@@ -62,7 +64,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       description.appendln(nextLine)
       val trimStart = nextLine.trimStart()
       if (trimStart.startsWith("> ")) {
-        reason = trimStart.substringAfter("> ").trimEnd('.')
+        reason = trimStart.substringAfter("> ").trimEnd('.') //NON-NLS
       }
       when {
         nextLine.isEmpty() -> break@loop
@@ -116,6 +118,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     }
 
     val detailedMessage = StringBuilder(errorText)
+
     if (!trySuggestions.isNullOrBlank()) {
       detailedMessage.append("\n* Try:\n$trySuggestions")
     }
@@ -123,8 +126,9 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       detailedMessage.append("\n* Exception is:\n$exception")
     }
     if (filePosition != null) {
+      //TODO: Used english suggestions and exceptions:
       messageConsumer.accept(object : FileMessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, detailedMessage.toString(), filePosition), DuplicateMessageAware {}
+        parentId, MessageEvent.Kind.ERROR, null, reason, detailedMessage.toString(), filePosition), DuplicateMessageAware {} //NON-NLS
       )
     }
     else {
@@ -133,8 +137,9 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
         messageConsumer.accept(unresolvedMessageEvent)
       }
       else {
+        //TODO: Used english suggestions and exceptions:
         messageConsumer.accept(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
-                                                         detailedMessage.toString()), DuplicateMessageAware {})
+                                                         detailedMessage.toString()), DuplicateMessageAware {}) //NON-NLS
       }
     }
     return true

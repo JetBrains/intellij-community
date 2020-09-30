@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 internal interface GHPRDataProviderRepository : Disposable {
-  @CalledInAwt
+  @RequiresEdt
   fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider
 
-  @CalledInAwt
+  @RequiresEdt
   fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider?
 
-  @CalledInAwt
+  @RequiresEdt
   fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit)
 }

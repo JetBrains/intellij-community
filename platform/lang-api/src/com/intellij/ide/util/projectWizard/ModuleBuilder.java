@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -61,7 +61,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
-    final ArrayList<ModuleBuilder> result = new ArrayList<>();
+    List<ModuleBuilder> result = new ArrayList<>();
     for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
       result.add(moduleType.createModuleBuilder());
     }
@@ -102,7 +102,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @Override
   @Nullable
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     ModuleType<?> moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
@@ -363,7 +363,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Nls(capitalization = Nls.Capitalization.Title)
   protected String getModuleTypeName() {
     String name = getModuleType().getName();
-    return StringUtil.trimEnd(name, " Module");
+    return StringUtil.trimEnd(name, " Module");  // NON-NLS
   }
 
   public String getGroupName() {

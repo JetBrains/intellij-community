@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.tooling.serialization;
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.intellij.openapi.externalSystem.model.project.dependencies.*;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +21,14 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectDependenciesSerializationService implements SerializationService<ProjectDependencies> {
+public final class ProjectDependenciesSerializationService implements SerializationService<ProjectDependencies> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
   public byte[] write(ProjectDependencies dependencies, Class<? extends ProjectDependencies> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = IonBinaryWriterBuilder.standard().build(out);
+    IonWriter writer = createIonWriter().build(out);
     try {
       write(writer, myWriteContext, dependencies);
     }

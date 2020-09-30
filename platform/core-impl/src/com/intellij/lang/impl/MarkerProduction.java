@@ -18,14 +18,14 @@ package com.intellij.lang.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-final class MarkerProduction extends TIntArrayList {
+final class MarkerProduction extends IntArrayList {
   private static final Logger LOG = Logger.getInstance(MarkerProduction.class);
   private static final int LINEAR_SEARCH_LIMIT = 20;
   private final MarkerPool myPool;
@@ -38,13 +38,18 @@ final class MarkerProduction extends TIntArrayList {
   }
 
   void addBefore(PsiBuilderImpl.ProductionMarker marker, PsiBuilderImpl.ProductionMarker anchor) {
-    insert(indexOf(anchor), marker.markerId);
+    add(indexOf(anchor), marker.markerId);
   }
 
   private int indexOf(PsiBuilderImpl.ProductionMarker marker) {
     int idx = findLinearly(marker.markerId);
     if (idx < 0) {
-      idx = indexOf(findMarkerAtLexeme(marker.getLexemeIndex(false)), marker.markerId);
+      for (int i = findMarkerAtLexeme(marker.getLexemeIndex(false)); i < size; i++) {
+        if (a[i] == marker.markerId) {
+          idx = i;
+          break;
+        }
+      }
     }
     if (idx < 0) {
       LOG.error("Dropped or rolled-back marker");
@@ -55,7 +60,7 @@ final class MarkerProduction extends TIntArrayList {
   private int findLinearly(int markerId) {
     int low = Math.max(0, size() - LINEAR_SEARCH_LIMIT);
     for (int i = size() - 1; i >= low; i--) {
-      if (_data[i] == markerId) {
+      if (a[i] == markerId) {
         return i;
       }
     }
@@ -79,12 +84,12 @@ final class MarkerProduction extends TIntArrayList {
   void rollbackTo(PsiBuilderImpl.ProductionMarker marker) {
     int idx = indexOf(marker);
     for (int i = size() - 1; i >= idx; i--) {
-      int markerId = _data[i];
+      int markerId = a[i];
       if (markerId > 0) {
         myPool.freeMarker(myPool.get(markerId));
       }
     }
-    remove(idx, size() - idx);
+    removeElements(idx, size());
   }
 
   boolean hasErrorsAfter(@NotNull PsiBuilderImpl.StartMarker marker) {
@@ -101,42 +106,42 @@ final class MarkerProduction extends TIntArrayList {
 
   void dropMarker(@NotNull PsiBuilderImpl.StartMarker marker) {
     if (marker.isDone()) {
-      remove(lastIndexOf(-marker.markerId));
+      removeInt(lastIndexOf(-marker.markerId));
     }
-    remove(indexOf(marker));
+    removeInt(indexOf(marker));
     myPool.freeMarker(marker);
   }
 
   void addDone(PsiBuilderImpl.StartMarker marker, @Nullable PsiBuilderImpl.ProductionMarker anchorBefore) {
-    insert(anchorBefore == null ? size() : indexOf(anchorBefore), -marker.markerId);
+    add(anchorBefore == null ? size() : indexOf(anchorBefore), -marker.markerId);
   }
 
   @Nullable
   PsiBuilderImpl.ProductionMarker getMarkerAt(int index) {
-    int id = get(index);
+    int id = getInt(index);
     return myPool.get(id > 0 ? id : -id);
   }
 
   @Nullable
   PsiBuilderImpl.ProductionMarker getStartMarkerAt(int index) {
-    int id = get(index);
+    int id = getInt(index);
     return id > 0 ? myPool.get(id) : null;
   }
 
   @Nullable
   PsiBuilderImpl.StartMarker getDoneMarkerAt(int index) {
-    int id = get(index);
+    int id = getInt(index);
     return id < 0 ? (PsiBuilderImpl.StartMarker)myPool.get(-id) : null;
   }
 
   int getLexemeIndexAt(int productionIndex) {
-    int id = get(productionIndex);
+    int id = getInt(productionIndex);
     return myPool.get(Math.abs(id)).getLexemeIndex(id < 0);
   }
 
   void confineMarkersToMaxLexeme(int markersBefore, int lexemeIndex) {
     for (int k = markersBefore - 1; k > 1; k--) {
-      int id = _data[k];
+      int id = a[k];
       PsiBuilderImpl.ProductionMarker marker = myPool.get(Math.abs(id));
       boolean done = id < 0;
       if (marker.getLexemeIndex(done) < lexemeIndex) break;

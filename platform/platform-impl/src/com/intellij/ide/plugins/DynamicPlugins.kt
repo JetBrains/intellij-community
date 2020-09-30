@@ -7,6 +7,10 @@ import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProje
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
+import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -30,6 +34,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -37,13 +42,16 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
@@ -57,50 +65,21 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import org.jetbrains.annotations.NonNls
 import java.awt.Window
 import java.io.File
+import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Predicate
 import javax.swing.JComponent
 import kotlin.collections.component1
 import kotlin.collections.component2
-
-class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
-
-interface DynamicPluginListener {
-  @JvmDefault
-  fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  @JvmDefault
-  fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  /**
-   * @param isUpdate `true` if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
-   */
-  @JvmDefault
-  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
-
-  @JvmDefault
-  fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
-
-  /**
-   * Checks if the plugin can be dynamically unloaded at this moment.
-   * Method should throw [CannotUnloadPluginException] if it isn't possible for some reason.
-   */
-  @Throws(CannotUnloadPluginException::class)
-  @JvmDefault
-  fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  companion object {
-    @JvmField val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
-  }
-}
 
 object DynamicPlugins {
   private val LOG = logger<DynamicPlugins>()
@@ -130,6 +109,7 @@ object DynamicPlugins {
    */
   @JvmStatic
   @JvmOverloads
+  @NonNls
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
@@ -142,6 +122,16 @@ object DynamicPlugins {
     }
     if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
+    }
+    descriptor.pluginDependencies?.let { pluginDependencies ->
+      for (pluginDependency in pluginDependencies) {
+        if (!pluginDependency.isOptional &&
+            !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
+            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
+            context.none { it.pluginId == pluginDependency.id }) {
+          return "Required dependency ${pluginDependency.id} of plugin ${descriptor.pluginId} is not currently loaded"
+        }
+      }
     }
 
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
@@ -264,8 +254,14 @@ object DynamicPlugins {
       }
 
       if (dependencyMessage == null && checkImplementationDetailDependencies) {
+        val contextWithImplementationDetails = context.toMutableList()
+        contextWithImplementationDetails.add(descriptor)
         processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
-          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = context, checkImplementationDetailDependencies = false)
+          contextWithImplementationDetails.add(fullDescriptor)
+        }
+
+        processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
+          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails, checkImplementationDetailDependencies = false)
           dependencyMessage == null
         }
       }
@@ -404,7 +400,7 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
+    val indicator = PotemkinProgress(IdeBundle.message("unloading.plugin.progress.title", pluginDescriptor.name), project, parentComponent, null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, options.withSave(false))
     }
@@ -421,12 +417,14 @@ object DynamicPlugins {
     var save: Boolean = true,
     var requireMemorySnapshot: Boolean = false,
     var waitForClassloaderUnload: Boolean = false,
-    var checkImplementationDetailDependencies: Boolean = true
+    var checkImplementationDetailDependencies: Boolean = true,
+    var unloadWaitTimeout: Int? = null
   ) {
     fun withUpdate(value: Boolean): UnloadPluginOptions { isUpdate = value; return this }
     fun withWaitForClassloaderUnload(value: Boolean): UnloadPluginOptions { waitForClassloaderUnload = value; return this }
     fun withDisable(value: Boolean): UnloadPluginOptions { disable = value; return this }
     fun withRequireMemorySnapshot(value: Boolean): UnloadPluginOptions { requireMemorySnapshot = value; return this }
+    fun withUnloadWaitTimeout(value: Int): UnloadPluginOptions { unloadWaitTimeout = value; return this }
     fun withSave(value: Boolean): UnloadPluginOptions { save = value; return this }
   }
 
@@ -494,6 +492,7 @@ object DynamicPlugins {
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
           MessagePool.getInstance().clearErrors()
+          DecodeDefaultsUtil.clearResourceCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()
@@ -533,7 +532,7 @@ object DynamicPlugins {
       classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] = loadedPluginDescriptor.pluginClassLoader as? PluginClassLoader
       val checkClassLoaderUnload = options.waitForClassloaderUnload || Registry.`is`("ide.plugins.snapshot.on.unload.fail") || options.requireMemorySnapshot
       val timeout = if (checkClassLoaderUnload)
-        Registry.intValue("ide.plugins.unload.timeout", 5000)
+        options.unloadWaitTimeout ?: Registry.intValue("ide.plugins.unload.timeout", 5000)
       else
         0
       var classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(timeout)
@@ -551,8 +550,22 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
-          notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
-          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
+          if (Registry.`is`("ide.plugins.analyze.snapshot") && File(snapshotPath).exists()) {
+            val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
+            if (analysisResult.isEmpty()) {
+              LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
+              FileUtil.asyncDelete(File(snapshotPath))
+              classloadersFromUnloadedPlugins.remove(pluginDescriptor.pluginId)
+              classLoaderUnloaded = true
+            }
+            else {
+              LOG.info("Snapshot analysis result: $analysisResult")
+            }
+          }
+          if (!classLoaderUnloaded) {
+            notify(IdeBundle.message("captured.memory.snapshot.on.plugin.unload.fail", snapshotPath), NotificationType.WARNING)
+            LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
+          }
         }
         else {
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
@@ -581,7 +594,7 @@ object DynamicPlugins {
     }
   }
 
-  internal fun notify(text: String, notificationType: NotificationType, vararg actions: AnAction) {
+  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
     val notification = GROUP.createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
@@ -632,6 +645,10 @@ object DynamicPlugins {
     processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.resetExtensionPoints(points) }
     // unregister plugin extension points
     processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
+
+    pluginDescriptor.app.extensionPoints?.clear()
+    pluginDescriptor.project.extensionPoints?.clear()
+    pluginDescriptor.module.extensionPoints?.clear()
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
@@ -822,6 +839,19 @@ object DynamicPlugins {
     }
     catch (e: Throwable) {
       LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
+  }
+
+  private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
+    FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
+      val analysis = HProfAnalysis(
+        channel,
+        SystemTempFilenameSupplier()
+      ) { analysisContext, progressIndicator -> AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator) }
+      analysis.onlyStrongReferences = true
+      analysis.includeClassesAsRoots = false
+      analysis.setIncludeMetaInfo(false)
+      return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
     }
   }
 }

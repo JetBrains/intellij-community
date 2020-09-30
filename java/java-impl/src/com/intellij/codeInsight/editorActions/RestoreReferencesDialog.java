@@ -21,6 +21,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -37,7 +38,7 @@ import static com.intellij.util.ui.UIUtil.FontColor.BRIGHTER;
 
 class RestoreReferencesDialog extends DialogWrapper {
   private final Object[] myNamedElements;
-  private JList myList;
+  private JList<Object> myList;
   private Object[] mySelectedElements = PsiClass.EMPTY_ARRAY;
   private boolean myContainsClassesOnly = true;
   private JBLabel myExplanationLabel;
@@ -79,7 +80,7 @@ class RestoreReferencesDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
-    myList = new JBList(myNamedElements);
+    myList = new JBList<>(myNamedElements);
     myList.setCellRenderer(new FQNameCellRenderer());
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
 
@@ -100,7 +101,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     return panel;
   }
 
-  public void setExplanation(String explanation) {
+  public void setExplanation(@NlsContexts.Label String explanation) {
     myExplanationLabel.setText(explanation);
   }
 

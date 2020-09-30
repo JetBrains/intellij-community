@@ -59,9 +59,25 @@ class CompositeBinaryBuilderMap {
     }
   }
 
+  void resetPersistedState(int fileId) throws IOException {
+    boolean hasWrittenAttribute;
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
+      hasWrittenAttribute = stream != null;
+    }
+    if (hasWrittenAttribute) {
+      try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
+        DataInputOutputUtil.writeINT(stream, 0);
+      }
+    }
+  }
+
   boolean isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
-    DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP);
-    int indexedVersion = stream != null ? DataInputOutputUtil.readINT(stream) : 0;
+    int indexedVersion = 0;
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
+      if (stream != null) {
+        indexedVersion = DataInputOutputUtil.readINT(stream);
+      }
+    }
     if (indexedVersion == 0) return false;
     int actualVersion = getBuilderCumulativeVersion(file);
     return actualVersion == indexedVersion;

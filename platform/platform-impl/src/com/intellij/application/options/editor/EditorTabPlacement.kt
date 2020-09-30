@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
@@ -46,6 +47,7 @@ private fun asOptionDescriptor(i: Int) = object : NotABooleanOptionDescription(T
   }
 }
 
+@Nls
 private fun Int.asTabPlacement(): String {
   return when (this) {
     TABS_NONE -> ApplicationBundle.message("combobox.tab.placement.none")

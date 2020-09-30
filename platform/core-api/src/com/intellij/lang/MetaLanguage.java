@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -19,7 +20,7 @@ import java.util.List;
 public abstract class MetaLanguage extends Language {
   public static final ExtensionPointName<MetaLanguage> EP_NAME = new ExtensionPointName<>("com.intellij.metaLanguage");
 
-  protected MetaLanguage(@NotNull String ID) {
+  protected MetaLanguage(@NotNull @NonNls String ID) {
     super(ID);
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<MetaLanguage>() {
       @Override

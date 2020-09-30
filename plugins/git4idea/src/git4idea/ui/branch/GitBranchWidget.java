@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -16,6 +17,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -25,12 +27,13 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Status bar widget which displays the current branch for the file currently open in the editor.
@@ -39,11 +42,11 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final Icon INCOMING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingLayer);
   private static final Icon INCOMING_OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingOutgoingLayer);
   private static final Icon OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer);
-  private static final String ID = "git";
+  private static final @NonNls String ID = "git";
   private final GitVcsSettings mySettings;
 
   public GitBranchWidget(@NotNull Project project) {
-    super(project, GitVcs.NAME);
+    super(project, GitVcs.DISPLAY_NAME.get());
     mySettings = GitVcsSettings.getInstance(project);
 
     project.getMessageBus().connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, r -> updateLater());
@@ -62,7 +65,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   @Nullable
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected GitRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), mySettings.getRecentRootPath());
   }
@@ -140,6 +143,11 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new GitBranchWidget(project);
+    }
+
+    @Override
+    public boolean isEnabledByDefault() {
+      return !UISettings.getInstance().getShowNewNavbarVcsGroup();
     }
 
     @Override

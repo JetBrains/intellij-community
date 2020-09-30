@@ -29,7 +29,7 @@ public class HgEncodingUtil {
   public static String getNameFor(@NotNull Charset charset) {
     //workaround for x_MacRoman encoding etc; todo: create map with encoding aliases because some encodings name are not supported by hg
     String name = charset.name();
-    if (name.startsWith("x-M")) {
+    if (name.startsWith("x-M")) { //NON-NLS
       return name.substring(2); // without "x-" prefix;
     }
     return name;

@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,7 +45,7 @@ public abstract class InspectionValidator {
   public static final ProjectExtensionPointName<InspectionValidator> EP_NAME = new ProjectExtensionPointName<>("com.intellij.compiler.inspectionValidator");
   private final String myId;
   private final String myDescription;
-  private final String myProgressIndicatorText;
+  private final @NlsContexts.ProgressText String myProgressIndicatorText;
 
   private final Class<? extends LocalInspectionTool> @Nullable [] myInspectionToolClasses;
 
@@ -97,7 +98,7 @@ public abstract class InspectionValidator {
     return myDescription;
   }
 
-  public final String getProgressIndicatorText() {
+  public final @NlsContexts.ProgressText String getProgressIndicatorText() {
     return myProgressIndicatorText;
   }
 

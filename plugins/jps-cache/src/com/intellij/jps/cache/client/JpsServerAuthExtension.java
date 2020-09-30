@@ -1,21 +1,31 @@
 package com.intellij.jps.cache.client;
 
+import com.intellij.jps.cache.JpsCacheBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
 
 /**
  * Extension point which provides authentication data for requests to the JPS cache server
  */
 public interface JpsServerAuthExtension {
   Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsServerAuthExtension");
+  Key<Boolean> NOTIFICATION_SHOWN_KEY = Key.create("AUTH_NOTIFICATION_SHOWN");
   ExtensionPointName<JpsServerAuthExtension> EP_NAME = ExtensionPointName.create("com.intellij.jpsServerAuthExtension");
 
   /**
@@ -43,11 +53,23 @@ public interface JpsServerAuthExtension {
     return EP_NAME.extensions().findFirst().orElse(null);
   }
 
-  static void checkAuthenticatedInBackgroundThread(@NotNull Disposable parentDisposable, @NotNull Runnable onAuthCompleted) {
+  static void checkAuthenticatedInBackgroundThread(@NotNull Disposable parentDisposable, @NotNull Project project, @NotNull Runnable onAuthCompleted) {
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(parentDisposable, disposable);
     JpsServerAuthExtension authExtension = getInstance();
     if (authExtension == null) {
+      Boolean userData = project.getUserData(NOTIFICATION_SHOWN_KEY);
+      if (userData == null) {
+        project.putUserData(NOTIFICATION_SHOWN_KEY, Boolean.TRUE);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String message =
+            JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
+          Notification notification = STICKY_NOTIFICATION_GROUP.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), message,
+            NotificationType.WARNING,
+            NotificationListener.URL_OPENING_LISTENER);
+          Notifications.Bus.notify(notification, project);
+        });
+      }
       LOG.warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.");
       return;
     }

@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +41,7 @@ public class LightEditFilePatterns {
     return new LightEditFilePatterns(filePatterns);
   }
 
+  @NlsSafe
   public String toSeparatedString() {
     return String.join(PATTERN_SEPARATOR, getPatterns());
   }

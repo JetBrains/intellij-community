@@ -3,31 +3,22 @@ package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import com.intellij.vcs.log.util.VcsLogUtil
-import git4idea.GitUtil.HEAD
-import git4idea.GitVcs
 import git4idea.branch.GitRebaseParams
-import git4idea.history.GitLogUtil
+import git4idea.history.GitHistoryTraverser
+import git4idea.history.GitHistoryTraverserImpl
 import git4idea.i18n.GitBundle
 import git4idea.rebase.*
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.repo.GitRepository
 
-private val LOG = logger("Git.Interactive.Rebase.Using.Log")
+private val LOG = Logger.getInstance("Git.Interactive.Rebase.Using.Log")
 
 @VisibleForTesting
 @Throws(CantRebaseUsingLogException::class)
@@ -36,50 +27,29 @@ internal fun getEntriesUsingLog(
   commit: VcsShortCommitDetails,
   logData: VcsLogData
 ): List<GitRebaseEntryGeneratedUsingLog> {
-  val project = repository.project
-  val root = repository.root
-
-  val dataPack = logData.dataPack
-  val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
-  val commitsInfo = permanentGraph.permanentCommitsInfo
-
-  val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, HEAD)
-                ?: throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNRESOLVED_HEAD)
-  val headIndex = logData.getCommitIndex(headRef.commitHash, root)
-  val headId = commitsInfo.getNodeId(headIndex)
-
-  val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
-  val used = BitSetFlags(permanentGraph.linearGraph.nodesCount())
-  val commits = mutableListOf<Hash>()
-  DfsWalk(listOf(headId), graph, used).walk(true) { nodeId ->
-    ProgressManager.checkCanceled()
-    val parents = graph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
-    // commit is not root or merge
-    if (parents.size == 1) {
-      val commitId = permanentGraph.permanentCommitsInfo.getCommitId(nodeId)
-      val hash = logData.getCommitId(commitId)!!.hash
-      commits.add(hash)
-      hash != commit.id
+  val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData)
+  val details = mutableListOf<VcsCommitMetadata>()
+  try {
+    traverser.traverse(repository.root) { (commitId, parents) ->
+      // commit is not root or merge
+      if (parents.size == 1) {
+        loadMetadataLater(commitId) { metadata ->
+          details.add(metadata)
+        }
+        val hash = traverser.toHash(commitId)
+        hash != commit.id
+      }
+      else {
+        throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.MERGE)
+      }
     }
-    else {
-      throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.MERGE)
-    }
-  }
-
-  if (commits.last() != commit.id) {
-    throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
-  }
-
-  val details = try {
-    GitLogUtil.collectMetadata(
-      project,
-      GitVcs.getInstance(project),
-      repository.root,
-      commits.map { it.asString() }
-    )
   }
   catch (e: VcsException) {
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNRESOLVED_HASH)
+  }
+
+  if (details.last().id != commit.id) {
+    throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
   }
 
   if (details.any { it.subject.startsWith("fixup!") || it.subject.startsWith("squash!") }) {
@@ -151,7 +121,7 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
           Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
           Attachment("expected.txt", entries.joinToString("\n"))
         )
-        throw VcsException("Couldn't start Rebase using Log")
+        throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
       }
     }
     processModel(rebaseTodoModel)
@@ -162,7 +132,6 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
 @VisibleForTesting
 internal class CantRebaseUsingLogException(val reason: Reason) : Exception(reason.toString()) {
   enum class Reason {
-    UNRESOLVED_HEAD,
     MERGE,
     FIXUP_SQUASH,
     UNEXPECTED_HASH,

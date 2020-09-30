@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,8 @@ public class JBTabsImpl extends JComponent
              UISettingsListener, QuickActionProvider, MorePopupAware, Accessible {
 
   public static final boolean NEW_TABS = Registry.is("ide.editor.tabs.use.tabslayout");
+  public static final Key<Boolean> PINNED = Key.create("pinned");
+
   TabsLayout myTabsLayout;
   JPanel myTabContent;
 
@@ -168,6 +171,9 @@ public class JBTabsImpl extends JComponent
 
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  private int myDropSide = -1;
   protected boolean myShowDropLocation = true;
 
   private TabInfo myOldSelection;
@@ -783,6 +789,11 @@ public class JBTabsImpl extends JComponent
 
   private void setDropInfoIndex(int dropInfoIndex) {
     myDropInfoIndex = dropInfoIndex;
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  private void setDropSide(int side) {
+    myDropSide = side;
   }
 
   public int getFirstTabOffset() {
@@ -1864,12 +1875,42 @@ public class JBTabsImpl extends JComponent
 
   protected List<TabInfo> getVisibleInfos() {
     if (!isAlphabeticalMode()) {
-      return myVisibleInfos;
+      return groupPinnedFirst(myVisibleInfos, null);
     } else {
       List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      sortedCopy.sort(ABC_COMPARATOR);
-      return sortedCopy;
+      return groupPinnedFirst(sortedCopy, ABC_COMPARATOR);
     }
+  }
+
+  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<TabInfo> comparator) {
+    int firstNotPinned = -1;
+    for (int i = 0; i < infos.size(); i++) {
+      TabInfo info = infos.get(i);
+      if (UIUtil.isClientPropertyTrue(info.getComponent(), PINNED)) {
+        if (firstNotPinned != -1) {
+          TabInfo tabInfo = infos.remove(firstNotPinned);
+          infos.add(firstNotPinned, info);
+          infos.set(i, tabInfo);
+          firstNotPinned++;
+        }
+      } else if (firstNotPinned == -1) {
+        firstNotPinned = i;
+      }
+    }
+
+    if (comparator != null) {
+      if (firstNotPinned != -1) {
+        List<TabInfo> pinned = infos.subList(0, firstNotPinned);
+        pinned.sort(comparator);
+        List<TabInfo> unpinned = infos.subList(firstNotPinned, infos.size());
+        unpinned.sort(comparator);
+        infos = new ArrayList<>(pinned);
+        infos.addAll(unpinned);
+      } else {
+        infos.sort(comparator);
+      }
+    }
+    return infos;
   }
 
   protected LayoutPassInfo getLastLayoutPass() {
@@ -2510,7 +2551,7 @@ public class JBTabsImpl extends JComponent
       });
   }
 
-  private static class SelectPreviousAction extends BaseNavigationAction {
+  private static final class SelectPreviousAction extends BaseNavigationAction {
     private SelectPreviousAction(JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }
@@ -2876,6 +2917,7 @@ public class JBTabsImpl extends JComponent
       myShowDropLocation = true;
       myForcedRelayout = true;
       setDropInfoIndex(-1);
+      setDropSide(-1);
       removeTab(dropInfo, null, false, true);
     }
   }
@@ -2907,9 +2949,15 @@ public class JBTabsImpl extends JComponent
   public void processDropOver(TabInfo over, RelativePoint point) {
     Point pointInMySpace = point.getPoint(this);
     int index = NEW_TABS ? myTabsLayout.getDropIndexFor(pointInMySpace) : myLayout.getDropIndexFor(pointInMySpace);
-
+    int side = index != -1
+               ? -1
+               : NEW_TABS ? myTabsLayout.getDropSideFor(pointInMySpace) : myLayout.getDropSideFor(pointInMySpace);
     if (index != getDropInfoIndex()) {
       setDropInfoIndex(index);
+      relayout(true, false);
+    }
+    if (side != myDropSide) {
+      setDropSide(side);
       relayout(true, false);
     }
   }
@@ -2917,6 +2965,12 @@ public class JBTabsImpl extends JComponent
   @Override
   public int getDropInfoIndex() {
     return myDropInfoIndex;
+  }
+
+  @Override
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public int getDropSide() {
+    return myDropSide;
   }
 
   @Override

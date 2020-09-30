@@ -1,4 +1,4 @@
-// "Replace with 'Arrays.copyOfRange'" "false"
+// "Replace with 'Arrays.copyOfRange()'" "false"
 import java.util.Arrays;
 
 class Test {

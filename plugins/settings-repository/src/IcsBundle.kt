@@ -2,11 +2,13 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.DynamicBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
 private const val BUNDLE: String = "messages.IcsBundle"
 
 object IcsBundle : DynamicBundle(BUNDLE) {
+  @Nls
   @JvmStatic
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
 
@@ -15,6 +17,7 @@ object IcsBundle : DynamicBundle(BUNDLE) {
                   vararg params: Any): java.util.function.Supplier<String> = getLazyMessage(key, *params)
 }
 
+@Nls
 fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
   return IcsBundle.message(key, *params)
 }

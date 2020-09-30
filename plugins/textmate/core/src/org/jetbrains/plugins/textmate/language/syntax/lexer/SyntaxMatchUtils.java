@@ -223,7 +223,7 @@ public final class SyntaxMatchUtils {
     return result.toString();
   }
 
-  private static class MatchKey {
+  private static final class MatchKey {
     final SyntaxNodeDescriptor descriptor;
     final StringWithId string;
     final int byteOffset;

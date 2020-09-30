@@ -144,7 +144,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
       doTest(null);
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
+      throw new ExecutionException("Failed to find free socket port", e); // NON-NLS
     }
   }
 

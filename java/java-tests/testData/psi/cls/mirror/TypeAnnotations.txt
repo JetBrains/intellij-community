@@ -5,22 +5,20 @@
 package pkg;
 
 class TypeAnnotations {
-    @pkg.TypeAnnotations.TA("field type")
-    private java.lang.String f1;
+    private java.lang.@pkg.TypeAnnotations.TA("field type") String f1;
     @pkg.TypeAnnotations.MixA("field and type")
-    private java.lang.String f2;
+    private java.lang.@pkg.TypeAnnotations.MixA("field and type") String f2;
 
     TypeAnnotations() { /* compiled code */ }
 
-    @pkg.TypeAnnotations.TA("return type")
-    int m1() { /* compiled code */ }
+    @pkg.TypeAnnotations.TA("return type") int m1() { /* compiled code */ }
 
     void m2(@pkg.TypeAnnotations.TA("parameter") int i) { /* compiled code */ }
 
     static enum E {
         E1, E2;
 
-        private E(@pkg.TypeAnnotations.MixA("enum ctor") java.lang.String s) { /* compiled code */ }
+        private E(java.lang.@pkg.TypeAnnotations.MixA("enum ctor") String s) { /* compiled code */ }
     }
 
     @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.TYPE_USE})

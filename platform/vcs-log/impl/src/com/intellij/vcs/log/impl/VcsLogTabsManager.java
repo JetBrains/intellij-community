@@ -2,10 +2,17 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -13,8 +20,10 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +31,9 @@ import java.util.Collection;
 import java.util.Set;
 
 public class VcsLogTabsManager {
+  private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
+  private static final TabGroupId TAB_GROUP_ID = new TabGroupId(VcsLogContentProvider.TAB_NAME,
+                                                                () -> VcsLogBundle.message("vcs.log.tab.name"), true);
   @NotNull private final Project myProject;
   @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
@@ -37,7 +49,11 @@ public class VcsLogTabsManager {
       @Override
       public void logCreated(@NotNull VcsLogManager manager) {
         myIsLogDisposing = false;
-        createLogTabs(manager);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
+            createLogTabs(manager);
+          }
+        }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
       }
 
       @Override
@@ -47,7 +63,7 @@ public class VcsLogTabsManager {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void createLogTabs(@NotNull VcsLogManager manager) {
     myUiProperties.getTabs().forEach((id, kind) -> openLogTab(manager, id, kind, false, null));
   }
@@ -74,16 +90,14 @@ public class VcsLogTabsManager {
 
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      ui = VcsLogEditorUtilKt.openLogTab(myProject, manager, getFullName(tabId), factory, focus);
-      ui.addFilterListener(() -> {
+      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus); //NON-NLS used for the file name, not displayed
+      ui.getFilterUi().addFilterListener(() -> {
         VcsLogEditorUtilKt.updateTabName(myProject, ui);
       });
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
-                                        () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
-                                        factory, focus);
-      ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
+      ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
+      ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");
@@ -92,6 +106,19 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
+  private static MainVcsLogUi openLogEditorTab(@NotNull Project project, @NotNull VcsLogManager manager,
+                                               @NotNull String fileName,
+                                               @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
+                                               boolean focus) {
+    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR);
+    DefaultVcsLogFile file = new DefaultVcsLogFile(fileName, new VcsLogPanel(manager, ui));
+    FileEditorManager.getInstance(project).openFile(file, focus);
+    manager.scheduleInitialization();
+    return ui;
+  }
+
+  @NotNull
+  @NlsContexts.TabTitle
   private static String generateShortDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "";
@@ -99,16 +126,19 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  private static String getFullName(@NotNull String shortName) {
+  @NlsContexts.TabTitle
+  private static String getFullName(@NotNull @NlsContexts.TabTitle String shortName) {
     return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName);
   }
 
   @NotNull
+  @NlsContexts.TabTitle
   public static String generateDisplayName(@NotNull VcsLogUi ui) {
     return getFullName(generateShortDisplayName(ui));
   }
 
   @NotNull
+  @NonNls
   private static String generateTabId(@NotNull Project project) {
     Set<String> existingIds = ContainerUtil.union(VcsLogContentUtil.getExistingLogIds(project),
                                                   VcsLogEditorUtilKt.getExistingLogIds(project));
@@ -131,12 +161,11 @@ public class VcsLogTabsManager {
     }
 
     @Override
-    public MainVcsLogUi createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData) {
+    public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
       myUiProperties.addTab(ui.getId(), myLogWindowKind);
       Disposer.register(ui, () -> {
-        if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
+        if (myProject.isDisposed() || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
 
         myUiProperties.removeTab(ui.getId()); // tab is closed by a user
       });

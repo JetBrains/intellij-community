@@ -57,6 +57,7 @@ class NewThemeAction: AnAction() {
     e.presentation.isEnabled = module != null && (PsiUtil.isPluginModule(module) || PluginModuleType.get(module) is PluginModuleType)
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun createThemeJson(themeName: String,
                               isDark: Boolean,
                               project: Project,

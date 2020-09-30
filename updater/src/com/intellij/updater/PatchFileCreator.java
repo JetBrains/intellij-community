@@ -30,7 +30,7 @@ public class PatchFileCreator {
     List<PatchAction> actions = patchInfo.getActions();
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1);
+    ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors() - 1, 1));
     Map<PatchAction, Future<Path>> tasks = new ConcurrentHashMap<>();
 
     for (int i = 0; i < actions.size(); i++) {

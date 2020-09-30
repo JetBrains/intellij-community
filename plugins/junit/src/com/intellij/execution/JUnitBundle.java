@@ -2,13 +2,14 @@
 package com.intellij.execution;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class JUnitBundle extends DynamicBundle {
+public final class JUnitBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JUnitBundle";
   private static final JUnitBundle INSTANCE = new JUnitBundle();
 
@@ -17,12 +18,12 @@ public class JUnitBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

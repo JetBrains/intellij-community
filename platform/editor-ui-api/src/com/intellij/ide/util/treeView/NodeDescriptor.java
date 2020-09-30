@@ -2,6 +2,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public abstract class NodeDescriptor<E> {
   protected final Project myProject;
   private final NodeDescriptor<?> myParentDescriptor;
 
-  protected String myName;
+  protected @NlsSafe String myName;
   @Nullable protected Icon myClosedIcon;
 
   /**
@@ -61,7 +62,7 @@ public abstract class NodeDescriptor<E> {
   public abstract E getElement();
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     // NB!: this method may return null if node is not valid
     // it contradicts the specification, but the fix breaks existing behaviour
     // see com.intellij.ide.util.FileStructurePopup#getSpeedSearchText

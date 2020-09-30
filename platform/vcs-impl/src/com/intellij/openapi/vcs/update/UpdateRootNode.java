@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -27,7 +28,7 @@ public class UpdateRootNode extends GroupTreeNode {
 
   private final Project myProject;
 
-  public UpdateRootNode(UpdatedFiles updatedFiles, Project project, String rootName, ActionInfo actionInfo) {
+  public UpdateRootNode(UpdatedFiles updatedFiles, Project project, @Nls String rootName, ActionInfo actionInfo) {
     super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.emptyMap(), null);
     myProject = project;
 

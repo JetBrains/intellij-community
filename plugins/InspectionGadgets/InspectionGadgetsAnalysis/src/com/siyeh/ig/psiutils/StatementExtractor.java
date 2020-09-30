@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -137,7 +138,7 @@ public class StatementExtractor {
     public abstract String toString();
   }
 
-  private static class Cond extends Node {
+  private static final class Cond extends Node {
     private final @NotNull PsiExpression myCondition;
     private final @NotNull Node myThenBranch;
     private final @NotNull Node myElseBranch;
@@ -169,7 +170,7 @@ public class StatementExtractor {
     }
 
     @Override
-    public String toString() {
+    public @NlsSafe String toString() {
       if (myThenBranch == EMPTY) {
         return "if(" + getCondition(true) + ") {" + myElseBranch + "}";
       }
@@ -197,7 +198,7 @@ public class StatementExtractor {
     }
   }
 
-  private static class Expr extends Node {
+  private static final class Expr extends Node {
     private Expr(@NotNull PsiExpression expression) {
       super(expression);
     }
@@ -224,7 +225,7 @@ public class StatementExtractor {
     }
   }
 
-  private static class Switch extends Node {
+  private static final class Switch extends Node {
     private static final Key<Node> NODE_KEY = Key.create("SwitchNode");
 
     private final @NotNull Map<PsiStatement, Node> myReturns;
@@ -332,7 +333,7 @@ public class StatementExtractor {
     }
   }
 
-  private static class Cons extends Node {
+  private static final class Cons extends Node {
     private final @NotNull Node myHead;
     private final @NotNull Node myTail;
 

@@ -15,8 +15,12 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
+import git4idea.GitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -35,7 +39,7 @@ public class GitMerge extends GitMergeAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("merge.action.name");
+    return GitBundle.message("merge.action.name");
   }
 
   @Nullable
@@ -48,9 +52,14 @@ public class GitMerge extends GitMergeAction {
     return new DialogState(dialog.getSelectedRoot(),
                            GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
                            getHandlerProvider(project, dialog),
-                           dialog.getSelectedBranches(),
+                           dialog.getSelectedBranch(),
                            dialog.shouldCommitAfterMerge(),
                            ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
+  }
+
+  @Override
+  protected String getNotificationErrorDisplayId() {
+    return "git.merge.failed";
   }
 
   @NotNull
@@ -58,7 +67,7 @@ public class GitMerge extends GitMergeAction {
     VirtualFile root = dialog.getSelectedRoot();
     Set<GitMergeOption> selectedOptions = dialog.getSelectedOptions();
     String commitMsg = dialog.getCommitMessage().trim();
-    List<String> selectedBranches = dialog.getSelectedBranches();
+    GitBranch selectedBranch = dialog.getSelectedBranch();
 
     return () -> {
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE);
@@ -74,11 +83,18 @@ public class GitMerge extends GitMergeAction {
         }
       }
 
-      for (String branch : selectedBranches) {
-        h.addParameters(branch);
-      }
+      h.addParameters(selectedBranch.getName());
 
       return h;
     };
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Project project = e.getProject();
+    if (project != null && !GitUtil.getRepositoriesInState(project, Repository.State.MERGING).isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

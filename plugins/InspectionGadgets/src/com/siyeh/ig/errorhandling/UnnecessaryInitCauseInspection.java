@@ -32,6 +32,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
+      @NonNls final String name = methodExpression.getReferenceName();
       if (!"initCause".equals(name)) {
         return;
       }

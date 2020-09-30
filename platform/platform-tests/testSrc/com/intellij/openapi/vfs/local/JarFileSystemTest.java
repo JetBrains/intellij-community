@@ -143,8 +143,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         handler.getInputStream("").close();
         fail("Unexpected");
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     };
     failingIOAction.run();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(failingIOAction);
@@ -412,5 +411,4 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertFalse(a.isValid());
     assertFalse(jarRoot.isValid());
   }
-
 }

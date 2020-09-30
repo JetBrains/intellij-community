@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
@@ -160,7 +159,7 @@ object GithubApiRequests {
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
+              it.reader().use { it.readText() }
             })
           }
         }.withOperationName("get diff for ref")
@@ -171,7 +170,7 @@ object GithubApiRequests {
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
+              it.reader().use { it.readText() }
             })
           }
         }.withOperationName("get diff between refs")

@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.application.ReadAction;
@@ -16,35 +15,33 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.TextRevisionNumber;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShelvedChange {
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+
+public final class ShelvedChange {
   private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
-  private final String myPatchPath;
+  private final Path myPatchPath;
   private final String myBeforePath;
   private final String myAfterPath;
   private final FileStatus myFileStatus;
   @NotNull private final Change myChange;
 
   public ShelvedChange(@NotNull Project project,
-                       final String patchPath,
-                       final String beforePath,
-                       final String afterPath,
-                       final FileStatus fileStatus) {
+                       @NotNull Path patchPath,
+                       String beforePath,
+                       String afterPath,
+                       FileStatus fileStatus) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
     // optimisation: memory
@@ -217,7 +214,7 @@ public class ShelvedChange {
     }
   }
 
-  public String getPatchPath() {
+  public @NotNull Path getPatchPath() {
     return myPatchPath;
   }
 

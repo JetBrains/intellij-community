@@ -22,6 +22,8 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -49,6 +51,7 @@ public class TypeDesc {
   String documentation;
   TypeDesc[] supers;
 
+  @NonNls
   public String toString() {
     return (type == TypeEnum.ENUM ? "enum" : "type") + ": " + name + ";" + xsName + ";";
   }

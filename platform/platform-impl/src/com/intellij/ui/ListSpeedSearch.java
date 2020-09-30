@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +78,8 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   @NotNull
-  private TIntArrayList findAllFilteredElements(@NotNull String s) {
-    TIntArrayList indices = new TIntArrayList();
+  private IntList findAllFilteredElements(@NotNull String s) {
+    IntArrayList indices = new IntArrayList();
     String _s = s.trim();
 
     Object[] elements = getAllListElements(myComponent);
@@ -116,10 +117,12 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
       String query = mySearch.getEnteredPrefix();
       if (query == null) return;
 
-      TIntArrayList filtered = mySearch.findAllFilteredElements(query);
-      if (filtered.isEmpty()) return;
+      IntList filtered = mySearch.findAllFilteredElements(query);
+      if (filtered.isEmpty()) {
+        return;
+      }
 
-      boolean alreadySelected = Arrays.equals(filtered.toNativeArray(), myList.getSelectedIndices());
+      boolean alreadySelected = Arrays.equals(filtered.toIntArray(), myList.getSelectedIndices());
 
       if (alreadySelected) {
         int anchor = myList.getAnchorSelectionIndex();
@@ -138,7 +141,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
         }
         if (anchor == -1) anchor = filtered.get(0);
 
-        myList.setSelectedIndices(filtered.toNativeArray());
+        myList.setSelectedIndices(filtered.toIntArray());
         sm.setAnchorSelectionIndex(anchor);
       }
     }

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,17 +44,18 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
       }
     }
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Choose Directory");
-    descriptor.setDescription("Directory containing highlighting test data");
+    descriptor.setTitle(DevKitBundle.message("action.DumpCleanTestData.file.chooser.title"));
+    descriptor.setDescription(DevKitBundle.message("action.DumpCleanTestData.file.chooser.source.description"));
     final VirtualFile dirToProcess = FileChooser.chooseFile(descriptor, project, null);
     if (dirToProcess != null) {
       LOG.assertTrue(project != null);
       final FileChooserDescriptor targetDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      targetDescriptor.setTitle("Choose Directory");
-      targetDescriptor.setDescription("Directory where highlighting-markup-free copies would be placed");
+      targetDescriptor.setTitle(DevKitBundle.message("action.DumpCleanTestData.file.chooser.title"));
+      targetDescriptor.setDescription(DevKitBundle.message("action.DumpCleanTestData.file.chooser.destination.description"));
       final VirtualFile destinationFolder = FileChooser.chooseFile(targetDescriptor, project, null);
       if (dirToProcess.equals(destinationFolder)) {
-        Messages.showErrorDialog(project, "Source and destination roots should differ", "Reject to Proceed");
+        Messages.showErrorDialog(project, DevKitBundle.message("action.DumpCleanTestData.error.source.destination.must.differ"),
+                                 CommonBundle.getErrorTitle());
         return;
       }
       if (destinationFolder != null) {

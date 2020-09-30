@@ -111,7 +111,8 @@ abstract class BuildTasks {
   @CompileDynamic
   static BuildContext createBuildContextFromProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
                                                     String communityHomeRelativePath, Script gantScript,
-                                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
+                                                    ProprietaryBuildTools proprietaryBuildTools,
+                                                    BuildOptions buildOptions) {
     String projectHome = IdeaProjectLoader.guessHome(gantScript)
     GantBinding binding = (GantBinding) gantScript.binding
     groovyRootRelativePaths.each {
@@ -120,7 +121,15 @@ abstract class BuildTasks {
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
 
     BuildContext context = BuildContext.createContext("$projectHome/$communityHomeRelativePath", projectHome,
-                                                      productProperties, proprietaryBuildTools)
+                                                      productProperties, proprietaryBuildTools, buildOptions)
     return context
+  }
+
+  @CompileDynamic
+  static BuildContext createBuildContextFromProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
+                                                    String communityHomeRelativePath, Script gantScript,
+                                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
+    return createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
+                                         communityHomeRelativePath, gantScript, proprietaryBuildTools, new BuildOptions())
   }
 }

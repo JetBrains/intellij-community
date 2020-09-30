@@ -3,30 +3,30 @@ package com.intellij.filePrediction.features.vcs
 
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
+import com.intellij.filePrediction.features.FilePredictionFeaturesCache
 import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.jetbrains.changeReminder.predict.FileProbabilityRequest
-import java.util.*
-import kotlin.collections.HashMap
 
 class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
+  companion object {
+    private val FEATURES = arrayListOf(
+      "in_changelist",
+      "prev_in_changelist",
+      "related_prob"
+    )
+  }
+
   override fun getName(): String = "vcs"
 
-  override fun getFeatures(): Array<String> = arrayOf(
-    "prev_in_changelist",
-    "in_changelist",
-    "related_prob"
-  )
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,
                                      prevFile: VirtualFile?,
-                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
+                                     cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return emptyMap()
 
     val result = HashMap<String, FilePredictionFeature>()
@@ -35,18 +35,6 @@ class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
       result["prev_in_changelist"] = FilePredictionFeature.binary(changeListManager.isFileAffected(prevFile))
     }
     result["in_changelist"] = FilePredictionFeature.binary(changeListManager.isFileAffected(newFile))
-
-    if (prevFile != null) {
-      val dataManager = VcsProjectLog.getInstance(project).dataManager
-      if (dataManager != null) {
-        val contextFactory = VcsContextFactory.SERVICE.getInstance()
-        val newPath = contextFactory.createFilePath(newFile.path, false)
-
-        val recentFile = contextFactory.createFilePath(prevFile.path, false)
-        val request = FileProbabilityRequest(project, dataManager, Collections.singletonList(recentFile))
-        result["related_prob"] = FilePredictionFeature.numerical(request.calculate(newPath))
-      }
-    }
     return result
   }
 }

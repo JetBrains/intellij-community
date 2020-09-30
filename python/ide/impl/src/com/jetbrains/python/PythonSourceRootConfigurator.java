@@ -64,7 +64,7 @@ final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator
     private String myRootPackageDir = null;
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyArgumentList argList = node.getArgumentList();
       if (node.isCalleeText("setup") && argList != null) {
         final PyKeywordArgument packageDirArg = argList.getKeywordArgument("package_dir");

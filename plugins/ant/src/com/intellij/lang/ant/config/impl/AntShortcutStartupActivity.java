@@ -36,9 +36,8 @@ final class AntShortcutStartupActivity implements StartupActivity {
   }
 
   private static void unregisterAction(@NotNull Project project) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
-    for (String oldId : oldIds) {
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    for (String oldId : actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
       actionManager.unregisterAction(oldId);
     }
   }

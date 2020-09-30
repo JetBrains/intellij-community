@@ -18,6 +18,8 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.util.NlsContext;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FileStructureFilter extends Filter {
   @NotNull
+  @NlsContexts.Checkbox
   String getCheckBoxText();
 
   Shortcut @NotNull [] getShortcut();

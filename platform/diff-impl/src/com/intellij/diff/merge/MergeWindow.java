@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +88,7 @@ public abstract class MergeWindow {
       }
 
       @Override
-      protected void setWindowTitle(@NotNull String title) {
+      protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
         myWrapper.setTitle(title);
       }
 

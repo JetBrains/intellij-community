@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
-public class JpsGlobalLoader extends JpsLoaderBase {
+public final class JpsGlobalLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";
   public static final JpsElementChildRole<JpsPathVariablesConfiguration> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
@@ -101,19 +101,6 @@ public class JpsGlobalLoader extends JpsLoaderBase {
         }
       }
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
-      if (configuration != null) {
-        for (Map.Entry<String, String> entry : configuration.getAllUserVariables().entrySet()) {
-          Element tag = new Element(MACRO_TAG);
-          tag.setAttribute(NAME_ATTRIBUTE, entry.getKey());
-          tag.setAttribute(VALUE_ATTRIBUTE, entry.getValue());
-          componentTag.addContent(tag);
-        }
-      }
-    }
   }
 
   public static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
@@ -124,11 +111,6 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       JpsLibraryTableSerializer.loadLibraries(componentTag, global.getLibraryCollection());
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsLibraryTableSerializer.saveLibraries(global.getLibraryCollection(), componentTag);
     }
   }
 
@@ -141,14 +123,9 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       JpsSdkTableSerializer.loadSdks(componentTag, global.getLibraryCollection());
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsSdkTableSerializer.saveSdks(global.getLibraryCollection(), componentTag);
-    }
   }
 
-  private static class FileTypesSerializer extends JpsGlobalExtensionSerializer {
+  private static final class FileTypesSerializer extends JpsGlobalExtensionSerializer {
     private FileTypesSerializer() {
       super("filetypes.xml", System.getProperty("jps.file.types.component.name", "FileTypeManager"));
     }
@@ -159,10 +136,6 @@ public class JpsGlobalLoader extends JpsLoaderBase {
       if (ignoreFilesTag != null) {
         global.getFileTypesConfiguration().setIgnoredPatternString(ignoreFilesTag.getAttributeValue("list"));
       }
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
     }
   }
 }

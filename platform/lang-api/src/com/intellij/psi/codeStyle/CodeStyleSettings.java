@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -16,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,12 +28,14 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.PresentableEnum;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -502,122 +507,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // endregion
 
-// region HTML formatting options (legacy)
-
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_KEEP_WHITESPACES;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_KEEP_LINE_BREAKS = true;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_KEEP_LINE_BREAKS_IN_TEXT = true;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public int HTML_KEEP_BLANK_LINES = 2;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_ALIGN_ATTRIBUTES = true;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_ALIGN_TEXT;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_SPACE_AFTER_TAG_NAME;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_SPACE_INSIDE_EMPTY_TAG;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_INLINE_ELEMENTS =
-    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public boolean HTML_ENFORCE_QUOTES;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
-  /**
-   * @deprecated Use HtmlCodeStyleSettings
-   */
-  @Deprecated
-  public HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
-
-// endregion
-
   /** @deprecated Use {@link com.intellij.application.options.JspCodeStyleSettings#JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST} */
   @Deprecated
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
@@ -1052,7 +941,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myLoadedAdditionalIndentOptions = false;
   }
 
-  private static class TempFileType implements FileType {
+  private static final class TempFileType implements FileType {
     private final String myExtension;
 
     private TempFileType(@NotNull final String extension) {
@@ -1067,7 +956,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
     @Override
     @NotNull
-    public String getDescription() {
+    public @NonNls String getDescription() {
       return "TempFileType";
     }
 
@@ -1188,31 +1077,85 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
-  public enum HtmlTagNewLineStyle {
-    Never("Never"),
-    WhenMultiline("When multiline");
+  public enum WrapStyle implements PresentableEnum {
 
-    public final String description;
+    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, ApplicationBundle.messagePointer("wrapping.do.not.wrap")),
+    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, ApplicationBundle.messagePointer("wrapping.wrap.if.long")),
+    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,ApplicationBundle.messagePointer("wrapping.chop.down.if.long")),
+    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS, ApplicationBundle.messagePointer("wrapping.wrap.always"));
 
-    HtmlTagNewLineStyle(String description) {
-      this.description = description;
+    private final int myId;
+    private final Supplier<@Label String> myDescription;
+
+    WrapStyle(int id, @NotNull Supplier<@Label String> description) {
+      myId = id;
+      myDescription = description;
+    }
+
+    public int getId() {
+      return myId;
+    }
+
+    @Override public @Label String getPresentableText() {
+      return myDescription.get();
+    }
+
+    public static @NotNull WrapStyle forWrapping(int wrappingStyleID) {
+      for (WrapStyle style: values()) {
+        if (style.myId == wrappingStyleID) {
+          return style;
+        }
+      }
+      LOG.error("Invalid wrapping option index: " + wrappingStyleID);
+      return DO_NOT_WRAP;
+    }
+
+    public static int getSelectedId(@NotNull JComboBox<WrapStyle> comboBox) {
+      WrapStyle wrapStyle = (WrapStyle)comboBox.getSelectedItem();
+      if (wrapStyle != null) {
+        return wrapStyle.myId;
+      }
+      return DO_NOT_WRAP.myId;
+    }
+  }
+
+  public enum HtmlTagNewLineStyle implements PresentableEnum{
+    Never("Never", LangBundle.messagePointer("html.tag.new.line.never")),
+    WhenMultiline("When multiline", LangBundle.messagePointer("html.tag.new.line.when.multiline"));
+
+    private final String myValue;
+    private final Supplier<@Label String> myDescription;
+
+    HtmlTagNewLineStyle(@NotNull String value, @NotNull Supplier<@Label String> description) {
+      myValue = value;
+      myDescription = description;
     }
 
     @Override
     public String toString() {
-      return description;
+      return myValue;
+    }
+
+    @Override public @Label String getPresentableText() {
+      return myDescription.get();
     }
   }
 
-  public enum QuoteStyle {
-    Single("'"),
-    Double("\""),
-    None("");
+  public enum QuoteStyle implements PresentableEnum {
+    Single("'", LangBundle.messagePointer("quote.style.single")),
+    Double("\"", LangBundle.messagePointer("quote.style.double")),
+    None("", LangBundle.messagePointer("quote.style.none"));
 
     public final String quote;
+    private final Supplier<@Label String> myDescription;
 
-    QuoteStyle(String quote) {
+    QuoteStyle(@NotNull String quote, @NotNull Supplier<@Label String> description) {
       this.quote = quote;
+      myDescription = description;
+    }
+
+    @Override public @Label String getPresentableText() {
+     return myDescription.get();
     }
   }
 
@@ -1256,7 +1199,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public void resetDeprecatedFields() {
     CodeStyleSettings defaults = getDefaults();
-    ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
+    ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<>(this, defaults){
       @Override
       public boolean isAccept(@NotNull Field field) {
         return field.getAnnotation(Deprecated.class) != null;

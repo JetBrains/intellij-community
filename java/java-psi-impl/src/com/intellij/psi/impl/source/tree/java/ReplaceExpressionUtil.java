@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -13,7 +14,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 
-public class ReplaceExpressionUtil {
+public final class ReplaceExpressionUtil {
   private static final Logger LOG = Logger.getInstance(ReplaceExpressionUtil.class);
 
   public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
@@ -114,13 +115,13 @@ public class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (opType == JavaTokenType.LTLT || opType == JavaTokenType.GTGT || opType == JavaTokenType.GTGTGT) {
+      else if (ExpressionParser.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (opType == JavaTokenType.PLUS || opType == JavaTokenType.MINUS) {
+      else if (ExpressionParser.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (opType == JavaTokenType.ASTERISK || opType == JavaTokenType.DIV || opType == JavaTokenType.PERC) {
+      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;

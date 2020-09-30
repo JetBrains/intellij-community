@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +83,7 @@ public abstract class MoveHandlerDelegate {
   }
 
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsActions.ActionText
   public String getActionName(PsiElement @NotNull [] elements) {
     return null;
   }

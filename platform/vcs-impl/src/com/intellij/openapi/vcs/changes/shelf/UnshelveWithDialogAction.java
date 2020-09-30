@@ -26,7 +26,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -52,24 +51,24 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     }
     else {
       ShelvedChangeList changeList = changeLists.get(0);
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(changeList.PATH));
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(changeList.path);
       if (virtualFile == null) {
-        VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.apply.can.t.find.patch.file.warning", changeList.PATH), MessageType.ERROR);
+        VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.apply.can.t.find.patch.file.warning", changeList.path), MessageType.ERROR);
         return;
       }
       List<ShelvedBinaryFilePatch> binaryShelvedPatches =
         ContainerUtil.map(changeList.getBinaryFiles(), ShelvedBinaryFilePatch::new);
-      final ApplyPatchDifferentiatedDialog dialog =
+      ApplyPatchDifferentiatedDialog dialog =
         new MyUnshelveDialog(project, virtualFile, changeList, binaryShelvedPatches, e.getData(VcsDataKeys.CHANGES));
       dialog.setHelpId("reference.dialogs.vcs.unshelve"); //NON-NLS
       dialog.show();
     }
   }
 
-  private static void unshelveMultipleShelveChangeLists(@NotNull final Project project,
-                                                        @NotNull final List<? extends ShelvedChangeList> changeLists,
-                                                        @NotNull List<? extends ShelvedBinaryFile> binaryFiles,
-                                                        @NotNull List<? extends ShelvedChange> changes) {
+  private static void unshelveMultipleShelveChangeLists(@NotNull Project project,
+                                                        @NotNull List<ShelvedChangeList> changeLists,
+                                                        @NotNull List<ShelvedBinaryFile> binaryFiles,
+                                                        @NotNull List<ShelvedChange> changes) {
     String suggestedName = changeLists.get(0).DESCRIPTION;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
@@ -100,7 +99,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     MyUnshelveDialog(@NotNull Project project,
                      @NotNull VirtualFile patchFile,
                      @NotNull ShelvedChangeList changeList,
-                     @NotNull List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
+                     @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                      Change @Nullable [] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,

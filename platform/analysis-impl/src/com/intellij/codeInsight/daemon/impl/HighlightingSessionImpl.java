@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class HighlightingSessionImpl implements HighlightingSession {
+public final class HighlightingSessionImpl implements HighlightingSession {
   private final @NotNull PsiFile myPsiFile;
   private final @NotNull ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
@@ -115,7 +115,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     applyInEDT(() -> {
-      final EditorColorsScheme colorsScheme = getColorsScheme();
+      EditorColorsScheme colorsScheme = getColorsScheme();
       UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), restrictedRange.getStartOffset(),
                                              restrictedRange.getEndOffset(),
                                              info, colorsScheme, groupId, myRanges2markersCache);

@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -68,7 +69,9 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
       final String newName = info.getName(parameters);
       TypeParameterInfo existing = infos.get(newName);
       if (existing != null) {
-        conflicts.putValue(myClass, RefactoringUIUtil.getDescription(myClass, false) + " already contains type parameter " + newName);
+        String classDescription = RefactoringUIUtil.getDescription(myClass, false);
+        String message = JavaRefactoringBundle.message("changeClassSignature.already.contains.type.parameter", classDescription, newName);
+        conflicts.putValue(myClass, message);
       }
       infos.put(newName, info);
     }

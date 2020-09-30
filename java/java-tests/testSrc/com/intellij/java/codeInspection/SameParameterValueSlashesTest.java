@@ -18,26 +18,15 @@ public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTe
 
   private SameParameterValueInspection myInspection = new SameParameterValueInspection();
 
-  @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() {
     myFixture.enableInspections(myInspection);
   }
 
-  @Override
   @After
-  public void tearDown() throws Exception {
-    try {
-      myFixture.disableInspections(myInspection);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myInspection = null;
-      super.tearDown();
-    }
+  public void after() {
+    myFixture.disableInspections(myInspection);
+    myInspection = null;
   }
 
   @Parameterized.Parameters(name = "\\{0}")

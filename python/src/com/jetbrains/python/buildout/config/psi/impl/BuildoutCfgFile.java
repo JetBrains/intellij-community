@@ -8,6 +8,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.buildout.config.BuildoutCfgFileType;
 import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class BuildoutCfgFile extends PsiFileBase {
+
+  @NonNls private static final String BUILDOUT_SECTION = "buildout";
+  @NonNls private static final String PARTS_OPTION = "parts";
+
   public BuildoutCfgFile(FileViewProvider viewProvider) {
     super(viewProvider, BuildoutCfgLanguage.INSTANCE);
   }
@@ -48,11 +53,11 @@ public class BuildoutCfgFile extends PsiFileBase {
   }
 
   public List<String> getParts() {
-    BuildoutCfgSection buildoutSection = findSectionByName("buildout");
+    BuildoutCfgSection buildoutSection = findSectionByName(BUILDOUT_SECTION);
     if (buildoutSection == null) {
       return Collections.emptyList();
     }
-    final BuildoutCfgOption option = buildoutSection.findOptionByName("parts");
+    final BuildoutCfgOption option = buildoutSection.findOptionByName(PARTS_OPTION);
     if (option == null) {
       return Collections.emptyList();
     }

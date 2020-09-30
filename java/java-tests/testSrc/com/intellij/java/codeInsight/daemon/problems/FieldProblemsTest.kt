@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
-import com.intellij.testFramework.UsefulTestCase
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 
@@ -61,14 +60,14 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         it.replace(replacement)
       }
 
-      assertTrue(hasReportedProblems<PsiLocalVariable>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
 
       changeField(targetClass) {
         val replacement = factory.createFieldFromText("public static String field;", targetClass)
         it.replace(replacement)
       }
 
-      assertEmpty(getProblems(targetClass.containingFile))
+      assertEmpty(getProblems())
     }
   }
 
@@ -100,12 +99,12 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       val field = factory.createFieldFromText("public static String mySpecialField;", bClass)
       WriteCommandAction.runWriteCommandAction(project) { bClass.add(field) }
       myFixture.doHighlighting()
-      assertEmpty(getProblems(bClass.containingFile))
+      assertEmpty(getProblems())
 
       myFixture.openFileInEditor(aClass.containingFile.virtualFile)
       myFixture.doHighlighting()
       changeField(aClass) { it.modifierList?.setModifierProperty(PsiModifier.STATIC, false) }
-      assertTrue(hasReportedProblems<PsiLocalVariable>(aClass, refClass))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
     }
   }
 
@@ -141,7 +140,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         bClass.add(field)
       }
       myFixture.doHighlighting()
-      assertTrue(hasReportedProblems<PsiLocalVariable>(bClass, cClass))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(cClass))
     }
   }
 
@@ -175,16 +174,16 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertTrue(hasReportedProblems<PsiLocalVariable>(targetClass, *refClasses.toTypedArray()))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(*refClasses.toTypedArray()))
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("field")) }
       val psiFile = targetClass.containingFile
-      assertEmpty(getProblems(psiFile))
+      assertEmpty(getProblems())
 
       myFixture.addClass(refClassText.replace("classname", "RefClass$nRefClasses"))
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertEmpty(getProblems(psiFile))
+      assertEmpty(getProblems())
     }
   }
 
@@ -204,7 +203,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(3)
+    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(2)
 
     doTest(targetClass) {
 
@@ -227,14 +226,14 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
       myFixture.doHighlighting()
 
-      assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
+      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
       myFixture.doHighlighting()
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
 
       changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }
       // too many usages now, cannot analyse all of them, so we give up and remove old errors
-      assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
-      assertFalse(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
+      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
+      assertFalse(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
     }
   }
 
@@ -267,8 +266,9 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         modifiers.setModifierProperty(PsiModifier.STATIC, false)
       }
       myFixture.doHighlighting()
-      val inlays = ProjectProblemPassUtils.getInlays(myFixture.editor)
-      UsefulTestCase.assertSize(1, inlays.entries)
+      val inlays = ProjectProblemUtils.getReportedProblems(
+        myFixture.editor)
+      assertSize(1, inlays.entries)
     }
   }
 
@@ -295,13 +295,13 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val modifiers = it.modifierList!!
         modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
       }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
 
       changeField(targetClass) {
         val modifiers = it.modifierList!!
         modifiers.setModifierProperty(PsiModifier.FINAL, false)
       }
-      assertEmpty(getProblems(targetClass.containingFile))
+      assertEmpty(getProblems())
     }
   }
 
@@ -329,7 +329,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val factory = JavaPsiFacade.getInstance(project).elementFactory
         identifier.replace(factory.createIdentifier("BAR"))
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -356,7 +356,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val factory = JavaPsiFacade.getInstance(project).elementFactory
         fieldChangeAction(it, factory)
       }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
     }
   }
 

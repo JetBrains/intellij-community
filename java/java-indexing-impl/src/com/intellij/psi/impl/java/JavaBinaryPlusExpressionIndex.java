@@ -65,7 +65,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
   @NotNull
   @Override
   public DataExternalizer<PlusOffsets> getValueExternalizer() {
-    return new DataExternalizer<PlusOffsets>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, PlusOffsets value) throws IOException {
         int[] offsets = value.getOffsets();

@@ -8,6 +8,8 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -58,6 +60,7 @@ public class FieldDesc implements Comparable<FieldDesc> {
     return name.compareTo(o.name);
   }
 
+  @NonNls
   public String toString() {
     return "Field: " + name + ";" + type + ";" + elementName + ";" + elementType;
   }

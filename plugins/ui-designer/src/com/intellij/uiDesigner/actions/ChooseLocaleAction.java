@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -72,9 +73,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     private final boolean myUpdateText;
 
     SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
-      super(locale.getDisplayName().length() == 0
-            ? UIDesignerBundle.message("choose.locale.default")
-            : locale.getDisplayName());
+      super(getLocaleText(locale));
       myUpdateText = updateText;
       myEditor = editor;
       myLocale = locale;
@@ -87,5 +86,9 @@ public class ChooseLocaleAction extends ComboBoxAction {
         myPresentation.setText(getTemplatePresentation().getText());
       }
     }
+  }
+
+  private static @NlsSafe String getLocaleText(Locale locale) {
+    return locale.getDisplayName().length() == 0 ? UIDesignerBundle.message("choose.locale.default") : locale.getDisplayName();
   }
 }

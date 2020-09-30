@@ -1,18 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Url;
 
@@ -22,6 +29,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import static java.util.Arrays.asList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class ExportOptionsDialog extends DialogWrapper implements ActionListener {
 
   private final Url myURL;
@@ -29,16 +39,17 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
-  private JCheckBox myExternalsCheckbox;
-  private JCheckBox myForceCheckbox;
-  private JComboBox myEOLStyleBox;
+  private JBCheckBox myExternalsCheckbox;
+  private JBCheckBox myForceCheckbox;
+  private final @NotNull CollectionComboBoxModel<@Nullable LineSeparator> myLineSeparatorComboBoxModel =
+    new CollectionComboBoxModel<>(asList(null, LineSeparator.LF, LineSeparator.CRLF, LineSeparator.CR));
 
   public ExportOptionsDialog(Project project, Url url, File target) {
     super(project, true);
     myURL = url;
     myProject = project;
     myFile = target;
-    setTitle("SVN Export Options");
+    setTitle(message("dialog.title.svn.export.options"));
     init();
   }
 
@@ -64,11 +75,10 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return !myExternalsCheckbox.isSelected();
   }
 
+  @Nullable
   public String getEOLStyle() {
-    if (myEOLStyleBox.getSelectedIndex() == 0) {
-      return null;
-    }
-    return (String) myEOLStyleBox.getSelectedItem();
+    LineSeparator separator = myLineSeparatorComboBoxModel.getSelected();
+    return separator != null ? separator.name() : null;
   }
 
   @Override
@@ -87,12 +97,12 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.weightx = 0;
     gc.weighty = 0;
 
-    panel.add(new JLabel("Export:"), gc);
+    panel.add(new JBLabel(message("label.export")), gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
     gc.weightx = 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    JLabel urlLabel = new JLabel(myURL.toDecodedString());
+    JBLabel urlLabel = new JBLabel(myURL.toDecodedString());
     urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
     panel.add(urlLabel, gc);
 
@@ -101,7 +111,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridx = 0;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    panel.add(new JLabel("Destination:"), gc);
+    panel.add(new JBLabel(message("label.destination")), gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
     gc.weightx = 1;
@@ -119,30 +129,29 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.fill = GridBagConstraints.NONE;
 
     // other options.
-    final JLabel depthLabel = new JLabel(SvnBundle.message("label.depth.text"));
-    depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
+    final JBLabel depthLabel = new JBLabel(message("label.depth.text"));
+    depthLabel.setToolTipText(message("label.depth.description"));
     panel.add(depthLabel, gc);
-    ++ gc.gridx;
+    ++gc.gridx;
     myDepth = new DepthCombo(false);
     panel.add(myDepth, gc);
     depthLabel.setLabelFor(myDepth);
 
     gc.gridx = 0;
     gc.gridy += 1;
-    myForceCheckbox = new JCheckBox("Replace existing files");
+    myForceCheckbox = new JBCheckBox(message("checkbox.replace.existing.files"));
     myForceCheckbox.setSelected(true);
     panel.add(myForceCheckbox, gc);
     gc.gridy += 1;
-    myExternalsCheckbox = new JCheckBox("Include externals locations");
+    myExternalsCheckbox = new JBCheckBox(message("checkbox.include.externals.locations"));
     myExternalsCheckbox.setSelected(true);
     panel.add(myExternalsCheckbox, gc);
     gc.gridy += 1;
     gc.gridwidth = 2;
-    panel.add(new JLabel("Override 'native' EOLs with:"), gc);
+    panel.add(new JBLabel(message("label.override.native.eols.with")), gc);
     gc.gridx += 2;
     gc.gridwidth = 1;
-    myEOLStyleBox = new JComboBox(new Object[] {"None", "LF", "CRLF", "CR"});
-    panel.add(myEOLStyleBox, gc);
+    panel.add(createLineSeparatorComboBox(), gc);
     gc.gridy += 1;
     gc.gridwidth = 3;
     gc.gridx = 0;
@@ -154,13 +163,32 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return panel;
   }
 
+  @NotNull
+  private ComboBox<LineSeparator> createLineSeparatorComboBox() {
+    ComboBox<LineSeparator> comboBox = new ComboBox<>(myLineSeparatorComboBoxModel);
+
+    comboBox.setRenderer(SimpleListCellRenderer.create(message("combobox.crlf.none"), separator -> {
+      switch (separator) {
+        case LF:
+          return ApplicationBundle.message("combobox.crlf.unix");
+        case CRLF:
+          return ApplicationBundle.message("combobox.crlf.windows");
+        case CR:
+          return ApplicationBundle.message("combobox.crlf.mac");
+      }
+      throw new IllegalArgumentException("unknown line separator " + separator);
+    }));
+
+    return comboBox;
+  }
+
   @Override
   public void actionPerformed(ActionEvent e) {
     // choose directory here/
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
-    fcd.setTitle("Export Directory");
-    fcd.setDescription("Select directory to export from subversion");
+    fcd.setTitle(message("dialog.title.export.directory"));
+    fcd.setDescription(message("label.select.directory.to.export.from.subversion"));
     fcd.setHideIgnored(false);
     VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), myProject, null);
     if (file == null) {

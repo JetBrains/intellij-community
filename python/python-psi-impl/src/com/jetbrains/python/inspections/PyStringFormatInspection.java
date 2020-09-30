@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -298,7 +299,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (!myUsedMappingKeys.get(key).booleanValue()) {
             unresolved++;
             if (unresolved > referenceKeyNumber) {
-              registerProblem(problemTarget, PyPsiBundle.message("INSP.key.$0.has.no.arg", key));
+              registerProblem(problemTarget, PyPsiBundle.message("INSP.str.format.key.has.no.argument", key));
               break;
             }
           }
@@ -316,12 +317,14 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message, @NotNull LocalQuickFix quickFix) {
+      private void registerProblem(@NotNull PsiElement problemTarget,
+                                   @NotNull @InspectionMessage String message,
+                                   @NotNull LocalQuickFix quickFix) {
         myProblemRegister = true;
         myVisitor.registerProblem(problemTarget, message, quickFix);
       }
 
-      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {
+      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull @InspectionMessage String message) {
         myProblemRegister = true;
         myVisitor.registerProblem(problemTarget, message);
       }
@@ -343,7 +346,7 @@ public class PyStringFormatInspection extends PyInspection {
           return;
         }
         if (actual != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-          registerProblem(problemTarget, PyPsiBundle.message("INSP.unexpected.type.$0", actual.getName()));
+          registerProblem(problemTarget, PyPsiBundle.message("INSP.str.format.unexpected.argument.type", actual.getName()));
         }
       }
 
@@ -381,7 +384,7 @@ public class PyStringFormatInspection extends PyInspection {
             if (conversionType == 'b') {
               final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
               if (languageLevel.isOlderThan(LanguageLevel.PYTHON35) || !isBytesLiteral(formatExpression, myTypeEvalContext)) {
-                registerProblem(formatExpression, "Unsupported format character 'b'");
+                registerProblem(formatExpression, PyPsiBundle.message("INSP.str.format.unsupported.format.character.b"));
                 return;
               }
             }
@@ -408,7 +411,7 @@ public class PyStringFormatInspection extends PyInspection {
         if ("*".equals(width)) {
           ++myExpectedArguments;
           if (myUsedMappingKeys.size() > 0) {
-            registerProblem(formatExpression, "Can't use '*' in formats when using a mapping");
+            registerProblem(formatExpression, PyPsiBundle.message("INSP.str.format.can.not.use.star.in.formats.when.using.mapping"));
           }
         }
       }
@@ -559,7 +562,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (chunkMapping != null) {
             registerProblem(myFormatExpression, hasElementIndex ?
                                                 PyPsiBundle.message("INSP.too.few.args.for.fmt.string") :
-                                                PyPsiBundle.message("INSP.key.$0.has.no.arg", chunkMapping));
+                                                PyPsiBundle.message("INSP.str.format.key.has.no.argument", chunkMapping));
           }
           else {
             registerProblem(myFormatExpression, PyPsiBundle.message("INSP.too.few.args.for.fmt.string"));
@@ -570,7 +573,7 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {
+      private void registerProblem(@NotNull PsiElement problemTarget, @NotNull @InspectionMessage String message) {
         myProblemRegister = true;
         myVisitor.registerProblem(problemTarget, message);
       }
@@ -585,7 +588,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (expected != null && actual != null
               && CHECKED_TYPES.contains(actual.getName())
               && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-            registerProblem(typedElement, PyPsiBundle.message("INSP.unexpected.type.$0", actual.getName()));
+            registerProblem(typedElement, PyPsiBundle.message("INSP.str.format.unexpected.argument.type", actual.getName()));
           }
         }
       }
@@ -664,7 +667,7 @@ public class PyStringFormatInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node) {
+    public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this, myTypeEvalContext);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
@@ -677,7 +680,7 @@ public class PyStringFormatInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee != null && callee.getName() != null && callee.getName().equals(PyNames.FORMAT)) {
         final PyStringLiteralExpression literalExpression = PsiTreeUtil.getChildOfType(callee, PyStringLiteralExpression.class);

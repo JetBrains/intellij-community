@@ -27,7 +27,9 @@ internal class GithubProjectDefaultAccountHolder(private val project: Project) :
   private fun findAccountById(id: String): GithubAccount? {
     val account = service<GithubAccountManager>().accounts.find { it.id == id }
     if (account == null) runInEdt {
-      GithubNotifications.showWarning(project, GithubBundle.message("accounts.default.missing"), "",
+      GithubNotifications.showWarning(project, "github.missing.default.account",
+                                      GithubBundle.message("accounts.default.missing"),
+                                      "",
                                       GithubNotifications.getConfigureAction(project))
     }
     return account

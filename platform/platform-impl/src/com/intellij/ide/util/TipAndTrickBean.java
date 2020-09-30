@@ -4,9 +4,11 @@ package com.intellij.ide.util;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
-import java.util.Objects;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author gregsh
@@ -36,6 +38,7 @@ public class TipAndTrickBean extends AbstractExtensionPointBean {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "TipAndTrickBean{" +
            "fileName='" + fileName + '\'' +

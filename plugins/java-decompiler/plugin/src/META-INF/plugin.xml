@@ -12,7 +12,7 @@
   <resource-bundle>messages.Decompiler</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
+    <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last, before clsStubBuilder"/>
   </extensions>
 
   <applicationListeners>

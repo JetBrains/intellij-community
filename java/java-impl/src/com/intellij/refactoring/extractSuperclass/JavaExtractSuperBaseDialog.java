@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -22,6 +23,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +53,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected final DestinationFolderComboBox myDestinationFolderComboBox;
 
 
-  public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
+  public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, sourceClass, members, refactoringName);
     myDestinationFolderComboBox = new DestinationFolderComboBox() {
       @Override
@@ -81,7 +83,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
     panel.add(label, BorderLayout.NORTH);
     label.setLabelFor(myDestinationFolderComboBox);
-    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<String>() {
+    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<>() {
       @Override
       public void pass(String s) {
       }
@@ -140,7 +142,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     final PsiFile containingFile = mySourceClass.getContainingFile();
     final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty();
     if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !PsiNameHelper.getInstance(myProject).isQualifiedName(targetPackageName)) {
-      throw new OperationFailedException("Invalid package name: " + targetPackageName);
+      throw new OperationFailedException(JavaRefactoringBundle.message("invalid.package.name", targetPackageName));
     }
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetPackageName);
     if (aPackage != null) {
@@ -182,7 +184,9 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Nullable
   @Override
   protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
-    return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected"
-                                                                                                                 : null;
+    if (StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName())) {
+      return JavaRefactoringBundle.message("different.name.expected");
+    }
+    return null;
   }
 }

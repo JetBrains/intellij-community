@@ -4,6 +4,8 @@ package com.intellij.internal.ml.completion;
 import com.intellij.internal.ml.DecisionFunction;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,9 +17,12 @@ public interface RankingModelProvider {
   DecisionFunction getModel();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayNameInSettings();
 
   boolean isLanguageSupported(@NotNull Language language);
+
+  default @NotNull @NonNls String getId() { return getDisplayNameInSettings();}
 
   default boolean isEnabledByDefault() {
     return false;

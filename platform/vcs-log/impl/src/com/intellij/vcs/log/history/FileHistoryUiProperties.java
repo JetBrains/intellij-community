@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +9,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
+import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,7 @@ import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 
-@State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.History.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
 
@@ -28,23 +30,36 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   private State myState = new State();
 
-  public static class State {
-    public boolean SHOW_DETAILS = false;
-    public boolean SHOW_OTHER_BRANCHES = false;
-    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
-    public boolean SHOW_DIFF_PREVIEW = true;
-    public boolean SHOW_ROOT_NAMES = false;
-  }
-
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (property instanceof TableColumnProperty) {
-      Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
-      if (savedWidth == null) return (T)Integer.valueOf(-1);
+    if (property instanceof TableColumnWidthProperty) {
+      TableColumnWidthProperty tableColumnWidthProperty = (TableColumnWidthProperty)property;
+      if (!myState.COLUMN_WIDTH.isEmpty()) {
+        tableColumnWidthProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
+        myState.COLUMN_WIDTH = new HashMap<>();
+      }
+      Integer savedWidth = myState.COLUMN_ID_WIDTH.get(property.getName());
+      if (savedWidth == null) {
+        return (T)Integer.valueOf(-1);
+      }
       return (T)savedWidth;
+    }
+    if (property instanceof TableColumnVisibilityProperty) {
+      TableColumnVisibilityProperty visibilityProperty = (TableColumnVisibilityProperty)property;
+      Boolean isVisible = myState.COLUMN_ID_VISIBILITY.get(visibilityProperty.getName());
+      if (isVisible != null) {
+        return (T)isVisible;
+      }
+
+      // visibility is not set, so we will get it from current/default order
+      // otherwise column will be visible but not exist in order
+      VcsLogColumn<?> column = visibilityProperty.getColumn();
+      if (get(COLUMN_ID_ORDER).contains(column.getId()) || column instanceof VcsLogCustomColumn) {
+        return (T)Boolean.TRUE;
+      }
+      return (T)Boolean.FALSE;
     }
     return property.match()
       .ifEq(SHOW_DETAILS).then(myState.SHOW_DETAILS)
@@ -52,13 +67,19 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
       .ifEq(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
       .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myAppSettings.get(PREFER_COMMIT_DATE))
-      .ifEq(COLUMN_ORDER).thenGet(() -> {
-        List<Integer> order = myState.COLUMN_ORDER;
-        if (order == null || order.isEmpty()) {
-          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
-                                    VcsLogColumn::ordinal);
+      .ifEq(COLUMN_ID_ORDER).thenGet(() -> {
+        List<String> order = myState.COLUMN_ID_ORDER;
+        if (order != null && !order.isEmpty()) {
+          return order;
         }
-        return order;
+        List<Integer> oldOrder = myState.COLUMN_ORDER;
+        if (oldOrder != null && !oldOrder.isEmpty()) {
+          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumnDeprecated.getVcsLogColumnEx(it).getId());
+          myState.COLUMN_ID_ORDER = oldIdOrder;
+          myState.COLUMN_ORDER = new ArrayList<>();
+          return oldIdOrder;
+        }
+        return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Author.INSTANCE, Date.INSTANCE, Commit.INSTANCE), VcsLogColumn::getId);
       })
       .get();
   }
@@ -78,11 +99,14 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ALL_BRANCHES.equals(property)) {
       myState.SHOW_OTHER_BRANCHES = (Boolean)value;
     }
-    else if (COLUMN_ORDER.equals(property)) {
-      myState.COLUMN_ORDER = (List<Integer>)value;
+    else if (COLUMN_ID_ORDER.equals(property)) {
+      myState.COLUMN_ID_ORDER = (List<String>)(value);
     }
-    else if (property instanceof TableColumnProperty) {
-      myState.COLUMN_WIDTH.put(((TableColumnProperty)property).getColumnIndex(), (Integer)value);
+    else if (property instanceof TableColumnWidthProperty) {
+      myState.COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
+    }
+    else if (property instanceof TableColumnVisibilityProperty) {
+      myState.COLUMN_ID_VISIBILITY.put(property.getName(), (Boolean)value);
     }
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;
@@ -105,11 +129,12 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
     return SHOW_DETAILS.equals(property) ||
            SHOW_ALL_BRANCHES.equals(property) ||
-           COLUMN_ORDER.equals(property) ||
+           COLUMN_ID_ORDER.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) ||
            SHOW_ROOT_NAMES.equals(property) ||
            PREFER_COMMIT_DATE.equals(property) ||
-           property instanceof TableColumnProperty;
+           property instanceof TableColumnWidthProperty ||
+           property instanceof TableColumnVisibilityProperty;
   }
 
   @Override
@@ -137,5 +162,19 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     if (myListeners.isEmpty()) {
       myAppSettings.removeChangeListener(myApplicationSettingsListener);
     }
+  }
+
+  public static class State {
+    public boolean SHOW_DETAILS = false;
+    public boolean SHOW_OTHER_BRANCHES = false;
+    @Deprecated
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
+    @Deprecated
+    public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
+    public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
+    public boolean SHOW_DIFF_PREVIEW = true;
+    public boolean SHOW_ROOT_NAMES = false;
   }
 }

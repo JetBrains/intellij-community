@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public class SpockPomDeclarationSearcher extends PomDeclarationSearcher {
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
     String name = SpockUtils.getNameByReference(element);
     if (name == null) return;
 

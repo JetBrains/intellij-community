@@ -14,9 +14,10 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EscapeHandler extends EditorActionHandler {
+  @NotNull
   private final EditorActionHandler myOriginalHandler;
 
-  public EscapeHandler(EditorActionHandler originalHandler){
+  public EscapeHandler(@NotNull EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
   }
 

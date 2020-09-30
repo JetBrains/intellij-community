@@ -3,12 +3,13 @@ package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-class HideableTitledSeparator(title: String) : TitledSeparator(title) {
+class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
   private var isExpanded: Boolean = true
 

@@ -80,16 +80,11 @@ class JUnit5EventsTest {
 
     String lineSeparator = MapSerializerUtil.escapeStr(System.getProperty("line.separator"), MapSerializerUtil.STD_ESCAPER);
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "\n" +
                             "##teamcity[testStarted id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
                             "##teamcity[testStdOut id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' out = 'timestamp = " + reportEntry.getTimestamp() + ", key1 = value1, stdout = out1']\n" +
-                            "\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='']\n" +
-                            "\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='']\n" +
-                            "\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='2 errors (2 failures)|r|n\tmessage1|r|n\tmessage2' details='TRACE']\n" +
-                            "\n" +
                             "##teamcity[testFinished id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
@@ -115,9 +110,7 @@ class JUnit5EventsTest {
                             "##teamcity[suiteTreeEnded id='|[engine:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:testClass|]' parentNodeId='0']\n" +
                             "##teamcity[treeEnded]\n" +
                             "##teamcity[testSuiteStarted id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/brokenStream' metainfo='']\n" +
-                            "\n" +
                             "##teamcity[testFailed name='Class Configuration' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' error='true' message='' details='TRACE']\n" +
-                            "\n" +
                             "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' ]\n" +
                             "##teamcity[testSuiteFinished  id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }

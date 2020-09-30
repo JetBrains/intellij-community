@@ -63,7 +63,7 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
             }
           }
         }
-        if (!multipleCarets) {
+        if (!multipleCarets && rangeMarkers.size() <= caretModel.getMaxCaretCount()) {
           final List<CaretState> newCaretStates = new SmartList<>();
           for (RangeMarker marker : rangeMarkers) {
             final int startOffset = marker.getStartOffset() + 1;

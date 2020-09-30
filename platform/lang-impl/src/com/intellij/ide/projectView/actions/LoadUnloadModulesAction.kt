@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions
 
 import com.intellij.ide.actions.OpenModuleSettingsAction
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.idea.ActionsBundle.actionText
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -10,7 +11,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 
-class LoadUnloadModulesAction : DumbAwareAction("Load/Unload Modules...") {
+private const val ACTION_ID = "LoadUnloadModules"
+
+class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabled(e)
   }

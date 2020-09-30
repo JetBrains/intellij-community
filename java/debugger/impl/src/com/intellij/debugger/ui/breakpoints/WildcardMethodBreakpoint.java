@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -80,7 +81,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return getClassName();
   }
 
-  public String getMethodName() {
+  public @NlsSafe String getMethodName() {
     return getProperties().myMethodName;
   }
 
@@ -273,7 +274,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     return getProperties().WATCH_EXIT;
   }
 
-  private String getClassPattern() {
+  private @NlsSafe String getClassPattern() {
     return getProperties().myClassPattern;
   }
 

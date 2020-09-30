@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -24,7 +24,7 @@ private val confirmationOptionGroupName get() = VcsBundle.message("settings.conf
 private val changelistsOptionGroupName get() = VcsBundle.message("settings.changelists.option.group")
 
 private fun vcsConfiguration(project: Project) = VcsConfiguration.getInstance(project)
-private fun changelistsOptions(project: Project) = ChangeListManagerImpl.getInstanceImpl(project).conflictTracker.options
+private fun changelistsOptions(project: Project) = ChangelistConflictTracker.getInstance(project).options
 
 private fun cdLimitMaximumHistory(project: Project): CheckboxDescriptor {
   val vcs = vcsConfiguration(project)

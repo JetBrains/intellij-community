@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,6 +14,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,8 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TestDataGuessByTestDiscoveryUtil {
-  public static final String COMMUNITY_PREFIX = "/community";
-  private static final Logger LOG = Logger.getInstance(TestDataGuessByTestDiscoveryUtil.class);
+  @NonNls public static final String COMMUNITY_PREFIX = "/community";
 
   @NotNull
   static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
@@ -55,7 +54,7 @@ public class TestDataGuessByTestDiscoveryUtil {
     return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
   }
 
-  private static class AffectedPathConsumer implements Consumer<String> {
+  private static final class AffectedPathConsumer implements Consumer<String> {
     private final List<String> myTestData = new ArrayList<>();
     private final String myBasePath;
 

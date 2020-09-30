@@ -7,6 +7,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import org.jetbrains.annotations.Nls;
 
 public final class ReportMessages {
   /**
@@ -15,7 +16,7 @@ public final class ReportMessages {
   @Deprecated
   public static final String ERROR_REPORT = "Error Report";
 
-  public static String getErrorReport() {
+  public static @Nls String getErrorReport() {
     return DiagnosticBundle.message("error.report.title");
   }
 

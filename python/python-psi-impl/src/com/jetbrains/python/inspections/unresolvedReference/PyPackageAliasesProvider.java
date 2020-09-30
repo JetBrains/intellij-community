@@ -3,7 +3,7 @@ package com.jetbrains.python.inspections.unresolvedReference;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PyPackageAliasesProvider {
+public final class PyPackageAliasesProvider {
   private PyPackageAliasesProvider() {
   }
 

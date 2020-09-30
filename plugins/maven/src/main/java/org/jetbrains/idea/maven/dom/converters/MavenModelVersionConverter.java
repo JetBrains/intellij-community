@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +35,6 @@ public class MavenModelVersionConverter extends MavenConstantListConverter {
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Unsupported model version. Only version " + VERSION + " is supported.";
+    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", VERSION);
   }
 }

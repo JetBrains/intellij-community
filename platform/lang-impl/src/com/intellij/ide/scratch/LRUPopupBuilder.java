@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +45,9 @@ public abstract class LRUPopupBuilder<T> {
   private static final int MAX_VISIBLE_SIZE = 20;
   private static final int LRU_ITEMS = 4;
 
-  private final String myTitle;
+  private final @PopupTitle String myTitle;
   private final PropertiesComponent myPropertiesComponent;
-  private final Map<T, Pair<String, Icon>> myPresentations = new IdentityHashMap<>();
+  private final Map<T, Pair<@Nls String, Icon>> myPresentations = new IdentityHashMap<>();
 
   private T mySelection;
   private Consumer<? super T> myOnChosen;
@@ -56,11 +57,11 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
-                                           @NotNull String title,
+                                           @NotNull @PopupTitle String title,
                                            @NotNull Iterable<? extends VirtualFile> files,
                                            @NotNull PerFileMappings<Language> mappings) {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
-    Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
+    Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.isCaseSensitive()));
     return forFileLanguages(project, title, null, t -> {
       try {
         WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(
@@ -80,7 +81,7 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @Nullable Language selection,
                                            @NotNull Consumer<? super Language> onChosen) {
-    return forFileLanguages(project, "Languages", selection, onChosen);
+    return forFileLanguages(project, "Languages", selection, onChosen); //NON-NLS
   }
 
   @NotNull
@@ -116,7 +117,7 @@ public abstract class LRUPopupBuilder<T> {
     }.withComparator(LanguageUtil.LANGUAGE_COMPARATOR);
   }
 
-  protected LRUPopupBuilder(@NotNull Project project, @NotNull String title) {
+  protected LRUPopupBuilder(@NotNull Project project, @NotNull @PopupTitle String title) {
     myTitle = title;
     myPropertiesComponent = PropertiesComponent.getInstance(project);
   }
@@ -138,7 +139,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public LRUPopupBuilder<T> withExtra(@NotNull T extra, @NotNull String displayName, @Nullable Icon icon) {
+  public LRUPopupBuilder<T> withExtra(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myExtraItems = myExtraItems.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
@@ -221,7 +222,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  private Pair<String, Icon> getPresentation(T t) {
+  private Pair<@Nls String, Icon> getPresentation(T t) {
     Pair<String, Icon> p = myPresentations.get(t);
     if (p == null) myPresentations.put(t, p = Pair.create(getDisplayName(t), getIcon(t)));
     return p;

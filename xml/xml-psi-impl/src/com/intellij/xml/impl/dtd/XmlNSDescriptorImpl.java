@@ -19,13 +19,12 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
+public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 
@@ -89,7 +88,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       final List<XmlElementDecl> result = new ArrayList<>();
       myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
       final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<>((int)(result.size() * 1.5));
-      Set<PsiFile> dependencies = new THashSet<>(1);
+      Set<PsiFile> dependencies = new HashSet<>(1);
       dependencies.add(myDescriptorFile);
 
       for (final XmlElementDecl xmlElementDecl : result) {

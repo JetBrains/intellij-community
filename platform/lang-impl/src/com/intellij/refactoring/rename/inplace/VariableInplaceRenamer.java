@@ -4,6 +4,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
@@ -25,7 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -117,7 +118,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       final RenameChooser renameChooser = new RenameChooser(myEditor) {
         @Override
         protected void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages) {
-          VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+          if (!VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile)) {
+            VariableInplaceRenameHandler.performDialogRename(myElementToRename, 
+                                                             myEditor, 
+                                                             DataManager.getInstance().getDataContext(myEditor.getContentComponent()), 
+                                                             myInitialName);
+          }
         }
       };
       renameChooser.showChooser(refs, stringUsages);
@@ -154,7 +160,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
-      Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+      Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
       TextRange selectedRange;
       if (myEditor instanceof EditorWindow) {
         PsiFile injected = ((EditorWindow)myEditor).getInjectedFile();
@@ -213,7 +219,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         return;
       }
       JBPopupFactory.getInstance()
-        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("button.continue.editing"),
+        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
                             CommonBundle.getCancelButtonText(),
                             () -> createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions), 0).showInBestPositionFor(myEditor);
     }
@@ -263,8 +269,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
             final ThrowableRunnable<RuntimeException> performAutomaticRename = () -> {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-              final UsageInfo[] usageInfos = usages.toArray(UsageInfo.EMPTY_ARRAY);
-              final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+              MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usages);
               for (final PsiNamedElement element : renamer.getElements()) {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {
@@ -293,7 +298,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
 
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+        ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -334,7 +339,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       revertStateOnFinish();
     }
     else {
-      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+      ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
     }
   }
 

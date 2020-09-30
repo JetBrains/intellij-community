@@ -31,7 +31,7 @@ public class SdkDetector {
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
   private final Object myPublicationLock = new Object();
   private final Set<DetectedSdkListener> myListeners = new HashSet<>();
-  private final List<Consumer<DetectedSdkListener>> myDetectedResults = new ArrayList<>();
+  private final List<Consumer<? super DetectedSdkListener>> myDetectedResults = new ArrayList<>();
 
   /**
    * The callback interface to deliver Sdk search results
@@ -90,7 +90,7 @@ public class SdkDetector {
   }
 
   private final DetectedSdkListener myMulticaster = new DetectedSdkListener() {
-    void logEvent(@NotNull Consumer<DetectedSdkListener> e) {
+    void logEvent(@NotNull Consumer<? super DetectedSdkListener> e) {
       myDetectedResults.add(e);
       for (DetectedSdkListener listener : myListeners) {
         e.accept(listener);

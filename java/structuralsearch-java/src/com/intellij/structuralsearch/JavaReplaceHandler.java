@@ -359,7 +359,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
     final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
     final PsiElement anchor = replacementModifierList.getFirstChild();
-    boolean append = (anchor == null);
+    boolean append = anchor == null;
     PsiElement child = originalModifierList.getFirstChild();
     while (child != null) {
       if (child instanceof PsiKeyword) {
@@ -417,7 +417,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void replace(final ReplacementInfo info, ReplaceOptions options) {
+  public void replace(final @NotNull ReplacementInfo info, @NotNull ReplaceOptions options) {
     final PsiElement elementToReplace = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
     if (elementToReplace == null) {
       return;
@@ -689,7 +689,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void postProcess(PsiElement affectedElement, ReplaceOptions options) {
+  public void postProcess(@NotNull PsiElement affectedElement, @NotNull ReplaceOptions options) {
     if (!affectedElement.isValid()) {
       return;
     }

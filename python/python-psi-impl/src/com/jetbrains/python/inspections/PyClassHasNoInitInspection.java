@@ -53,7 +53,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       final PyClass outerClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       assert node != null;
       if (outerClass != null && StringUtil.equalsIgnoreCase("meta", node.getName())) {

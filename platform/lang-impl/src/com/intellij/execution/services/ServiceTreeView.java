@@ -433,12 +433,21 @@ class ServiceTreeView extends ServiceView {
                                         ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID), ActionGroup.class);
                                       if (addActionGroup == null) return;
 
+                                      Point position = component.getMousePosition();
+                                      if (position == null) {
+                                        Rectangle componentBounds = component.getBounds();
+                                        Rectangle textBounds = emptyText.getComponent().getBounds();
+                                        position = new Point(componentBounds.width / 2,
+                                                             componentBounds.height / (emptyText.isShowAboveCenter() ? 3 : 2) +
+                                                             textBounds.height / 4);
+
+                                      }
                                       DataContext dataContext = DataManager.getInstance().getDataContext(component);
                                       JBPopupFactory.getInstance().createActionGroupPopup(
                                         addActionGroup.getTemplatePresentation().getText(), addActionGroup, dataContext,
                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                         false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(ADD_SERVICE_ACTION_ID))
-                                        .show(new RelativePoint(component, component.getMousePosition()));
+                                        .show(new RelativePoint(component, position));
                                     }
                                   });
     AnAction addAction = ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -7,16 +7,20 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.FileCollectionFactory;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -37,7 +41,7 @@ import java.util.concurrent.Future;
 /**
  * @author Eugene Zhuravlev
  */
-public class RmiStubsGenerator extends ClassProcessingBuilder {
+public final class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
   private static final Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
@@ -48,12 +52,11 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
 
   @Override
   protected String getProgressMessage() {
-    return "Generating RMI stubs...";
+    return JpsBuildBundle.message("progress.message.generating.rmi.stubs");
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return "rmic";
   }
 
@@ -159,7 +162,8 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         else {
           final int exitValue = handler.getProcess().exitValue();
           if (exitValue != 0) {
-            context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "RMI stub generation failed"));
+            context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR,
+                                                       JpsBuildBundle.message("build.message.rmi.stub.generation.failed")));
             break;
           }
         }
@@ -171,7 +175,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     // registering generated files
-    final Map<File, File[]> fsCache = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, File[]> fsCache = FileCollectionFactory.createCanonicalFileMap();
     for (ModuleBuildTarget target : targetsProcessed) {
       final Collection<ClassItem> items = remoteClasses.get(target);
       for (ClassItem item : items) {
@@ -326,12 +330,12 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
   }
 
-  private static class RmicOutputParser extends LineOutputWriter {
+  private static final class RmicOutputParser extends LineOutputWriter {
     private final CompileContext myContext;
-    private final String myCompilerName;
+    private final @Nls String myCompilerName;
     private boolean myErrorsReported = false;
 
-    private RmicOutputParser(CompileContext context, String name) {
+    private RmicOutputParser(CompileContext context, @Nls String name) {
       myContext = context;
       myCompilerName = name;
     }
@@ -341,7 +345,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     @Override
-    protected void lineAvailable(String line) {
+    protected void lineAvailable(@NlsSafe String line) {
       if (!StringUtil.isEmpty(line)) {
         BuildMessage.Kind kind = BuildMessage.Kind.INFO;
         if (line.contains("error")) {

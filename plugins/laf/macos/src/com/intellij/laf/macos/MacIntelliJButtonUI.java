@@ -49,7 +49,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
         float lw = LW(g2);
-        float arc = ARC.getFloat();
+        float arc = isTag(c) ? h - lw * 2 : ARC.getFloat();
         Insets i = DarculaButtonUI.isSmallVariant(c) ? JBUI.insets(1) : c.getInsets();
 
         if (b.isContentAreaFilled()) {

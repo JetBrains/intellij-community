@@ -201,7 +201,7 @@ class CompoundRunConfigurationOptions : BaseState() {
 @Tag("toRun")
 @Property(style = Property.Style.ATTRIBUTE)
 class TypeNameTarget() : BaseState() {
-  constructor(type: String, name: String, targetId: String?) : this() {
+  constructor(type: String?, name: String?, targetId: String?) : this() {
     this.type = type
     this.name = name
     this.targetId = targetId

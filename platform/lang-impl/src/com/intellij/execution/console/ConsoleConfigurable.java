@@ -15,6 +15,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -264,9 +265,9 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
-    private final String myQuery;
+    private final @NlsContexts.DialogMessage String myQuery;
 
-    MyAddDeleteListPanel(String title, String query) {
+    MyAddDeleteListPanel(@NlsContexts.BorderTitle String title, @NlsContexts.DialogMessage String query) {
       super(title, new ArrayList<>());
       myQuery = query;
       new ListSpeedSearch(myList);

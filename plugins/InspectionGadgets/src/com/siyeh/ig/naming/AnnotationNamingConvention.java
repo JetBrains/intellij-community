@@ -20,6 +20,7 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.codeInspection.naming.NamingConventionWithFallbackBean;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class AnnotationNamingConvention extends NamingConvention<PsiClass> {
 
@@ -37,6 +38,7 @@ public class AnnotationNamingConvention extends NamingConvention<PsiClass> {
   }
 
   @Override
+  @NonNls
   public String getShortName() {
     return "AnnotationNamingConvention";
   }

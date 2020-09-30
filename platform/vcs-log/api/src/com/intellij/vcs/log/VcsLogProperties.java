@@ -4,7 +4,7 @@ package com.intellij.vcs.log;
 import org.jetbrains.annotations.NotNull;
 
 public final class VcsLogProperties {
-  public static class VcsLogProperty<T> {
+  public static final class VcsLogProperty<T> {
     private final @NotNull T defaultValue;
 
     private VcsLogProperty(@NotNull T defaultValue) {

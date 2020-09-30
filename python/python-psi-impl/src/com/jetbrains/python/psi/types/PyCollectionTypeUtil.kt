@@ -39,26 +39,20 @@ object PyCollectionTypeUtil {
 
   fun getTypeByModifications(sequence: PySequenceExpression, context: TypeEvalContext): List<PyType?> {
     return when (sequence) {
-      is PyListLiteralExpression -> listOf(
-        getListOrSetIteratedValueType(sequence, context, true))
-      is PySetLiteralExpression -> listOf(
-        getListOrSetIteratedValueType(sequence, context, true))
-      is PyDictLiteralExpression -> getDictElementTypesWithModifications(sequence,
-                                                                                                                             context)
+      is PyListLiteralExpression -> listOf(getListOrSetIteratedValueType(sequence, context, true))
+      is PySetLiteralExpression -> listOf(getListOrSetIteratedValueType(sequence, context, true))
+      is PyDictLiteralExpression -> getDictElementTypesWithModifications(sequence, context)
       else -> listOf<PyType?>(null)
     }
   }
 
-  private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext,
-                                            withModifications: Boolean): PyType? {
+  private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext, withModifications: Boolean): PyType? {
     val elements = sequence.elements
-    val maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.size)
-    var analyzedElementsType = PyUnionType.union(elements
-                                                                                  .take(maxAnalyzedElements)
-                                                                                  .map { context.getType(it) })
+    val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
+    var analyzedElementsType = PyUnionType.union(elements.take(maxAnalyzedElements).map { context.getType(it) })
     if (withModifications) {
       val typesByModifications = getCollectionTypeByModifications(sequence, context)
-      if (!typesByModifications.isEmpty()) {
+      if (typesByModifications.isNotEmpty()) {
         val typeByModifications = PyUnionType.union(typesByModifications)
         analyzedElementsType = if (analyzedElementsType == null) typeByModifications
         else PyUnionType.union(analyzedElementsType, typeByModifications)
@@ -75,7 +69,7 @@ object PyCollectionTypeUtil {
 
   private fun getDictElementTypes(sequence: PySequenceExpression, context: TypeEvalContext): List<PyType?> {
     val elements = sequence.elements
-    val maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.size)
+    val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
     val keyTypes = ArrayList<PyType?>()
     val valueTypes = ArrayList<PyType?>()
 
@@ -116,8 +110,7 @@ object PyCollectionTypeUtil {
     return listOf(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
   }
 
-  private fun getDictElementTypesWithModifications(sequence: PySequenceExpression,
-                                                   context: TypeEvalContext): List<PyType?> {
+  private fun getDictElementTypesWithModifications(sequence: PySequenceExpression, context: TypeEvalContext): List<PyType?> {
     val dictTypes = getDictElementTypes(sequence, context)
     var keyType: PyType? = null
     var valueType: PyType? = null
@@ -156,8 +149,7 @@ object PyCollectionTypeUtil {
     return visitor.result
   }
 
-  fun getCollectionTypeByModifications(qualifiedName: String, element: PsiElement,
-                                       context: TypeEvalContext): List<PyType?> {
+  fun getCollectionTypeByModifications(qualifiedName: String, element: PsiElement, context: TypeEvalContext): List<PyType?> {
     val owner = ScopeUtil.getScopeOwner(element)
     if (owner != null) {
       val typeVisitor = getVisitorForQualifiedName(qualifiedName, element, context)
@@ -169,7 +161,8 @@ object PyCollectionTypeUtil {
     return emptyList()
   }
 
-  private fun getVisitorForSequence(sequence: PySequenceExpression, element: PsiElement,
+  private fun getVisitorForSequence(sequence: PySequenceExpression,
+                                    element: PsiElement,
                                     context: TypeEvalContext): PyCollectionTypeVisitor? {
     return when (sequence) {
       is PyListLiteralExpression -> PyListTypeVisitor(element, context)
@@ -179,15 +172,11 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private fun getVisitorForQualifiedName(qualifiedName: String, element: PsiElement,
-                                         context: TypeEvalContext): PyCollectionTypeVisitor? {
+  private fun getVisitorForQualifiedName(qualifiedName: String, element: PsiElement, context: TypeEvalContext): PyCollectionTypeVisitor? {
     return when (qualifiedName) {
-      LIST_CONSTRUCTOR, RANGE_CONSTRUCTOR -> PyListTypeVisitor(
-        element, context)
-      DICT_CONSTRUCTOR -> PyDictTypeVisitor(
-        element, context)
-      SET_CONSTRUCTOR -> PySetTypeVisitor(
-        element, context)
+      LIST_CONSTRUCTOR, RANGE_CONSTRUCTOR -> PyListTypeVisitor(element, context)
+      DICT_CONSTRUCTOR -> PyDictTypeVisitor(element, context)
+      SET_CONSTRUCTOR -> PySetTypeVisitor(element, context)
       else -> null
     }
   }
@@ -268,7 +257,7 @@ object PyCollectionTypeUtil {
       if (tupleParent != null && rightValue is PyTupleExpression) {
         val rightTuple = rightValue as PyTupleExpression?
         val rightElements = rightTuple!!.elements
-        val indexInAssignment = Arrays.asList(*tupleParent.elements).indexOf(node)
+        val indexInAssignment = tupleParent.elements.indexOf(node)
         if (indexInAssignment < rightElements.size) {
           rightValue = rightElements[indexInAssignment]
         }
@@ -323,28 +312,25 @@ object PyCollectionTypeUtil {
     override fun initMethods(): Map<String, (Array<PyExpression>) -> List<PyType?>> {
       val modificationMethods = HashMap<String, (Array<PyExpression>) -> List<PyType?>>()
 
-      modificationMethods.put("append", { arguments: Array<PyExpression> -> listOf(
-        getTypeForArgument(arguments, 0, myTypeEvalContext)) })
-      modificationMethods.put("index", { arguments: Array<PyExpression> -> listOf(
-        getTypeForArgument(arguments, 0, myTypeEvalContext)) })
-      modificationMethods.put("insert", { arguments: Array<PyExpression> -> listOf(
-        getTypeForArgument(arguments, 1, myTypeEvalContext)) })
-      modificationMethods.put("extend", { arguments: Array<PyExpression> ->
-        val argType = getTypeForArgument(arguments, 0, myTypeEvalContext)
+      modificationMethods["append"] = { listOf(getTypeForArgument(it, 0, myTypeEvalContext)) }
+      modificationMethods["index"] = { listOf(getTypeForArgument(it, 0, myTypeEvalContext)) }
+      modificationMethods["insert"] = { listOf(getTypeForArgument(it, 1, myTypeEvalContext)) }
+
+      modificationMethods["extend"] = {
+        val argType = getTypeForArgument(it, 0, myTypeEvalContext)
         if (argType is PyCollectionType) {
           argType.elementTypes
         }
         else {
           emptyList()
         }
-      })
+      }
 
       return modificationMethods
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      val types = getTypeByModifications(node, modificationMethods, myElement,
-                                                                                             myTypeEvalContext)
+      val types = getTypeByModifications(node, modificationMethods, myElement, myTypeEvalContext)
       if (types != null) {
         isModificationExist = true
         valueTypes.addAll(types)
@@ -360,15 +346,14 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PyDictTypeVisitor(element: PsiElement, typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element,
-                                                                                                                                                                                                      typeEvalContext) {
+  private class PyDictTypeVisitor(element: PsiElement,
+                                  typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     private val keyTypes: MutableList<PyType?>
     private val valueTypes: MutableList<PyType?>
 
-    override val result: List<PyType>
-      get() = if (isModificationExist) Arrays.asList<PyType>(
-        PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
+    override val result: List<PyType?>
+      get() = if (isModificationExist) listOf(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
       else emptyList()
 
     init {
@@ -380,7 +365,7 @@ object PyCollectionTypeUtil {
     override fun initMethods(): Map<String, (Array<PyExpression>) -> List<PyType?>> {
       val modificationMethods = HashMap<String, (Array<PyExpression>) -> List<PyType?>>()
 
-      modificationMethods.put("update", { arguments ->
+      modificationMethods["update"] = { arguments ->
         if (arguments.size == 1 && arguments[0] is PyDictLiteralExpression) {
           val dict = arguments[0] as PyDictLiteralExpression
           val dictTypes = getDictElementTypes(dict, myTypeEvalContext)
@@ -408,14 +393,13 @@ object PyCollectionTypeUtil {
           }
         }
         emptyList()
-      })
+      }
 
       return modificationMethods
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      val types = getTypeByModifications(node, modificationMethods, myElement,
-                                                                                             myTypeEvalContext)
+      val types = getTypeByModifications(node, modificationMethods, myElement, myTypeEvalContext)
       if (types != null) {
         isModificationExist = true
         valueTypes.addAll(types)
@@ -432,8 +416,8 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PySetTypeVisitor(element: PsiElement, typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element,
-                                                                                                                                                                                                     typeEvalContext) {
+  private class PySetTypeVisitor(element: PsiElement,
+                                 typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     private val valueTypes: MutableList<PyType?>
 
@@ -447,20 +431,19 @@ object PyCollectionTypeUtil {
 
     override fun initMethods(): Map<String, (Array<PyExpression>) -> List<PyType?>> {
       val modificationMethods = HashMap<String, (Array<PyExpression>) -> List<PyType?>>()
-      modificationMethods.put("add", { arguments -> listOf(
-        getTypeForArgument(arguments, 0, myTypeEvalContext)) })
-      modificationMethods.put("update", { arguments ->
+
+      modificationMethods["add"] = { listOf(getTypeForArgument(it, 0, myTypeEvalContext)) }
+
+      modificationMethods["update"] = { arguments ->
         val types = ArrayList<PyType?>()
         for (argument in arguments) {
           when (argument) {
-            is PySetLiteralExpression -> types.add(
-              getListOrSetIteratedValueType(argument as PySequenceExpression,
-                                                                                                myTypeEvalContext, false))
-            is PyListLiteralExpression -> types.add(
-              getListOrSetIteratedValueType(argument as PySequenceExpression,
-                                                                                                myTypeEvalContext, false))
-            is PyDictLiteralExpression -> types.add(
-              getDictElementTypes(argument as PySequenceExpression, myTypeEvalContext)[0])
+            is PySetLiteralExpression ->
+              types.add(getListOrSetIteratedValueType(argument as PySequenceExpression, myTypeEvalContext, false))
+            is PyListLiteralExpression ->
+              types.add(getListOrSetIteratedValueType(argument as PySequenceExpression, myTypeEvalContext, false))
+            is PyDictLiteralExpression ->
+              types.add(getDictElementTypes(argument as PySequenceExpression, myTypeEvalContext)[0])
             else -> {
               val argType = myTypeEvalContext.getType(argument)
               if (argType is PyCollectionType) {
@@ -472,14 +455,14 @@ object PyCollectionTypeUtil {
             }
           }
         }
-        return@put types
-      })
+        types
+      }
+
       return modificationMethods
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      val types = getTypeByModifications(node, modificationMethods, myElement,
-                                                                                             myTypeEvalContext)
+      val types = getTypeByModifications(node, modificationMethods, myElement, myTypeEvalContext)
       if (types != null) {
         isModificationExist = true
         valueTypes.addAll(types)

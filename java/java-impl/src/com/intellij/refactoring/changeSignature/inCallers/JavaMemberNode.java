@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -37,15 +38,19 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
 
   @Override
   protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
-    final StringBuilder buffer = new StringBuilder(128);
-    final PsiClass containingClass = getMember().getContainingClass();
+    customizeRendererText(renderer, getMember(), isEnabled());
+  }
+
+  public static <M extends PsiMember> void customizeRendererText(ColoredTreeCellRenderer renderer, M member, boolean enabled) {
+    final @NlsSafe StringBuilder buffer = new StringBuilder(128);
+    final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
       buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
       buffer.append('.');
     }
-    buffer.append(formatMember(getMember()));
+    buffer.append(formatMember(member));
 
-    final SimpleTextAttributes attributes = isEnabled() ?
+    final SimpleTextAttributes attributes = enabled ?
                                             new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground()) :
                                             SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
     renderer.append(buffer.toString(), attributes);

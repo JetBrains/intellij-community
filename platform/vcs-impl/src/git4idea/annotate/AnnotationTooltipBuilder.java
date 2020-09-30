@@ -2,12 +2,14 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,18 +17,18 @@ public class AnnotationTooltipBuilder {
   @NotNull private final Project myProject;
   private final boolean myAsHtml;
 
-  private final StringBuilder sb = new StringBuilder();
+  private final @Nls StringBuilder sb = new StringBuilder();
 
   public AnnotationTooltipBuilder(@NotNull Project project, boolean asHtml) {
     myProject = project;
     myAsHtml = asHtml;
   }
 
-  private void append(@NotNull String text) {
+  private void append(@NotNull @Nls String text) {
     sb.append(myAsHtml ? XmlStringUtil.escapeString(text) : text);
   }
 
-  private void appendRaw(@NotNull String text) {
+  private void appendRaw(@NotNull @Nls String text) {
     sb.append(text);
   }
 
@@ -47,17 +49,17 @@ public class AnnotationTooltipBuilder {
     appendRaw(VcsBundle.message("commit.description.tooltip.commit", revision));
   }
 
-  public void appendLine(@NotNull String content) {
+  public void appendLine(@NotNull @Nls String content) {
     appendNewline();
     append(content);
   }
 
-  public void appendCommitMessageBlock(@NotNull String message) {
+  public void appendCommitMessageBlock(@NotNull @Nls String message) {
     append("\n\n");
     appendTextWithLinks(message);
   }
 
-  public void appendTextWithLinks(@NotNull String message) {
+  public void appendTextWithLinks(@NotNull @Nls String message) {
     if (myAsHtml) {
       appendRaw(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message));
     }
@@ -70,17 +72,19 @@ public class AnnotationTooltipBuilder {
     if (sb.length() != 0) append("\n");
   }
 
+  @Nls
   @Override
   public String toString() {
     return sb.toString();
   }
 
+  @Nls
   @NotNull
   public static String buildSimpleTooltip(@NotNull Project project,
                                           boolean asHtml,
-                                          @NotNull String prefix,
-                                          @NotNull String revision,
-                                          @Nullable String commitMessage) {
+                                          @NotNull @Nls String prefix,
+                                          @NotNull @NlsSafe String revision,
+                                          @Nullable @Nls String commitMessage) {
     AnnotationTooltipBuilder builder = new AnnotationTooltipBuilder(project, asHtml);
     builder.append(prefix);
     builder.append(" ");

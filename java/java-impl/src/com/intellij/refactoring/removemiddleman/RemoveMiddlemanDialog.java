@@ -47,9 +47,11 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
-    final MemberSelectionPanel selectionPanel = new MemberSelectionPanel("&Methods to inline", delegateMethods, "Delete");
+    final MemberSelectionPanel selectionPanel = new MemberSelectionPanel(
+      JavaRefactoringBundle.message("remove.middleman.methods.to.inline.title"), delegateMethods,
+      JavaRefactoringBundle.message("remove.middleman.column.header"));
     final MemberSelectionTable table = selectionPanel.getTable();
-    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {
         return hasSuperMethods(member) ? ERROR : OK;
@@ -57,7 +59,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
 
       @Override
       public String getTooltipText(final MemberInfo member) {
-        if (hasSuperMethods(member)) return "Deletion will break type hierarchy";
+        if (hasSuperMethods(member)) return JavaRefactoringBundle.message("remove.middleman.tooltip.warning");
         return super.getTooltipText(member);
       }
 

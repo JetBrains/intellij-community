@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class DebuggerTreeNodeExpression {
+public final class DebuggerTreeNodeExpression {
   @Nullable
   public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
@@ -77,12 +77,12 @@ public class DebuggerTreeNodeExpression {
     if (!(value instanceof ObjectReference)) {
       return expression;
     }
-    
+
     ReferenceType valueType = ((ObjectReference)value).referenceType();
     if (valueType == null) {
       return expression;
     }
-    
+
     Project project = expression.getProject();
 
     PsiType type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);

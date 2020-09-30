@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public interface Keymap extends Scheme {
   String getName();
 
   //think about name
-  String getPresentableName();
+  @NlsSafe String getPresentableName();
 
   @Nullable
   Keymap getParent();

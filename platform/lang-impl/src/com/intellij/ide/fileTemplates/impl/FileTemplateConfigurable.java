@@ -23,13 +23,7 @@ import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -50,9 +44,14 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
@@ -60,17 +59,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JEditorPane;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(FileTemplateConfigurable.class);
@@ -326,7 +314,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     if (description.isEmpty() && myDefaultDescriptionUrl != null) {
       try {
-        description = UrlUtil.loadText(myDefaultDescriptionUrl);
+        description = UrlUtil.loadText(myDefaultDescriptionUrl); //NON-NLS
       }
       catch (IOException e) {
         LOG.error(e);
@@ -348,8 +336,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     description = XmlStringUtil.stripHtml(description);
     description = description.replace("\n", "").replace("\r", "");
     description = XmlStringUtil.stripHtml(description);
-    description = description + "<hr> <font face=\"verdana\" size=\"-1\"><a href='http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction'>\n" +
-                  "Apache Velocity</a> template language is used</font>";
+    description = IdeBundle.message("http.velocity", description);
 
     myDescriptionComponent.setText(description);
     myDescriptionComponent.setCaretPosition(0);

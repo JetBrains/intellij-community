@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -76,9 +77,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return new GrChangeSignatureProcessor(myProject, info);
   }
 
-  @NotNull
   @Override
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
     myExceptionsModel = new ExceptionsTableModel(myMethod.getMethod().getThrowsList());
     myExceptionsModel.setTypeInfos(myMethod.getMethod());

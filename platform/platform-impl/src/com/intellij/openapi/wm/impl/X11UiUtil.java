@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 import sun.misc.Unsafe;
@@ -38,6 +39,7 @@ public final class X11UiUtil {
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
+  private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -61,6 +63,8 @@ public final class X11UiUtil {
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
+    private long NET_WM_STATE_DEMANDS_ATTENTION;
+    private long NET_ACTIVE_WINDOW;
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
@@ -73,7 +77,7 @@ public final class X11UiUtil {
 
         // reflect on Xlib method wrappers and important structures
         Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        x11.unsafe = AtomicFieldUpdater.getUnsafe();
+        x11.unsafe = (Unsafe)AtomicFieldUpdater.getUnsafe();
         x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
@@ -96,6 +100,8 @@ public final class X11UiUtil {
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
         x11.NET_WM_STATE_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_FULLSCREEN"));
+        x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
+        x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
 
         // check for _NET protocol support
         Long netWmWindow = x11.getNetWmWindow();
@@ -201,7 +207,7 @@ public final class X11UiUtil {
         else {
           unsafe.putInt(event + 16, True);
           unsafe.putLong(event + 32, window);
-          unsafe.putLong(event + 40, NET_WM_STATE);
+          unsafe.putLong(event + 40, type);
           unsafe.putInt(event + 48, FORMAT_LONG);
           for (int i = 0; i < data.length; i++) {
             unsafe.putLong(event + 56 + 8L * i, data[i]);
@@ -213,6 +219,20 @@ public final class X11UiUtil {
       finally {
         awtUnlock.invoke(null);
         unsafe.freeMemory(event);
+      }
+    }
+
+    private void sendClientMessage(Window window, String operation, long type, long... params) {
+      try {
+        ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
+        if (peer == null) throw new IllegalStateException(window + " has no peer");
+        long windowId = (Long)getWindow.invoke(peer);
+        long screen = (Long)getScreenNumber.invoke(peer);
+        long rootWindow = getRootWindow(screen);
+        sendClientMessage(rootWindow, windowId, type, params);
+      }
+      catch (Throwable t) {
+        LOG.info("cannot " + operation, t);
       }
     }
   }
@@ -343,18 +363,24 @@ public final class X11UiUtil {
 
   public static void toggleFullScreenMode(JFrame frame) {
     if (X11 == null) return;
+    X11.sendClientMessage(frame, "toggle mode", X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
+  }
 
-    try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
-      if (peer == null) throw new IllegalStateException(frame + " has no peer");
-      long window = (Long)X11.getWindow.invoke(peer);
-      long screen = (Long)X11.getScreenNumber.invoke(peer);
-      long rootWindow = X11.getRootWindow(screen);
-      X11.sendClientMessage(rootWindow, window, X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
-    }
-    catch (Throwable t) {
-      LOG.info("cannot toggle mode", t);
-    }
+  /**
+   * This method requests window manager to activate the specified application window. This might cause the window to steal focus
+   * from another (currently active) application, which is generally not considered acceptable. So it should be used only in
+   * special cases, when we know that the user definitely expects such behaviour. In most cases, requesting focus in the target
+   * window should be used instead - in that case window manager is expected to indicate that the application requires user
+   * attention but won't switch the focus to it automatically.
+   */
+  public static void activate(@NotNull Window window) {
+    if (X11 == null) return;
+    X11.sendClientMessage(window, "activate", X11.NET_ACTIVE_WINDOW);
+  }
+
+  public static void requestAttention(@NotNull Window window) {
+    if (X11 == null) return;
+    X11.sendClientMessage(window, "request attention", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_DEMANDS_ATTENTION);
   }
 
   // reflection utilities

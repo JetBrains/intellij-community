@@ -81,7 +81,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         showErrors ? getWavedAttributes(SimpleTextAttributes.STYLE_BOLD) :  new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
 
       addColoredFragment(getNodeName(), textAttributes);
-      addColoredFragment(" (" + childrenCount + ')', showErrors ? XmlDomBundle.message("dom.elements.tree.childs.contain.errors") : null,
+      addColoredFragment(" (" + childrenCount + ')', showErrors ? XmlDomBundle.message("dom.tree.children.contain.errors") : null,
                          SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
     else {

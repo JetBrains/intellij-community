@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class GradleConstants {
+public final class GradleConstants {
 
   @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
   @NotNull @NonNls public static final String GRADLE_NAME = "Gradle";

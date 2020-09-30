@@ -14,6 +14,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.testng.TestNGXmlSuiteHelper;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -197,7 +198,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       }
     }
     catch (Exception e) {
-      throw new CantRunException("Unable to parse suite: " + e.getMessage());
+      throw new CantRunException(TestngBundle.message("dialog.message.unable.to.parse.suite", e.getMessage()));
     }
   }
 

@@ -15,9 +15,12 @@
  */
 package com.intellij.remote;
 
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import org.jetbrains.annotations.Nls;
+
 public interface ExceptionFix {
 
   void apply();
 
-  String getNotificationMessage(String message);
+  @NotificationContent String getNotificationMessage(@Nls String message);
 }

@@ -7,7 +7,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 
 @CompileStatic
@@ -24,12 +26,12 @@ abstract class GrEclipseTestBase extends GroovyCompilerTest {
   }
 
   @Override
-  void runTest() {
+  void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
     if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(module).sdk)?.isAtLeast(JavaSdkVersion.JDK_10)) {
       println "Groovy-Eclipse doesn't support Java 10+ yet"
       return
     }
-    super.runTest()
+    super.runTestRunnable(testRunnable)
   }
 
   protected List<String> chunkRebuildMessage(String builder) {

@@ -7,6 +7,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
   public LocalDeploymentImpl(@NotNull ServerRuntimeInstance<D> instance,
                              @NotNull ServerConnectionImpl<D> connection,
                              @NotNull DeploymentStatus status,
-                             @Nullable String statusText,
+                             @Nullable @Nls String statusText,
                              @Nullable DeploymentRuntime runtime,
                              @NotNull DeploymentTask<D> deploymentTask) {
     super(connection,

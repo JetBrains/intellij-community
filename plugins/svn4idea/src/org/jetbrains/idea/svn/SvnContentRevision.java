@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn;
 
@@ -18,6 +18,8 @@ import org.jetbrains.idea.svn.status.Status;
 
 import java.io.File;
 import java.io.IOException;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
@@ -93,7 +95,7 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
     File file = myFile.getIOFile();
     File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
     if (lock.exists()) {
-      throw new VcsException("Can not access file base revision contents: administrative area is locked");
+      throw new VcsException(message("error.can.not.access.file.base.revision.contents.administrative.area.is.locked"));
     }
     return SvnUtil.getFileContents(myVcs, Target.on(file), myUseBaseRevision ? Revision.BASE : myRevision,
                                    Revision.UNDEFINED);

@@ -21,7 +21,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
+public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final MyWrapperRenderer myWrapperRenderer;
   private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;
   private final MyNotSelectedColoredTreeCellRenderer myRightCellRenderer;

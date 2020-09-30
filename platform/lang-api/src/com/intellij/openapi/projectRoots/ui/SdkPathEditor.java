@@ -18,21 +18,22 @@ package com.intellij.openapi.projectRoots.ui;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SdkPathEditor extends PathEditor {
-  private final String myDisplayName;
+  private final @NlsContexts.TabTitle String myDisplayName;
   private final OrderRootType myOrderRootType;
 
-  public SdkPathEditor(String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
+  public SdkPathEditor(@NlsContexts.TabTitle String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
     super(descriptor);
     myDisplayName = displayName;
     myOrderRootType = orderRootType;
   }
 
-  public String getDisplayName() {
+  public @NlsContexts.TabTitle String getDisplayName() {
     return myDisplayName;
   }
 

@@ -32,11 +32,12 @@ import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveRedundantCo
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable;
 import org.intellij.lang.xpath.xslt.validation.inspections.InspectionUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XsltQuickFixFactory implements XPathQuickFixFactory {
+public final class XsltQuickFixFactory implements XPathQuickFixFactory {
     public static final XsltQuickFixFactory INSTANCE = new XsltQuickFixFactory();
 
     private XsltQuickFixFactory() {
@@ -99,13 +100,13 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
         @Override
         @NotNull
         public String getText() {
-            return "Edit File Associations";
+            return getFamilyName();
         }
 
         @Override
         @NotNull
         public String getFamilyName() {
-            return "Edit File Associations";
+            return XPathBundle.message("intention.family.name.edit.file.associations");
         }
     }
 }

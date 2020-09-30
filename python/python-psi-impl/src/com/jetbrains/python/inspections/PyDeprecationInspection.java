@@ -19,9 +19,11 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -47,7 +49,7 @@ public class PyDeprecationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
       if (exceptPart != null) {
         final PyExpression exceptClass = exceptPart.getExceptClass();
@@ -59,7 +61,7 @@ public class PyDeprecationInspection extends PyInspection {
         final PsiElement element = importStatement.resolveImportSource();
         if (resolveResult != null && element != resolveResult.getContainingFile()) return;
       }
-      String deprecationMessage = null;
+      @NlsSafe String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {
         deprecationMessage = ((PyFunction)resolveResult).getDeprecationMessage();
       }
@@ -73,7 +75,7 @@ public class PyDeprecationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
 
       final PyDecoratorList decoratorList = node.getDecoratorList();
@@ -100,8 +102,10 @@ public class PyDeprecationInspection extends PyInspection {
             }
 
             final KnownDecorator abcAbsMethod = KnownDecorator.ABC_ABSTRACTMETHOD;
-            final String message = "'" + deprecated.getQualifiedName() + "' is deprecated since Python 3.3. " +
-                                   "Use '" + builtin.getQualifiedName() + "' with '" + abcAbsMethod.getQualifiedName() + "' instead.";
+            final String message = PyPsiBundle.message("INSP.deprecation.abc.decorator.deprecated.use.alternative",
+                                                       deprecated.getQualifiedName(),
+                                                       builtin.getQualifiedName(),
+                                                       abcAbsMethod.getQualifiedName());
 
             registerProblem(decorator, message, ProblemHighlightType.LIKE_DEPRECATED);
           }

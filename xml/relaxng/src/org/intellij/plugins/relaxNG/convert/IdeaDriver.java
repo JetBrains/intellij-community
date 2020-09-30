@@ -137,8 +137,9 @@ public class IdeaDriver {
             final String s = reference(null, sourceUri);
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
-              final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
-              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message("output.file.exists"), Messages.getWarningIcon());
+              final String msg = RelaxngBundle.message("relaxng.convert-schema.dialog.file-exists.message", file.getAbsolutePath());
+              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message(
+                "relaxng.convert-schema.dialog.file-exists.title"), Messages.getWarningIcon());
               if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {
@@ -173,7 +174,7 @@ public class IdeaDriver {
   }
 
 
-  private OutputFormat getOutputFormat(SchemaType outputType) {
+  private static OutputFormat getOutputFormat(SchemaType outputType) {
     switch (outputType) {
       case DTD:
         return new DtdOutputFormat();
@@ -189,7 +190,7 @@ public class IdeaDriver {
     }
   }
 
-  private InputFormat getInputFormat(SchemaType type) {
+  private static InputFormat getInputFormat(SchemaType type) {
     switch (type) {
       case DTD:
         return new DtdInputFormat();

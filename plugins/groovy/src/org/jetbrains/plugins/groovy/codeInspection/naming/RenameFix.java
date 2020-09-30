@@ -21,53 +21,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringFactory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
 public class RenameFix extends GroovyFix implements RefactoringQuickFix {
 
-  private final String targetName;
-
   public RenameFix() {
     super();
-    targetName = null;
   }
 
-  public RenameFix(@NonNls String targetName) {
-    super();
-    this.targetName = targetName;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    if (targetName == null) {
-      return "Rename";
-    } else {
-      return "Rename to " + targetName;
-    }
-  }
-
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Rename";
+    return GroovyBundle.message("intention.family.name.rename");
   }
 
   @Override
   public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (targetName == null) {
-      doFix(element);
-    }
-    else {
-      final PsiElement elementToRename = element.getParent();
-      RefactoringFactory.getInstance(project).createRename(elementToRename, targetName).run();
-    }
+    doFix(element);
   }
 
   @NotNull

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
@@ -33,7 +34,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   private final TableCellEditor myEditor;
   private final DomFixedChildDescription myChildDescription;
 
-  public ChildGenericValueColumnInfo(final String name,
+  public ChildGenericValueColumnInfo(final @ColumnName String name,
                                      @NotNull final DomFixedChildDescription description,
                                      final TableCellRenderer renderer,
                                      final TableCellEditor editor) {
@@ -42,7 +43,8 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     myChildDescription = description;
   }
 
-  public ChildGenericValueColumnInfo(final String name, final DomFixedChildDescription description, final TableCellEditor editor) {
+  public ChildGenericValueColumnInfo(final @ColumnName String name, final DomFixedChildDescription description,
+                                     final TableCellEditor editor) {
     this(name, description, new DefaultTableCellRenderer(), editor);
   }
 

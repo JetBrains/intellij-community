@@ -24,6 +24,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -1267,16 +1268,14 @@ class Foo {
 
     myFixture.configureByText "a.java", "class Foo {{ System.out.println(helloW<caret>) }}"
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode(new Runnable() {
-      @Override
-      void run() {
-        myFixture.completeBasic()
-        assert myFixture.lookup
-        assert myFixture.lookupElementStrings.contains('helloWorld')
-        myFixture.type('\t')
-        myFixture.checkResult "class Foo {{ System.out.println(\"Hello, World\") }}"
-      }
-    })
+    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
+      RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+      myFixture.completeBasic()
+      assert myFixture.lookup
+      assert myFixture.lookupElementStrings.contains('helloWorld')
+      myFixture.type('\t')
+      myFixture.checkResult "class Foo {{ System.out.println(\"Hello, World\") }}"
+    }
   }
 
   void "test log livetemplate started event"() {

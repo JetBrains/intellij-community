@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
@@ -6,6 +6,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
@@ -27,11 +28,11 @@ import javax.swing.text.Segment
  */
 @JvmOverloads
 fun askPassword(project: Project?,
-                dialogTitle: String,
-                passwordFieldLabel: String,
+                @NlsContexts.DialogTitle dialogTitle: String,
+                @NlsContexts.Label passwordFieldLabel: String,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
-                error: String? = null): String? {
+                @NlsContexts.DialogMessage error: String? = null): String? {
   return askCredentials(project, dialogTitle, passwordFieldLabel, attributes,
                         isResetPassword = resetPassword,
                         error = error,
@@ -40,13 +41,13 @@ fun askPassword(project: Project?,
 
 @JvmOverloads
 fun askCredentials(project: Project?,
-                   dialogTitle: String,
-                   passwordFieldLabel: String,
+                   @NlsContexts.DialogTitle dialogTitle: String,
+                   @NlsContexts.Label passwordFieldLabel: String,
                    attributes: CredentialAttributes,
                    isSaveOnOk: Boolean = true,
                    isCheckExistingBeforeDialog: Boolean = false,
                    isResetPassword: Boolean = false,
-                   error: String? = null): CredentialRequestResult? {
+                   @NlsContexts.DialogMessage error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.instance
   if (isResetPassword) {
     store.set(attributes, null)

@@ -12,6 +12,7 @@ import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
-  private static final String TRIGRAMS = "trigrams"; // NON-NLS
+  @NonNls private static final String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,

@@ -22,8 +22,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
@@ -55,9 +57,11 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
       }
     }
 
-    final List<String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
+    final List<@NlsSafe String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
     if (descriptions.isEmpty()) return null;
 
-    return XmlStringUtil.wrapInHtml(StringUtil.join(descriptions, "<br>"));
+    final HtmlBuilder builder = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(),
+                                                                       ContainerUtil.map(descriptions, HtmlChunk::text));
+    return builder.wrapWithHtmlBody().toString();
   }
 }

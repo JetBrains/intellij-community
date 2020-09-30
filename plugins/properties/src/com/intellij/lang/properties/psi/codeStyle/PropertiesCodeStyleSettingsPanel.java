@@ -3,6 +3,7 @@ package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -24,7 +25,7 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
 
   @Override
   protected void initTables() {
-    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", "Align properties in column");
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", PropertiesBundle.message("align.properties.in.column.code.style.option"));
   }
 
   @Nullable

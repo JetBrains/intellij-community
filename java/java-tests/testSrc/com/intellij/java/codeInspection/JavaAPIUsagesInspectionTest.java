@@ -17,12 +17,31 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -67,31 +86,66 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
   //generate apiXXX.txt
   //configure jdk and set test project descriptor
- /* private static final String JDK_HOME = "/Users/anna/Downloads/jdk-12.0.2.jdk/Contents/Home";
-  private static final String VERSION = "12";
+  private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-14.0.1";
+  private static final String JDK_HOME = "/home/me/java/jdk-15";
+  private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_14_PREVIEW;
+  private static final String VERSION = "15";
   private static final LightProjectDescriptor API_VERSION_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
-    @Nullable
     @Override
-    public Sdk getSdk() {
+    public @NotNull Sdk getSdk() {
       return JavaSdk.getInstance().createJdk(VERSION, JDK_HOME + "/", false);
     }
   };
 
   //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
-    VfsRootAccess.allowRootAccess("/");
-    final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
+    //doCollectSinceApiUsages();
+  }
+
+  private void doCollectSinceApiUsages() {
+    final Set<String> previews = new HashSet<>();
+    final ContentIterator previewContentIterator = new ContentIterator() {
+      @Override
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
+        final PsiFile file = PsiManager.getInstance(JavaAPIUsagesInspectionTest.this.getProject()).findFile(fileOrDir);
+        PsiTreeUtil.findChildrenOfAnyType(file, PsiMember.class)
+          .stream()
+          .filter(member -> member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE))
+          .filter(member -> getLanguageLevel(member) == LANGUAGE_LEVEL)
+          .map(e -> Java15APIUsageInspection.getSignature(e))
+          .forEach(previews::add);
+        return true;
+      }
+
+      @Nullable
+      private LanguageLevel getLanguageLevel(@NotNull final PsiMember e) {
+        final PsiAnnotation annotation = HighlightUtil.getPreviewFeatureAnnotation(e);
+        if (annotation == null) return null;
+
+        final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
+        return feature == null ? null : feature.getLevel();
+      }
+    };
+    if (LANGUAGE_LEVEL.isPreview()) {
+      final VirtualFile previewSrcFile = JarFileSystem.getInstance().findFileByPath(PREVIEW_JDK_HOME + "/lib/src.zip!/");
+      assert previewSrcFile != null;
+      VfsUtilCore.iterateChildrenRecursively(previewSrcFile, VirtualFileFilter.ALL, previewContentIterator);
+    }
+
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
         final PsiFile file = PsiManager.getInstance(getProject()).findFile(fileOrDir);
         if (file instanceof PsiJavaFile) {
           file.accept(new JavaRecursiveElementVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
               super.visitElement(element);
               if (isDocumentedSinceApi(element)) {
-                System.out.println(Java15APIUsageInspection.getSignature((PsiMember)element));
+                final String signature = Java15APIUsageInspection.getSignature((PsiMember)element);
+                if (!previews.contains(signature)) {
+                  System.out.println(signature);
+                }
               }
             }
 
@@ -117,10 +171,10 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
         return true;
       }
     };
+
     final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath(JDK_HOME + "/lib/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
+  }
 
-    notDocumented.forEach(System.out::println);
-  }*/
 }

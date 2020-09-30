@@ -21,9 +21,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgProjectConfigurable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -43,7 +45,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgRemoteChangesetsCommand.class);
 
-  public HgRemoteChangesetsCommand(Project project, String command) {
+  public HgRemoteChangesetsCommand(Project project, @NonNls String command) {
     super(project, command);
   }
 
@@ -76,14 +78,16 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       if (vcs == null) {
         return result;
       }
-      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.changesets.error"),
+      new HgCommandResultNotifier(project).notifyError("hg4idea.changesets.error",
+                                                       result,
+                                                       HgBundle.message("hg4idea.changesets.error"),
                                                        HgBundle.message("hg4idea.changesets.error.msg", repositoryURL),
                                                        new NotificationListener() {
                                                          @Override
                                                          public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                      @NotNull HyperlinkEvent event) {
                                                            ShowSettingsUtil.getInstance()
-                                                             .showSettingsDialog(project, vcs.getConfigurable().getDisplayName());
+                                                             .showSettingsDialog(project, HgProjectConfigurable.getDISPLAY_NAME());
                                                          }
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();

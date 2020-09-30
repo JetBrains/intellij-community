@@ -38,7 +38,6 @@ import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -46,31 +45,65 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
+import org.junit.Rule;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static org.junit.Assume.assumeTrue;
+
+/**
+ * This class is compatible with both JUnit 3 and JUnit 4. To use JUnit 4, just annotate your test subclass
+ * with @RunWith(JUnit4.class) or any other (like Parametrized.class), and you are all set.
+ *
+ * Don't annotate the JUnit 3 setUp()/tearDown() methods as @Before/@After, and don't call them from other @Before/@After methods.
+ * Also don't define @Rule's calling runBare(), just subclassing this class (directly or indirectly) is enough. <p/>
+ *
+ * The execution order is the following:
+ * <pre{@code
+ *
+ *   - (JUnit 4 only) #checkShouldRunTest(Description) that can be used to ignore tests with meaningful message
+ *   - #shouldRunTest() is also called (both JUnit 3 and JUnit 4)
+ *
+ *   - #setUp(), usually overridden so that it initializes classes in order from base to specific
+ *
+ *       - (JUnit 4 only) any @Rule fields, then @Rule methods
+ *       - (JUnit 4 only) any @Before methods
+ *
+ *           - the testXxx() method (JUnit 3), or the @Test method (JUnit 4)
+ *
+ *       - (JUnit 4 only) any @After methods
+ *       - (JUnit 4 only) any @Rule methods, then @Rule fields, cleanup
+ *
+ *   - #tearDown(), usually overridden in the reverse order: from specific to base
+ * } </pre>
+ *
+ * Note that @Rule, @Before and @After methods execute within the same context/thread as the @Test method,
+ * which may differ from how setUp()/tearDown() are executed.
+ */
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
   public static final String TEMP_DIR_MARKER = "unitTest_";
@@ -83,12 +116,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
-  @NotNull
-  private final Disposable myTestRootDisposable = new TestDisposable();
+  private @Nullable Disposable myTestRootDisposable;
 
-  private final List<Path> myPathsToKeep = new ArrayList<>();
-
-  private Path myTempDir;
+  private @Nullable Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -108,6 +138,40 @@ public abstract class UsefulTestCase extends TestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * This @Rule ensures that JUnit4 tests defined in subclasses annotated with @RunWith are executed
+   * in the exactly the same context as if they would have been executed were they plain old JUnit3 tests.
+   * This includes calling all the necessary setUp()/tearDown() together with any other customization defined by the
+   * platform subclasses like {@link LightPlatformTestCase} or {@link HeavyPlatformTestCase}: running on EDT,
+   * in a write action, wrapped in a command, etc.
+   *
+   * It's executed around any other rules and @Before/@After methods defined in subclasses.
+   * Subclasses may change this by using {@link #asOuterRule}.
+   */
+  @Rule
+  public @NotNull TestRule runBareTestRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      String name = description.getMethodName();
+      name = StringUtil.notNullize(StringUtil.substringBefore(name, "["), name);
+      setName(name);
+      checkShouldRunTest(description);
+      runBare(base::evaluate);
+    }
+  };
+
+  /**
+   * Use to make the specified rule applied around the base rule.
+   * This may be useful in case you need to access the rule from {@link #setUp()}.
+   *
+   * NB. Do not annotate the field that you assign the result of an asOuterRule() call to, as @Rule.
+   *     Otherwise the rule is going to be applied twice.
+   */
+  protected @NotNull <R extends TestRule> R asOuterRule(@NotNull R rule) {
+    runBareTestRule = RuleChain.outerRule(rule).around(runBareTestRule);
+    return rule;
   }
 
   /**
@@ -144,6 +208,10 @@ public abstract class UsefulTestCase extends TestCase {
     super(name);
   }
 
+  protected void checkShouldRunTest(@NotNull Description description) throws AssumptionViolatedException {
+    assumeTrue("skipped: shouldRunTest() returned false", shouldRunTest());
+  }
+
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -152,19 +220,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    if (shouldContainTempFiles()) {
-      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-      String testName = null;
-      if (policy != null) {
-        testName = policy.getPerTestTempDirName();
-      }
-      if (testName == null) {
-        testName = FileUtil.sanitizeFileName(getTestName(true));
-      }
-      myTempDir = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
-      Files.createDirectories(myTempDir);
-      FileUtil.resetCanonicalTempPathCache(myTempDir.toString());
-    }
+    setupTempDir();
 
     AndroidStudioAnalytics.initialize(new NullAndroidStudioAnalytics());
 
@@ -184,6 +240,36 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  // some brilliant tests overrides setup and change setup flow in an alien way - quite unsafe and error prone to fix for now,
+  // so, expose method for such a brilliant test classes
+  protected final void setupTempDir() throws IOException {
+    if (myTempDir == null && shouldContainTempFiles()) {
+      myTempDir = createGlobalTempDirectory();
+    }
+  }
+
+  @ApiStatus.Internal
+  @NotNull Path createGlobalTempDirectory() throws IOException {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    String testName = null;
+    if (policy != null) {
+      testName = policy.getPerTestTempDirName();
+    }
+    if (testName == null) {
+      testName = FileUtil.sanitizeFileName(getTestName(true));
+    }
+
+    Path result = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
+    Files.createDirectories(result);
+    FileUtil.resetCanonicalTempPathCache(result.toString());
+    return result;
+  }
+
+  @ApiStatus.Internal
+  void removeGlobalTempDirectory(@NotNull Path dir) {
+    PathKt.delete(dir);
+  }
+
   protected boolean isIconRequired() {
     return false;
   }
@@ -198,22 +284,9 @@ public abstract class UsefulTestCase extends TestCase {
       () -> cleanupDeleteOnExitHookList(),
       () -> Disposer.setDebugMode(true),
       () -> {
-        if (shouldContainTempFiles()) {
+        if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          if (myPathsToKeep.isEmpty()) {
-            PathKt.delete(myTempDir);
-          }
-          else {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(myTempDir)) {
-              for (Path file : directoryStream) {
-                if (!shouldKeepTmpFile(file)) {
-                  FileUtil.delete(file);
-                }
-              }
-            }
-            catch (NoSuchFileException ignore) {
-            }
-          }
+          removeGlobalTempDirectory(myTempDir);
         }
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
@@ -223,19 +296,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected final void disposeRootDisposable() {
     Disposer.dispose(getTestRootDisposable());
-  }
-
-  protected void addTmpFileToKeep(@NotNull Path file) {
-    myPathsToKeep.add(file.toAbsolutePath());
-  }
-
-  private boolean shouldKeepTmpFile(@NotNull Path file) {
-    for (Path pathToKeep : myPathsToKeep) {
-      if (file.equals(pathToKeep)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
@@ -322,40 +382,20 @@ public abstract class UsefulTestCase extends TestCase {
    */
   @NotNull
   public Disposable getTestRootDisposable() {
-    return myTestRootDisposable;
+    Disposable disposable = myTestRootDisposable;
+    if (disposable == null) {
+      myTestRootDisposable = disposable = new TestDisposable();
+    }
+    return disposable;
   }
 
+  /**
+   * @deprecated not JUnit4-friendly; to override the way tests are executed use {@link #runTestRunnable} instead
+   */
   @Override
-  protected void runTest() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-
-    Runnable runnable = () -> {
-      try {
-        TestLoggerFactory.onTestStarted();
-        super.runTest();
-        TestLoggerFactory.onTestFinished(true);
-      }
-      catch (InvocationTargetException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e.getTargetException();
-      }
-      catch (IllegalAccessException e) {
-        TestLoggerFactory.onTestFinished(false);
-        e.fillInStackTrace();
-        throwables[0] = e;
-      }
-      catch (Throwable e) {
-        TestLoggerFactory.onTestFinished(false);
-        throwables[0] = e;
-      }
-    };
-
-    invokeTestRunnable(runnable);
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
+  @Deprecated
+  protected final void runTest() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Use runTestRunnable() to override the way tests are executed");
   }
 
   protected boolean shouldRunTest() {
@@ -366,59 +406,39 @@ public abstract class UsefulTestCase extends TestCase {
     return TestFrameworkUtil.canRunTest(getClass());
   }
 
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    if (runInDispatchThread()) {
-      // reduce stack trace
-      Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        if (SwingUtilities.isEventDispatchThread()) {
-          runnable.run();
-        }
-        else {
-          SwingUtilities.invokeAndWait(runnable);
-        }
-      }
-      else {
-        app.invokeAndWait(runnable);
-      }
-    }
-    else {
-      runnable.run();
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    testRunnable.run();
+  }
+
+  /**
+   * This reflects the way the default {@link TestCase#runBare} works, with few notable exceptions:
+   * <ul>
+   *   <li/> {@link #tearDown} is called even if {@link #setUp} has failed;
+   *   <li/> exceptions from tearDown() don't shadow those from the main test method, but are rather linked as suppressed;
+   *   <li/> it allows to customise the way the methods are invoked through {@link #runTestRunnable},
+   *         {@link #invokeSetUp} and {@link #invokeTearDown}, for example, to make them execute on a different thread.
+   * </ul>
+   */
+  protected void defaultRunBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    try (AutoCloseable ignored = this::invokeTearDown) {
+      invokeSetUp();
+
+      runTestRunnable(testRunnable);
     }
   }
 
-  protected void defaultRunBare() throws Throwable {
-    Throwable exception = null;
-    try {
-      long setupStart = System.nanoTime();
-      setUp();
-      long setupCost = (System.nanoTime() - setupStart) / 1000000;
-      logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+  protected void invokeSetUp() throws Exception {
+    long setupStart = System.nanoTime();
+    setUp();
+    long setupCost = (System.nanoTime() - setupStart) / 1000000;
+    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+  }
 
-      runTest();
-    }
-    catch (Throwable running) {
-      exception = running;
-    }
-    finally {
-      try {
-        long teardownStart = System.nanoTime();
-        tearDown();
-        long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
-        logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
-      }
-      catch (Throwable tearingDown) {
-        if (exception == null) {
-          exception = tearingDown;
-        }
-        else {
-          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
-        }
-      }
-    }
-    if (exception != null) {
-      throw exception;
-    }
+  protected void invokeTearDown() throws Exception {
+    long teardownStart = System.nanoTime();
+    tearDown();
+    long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
+    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
   }
 
   /**
@@ -450,17 +470,37 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Override
-  public void runBare() throws Throwable {
+  public final void runBare() throws Throwable {
     if (!shouldRunTest()) {
       return;
     }
+    runBare(super::runTest);
+  }
+
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    final ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
+
     if (runInDispatchThread()) {
       TestApplicationManagerKt.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
     else {
-      defaultRunBare();
+      defaultRunBare(wrappedRunnable);
     }
+  }
+
+  protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    return () -> {
+      boolean success = false;
+      TestLoggerFactory.onTestStarted();
+      try {
+        testRunnable.run();
+        success = true;
+      }
+      finally {
+        TestLoggerFactory.onTestFinished(success);
+      }
+    };
   }
 
   protected boolean runInDispatchThread() {
@@ -474,7 +514,7 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * If you want a more shorter name than runInEdtAndWait.
    */
-  protected static void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+  protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
@@ -923,7 +963,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings, @NotNull CodeInsightSettings settings) {
+  private static void checkCodeInsightSettingsEqual(@SuppressWarnings("SameParameterValue") @NotNull CodeInsightSettings oldSettings,
+                                                    @NotNull CodeInsightSettings settings) {
     if (!oldSettings.equals(settings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);
@@ -1056,7 +1097,11 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
+        Class<T> expected = exceptionCase.getExpectedExceptionClass();
+        if (!expected.isInstance(cause)) {
+          throw new AssertionError("Expected instance of: " + expected + " actual: " + cause.getClass(), cause);
+        }
+
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
@@ -1084,7 +1129,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected boolean annotatedWith(@NotNull Class<? extends Annotation> annotationClass) {
     Class<?> aClass = getClass();
-    String methodName = "test" + getTestName(false);
+    String methodName = ObjectUtils.notNull(getName(), "");
     boolean methodChecked = false;
     while (aClass != null && aClass != Object.class) {
       if (aClass.getAnnotation(annotationClass) != null) return true;
@@ -1120,7 +1165,7 @@ public abstract class UsefulTestCase extends TestCase {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
-  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {

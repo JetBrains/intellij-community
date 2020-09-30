@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -37,7 +38,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
@@ -48,9 +48,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -67,7 +67,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private long myModificationCount;
 
 
-  private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
+  private final Deque<Runnable> myRunWhenSmartQueue = new ArrayDeque<>(5);
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -97,9 +97,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
-    LOG.assertTrue(myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
-                                         State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS),
-                   "actual state: " + myState.get() + ", project " + getProject());
+    boolean changed = myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
+                                          State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS);
+    LOG.assertTrue(changed, "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
     if (activities.isEmpty()) {
@@ -181,6 +181,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @TestOnly
   public void setDumb(boolean dumb) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (dumb) {
       myState.set(State.RUNNING_DUMB_TASKS);
       myPublisher.enteredDumbMode();
@@ -332,10 +333,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       while (!isDumb()) {
         final Runnable runnable;
         synchronized (myRunWhenSmartQueue) {
-          if (myRunWhenSmartQueue.isEmpty()) {
+          runnable = myRunWhenSmartQueue.pollFirst();
+          if (runnable == null) {
             break;
           }
-          runnable = myRunWhenSmartQueue.pullFirst();
         }
         doRun(runnable);
       }
@@ -396,9 +397,21 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
+    CountDownLatch switched;
+    synchronized (myRunWhenSmartQueue) {
+      if (!isDumb()) {
+        return;
+      }
+      switched = new CountDownLatch(1);
+      myRunWhenSmartQueue.addLast(() -> switched.countDown());
+    }
 
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
-      LockSupport.parkNanos(50_000_000);
+      try {
+        switched.await(50, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException ignored) {
+      }
       ProgressManager.checkCanceled();
     }
   }
@@ -534,7 +547,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // Only one thread can execute this method at the same time at this point.
 
-    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused")) {
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
       IdeActivity activity = IdeActivity.started(myProject, "indexing");
@@ -544,17 +557,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         shutdownTracker.registerStopperThread(self);
 
         DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
+        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
 
-        myGuiDumbTaskRunner.processTasksWithProgress(taskIndicator -> {
+        myGuiDumbTaskRunner.processTasksWithProgress(activity, taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-        }, activity);
+          taskIndicator.addStateDelegate(relayToVisibleIndicator);
+        },
+        taskIndicator -> {
+          ((AbstractProgressIndicatorExBase)taskIndicator).removeStateDelegate(relayToVisibleIndicator);
+        }
+        );
       }
       catch (Throwable unexpected) {
         LOG.error(unexpected);

@@ -2,17 +2,18 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsRefType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Objects;
 
 public class SimpleRefType implements VcsRefType {
-  @NotNull private final String myName;
+  @NotNull private final @NonNls String myName;
   private final boolean myIsBranch;
   @NotNull private final Color myColor;
 
-  public SimpleRefType(@NotNull String name, boolean isBranch, @NotNull Color color) {
+  public SimpleRefType(@NotNull @NonNls String name, boolean isBranch, @NotNull Color color) {
     myName = name;
     myIsBranch = isBranch;
     myColor = color;

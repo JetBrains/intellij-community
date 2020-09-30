@@ -6,17 +6,13 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.rmi.Remote;
 import java.rmi.ServerError;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -28,7 +24,7 @@ public final class RemoteUtil {
 
   private static final ConcurrentMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
     ConcurrentFactoryMap.createMap(key -> {
-      final THashMap<Method, Method> map = new THashMap<>();
+      Map<Method, Method> map = new HashMap<>();
       for (Method method : key.second.getMethods()) {
         Method m = null;
         main:
@@ -48,8 +44,7 @@ public final class RemoteUtil {
         if (m != null) map.put(method, m);
       }
       return map;
-    }
-    );
+    });
 
   @NotNull
   public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {

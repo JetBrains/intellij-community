@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.paths;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -79,7 +80,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
 
     boolean containsAvailableHosts = false;
-    
+
     for (MyFetchResult fetchResult : fetchResults) {
       if (fetchResult != MyFetchResult.UNKNOWN_HOST) {
         containsAvailableHosts = true;
@@ -126,14 +127,14 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
       }
     }
   }
-  
+
   @NotNull
-  protected abstract String getErrorMessage(@NotNull String url);
+  protected abstract @InspectionMessage String getErrorMessage(@NotNull String url);
 
   protected IntentionAction @NotNull [] getQuickFixes() {
     return IntentionAction.EMPTY_ARRAY;
   }
-  
+
   @NotNull
   protected abstract HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
 
@@ -178,7 +179,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     return MyFetchResult.OK;
   }
 
-  private static class MyFetchCacheEntry {
+  private static final class MyFetchCacheEntry {
     private final long myTime;
     private final MyFetchResult myFetchResult;
 
@@ -196,12 +197,12 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
       return myFetchResult;
     }
   }
-  
+
   private enum MyFetchResult {
     OK, UNKNOWN_HOST, NONEXISTENCE
   }
 
-  protected static class MyInfo {
+  protected static final class MyInfo {
     final PsiAnchor myAnchor;
     final String myUrl;
     final TextRange myRangeInElement;

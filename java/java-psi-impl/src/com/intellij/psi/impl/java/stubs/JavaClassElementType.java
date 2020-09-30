@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
+public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub<?>, PsiClass> {
   JavaClassElementType(@NotNull String id) {
     super(id);
   }
@@ -119,7 +119,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
         if (!pkg.isEmpty()) qualifiedName = pkg + '.' + name; else qualifiedName = name;
       }
       else if (parentStub instanceof PsiClassStub) {
-        final String parentFqn = ((PsiClassStub)parentStub).getQualifiedName();
+        final String parentFqn = ((PsiClassStub<?>)parentStub).getQualifiedName();
         qualifiedName = parentFqn != null ? parentFqn + '.' + name : null;
       }
     }
@@ -134,7 +134,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
                                                   isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
-    return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
+    return new PsiClassStubImpl<>(type, parentStub, qualifiedName, name, baseRef, flags);
   }
 
   @NotNull
@@ -146,7 +146,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public void serialize(@NotNull PsiClassStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeShort(((PsiClassStubImpl)stub).getFlags());
+    dataStream.writeShort(((PsiClassStubImpl<?>)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());

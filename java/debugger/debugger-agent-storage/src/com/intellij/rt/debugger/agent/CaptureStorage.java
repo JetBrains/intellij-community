@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class CaptureStorage {
+public final class CaptureStorage {
   public static final String GENERATED_INSERT_METHOD_POSTFIX = "$$$capture";
   private static final ReferenceQueue KEY_REFERENCE_QUEUE = new ReferenceQueue();
   private static final ConcurrentMap<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();

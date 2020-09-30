@@ -67,7 +67,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   public AttachSourcesNotificationProvider() {
     EXTENSION_POINT_NAME.addChangeListener(() -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        EditorNotifications.getInstance(project).updateNotifications(AttachSourcesNotificationProvider.this);
+        EditorNotifications.getInstance(project).updateNotifications(this);
       }
     }, null);
   }
@@ -127,11 +127,11 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
         String originalText = text;
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
-          panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
+          String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
+          panel.createActionLabel(escapedName, () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
             if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
-                                       CommonBundle.message("title.error"));
+              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()), CommonBundle.message("title.error"));
               return;
             }
 
@@ -166,7 +166,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
             JavaSdkVersion sdkVersion = ClsParsingUtil.getJdkVersionByBytecode(major);
             if (sdkVersion != null) {
-              info.append(" (Java ").append(sdkVersion.getDescription()).append(')');
+              info.append(" (Java ");
+              info.append(sdkVersion.getDescription());
+              if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && ClsParsingUtil.isPreviewLevel(minor)) info.append("-preview");
+              info.append(')');
             }
             return info.toString();
           }
@@ -294,7 +297,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         librariesToAppendSourcesTo.put(null, null);
         String title = JavaUiBundle.message("library.choose.one.to.attach");
         List<LibraryOrderEntry> entries = new ArrayList<>(librariesToAppendSourcesTo.values());
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryOrderEntry>(title, entries) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(title, entries) {
           @Override
           public ListSeparator getSeparatorAbove(LibraryOrderEntry value) {
             return value == null ? new ListSeparator() : null;
@@ -303,7 +306,8 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           @NotNull
           @Override
           public String getTextFor(LibraryOrderEntry value) {
-            return value == null ? "All" : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
+            return value == null ? CommonBundle.message("action.text.all")
+                                 : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
           }
 
           @Override

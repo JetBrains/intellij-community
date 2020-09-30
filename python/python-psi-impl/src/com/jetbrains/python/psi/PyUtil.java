@@ -63,7 +63,7 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
  * @see PyPsiUtils for utilities used in Python PSI API
  * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
  */
-public class PyUtil {
+public final class PyUtil {
 
   private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
 
@@ -853,7 +853,7 @@ public class PyUtil {
       }
 
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         if (!node.isQualified()) {
           variables.add(node.getReferencedName());
         }
@@ -1186,7 +1186,7 @@ public class PyUtil {
     return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
 
-  public static class MethodFlags {
+  public static final class MethodFlags {
 
     private final boolean myIsStaticMethod;
     private final boolean myIsMetaclassMethod;
@@ -1529,17 +1529,7 @@ public class PyUtil {
     }
 
     if (type instanceof PyUnionType) {
-      final List<PyType> types = new ArrayList<>();
-
-      for (PyType pyType : ((PyUnionType)type).getMembers()) {
-        final PyType returnType = getReturnType(pyType, context);
-
-        if (returnType != null) {
-          types.add(returnType);
-        }
-      }
-
-      return PyUnionType.union(types);
+      return PyUnionType.toNonWeakType(((PyUnionType)type).map(member -> getReturnType(member, context)));
     }
 
     return null;
@@ -1783,7 +1773,7 @@ public class PyUtil {
     }
   }
 
-  public static class IterHelper {  // TODO: rename sanely
+  public static final class IterHelper {  // TODO: rename sanely
     private IterHelper() {}
 
     @Nullable

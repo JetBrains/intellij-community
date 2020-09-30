@@ -28,6 +28,7 @@ import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -37,8 +38,12 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -62,9 +67,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> DiffBundle.message("group.compare.contents.text"));
+    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.message("group.compare.contents.text"));
     diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
-    diffGroup.add(Separator.create(DiffBundle.message("group.compare.contents.text")));
+    diffGroup.add(Separator.create(ActionsBundle.message("group.compare.contents.text")));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));
@@ -198,7 +203,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
@@ -217,7 +222,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   //
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
     super.onBeforeDocumentChange(e);
     if (myDiffChanges.isEmpty()) return;
@@ -287,7 +292,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private List<SimpleThreesideDiffChange> getSelectedChanges(@NotNull ThreeSide side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -298,7 +303,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   // Modification operations
   //
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void replaceChange(@NotNull SimpleThreesideDiffChange change, @NotNull ThreeSide sourceSide, @NotNull ThreeSide outputSide) {
     if (!change.isValid()) return;
 
@@ -419,7 +424,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     @Nullable
     protected abstract Icon getIcon(@NotNull ThreeSide side);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes);
   }
 

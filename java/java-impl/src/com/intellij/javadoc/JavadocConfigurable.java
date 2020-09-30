@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 
@@ -140,7 +141,7 @@ public final class JavadocConfigurable implements Configurable {
     return directory.replace(File.separatorChar, '/');
   }
 
-  private static String toUserSystemFormat(String directory) {
+  private static @NlsSafe String toUserSystemFormat(String directory) {
     if (directory == null) {
       return "";
     }

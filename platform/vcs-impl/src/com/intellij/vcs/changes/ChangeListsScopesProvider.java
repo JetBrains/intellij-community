@@ -65,7 +65,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (place == ScopePlace.SETTING) {
       if (myProject.isDefault()) return false;
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      return changeListManager.findChangeList(scope.getName()) != null;
+      return changeListManager.findChangeList(scope.getScopeId()) != null;
     }
     return false;
   }

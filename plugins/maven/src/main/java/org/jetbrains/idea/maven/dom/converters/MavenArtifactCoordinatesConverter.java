@@ -32,6 +32,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xml.impl.GenericDomValueReference;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +109,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return selectStrategy(context).getContextName() + " '" + MavenArtifactCoordinatesHelper.getId(context) + "' not found";
+    return selectStrategy(context).getErrorMessage(s, context);
   }
 
   @Override
@@ -205,8 +206,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class ConverterStrategy {
-    public String getContextName() {
-      return "Artifact";
+    @Nls
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return MavenDomBundle.message("artifact.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
@@ -236,8 +238,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      MavenProject project = projectsManager.findProject(id);
+      MavenProject project = resolveMavenProject(id, projectsManager);
       return project == null ? null : psiManager.findFile(project.getFile());
+    }
+
+    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager) {
+      if (MavenConsumerPomUtil.isConsumerPomResolutionApplicable(projectsManager.getProject())) {
+        return projectsManager.findSingleProjectInReactor(id);
+      }  else {
+        return projectsManager.findProject(id);
+      }
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
@@ -268,8 +278,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public String getContextName() {
-      return "Project";
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return MavenDomBundle.message("project.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
     @Override
@@ -286,8 +296,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public String getContextName() {
-      return "Dependency";
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return MavenDomBundle.message("dependency.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
     @Override
@@ -349,8 +359,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public String getContextName() {
-      return myPlugin ? "Plugin" : "Build Extension";
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return myPlugin ? MavenDomBundle.message("plugin.0.not.found", MavenArtifactCoordinatesHelper.getId(context))
+                      : MavenDomBundle.message("build.extension.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
     @Override

@@ -17,12 +17,13 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.BeanConfigurable;
 
 public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public JavaCodeFoldingOptionsProvider() {
-    super(JavaCodeFoldingSettings.getInstance(), "Java");
+    super(JavaCodeFoldingSettings.getInstance(), JavaFileType.INSTANCE.getDescription());
     JavaCodeFoldingSettings settings = getInstance();
     
     checkBox(JavaBundle.message("checkbox.collapse.one.line.methods"), settings::isCollapseOneLineMethods, settings::setCollapseOneLineMethods);

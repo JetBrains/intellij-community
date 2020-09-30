@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,11 +58,11 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return e.getData(InspectionResultsView.DATA_KEY);
   }
 
-  protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, @NotNull InspectionToolWrapper toolWrapper) {
     this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
-  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
     super(text, null, icon);
     myToolWrapper = toolWrapper;
     if (keyStroke != null) {

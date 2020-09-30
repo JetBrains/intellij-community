@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -10,5 +11,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TraceExpressionBuilder {
   @NotNull
-  String createTraceExpression(@NotNull StreamChain chain);
+  @NonNls String createTraceExpression(@NotNull StreamChain chain);
 }

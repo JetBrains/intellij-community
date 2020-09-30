@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -84,7 +85,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       }
     }
 
-    private void findDuplicates(PsiExpression[] expressions, String message) {
+    private void findDuplicates(PsiExpression[] expressions, @InspectionMessage String message) {
       Map<Object, List<PsiExpression>> groups = StreamEx.of(expressions).mapToEntry(OverwrittenKeyVisitor::getKey, Function.identity())
         .nonNullKeys().grouping();
       registerDuplicates(message, groups);
@@ -100,7 +101,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     private PsiExpressionStatement processCallSequence(PsiMethodCallExpression call,
                                                        PsiExpressionStatement statement,
                                                        CallMatcher myMatcher,
-                                                       String message) {
+                                                       @InspectionMessage String message) {
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
       Object key = getKey(arg);
       if (key == null) return statement;
@@ -131,7 +132,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       return statement;
     }
 
-    private void registerDuplicates(String message, Map<Object, List<PsiExpression>> map) {
+    private void registerDuplicates(@InspectionMessage String message, Map<Object, List<PsiExpression>> map) {
       for (List<PsiExpression> args : map.values()) {
         if (args.size() < 2) continue;
         for (int i = 0; i < args.size(); i++) {

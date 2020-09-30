@@ -19,9 +19,10 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class ToggleMatchCase extends EditorHeaderToggleAction implements Embeddable {
+public class ToggleMatchCase extends EditorHeaderToggleAction implements Embeddable, TooltipDescriptionProvider {
   public ToggleMatchCase() {
     super(FindBundle.message("find.case.sensitive"),
           AllIcons.Actions.MatchCase,

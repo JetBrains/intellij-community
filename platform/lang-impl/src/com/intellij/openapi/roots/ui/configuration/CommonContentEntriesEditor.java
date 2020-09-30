@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -486,7 +487,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   }
 
-  public static String getName() {
+  public static @NlsContexts.ConfigurableName String getName() {
     return ProjectBundle.message("module.paths.title");
   }
 }

@@ -51,6 +51,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.java.decompiler",
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
+    "intellij.completionMlRanking",
+    "intellij.completionMlRankingModels",
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
@@ -84,8 +86,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
     "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
-    "plugins/Groovy/lib/groovy_rt.jar"                          : "1.6",
-    "plugins/Groovy/lib/groovy-rt-constants.jar"                : "1.6",
+    "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
+    "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
     "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"              : "11",
     "plugins/junit/lib/junit-rt.jar"                            : "1.6",
@@ -114,8 +116,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar",
              ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt",
-              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8",
-              "intellij.java.jps.javacRefScanner8"])
+              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
 
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
 

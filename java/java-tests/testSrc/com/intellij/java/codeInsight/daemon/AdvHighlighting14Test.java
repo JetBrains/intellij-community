@@ -168,13 +168,13 @@ public class AdvHighlighting14Test extends LightJavaCodeInsightFixtureTestCase {
   private void doTest(String filePath, String dir) throws Exception {
     File basePath = new File(getTestDataPath());
     File currentDir = new File(basePath, dir);
-    Files.walkFileTree(currentDir.toPath(), new SimpleFileVisitor<Path>(){
+    Files.walkFileTree(currentDir.toPath(), new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         File additionalFile = file.toFile();
         String additionalPath = "/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(basePath, additionalFile));
         if (!filePath.equals(additionalPath)) {
-          myFixture.addFileToProject("/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(currentDir, additionalFile)), 
+          myFixture.addFileToProject("/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(currentDir, additionalFile)),
                                      FileUtil.loadFile(additionalFile));
         }
         return super.visitFile(file, attrs);

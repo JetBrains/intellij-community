@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.openapi.util.Pair;
@@ -7,11 +7,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -29,7 +30,7 @@ public class ClashingGettersInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("getter.0.clashes.with.getter.1", args);
+    return GroovyBundle.message("getter.0.clashes.with.getter.1", args);
   }
 
   @NotNull
@@ -67,26 +68,26 @@ public class ClashingGettersInspection extends BaseInspection {
     };
   }
 
-  private static Pair<PsiElement, String> getGetterDescription(PsiMethod getter) {
+  private static Pair<PsiElement, @Nls String> getGetterDescription(PsiMethod getter) {
     final String name = getter.getName();
     if (getter instanceof GrGdkMethod) {
-      return new Pair<>(null, "GDK method '" + name + "'");
+      return new Pair<>(null, GroovyBundle.message("getter.kind.gdk.method.0", name));
     }
     else if (getter instanceof GrReflectedMethod) {
       getter = ((GrReflectedMethod)getter).getBaseMethod();
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "method " + info);
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), GroovyBundle.message("getter.kind.method.0", info));
     }
     else if (getter instanceof GrMethod) {
-      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "getter '" + name + "'");
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), GroovyBundle.message("getter.kind.getter.0", name));
     }
     else {
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return new Pair<>(null, "method " + info);
+      return new Pair<>(null, GroovyBundle.message("getter.kind.method.0", info));
     }
   }
 }

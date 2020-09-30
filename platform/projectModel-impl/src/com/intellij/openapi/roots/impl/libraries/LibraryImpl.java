@@ -221,6 +221,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public void setProperties(LibraryProperties properties) {
     LOG.assertTrue(isWritable());
+    if (myKind == null) {
+      if (properties != null && !(properties instanceof DummyLibraryProperties)) {
+        LOG.error("Cannot set properties for library with default type");
+      }
+      return;
+    }
     myProperties = properties;
   }
 
@@ -325,7 +331,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
       if (!rootChild.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
         VirtualFilePointerContainer roots = getOrCreateContainer(rootType);
-        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, false);
+        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, true);
       }
     }
     Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);
@@ -582,6 +588,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer fp = container == null ? null : container.findByUrl(url);
     return fp != null && fp.isValid();
+  }
+
+  @Override
+  public boolean hasSameContent(@NotNull Library library) {
+    return this.equals(library);
   }
 
   @Override

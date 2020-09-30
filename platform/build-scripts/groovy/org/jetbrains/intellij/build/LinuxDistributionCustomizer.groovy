@@ -26,9 +26,14 @@ abstract class LinuxDistributionCustomizer {
   boolean includeX86Files = true
 
   /**
-   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced
+   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced.
    */
   boolean buildTarGzWithoutBundledJre = true
+
+  /**
+   * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
+   */
+  boolean buildOnlyBareTarGz = false
 
   /**
    * Set both properties if a .snap package should be produced.

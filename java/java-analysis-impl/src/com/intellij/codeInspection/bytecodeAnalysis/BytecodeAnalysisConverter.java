@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
@@ -18,7 +18,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisConverter {
+public final class BytecodeAnalysisConverter {
 
   /**
    * Creates a stable non-negated EKey for given PsiMethod and direction

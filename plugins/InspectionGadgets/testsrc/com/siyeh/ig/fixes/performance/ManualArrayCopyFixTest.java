@@ -17,4 +17,7 @@ public class ManualArrayCopyFixTest extends IGQuickFixesTestCase {
   public void testSimple() { doTest(); }
   public void testDecrement() { doTest(); }
   public void testLengthSmallerThanOffset() { doTest(); }
+  public void testInitializerContainsSubtraction() {
+    doTest();
+  }
 }

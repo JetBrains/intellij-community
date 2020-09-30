@@ -168,8 +168,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
   }
 
   private static class SuspiciousToArrayCallFix extends InspectionGadgetsFix {
-    private final String myReplacement;
-    private final String myPresented;
+    @NonNls private final String myReplacement;
+    @NonNls private final String myPresented;
     
     SuspiciousToArrayCallFix(PsiType wantedType, boolean isFunction) {
       if (isFunction) {

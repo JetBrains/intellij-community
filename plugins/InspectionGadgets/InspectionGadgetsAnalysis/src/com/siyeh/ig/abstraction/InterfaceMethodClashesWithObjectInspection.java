@@ -23,6 +23,7 @@ import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -58,7 +59,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
       if (aClass == null || !aClass.isInterface()) {
         return;
       }
-      final String name = method.getName();
+      @NonNls final String name = method.getName();
       if ("clone".equals(name) && !(method.getReturnType() instanceof PsiClassType)) {
         registerMethodError(method);
       }

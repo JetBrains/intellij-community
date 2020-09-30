@@ -42,6 +42,13 @@ public interface FileBasedIndexInfrastructureExtension {
     boolean processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
 
     /**
+     * Tries to index file given content-dependent index "scanning files to index" in progress before its content will be loaded.
+     *
+     * @return true if file was indexed by an extension.
+     */
+    boolean tryIndexFileWithoutContent(@NotNull IndexedFile file, int inputId, @NotNull ID<?, ?> indexId);
+
+    /**
      * Whether the given file has index provided by this extension.
      */
     @ApiStatus.Experimental

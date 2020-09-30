@@ -42,6 +42,6 @@ public class SliceBackwardAction extends CodeInsightAction {
       return false;
     }
     PsiElement expression = getHandler().getExpressionAtCaret(editor, file);
-    return expression == null || expression.isPhysical();
+    return expression != null;
   }
 }

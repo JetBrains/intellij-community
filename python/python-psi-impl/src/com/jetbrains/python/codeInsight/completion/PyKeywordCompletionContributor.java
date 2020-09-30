@@ -775,7 +775,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   }
 
-  private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final String[] myKeywords;
     private final TailType myTailType;
     private final InsertHandler<PythonLookupElement> myInsertHandler;

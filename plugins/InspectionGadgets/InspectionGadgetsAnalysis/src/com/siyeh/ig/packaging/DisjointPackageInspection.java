@@ -26,6 +26,7 @@ import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
@@ -46,12 +46,7 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
       return null;
     }
     final RefPackage refPackage = (RefPackage)refEntity;
-    final Set<RefClass> childClasses = refPackage
-      .getChildren()
-      .stream()
-      .filter(child -> child instanceof RefClass)
-      .map(child -> (RefClass)child)
-      .collect(Collectors.toSet());
+    final Set<RefClass> childClasses = StreamEx.of(refPackage.getChildren()).select(RefClass.class).toSet();
     if (childClasses.isEmpty()) {
       return null;
     }

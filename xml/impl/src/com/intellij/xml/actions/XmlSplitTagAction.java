@@ -43,13 +43,13 @@ public class XmlSplitTagAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return XmlBundle.message("xml.split.tag.intention.action");
+    return XmlBundle.message("xml.intention.split.tag.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("xml.split.tag.intention.action");
+    return XmlBundle.message("xml.intention.split.tag.family");
   }
 
   @Override

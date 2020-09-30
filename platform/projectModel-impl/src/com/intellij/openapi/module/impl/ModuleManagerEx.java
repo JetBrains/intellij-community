@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class ModuleManagerEx extends ModuleManager {
@@ -18,5 +20,9 @@ public abstract class ModuleManagerEx extends ModuleManager {
 
   public static ModuleManagerEx getInstanceEx(@NotNull Project project) {
     return (ModuleManagerEx)getInstance(project);
+  }
+
+  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad,
+                                                @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 }

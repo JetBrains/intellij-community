@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.intention.impl.CreateSwitchIntention;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -83,11 +83,11 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
 
   private void doTest() {
     final String name = getTestName(true);
-    CodeInsightTestUtil.doIntentionTest(myFixture, CreateSwitchIntention.TEXT, name + ".java", name + "_after.java");
+    CodeInsightTestUtil.doIntentionTest(myFixture, JavaBundle.message("intention.create.switch.statement"), name + ".java", name + "_after.java");
   }
 
   private void doTestNotAvailable() {
     myFixture.configureByFile(getTestName(true) + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(CreateSwitchIntention.TEXT));
+    assertEmpty(myFixture.filterAvailableIntentions(JavaBundle.message("intention.create.switch.statement")));
   }
 }

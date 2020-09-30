@@ -19,7 +19,7 @@ public final class ActionUpdateEdtExecutor {
    * Makes sense to be used in background read actions running with a progress indicator that's canceled when a write action is about to occur.
    * @see com.intellij.openapi.application.ReadAction#nonBlocking(Runnable)
    */
-  public static <T> T computeOnEdt(@NotNull Supplier<T> supplier) {
+  public static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();

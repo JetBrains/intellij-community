@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -50,7 +50,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       group.add(action);
     }
     group.addSeparator();
-    group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.severities.text")) {
+    group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.severities.action")) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
@@ -89,7 +89,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     templatePresentation.setIcon(HighlightDisplayLevel.find(severity).getIcon());
   }
 
-  private class HighlightSeverityAction extends DumbAwareAction {
+  private final class HighlightSeverityAction extends DumbAwareAction {
     private final HighlightSeverity mySeverity;
 
     public HighlightSeverity getSeverity() {

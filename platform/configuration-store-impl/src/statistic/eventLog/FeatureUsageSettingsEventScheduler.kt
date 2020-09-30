@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-private val LOG = logger<FeatureUsageSettingsEventScheduler>()
+
 
 private const val PERIOD_DELAY = 24 * 60
 private const val INITIAL_DELAY = PERIOD_DELAY
@@ -34,24 +34,29 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
     AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay({ logConfigStateEvents() }, INITIAL_DELAY.toLong(), PERIOD_DELAY.toLong(), TimeUnit.MINUTES)
   }
 
-  override fun reportNow() {
-    logConfigStateEvents()
+  override fun reportNow(): CompletableFuture<Void> {
+    return logConfigStateEvents()
+  }
+
+  companion object {
+    val LOG = logger<FeatureUsageSettingsEventScheduler>()
   }
 }
 
-private fun logConfigStateEvents() {
+private fun logConfigStateEvents(): CompletableFuture<Void> {
   if (!FeatureUsageLogger.isEnabled()) {
-    return
+    return CompletableFuture.completedFuture(null)
   }
 
-  logInitializedProjectComponents(ApplicationManager.getApplication())
+  val applicationCompletableFuture = logInitializedProjectComponents(ApplicationManager.getApplication())
 
   val projectManager = ProjectManagerEx.getInstanceEx()
   val projects = ArrayDeque(projectManager.openProjects.toList())
   if (projectManager.isDefaultProjectInitialized) {
     projects.addFirst(projectManager.defaultProject)
   }
-  logProjectInitializedComponentsAndContinue(projects)
+  val projectCompletableFuture = logProjectInitializedComponentsAndContinue(projects)
+  return CompletableFuture.allOf(applicationCompletableFuture, projectCompletableFuture);
 }
 
 private fun logProjectInitializedComponentsAndContinue(projects: ArrayDeque<Project>): CompletableFuture<Void?> {
@@ -96,7 +101,7 @@ private fun logInitializedComponent(project: Project?, info: ComponentInfo, name
       component.state?.let { FeatureUsageSettingsEvents.logConfigurationState(name, it, project) }
     }
     catch (e: Exception) {
-      LOG.warn("Error during configuration recording", e)
+      FeatureUsageSettingsEventScheduler.LOG.warn("Error during configuration recording", e)
     }
   }, EDT_EXECUTOR)
 }

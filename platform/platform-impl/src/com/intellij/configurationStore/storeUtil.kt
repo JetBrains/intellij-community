@@ -21,9 +21,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
@@ -51,7 +52,7 @@ class StoreUtil private constructor() {
      * Save all unsaved documents and project settings. Must be called from EDT.
      * Use with care because it blocks EDT. Any new usage should be reviewed.
      */
-    @CalledInAwt
+    @RequiresEdt
     @JvmStatic
     fun saveDocumentsAndProjectSettings(project: Project) {
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -64,7 +65,7 @@ class StoreUtil private constructor() {
      *
      * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
      */
-    @CalledInAwt
+    @RequiresEdt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
       runInAutoSaveDisabledMode {
@@ -86,6 +87,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
+  }
+  catch (e: CancellationException) {
+    return false
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)

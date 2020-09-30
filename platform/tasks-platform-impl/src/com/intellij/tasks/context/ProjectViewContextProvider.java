@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ final class ProjectViewContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Project view state";
+    return TaskBundle.message("project.view.state");
   }
 
   @Override

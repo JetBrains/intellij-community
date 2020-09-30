@@ -51,6 +51,12 @@ public class SimpleReferringObject implements ReferringObject {
 
   @NotNull
   @Override
+  public ObjectReference getReference() {
+    return myReference;
+  }
+
+  @NotNull
+  @Override
   public Function<XValueNode, XValueNode> getNodeCustomizer() {
     return Function.identity();
   }

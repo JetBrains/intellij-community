@@ -20,6 +20,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -86,7 +87,16 @@ public class AssignableFromFilter implements ElementFilter{
       return false;
     }
 
-    return expectedType.isAssignableFrom(typeByElement);
+    try {
+      return expectedType.isAssignableFrom(typeByElement);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.getRootCause(e) instanceof PsiInvalidElementAccessException) {
+        PsiUtil.ensureValidType(expectedType);
+        throw new RuntimeException("Invalid type of " + element.getClass(), e);
+      }
+      throw e;
+    }
   }
 
   private static boolean allowBoxing(PsiElement place) {

@@ -262,11 +262,11 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     myListeners.add(listener);
   }
 
-  private static void sendSuccessEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<Result> resultConsumer) {
+  private static void sendSuccessEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<? super Result> resultConsumer) {
     resultConsumer.accept(new MyResult(context, Collections.emptyMap(), false, false));
   }
 
-  private static void sendAbortedEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<Result> resultConsumer) {
+  private static void sendAbortedEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<? super Result> resultConsumer) {
     resultConsumer.accept(new MyResult(context, Collections.emptyMap(), true, false));
   }
 
@@ -309,7 +309,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private class ResultConsumer implements Consumer<Result> {
+  private final class ResultConsumer implements Consumer<Result> {
     private final @NotNull AsyncPromise<Result> myPromise;
 
     private ResultConsumer(@NotNull AsyncPromise<Result> promise) {
@@ -353,7 +353,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static class ProjectTaskResultsAggregator {
+  private static final class ProjectTaskResultsAggregator {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
@@ -408,7 +408,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static class MyResult implements Result {
+  private static final class MyResult implements Result {
     private final ProjectTaskContext myContext;
     private final boolean myAborted;
     private final boolean myErrors;
@@ -588,7 +588,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
+  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
     private final AsyncPromise<Result> myPromise;
     private final ProjectTaskContext myContext;
 

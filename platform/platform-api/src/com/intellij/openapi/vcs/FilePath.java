@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,7 @@ public interface FilePath {
   /**
    * @return the file name (without directory component)
    */
+  @NlsSafe
   @NotNull
   String getName();
 
@@ -60,6 +62,7 @@ public interface FilePath {
    * @return the path to the file in the format suitable for displaying in the UI,
    * e.g. for local file it is the path to this file with system separators.
    */
+  @NlsSafe
   @NotNull
   String getPresentableUrl();
 
@@ -106,6 +109,7 @@ public interface FilePath {
   /**
    * @return the path to the file represented by this file path in the system-independent format.
    */
+  @NlsSafe
   @NotNull
   @SystemIndependent
   String getPath();

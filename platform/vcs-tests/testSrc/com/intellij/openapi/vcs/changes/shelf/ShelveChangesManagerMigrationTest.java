@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getInstance;
 
 public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
-
   public void testMigrateInfo() throws Exception {
     doTest();
   }
@@ -72,7 +72,7 @@ public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
   private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager)
     throws IOException {
     for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
-      File newPatchDir = new File(shelveChangesManager.getShelfResourcesDirectory(), list.getName());
+      Path newPatchDir = shelveChangesManager.getShelfResourcesDirectory().toPath().resolve(list.getName());
       ShelvedChangeList migrated = shelveChangesManager.createChangelistCopyWithChanges(list, newPatchDir);
       shelveChangesManager.saveListAsScheme(migrated);
       shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);

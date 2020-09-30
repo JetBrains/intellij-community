@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -59,7 +59,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.inapplicable;
 
-public class JavaCompletionUtil {
+public final class JavaCompletionUtil {
   public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
   private static final Logger LOG = Logger.getInstance(JavaCompletionUtil.class);
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
@@ -235,7 +235,7 @@ public class JavaCompletionUtil {
                                                  PsiJavaCodeReferenceElement javaReference,
                                                  ElementFilter elementFilter,
                                                  JavaCompletionProcessor.Options options,
-                                                 Condition<String> nameCondition,
+                                                 Condition<? super String> nameCondition,
                                                  CompletionParameters parameters) {
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
@@ -272,7 +272,7 @@ public class JavaCompletionUtil {
                                                                   PsiJavaCodeReferenceElement javaReference,
                                                                   ElementFilter elementFilter,
                                                                   JavaCompletionProcessor.Options options,
-                                                                  Condition<String> nameCondition,
+                                                                  Condition<? super String> nameCondition,
                                                                   CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<>();
 
@@ -409,7 +409,7 @@ public class JavaCompletionUtil {
 
   @NotNull
   private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
-    return new LookupElementDecorator<LookupElement>(item) {
+    return new LookupElementDecorator<>(item) {
       @Override
       public void handleInsert(@NotNull InsertionContext context) {
         final Document document = context.getEditor().getDocument();
@@ -466,7 +466,7 @@ public class JavaCompletionUtil {
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
     if (shouldMarkRed(object, place)) {
-      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
@@ -475,7 +475,7 @@ public class JavaCompletionUtil {
       }), -1);
     }
     if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+      LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
@@ -643,7 +643,7 @@ public class JavaCompletionUtil {
         }
       }
     }
-    
+
     assert document != null;
     document.replaceString(startOffset, endOffset, name);
 
@@ -773,8 +773,8 @@ public class JavaCompletionUtil {
       ThreeState hasParameters = hasParams;
       boolean spaceBetweenParentheses = hasParams == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||
                                         hasParams == ThreeState.UNSURE && styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES;
-      new ParenthesesInsertHandler<LookupElement>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
-                                                  needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
+      new ParenthesesInsertHandler<>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
+                                     needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
         @Override
         protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
           return hasParameters != ThreeState.NO;

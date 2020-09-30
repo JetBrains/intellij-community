@@ -6,12 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -20,22 +15,10 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +26,25 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
  * @see #applyTo(JTree)
  * @see #applyTo(JTree, Object)
  */
-public class TreeState implements JDOMExternalizable {
+public final class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
@@ -62,7 +57,7 @@ public class TreeState implements JDOMExternalizable {
   private enum Match {OBJECT, ID_TYPE}
 
   @Tag("item")
-  static class PathElement {
+  static final class PathElement {
     @Attribute("name")
     public String id;
     @Attribute("type")
@@ -70,8 +65,8 @@ public class TreeState implements JDOMExternalizable {
     @Attribute("user")
     public String userStr;
 
-    Object userObject;
-    final int index;
+    transient Object userObject;
+    transient final int index;
 
     @SuppressWarnings("unused")
     PathElement() {
@@ -98,7 +93,9 @@ public class TreeState implements JDOMExternalizable {
 
     private Match getMatchTo(Object object) {
       Object userObject = TreeUtil.getUserObject(object);
-      if (this.userObject != null && this.userObject.equals(userObject)) return Match.OBJECT;
+      if (this.userObject != null && this.userObject.equals(userObject)) {
+        return Match.OBJECT;
+      }
       return Objects.equals(id, calcId(userObject)) &&
              Objects.equals(type, calcType(userObject)) ? Match.ID_TYPE : null;
     }
@@ -130,7 +127,7 @@ public class TreeState implements JDOMExternalizable {
     readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(Element root, List<? super List<PathElement>> list, String name) throws InvalidDataException {
+  private static void readExternal(@NotNull Element root, List<List<PathElement>> list, @NotNull String name) {
     list.clear();
     for (Element element : root.getChildren(name)) {
       for (Element child : element.getChildren(PATH_TAG)) {
@@ -171,12 +168,12 @@ public class TreeState implements JDOMExternalizable {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     writeExternal(element, myExpandedPaths, EXPAND_TAG);
     writeExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void writeExternal(Element element, List<? extends List<PathElement>> list, String name) throws WriteExternalException {
+  private static void writeExternal(Element element, List<? extends List<PathElement>> list, String name) {
     Element root = new Element(name);
     for (List<PathElement> path : list) {
       Element e = XmlSerializer.serialize(path.toArray());
@@ -186,12 +183,14 @@ public class TreeState implements JDOMExternalizable {
     element.addContent(root);
   }
 
-  @NotNull
-  private static List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
-    return JBIterable.from(paths)
-      .filter(o -> o.getPathCount() > 1 || tree.isRootVisible())
-      .map(o -> createPath(tree.getModel(), o))
-      .toList();
+  private static @NotNull List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+    List<List<PathElement>> list = new ArrayList<>();
+    for (TreePath o : paths) {
+      if (o.getPathCount() > 1 || tree.isRootVisible()) {
+        list.add(createPath(tree.getModel(), o));
+      }
+    }
+    return list;
   }
 
   @NotNull
@@ -320,7 +319,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static void expandImpl(int positionInPath,
-                                 List<? extends PathElement> path,
+                                 List<PathElement> path,
                                  TreePath treePath,
                                  TreeFacade tree,
                                  ProgressIndicator indicator) {
@@ -390,8 +389,7 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  static class BuilderFacade extends TreeFacade {
-
+  static final class BuilderFacade extends TreeFacade {
     private final AbstractTreeBuilder myBuilder;
 
     BuilderFacade(AbstractTreeBuilder builder) {
@@ -411,8 +409,10 @@ public class TreeState implements JDOMExternalizable {
 
     @Override
     public ActionCallback expand(TreePath treePath) {
-      NodeDescriptor desc = TreeUtil.getLastUserObject(NodeDescriptor.class, treePath);
-      if (desc == null) return ActionCallback.REJECTED;
+      NodeDescriptor<?> desc = TreeUtil.getLastUserObject(NodeDescriptor.class, treePath);
+      if (desc == null) {
+        return ActionCallback.REJECTED;
+      }
       Object element = myBuilder.getTreeStructureElement(desc);
       ActionCallback result = new ActionCallback();
       myBuilder.expand(element, result.createSetDoneRunnable());

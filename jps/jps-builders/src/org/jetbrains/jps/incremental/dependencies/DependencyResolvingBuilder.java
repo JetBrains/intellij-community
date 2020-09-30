@@ -3,19 +3,24 @@ package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -36,15 +41,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
- * @author Eugene Zhuravlev
+ * Downloads missing Maven repository libraries on which a module depends. IDE should download them automatically when the project is opened,
+ * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
+ * if build is triggered before IDE downloads all required dependencies.
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
-  private static final String NAME = "Maven Dependency Resolver";
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
@@ -62,7 +68,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
 
   @Override
   public @NotNull String getPresentableName() {
-    return NAME;
+    return getBuilderName();
   }
 
   @Override
@@ -95,14 +101,15 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   static @NotNull ExitCode reportError(CompileContext context, String placePresentableName, Exception error) {
-    final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(placePresentableName);
+    @Nls StringBuilder builder = new StringBuilder().append(JpsBuildBundle.message("build.message.error.resolving.dependencies.for",
+                                                                                   placePresentableName));
     Throwable th = error;
     final Set<Throwable> processed = new HashSet<>();
     final Set<String> detailsMessage = new HashSet<>();
     while (th != null && processed.add(th)) {
       String details = th.getMessage();
       if (th instanceof UnknownHostException) {
-        details = "Unknown host: " + details; // hack for UnknownHostException
+        details = JpsBuildBundle.message("build.message.unknown.host.0", details); // hack for UnknownHostException
       }
       if (details != null && detailsMessage.add(details)) {
         builder.append(":\n").append(details);
@@ -111,58 +118,91 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
     final String msg = builder.toString();
     LOG.info(msg, error);
-    context.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, msg));
+    context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, msg));
     return ExitCode.ABORT;
   }
 
+  @SuppressWarnings("RedundantThrows")
   static void resolveMissingDependencies(CompileContext context, Collection<? extends JpsModule> modules,
                                          BuildTargetChunk currentTargets) throws Exception {
     Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
       final ArtifactRepositoryManager repoManager = getRepositoryManager(context);
-      for (JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib : libs) {
-        final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
-        final ResourceGuard guard = ResourceGuard.get(context, descriptor);
-        if (guard.requestProcessing(context.getCancelStatus())) {
-          try {
-            final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
-            for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
-              if (it.next().exists()) {
-                it.remove(); // leaving only non-existing stuff requiring synchronization
-              }
-            }
-            if (!required.isEmpty()) {
-              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library...", currentTargets));
-              LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
-              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
-                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
-                                                                              descriptor.getExcludedDependencies());
-              if (!resolved.isEmpty()) {
-                syncPaths(required, resolved);
-              }
-              else {
-                LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
-              }
-            }
-          }
-          catch (TransferCancelledException e) {
-            context.checkCanceled();
-          }
-          finally {
-            guard.finish();
+      resolveMissingDependencies(libs, lib -> {
+        try {
+          resolveMissingDependency(context, currentTargets, lib, repoManager);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
+  }
+
+  private static void resolveMissingDependencies(
+    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
+    Consumer<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
+  ) throws Exception {
+    String key = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
+    int parallelism = SystemProperties.getIntProperty(key, 1);
+    if (parallelism < 2 || libs.size() < 2) {
+      libs.forEach(resolveAction);
+    }
+    else {
+      ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
+      try {
+        List<Future<?>> futures = ContainerUtil.map(libs, lib -> executorService.submit(() -> resolveAction.accept(lib)));
+        for (Future<?> future : futures) future.get();
+      }
+      finally {
+        executorService.shutdown();
+      }
+    }
+  }
+
+  private static void resolveMissingDependency(CompileContext context, BuildTargetChunk currentTargets,
+                                               JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib,
+                                               ArtifactRepositoryManager repoManager) throws Exception {
+    final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
+    final ResourceGuard guard = ResourceGuard.get(context, descriptor);
+    if (guard.requestProcessing(context.getCancelStatus())) {
+      try {
+        final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
+        for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
+          if (it.next().exists()) {
+            it.remove(); // leaving only non-existing stuff requiring synchronization
           }
         }
+        if (!required.isEmpty()) {
+          context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
+          LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
+          final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
+                                                                          descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
+                                                                          descriptor.getExcludedDependencies());
+          if (!resolved.isEmpty()) {
+            syncPaths(required, resolved);
+          }
+          else {
+            LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
+          }
+        }
+      }
+      catch (TransferCancelledException e) {
+        context.checkCanceled();
+      }
+      finally {
+        guard.finish();
       }
     }
   }
 
   private static void syncPaths(final Collection<? extends File> required, @NotNull Collection<? extends File> resolved) throws Exception {
-    final THashSet<File> libFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> libFiles = FileCollectionFactory.createCanonicalFileSet();
     libFiles.addAll(required);
     libFiles.removeAll(resolved);
 
     if (!libFiles.isEmpty()) {
-      final Map<String, File> nameToArtifactMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Map<String, File> nameToArtifactMap = CollectionFactory.createFilePathMap();
       for (File f : resolved) {
         final File prev = nameToArtifactMap.put(f.getName(), f);
         if (prev != null) {
@@ -250,7 +290,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       }
       manager = new ArtifactRepositoryManager(getLocalRepoDir(context), repositories, new ProgressConsumer() {
         @Override
-        public void consume(String message) {
+        public void consume(@NlsSafe String message) {
           context.processMessage(new ProgressMessage(message));
         }
 
@@ -273,5 +313,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
     final String root = System.getProperty("user.home", null);
     return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
+  }
+
+  @NotNull
+  private static @Nls String getBuilderName() {
+    return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 }

@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
+
+import java.util.function.Predicate;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.parseComparisonMessage;
 
@@ -62,7 +63,7 @@ public class AfterTestEvent extends AbstractTestEvent {
         if ("comparison".equals(failureType)) {
           String actualText = decode(eventXml.getEventTestResultActual());
           String expectedText = decode(eventXml.getEventTestResultExpected());
-          final Condition<String> emptyString = StringUtil::isEmpty;
+          final Predicate<String> emptyString = StringUtil::isEmpty;
           String filePath = ObjectUtils.nullizeByCondition(decode(eventXml.getEventTestResultFilePath()), emptyString);
           String actualFilePath = ObjectUtils.nullizeByCondition(
             decode(eventXml.getEventTestResultActualFilePath()), emptyString);

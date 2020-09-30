@@ -1,0 +1,167 @@
+package pkg;
+
+public class TestInvertedFloatComparison {
+   public boolean less(double var1, double var3) {
+      return var1 < var3;// 6
+   }
+
+   public boolean less(int var1, int var2) {
+      return var1 < var2;// 10
+   }
+
+   public boolean notLess(double var1, double var3) {
+      return !(var1 < var3);// 14
+   }
+
+   public boolean notLess(int var1, int var2) {
+      return var1 >= var2;// 18
+   }
+
+   public boolean greater(double var1, double var3) {
+      return var1 > var3;// 22
+   }
+
+   public boolean greater(int var1, int var2) {
+      return var1 > var2;// 26
+   }
+
+   public boolean notGreater(double var1, double var3) {
+      return !(var1 > var3);// 30
+   }
+
+   public boolean notGreater(int var1, int var2) {
+      return var1 <= var2;// 34
+   }
+
+   public boolean lessEqual(double var1, double var3) {
+      return var1 <= var3;// 38
+   }
+
+   public boolean lessEqual(int var1, int var2) {
+      return var1 <= var2;// 42
+   }
+
+   public boolean notLessEqual(double var1, double var3) {
+      return !(var1 <= var3);// 46
+   }
+
+   public boolean notLessEqual(int var1, int var2) {
+      return var1 > var2;// 50
+   }
+
+   public boolean greaterEqual(double var1, double var3) {
+      return var1 >= var3;// 54
+   }
+
+   public boolean greaterEqual(int var1, int var2) {
+      return var1 >= var2;// 58
+   }
+
+   public boolean notGreaterEqual(double var1, double var3) {
+      return !(var1 >= var3);// 62
+   }
+
+   public boolean notGreaterEqual(int var1, int var2) {
+      return var1 < var2;// 66
+   }
+}
+
+class 'pkg/TestInvertedFloatComparison' {
+   method 'less (DD)Z' {
+      2      4
+      b      4
+   }
+
+   method 'less (II)Z' {
+      2      8
+      a      8
+   }
+
+   method 'notLess (DD)Z' {
+      2      12
+      b      12
+   }
+
+   method 'notLess (II)Z' {
+      2      16
+      a      16
+   }
+
+   method 'greater (DD)Z' {
+      2      20
+      b      20
+   }
+
+   method 'greater (II)Z' {
+      2      24
+      a      24
+   }
+
+   method 'notGreater (DD)Z' {
+      2      28
+      b      28
+   }
+
+   method 'notGreater (II)Z' {
+      2      32
+      a      32
+   }
+
+   method 'lessEqual (DD)Z' {
+      2      36
+      b      36
+   }
+
+   method 'lessEqual (II)Z' {
+      2      40
+      a      40
+   }
+
+   method 'notLessEqual (DD)Z' {
+      2      44
+      b      44
+   }
+
+   method 'notLessEqual (II)Z' {
+      2      48
+      a      48
+   }
+
+   method 'greaterEqual (DD)Z' {
+      2      52
+      b      52
+   }
+
+   method 'greaterEqual (II)Z' {
+      2      56
+      a      56
+   }
+
+   method 'notGreaterEqual (DD)Z' {
+      2      60
+      b      60
+   }
+
+   method 'notGreaterEqual (II)Z' {
+      2      64
+      a      64
+   }
+}
+
+Lines mapping:
+6 <-> 5
+10 <-> 9
+14 <-> 13
+18 <-> 17
+22 <-> 21
+26 <-> 25
+30 <-> 29
+34 <-> 33
+38 <-> 37
+42 <-> 41
+46 <-> 45
+50 <-> 49
+54 <-> 53
+58 <-> 57
+62 <-> 61
+66 <-> 65

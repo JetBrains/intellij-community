@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
@@ -99,6 +100,7 @@ class MissingRecentApiUsageProcessor(
     }
   }
 
+  @InspectionMessage
   private fun buildDescription(
     apiElement: PsiModifierListOwner,
     availableSince: BuildNumber,

@@ -21,7 +21,7 @@ public final class FileFinder {
         public boolean visitFile(@NotNull VirtualFile f) {
           try {
             indicator.checkCanceled();
-            indicator.setText2(f.getPath());
+            indicator.setText2(f.getPresentableUrl());
 
             if (f.isDirectory()) {
               if (lookForNested) {

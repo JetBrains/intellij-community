@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
@@ -44,8 +45,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -550,8 +554,11 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
                 new VFileDeleteEvent(this, testTxt, false));
   }
 
-  @NotNull
-  private static VirtualFile find(File file) {
+  private static @NotNull VirtualFile find(@NotNull Path file) {
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file));
+  }
+
+  private static @NotNull VirtualFile find(@NotNull File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -681,16 +688,15 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
     IoTestUtil.assumeWindows();
-    File temp = createTempDir("", false);
-    File file = new File(temp, "rename.txt");
-    FileUtil.createParentDirs(file);
-    FileUtil.writeToFile(file, "x");
+    Path temp = getTempDir().newPath();
+    Path file = temp.resolve("rename.txt");
+    PathKt.write(file, "x");
     VirtualFile vfile = find(file);
-    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
-    assertFalse(vtemp.allChildrenLoaded());
-    VfsUtil.markDirty(true, false, vtemp);
-    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
-    VirtualFile[] newChildren = vtemp.getChildren();
+    VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vTemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vTemp);
+    Files.move(file, temp.resolveSibling(file.getFileName().toString().toUpperCase()));
+    VirtualFile[] newChildren = vTemp.getChildren();
     assertOneElement(newChildren);
   }
 
@@ -733,7 +739,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
     for (int i=0; i<10; i++) {
-      File temp = createTempDir("", false);
+      File temp = getTempDir().createDir().toFile();
       File file = new File(temp, "file.txt");
       FileUtil.createParentDirs(file);
       FileUtil.writeToFile(file, "x");
@@ -747,7 +753,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       List<? extends ChildInfo> children2 = f2.get();
       int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
       int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
-      
+
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
       for (int i1 = 0; i1 < nameIds1.length; i1++) {
@@ -765,7 +771,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   public void testMustNotDuplicateIdsOnRenameWithCaseChanged() throws IOException {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    File temp = createTempDir("", false);
+    File temp = getTempDir().createDir().toFile();
     File file = new File(temp, "file.txt");
     FileUtil.createParentDirs(file);
     FileUtil.writeToFile(file, "x");
@@ -803,12 +809,12 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   }
 
   public void testReadOnlyFsCachesLength() throws IOException {
-    String text = "<virtualFileSystem implementationClass=\"" + JarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
-    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, JarFileSystemTestWrapper.class.getClassLoader());
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
 
     try {
-      File testDir = createTempDir("zip-test", false);
-      File generationDir = createTempDir("generation", false);
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
 
       String jarName = "test.jar";
       String entryName = "Some.java";
@@ -818,15 +824,12 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       String content2 = "class Some { void mmm() {} }";
 
       File zipFile = createZipWithEntry(jarName, entryName, content0, testDir, generationDir);
-      assertTrue(zipFile.exists());
-
-      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
 
       String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
 
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       file.refresh(false, false);
-      JarFileSystemTestWrapper fs = (JarFileSystemTestWrapper)file.getFileSystem();
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
 
       assertTrue(file.isValid());
       assertEquals(content0, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
@@ -864,7 +867,46 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     }
   }
 
-  public static class JarFileSystemTestWrapper extends JarFileSystemImpl {
+  public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+
+    try {
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
+
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+      String entryContent = "class Some {}";
+
+      File zipFile = createZipWithEntry(jarName, entryName, entryContent, testDir, generationDir);
+
+      String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
+      int attributeCallCount = fs.getAttributeCallCount();
+
+      try (InputStream stream = file.getInputStream()) {
+        // just read single byte
+        @SuppressWarnings("unused") int read = stream.read();
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+      //noinspection EmptyTryBlock,unused
+      try (InputStream stream = file.getInputStream()) {
+        // just close
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public static class TracingJarFileSystemTestWrapper extends JarFileSystemImpl {
     private final AtomicInteger myAttributeCallCount = new AtomicInteger();
     @Override
     public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
@@ -895,6 +937,10 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     File outputFile = new File(outputPath, fileName);
     FileUtil.copy(zipFile, outputFile);
+
+    assertTrue(outputFile.exists());
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
 
     return outputFile;
   }

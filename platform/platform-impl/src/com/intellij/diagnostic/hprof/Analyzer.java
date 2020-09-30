@@ -16,10 +16,14 @@
 package com.intellij.diagnostic.hprof;
 
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier;
+import com.intellij.diagnostic.hprof.analysis.AnalysisContext;
+import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph;
+import com.intellij.diagnostic.hprof.analysis.AnalyzeGraph;
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import kotlin.jvm.functions.Function2;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -71,24 +75,42 @@ public final class Analyzer {
     if (args.length == 0 ||
         args.length == 1 && args[0].equals("-v")) {
       out.println();
-      out.println("Usage: " + Analyzer.class.getName() + " [-v] <hprof file>");
+      out.println("Usage: " + Analyzer.class.getName() + " [-v] [-plugin <plugin_id>] <hprof file>");
       System.exit(1);
     }
 
     Path hprofPath;
     ProgressIndicator progress;
-    if (args[0].equals("-v")) {
+    Function2<AnalysisContext, ProgressIndicator, String> analysisCallback;
+    boolean onlyStrongReferences = false;
+    boolean includeClassesAsRoots = true;
+    int index = 0;
+    if (args[index].equals("-v")) {
+      index++;
       progress = new AnalyzerProgressIndicator();
-      hprofPath = Paths.get(args[1]);
     }
     else {
       progress = new EmptyProgressIndicator(ModalityState.NON_MODAL);
-      hprofPath = Paths.get(args[0]);
     }
+    if (args[index].equals("-plugin")) {
+      index++;
+      String pluginId = args[index];
+      analysisCallback = (analysisContext, progressIndicator) -> new AnalyzeClassloaderReferencesGraph(analysisContext, pluginId).analyze(progressIndicator);
+      onlyStrongReferences = true;
+      includeClassesAsRoots = false;
+      index++;
+    }
+    else {
+      analysisCallback = (analysisContext, progressIndicator) -> new AnalyzeGraph(analysisContext).analyze(progressIndicator);
+    }
+    hprofPath = Paths.get(args[index]);
 
     String report;
     try (FileChannel channel = FileChannel.open(hprofPath, StandardOpenOption.READ)) {
-      report = new HProfAnalysis(channel, new SystemTempFilenameSupplier()).analyze(progress);
+      HProfAnalysis analysis = new HProfAnalysis(channel, new SystemTempFilenameSupplier(), analysisCallback);
+      analysis.setOnlyStrongReferences(onlyStrongReferences);
+      analysis.setIncludeClassesAsRoots(includeClassesAsRoots);
+      report = analysis.analyze(progress);
       progress.setText("DONE");
     }
     out.println(report);

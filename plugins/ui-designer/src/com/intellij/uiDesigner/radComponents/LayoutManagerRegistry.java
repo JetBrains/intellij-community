@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.util.ArrayUtilRt;
@@ -17,7 +18,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class LayoutManagerRegistry {
+public final class LayoutManagerRegistry {
   @NonNls private static final Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<>();
   @NonNls private static final Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<>();
   @NonNls private static final Map<String, String> ourLayoutManagerDisplayNames = new HashMap<>();
@@ -63,7 +64,7 @@ public class LayoutManagerRegistry {
     return ArrayUtilRt.toStringArray(layoutManagerNames);
   }
 
-  public static String getLayoutManagerDisplayName(String name) {
+  public static @NlsSafe String getLayoutManagerDisplayName(String name) {
     if (ourLayoutManagerDisplayNames.containsKey(name)) {
       return ourLayoutManagerDisplayNames.get(name);
     }

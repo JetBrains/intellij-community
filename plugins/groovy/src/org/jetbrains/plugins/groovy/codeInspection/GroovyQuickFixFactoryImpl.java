@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromLabelFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromRefFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.elements.annotation.MapConstructorAttributesFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
@@ -148,5 +149,10 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public GroovyFix createSpreadArgumentFix(int size) {
     return new SpreadArgumentFix(size);
+  }
+
+  @Override
+  public GroovyFix createMapConstructorFix() {
+    return new MapConstructorAttributesFix();
   }
 }

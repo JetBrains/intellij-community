@@ -2,13 +2,14 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class ScrollPaneActions extends SwingActionDelegate {
-  private ScrollPaneActions(String actionId) {
+  private ScrollPaneActions(@NonNls String actionId) {
     super(actionId);
   }
 

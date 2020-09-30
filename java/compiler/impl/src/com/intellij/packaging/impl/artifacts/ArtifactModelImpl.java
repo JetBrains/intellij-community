@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -27,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableArtifactModel {
+public final class ArtifactModelImpl extends ArtifactModelBase implements ModifiableArtifactModel {
   private final List<ArtifactImpl> myOriginalArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
   private final Map<ArtifactImpl, ArtifactImpl> myArtifact2ModifiableCopy = new HashMap<>();
@@ -73,12 +59,13 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   @Override
-  @NotNull
-  public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement,
-                                        @Nullable ProjectModelExternalSource externalSource) {
-    final String uniqueName = generateUniqueName(name);
-    final String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, myArtifactManager.getProject());
-    final ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, externalSource, myDispatcher);
+  public @NotNull ModifiableArtifact addArtifact(@NotNull String name,
+                                                 @NotNull ArtifactType artifactType,
+                                                 CompositePackagingElement<?> rootElement,
+                                                 @Nullable ProjectModelExternalSource externalSource) {
+    String uniqueName = generateUniqueName(name);
+    String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, myArtifactManager.getProject());
+    ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, externalSource, myDispatcher);
     addArtifact(artifact);
     return artifact;
   }
@@ -149,9 +136,8 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   @Override
-  @NotNull
-  public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
-    final ArtifactImpl original = myModifiable2Original.get(artifact);
+  public @NotNull Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+    ArtifactImpl original = myModifiable2Original.get(artifact);
     return original != null ? original : artifact;
   }
 

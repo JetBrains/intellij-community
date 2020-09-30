@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.inspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -297,7 +297,8 @@ public abstract class AbstractQuickFixManager {
   }
 
   private Runnable getQuickFixRunnable(final QuickFix value) {
-    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value), "Run '" + value.getName() + "' QuickFix");
+    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value),
+                                                                 DesignerBundle.message("run.0.quickfix", value.getName()));
   }
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);
@@ -307,7 +308,7 @@ public abstract class AbstractQuickFixManager {
 
   private static final Icon INACTIVE_ARROW_ICON = EmptyIcon.create(AllIcons.General.ArrowDown);
 
-  private class InspectionHint extends JLabel {
+  private final class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;
     private final RowIcon myActiveIcon;
 

@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -262,9 +263,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                                     expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
-  private File saveTmpImage(BufferedImage image, String nameSuffix) throws IOException {
+  private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
-    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }
@@ -320,7 +320,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   // font which, once created, should be rendered identically on all platforms
-  protected static class BitmapFont {
+  protected static final class BitmapFont {
     private static final float FONT_SIZE = 12;
     private static final int CHAR_WIDTH = 10;
     private static final int CHAR_HEIGHT = 12;
@@ -376,7 +376,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
   }
 
-  private static class UniformHighlighter implements EditorHighlighter {
+  private static final class UniformHighlighter implements EditorHighlighter {
     @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;

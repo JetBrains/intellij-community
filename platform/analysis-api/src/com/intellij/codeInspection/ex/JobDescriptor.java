@@ -2,21 +2,22 @@
 
 package com.intellij.codeInspection.ex;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class JobDescriptor {
   @NotNull
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;
   public static final JobDescriptor[] EMPTY_ARRAY = new JobDescriptor[0];
 
-  public JobDescriptor(@NotNull String displayName) {
+  public JobDescriptor(@NotNull @Nls String displayName) {
     myDisplayName = displayName;
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return myDisplayName;
   }
 

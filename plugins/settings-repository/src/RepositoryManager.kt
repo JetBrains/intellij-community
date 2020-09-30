@@ -2,7 +2,8 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.containers.CollectionFactory
 import java.io.InputStream
 import java.util.*
 
@@ -16,6 +17,7 @@ interface RepositoryManager {
 
   fun isRepositoryExists(): Boolean
 
+  @NlsSafe
   fun getUpstream(): String?
 
   fun hasUpstream(): Boolean
@@ -81,8 +83,8 @@ internal data class ImmutableUpdateResult(override val changed: Collection<Strin
 }
 
 internal class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
-  override val changed = ObjectOpenHashSet(changed)
-  override val deleted = ObjectOpenHashSet(deleted)
+  override val changed = CollectionFactory.createSmallMemoryFootprintSet(changed)
+  override val deleted = CollectionFactory.createSmallMemoryFootprintSet(deleted)
 
   fun add(result: UpdateResult?): MutableUpdateResult {
     if (result != null) {

@@ -31,7 +31,7 @@ public class PyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpa
     protected void process(@NotNull PsiFile psiFile) {
       psiFile.accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+        public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
           if (node.isDocString()) return;
           disableRange(node.getTextRange(), false);
         }

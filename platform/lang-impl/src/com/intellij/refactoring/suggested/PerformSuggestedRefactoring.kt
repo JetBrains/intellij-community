@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.suggested
 
+import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -186,7 +188,7 @@ private fun <TData> createAndShowBalloon(
   popupAnchorComponent: JComponent?,
   popupAnchorPoint: Point?,
   rangeToHighlight: TextRange,
-  commandName: String,
+  @NlsContexts.Command commandName: String,
   doRefactoring: (TData) -> Unit,
   onEnter: () -> Unit,
   isEnterEnabled: () -> Boolean,
@@ -315,6 +317,8 @@ private fun performWithDumbEditor(editor: Editor, action: () -> Unit) {
 }
 
 private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data: SuggestedRenameData, project: Project, editor: Editor) {
+  if (!FileModificationService.getInstance().preparePsiElementForWrite(data.declaration)) return
+
   val relativeCaretOffset = editor.caretModel.offset - refactoringSupport.anchorOffset(data.declaration)
 
   val newName = data.declaration.name!!

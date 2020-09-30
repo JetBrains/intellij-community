@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
@@ -33,6 +34,7 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.FacetBasedPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ModulePackagingElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +61,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
       if (artifactEditor != null && (artifactEditor.isModified() || isArtifactModified(artifact))) {
         ProjectModelExternalSource externalSource = artifact.getExternalSource();
         if (externalSource != null) {
-          String message = ModificationOfImportedModelWarningComponent.getWarningText("Artifact '" + artifact.getName() + "'", externalSource);
+          String message = ModificationOfImportedModelWarningComponent.getWarningText(
+            JavaUiBundle.message("banner.slogan.artifact.0", artifact.getName()), externalSource);
           artifactProblemsHolder.registerWarning(message, "modification-of-imported-element", null);
         }
       }
@@ -81,7 +84,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
-    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
+    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         ProjectStructureElement element = getProjectStructureElementFor(packagingElement, ArtifactProjectStructureElement.this.myContext,
@@ -150,8 +153,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String getTypeName() {
-    return "Artifact";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return JavaUiBundle.message("configurable.artifact.prefix");
   }
 
   @Override
@@ -159,7 +162,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     return "artifact:" + getActualArtifactName();
   }
 
-  private String getActualArtifactName() {
+  private @Nls(capitalization = Nls.Capitalization.Sentence) String getActualArtifactName() {
     return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact).getName();
   }
 }

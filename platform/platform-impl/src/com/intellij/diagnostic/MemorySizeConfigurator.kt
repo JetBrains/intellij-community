@@ -15,19 +15,20 @@ private class MemorySizeConfigurator : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
+    val memoryAdjusted = PropertiesComponent.getInstance().isTrueValue("ide.memory.adjusted")
+    if (memoryAdjusted) return
+
     val currentXmx = max(VMOptions.readOption(VMOptions.MemoryKind.HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.HEAP, false))
     if (currentXmx < 0) {
       // Don't know how much -Xmx we have
+      LOG.info("Memory size configurator skipped: Unable to determine current -Xmx. VM options file is ${System.getProperty("jb.vmOptionsFile")}")
       return
     }
     if (currentXmx > 750) {
       // Memory has already been adjusted by the user manually
       return
     }
-
-    val memoryAdjusted = PropertiesComponent.getInstance().isTrueValue("ide.memory.adjusted")
-    if (memoryAdjusted) return
 
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
@@ -37,11 +38,14 @@ private class MemorySizeConfigurator : StartupActivity.Background {
     val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
 
-    if (currentXms < 0 || newXmx < currentXms) return
-
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, newXmx)
+    if (currentXms < 0 || newXmx < currentXms) {
+      LOG.info("Memory size configurator skipped: avoiding invalid configuration with -Xmx ${currentXms} and -Xmx ${newXmx}")
+    }
+    else {
+      VMOptions.writeOption(VMOptions.MemoryKind.HEAP, newXmx)
+      LOG.info("Physical memory ${totalPhysicalMemory}M, minimum memory size ${currentXms}M, -Xmx adjusted from ${currentXmx}M to ${newXmx}M")
+    }
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
-    LOG.info("Physical memory ${totalPhysicalMemory}M, minimum memory size ${currentXms}M, -Xmx adjusted from ${currentXmx}M to ${newXmx}M")
   }
 
   companion object {

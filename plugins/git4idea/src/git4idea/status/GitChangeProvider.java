@@ -141,7 +141,7 @@ public final class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  private static class NonChangedHolder {
+  private static final class NonChangedHolder {
     private final Project myProject;
     private final ChangeListManagerGate myAddGate;
 

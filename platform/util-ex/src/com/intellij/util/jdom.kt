@@ -2,6 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
 import com.intellij.util.io.outputStream
@@ -13,6 +14,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.input.SAXBuilder
 import org.jdom.input.sax.SAXHandler
+import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
@@ -56,7 +58,7 @@ fun loadElement(path: Path): Element = JDOMUtil.load(path)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 
-fun Element.getOrCreate(name: String): Element {
+fun Element.getOrCreate(@NonNls name: String): Element {
   var element = getChild(name)
   if (element == null) {
     element = Element(name)
@@ -79,7 +81,7 @@ fun Element.toByteArray(): ByteArray {
 }
 
 @JvmOverloads
-fun Element.addOptionTag(name: String, value: String, elementName: String = Constants.OPTION) {
+fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementName: String = Constants.OPTION) {
   val element = Element(elementName)
   element.setAttribute(Constants.NAME, name)
   element.setAttribute(Constants.VALUE, value)

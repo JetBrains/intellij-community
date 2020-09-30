@@ -5,6 +5,7 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.Interner;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashSet;
@@ -40,7 +41,7 @@ public final class OfflineViewParseUtil {
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(Reader problemReader) {
     TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
-    Interner<String> stringInterner = Interner.createStringInterner();
+    Interner<@NlsSafe String> stringInterner = Interner.createStringInterner();
     Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
     XppReader reader = new XppReader(problemReader, new MXParser());
     try {

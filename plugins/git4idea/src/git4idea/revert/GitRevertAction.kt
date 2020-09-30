@@ -19,12 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.config.GitVcsSettings
+import git4idea.i18n.GitBundle
 
 class GitRevertAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
@@ -55,7 +55,7 @@ class GitRevertAction : DumbAwareAction() {
     if (commits.any { it.parents.size > 1 }) {
       e.presentation.isVisible = true
       e.presentation.isEnabled = false
-      e.presentation.description = "Reverting merge commits is not allowed"
+      e.presentation.description = GitBundle.message("action.description.cant.revert.merge.commit")
       return
     }
 
@@ -67,14 +67,14 @@ class GitRevertAction : DumbAwareAction() {
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
     val repositoryManager = getRepositoryManager(project)
 
-    log.requestSelectedDetails rsd@ { commits ->
+    log.requestSelectedDetails rsd@{ commits ->
       if (commits.any { repositoryManager.getRepositoryForRootQuick(it.root) == null }) return@rsd
       if (commits.any { it.parents.size > 1 }) return@rsd
 
-      object : Task.Backgroundable(project, "Reverting ${pluralize("commit", commits.size)}") {
-       override fun run(indicator: ProgressIndicator) {
-         GitRevertOperation(project, commits, GitVcsSettings.getInstance(project).isAutoCommitOnRevert).execute()
-       }
+      object : Task.Backgroundable(project, GitBundle.message("progress.title.reverting.n.commits", commits.size)) {
+        override fun run(indicator: ProgressIndicator) {
+          GitRevertOperation(project, commits, GitVcsSettings.getInstance(project).isAutoCommitOnRevert).execute()
+        }
       }.queue()
     }
   }

@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports redundant file creation when the stream constructor that takes a path could be used.
+<p>The quick-fix replaces the constructor call with a <code>String</code> literal that represents the path, for example:</p>
+<pre>
+<code>InputStream is = new FileInputStream(new File("in.txt")); // before
+InputStream is = new FileInputStream("in.txt"); // after
+</code>
+</pre>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

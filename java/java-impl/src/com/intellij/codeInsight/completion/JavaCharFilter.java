@@ -19,6 +19,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
@@ -45,13 +46,12 @@ public class JavaCharFilter extends CharFilter {
 
     final Object o = item.getObject();
     if (c == '!') {
-      if (o instanceof PsiVariable) {
-        if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-      if (o instanceof PsiMethod) {
-        final PsiType type = ((PsiMethod)o).getReturnType();
-        if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
+      VariableLookupItem varItem = item.as(VariableLookupItem.class);
+      if (varItem != null && varItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
+      JavaMethodCallElement methodItem = item.as(JavaMethodCallElement.class);
+      if (methodItem != null && methodItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
       if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(PsiKeyword.INSTANCEOF)) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

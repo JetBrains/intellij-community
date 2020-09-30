@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.exception;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * so that instead of polluting the log with hundreds of {@link Logger#error(Throwable) LOG.errors} it prints the error message
  * and the stacktrace once in a while.
  */
-public class FrequentErrorLogger {
+public final class FrequentErrorLogger {
 
   private static final int REPORT_EVERY_NUM = 1000;
   @NotNull private final Map<Integer, Integer> ourReportedIssues = new ConcurrentHashMap<>(); // stacktrace hash -> number of reports
@@ -30,15 +31,15 @@ public class FrequentErrorLogger {
     myLogger = logger;
   }
 
-  public void error(@NotNull String message, @NotNull Throwable t) {
+  public void error(@NotNull @NonNls String message, @NotNull Throwable t) {
     report(t, () -> myLogger.error(message, t));
   }
 
-  public void error(@NotNull String message, @NotNull Throwable t, Attachment... attachments) {
+  public void error(@NotNull @NonNls String message, @NotNull Throwable t, Attachment... attachments) {
     report(t, () -> myLogger.error(message, t, attachments));
   }
 
-  public void info(@NotNull String message, @NotNull Throwable t) {
+  public void info(@NotNull @NonNls String message, @NotNull Throwable t) {
     report(t, () -> myLogger.info(message, t));
   }
 

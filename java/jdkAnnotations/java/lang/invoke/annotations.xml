@@ -1,0 +1,5 @@
+<root>
+  <item name='java.lang.invoke'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

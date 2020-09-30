@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.text.StringUtil;
@@ -167,7 +168,7 @@ abstract class UndoRedo {
     return readOnlyFiles;
   }
 
-  private void reportCannotUndo(String message, Collection<? extends DocumentReference> problemFiles) {
+  private void reportCannotUndo(@NlsContexts.DialogMessage String message, Collection<? extends DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(
         message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));

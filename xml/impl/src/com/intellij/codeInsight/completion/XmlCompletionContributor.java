@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
@@ -35,11 +35,11 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,12 +50,12 @@ import static com.intellij.xml.util.XmlUtil.findDescriptorFile;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlCompletionContributor extends CompletionContributor {
+public final class XmlCompletionContributor extends CompletionContributor {
   public static final Key<Boolean> WORD_COMPLETION_COMPATIBLE = Key.create("WORD_COMPLETION_COMPATIBLE");
   public static final EntityRefInsertHandler ENTITY_INSERT_HANDLER = new EntityRefInsertHandler();
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
-  private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+  private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
@@ -120,7 +120,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                  return;
                }
 
-               final Set<String> usedWords = new THashSet<>();
+               final Set<String> usedWords = new HashSet<>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, r -> {
                  if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {

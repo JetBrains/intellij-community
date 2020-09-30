@@ -67,7 +67,9 @@ public class HgQRenameCommand {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qrename", Arrays.asList(oldName, newName));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("action.hg4idea.QRename.error"),
+        new HgCommandResultNotifier(project).notifyError("hg.qrename.error",
+                                                         result,
+                                                         HgBundle.message("action.hg4idea.QRename.error"),
                                                          HgBundle.message("action.hg4idea.QRename.error.msg", oldName, newName));
       }
       repository.update();

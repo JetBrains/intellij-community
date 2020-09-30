@@ -178,7 +178,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     final PsiMethod factoryMethod = myTargetClass.findMethodBySignature(createFactoryMethod(), false);
     if (factoryMethod != null) {
-      conflicts.putValue(factoryMethod, "Factory method " + RefactoringUIUtil.getDescription(factoryMethod, false) + " already exists and will be used instead of newly created.");
+      conflicts.putValue(factoryMethod, JavaRefactoringBundle
+        .message("replace.constructor.factory.error.factory.method.already.exists", RefactoringUIUtil.getDescription(factoryMethod, false)));
     }
 
     return showConflicts(conflicts, usages);

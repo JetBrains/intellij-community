@@ -7,6 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @NotNull
+  @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.symbols");
   }

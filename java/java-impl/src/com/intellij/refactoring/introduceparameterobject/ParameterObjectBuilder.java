@@ -19,7 +19,10 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -121,11 +124,11 @@ class ParameterObjectBuilder {
       out.append(GenerateMembersUtil.generateSetterPrototype(JavaPsiFacade.getElementFactory(myProject).createField(field.getName(), field.getType())).getText());
     }
 
-  private static void generateFieldAssignment(final StringBuffer out, final String parameterName, final String fieldName) {
+  private static void generateFieldAssignment(final @NonNls StringBuffer out, final String parameterName, final String fieldName) {
     if (fieldName.equals(parameterName)) {
-        out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\tthis.").append(fieldName).append(" = ").append(parameterName).append(";\n");
     } else {
-        out.append("\t\t" + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\t").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
   }
 

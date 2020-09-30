@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -39,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 /**
  * @author rvishnyakov
@@ -47,7 +34,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(settings, modelSettings, "Java") {
+    return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -90,17 +77,23 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS", "Angle brackets",CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS",
+                                JavaBundle.message("code.style.settings.angle.spacing.brackets"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
+                                JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
 
-      String groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_ARGUMENTS;
+      String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT", "After closing angle bracket", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT",
+                                JavaBundle.message("code.style.settings.spacing.after.closing.angle.bracket"), groupName);
 
-      groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+      groupName = getInstance().SPACES_IN_TYPE_PARAMETERS;
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER",
+                                ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS",
+                                JavaBundle.message("code.style.settings.spacing.around.type.bounds"), groupName);
 
-      groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
+      groupName = getInstance().SPACES_OTHER;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", JavaBundle.message(
         "checkbox.spaces.before.colon.in.foreach"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
@@ -201,7 +194,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "ANNOTATION_PARAMETER_WRAP",
                                 JavaBundle.message("wrapping.annotation.parameters"),
                                 null,
-                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
@@ -222,7 +215,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RECORD_COMPONENTS_WRAP",
                                 recordComponentsGroup,
                                 null,
-                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_RECORDS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
@@ -238,7 +231,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", JavaBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER",
+                                JavaBundle.message("editbox.blanklines.around.initializer"),
+                                getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showAllStandardOptions();

@@ -1,0 +1,39 @@
+package records;
+
+public record TestRecordGenericVararg<T>(T first, T... other) {
+   @SafeVarargs
+   public TestRecordGenericVararg(T first, T... other) {
+      this.first = first;// 5
+      this.other = other;
+   }
+
+   public T first() {
+      return this.first;
+   }
+
+   public T[] other() {
+      return this.other;// 3
+   }
+}
+
+class 'records/TestRecordGenericVararg' {
+   method '<init> (Ljava/lang/Object;[Ljava/lang/Object;)V' {
+      6      5
+      b      6
+      e      7
+   }
+
+   method 'first ()Ljava/lang/Object;' {
+      1      10
+      4      10
+   }
+
+   method 'other ()[Ljava/lang/Object;' {
+      1      14
+      4      14
+   }
+}
+
+Lines mapping:
+3 <-> 15
+5 <-> 6

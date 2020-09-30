@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.zmlx.hg4idea.repo;
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -29,7 +30,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
-public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
+public final class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   private static final Logger LOG = Logger.getInstance(HgRepositoryImpl.class);
 
@@ -220,6 +221,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     }
   }
 
+  @NonNls
   @NotNull
   @Override
   public String toLogString() {

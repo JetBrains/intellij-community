@@ -21,7 +21,7 @@ PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: 
   PyProcessWithConsoleTestTask<T>(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY) {
 
   override fun getTagsToCover(): Set<String> = hashSetOf("python2.6", "python2.7", "python3.5", "python3.6", "jython", "pypy",
-                                                                             "IronPython")
+                                                         "IronPython")
 
 
   @Throws(Exception::class)
@@ -29,4 +29,6 @@ PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: 
     processRunnerCreator.apply(TestRunnerConfig(myScriptName, myRerunFailedTests))
 }
 
-data class TestRunnerConfig(val scriptName: String, val rerunFailedTests: Int)
+data class TestRunnerConfig(val scriptName: String, val rerunFailedTests: Int) {
+  fun increaseRerunCount(rerunFailedTests: Int) = copy(scriptName = scriptName, rerunFailedTests = rerunFailedTests)
+}

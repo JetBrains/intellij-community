@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,5 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface IdeValidationHost extends Validator.ValidationHost {
-  void addMessageWithFixes(PsiElement context, String message, @NotNull ErrorType type, IntentionAction @NotNull ... fixes);
+  void addMessageWithFixes(PsiElement context, @InspectionMessage String message,
+                           @NotNull ErrorType type, IntentionAction @NotNull ... fixes);
 }

@@ -37,7 +37,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     def vFile = psiFile.virtualFile
     def path = vFile.path
 
-    def contributor = ChooseByNameTest.createFileContributor(project)
+    def contributor = ChooseByNameTest.createFileContributor(project, testRootDisposable)
 
     assert ChooseByNameTest.calcContributorElements(contributor, path) == [psiFile]
     assert ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemDependentName(path)) == [psiFile]
@@ -54,7 +54,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     (0..moduleCount-1).each { myFixture.addFileToProject("mod$it/Foo.java", "class Foo {}") }
 
     def place = myFixture.addClass("class A {}").containingFile
-    def contributor = ChooseByNameTest.createFileContributor(project, place)
+    def contributor = ChooseByNameTest.createFileContributor(project, testRootDisposable, place)
     def resultModules = ChooseByNameTest.calcContributorElements(contributor, 'Foo').collect {
       ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
     }
@@ -65,7 +65,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm1', myFixture.tempDirFixture.findOrCreateDir("foo"))
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm2', myFixture.tempDirFixture.findOrCreateDir("foo/bar"))
     def file = myFixture.addFileToProject('foo/bar/goo/doo.txt', '')
-    def contributor = ChooseByNameTest.createFileContributor(project, file)
+    def contributor = ChooseByNameTest.createFileContributor(project, testRootDisposable, file)
     assert ChooseByNameTest.calcContributorElements(contributor, "doo") == [file]
     assert ChooseByNameTest.calcContributorElements(contributor, "goo/doo") == [file]
     assert ChooseByNameTest.calcContributorElements(contributor, "bar/goo/doo") == [file]
@@ -99,7 +99,8 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
-    return ChooseByNameTest.calcContributorElements(ChooseByNameTest.createFileContributor(project, context, checkboxState), text)
+    return ChooseByNameTest.calcContributorElements(ChooseByNameTest.createFileContributor(project, testRootDisposable, context,
+                                                                                           checkboxState), text)
   }
 
 }

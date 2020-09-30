@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
+public final class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
   private static final Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
   private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
   private long modificationTimeStamp;

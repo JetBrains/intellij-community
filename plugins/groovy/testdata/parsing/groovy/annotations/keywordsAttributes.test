@@ -1,4 +1,4 @@
-@Foo(as=5, def=4, in=6, foo=4)
+@Foo(as=5, def=4, in=6, foo=4, var=5)
 def zx
 -----
 Groovy script
@@ -36,6 +36,13 @@ Groovy script
             PsiElement(=)('=')
             Literal
               PsiElement(Integer)('4')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Annotation member value pair
+            PsiElement(var)('var')
+            PsiElement(=)('=')
+            Literal
+              PsiElement(Integer)('5')
           PsiElement())(')')
       PsiElement(new line)('\n')
       PsiElement(def)('def')

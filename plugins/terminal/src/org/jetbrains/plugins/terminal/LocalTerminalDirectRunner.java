@@ -283,9 +283,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     List<String> result = new ArrayList<>();
     result.add(shellCommand);
 
-    String rcFilePath = findRCFile(shellName);
-
-    if (rcFilePath != null && shellIntegration) {
+    String rcFilePath = shellIntegration ? findRCFile(shellName) : null;
+    if (rcFilePath != null) {
       if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
         addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
         // remove --login to enable --rcfile sourcing
@@ -315,9 +314,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
         envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
       }
+      setLoginShellEnv(envs, isLogin(command));
     }
-
-    setLoginShellEnv(envs, isLogin(command));
 
     result.addAll(command);
     return result;

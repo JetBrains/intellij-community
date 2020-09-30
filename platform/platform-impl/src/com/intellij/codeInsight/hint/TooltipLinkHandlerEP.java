@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -40,7 +42,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
   }
 
   @Nullable
-  public static String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
+  public static @InspectionMessage String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
@@ -57,7 +59,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
         String refSuffix = ref.substring(ep.prefix.length());
         return ep.getInstance().getDescriptionTitle(refSuffix, editor);
       }
-      return TooltipLinkHandler.INSPECTION_INFO;
+      return IdeBundle.message("inspection.message.inspection.info");
     }));
   }
 }

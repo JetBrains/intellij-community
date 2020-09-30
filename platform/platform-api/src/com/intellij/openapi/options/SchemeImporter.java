@@ -2,6 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public interface SchemeImporter <T extends Scheme> {
    * @return An information message to be displayed after import.
    */
   @Nullable
-  default String getAdditionalImportInfo(@NotNull T scheme) {
+  default @NlsContexts.NotificationContent String getAdditionalImportInfo(@NotNull T scheme) {
     return null;
   }
 

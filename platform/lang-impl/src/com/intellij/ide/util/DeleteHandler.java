@@ -7,6 +7,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -163,9 +164,8 @@ public final class DeleteHandler {
       }
 
       if (safeDeleteApplicable) {
-        warningMessage += "\n\nWarning:\n  Safe delete is not available while " +
-                          ApplicationNamesInfo.getInstance().getFullProductName() +
-                          " updates indices,\n  no usages will be checked.";
+        warningMessage +=
+          LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
       }
 
       if (needConfirmation) {

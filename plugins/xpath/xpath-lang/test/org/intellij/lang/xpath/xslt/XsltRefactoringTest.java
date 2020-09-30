@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -36,7 +36,7 @@ public class XsltRefactoringTest extends TestBase {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
-    settings.getIndentOptions(StdFileTypes.XML).INDENT_SIZE = 2;
+    settings.getIndentOptions(XmlFileType.INSTANCE).INDENT_SIZE = 2;
   }
 
   public void testExtractTemplate() {

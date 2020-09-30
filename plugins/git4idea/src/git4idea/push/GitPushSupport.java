@@ -23,7 +23,7 @@ import java.util.Objects;
 import static git4idea.GitUtil.findRemoteBranch;
 import static git4idea.GitUtil.getDefaultOrFirstRemote;
 
-public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
+public final class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcs myVcs;

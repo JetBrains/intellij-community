@@ -28,6 +28,15 @@ fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   return data.targets
 }
 
+/**
+ * @return two collections: of declared and of referenced symbols
+ */
+@Experimental
+fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Collection<Symbol>, Collection<Symbol>> {
+  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  return (declaredData?.targets ?: emptyList()) to (referencedData?.targets ?: emptyList())
+}
+
 private val emptyData = DeclaredReferencedData(null, null)
 
 internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {

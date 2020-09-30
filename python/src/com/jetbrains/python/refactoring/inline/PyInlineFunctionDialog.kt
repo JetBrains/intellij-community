@@ -38,13 +38,13 @@ class PyInlineFunctionDialog(project: Project,
   }
 
   override fun getNameLabelText(): String {
-    val text = if (isMethod) "Method ${myFunctionName}" else "Function $myFunctionName"
+    val text = if (isMethod) PyBundle.message("refactoring.inline.label.method", myFunctionName) else PyBundle.message("refactoring.inline.label.function", myFunctionName)
     if (myNumberOfOccurrences != -1) {
-      return "$text has $myNumberOfOccurrences occurrence${if (myNumberOfOccurrences == 1) "" else "s"}"
+      return PyBundle.message("refactoring.name.label.text", text, myNumberOfOccurrences, if (myNumberOfOccurrences == 1) 0 else 1)
     }
     return text
   }
-  override fun getBorderTitle(): String  = "Inline"
+  override fun getBorderTitle(): String  = PyBundle.message("refactoring.inline.all.border.title")
   override fun getInlineAllText(): String = PyBundle.message("refactoring.inline.all.remove.declaration")
   override fun getKeepTheDeclarationText(): String = PyBundle.message("refactoring.inline.all.keep.declaration")
   override fun getInlineThisText(): String = PyBundle.message("refactoring.inline.this.only")

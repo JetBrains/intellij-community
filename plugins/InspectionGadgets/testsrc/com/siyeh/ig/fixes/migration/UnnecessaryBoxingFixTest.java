@@ -22,25 +22,25 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
   public void testLiteral2() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new/**/ Float(1);",
-                 "Float l = 1f;");
+                 "Float l = 1F;");
   }
 
   public void testLiteral3() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new/**/ Float(1.0);",
-                 "Float l = 1.0f;");
+                 "Float l = 1.0F;");
   }
 
   public void testLiteral4() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new/**/ Float(1d);",
-                 "Float l = (float) 1d;");
+                 "Float l = 1F;");
   }
 
   public void testLiteral5() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Double l = new/**/ Double(1);",
-                 "Double l = 1d;");
+                 "Double l = 1.0;");
   }
 
   public void testBooleanLiteral() {

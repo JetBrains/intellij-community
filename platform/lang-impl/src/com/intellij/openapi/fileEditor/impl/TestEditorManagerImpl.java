@@ -48,11 +48,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
 
   private final Project myProject;
-  private int counter = 0;
+  private int counter;
 
   private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
-  private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
+  private static final MyLightVirtualFile LIGHT_VIRTUAL_FILE = new MyLightVirtualFile();
+  private static class MyLightVirtualFile extends LightVirtualFile {
+    MyLightVirtualFile() {super("Dummy.java");}
+    void clearUserDataOnDispose() {
+      clearUserData();
+    }
+  }
 
   TestEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -363,6 +369,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   public void dispose() {
     closeAllFiles();
+    LIGHT_VIRTUAL_FILE.clearUserDataOnDispose();
   }
 
   @Override

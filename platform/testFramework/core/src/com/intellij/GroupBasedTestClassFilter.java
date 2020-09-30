@@ -155,7 +155,7 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
   }
 
-  private static class Group {
+  private static final class Group {
     private final String name;
     private final List<Pattern> included;
     private final List<Pattern> excluded;

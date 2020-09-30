@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private final String myText;
+  private final @Nls String myText;
 
   public DeleteElementFix(@NotNull PsiElement element) {
     super(element);
@@ -51,7 +50,7 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   @NotNull
   @Override
   public String getText() {
-    return ObjectUtils.notNull(myText, getFamilyName());
+    return myText == null ? getFamilyName() : myText;
   }
 
   @Nls

@@ -4,32 +4,36 @@ package com.intellij.filePrediction.features.history
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
-import com.intellij.filePrediction.references.ExternalReferencesResult
+import com.intellij.filePrediction.features.FilePredictionFeaturesCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
+  companion object {
+    private val FEATURES = arrayListOf(
+      "bi_max",
+      "bi_min",
+      "bi_mle",
+      "bi_mle_to_max",
+      "bi_mle_to_min",
+      "position",
+      "size",
+      "uni_max",
+      "uni_min",
+      "uni_mle",
+      "uni_mle_to_max",
+      "uni_mle_to_min"
+    )
+  }
+
   override fun getName(): String = "history"
 
-  override fun getFeatures(): Array<String> = arrayOf(
-    "size",
-    "position",
-    "uni_mle",
-    "uni_min",
-    "uni_max",
-    "uni_mle_to_min",
-    "uni_mle_to_max",
-    "bi_mle",
-    "bi_min",
-    "bi_max",
-    "bi_mle_to_min",
-    "bi_mle_to_max"
-  )
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,
                                      prevFile: VirtualFile?,
-                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
+                                     cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
     val history = FilePredictionHistory.getInstance(project)
     result["size"] = numerical(history.size())

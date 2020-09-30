@@ -6,6 +6,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +14,7 @@ import java.awt.*;
 public class EngravedLabel extends JLabel {
   private Color myShadowColor = EngravedTextGraphics.SHADOW_COLOR;
 
-  public EngravedLabel(String text) {
+  public EngravedLabel(@Nls String text) {
     super(text);
     setOpaque(false);
   }

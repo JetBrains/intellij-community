@@ -1,6 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.CatchingConsumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +105,7 @@ public abstract class PackageManagementService {
    *
    * @return the text of the 'install to user' checkbox.
    */
-  public String getInstallToUserText() {
+  public @NlsContexts.Button String getInstallToUserText() {
     return "";
   }
 
@@ -142,7 +146,7 @@ public abstract class PackageManagementService {
 
   public abstract void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer);
 
-  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<String, Exception> consumer);
+  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<@Nls String, Exception> consumer);
 
   /**
    * @return identifier of this service for reported usage data (sent for JetBrains implementations only).
@@ -173,17 +177,17 @@ public abstract class PackageManagementService {
   }
 
   public static class ErrorDescription {
-    @NotNull private final String myMessage;
+    @NotNull private final @NlsContexts.DetailedDescription String myMessage;
     @Nullable private final String myCommand;
     @Nullable private final String myOutput;
-    @Nullable private final String mySolution;
+    @Nullable private final @NlsContexts.DetailedDescription String mySolution;
 
     @Nullable
-    public static ErrorDescription fromMessage(@Nullable String message) {
+    public static ErrorDescription fromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
       return message != null ? new ErrorDescription(message, null, null, null) : null;
     }
 
-    public ErrorDescription(@NotNull String message, @Nullable String command, @Nullable String output, @Nullable String solution) {
+    public ErrorDescription(@NotNull @NlsContexts.DetailedDescription String message, @NlsSafe @Nullable String command, @NlsSafe @Nullable String output, @Nullable @NlsContexts.DetailedDescription String solution) {
       myMessage = message;
       myCommand = command;
       myOutput = output;
@@ -194,7 +198,7 @@ public abstract class PackageManagementService {
      * The reason message that explains why the error has occurred.
      */
     @NotNull
-    public String getMessage() {
+    public @NlsContexts.DetailedDescription String getMessage() {
       return myMessage;
     }
 
@@ -202,7 +206,7 @@ public abstract class PackageManagementService {
      * The packaging command that has been executed, if it is meaningful to the user.
      */
     @Nullable
-    public String getCommand() {
+    public @NlsSafe String getCommand() {
       return myCommand;
     }
 
@@ -210,7 +214,7 @@ public abstract class PackageManagementService {
      * The output of the packaging command.
      */
     @Nullable
-    public String getOutput() {
+    public @NlsSafe String getOutput() {
       return myOutput;
     }
 
@@ -218,7 +222,7 @@ public abstract class PackageManagementService {
      * A possible solution of this packaging problem for the user.
      */
     @Nullable
-    public String getSolution() {
+    public @NlsContexts.DetailedDescription String getSolution() {
       return mySolution;
     }
   }

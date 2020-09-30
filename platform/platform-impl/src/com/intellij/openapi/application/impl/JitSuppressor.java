@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.sun.tools.attach.VirtualMachine;
+import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
 
 import java.io.File;
@@ -23,6 +24,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
   // Limit C2 compilation to the given packages only. The package set was computed by test performance analysis:
   // it's supposed to make performance tests (not all yet) timing comparable with full C2
   // and at same time the IDE does not load CPU heavily with this limitation.
+  @NonNls
   private static final String[] C2_WHITELIST = {
     "com/intellij/openapi/application/*.*",
     "com/intellij/openapi/editor/*.*",
@@ -46,6 +48,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
   };
 
   // masks matching methods with longest compilation durations which we have no control over
+  @NonNls
   private static final String[] C2_BLACKLIST = {
     "javax/swing/*.*",
     "javax/awt/*.*",

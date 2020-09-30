@@ -14,7 +14,6 @@ import com.sun.jna.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,22 +38,23 @@ public final class FileSystemUtil {
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  private interface Mediator {
+  interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
     @Nullable String resolveSymLink(@NotNull String path) throws IOException;
     boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
   }
 
   @NotNull
-  private static Mediator ourMediator = getMediator();
+  private static final Mediator ourMediator = computeMediator();
 
-  private static Mediator getMediator() {
+  @NotNull
+  static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return check(new IdeaWin32MediatorImpl());
         }
-        else if ((SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
+        else if ((SystemInfo.isLinux || SystemInfo.isMac && !SystemInfo.isArm64 || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -66,7 +66,8 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator check(final Mediator mediator) throws Exception {
+  @NotNull
+  private static Mediator check(@NotNull Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -279,6 +280,7 @@ public final class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
+    @SuppressWarnings("HardCodedStringLiteral")
     JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
@@ -369,15 +371,15 @@ public final class FileSystemUtil {
       return LibC.chmod(target, permissions) == 0;
     }
 
-    private static boolean loadFileStatus(String path, Memory buffer) {
+    private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
-    private int getModeFlags(Memory buffer) {
+    private int getModeFlags(@NotNull Memory buffer) {
       return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
-    private boolean ownFile(Memory buffer) {
+    private boolean ownFile(@NotNull Memory buffer) {
       return buffer.getInt(myOffsets[OFF_UID]) == myUid && buffer.getInt(myOffsets[OFF_GID]) == myGid;
     }
   }
@@ -409,15 +411,17 @@ public final class FileSystemUtil {
         boolean isOther = attributes.isOther();
         long size = attributes.size();
         long lastModified = attributes.lastModifiedTime().toMillis();
+        boolean isHidden;
+        boolean isWritable;
         if (SystemInfo.isWindows) {
-          boolean isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
-          boolean isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
+          isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
+          isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
         }
         else {
-          boolean isWritable = Files.isWritable(path);
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, false, size, lastModified, isWritable);
+          isHidden = false;
+          isWritable = Files.isWritable(path);
         }
+        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
@@ -439,7 +443,8 @@ public final class FileSystemUtil {
     public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException {
       if (!SystemInfo.isUnix) return false;
 
-      Path sourcePath = Paths.get(source), targetPath = Paths.get(target);
+      Path sourcePath = Paths.get(source);
+      Path targetPath = Paths.get(target);
       Set<PosixFilePermission> sourcePermissions = Files.readAttributes(sourcePath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> targetPermissions = Files.readAttributes(targetPath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> newPermissions;
@@ -462,13 +467,76 @@ public final class FileSystemUtil {
     }
   }
 
-  @TestOnly
-  static void resetMediator() {
-    ourMediator = getMediator();
+  /**
+   * determines case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names
+   */
+  @NotNull
+  public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull Path anyChild) {
+    // todo call some native API here, instead of slowly querying file attributes
+    Path parent = anyChild.getParent();
+    if (parent == null) {
+      // assume root always has FS case-sensitivity
+      return SystemInfo.isFileSystemCaseSensitive
+               ? FileAttributes.CaseSensitivity.SENSITIVE
+               : FileAttributes.CaseSensitivity.INSENSITIVE;
+    }
+
+    File file = anyChild.toFile();
+    String name = file.getName();
+    String newName = toggleCase(name);
+    if (newName.equals(name)) {
+      // we have a bad case of "123" file
+      name = findCaseableSiblingName(parent);
+      if (name == null) {
+        // we can't find any file with toggleable case.
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
+      newName = toggleCase(name);
+    }
+    String newPath = parent + "/" + newName;
+    FileAttributes newAttributes = getAttributes(newPath);
+    if (newAttributes == null) {
+      // couldn't file this file by other-cased name, so deduce FS is sensitive
+      return FileAttributes.CaseSensitivity.SENSITIVE;
+    }
+    try {
+      // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
+      File newCanonicalFile = new File(newPath).getCanonicalFile();
+      String newCanonicalName = newCanonicalFile.getName();
+      if (newCanonicalName.equals(name) || newCanonicalName.equals(file.getCanonicalFile().getName())) {
+        // nah, these two are really the same file
+        return FileAttributes.CaseSensitivity.INSENSITIVE;
+      }
+    }
+    catch (IOException e) {
+      return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
+    // it's the different file indeed, what a bad luck
+    return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
-  @TestOnly
-  static String getMediatorName() {
-    return ourMediator.getClass().getSimpleName().replace("MediatorImpl", "");
+  @NotNull
+  private static String toggleCase(@NotNull String name) {
+    String newName = name.toUpperCase();
+    if (newName.equals(name)) newName = name.toLowerCase();
+    return newName;
+  }
+
+  public static boolean isCaseToggleable(@NotNull String name) {
+    return !toggleCase(name).equals(name);
+  }
+
+  private static String findCaseableSiblingName(@NotNull Path dir) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+      for (Path path : stream) {
+        String name = path.getFileName().toString();
+        if (!name.toLowerCase().equals(name.toUpperCase())) {
+          return name;
+        }
+      }
+    }
+    catch (Exception ignored) {
+    }
+    return null;
   }
 }

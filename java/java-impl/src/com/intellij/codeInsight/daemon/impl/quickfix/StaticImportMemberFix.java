@@ -24,9 +24,11 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,10 +57,10 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @NotNull
-  protected abstract String getBaseText();
+  protected abstract @IntentionName String getBaseText();
 
   @NotNull
-  protected abstract String getMemberPresentableText(@NotNull T t);
+  protected abstract @NlsSafe String getMemberPresentableText(@NotNull T t);
 
   @Override
   @NotNull

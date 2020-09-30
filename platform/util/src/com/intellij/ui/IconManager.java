@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
@@ -83,7 +83,7 @@ final class IconManagerHelper {
       return;
     }
 
-    Iterator<IconManager> iterator = ServiceLoader.load(IconManager.class).iterator();
+    Iterator<IconManager> iterator = ServiceLoader.load(IconManager.class, IconManager.class.getClassLoader()).iterator();
     if (iterator.hasNext()) {
       instance = iterator.next();
     }

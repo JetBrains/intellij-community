@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
@@ -62,7 +63,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
         myOpenKeymapLabel.setVisible(myExpandByCombo.getSelectedItem() == getCustom());
       }
     });
-    for (String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
+    for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
       myExpandByCombo.addItem(s);
     }
     myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
@@ -147,19 +148,19 @@ public class TemplateExpandShortcutPanel extends JPanel {
     myExpandByCombo.repaint();
   }
 
-  private static String getSpace() {
+  private static @ListItem String getSpace() {
     return CodeInsightBundle.message("template.shortcut.space");
   }
 
-  private static String getTab() {
+  private static @ListItem String getTab() {
     return CodeInsightBundle.message("template.shortcut.tab");
   }
 
-  private static String getEnter() {
+  private static @ListItem String getEnter() {
     return CodeInsightBundle.message("template.shortcut.enter");
   }
 
-  private static String getCustom() {
+  private static @ListItem String getCustom() {
     return CodeInsightBundle.message("template.shortcut.custom");
   }
 }

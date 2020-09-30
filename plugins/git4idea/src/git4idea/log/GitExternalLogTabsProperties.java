@@ -16,12 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(
-  name = "Git.Log.External.Tabs.Properties",
-  storages = {
-    @Storage(value = "git.external.log.tabs.xml", roamingType = RoamingType.DISABLED)
-  }
-)
+@State(name = "Git.Log.External.Tabs.Properties", storages = @Storage(value = "git.external.log.tabs.xml", roamingType = RoamingType.DISABLED))
 public final class GitExternalLogTabsProperties
   implements PersistentStateComponent<GitExternalLogTabsProperties.State>, VcsLogTabsProperties {
   private State myState = new State();

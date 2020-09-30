@@ -10,6 +10,7 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -364,8 +365,9 @@ public final class ReachingDefinitionsCollector {
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
+  @NonNls
   private static String dumpDfaResult(ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
-    final StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
       TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
       buffer.append("At ").append(i).append(":\n");

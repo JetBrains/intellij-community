@@ -51,7 +51,7 @@ class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
     const val ID = "appearance"
 
     @JvmStatic
-    fun option(option: @Label String, propertyName: String, configurableId: String): BooleanOptionDescription =
+    fun option(@Label option: String, propertyName: String, configurableId: String): BooleanOptionDescription =
       object : PublicMethodBasedOptionDescription(option, configurableId,
                                                   "get" + StringUtil.capitalize(propertyName),
                                                   "set" + StringUtil.capitalize(propertyName)) {
@@ -60,6 +60,6 @@ class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
       }
 
     @JvmStatic
-    fun appearance(option: @Label String, propertyName: String): BooleanOptionDescription = option(option, propertyName, "preferences.lookFeel")
+    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName, "preferences.lookFeel")
   }
 }

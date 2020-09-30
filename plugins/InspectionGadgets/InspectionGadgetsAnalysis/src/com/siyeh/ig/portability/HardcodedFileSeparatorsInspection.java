@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers, Mark Scott
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers, Mark Scott
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.portability;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,12 +26,13 @@ import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +40,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';
-  private static final Set<Character> FORBIDDEN_ESCAPE_SEQUENCES_IN_PATH = new THashSet<>(Arrays.asList('b', 'n', 't', 'r', 'f'));
   private static class Holder {
   /**
    * The regular expression pattern that matches strings which are likely to
@@ -199,6 +200,12 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           string.indexOf(BACKSLASH) == -1) {
         return false;
       }
+      for (int i = 0, length = string.length(); i < length; i++) {
+        char c = string.charAt(i);
+        if (c == '\b' || c == '\n' || c == '\t' || c == '\r' || c == '\f') {
+          return false;
+        }
+      }
       final char startChar = string.charAt(0);
       if (Character.isLetter(startChar) && string.charAt(1) == ':') {
         return true;
@@ -219,38 +226,22 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     }
 
     /**
-     * Highlights the backward or forward slashes in a string literal except backward slashes inside particular escape sequences.
+     * Highlights the backward or forward slashes in a string literal.
      */
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
-      String text = expression.getText();
-      boolean existsSlash = false, existsBackslash = false;
-      int slashSequenceLength = 0;
-      List<Integer> slashIndexes = new ArrayList<>();
-      for (int slashInd = 0; slashInd < text.length(); slashInd++) {
-        if (existsSlash && existsBackslash) return;
-        char symbol = text.charAt(slashInd);
-        if (SLASH == symbol) {
-          slashSequenceLength++;
-          existsSlash = true;
-        }
-        else if (BACKSLASH == symbol) {
-          slashSequenceLength++;
-          if (slashInd < text.length() - 1) {
-            char nextSymbol = text.charAt(slashInd + 1);
-            if (isEscapeSequence(nextSymbol, slashSequenceLength)) {
-              if (FORBIDDEN_ESCAPE_SEQUENCES_IN_PATH.contains(nextSymbol)) return;
-              continue;
-            }
-          }
-          existsBackslash = true;
-        }
-        else {
-          slashSequenceLength = 0;
-          continue;
-        }
-        slashIndexes.add(slashInd);
+      final String text = expression.getText();
+      final int[] offsets = new int[text.length() + 1];
+      final StringBuilder result = new StringBuilder();
+      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
+      if (!success) {
+        return;
       }
-      slashIndexes.forEach(slashInd -> registerErrorAtOffset(expression, slashInd, 1));
+      for (int i = 0, length = result.length(); i < length; i++) {
+        final char c = result.charAt(i);
+        if (c == SLASH || c == BACKSLASH) {
+          registerErrorAtOffset(expression, offsets[i], offsets[i + 1] - offsets[i]);
+        }
+      }
     }
 
     /**
@@ -352,10 +343,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      */
     private boolean isTimeZoneIdString(String string) {
       return Holder.timeZoneIds.contains(string);
-    }
-
-    private boolean isEscapeSequence(char symbol, int slashSequenceLength) {
-      return symbol != SLASH && symbol != BACKSLASH && slashSequenceLength % 2 != 0;
     }
   }
 }

@@ -74,8 +74,9 @@ public class MethodLocation extends Location<PsiMethod> {
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
-    return new Iterator<Location<T>>() {
+    return new Iterator<>() {
       private boolean myFirstStep = ancestorClass.isInstance(myMethod);
+
       @Override
       public boolean hasNext() {
         return myFirstStep || fromClass.hasNext();

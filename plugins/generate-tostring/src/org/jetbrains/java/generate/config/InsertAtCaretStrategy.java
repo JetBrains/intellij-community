@@ -27,7 +27,7 @@ import java.util.Collections;
 /**
  * Inserts the method at the caret position.
  */
-public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
+public final class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
   private static final InsertAtCaretStrategy instance = new InsertAtCaretStrategy();
 

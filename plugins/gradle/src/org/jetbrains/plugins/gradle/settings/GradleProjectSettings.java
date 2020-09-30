@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -46,6 +47,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private TestRunner testRunner;
 
   @Nullable
+  @NlsSafe
   public String getGradleHome() {
     return myGradleHome;
   }
@@ -55,6 +57,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   @Nullable
+  @NlsSafe
   public String getGradleJvm() {
     return myGradleJvm;
   }

@@ -128,7 +128,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  private class PsiCorrectedClassType extends PsiClassType.Stub {
+  private final class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 

@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -593,6 +594,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
+  @NonNls
   public String toString() {
     return getClass().getName() + "(" +
            (myLexer.getClass() == FlexAdapter.class ? myLexer.toString() : myLexer.getClass().getName()) +
@@ -670,7 +672,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return mySegments;
   }
 
-  public static class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
+  public static final class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
     private InvalidStateException(LexerEditorHighlighter highlighter, String message, Throwable cause) {

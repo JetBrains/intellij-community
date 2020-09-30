@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,19 +24,20 @@ import java.util.*;
  * author: lesya
  */
 public class GroupTreeNode extends AbstractTreeNode implements Disposable {
-  private final String myName;
+  private final @Nls String myName;
   private final boolean mySupportsDeletion;
   private final List<String> myFilePaths = new ArrayList<>();
-  private final Map<String, String> myErrorsMap;
+  private final Map<@NonNls String, @Nls String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
   private final String myFileGroupId;
 
-  public GroupTreeNode(@NotNull String name,
+  public GroupTreeNode(@Nls @NotNull String name,
                        boolean supportsDeletion,
                        @NotNull SimpleTextAttributes invalidAttributes,
                        @NotNull Project project,
-                       @NotNull Map<String, String> errorsMap, String id) {
+                       @NotNull Map<@NonNls String, @Nls String> errorsMap,
+                       @NonNls String id) {
     myName = name;
     mySupportsDeletion = supportsDeletion;
     myInvalidAttributes = invalidAttributes;

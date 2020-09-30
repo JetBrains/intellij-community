@@ -9,4 +9,8 @@ public class FileAssociationException extends Exception {
   public FileAssociationException(String message) {
     super(message);
   }
+
+  public FileAssociationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

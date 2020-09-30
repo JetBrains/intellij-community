@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.module;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.assertj.core.util.Maps;
 
@@ -81,8 +82,8 @@ public class ModulePointerTest extends HeavyPlatformTestCase {
     ModulePointerManager pointerManager = getPointerManager();
     final ModulePointer pointer = pointerManager.create("xxx");
 
-    final ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
-    final Module module = modifiableModel.newModule(myProject.getBasePath() + "/xxx.iml", EmptyModuleType.getInstance().getId());
+    ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
+    Module module = modifiableModel.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("xxx.iml"), EmptyModuleType.getInstance().getId());
     assertThat(pointerManager.create(module)).isSameAs(pointer);
     assertThat(pointerManager.create("xxx")).isSameAs(pointer);
 
@@ -162,7 +163,7 @@ public class ModulePointerTest extends HeavyPlatformTestCase {
 
   private Module addModule(final String name) {
     final ModifiableModuleModel model = getModuleManager().getModifiableModel();
-    final Module module = model.newModule(myProject.getBasePath() + "/" + name + ".iml", EmptyModuleType.getInstance().getId());
+    final Module module = model.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve(name + ".iml"), EmptyModuleType.getInstance().getId());
     commitModel(model);
     return module;
   }

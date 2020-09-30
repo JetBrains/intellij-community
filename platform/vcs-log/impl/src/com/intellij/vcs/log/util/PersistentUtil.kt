@@ -26,13 +26,15 @@ import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
+import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Path
 
 object PersistentUtil {
   @JvmField
   val LOG_CACHE = File(PathManager.getSystemPath(), "vcs-log")
-  private const val CORRUPTION_MARKER = "corruption.marker" // NON-NLS
+  @NonNls
+  private const val CORRUPTION_MARKER = "corruption.marker"
 
   @JvmStatic
   val corruptionMarkerFile: File
@@ -56,7 +58,7 @@ object PersistentUtil {
   }
 }
 
-class StorageId(private val projectName: String, private val subdirName: String, private val logId: String, val version: Int) {
+class StorageId(@NonNls private val projectName: String, @NonNls private val subdirName: String, private val logId: String, val version: Int) {
   private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
   private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
   val subdir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }

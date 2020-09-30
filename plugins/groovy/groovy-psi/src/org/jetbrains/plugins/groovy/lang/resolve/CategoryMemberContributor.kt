@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -58,6 +59,8 @@ private fun getCategoryClasses(call: GrMethodCall, closure: GrFunctionalExpressi
   }
 }
 
+@NlsSafe private const val USE = "use"
+
 private fun checkMethodCall(place: PsiElement): GrMethodCall? {
   val context = place.context
   val call = when (context) {
@@ -68,7 +71,7 @@ private fun checkMethodCall(place: PsiElement): GrMethodCall? {
   if (call == null) return null
 
   val invoked = call.invokedExpression as? GrReferenceExpression
-  if (invoked?.referenceName != "use") return null
+  if (invoked?.referenceName != USE) return null
 
   return call
 }

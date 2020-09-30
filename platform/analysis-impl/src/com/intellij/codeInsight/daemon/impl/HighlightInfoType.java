@@ -17,12 +17,15 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
@@ -164,11 +167,11 @@ public interface HighlightInfoType {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof HighlightInfoTypeImpl)) return false;
 
-      final HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
+      HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
 
       if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;
@@ -203,7 +206,7 @@ public interface HighlightInfoType {
 
     @Override
     @NotNull
-    public HighlightSeverity getSeverity(final PsiElement psiElement) {
+    public HighlightSeverity getSeverity(PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
                                   ? InspectionProfileManager.getInstance().getCurrentProfile()
                                   : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
@@ -237,7 +240,7 @@ public interface HighlightInfoType {
     boolean needsUpdateOnTyping();
   }
 
-  static String getUnusedSymbolDisplayName() {
+  static @Nls(capitalization = Sentence) String getUnusedSymbolDisplayName() {
     return AnalysisBundle.message("inspection.dead.code.display.name");
   }
 }

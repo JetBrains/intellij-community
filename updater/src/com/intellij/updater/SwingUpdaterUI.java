@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import javax.swing.*;
@@ -13,9 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
+@SuppressWarnings({"UseJBColor", "UseDPIAwareBorders", "HardCodedStringLiteral"})
 public abstract class SwingUpdaterUI implements UpdaterUI {
-
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
@@ -206,7 +205,6 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
     return "<b>" + text + "</b>";
   }
 
-  @SuppressWarnings("SSBasedInspection")
   protected static void invokeLater(Runnable runnable) {
     SwingUtilities.invokeLater(runnable);
   }
@@ -300,7 +298,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
       }
     }
 
-    private static class Item {
+    private static final class Item {
       private final ValidationResult validationResult;
       private ValidationResult.Option option;
 
@@ -313,7 +311,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
 
   private static class MyCellEditor extends DefaultCellEditor {
     MyCellEditor() {
-      super(new JComboBox());
+      super(new JComboBox<>());
     }
 
     @Override

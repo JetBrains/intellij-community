@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -21,10 +21,9 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.UriUtil;
+import com.intellij.util.UrlUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashSet;
 import org.apache.velocity.runtime.ParserPool;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -160,8 +158,7 @@ class FileTemplatesLoader implements Disposable {
       configDir = PathManager.getConfigDir().resolve(TEMPLATES_DIR);
     }
     else {
-      String storeDirPath = Objects.requireNonNull(ProjectKt.getStateStore(project).getDirectoryStorePath(true));
-      configDir = Paths.get(storeDirPath, TEMPLATES_DIR);
+      configDir = ProjectKt.getStateStore(project).getProjectFilePath().getParent().resolve(TEMPLATES_DIR);
     }
 
     FileTemplateLoadResult result = loadDefaultTemplates(new ArrayList<>(MANAGER_TO_DIR.values()));
@@ -181,13 +178,13 @@ class FileTemplatesLoader implements Disposable {
 
   private static @NotNull FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
     FileTemplateLoadResult result = new FileTemplateLoadResult(new MultiMap<>());
-    Set<URL> processedUrls = new THashSet<>();
+    Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (PluginDescriptor plugin : plugins) {
       if (plugin instanceof IdeaPluginDescriptorImpl && plugin.isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
-        if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty() ||
+        if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getUrls().isEmpty() ||
             !processedLoaders.add(loader)) {
           continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
         }
@@ -222,11 +219,10 @@ class FileTemplatesLoader implements Disposable {
     for (String path : children) {
       if (path.equals("default.html")) {
         result.setDefaultTemplateDescription(
-          UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+          UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.equals("includes/default.html")) {
-        result.setDefaultIncludeDescription(
-          UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+        result.setDefaultIncludeDescription(UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
@@ -246,11 +242,10 @@ class FileTemplatesLoader implements Disposable {
         String filename = path.substring(prefix.isEmpty() ? 0 : prefix.length() + 1, path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
         String extension = FileUtilRt.getExtension(filename);
         String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-        URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
+        URL templateUrl = UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
         String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
         URL descriptionUrl = descriptionPath == null ? null :
-                             UrlClassLoader
-                               .internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
+                             UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
         assert templateUrl != null;
         result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
         // FTManagers loop

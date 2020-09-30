@@ -1,0 +1,10 @@
+o('div','md-src-pos','0..164');o('pre','md-src-pos','0..65');o('code','md-src-pos','0..65');o('span','md-src-pos','0..4');c('span');o('span','md-src-pos','4..22');t(`\\0\\a\\b\\t\\n\\v\\f\\r\\e`);c('span');t(`
+`);o('span','md-src-pos','23..42');t(`'"\`\\'\\"\\\``);c('span');t(`
+`);o('span','md-src-pos','43..46');t(`\\\\n`);c('span');t(`
+`);o('span','md-src-pos','47..49');t(`\\n`);c('span');t(`
+`);o('span','md-src-pos','50..75');t(`\$%^&*{}[](),./?/~\\/\\\\`);c('span');t(`
+`);o('span','md-src-pos','76..76');c('span');o('span','md-src-pos','62..65');c('span');c('code');c('pre');o('pre','md-src-pos','67..163');o('code','class','language-javascript','md-src-pos','67..163');o('span','md-src-pos','45..59');c('span');o('span','md-src-pos','59..78');t(`console.log(`);o('span','style','color:#6a8759');t(`"`);c('span');o('span','style','color:#cc7832');t(`\\"`);c('span');o('span','style','color:#6a8759');t(`"`);c('span');t(`)`);o('span','style','color:#cc7832');t(`;`);c('span');c('span');t(`
+`);o('span','md-src-pos','78..97');t(`console.log(`);o('span','style','color:#6a8759');t(`"`);c('span');o('span','style','color:#cc7832');t(`\\'`);c('span');o('span','style','color:#6a8759');t(`"`);c('span');t(`)`);o('span','style','color:#cc7832');t(`;`);c('span');c('span');t(`
+`);o('span','md-src-pos','97..116');t(`console.log(`);o('span','style','color:#6a8759');t(`"`);c('span');o('span','style','color:#cc7832');t(`\\\``);c('span');o('span','style','color:#6a8759');t(`"`);c('span');t(`)`);o('span','style','color:#cc7832');t(`;`);c('span');c('span');t(`
+`);o('span','md-src-pos','116..138');t(`console.log(`);o('span','style','color:#6a8759');t(`"`);c('span');o('span','style','color:#cc7832');t(`\\n`);c('span');o('span','style','color:#cc7832');t(`\\\\`);c('span');o('span','style','color:#6a8759');t(`n"`);c('span');t(`)`);o('span','style','color:#cc7832');t(`;`);c('span');c('span');t(`
+`);o('span','md-src-pos','138..139');c('span');o('span','md-src-pos','138..141');c('span');c('code');c('pre');c('div');

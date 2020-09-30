@@ -31,8 +31,10 @@ import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix {
 
@@ -74,28 +76,36 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       }
       else {
         final PsiElement[] elements = declarationStatement.getDeclaredElements();
-        final PsiVariable variable = (PsiVariable)elements[0];
-        variable.normalizeDeclaration();
-        for (int i = 1; i < elements.length; i++) {
-          declarationStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiDeclarationStatement.class);
-          assert declarationStatement != null;
-          JavaSharedImplUtil.normalizeBrackets((PsiVariable)declarationStatement.getDeclaredElements()[0]);
+        List<PsiVariable> psiVariables = StreamEx.of(elements).select(PsiVariable.class).collect(Collectors.toList());
+        if (!myCStyleDeclaration || elements.length != psiVariables.size() || !new SingleDeclarationNormalizer(psiVariables).normalize()) {
+          final PsiVariable variable = (PsiVariable)elements[0];
+          variable.normalizeDeclaration();
+          for (int i = 1; i < elements.length; i++) {
+            declarationStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiDeclarationStatement.class);
+            assert declarationStatement != null;
+            JavaSharedImplUtil.normalizeBrackets((PsiVariable)declarationStatement.getDeclaredElements()[0]);
+          }
         }
       }
     }
     else if (element instanceof PsiField) {
       PsiField field = DeclarationSearchUtils.findFirstFieldInDeclaration((PsiField)element);
+      assert field != null;
       PsiField nextField = field;
       int count = 0;
+      List<PsiVariable> psiFields = new ArrayList<>();
       while (nextField != null) {
         count++;
+        psiFields.add(nextField);
         nextField = DeclarationSearchUtils.findNextFieldInDeclaration(nextField);
       }
-      field.normalizeDeclaration();
-      for (int i = 1; i < count; i++) {
-        field = PsiTreeUtil.getNextSiblingOfType(field, PsiField.class);
-        assert field != null;
-        JavaSharedImplUtil.normalizeBrackets(field);
+      if (!myCStyleDeclaration || !new SingleDeclarationNormalizer(psiFields).normalize()) {
+        field.normalizeDeclaration();
+        for (int i = 1; i < count; i++) {
+          field = PsiTreeUtil.getNextSiblingOfType(field, PsiField.class);
+          assert field != null;
+          JavaSharedImplUtil.normalizeBrackets(field);
+        }
       }
     }
     else if (element instanceof PsiMethod) {
@@ -108,19 +118,23 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       if (returnType == null) {
         return;
       }
+      final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(returnType);
+      returnTypeElement.replace(typeElement);
+
       PsiElement child = method.getParameterList();
-      while (!(child instanceof PsiCodeBlock)) {
+      while (child != null && !(child instanceof PsiCodeBlock)) {
         final PsiElement elementToDelete = child;
-        child = child.getNextSibling();
+        child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
         if (elementToDelete instanceof PsiJavaToken) {
           final IElementType tokenType = ((PsiJavaToken)elementToDelete).getTokenType();
           if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
             elementToDelete.delete();
           }
         }
+        else if (elementToDelete instanceof PsiAnnotation) {
+          elementToDelete.delete();
+        }
       }
-      final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(returnType);
-      returnTypeElement.replace(typeElement);
     }
   }
 

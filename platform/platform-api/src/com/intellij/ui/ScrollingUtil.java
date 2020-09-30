@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -225,8 +226,12 @@ public final class ScrollingUtil {
     return list.getLastVisibleIndex() - list.getFirstVisibleIndex() + 1;
   }
 
-  public static void moveDown(@NotNull JList<?> list, @JdkConstants.InputEventMask final int modifiers) {
-    _moveDown(list, list.getSelectionModel(), modifiers, list.getModel().getSize(), UISettings.getInstance().getCycleScrolling());
+  public static void moveDown(@NotNull JList<?> list, @JdkConstants.InputEventMask int modifiers) {
+    moveDown(list, modifiers, UISettings.getInstance().getCycleScrolling());
+  }
+
+  private static void moveDown(@NotNull JList<?> list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+    _moveDown(list, list.getSelectionModel(), modifiers, list.getModel().getSize(), cycleScrolling);
   }
 
   private static void selectOrAddSelection(@NotNull ListSelectionModel selectionModel,
@@ -247,27 +252,35 @@ public final class ScrollingUtil {
     installActions(list, null);
   }
 
-  public static void installActions(final @NotNull JList<?> list, @Nullable JComponent focusParent) {
+  public static void installActions(@NotNull JList<?> list, @Nullable JComponent focusParent) {
+    installActions(list, focusParent, UISettings.getInstance().getCycleScrolling());
+  }
+
+  public static void installActions(final @NotNull JList<?> list, @Nullable JComponent focusParent, boolean cycleScrolling) {
     ActionMap actionMap = list.getActionMap();
-    actionMap.put(SCROLL_UP_ACTION_ID, new MoveAction(SCROLL_UP_ACTION_ID, list));
-    actionMap.put(SCROLL_DOWN_ACTION_ID, new MoveAction(SCROLL_DOWN_ACTION_ID, list));
-    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list));
-    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list));
-    actionMap.put(SELECT_LAST_ROW_ACTION_ID, new MoveAction(SELECT_LAST_ROW_ACTION_ID, list));
-    actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new MoveAction(SELECT_FIRST_ROW_ACTION_ID, list));
+    setupScrollingActions(list, actionMap, cycleScrolling);
     actionMap.put(MOVE_HOME_ID, new MoveAction(MOVE_HOME_ID, list));
     actionMap.put(MOVE_END_ID, new MoveAction(MOVE_END_ID, list));
 
     maybeInstallDefaultShortcuts(list);
 
-    installMoveUpAction(list, focusParent);
-    installMoveDownAction(list, focusParent);
+    installMoveUpAction(list, focusParent, cycleScrolling);
+    installMoveDownAction(list, focusParent, cycleScrolling);
     installMovePageUpAction(list, focusParent);
     installMovePageDownAction(list, focusParent);
     if (!(focusParent instanceof JTextComponent)) {
       installMoveHomeAction(list, focusParent);
       installMoveEndAction(list, focusParent);
     }
+  }
+
+  private static void setupScrollingActions(@NotNull JComponent list, ActionMap actionMap, boolean cycleScrolling) {
+    actionMap.put(SCROLL_UP_ACTION_ID, new MoveAction(SCROLL_UP_ACTION_ID, list, cycleScrolling));
+    actionMap.put(SCROLL_DOWN_ACTION_ID, new MoveAction(SCROLL_DOWN_ACTION_ID, list, cycleScrolling));
+    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list, cycleScrolling));
+    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list, cycleScrolling));
+    actionMap.put(SELECT_LAST_ROW_ACTION_ID, new MoveAction(SELECT_LAST_ROW_ACTION_ID, list, cycleScrolling));
+    actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new MoveAction(SELECT_FIRST_ROW_ACTION_ID, list, cycleScrolling));
   }
 
   public static void redirectExpandSelection(@NotNull JList<?> list, @Nullable JComponent focusParent) {
@@ -327,19 +340,27 @@ public final class ScrollingUtil {
   }
 
   public static void installMoveDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
+    installMoveDownAction(list, focusParent, UISettings.getInstance().getCycleScrolling());
+  }
+
+  private static void installMoveDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent, boolean cycleScrolling) {
     new ListScrollAction(CommonShortcuts.getMoveDown(), focusParent == null ? list : focusParent){
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        moveDown(list, 0);
+        moveDown(list, 0, cycleScrolling);
       }
     };
   }
 
   public static void installMoveUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
+    installMoveUpAction(list, focusParent, UISettings.getInstance().getCycleScrolling());
+  }
+
+  private static void installMoveUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent, boolean cycleScrolling) {
     new ListScrollAction(CommonShortcuts.getMoveUp(), focusParent == null ? list : focusParent) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        moveUp(list, 0);
+        moveUp(list, 0, cycleScrolling);
       }
     };
   }
@@ -468,7 +489,11 @@ public final class ScrollingUtil {
   }
 
   public static void moveUp(@NotNull JList<?> list, @JdkConstants.InputEventMask int modifiers) {
-    _moveUp(list, list.getSelectionModel(), list.getModel().getSize(), modifiers, UISettings.getInstance().getCycleScrolling());
+    moveUp(list, modifiers, UISettings.getInstance().getCycleScrolling());
+  }
+
+  private static void moveUp(@NotNull JList<?> list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
+    _moveUp(list, list.getSelectionModel(), list.getModel().getSize(), modifiers, cycleScrolling);
   }
 
   public static void moveUp(@NotNull JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
@@ -558,7 +583,7 @@ public final class ScrollingUtil {
     installActions(table, UISettings.getInstance().getCycleScrolling());
   }
 
-  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction {
+  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction, LightEditCompatible {
     private final JComponent myComponent;
 
     MyScrollingAction(@NotNull JComponent component) {
@@ -587,12 +612,7 @@ public final class ScrollingUtil {
 
   public static void installActions(final @NotNull JTable table, final boolean cycleScrolling, @Nullable JComponent focusParent) {
     ActionMap actionMap = table.getActionMap();
-    actionMap.put(SCROLL_UP_ACTION_ID, new MoveAction(SCROLL_UP_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SCROLL_DOWN_ACTION_ID, new MoveAction(SCROLL_DOWN_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SELECT_LAST_ROW_ACTION_ID, new MoveAction(SELECT_LAST_ROW_ACTION_ID, table, cycleScrolling));
-    actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new MoveAction(SELECT_FIRST_ROW_ACTION_ID, table, cycleScrolling));
+    setupScrollingActions(table, actionMap, cycleScrolling);
 
     maybeInstallDefaultShortcuts(table);
     JComponent target = focusParent == null ? table : focusParent;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AbbreviationManager;
@@ -6,10 +6,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,18 +15,14 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(
-  name = "AbbreviationManager",
-  storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS)
-)
-public class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
-  private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<>();
-  private final Map<String, Set<String>> myActionId2Abbreviations = new THashMap<>();
-  private final Map<String, Set<String>> myPluginsActionId2Abbreviations = new THashMap<>();
+@State(name = "AbbreviationManager", storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS))
+public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
+  private final Map<String, List<String>> myAbbreviation2ActionId = new HashMap<>();
+  private final Map<String, Set<String>> myActionId2Abbreviations = new HashMap<>();
+  private final Map<String, Set<String>> myPluginsActionId2Abbreviations = new HashMap<>();
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     final Element actions = new Element("actions");
     if (myActionId2Abbreviations.isEmpty()) {
       return actions;
@@ -39,7 +33,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
       String key = entry.getKey();
       Set<String> abbrs = entry.getValue();
       Set<String> pluginAbbrs = myPluginsActionId2Abbreviations.get(key);
-      if (abbrs == pluginAbbrs || abbrs != null && abbrs.equals(pluginAbbrs)) {
+      if (Objects.equals(abbrs, pluginAbbrs)) {
         continue;
       }
 

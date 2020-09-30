@@ -43,8 +43,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -62,9 +63,9 @@ import java.util.regex.Pattern;
  */
 public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
-  private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
+  private static final @NonNls String PROJECT_TEMPLATE_XML = "project-template.xml";
 
-  static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
+  static final @NonNls String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -263,7 +264,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
-    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<>());
+    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new Int2ObjectOpenHashMap<>());
     String result = convertTemplates(text, pattern, templateText, shouldEscape);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {

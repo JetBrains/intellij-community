@@ -6,13 +6,20 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.util.indexing.IndexableSetContributor
+import org.junit.Before
 import org.junit.Test
 
 @RunsInEdt
 class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
+  @Before
+  fun applicabilityCheck() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+  }
+
   // Symlinks in ProjectFileIndex are treated as if they were copy of the target's content,
   // so exclusion of the target is not taken into account.
   @Test

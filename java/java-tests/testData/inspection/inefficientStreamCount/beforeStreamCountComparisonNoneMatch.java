@@ -1,4 +1,4 @@
-// "Replace Stream().filter().count() == 0 with stream.noneMatch()" "true"
+// "Replace 'Stream().filter().count() == 0' with 'stream.noneMatch()'" "true"
 
 import java.util.Arrays;
 

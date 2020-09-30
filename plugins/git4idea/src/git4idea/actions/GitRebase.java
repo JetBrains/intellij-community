@@ -33,12 +33,11 @@ public class GitRebase extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    if (project == null || !hasGitRepositories(project)) {
+    if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(getRebasingRepositories(project).size() < getRepositories(project).size());
+      e.getPresentation().setEnabledAndVisible(true);
     }
   }
 
@@ -53,7 +52,7 @@ public class GitRebase extends DumbAwareAction {
     if (dialog.showAndGet()) {
       VirtualFile root = dialog.gitRoot();
       GitRebaseParams selectedParams = dialog.getSelectedParams();
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.getString("rebase.progress.indicator.title")) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitRepository selectedRepository =

@@ -33,6 +33,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
@@ -50,14 +51,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
-  private static final String ID = "gradle-intellij-plugin";
+  private static final @NonNls String ID = "gradle-intellij-plugin";
   private static final Logger LOG = Logger.getInstance(GradleIntellijPluginFrameworkSupportProvider.class);
 
-  private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
-  private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
+  private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
+  private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.20";
-  protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
+  private static final @NonNls String FALLBACK_VERSION = "0.4.22";
+  protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
+
+  private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
+  private static final @NonNls String META_INF_PATH = "/src/main/resources/META-INF";
 
   private static class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
@@ -76,7 +80,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       @NotNull
       @Override
       public String getPresentableName() {
-        return "IntelliJ Platform Plugin";
+        return DevKitBundle.message("module.wizard.gradle.presentable.name");
       }
 
       @NotNull
@@ -114,8 +118,8 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   }
 
   protected void configureBuildScript(@NotNull BuildScriptDataBuilder buildScriptData,
-                                      String pluginVersion,
-                                      String ideVersion) {
+                                      @NonNls String pluginVersion,
+                                      @NonNls String ideVersion) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
@@ -137,7 +141,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       Lazy.EXECUTOR.execute(() -> {
         try {
           // sadly plugins.gradle.org has no API and doesn't support meta-versions like latest.
-          // Let's parse HTML with REGEXPs muhahaha
+          // Let's parse HTML with REGEXPs
           String content = HttpRequests.request("https://plugins.gradle.org/plugin/org.jetbrains.intellij")
             .productNameAsUserAgent()
             .readString(new EmptyProgressIndicator(modalityState));
@@ -154,14 +158,14 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     }
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText("Learn how to <a>build plugins with Gradle</a>");
+    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.gradle.learn.title"));
     linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
     return linkLabel;
   }
 
   private boolean createPluginXml(@NotNull ProjectId projectId, @NotNull Module module, @NotNull String contentRootPath) {
     try {
-      VirtualFile metaInf = VfsUtil.createDirectoryIfMissing(contentRootPath + "/src/main/resources/META-INF");
+      VirtualFile metaInf = VfsUtil.createDirectoryIfMissing(contentRootPath + META_INF_PATH);
       if (metaInf == null) {
         return false;
       }
@@ -173,7 +177,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
 
-      Map<String, String> attributes = new HashMap<>();
+      @NonNls Map<String, String> attributes = new HashMap<>();
       String groupId = projectId.getGroupId();
       String artifactId = projectId.getArtifactId();
       if (StringUtil.isNotEmpty(artifactId)) {
@@ -203,7 +207,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     RunConfiguration runConfiguration = configuration.getConfiguration();
     if (runConfiguration instanceof ExternalSystemRunConfiguration) {
       ExternalSystemTaskExecutionSettings settings = ((ExternalSystemRunConfiguration)runConfiguration).getSettings();
-      settings.setTaskNames(Collections.singletonList(":runIde"));
+      settings.setTaskNames(Collections.singletonList(TASK_NAME_RUN_IDE));
       settings.setExternalProjectPath(contentRootPath);
     }
     runManager.addConfiguration(configuration);

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class RelativePathCalculator {
+public final class RelativePathCalculator {
   private static final int ourNumOfAllowedStepsAbove = 1;
   private static final int ourAllowedStepsDown = 2;
 
@@ -43,8 +31,7 @@ public class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  @NotNull
-  public String execute() {
+  public @NlsSafe @NotNull String execute() {
     if (stringEqual(myShifted, myBase)) {
       return ".";
     }
@@ -106,18 +93,19 @@ public class RelativePathCalculator {
     return false;
   }
 
-  @Nullable
-  public static String getMovedString(final String beforeName, final String afterName) {
+  public static @NlsContexts.Label @Nullable String getMovedString(final String beforeName, final String afterName) {
     if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
-      final RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
+      RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
       String result = calculator.execute();
-      final String key = calculator.isRename() ? "change.file.renamed.to.text" : "change.file.moved.to.text";
-      return VcsBundle.message(key, result);
+
+      return calculator.isRename()
+             ? VcsBundle.message("change.file.renamed.to.text", result)
+             : VcsBundle.message("change.file.moved.to.text", result);
     }
     return null;
   }
 
-  public static String[] split(final String s) {
+  public static String[] split(@NotNull String s) {
     return s.replace(File.separatorChar, '/').split("/");
   }
 }

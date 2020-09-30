@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class IntentionSettingsPanel implements MasterDetails {
+public final class IntentionSettingsPanel implements MasterDetails {
   private JPanel myPanel;
   private final IntentionSettingsTree myIntentionSettingsTree;
   private final IntentionDescriptionPanel myIntentionDescriptionPanel = new IntentionDescriptionPanel();

@@ -187,7 +187,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
-  private static class ArrayValuesCache {
+  private static final class ArrayValuesCache {
     private final ArrayReference myArray;
     private List<Value> myCachedValues = Collections.emptyList();
     private int myCachedStartIndex;
@@ -337,7 +337,8 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
 
-    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(" clear") {
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(
+      JavaDebuggerBundle.message("array.filter.node.clear.link")) {
       @Override
       public void onClick(MouseEvent e) {
         XDebuggerTree tree = (XDebuggerTree)e.getSource();

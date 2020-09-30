@@ -2,7 +2,6 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.ReferringObject;
-import com.intellij.debugger.engine.SimpleReferringObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +20,10 @@ public class ReferringObjectsInfo {
   private static final Logger LOG = Logger.getInstance(ReferringObjectsInfo.class);
 
   private final Map<ObjectReference, Integer> myReversedMap = new HashMap<>();
-  private final List<? extends ObjectReference> myDirectMap;
-  private final List<? extends List<Integer>> myReferrers;
+  private final List<List<ReferringObject>> myReferrers;
 
-  public ReferringObjectsInfo(@NotNull List<? extends ObjectReference> values, @NotNull List<? extends List<Integer>> referrers) {
-    myDirectMap = values;
+  public ReferringObjectsInfo(@NotNull List<? extends ObjectReference> values,
+                              @NotNull List<List<ReferringObject>> referrers) {
     for (int i = 0; i < values.size(); i++) {
       myReversedMap.put(values.get(i), i);
     }
@@ -40,7 +38,11 @@ public class ReferringObjectsInfo {
   @NotNull
   @TestOnly
   public List<ObjectReference> getAllReferrers(@NotNull ObjectReference value) {
-    return myReferrers.get(myReversedMap.get(value)).stream().distinct().map(ix -> myDirectMap.get(ix)).collect(Collectors.toList());
+    return myReferrers.get(myReversedMap.get(value)).stream()
+      .distinct()
+      .map(ReferringObject::getReference)
+      .filter(ref -> ref != null)
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -54,8 +56,6 @@ public class ReferringObjectsInfo {
     return myReferrers.get(index).stream()
       .distinct()
       .limit(limit)
-      .map(ix -> myDirectMap.get(ix))
-      .map(SimpleReferringObject::new)
       .collect(Collectors.toList());
   }
 }

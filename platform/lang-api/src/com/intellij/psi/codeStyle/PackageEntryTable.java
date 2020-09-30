@@ -105,7 +105,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myEntries.clear();
-    List children = element.getChildren();
+    List<Element> children = element.getChildren();
     for (final Object aChildren : children) {
       @NonNls Element e = (Element)aChildren;
       @NonNls String name = e.getName();

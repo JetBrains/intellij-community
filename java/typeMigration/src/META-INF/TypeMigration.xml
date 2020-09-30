@@ -33,16 +33,16 @@
       <category>Java/Concurrency</category>
     </intentionAction>
 
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Guava"
-                     groupBundle="messages.InspectionsBundle"
-                     groupName="Java 8" enabledByDefault="true" level="WARNING"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" 
+                     language="JAVA" shortName="Guava" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
-                     displayName="Guava's functional primitives can be replaced by Java"/>
+                     bundle="messages.TypeMigrationBundle" key="inspection.guava.name"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="MigrateAssertToMatcherAssert"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection"
-                     displayName="Assertion expression can be replaced with 'assertThat' method call"/>
+                     bundle="messages.TypeMigrationBundle" key="inspection.assertion.name"/>
 
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
   </extensions>

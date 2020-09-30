@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -37,22 +38,22 @@ public class UIThemeMetadata {
       return deprecated;
     }
 
-    public String getKey() {
+    public @NlsSafe String getKey() {
       return key;
     }
 
     @Nullable
-    public String getDescription() {
+    public @NlsSafe String getDescription() {
       return description;
     }
 
     @Nullable
-    public String getSource() {
+    public @NlsSafe String getSource() {
       return source;
     }
 
     @Nullable
-    public String getSince() {
+    public @NlsSafe String getSince() {
       return since;
     }
 
@@ -93,11 +94,11 @@ public class UIThemeMetadata {
     }
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 
-  public String getPluginId() {
+  public @NlsSafe String getPluginId() {
     return pluginId;
   }
 

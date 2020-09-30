@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.util.containers.ContainerUtil.find
 import com.intellij.util.containers.Convertor
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.SvnUtil.append
 import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
@@ -118,12 +120,14 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   @Throws(SvnBindException::class)
   private fun parseResult(path: File, base: File, infoBase: Info?, command: CommandExecutor, handler: StatusConsumer) {
     val result = command.output
-    if (isEmptyOrSpaces(result)) throw SvnBindException("Status request returned nothing for command: ${command.commandText}")
+    if (isEmptyOrSpaces(result)) throw SvnBindException(message("error.svn.status.with.no.output", command.commandText))
 
     try {
       if (!parseResult(base, infoBase, createInfoGetter(), result, handler)) {
         if (!isSvnVersioned(myVcs, path)) {
-          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - ${command.commandText}. Result - $result")
+          LOG.info("Status requested not in working copy. Command - ${command.commandText}. Result - $result")
+
+          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, message("error.svn.status.not.in.working.copy", command.commandText))
         }
         else {
           // return status indicating "NORMAL" state
@@ -159,6 +163,8 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   }
 
   companion object {
+    private val LOG = logger<CmdStatusClient>()
+
     fun parseResult(base: File, result: String): Status? {
       val ref = Ref<Status?>()
       parseResult(base, null, Convertor { null }, result, StatusConsumer(ref::set))

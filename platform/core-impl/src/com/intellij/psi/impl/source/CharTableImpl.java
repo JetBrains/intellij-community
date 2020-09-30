@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-public class CharTableImpl implements CharTable {
+public final class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
 
   private static final StringHashToCharSequencesMap STATIC_ENTRIES = newStaticSet();
@@ -200,7 +199,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
-  private static class StringHashToCharSequencesMap extends TIntObjectHashMap<Object> {
+  private static final class StringHashToCharSequencesMap extends TIntObjectHashMap<Object> {
     private StringHashToCharSequencesMap(int capacity, float loadFactor) {
       super(capacity, loadFactor);
     }

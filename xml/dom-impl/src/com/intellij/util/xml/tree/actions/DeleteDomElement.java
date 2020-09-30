@@ -25,6 +25,8 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.PropertyKey;
 
 public class DeleteDomElement extends BaseDomTreeAction {
 
@@ -48,8 +50,8 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?",
-                                                  XmlDomBundle.message("dialog.title.remove.xml.element"), Messages.getQuestionIcon());
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "dom.dialog.message.remove.elements"),
+                                                  XmlDomBundle.message("dom.tree.remove.xml.element.dialog.title"), Messages.getQuestionIcon());
       if (ret == Messages.OK) {
         WriteCommandAction.writeCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)).run(() -> domElement.undefine());
       }
@@ -77,19 +79,20 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
 
     if (enabled) {
-      e.getPresentation().setText(getPresentationText(selectedNode, XmlDomBundle.message("action.remove")));
+      e.getPresentation().setText(getPresentationText(selectedNode, "dom.action.remove.elements"));
     }
     else {
-      e.getPresentation().setText(XmlDomBundle.messagePointer("action.remove"));
+      e.getPresentation().setText(XmlDomBundle.messagePointer("dom.action.remove"));
     }
 
     e.getPresentation().setIcon(AllIcons.General.Remove);
   }
 
-  private static String getPresentationText(final SimpleNode selectedNode, String removeString) {
+
+  private static @Nls String getPresentationText(final SimpleNode selectedNode,
+                                                 @PropertyKey (resourceBundle = XmlDomBundle.BUNDLE) String messageKey) {
     final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
-    removeString += " " + presentation.getTypeName() +
-                                (presentation.getElementName() == null || presentation.getElementName().trim().length() == 0? "" : ": " + presentation.getElementName());
-    return removeString;
+    return XmlDomBundle.message(messageKey, presentation.getTypeName() +
+                                            (presentation.getElementName() == null || presentation.getElementName().trim().length() == 0? "" : ": " + presentation.getElementName()));
   }
 }

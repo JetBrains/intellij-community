@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.ignore;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +58,7 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
     return sameExtensionCase;
   }
 
-  public String getExtensionMask() {
+  public @NlsSafe @NotNull String getExtensionMask() {
     return "*." + commonExtension;
   }
 
@@ -74,7 +76,7 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
     return result;
   }
 
-  public String getFileName() {
+  public @NlsSafe @NotNull String getFileName() {
     return folders.values().iterator().next().iterator().next();
   }
 }

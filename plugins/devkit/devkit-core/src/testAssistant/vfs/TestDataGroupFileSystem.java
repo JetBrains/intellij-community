@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile> {
@@ -28,8 +29,8 @@ public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile>
    * We must have a separator for two arbitrary file paths, considering that almost all symbols are possible in Unix paths.
    * It is very unlikely that this UUID will be present in file path so it's a pretty reliable separator.
    */
-  private static final String GROUP_FILES_SEPARATOR = "33d0ee30-8c8f-11e7-bb31-be2e44b06b34";
-  private static final String PROTOCOL = "testdata";
+  private static final @NonNls String GROUP_FILES_SEPARATOR = "33d0ee30-8c8f-11e7-bb31-be2e44b06b34";
+  private static final @NonNls String PROTOCOL = "testdata";
 
   public TestDataGroupFileSystem() {
     super(PROTOCOL);

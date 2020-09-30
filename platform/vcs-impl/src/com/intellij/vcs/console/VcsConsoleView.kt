@@ -3,6 +3,7 @@ package com.intellij.vcs.console
 
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.execution.ui.ConsoleViewPlace
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -11,7 +12,12 @@ import com.intellij.openapi.util.TextRange
 class VcsConsoleView(project: Project) : ConsoleViewImpl(project, true) {
   companion object {
     private val LOG = logger<VcsConsoleView>()
+
+    @JvmField
+    val CONSOLE_PLACE: ConsoleViewPlace = ConsoleViewPlace("VCS Console")
   }
+
+  override fun getPlace(): ConsoleViewPlace = CONSOLE_PLACE
 
   override fun updateFoldings(startLine: Int, endLine: Int) {
     super.updateFoldings(startLine, endLine)

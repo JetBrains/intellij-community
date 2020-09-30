@@ -1,2 +1,2 @@
-- >qwe
-  >asd<caret>
+- > qwe
+  > asd<caret>

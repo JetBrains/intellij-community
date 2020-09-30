@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -7,7 +7,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.List;
 import java.util.Map;
@@ -18,9 +18,9 @@ interface ConfigurationByRecordProvider {
   RunnerAndConfigurationSettings getConfiguration(TestStateStorage.Record record);
 }
 
-class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
+final class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
   private final Project myProject;
-  private final TIntObjectHashMap<RunnerAndConfigurationSettings> myConfigurationsMap = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<RunnerAndConfigurationSettings> myConfigurationsMap = new Int2ObjectOpenHashMap<>();
 
   RunConfigurationByRecordProvider(Project project) {
     myProject = project;
@@ -39,7 +39,7 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
   }
 }
 
-public class RecentTestsListProvider {
+public final class RecentTestsListProvider {
   private final Map<String, TestStateStorage.Record> myRecords;
   private final ConfigurationByRecordProvider myConfigurationProvider;
 

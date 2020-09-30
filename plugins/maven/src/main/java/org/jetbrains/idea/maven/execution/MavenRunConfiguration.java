@@ -26,6 +26,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -302,10 +303,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private class JavaCommandLineStateImpl extends JavaCommandLineState implements RemoteConnectionCreator {
 
-    private final String myName;
+    @NlsSafe private final String myName;
     private RemoteConnectionCreator myRemoteConnectionCreator;
 
-    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment, String name) {
+    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment, @NlsSafe String name) {
       super(environment);
       myName = name;
     }
@@ -631,12 +632,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   public static class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
     private final ProcessListener myListener;
     private final ProcessHandler myProcessHandler;
-    private final MavenExternalExecutor.MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
+    private final MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
 
     ProcessListenerWithFilteredSpyOutput(ProcessListener listener, ProcessHandler processHandler) {
       myListener = listener;
       myProcessHandler = processHandler;
-      mySimpleConsoleEventsBuffer = new MavenExternalExecutor.MavenSimpleConsoleEventsBuffer(
+      mySimpleConsoleEventsBuffer = new MavenSimpleConsoleEventsBuffer(
         (l, k) -> myListener.onTextAvailable(new ProcessEvent(processHandler, l), k),
         Registry.is("maven.spy.events.debug")
       );

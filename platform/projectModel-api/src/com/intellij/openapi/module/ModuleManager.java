@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
@@ -25,7 +10,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -53,8 +40,11 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull
-  public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
+  public abstract @NotNull Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
+
+  public @NotNull Module newModule(@NotNull Path file, @NotNull String moduleTypeId) {
+    return newModule(file.toString().replace(File.separatorChar, '/'), moduleTypeId);
+  }
 
   /**
    * Creates a non-persistent module of the specified type and adds it to the project
@@ -72,17 +62,20 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   }
 
   /**
+   * @deprecated Use {@link #loadModule(Path)}
+   */
+  @Deprecated
+  public abstract @NotNull Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
+
+  /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    *
-   * @param filePath the path to load the module from.
+   * @param file the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException        if the data in the .iml file is semantically incorrect.
    * @throws IOException                 if an I/O error occurred when loading the module file.
-   * @throws JDOMException               if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  @NotNull
-  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
+  public abstract @NotNull Module loadModule(@NotNull Path file) throws IOException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.

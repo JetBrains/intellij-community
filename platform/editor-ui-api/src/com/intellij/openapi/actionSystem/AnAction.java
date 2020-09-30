@@ -13,6 +13,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartList<Supplier<String>> mySynonyms = new SmartList<>();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -390,6 +392,14 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
+  public void addSynonym(@NotNull Supplier<String> text) {
+    mySynonyms.add(text);
+  }
+
+  public List<Supplier<String>> getSynonyms() {
+    return mySynonyms;
+  }
+
   public interface TransparentUpdate {
   }
 
@@ -399,6 +409,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   @Override
+  @Nls
   public String toString() {
     return getTemplatePresentation().toString();
   }

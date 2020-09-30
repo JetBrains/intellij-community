@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.testframework.TestSearchScope;
@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TestClassCollector {
+public final class TestClassCollector {
 
   private static final Logger LOG = Logger.getInstance(TestClassCollector.class);
 
@@ -56,7 +56,7 @@ public class TestClassCollector {
         if (rootPath != null && !baseDir.startsWith(rootPath)) continue;
 
         String pathSeparator = baseDir.getFileSystem().getSeparator();
-        Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(baseDir, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             ProgressManager.checkCanceled();
@@ -74,7 +74,7 @@ public class TestClassCollector {
                 int modifiers = aClass.getModifiers();
                 if (Modifier.isAbstract(modifiers) ||
                     !Modifier.isPublic(modifiers) ||
-                   aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
+                    aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
                   return result;
                 }
                 if (classPredicate.test(aClass)) {

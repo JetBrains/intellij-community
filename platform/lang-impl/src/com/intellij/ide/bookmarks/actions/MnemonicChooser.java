@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -79,7 +79,7 @@ public class MnemonicChooser extends JPanel {
     return isOccupied(c) ? OCCUPIED_CELL_COLOR  : FREE_CELL_COLOR;
   }
 
-  private class MnemonicLabel extends JLabel {
+  private final class MnemonicLabel extends JLabel {
     private MnemonicLabel(final char c) {
       setOpaque(true);
       setText(Character.toString(c));

@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestCompilerRefInheritanceAction extends TestCompilerHierarchyBaseAction {
   public TestCompilerRefInheritanceAction() {
-    super("Compiler Reference Direct Inheritor Search");
+    super(JavaCompilerBundle.message("action.compiler.reference.direct.inheritor.search.text"));
   }
 
   @Override

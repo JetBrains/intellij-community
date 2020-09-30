@@ -59,7 +59,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           Optional<PsiElement> referenceExpression = StreamEx.ofTree(((PsiElement)runnableExpression), el -> StreamEx.of(el.getChildren()))
             .findAny(el -> el instanceof PsiReferenceExpression &&
                            ((PsiReferenceExpression)el).isReferenceTo(variable));
-          if (!referenceExpression.isPresent()) return;
+          if (referenceExpression.isEmpty()) return;
           String variableName = variable.getName();
           if (variableName == null) return;
           highlightingElement = referenceExpression.get();

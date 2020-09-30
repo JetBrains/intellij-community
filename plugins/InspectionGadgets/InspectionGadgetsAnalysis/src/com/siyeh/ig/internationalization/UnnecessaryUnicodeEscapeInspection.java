@@ -137,7 +137,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
           if (d == '\uFFFD') {
-            // this character is used as a replacement when a unicode character can't be displayed: �
+            // this character is used as a replacement when a unicode character can't be displayed
             // replacing the escape with the character may cause confusion, so ignore it.
             continue;
           }

@@ -3,11 +3,11 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.count;
 
@@ -31,7 +31,7 @@ public class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserNode<T
     super.render(renderer, selected, expanded, hasFocus);
     if (isManyFiles()) {
       renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
+      renderer.append(VcsBundle.message("changes.browse"), SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
     }
   }
 

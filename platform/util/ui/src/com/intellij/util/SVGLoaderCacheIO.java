@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,11 +10,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
+import java.util.EnumSet;
 import java.util.Set;
-
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardOpenOption.CREATE_NEW;
-import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * Storage level for {@link SVGLoaderCache} and {@link SVGLoaderPrebuilt}
@@ -23,12 +19,10 @@ import static java.nio.file.StandardOpenOption.WRITE;
  */
 @ApiStatus.Internal
 public final class SVGLoaderCacheIO {
-  private static final Set<OpenOption> OPEN_OPTION_SET = ContainerUtil.set(CREATE_NEW, WRITE);
+  private static final Set<StandardOpenOption> OPEN_OPTION_SET = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 
-  @Nullable
-  @ApiStatus.Internal
-  public static BufferedImage readImageFile(byte @NotNull [] bytes,
-                                            @NotNull ImageLoader.Dimension2DDouble docSize) {
+  public static @Nullable BufferedImage readImageFile(byte @NotNull [] bytes,
+                                                      @NotNull ImageLoader.Dimension2DDouble docSize) {
     ByteBuffer buff = ByteBuffer.wrap(bytes);
 
     double width = buff.getDouble();
@@ -36,13 +30,14 @@ public final class SVGLoaderCacheIO {
     int actualWidth = buff.getInt();
     int actualHeight = buff.getInt();
 
-    //sanity check to make sure file is not corrupted
-    if (actualWidth <= 0 || actualHeight <= 0 || actualWidth * actualHeight <= 0) return null;
+    // sanity check to make sure file is not corrupted
+    if (actualWidth <= 0 || actualHeight <= 0 || actualWidth * actualHeight <= 0) {
+      return null;
+    }
 
     @SuppressWarnings("UndesirableClassUsage")
-    //we do not need a specific image here, it will be wrapped later
+    // we do not need a specific image here, it will be wrapped later
     BufferedImage image = new BufferedImage(actualWidth, actualHeight, BufferedImage.TYPE_INT_ARGB);
-
     for (int y = 0; y < actualHeight; y++) {
       for (int x = 0; x < actualWidth; x++) {
         image.setRGB(x, y, buff.getInt());
@@ -53,7 +48,6 @@ public final class SVGLoaderCacheIO {
     return image;
   }
 
-  @ApiStatus.Internal
   public static void writeImageFile(@NotNull Path file,
                                     @NotNull BufferedImage image,
                                     @NotNull ImageLoader.Dimension2DDouble size) throws IOException {
@@ -89,14 +83,14 @@ public final class SVGLoaderCacheIO {
       }
 
       try {
-        Files.move(tmpFile, file, ATOMIC_MOVE);
+        Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE);
       }
       catch (AtomicMoveNotSupportedException e) {
         Files.move(tmpFile, file);
       }
     }
     catch (FileAlreadyExistsException e) {
-      //parallel thread managed to create the same file, skip it
+      // parallel thread managed to create the same file, skip it
     }
     catch (Exception e) {
       deleteQuietly(file);
@@ -111,8 +105,7 @@ public final class SVGLoaderCacheIO {
     try {
       Files.deleteIfExists(path);
     }
-    catch (Exception e) {
-      //NOP
+    catch (Exception ignore) {
     }
   }
 }

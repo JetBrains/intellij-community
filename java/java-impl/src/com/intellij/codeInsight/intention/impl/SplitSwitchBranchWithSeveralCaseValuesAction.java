@@ -277,7 +277,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     return result;
   }
 
-  private static class Branch {
+  private static final class Branch {
     private final PsiElement myFirstElement;
     private final PsiStatement myLastStatement;
     private final PsiCodeBlock myCodeBlock;

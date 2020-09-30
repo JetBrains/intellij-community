@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.jira.rest.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class JiraComment {
   }
 
   @NotNull
-  public String getBody() {
+  public @NlsSafe String getBody() {
     return body;
   }
 

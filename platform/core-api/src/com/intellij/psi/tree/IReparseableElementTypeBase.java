@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An additional interface to be implemented by {@link IElementType} instances for tokens, which allows for incremental reparse.
  * When the infrastructure detects that all the document's changes are inside an AST node with reparseable type,
- * {@link #isParsable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
+ * {@link #isReparseable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
  * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
- *
+ * <p>
  * Implementers of this interface (except {@link IReparseableElementType}) must also implement {@link ICustomParsingType}.
  */
 public interface IReparseableElementTypeBase extends ILazyParseableElementTypeBase {
@@ -37,6 +37,17 @@ public interface IReparseableElementTypeBase extends ILazyParseableElementTypeBa
                              @NotNull Language fileLanguage,
                              @NotNull Project project) {
     return false;
+  }
+
+  /**
+   * The same as {@link #isParsable(ASTNode, CharSequence, Language, Project)} but receives original node as a parameter, instead of
+   * parent. Original node may be used to look around for context dependent languages.
+   */
+  default boolean isReparseable(@NotNull ASTNode currentNode,
+                                @NotNull CharSequence newText,
+                                @NotNull Language fileLanguage,
+                                @NotNull Project project) {
+    return isParsable(currentNode.getTreeParent(), newText, fileLanguage, project);
   }
 
   default boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {

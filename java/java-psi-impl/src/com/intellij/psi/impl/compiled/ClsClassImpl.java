@@ -15,6 +15,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiRecordHeaderStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -72,7 +73,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   private boolean isLocalClass() {
     PsiClassStub<?> stub = getStub();
     return stub instanceof PsiClassStubImpl &&
-           ((PsiClassStubImpl)stub).isLocalClassInner();
+           ((PsiClassStubImpl<?>)stub).isLocalClassInner();
   }
 
   private boolean isAnonymousOrLocalClass() {
@@ -210,6 +211,18 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
+  public PsiRecordComponent @NotNull [] getRecordComponents() {
+    PsiRecordHeader header = getRecordHeader();
+    return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
+  }
+
+  @Override
+  public @Nullable PsiRecordHeader getRecordHeader() {
+    PsiRecordHeaderStub headerStub = getStub().findChildStubByType(JavaStubElementTypes.RECORD_HEADER);
+    return headerStub == null ? null : headerStub.getPsi();
+  }
+
+  @Override
   public PsiClassInitializer @NotNull [] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
@@ -320,12 +333,27 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
+  public boolean isRecord() {
+    return getStub().isRecord();
+  }
+
+  @Override
   public void appendMirrorText(final int indentLevel, @NotNull @NonNls final StringBuilder buffer) {
     appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
 
     appendText(getModifierListInternal(), indentLevel, buffer);
-    buffer.append(isEnum() ? "enum " : isAnnotationType() ? "@interface " : isInterface() ? "interface " : "class ");
-    appendText(getNameIdentifier(), indentLevel, buffer, " ");
+    buffer.append(isEnum() ? "enum " : 
+                  isAnnotationType() ? "@interface " : 
+                  isInterface() ? "interface " :
+                  isRecord() ? "record " :
+                  "class ");
+    PsiRecordHeader header = getRecordHeader();
+    if (header != null) {
+      appendText(getNameIdentifier(), indentLevel, buffer, "");
+      appendText(header, indentLevel, buffer, " ");
+    } else {
+      appendText(getNameIdentifier(), indentLevel, buffer, " ");
+    }
     appendText(getTypeParameterList(), indentLevel, buffer, " ");
     appendText(getExtendsList(), indentLevel, buffer, " ");
     appendText(getImplementsList(), indentLevel, buffer, " ");

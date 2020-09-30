@@ -34,7 +34,7 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * Basic PSI Adapter with common function that works in all supported versions of IDEA.
  */
-public class PsiAdapter {
+public final class PsiAdapter {
 
     private PsiAdapter() {}
 

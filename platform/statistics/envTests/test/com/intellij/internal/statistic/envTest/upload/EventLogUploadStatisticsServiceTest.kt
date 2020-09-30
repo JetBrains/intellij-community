@@ -3,10 +3,12 @@ package com.intellij.internal.statistic.envTest.upload
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.intellij.internal.statistic.connect.StatisticsResult
-import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorator
+import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.util.io.readText
 import junit.framework.TestCase
 import java.io.File

@@ -26,6 +26,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 /**
  * A collection of methods for retrieving history information from native Git.
  */
-public class GitHistoryUtils {
+public final class GitHistoryUtils {
   private static final Logger LOG = Logger.getInstance(GitHistoryUtils.class);
 
   private GitHistoryUtils() {
@@ -292,22 +293,8 @@ public class GitHistoryUtils {
 
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     GitLogRecord logRecord = parser.parseOneRecord(output);
-    if (logRecord == null) throw new VcsException("Can not parse log output \"" + output + "\"");
+    if (logRecord == null) throw new VcsException(GitBundle.message("log.parser.exception.message.could.not.parse.output", output));
     return logRecord.getAuthorTimeStamp();
-  }
-
-  /**
-   * Get name of the file in the last commit. If file was renamed, returns the previous name.
-   *
-   * @param project the context project
-   * @param path    the path to check
-   * @return the name of file in the last commit or argument
-   * @deprecated use {@link VcsUtil#getLastCommitPath(Project, FilePath)}
-   */
-  @NotNull
-  @Deprecated
-  public static FilePath getLastCommitName(@NotNull Project project, @NotNull FilePath path) {
-    return VcsUtil.getLastCommitPath(project, path);
   }
 
   /**
@@ -349,15 +336,5 @@ public class GitHistoryUtils {
       rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectCommitsMetadata(Project, VirtualFile, String...)} instead.
-   */
-  @Deprecated
-  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
-                                                                  @NotNull VirtualFile root,
-                                                                  String @NotNull ... hashes) throws VcsException {
-    return collectCommitsMetadata(project, root, hashes);
   }
 }

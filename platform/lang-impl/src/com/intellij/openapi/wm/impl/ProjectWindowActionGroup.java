@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +42,9 @@ public final class ProjectWindowActionGroup extends DefaultActionGroup {
     latest = windowAction;
   }
 
-  @NotNull
-  private static String getProjectDisplayName(@NotNull final Project project) {
-    final String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
+  private static @NlsActions.ActionText String getProjectDisplayName(Project project) {
+    if (LightEdit.owns(project)) return LightEditService.WINDOW_NAME;
+    String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
     return name != null ? name : project.getName();
   }
 

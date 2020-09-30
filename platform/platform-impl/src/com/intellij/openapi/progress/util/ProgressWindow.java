@@ -19,17 +19,18 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +54,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Nullable protected final Project myProject;
   final boolean myShouldShowCancel;
-  String myCancelText;
+  @NlsContexts.Button String myCancelText;
 
-  private String myTitle;
+  @ProgressTitle private String myTitle;
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
@@ -107,13 +108,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void initializeOnEdtIfNeeded() {
     EDT.assertIsEdt();
     initializeDialog();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initializeDialog() {
     Runnable initialization = myDialogInitialization;
     if (initialization == null) return;
@@ -198,7 +199,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void startBlocking(@NotNull Runnable init) {
     EDT.assertIsEdt();
     synchronized (getLock()) {
@@ -240,6 +241,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   protected void showDialog() {
     if (!isRunning() || isCanceled()) {
+      return;
+    }
+
+    if (ApplicationManagerEx.getApplicationEx().isExitInProgress() && Registry.is("ide.instant.shutdown")) {
       return;
     }
 
@@ -334,11 +339,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @ProgressTitle
   public String getTitle() {
     return myTitle;
   }
 
-  public void setCancelButtonText(@NotNull String text) {
+  public void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }

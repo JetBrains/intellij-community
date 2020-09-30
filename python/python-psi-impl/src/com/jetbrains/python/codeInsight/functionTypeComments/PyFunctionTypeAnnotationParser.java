@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.functionTypeComments;
 
 import com.intellij.lang.SyntaxTreeBuilder;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyPsiBundle;
@@ -26,7 +27,6 @@ import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +119,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       listMark.done(PyFunctionTypeAnnotationElementTypes.PARAMETER_TYPE_LIST);
     }
 
-    private void recoverUntilMatches(@NotNull @Nls String errorMessage, IElementType @NotNull ... types) {
+    private void recoverUntilMatches(@NotNull @ParsingError String errorMessage, IElementType @NotNull ... types) {
       final SyntaxTreeBuilder.Marker errorMarker = myBuilder.mark();
       boolean hasNonWhitespaceTokens = false;
       while (!(atAnyOfTokens(types) || myBuilder.eof())) {

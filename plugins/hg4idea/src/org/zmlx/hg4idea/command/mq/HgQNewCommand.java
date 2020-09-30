@@ -58,7 +58,10 @@ public class HgQNewCommand extends HgCommitTypeCommand {
     HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(myRepository.getRoot(), "qrefresh", args);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(myProject)
-        .notifyError(result, HgBundle.message("action.hg4idea.QRefresh.error"), HgBundle.message("action.hg4idea.QRefresh.error.msg"));
+        .notifyError("hg.qrefresh.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QRefresh.error"),
+                     HgBundle.message("action.hg4idea.QRefresh.error.msg"));
     }
   }
 
@@ -74,7 +77,10 @@ public class HgQNewCommand extends HgCommitTypeCommand {
     HgCommandResult result = executor.executeInCurrentThread(myRepository.getRoot(), "qnew", args);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(myProject)
-        .notifyError(result, HgBundle.message("action.hg4idea.QNew.error"), HgBundle.message("action.hg4idea.QNew.error.msg"));
+        .notifyError("hg.qnew.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QNew.error"),
+                     HgBundle.message("action.hg4idea.QNew.error.msg"));
     }
   }
 }

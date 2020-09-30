@@ -4,6 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction
 
 class UnregisteredActionUsedViaConstructor : AnAction()
 
-fun main(args: Array<String>) {
+fun main() {
   val mine = UnregisteredActionUsedViaConstructor()
 }

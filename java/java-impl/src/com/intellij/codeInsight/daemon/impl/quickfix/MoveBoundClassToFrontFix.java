@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MoveBoundClassToFrontFix extends ExtendsListFix {
   private static final Logger LOG = Logger.getInstance(MoveBoundClassToFrontFix.class);
-  private final String myName;
+  private final @IntentionName String myName;
 
   public MoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);

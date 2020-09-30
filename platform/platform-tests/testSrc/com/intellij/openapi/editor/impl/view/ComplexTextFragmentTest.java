@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -40,7 +26,7 @@ public class ComplexTextFragmentTest {
       10, 20, 30
     );
   }
-  
+
   @Test
   public void testSimpleRtlText() {
     assertCaretPositionsForGlyphVector(
@@ -48,7 +34,7 @@ public class ComplexTextFragmentTest {
       10, 20, 30
     );
   }
-  
+
   @Test
   public void testLigature() {
     assertCaretPositionsForGlyphVector(
@@ -56,7 +42,7 @@ public class ComplexTextFragmentTest {
       4, 8, 12
     );
   }
-  
+
   @Test
   public void testRtlLigature() {
     assertCaretPositionsForGlyphVector(
@@ -102,7 +88,7 @@ public class ComplexTextFragmentTest {
       int length = gv.getNumChars();
       char[] text = new char[length];
       FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0, 
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
@@ -114,16 +100,16 @@ public class ComplexTextFragmentTest {
       FontLayoutService.setInstance(null);
     }
   }
-  
+
   private static MyGlyphVector rtl() {
     return new MyGlyphVector(true, new Integer[0], new Integer[0]);
   }
-  
+
   private static MyGlyphVector glyph(int xStart, int xEnd) {
     return new MyGlyphVector(false, new Integer[]{xStart}, new Integer[]{xEnd - xStart});
   }
 
-  private static class MyGlyphVector extends AbstractMockGlyphVector {
+  private static final class MyGlyphVector extends AbstractMockGlyphVector {
     private final boolean myRtl;
     private final Integer[] myGlyphPositions;
     private final Integer[] myGlyphWidths;

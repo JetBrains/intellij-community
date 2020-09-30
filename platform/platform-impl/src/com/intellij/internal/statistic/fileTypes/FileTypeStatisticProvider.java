@@ -6,10 +6,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileTypeStatisticProvider {
-  @NotNull
+  @NotNull @NonNls
   String getPluginId();
 
   default boolean accept(@NotNull Editor editor, @NotNull FileType fileType) {

@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -40,7 +41,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private String problemDescriptor;
   private int order;
 
-  private transient String myCurrentVariableName = null;
+  private transient String myCurrentVariableName;
 
   public Configuration() {
     name = "";
@@ -48,13 +49,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     created = -1L;
   }
 
-  public Configuration(String name, String category) {
+  public Configuration(@NotNull String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
   }
 
-  protected Configuration(Configuration configuration) {
+  protected Configuration(@NotNull Configuration configuration) {
     name = configuration.name;
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
@@ -66,9 +67,10 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     order = configuration.order;
   }
 
+  @NotNull
   public abstract Configuration copy();
 
-  @NotNull
+  @NotNull @NlsSafe
   public String getName() {
     return name;
   }
@@ -80,6 +82,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     name = value;
   }
 
+  @NotNull
   public String getCategory() {
     return category;
   }
@@ -108,7 +111,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.uuid = uuid;
   }
 
-  public String getDescription() {
+  public @NlsSafe @Nullable String getDescription() {
     return description;
   }
 
@@ -116,7 +119,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.description = description;
   }
 
-  public String getSuppressId() {
+  public @NlsSafe @Nullable String getSuppressId() {
     return suppressId;
   }
 
@@ -124,7 +127,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.suppressId = suppressId;
   }
 
-  public String getProblemDescriptor() {
+  public @NlsSafe @Nullable String getProblemDescriptor() {
     return this.problemDescriptor;
   }
 
@@ -210,13 +213,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.predefined = predefined;
   }
 
+  @NotNull
   public abstract MatchOptions getMatchOptions();
 
-  public ReplaceOptions getReplaceOptions() {
-    return null;
-  }
+  @NotNull
+  public abstract ReplaceOptions getReplaceOptions();
 
-  public abstract NamedScriptableDefinition findVariable(String name);
+  public abstract NamedScriptableDefinition findVariable(@NotNull String name);
 
   public abstract void removeUnusedVariables();
 

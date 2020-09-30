@@ -29,7 +29,7 @@ import java.util.Map;
  * Consider usage of {@link com.intellij.psi.search.PsiSearchHelper} or {@link com.intellij.psi.impl.cache.CacheManager} instead direct index access.
  */
 @ApiStatus.Internal
-public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangeDependentIndex {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {

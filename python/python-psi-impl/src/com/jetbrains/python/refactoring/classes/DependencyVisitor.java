@@ -75,7 +75,7 @@ class DependencyVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyReferenceExpression(final PyReferenceExpression node) {
+  public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
 
     final PsiPolyVariantReference reference = node.getReference();
     if (reference.isReferenceTo(myElementToFind)) {

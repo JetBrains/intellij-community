@@ -274,7 +274,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
   }
 
-  private static class MyTransferHandler extends TransferHandler {
+  private static final class MyTransferHandler extends TransferHandler {
 
     private final Project myProject;
 

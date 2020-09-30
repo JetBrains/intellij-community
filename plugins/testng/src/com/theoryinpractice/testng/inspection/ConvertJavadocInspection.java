@@ -18,6 +18,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
-  static final String FIX_NAME = "Convert TestNG Javadoc to 1.5 annotations";
-  private static final String INSPECTION_NAME = "TestNG Javadoc can be converted to annotations";
 
   @Override
   @Nls
@@ -51,7 +50,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     return new JavaElementVisitor() {
       @Override public void visitDocTag(final PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
-          holder.registerProblem(tag, INSPECTION_NAME, new ConvertJavadocQuickfix());
+          holder.registerProblem(tag, TestngBundle.message("inspection.message.testng.javadoc.can.be.converted.to.annotations"), new ConvertJavadocQuickfix());
         }
       }
     };
@@ -63,7 +62,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return FIX_NAME;
+      return TestngBundle.message("intention.family.name.convert.testng.javadoc.to.annotations");
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.dynamic
 
 import com.intellij.psi.PsiType
@@ -30,7 +30,7 @@ class DynamicTest extends GroovyLatestTest implements BaseTest {
   void method() {
     fixture.enableInspections(new GrUnresolvedAccessInspection())
     fixture.configureByFile(testName.capitalize() + ".groovy")
-    fixture.launchAction(fixture.findSingleIntention("Add Dynamic Method"))
+    fixture.launchAction(fixture.findSingleIntention("Add dynamic method"))
 
     GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class)
 

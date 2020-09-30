@@ -10,8 +10,8 @@ import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 
 public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTest {
   @Override
-  protected void runTest() throws Throwable {
-    doRunTest();
+  protected boolean isRunInCommand() {
+    return false;
   }
 
   public void testReassignSimple() {

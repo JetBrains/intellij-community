@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.authentication.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -54,7 +55,7 @@ internal class GHTokenLoginDialog(project: Project?, parent: Component?, isAccou
     init()
   }
 
-  internal fun setLoginButtonText(text: String) = setOKButtonText(text)
+  internal fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
 
   override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 }

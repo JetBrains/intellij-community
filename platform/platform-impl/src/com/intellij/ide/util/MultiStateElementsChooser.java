@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -9,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -308,7 +311,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       return null;
     }
     @Nullable
-    default String getLocation() {
+    default @Nls String getLocation() {
       return null;
     }
   }
@@ -611,8 +614,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
   }
 
-  protected String getItemText(@NotNull T value) {
-    return value.toString();
+  protected @NlsContexts.ListItem String getItemText(@NotNull T value) {
+    @NlsSafe String text = value.toString();
+    return text;
   }
 
   @Nullable
@@ -623,7 +627,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   private class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       @SuppressWarnings("unchecked") T item = (T)value;
       String text = item == null ? "" : getItemText(item);
       append(text);

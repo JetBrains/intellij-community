@@ -2,11 +2,14 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +28,7 @@ import java.util.Objects;
  * @author gregsh
  */
 public class ColorSelectionComponent extends JPanel {
-  private static final String CUSTOM_COLOR_NAME = "Custom";
-  private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
+  private final Map<@NlsContexts.Button String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
   private ChangeListener myChangeListener;
 
@@ -39,7 +41,7 @@ public class ColorSelectionComponent extends JPanel {
     myChangeListener = changeListener;
   }
 
-  public void setSelectedColor(String colorName) {
+  public void setSelectedColor(@NlsContexts.Button String colorName) {
     AbstractButton button = myColorToButtonMap.get(colorName);
     if (button != null) {
       button.setSelected(true);
@@ -69,7 +71,7 @@ public class ColorSelectionComponent extends JPanel {
     myColorToButtonMap.put(customButton.getText(), customButton);
   }
 
-  public void addColorButton(@NotNull String name, @NotNull Color color) {
+  public void addColorButton(@NotNull @NlsContexts.Button String name, @NotNull Color color) {
     ColorButton colorButton = new ColorButton(name, color);
     myButtonGroup.add(colorButton);
     add(colorButton);
@@ -77,29 +79,30 @@ public class ColorSelectionComponent extends JPanel {
   }
 
   public void setCustomButtonColor(@NotNull Color color) {
-    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_NAME);
+    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(IdeBundle.message("settings.file.color.custom.name"));
     button.setColor(color);
     button.setSelected(true);
     button.repaint();
   }
 
   @Nullable
+  @NonNls
   public String getSelectedColorName() {
     for (String name : myColorToButtonMap.keySet()) {
       ColorButton button = myColorToButtonMap.get(name);
       if (!button.isSelected()) continue;
       if (button instanceof CustomColorButton) {
-        final String color = ColorUtil.toHex(button.getColor());
-        String colorName  = FileColorManagerImpl.getColorName(button.getColor());
-        return colorName == null ? color : colorName;
+        String colorHexString = ColorUtil.toHex(button.getColor());
+        String colorID  = FileColorManagerImpl.getColorID(button.getColor());
+        return colorID == null ? colorHexString : colorID;
       }
       return name;
     }
     return null;
   }
 
-  public void initDefault(@NotNull FileColorManager manager, @Nullable String selectedColorName) {
-    for (String name : manager.getColorNames()) {
+  public void initDefault(@NotNull FileColorManager manager, @Nullable @NlsContexts.Button String selectedColorName) {
+    for (@Nls String name : manager.getColorNames()) {
       addColorButton(name, Objects.requireNonNull(manager.getColor(name)));
     }
     addCustomColorButton();
@@ -107,7 +110,7 @@ public class ColorSelectionComponent extends JPanel {
   }
 
   private class ColorButton extends ColorButtonBase {
-    protected ColorButton(String text, Color color) {
+    protected ColorButton(@NlsContexts.Button String text, Color color) {
       super(text, color);
     }
 
@@ -123,9 +126,9 @@ public class ColorSelectionComponent extends JPanel {
     }
   }
 
-  private class CustomColorButton extends ColorButton {
+  private final class CustomColorButton extends ColorButton {
     private CustomColorButton() {
-      super(CUSTOM_COLOR_NAME, JBColor.WHITE);
+      super(IdeBundle.message("settings.file.color.custom.name"), JBColor.WHITE);
       myColor = null;
     }
 

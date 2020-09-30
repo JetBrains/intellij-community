@@ -50,7 +50,7 @@ public interface TabbedPane {
 
   void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String title);
 
-  void setToolTipTextAt(int index, String toolTipText);
+  void setToolTipTextAt(int index, @NlsContexts.Tooltip String toolTipText);
 
   void setComponentAt(int index, Component c);
 

@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
  *
  * @author ven
  */
-public class PsiIntersectionType extends PsiType.Stub {
+public final class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(PsiType @NotNull [] conjuncts) {
@@ -170,7 +172,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     return Arrays.stream(myConjuncts).map(PsiType::getPresentableText).collect(Collectors.joining(", ", "PsiIntersectionType: ", ""));
   }
 
-  public String getConflictingConjunctsMessage() {
+  public @Nls String getConflictingConjunctsMessage() {
     final PsiType[] conjuncts = getConjuncts();
     for (int i = 0; i < conjuncts.length; i++) {
       PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
@@ -179,7 +181,7 @@ public class PsiIntersectionType extends PsiType.Stub {
           PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
           if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
             if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
-              return conjuncts[i].getPresentableText() + " and " + conjuncts[i1].getPresentableText();
+              return JavaPsiBundle.message("conflicting.conjuncts", conjuncts[i].getPresentableText(), conjuncts[i1].getPresentableText());
             }
           }
         }

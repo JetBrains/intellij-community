@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyiUtil {
+public final class PyiUtil {
   private PyiUtil() {}
 
   public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
@@ -188,24 +188,29 @@ public class PyiUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = findSimilarElement(owner, file);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
-        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
-          final PyClassLikeType instanceType = classType.toInstance();
-          final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                               PyResolveContext.defaultContext(), false);
-          final PsiElement result = takeTopPriorityElement(resolveResults);
-          return result == element ? null : result;
-        }
-      }
-      else if (originalOwner instanceof PyFile) {
-        final PsiElement result = takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
+      if (originalOwner instanceof PyTypedElement) {
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
+        final PyType type = context.getType((PyTypedElement)originalOwner);
+        final PsiElement result = resolveSimilarMember(type, name, context);
         return result == element ? null : result;
       }
     }
     return null;
+  }
+
+  private static @Nullable PsiElement resolveSimilarMember(@Nullable PyType similarOwnerType,
+                                                           @NotNull String name,
+                                                           @NotNull TypeEvalContext context) {
+    if (similarOwnerType == null) return null;
+
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+
+    final List<? extends RatedResolveResult> results =
+      similarOwnerType instanceof PyClassLikeType
+      ? ((PyClassLikeType)similarOwnerType).resolveMember(name, null, AccessDirection.READ, resolveContext, false)
+      : similarOwnerType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+
+    return takeTopPriorityElement(results);
   }
 
   @NotNull

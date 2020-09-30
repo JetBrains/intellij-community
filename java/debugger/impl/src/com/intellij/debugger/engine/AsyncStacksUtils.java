@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-public class AsyncStacksUtils {
+public final class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
   // TODO: obtain CaptureStorage fqn from the class somehow
   public static final String CAPTURE_STORAGE_CLASS_NAME = "com.intellij.rt.debugger.agent.CaptureStorage";

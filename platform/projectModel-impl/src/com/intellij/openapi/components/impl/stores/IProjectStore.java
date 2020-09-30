@@ -3,40 +3,32 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public interface IProjectStore extends IComponentStore {
-  @NotNull
-  Path getProjectBasePath();
+  @TestOnly
+  Key<Boolean> COMPONENT_STORE_LOADING_ENABLED = Key.create("COMPONENT_STORE_LOADING_ENABLED");
 
-  @NotNull
-  String getProjectName();
+  @NotNull Path getProjectBasePath();
 
-  @NotNull
-  StorageScheme getStorageScheme();
+  @NotNull String getProjectName();
 
-  @SystemIndependent
-  @NotNull
-  String getProjectFilePath();
+  @NotNull StorageScheme getStorageScheme();
 
   /**
-   * `null` for default or non-directory based project.
+   * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
+   * @return
    */
-  @SystemIndependent
-  @Nullable
-  String getProjectConfigDir();
+  @NotNull Path getProjectFilePath();
 
-  /**
-   * System-independent path.
-   */
-  @Nullable
-  String getWorkspaceFilePath();
+  @NotNull Path getWorkspacePath();
 
   void clearStorages();
 
@@ -46,24 +38,19 @@ public interface IProjectStore extends IComponentStore {
 
   boolean isProjectFile(@NotNull VirtualFile file);
 
-  @Nullable
+  /**
+   * @deprecated Use {@link #getDirectoryStorePath()} or {@link Path#getParent()} of {@link #getProjectFilePath()}.
+   */
   @SystemIndependent
-  String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
+  @Deprecated
+  @Nullable String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
 
   /**
-   * Directory of project configuration files for directory-based project. Or null.
+   * The directory of project configuration files for directory-based project or null for file-based.
    */
-  default Path getDirectoryStorePath() {
-    String result = getDirectoryStorePath(false);
-    return result == null ? null : Paths.get(result);
-  }
-
-  @NotNull
-  @SystemIndependent
-  String getDirectoryStorePathOrBase();
+  @Nullable Path getDirectoryStorePath();
 
   void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
 
-  @Nullable
-  String getProjectWorkspaceId();
+  @Nullable String getProjectWorkspaceId();
 }

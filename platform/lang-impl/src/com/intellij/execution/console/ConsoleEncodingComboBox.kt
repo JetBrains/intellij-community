@@ -118,7 +118,9 @@ class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>()
       EncodingReference.DEFAULT
     }
   }
+  companion object {
+    private val LOG = Logger.getInstance(ConsoleEncodingComboBox::class.java)
+  }
 }
 
-private val LOG = Logger.getInstance("#" + ConsoleEncodingComboBox::class.java.`package`.name)
 

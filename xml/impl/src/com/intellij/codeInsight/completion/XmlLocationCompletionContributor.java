@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,19 +23,16 @@ import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlLocationCompletionContributor extends CompletionContributor {
-
-  public static final Function<Object, LookupElement> MAPPING =
-    o -> o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
+final class XmlLocationCompletionContributor extends CompletionContributor {
+  public static final Function<Object, LookupElement> MAPPING = o -> {
+    return o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
+  };
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -88,12 +85,14 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
-    final ArrayList<String> additionalNs = new ArrayList<>();
-    if (rootTag != null) URLReference.processWsdlSchemas(rootTag, xmlTag -> {
-      final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
-      if (s != null) { additionalNs.add(s); }
-      return true;
-    });
+    final List<String> additionalNs = new ArrayList<>();
+    if (rootTag != null) {
+      URLReference.processWsdlSchemas(rootTag, xmlTag -> {
+        final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
+        if (s != null) { additionalNs.add(s); }
+        return true;
+      });
+    }
     resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtilRt.toStringArray(additionalNs));
 
     final Set<Object> preferred = new HashSet<>();

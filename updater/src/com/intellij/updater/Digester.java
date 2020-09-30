@@ -57,6 +57,9 @@ public class Digester {
     try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize))) {
       return digestStream(in) | executable;
     }
+    catch (IOException e) {
+      throw new IOException(path.toString(), e);
+    }
   }
 
   public long digestZipFile(File file) throws IOException {

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
@@ -25,12 +26,12 @@ public class ConvertToGrayQuickFix implements LocalQuickFix {
 
   @Override
   public @IntentionName @NotNull String getName() {
-    return "Convert to Gray._" + myNum;
+    return DevKitBundle.message("inspections.use.gray.convert", myNum);
   }
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Convert to Gray";
+    return DevKitBundle.message("inspections.use.gray.convert.family.name");
   }
 
   @Override

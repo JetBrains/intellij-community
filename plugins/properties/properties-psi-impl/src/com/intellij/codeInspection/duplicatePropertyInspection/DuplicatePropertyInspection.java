@@ -2,21 +2,13 @@
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalSimpleInspectionTool;
-import com.intellij.codeInspection.HTMLComposer;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -40,22 +33,13 @@ import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import org.jetbrains.annotations.NotNull;
+import java.util.*;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;
@@ -81,25 +65,23 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (elementToLink != null) {
         HTMLComposer.appendAfterHeaderIndention(anchor);
         HTMLComposer.appendAfterHeaderIndention(anchor);
-        anchor.append("<a HREF=\"");
+        String link = "";
         final PsiFile file = element.getContainingFile();
         if (file != null) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null) {
-            anchor.append(virtualFile.getUrl()).append("#").append(elementToLink.getTextRange().getStartOffset());
+            link = virtualFile.getUrl() + "#" + elementToLink.getTextRange().getStartOffset();
           }
         }
-        anchor.append("\">");
-        anchor.append(elementToLink.getText().replaceAll("\\$", "\\\\\\$"));
-        anchor.append("</a>");
+        HtmlChunk.link(link, elementToLink.getText().replaceAll("\\$", "\\\\\\$")).appendTo(anchor);
         compoundLineLink(anchor, element);
         anchor.append("<br>");
       }
     }
     else {
-      anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>");
-      anchor.append(PropertiesBundle.message("inspection.export.results.invalidated.item"));
-      anchor.append("</font>");
+      HtmlChunk.tag("font")
+        .style("font-family:verdana; font-weight:bold; color:#FF0000")
+        .addText(PropertiesBundle.message("inspection.export.results.invalidated.item")).appendTo(anchor);
     }
   }
 
@@ -111,13 +93,9 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
         lineAnchor.append(" ").append(AnalysisBundle.message("inspection.export.results.at.line")).append(" ");
-        lineAnchor.append("<a HREF=\"");
         int offset = doc.getLineStartOffset(lineNumber - 1);
         offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-        lineAnchor.append(vFile.getUrl()).append("#").append(offset);
-        lineAnchor.append("\">");
-        lineAnchor.append(lineNumber);
-        lineAnchor.append("</a>");
+        HtmlChunk.link(vFile.getUrl() + "#" + offset, String.valueOf(lineNumber)).appendTo(lineAnchor);
       }
     }
   }
@@ -134,11 +112,11 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return;
-    final GlobalSearchScope scope = CURRENT_FILE
+    final GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(CURRENT_FILE
                                     ? GlobalSearchScope.fileScope(file)
                                     : MODULE_WITH_DEPENDENCIES
                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
-                                      : GlobalSearchScope.projectScope(file.getProject());
+                                      : GlobalSearchScope.projectScope(file.getProject()), PropertiesFileType.INSTANCE);
     final Map<String, Set<PsiFile>> processedValueToFiles = Collections.synchronizedMap(new HashMap<>());
     final Map<String, Set<PsiFile>> processedKeyToFiles = Collections.synchronizedMap(new HashMap<>());
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
@@ -202,7 +180,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
-      StringBuilder message = new StringBuilder();
+      @Nls StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
       Property[] propertyInCurrentFile = new Property[1];
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
@@ -246,7 +224,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         progress.setText2(PropertiesBundle.message("duplicate.property.key.progress.indicator.text", key));
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
-      StringBuilder message = new StringBuilder();
+      @Nls StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
       PsiElement propertyInCurrentFile = null;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
@@ -295,7 +273,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (values == null || values.size() < 2){
         keyToFiles.remove(key);
       } else {
-        StringBuilder message = new StringBuilder();
+        @Nls StringBuilder message = new StringBuilder();
         final Set<PsiFile> psiFiles = keyToFiles.get(key);
         boolean firstUsage = true;
         for (PsiFile file : psiFiles) {

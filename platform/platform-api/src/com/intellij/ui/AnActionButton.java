@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
@@ -224,7 +224,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  public static class AnActionEventWrapper extends AnActionEvent {
+  public static final class AnActionEventWrapper extends AnActionEvent {
     private final AnActionButton myPeer;
 
     private AnActionEventWrapper(AnActionEvent e, AnActionButton peer) {

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,7 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
         public void update(@NotNull AnActionEvent e) {
           String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
           Presentation presentation = e.getPresentation();
-          presentation.setText(ObjectUtils.notNull(text, "Test..."));
+          presentation.setText(ObjectUtils.notNull(text, LangBundle.message("action.test.text")));
           presentation.setEnabledAndVisible(creator.isAvailable(project, editor, file));
         }
 

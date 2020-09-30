@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
@@ -19,6 +18,9 @@ import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
   private final IgnoreGroupHelperAction myHelperAction;
@@ -75,8 +77,8 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
         SvnPropertyService.doCheckIgnoreProperty(vcs, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);
 
         if (Boolean.TRUE.equals(filesOk.get())) {
-          myRemoveExactAction.setActionText(fileGroupInfo.oneFileSelected() ?
-            fileGroupInfo.getFileName() : SvnBundle.message("action.Subversion.UndoIgnore.text"));
+          myRemoveExactAction
+            .setActionText(fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.UndoIgnore.text"));
           add(myRemoveExactAction);
         }
 
@@ -85,17 +87,16 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
           add(myRemoveExtensionAction);
         }
 
-        e.getPresentation().setText(SvnBundle.messagePointer("group.RevertIgnoreChoicesGroup.text"));
+        e.getPresentation().setText(messagePointer("group.RevertIgnoreChoicesGroup.text"));
       } else if (myHelperAction.allCanBeIgnored()) {
-        final String ignoreExactlyName = (fileGroupInfo.oneFileSelected()) ?
-                                         fileGroupInfo.getFileName() : SvnBundle.message("action.Subversion.Ignore.ExactMatch.text");
-        myAddExactAction.setActionText(ignoreExactlyName);
+        myAddExactAction.setActionText(
+          fileGroupInfo.oneFileSelected() ? fileGroupInfo.getFileName() : message("action.Subversion.Ignore.ExactMatch.text"));
         add(myAddExactAction);
         if (fileGroupInfo.sameExtension()) {
           myAddExtensionAction.setActionText(fileGroupInfo.getExtensionMask());
           add(myAddExtensionAction);
         }
-        e.getPresentation().setText(SvnBundle.messagePointer("group.IgnoreChoicesGroup.text"));
+        e.getPresentation().setText(messagePointer("group.IgnoreChoicesGroup.text"));
       }
     }
   }

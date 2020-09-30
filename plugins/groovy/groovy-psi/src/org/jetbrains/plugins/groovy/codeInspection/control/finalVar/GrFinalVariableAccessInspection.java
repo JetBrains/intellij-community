@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,7 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrGeneratedConstructorUtils;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -299,6 +302,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
 
     if (isImmutableField(field)) return true;
 
+    if (isInitializedInTupleConstructor(field)) return true;
+
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
@@ -354,6 +359,19 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       return false;
     }
     return true;
+  }
+
+  private static boolean isInitializedInTupleConstructor(@NotNull GrField field) {
+    var containingClass = field.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    PsiAnnotation anno = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    if (anno == null) {
+      return false;
+    }
+    AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(anno);
+    return !cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field);
   }
 
   private static boolean isImmutableField(@NotNull GrField field) {

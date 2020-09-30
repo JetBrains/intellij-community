@@ -70,7 +70,7 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
         gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(runtime))
       }
       row {
-        val languageUI = runtime.getRuntimeType().createConfigurable(project, runtime)
+        val languageUI = runtime.getRuntimeType().createConfigurable(project, runtime, config)
           .also { runtimeConfigurables.add(it) }
           .let {
             it.createComponent() ?: throw IllegalStateException("for runtime: $runtime")
@@ -91,7 +91,7 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
       val newRuntime = it.type?.createDefaultConfig() ?: return@Consumer
       config.runtimes.addConfig(newRuntime)
       forceRefreshUI()
-    }, false)
+    })
   }
 
   private fun allConfigurables() = sequenceOf(targetConfigurable) + runtimeConfigurables.asSequence()

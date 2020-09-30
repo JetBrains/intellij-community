@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
@@ -13,12 +14,14 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SuspiciousMethodCallUtil {
+public final class SuspiciousMethodCallUtil {
 
   // List.of/Set.of are unnecessary here as they don't accept nulls
   private static final CallMatcher.Simple SINGLETON_COLLECTION =
@@ -44,6 +47,7 @@ public class SuspiciousMethodCallUtil {
         PsiClassType wildcardCollection = javaPsiFacade.getElementFactory().createType(collectionClass, PsiWildcardType.createUnbounded(manager));
         addSingleParameterMethod(patternMethods, collectionClass, "removeAll", wildcardCollection);
         addSingleParameterMethod(patternMethods, collectionClass, "retainAll", wildcardCollection);
+        addSingleParameterMethod(patternMethods, collectionClass, "containsAll", wildcardCollection);
       }
     }
 
@@ -203,12 +207,12 @@ public class SuspiciousMethodCallUtil {
   }
 
   @Nullable
-  public static String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
-                                                      PsiExpression arg,
-                                                      PsiType argType,
-                                                      boolean reportConvertibleMethodCalls,
-                                                      @NotNull List<PatternMethod> patternMethods,
-                                                      int idx) {
+  public static @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
+                                                                         PsiExpression arg,
+                                                                         PsiType argType,
+                                                                         boolean reportConvertibleMethodCalls,
+                                                                         @NotNull List<PatternMethod> patternMethods,
+                                                                         int idx) {
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
 
     if (arg instanceof PsiConditionalExpression &&
@@ -221,11 +225,11 @@ public class SuspiciousMethodCallUtil {
   }
 
   @Nullable
-  static String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
-                                               PsiType argType,
-                                               boolean reportConvertibleMethodCalls,
-                                               @NotNull List<PatternMethod> patternMethods,
-                                               int argIdx) {
+  static @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
+                                                                  PsiType argType,
+                                                                  boolean reportConvertibleMethodCalls,
+                                                                  @NotNull List<PatternMethod> patternMethods,
+                                                                  int argIdx) {
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
     if (argType instanceof PsiPrimitiveType) {
@@ -273,7 +277,7 @@ public class SuspiciousMethodCallUtil {
       if (typeParamMapping == null) return null;
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 1 && ("removeAll".equals(method.getName()) || "retainAll".equals(method.getName()))) {
+      if (parameters.length == 1 && isCollectionAcceptingMethod(method.getName())) {
         PsiType paramType = parameters[0].getType();
         if (InheritanceUtil.isInheritor(paramType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType qualifierType = qualifier.getType();
@@ -327,12 +331,17 @@ public class SuspiciousMethodCallUtil {
     return null;
   }
 
-  private static String getPreciseObjectTitle(PsiClass patternClass, int index) {
+  @Contract(value = "null -> false", pure = true)
+  static boolean isCollectionAcceptingMethod(@Nullable String name) {
+    return "removeAll".equals(name) || "retainAll".equals(name) || "containsAll".equals(name);
+  }
+
+  private static @Nls String getPreciseObjectTitle(PsiClass patternClass, int index) {
     if (InheritanceUtil.isInheritor(patternClass, CommonClassNames.JAVA_UTIL_MAP)) {
-      return index == 0 ? "keys" : "values";
+      return index == 0 ? JavaAnalysisBundle.message("element.kind.keys") : JavaAnalysisBundle.message("element.kind.values");
     }
-    
-    return "objects";
+
+    return JavaAnalysisBundle.message("element.kind.objects");
   }
 
   private static boolean hasNullCollectionArg(PsiReferenceExpression methodExpression) {
@@ -346,7 +355,7 @@ public class SuspiciousMethodCallUtil {
     }
     return false;
   }
-  
+
   static class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;

@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,11 +72,11 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
 
   public ProjectCategory getProjectCategory() { return myProjectCategory; }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return myDescription;
   }
 

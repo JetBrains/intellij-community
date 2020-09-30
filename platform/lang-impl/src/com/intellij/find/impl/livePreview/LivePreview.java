@@ -433,7 +433,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     @Override
-    public RelativePoint recalculateLocation(final Balloon object) {
+    public RelativePoint recalculateLocation(final @NotNull Balloon object) {
       FindResult cursor = mySearchResults.getCursor();
       if (cursor == null) return null;
       final TextRange cur = cursor;

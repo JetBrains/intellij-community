@@ -16,18 +16,17 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ModuleWithDependentsScope extends GlobalSearchScope {
+public final class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Set<Module> myRootModules;
   private final ProjectFileIndexImpl myProjectFileIndex;
-  private final Set<Module> myModules = new THashSet<>();
-  private final Set<Module> myProductionOnTestModules = new THashSet<>();
+  private final Set<Module> myModules = new HashSet<>();
+  private final Set<Module> myProductionOnTestModules = new HashSet<>();
 
   ModuleWithDependentsScope(@NotNull Module module) {
     this(module.getProject(), Collections.singleton(module));
@@ -43,7 +42,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
 
     ModuleIndex index = getModuleIndex(project);
 
-    HashSetQueue<Module> walkingQueue = new HashSetQueue<>();
+    Collection<Module> walkingQueue = new HashSetQueue<>();
     walkingQueue.addAll(myRootModules);
     for (Module current : walkingQueue) {
       Collection<Module> usages = index.allUsages.get(current);
@@ -57,16 +56,10 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     }
   }
 
-  @NotNull
-  @Override
-  public Project getProject() {
-    return Objects.requireNonNull(super.getProject());
-  }
-
-  private static class ModuleIndex {
-    final MultiMap<Module, Module> allUsages = MultiMap.create();
-    final MultiMap<Module, Module> exportingUsages = MultiMap.create();
-    final MultiMap<Module, Module> productionOnTestUsages = MultiMap.create();
+  private static final class ModuleIndex {
+    final MultiMap<Module, Module> allUsages = new MultiMap<>();
+    final MultiMap<Module, Module> exportingUsages = new MultiMap<>();
+    final MultiMap<Module, Module> productionOnTestUsages = new MultiMap<>();
   }
 
   @NotNull
@@ -125,7 +118,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    ModuleManager moduleManager = ModuleManager.getInstance(Objects.requireNonNull(project));
     return myRootModules
       .stream()
       .flatMap(module -> DirectoryIndex.getInstance(project).getDependentUnloadedModules(module).stream())

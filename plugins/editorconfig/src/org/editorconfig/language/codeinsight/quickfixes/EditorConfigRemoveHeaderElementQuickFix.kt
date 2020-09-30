@@ -11,7 +11,7 @@ import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 
 class EditorConfigRemoveHeaderElementQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.header-element.remove.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.header-element.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val pattern = descriptor.psiElement as? EditorConfigHeaderElement ?: return

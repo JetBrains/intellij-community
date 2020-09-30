@@ -72,4 +72,20 @@ abstract class RunAnythingCommandLineProviderTestCase : UsefulTestCase() {
     assertTrue(isSuggestingTouched)
     assertTrue(isRunningTouched)
   }
+
+  fun createDummyCommandLineProvider(): RunAnythingCommandLineProvider {
+    return object : RunAnythingCommandLineProvider() {
+      override fun getHelpCommand() = this@RunAnythingCommandLineProviderTestCase.helpCommand
+
+      override fun getHelpCommandAliases() = helpCommandAliases
+
+      override fun suggestCompletionVariants(dataContext: DataContext, commandLine: CommandLine): Sequence<String> {
+        return emptySequence()
+      }
+
+      override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
+        return true
+      }
+    }
+  }
 }

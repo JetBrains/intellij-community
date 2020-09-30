@@ -59,7 +59,7 @@ public class EditorHyperlinkSupport {
     myFilterRunner = new AsyncFilterRunner(this, myEditor);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
-      private MouseEvent myInitialMouseEvent = null;
+      private MouseEvent myInitialMouseEvent;
 
       @Override
       public void mousePressed(@NotNull EditorMouseEvent e) {
@@ -96,6 +96,7 @@ public class EditorHyperlinkSupport {
     );
   }
 
+  @NotNull
   public static EditorHyperlinkSupport get(@NotNull final Editor editor) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
@@ -364,7 +365,7 @@ public class EditorHyperlinkSupport {
     }
     i %= ranges.size();
     int newIndex = i;
-    while (newIndex < ranges.size() && newIndex >= 0) {
+    while (newIndex < ranges.size()) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
       HyperlinkInfo info = getHyperlinkInfo(next);
@@ -378,7 +379,7 @@ public class EditorHyperlinkSupport {
               action.consume(next);
               linkFollowed(editor, ranges, next);
             }
-          }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+          }, newIndex + 1, ranges.size());
         }
       }
       if (newIndex == i) {

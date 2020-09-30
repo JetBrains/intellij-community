@@ -8,8 +8,7 @@ PyFile:FStringSingleSlashBeforeLeftBraceInLiteralPart.py
     PyStringLiteralExpression: foo\{42}
       PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
-        PsiElement(Py:FSTRING_TEXT)('foo')
-        PsiElement(Py:FSTRING_TEXT)('\')
+        PsiElement(Py:FSTRING_TEXT)('foo\')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyNumericLiteralExpression

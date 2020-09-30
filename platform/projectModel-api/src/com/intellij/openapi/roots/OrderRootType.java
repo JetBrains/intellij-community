@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class OrderRootType {
   private final String myName;
-  private static boolean ourExtensionsLoaded = false;
+  private static boolean ourExtensionsLoaded;
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 

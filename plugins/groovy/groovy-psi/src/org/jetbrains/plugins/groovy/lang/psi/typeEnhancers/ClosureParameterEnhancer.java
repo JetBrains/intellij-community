@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,8 +36,8 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author peter
  */
 public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private static final Map<String, String> simpleTypes = new HashMap<>();
-  private static final Set<String> iterations = new HashSet<>();
+  private static final Map<@NlsSafe String, @NlsSafe String> simpleTypes = new HashMap<>();
+  private static final Set<@NlsSafe String> iterations = new HashSet<>();
 
   static {
     simpleTypes.put("times", JAVA_LANG_INTEGER);

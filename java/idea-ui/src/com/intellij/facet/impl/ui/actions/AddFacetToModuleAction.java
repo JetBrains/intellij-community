@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl.ui.actions;
 
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class AddFacetToModuleAction extends AnAction implements DumbAware {
+public final class AddFacetToModuleAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AddFacetToModuleAction.class);
   private final FacetEditorFacade myEditor;
   private final Project myProject;

@@ -25,10 +25,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -51,14 +51,10 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   @Override
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrBinaryExpression) {
-      return GroovyInspectionBundle.message(
-        "pointless.boolean.problem.descriptor",
-        calculateSimplifiedBinaryExpression((GrBinaryExpression)args[0]));
+      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedBinaryExpression((GrBinaryExpression)args[0]));
     }
     else {
-      return GroovyInspectionBundle.message(
-        "pointless.boolean.problem.descriptor",
-        calculateSimplifiedPrefixExpression((GrUnaryExpression)args[0]));
+      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedPrefixExpression((GrUnaryExpression)args[0]));
     }
   }
 
@@ -192,7 +188,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return GroovyInspectionBundle.message("pointless.boolean.quickfix");
+      return GroovyBundle.message("pointless.boolean.quickfix");
     }
 
     @Override

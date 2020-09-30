@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ui.SdkAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -32,25 +33,20 @@ import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
 public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
-  @NotNull private final Producer<SdkListModel> myGetModel;
+
+  private final @NotNull Producer<SdkListModel> myGetModel;
 
   public SdkListPresenter(@NotNull Producer<SdkListModel> getSdkListModel) {
     myGetModel = getSdkListModel;
   }
 
-  @NotNull
-  public <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
-    return new ListCellRenderer<T>() {
-      @NotNull
+  public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
+    return new ListCellRenderer<>() {
       @Override
-      public Component getListCellRendererComponent(JList<? extends T> list,
-                                                    @Nullable T value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
+      public Component getListCellRendererComponent(JList<? extends T> list, @Nullable T value, int index, boolean selected, boolean focused) {
         SdkListItem item = value == null ? null : unwrap.fun(value);
-        //noinspection unchecked,rawtypes
-        return SdkListPresenter.this.getListCellRendererComponent((JList)list, item, index, isSelected, cellHasFocus);
+        @SuppressWarnings("unchecked") JList<SdkItem> cast = (JList<SdkItem>)list;
+        return SdkListPresenter.this.getListCellRendererComponent(cast, item, index, selected, focused);
       }
     };
   }
@@ -61,7 +57,6 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
                                                 int index,
                                                 boolean selected,
                                                 boolean hasFocus) {
-
     SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
     JPanel panel = new CellRendererPanel() {
       private final AccessibleContext myContext = component.getAccessibleContext();
@@ -95,10 +90,12 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
 
     component.setOpaque(true);
     panel.setOpaque(true);
-    panel.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
+    Color background = selected ? list.getSelectionBackground() : list.getBackground();
+    panel.setBackground(background);
     if (value instanceof GroupItem) {
-      JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
-      toggle.setOpaque(false);
+      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      toggle.setOpaque(true);
+      toggle.setBackground(background);
       panel.add(toggle, BorderLayout.EAST);
     }
 
@@ -128,12 +125,11 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
-
     setIcon(EMPTY_ICON);    // to fix vertical size
     getAccessibleContext().setAccessibleName(null);
     if (value instanceof InvalidSdkItem) {
       InvalidSdkItem item = (InvalidSdkItem)value;
-      final String str = ProjectBundle.message("jdk.combo.box.invalid.item", item.getSdkName());
+      String str = ProjectBundle.message("jdk.combo.box.invalid.item", item.sdkName);
       append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
     else if (value instanceof ProjectSdkItem) {
@@ -150,9 +146,9 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     }
     else if (value instanceof SuggestedItem) {
       SuggestedItem item = (SuggestedItem)value;
-      SdkType type = item.getSdkType();
-      String home = item.getHomePath();
-      String version = item.getVersion();
+      SdkType type = item.sdkType;
+      String home = item.homePath;
+      String version = item.version;
 
       Icon icon = type.getIconForAddAction();
       if (Objects.equals(icon, IconUtil.getAddIcon())) icon = type.getIcon();
@@ -164,11 +160,11 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     }
     else if (value instanceof ActionItem) {
       ActionItem item = (ActionItem)value;
-      Presentation template = item.myAction.getTemplatePresentation();
+      Presentation template = item.action.getTemplatePresentation();
       //this is a sub-menu item
-      SdkType sdkType = item.myAction.getSdkType();
-      if (item.myGroup != null) {
-        switch (item.myRole) {
+      SdkType sdkType = item.action.getSdkType();
+      if (item.group != null) {
+        switch (item.role) {
           case ADD:
             //we already have the (+) in the parent node, thus showing original icon
             Icon icon = sdkType.getIcon();
@@ -183,7 +179,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
         }
       }
       else {
-        switch (item.myRole) {
+        switch (item.role) {
           case ADD:
             setIcon(template.getIcon());
             append(ProjectBundle.message("sdk.configure.add.sdkType.action", sdkType.getPresentableName()));
@@ -197,11 +193,11 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     }
     else if (value instanceof GroupItem) {
       GroupItem item = (GroupItem)value;
-      setIcon(item.myIcon);
-      append(item.myCaption);
+      setIcon(item.icon);
+      append(item.caption);
     }
     else if (value instanceof SdkItem) {
-      Sdk sdk = ((SdkItem)value).getSdk();
+      Sdk sdk = ((SdkItem)value).sdk;
       SdkAppearanceService.getInstance()
         .forSdk(sdk, false, selected, false)
         .customize(this);
@@ -221,11 +217,11 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
       SdkReferenceItem item = (SdkReferenceItem)value;
 
       SdkAppearanceService.getInstance()
-        .forSdk(item.getSdkType(), item.getName(), null, item.isValid(), false, selected)
+        .forSdk(item.sdkType, item.name, null, item.hasValidPath, false, selected)
         .customize(this);
 
-      String version = item.getVersionString();
-      if (version == null) version = item.getSdkType().getPresentableName();
+      String version = item.versionString;
+      if (version == null) version = item.sdkType.getPresentableName();
       append(" ");
       append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -237,12 +233,11 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
   }
 
   @NotNull
-  public static String presentDetectedSdkPath(@NotNull String home) {
+  public static @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
     return presentDetectedSdkPath(home, 50, 30);
   }
 
-  @NotNull
-  public static String presentDetectedSdkPath(@NotNull String home, int maxLength, int suffixLength) {
+  public static @NlsSafe @NotNull String presentDetectedSdkPath(@NotNull String home, int maxLength, int suffixLength) {
     //for macOS, let's try removing Bundle internals
     home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
     home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS

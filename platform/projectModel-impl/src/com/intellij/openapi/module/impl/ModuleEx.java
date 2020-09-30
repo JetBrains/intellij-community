@@ -16,6 +16,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,5 +46,10 @@ public interface ModuleEx extends Module {
 
   default long getOptionsModificationCount() {
     return 0;
+  }
+
+  @ApiStatus.Internal
+  default boolean canStoreSettings() {
+    return true;
   }
 }

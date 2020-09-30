@@ -18,13 +18,14 @@ package com.intellij.execution.testframework;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 public class TestTreeViewActionsPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(List<AnAction> actions, DataContext context) {
+  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
     if (AbstractTestProxy.DATA_KEY.getData(context) != null) {
       for (AnAction action : actions) {
         if (action instanceof TestTreeViewAction) {

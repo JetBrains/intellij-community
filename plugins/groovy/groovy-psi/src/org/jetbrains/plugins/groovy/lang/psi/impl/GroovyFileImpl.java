@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -49,7 +50,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
   private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
 
-  private static final String SYNTHETIC_PARAMETER_NAME = "args";
+  @NlsSafe private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;

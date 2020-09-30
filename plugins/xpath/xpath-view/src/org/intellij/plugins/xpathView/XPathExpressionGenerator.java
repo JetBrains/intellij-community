@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class XPathExpressionGenerator {
+public final class XPathExpressionGenerator {
     private static final XPathSupport xpathSupport = XPathSupport.getInstance();
 
     private XPathExpressionGenerator() {

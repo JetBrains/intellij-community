@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +32,20 @@ public final class PluginEnabler {
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = loadFullDescriptors(pluginsToEnable);
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = loadFullDescriptors(pluginsToDisable);
 
+    ProjectPluginTracker pluginTracker = project != null ?
+                                         ProjectPluginTracker.getInstance(project) :
+                                         null;
+
     Set<PluginId> disabledIds = DisabledPluginsState.getDisabledIds();
-    for (PluginDescriptor descriptor : pluginsToEnable) {
-      descriptor.setEnabled(true);
-      disabledIds.remove(descriptor.getPluginId());
+    for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
+      if (pluginTracker == null ||
+          !pluginTracker.isRegistered(descriptor)) {
+        descriptor.setEnabled(true);
+        disabledIds.remove(descriptor.getPluginId());
+      }
     }
-    for (PluginDescriptor descriptor : pluginsToDisable) {
+
+    for (IdeaPluginDescriptor descriptor : pluginsToDisable) {
       if (!PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
         // don't try to unload plugin which wasn't loaded
         pluginDescriptorsToDisable.removeIf(plugin -> plugin.getPluginId().equals(descriptor.getPluginId()));

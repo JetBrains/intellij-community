@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class RenameViewDescriptor implements UsageViewDescriptor{
   private static final Logger LOG = Logger.getInstance(RenameViewDescriptor.class);
   private final String myProcessedElementsHeader;
-  private final String myCodeReferencesText;
+  private final @Nls String myCodeReferencesText;
   private final PsiElement[] myElements;
 
   public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {

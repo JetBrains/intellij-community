@@ -16,10 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -43,6 +40,7 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
+  static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
@@ -139,18 +137,18 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private void init() {
+    AnAction action = myAction.getAction();
+    updateIcon(action);
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
-    setText(myPresentation.getText());
+    setText(myPresentation.getText(true));
     final int mnemonicIndex = myEnableMnemonics ? myPresentation.getDisplayedMnemonicIndex() : -1;
 
     if (getText() != null && mnemonicIndex >= 0 && mnemonicIndex < getText().length()) {
       setDisplayedMnemonicIndex(mnemonicIndex);
     }
 
-    AnAction action = myAction.getAction();
-    updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
       setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
@@ -188,6 +186,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     ActionMenu.showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
   }
 
+  @NlsSafe
   public String getFirstShortcutText() {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction.getAction());
   }
@@ -203,6 +202,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
+        setIcon(wrapNullIcon(getIcon()));
       }
       else {
         if (myToggled) {
@@ -231,11 +231,24 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (selected == null)
           selected = icon;
 
-        setIcon(myPresentation.isEnabled() ? icon : disabled);
-        setSelectedIcon(selected != null ? selected : icon);
-        setDisabledIcon(disabled);
+        setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
+        setSelectedIcon(wrapNullIcon(selected != null ? selected : icon));
+        setDisabledIcon(wrapNullIcon(disabled));
       }
     }
+  }
+
+  private Icon wrapNullIcon(Icon icon) {
+    if (ActionMenu.isShowIcons()) {
+      return null;
+    }
+    if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {
+      return icon;
+    }
+    if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      return EMPTY_ICON;
+    }
+    return icon;
   }
 
   @Override
@@ -347,7 +360,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
-          setText(myPresentation.getText());
+          setText(myPresentation.getText(true));
           Window window = ComponentUtil.getWindow(ActionMenuItem.this);
           if (window != null) window.pack();
         }

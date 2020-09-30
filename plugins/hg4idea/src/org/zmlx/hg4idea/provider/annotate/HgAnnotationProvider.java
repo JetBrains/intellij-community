@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -53,7 +54,7 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
   public FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
-      throw new VcsException("vcs root is null for " + file);
+      throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", file.getPresentableUrl()));
     }
     HgRevisionNumber revisionNumber = revision != null ? (HgRevisionNumber)revision.getRevisionNumber() : null;
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
@@ -74,7 +75,7 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
   public FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, path);
     if (vcsRoot == null) {
-      throw new VcsException("vcs root is null for " + path);
+      throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", path.getPresentableUrl()));
     }
     final HgFile hgFile = new HgFile(vcsRoot, path);
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, (HgRevisionNumber)revision);

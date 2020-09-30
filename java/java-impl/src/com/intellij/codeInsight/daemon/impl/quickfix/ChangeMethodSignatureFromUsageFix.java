@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -13,6 +14,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -28,7 +30,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -52,7 +53,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   ParameterInfoImpl[] myNewParametersInfo;
-  private String myShortName;
+  private @IntentionName String myShortName;
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
@@ -81,10 +82,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                   formatTypesList(myNewParametersInfo, myContext));
   }
 
-  private String getShortText(final StringBuilder buf,
-                              final HashSet<? extends ParameterInfoImpl> newParams,
-                              final HashSet<? extends ParameterInfoImpl> removedParams,
-                              final HashSet<? extends ParameterInfoImpl> changedParams) {
+  private @IntentionName String getShortText(final StringBuilder buf,
+                                             final HashSet<? extends ParameterInfoImpl> newParams,
+                                             final HashSet<? extends ParameterInfoImpl> removedParams,
+                                             final HashSet<? extends ParameterInfoImpl> changedParams) {
     final String targetMethodName = myTargetMethod.getName();
     PsiClass aClass = myTargetMethod.getContainingClass();
     if (aClass != null && aClass.findMethodsByName(targetMethodName, true).length == 1) {
@@ -113,7 +114,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                       p.getTypeText());
       }
     }
-    return "<html> Change signature of " + targetMethodName + "(" + buf + ")</html>";
+    return JavaBundle.message("change.signature.from.usage.short.name", targetMethodName, buf);
   }
 
   @Nullable
@@ -172,7 +173,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
+    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod);
     if (method == null) return;
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
@@ -270,7 +271,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private ParameterInfoImpl @Nullable [] getNewParametersInfo(PsiExpression[] expressions,
                                                               PsiMethod targetMethod,
                                                               PsiSubstitutor substitutor,
-                                                              final StringBuilder buf,
+                                                              @NonNls final StringBuilder buf,
                                                               final HashSet<? super ParameterInfoImpl> newParams,
                                                               final HashSet<? super ParameterInfoImpl> removedParams,
                                                               final HashSet<? super ParameterInfoImpl> changedParams) {

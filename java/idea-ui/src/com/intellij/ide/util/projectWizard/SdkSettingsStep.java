@@ -4,6 +4,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,8 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +66,12 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myModel = new ProjectSdksModel();
     Project project = myWizardContext.getProject();
     myModel.reset(project);
+
+    Disposable disposable = context.getDisposable();
+    if (disposable != null) {
+      Disposable stepDisposable = () -> myModel.disposeUIResources();
+      Disposer.register(disposable, stepDisposable);
+    }
 
     if (sdkFilter == null) {
       sdkFilter = JdkComboBox.getSdkFilter(sdkTypeIdFilter);
@@ -157,8 +166,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
   }
 
   @NotNull
-  protected String getSdkFieldLabel(@Nullable Project project) {
-    return (project == null ? "Project" : "Module") + " \u001BSDK:";
+  protected @NlsContexts.Label String getSdkFieldLabel(@Nullable Project project) {
+    return JavaUiBundle.message("sdk.setting.step.label", project == null ? 0 : 1);
   }
 
   @Override
@@ -201,7 +210,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     return true;
   }
 
-  protected String getNoSdkMessage() {
+  protected @NlsContexts.DialogMessage String getNoSdkMessage() {
     return JavaUiBundle.message("prompt.confirm.project.no.jdk");
   }
 }

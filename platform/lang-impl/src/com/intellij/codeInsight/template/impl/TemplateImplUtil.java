@@ -6,16 +6,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
  */
 public final class TemplateImplUtil {
 
-  public static LinkedHashSet<String> parseVariableNames(CharSequence text) {
+  @NotNull
+  public static LinkedHashSet<String> parseVariableNames(@NotNull CharSequence text) {
     LinkedHashSet<String> variableNames = new LinkedHashSet<>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
@@ -34,15 +37,16 @@ public final class TemplateImplUtil {
     return variableNames;
   }
 
-  public static LinkedHashMap<String, Variable> parseVariables(CharSequence text) {
-    LinkedHashMap<String, Variable> variables = new LinkedHashMap<>();
+  @NotNull
+  public static Map<String, Variable> parseVariables(@NotNull CharSequence text) {
+    Map<String, Variable> variables = new LinkedHashMap<>();
     for (String name : parseVariableNames(text)) {
       variables.put(name, new Variable(name, "", "", true));
     }
     return variables;
   }
 
-  public static boolean isValidVariableName(String varName) {
+  public static boolean isValidVariableName(@NotNull String varName) {
     return parseVariableNames("$" + varName + "$").contains(varName);
   }
 
@@ -51,7 +55,7 @@ public final class TemplateImplUtil {
            isValidVariableName(var.substring(1, var.length() - 1));
   }
 
-  public static TextRange findVariableAtOffset(CharSequence text, int offset) {
+  public static TextRange findVariableAtOffset(@NotNull CharSequence text, int offset) {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 

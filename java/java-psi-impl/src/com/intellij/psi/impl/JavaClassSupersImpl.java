@@ -15,10 +15,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -188,13 +185,13 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     StringBuilder msg = new StringBuilder("superClassSubstitutor requested when derived doesn't extend super:\n");
     msg.append("Super: " + classInfo(superClass));
     msg.append("Derived: " + classInfo(derivedClass));
-    msg.append("isInheritor: " +
+    msg.append("isInheritor: via util=" +
                InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) +
-               " " +
+               ", directly=" +
                derivedClass.isInheritor(superClass, true) + "\n");
     msg.append("Super in derived's scope: " + PsiSearchScopeUtil.isInScope(derivedClass.getResolveScope(), superClass) + "\n");
     if (!InheritanceUtil.processSupers(derivedClass, false, s -> s != superClass)) {
-      msg.append("Plain derived's supers contain Super:\n");
+      msg.append("Plain derived's supers contain Super\n");
     }
     msg.append("Hierarchy:\n");
     new ScopedClassHierarchy(derivedClass, derivedClass.getResolveScope()) {
@@ -205,7 +202,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
         msg.append(eachClass == null ? "unresolved " + type : classInfo(eachClass));
         super.visitType(type, map);
       }
-    };
+    }.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), new HashMap<>());
     LOG.error(msg);
   }
 
@@ -213,13 +210,13 @@ public class JavaClassSupersImpl extends JavaClassSupers {
   @NotNull
   private static String classInfo(@NotNull PsiClass aClass) {
     String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
-    s += "extends: ";
+    s += "    extends: ";
     for (PsiClassType type : aClass.getExtendsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+      s += "    " + type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
     }
-    s += "\nimplements: ";
+    s += "\n    implements: ";
     for (PsiClassType type : aClass.getImplementsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+      s += "    " + type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
     }
     return s + "\n";
   }

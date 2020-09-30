@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -15,7 +14,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class StringContentIndentUtil {
+public final class StringContentIndentUtil {
 
   private static final Key<Integer> TEXT_BLOCK_INDENT_KEY = Key.create("TextBlockOffset");
   private static final Key<List<RangeHighlighter>> TEXT_BLOCK_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TextBlockHighlightersInEditor");

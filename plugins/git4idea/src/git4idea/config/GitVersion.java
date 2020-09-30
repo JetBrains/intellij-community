@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,8 +121,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     if (type == null) {
       if (SystemInfo.isWindows) {
         String suffix = getStringGroup(m, 5);
-        if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
-            StringUtil.toLowerCase(suffix).contains("windows")) {
+        if (StringUtil.toLowerCase(suffix).contains("msysgit") || //NON-NLS
+            StringUtil.toLowerCase(suffix).contains("windows")) { //NON-NLS
           type = Type.MSYS;
         }
         else {
@@ -191,8 +192,7 @@ public final class GitVersion implements Comparable<GitVersion> {
       try {
         parse(result.getStdout());
       } catch (ParseException pe) {
-        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() +
-                                     " errors: " + result.getStderr());
+        throw new ExecutionException(GitBundle.message("error.git.version.check.failed", result.getExitCode(), result.getStderr()), pe);
       }
     }
     return parse(result.getStdout());

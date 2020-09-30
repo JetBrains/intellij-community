@@ -26,7 +26,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 /**
  * Resolves current target platform.
  */
-public class PluginPlatformInfo {
+public final class PluginPlatformInfo {
 
   private static final PluginPlatformInfo UNRESOLVED_INSTANCE = new PluginPlatformInfo(PlatformResolveStatus.UNRESOLVED, null, null);
 

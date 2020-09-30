@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -117,7 +117,7 @@ public final class FSOperations {
             }
             Set<File> rootFiles = targetFiles.get(rd);
             if (rootFiles == null) {
-              rootFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+              rootFiles = FileCollectionFactory.createCanonicalFileSet();
               targetFiles.put(rd, rootFiles);
             }
             rootFiles.add(file);
@@ -395,7 +395,7 @@ public final class FSOperations {
 
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
-      doNotDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      doNotDelete = FileCollectionFactory.createCanonicalFileSet();
       for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
         doNotDelete.addAll(target.getOutputRoots(context));
       }
@@ -412,7 +412,7 @@ public final class FSOperations {
           final File parentFile = file.getParentFile();
           if (parentFile != null) {
             if (additionalDirs == null) {
-              additionalDirs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+              additionalDirs = FileCollectionFactory.createCanonicalFileSet();
             }
             additionalDirs.add(parentFile);
           }

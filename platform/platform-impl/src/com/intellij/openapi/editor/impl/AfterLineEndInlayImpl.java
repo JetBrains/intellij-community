@@ -66,6 +66,6 @@ final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends
 
   @Override
   public String toString() {
-    return "[After-line-end inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]";
+    return "[After-line-end inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]" + (isValid() ? "" : "(invalid)");
   }
 }

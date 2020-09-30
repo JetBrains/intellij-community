@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
@@ -30,7 +31,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
                                 ProjectDescriptor projectDescriptor, final ModuleInsight insight,
                                 Icon icon,
                                 @NonNls String helpId) {
-    super("Stop library analysis?");
+    super(JavaUiBundle.message("library.detection.dialog.message.stop.library.analysis"));
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;
     myInsight = insight;
@@ -51,7 +52,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
 
   @Override
   protected String getProgressText() {
-    return "Searching for libraries. Please wait.";
+    return JavaUiBundle.message("progress.text.searching.for.libraries");
   }
 
   private int myPreviousStateHashCode = -1;

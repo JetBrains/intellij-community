@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.cachedValueProfiler;
 
 import com.intellij.icons.AllIcons;
@@ -6,10 +6,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 
-public class CVPFileType implements FileType {
+public final class CVPFileType implements FileType {
   public static final CVPFileType INSTANCE = new CVPFileType();
 
   private CVPFileType() {
@@ -24,7 +25,7 @@ public class CVPFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Cached value profiling snapshot";
+    return DevKitBundle.message("cached.value.profiler.file.description");
   }
 
   @NotNull

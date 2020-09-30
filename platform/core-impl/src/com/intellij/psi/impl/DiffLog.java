@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -9,7 +9,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -75,7 +74,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     myEntries.add(new InsertEntry(oldParent, newNode, pos));
   }
 
-  private static class ReplaceEntry extends LogEntry {
+  private static final class ReplaceEntry extends LogEntry {
     private final TreeElement myOldChild;
     private final TreeElement myNewChild;
 
@@ -126,7 +125,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class DeleteEntry extends LogEntry {
+  private static final class DeleteEntry extends LogEntry {
     @NotNull private final CompositeElement myOldParent;
     @NotNull private final TreeElement myOldNode;
 
@@ -157,7 +156,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class InsertEntry extends LogEntry {
+  private static final class InsertEntry extends LogEntry {
     @NotNull private final CompositeElement myOldParent;
     @NotNull private final TreeElement myNewNode;
     private final int myPos;
@@ -216,7 +215,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     return psiChild;
   }
 
-  private static class ReplaceFileElement extends LogEntry {
+  private static final class ReplaceFileElement extends LogEntry {
     @NotNull private final FileElement myOldNode;
     @NotNull private final FileElement myNewNode;
 
@@ -228,19 +227,16 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event) {
       PsiFileImpl fileImpl = (PsiFileImpl)file;
-      final int oldLength = myOldNode.getTextLength();
-      PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, fileImpl, false);
+      event.addElementaryChange(myOldNode);
       if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
       final TreeElement firstChildNode = myNewNode.getFirstChildNode();
       if (firstChildNode != null) myOldNode.rawAddChildren(firstChildNode);
       fileImpl.calcTreeElement().setCharTable(myNewNode.getCharTable());
       myOldNode.subtreeChanged();
-      BlockSupportImpl.sendAfterChildrenChangedEvent(manager,fileImpl, oldLength, false);
     }
   }
 
-  private static class ReplaceElementWithEvents extends LogEntry {
+  private static final class ReplaceElementWithEvents extends LogEntry {
     @NotNull private final CompositeElement myOldRoot;
     @NotNull private final CompositeElement myNewRoot;
 
@@ -271,10 +267,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         if (transaction == null) {
           final PomModel model = PomManager.getModel(file.getProject());
 
-          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+          model.runTransaction(new PomTransactionBase(file) {
             @Override
-            public PomModelEvent runInner() {
-              return new TreeAspectEvent(model, performActualPsiChange(file));
+            public @NotNull PomModelEvent runInner() {
+              return new PomModelEvent(model, performActualPsiChange(file));
             }
           });
         }

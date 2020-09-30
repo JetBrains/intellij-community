@@ -13,8 +13,6 @@ interface GHPRDetailsModel {
 
   val number: String
   val title: String
-  val baseBranch: String
-  val headBranch: String
   val state: GHPullRequestState
   val isDraft: Boolean
 

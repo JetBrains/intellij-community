@@ -23,6 +23,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -45,7 +46,7 @@ public class IntroduceOperation {
   private PsiElement myElement;
   private PyExpression myInitializer;
   private List<SmartPsiElementPointer<PsiElement>> myOccurrences = Collections.emptyList();
-  private Collection<String> mySuggestedNames;
+  private Collection<@Nls String> mySuggestedNames;
 
   public IntroduceOperation(Project project,
                             Editor editor,

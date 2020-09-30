@@ -10,12 +10,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +39,10 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final Runnable myListChangeListener;
-  private final String myOperationName;
+  private final @Nls String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
-    final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
+    final ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
 
     if (changes.isEmpty()) {
       showNoChangesDialog(project);
@@ -103,7 +107,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     setOKButtonText(operationName);
 
     myOperationName = UIUtil.removeMnemonic(operationName);
-    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
+    myBrowser.setToggleActionTitle(VcsBundle.message("changes.action.include.in.operation.name", StringUtil.toLowerCase(myOperationName)));
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
 
@@ -121,6 +125,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }

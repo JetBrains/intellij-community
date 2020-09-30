@@ -13,8 +13,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +94,7 @@ public interface MergeVersion {
     }
 
     protected void doRestoreOriginalContent(@Nullable Project project) {
-      setDocumentText(myDocument, myTextBeforeMerge, "", project);
+      setDocumentText(myDocument, myTextBeforeMerge, null, project);
     }
 
     @Override
@@ -114,8 +116,12 @@ public interface MergeVersion {
       return file.getFileType();
     }
 
-    private static void setDocumentText(@NotNull final Document document, @NotNull final String text, @Nullable String name, @Nullable Project project) {
-      CommandProcessor.getInstance().executeCommand(project, () -> document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text)), name, null);
+    private static void setDocumentText(@NotNull Document document,
+                                        @NotNull @NonNls String text,
+                                        @Nullable @NlsContexts.Command String commandName,
+                                        @Nullable Project project) {
+      CommandProcessor.getInstance().executeCommand(project, () ->
+        document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text)), commandName, null);
     }
   }
 }

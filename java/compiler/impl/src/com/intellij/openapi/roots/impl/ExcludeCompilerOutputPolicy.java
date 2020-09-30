@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -11,14 +11,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author yole
- */
-public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy {
+final class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy {
   private final Project myProject;
 
-  public ExcludeCompilerOutputPolicy(final Project project) {
+  ExcludeCompilerOutputPolicy(@NotNull Project project) {
     myProject = project;
   }
 
@@ -33,8 +31,8 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
   }
 
   @Override
-  public VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull final ModuleRootModel rootModel) {
-    ArrayList<VirtualFilePointer> result = new ArrayList<>();
+  public VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) {
+    List<VirtualFilePointer> result = new ArrayList<>();
     final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
       return VirtualFilePointer.EMPTY_ARRAY;

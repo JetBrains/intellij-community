@@ -29,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,12 +71,20 @@ public final class CommandLineProcessor {
     }
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
-    assert file != null;
+    if (file == null) {
+      Project lightEditProject = LightEditUtil.openFile(ioFile);
+      if (lightEditProject != null) {
+        return new CommandLineProcessorResult(lightEditProject, OK_FUTURE);
+      }
+      else {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
+      }
+    }
 
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject);
       if (project == null) {
-        return CommandLineProcessorResult.createError("No project found to open file in");
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"));
       }
 
       return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
@@ -85,8 +92,9 @@ public final class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
-      if (LightEdit.owns(project)) {
-        if (LightEdit.openFile(file)) {
+      if (project == null) {
+        project = LightEditService.getInstance().openFile(file, true);
+        if (project != null) {
           LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
         }
       }
@@ -103,7 +111,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static @Nullable Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
@@ -112,13 +120,13 @@ public final class CommandLineProcessor {
     }
 
     if (LightEditService.getInstance().canOpen(file) && !LightEditUtil.isOpenInExistingProject()) {
-      return LightEditUtil.getProject();
+      return null;
     }
 
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame != null) {
       Project project = frame.getProject();
-      if (project != null) {
+      if (project != null && !LightEdit.owns(project)) {
         return project;
       }
     }
@@ -150,7 +158,8 @@ public final class CommandLineProcessor {
         return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        return CommandLineProcessorResult.createError("Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
+        return CommandLineProcessorResult.createError(
+          IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time", ApplicationNamesInfo.getInstance().getProductName()));
       }
     });
     if (result != null) {
@@ -217,8 +226,8 @@ public final class CommandLineProcessor {
       catch (InvalidPathException e) {
         LOG.warn(e);
       }
-      if (file == null || !Files.exists(file)) {
-        return CommandLineProcessorResult.createError("Cannot find file '" + arg + "'");
+      if (file == null) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
       }
 
       if (line != -1 || tempProject) {
@@ -237,7 +246,10 @@ public final class CommandLineProcessor {
     }
 
     if (shouldWait && projectAndCallback == null) {
-      return new CommandLineProcessorResult(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
+      return new CommandLineProcessorResult(
+        null,
+        CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+      );
     }
 
     return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;

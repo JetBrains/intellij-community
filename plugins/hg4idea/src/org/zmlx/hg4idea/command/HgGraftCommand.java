@@ -17,6 +17,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -50,7 +51,7 @@ public class HgGraftCommand {
     List<String> args = new ArrayList<>();
     args.add("--log");
     args.addAll(params);
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Graft")) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, HgBundle.message("activity.name.graft"))) {
       HgCommandResult result =
         new HgCommandExecutor(myProject)
           .executeInCurrentThread(myRepository.getRoot(), "graft", args);

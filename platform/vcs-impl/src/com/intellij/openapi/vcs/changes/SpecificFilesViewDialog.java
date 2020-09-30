@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -21,7 +22,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import static com.intellij.util.containers.ContainerUtil.set;
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
   protected final ChangesListView myView;
-  protected final ChangeListManager myChangeListManager;
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
@@ -64,7 +63,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     };
     EditSourceOnEnterKeyHandler.install(myView, closer);
     EditSourceOnDoubleClickHandler.install(myView, closer);
-    myChangeListManager = ChangeListManager.getInstance(project);
     createPanel();
     setOKButtonText(CommonBundle.getCancelButtonText());
 

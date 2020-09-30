@@ -14,7 +14,7 @@ import java.util.Set;
  */
 class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final StringBuilder builder = new StringBuilder();
-  private boolean myTransactionStarted = false;
+  private boolean myTransactionStarted;
 
   private final List<String> myWords = new SmartList<>();
 
@@ -23,7 +23,7 @@ class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return true;
   }
 
-  private void append(final String word, final String prefix) {
+  private void append(@NotNull String word, @NotNull String prefix) {
     myWords.add(prefix + word);
     myTransactionStarted = true;
   }
@@ -77,6 +77,7 @@ class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return Collections.emptySet();
   }
 
+  @NotNull
   public String getSearchPlan() {
     assert !myTransactionStarted;
     final String plan = builder.toString();

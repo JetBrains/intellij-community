@@ -54,6 +54,7 @@
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
+    <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
@@ -103,7 +104,7 @@
 
     <programRunner implementation="org.jetbrains.idea.maven.execution.build.DelegateBuildRunner" id="mavenDelegateBuildRunner"/>
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar"/>
+    <compileServer.plugin classpath="maven-jps.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
@@ -142,6 +143,10 @@
     <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.dependencies.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
+
+    <localInspection language="XML" shortName="MavenParentMissedVersionInspection" bundle="messages.MavenDomBundle" key="inspection.missed.parent.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection"/>
     <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.plugin.declaration"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection"/>
@@ -271,7 +276,8 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationAllowlist groupIds="Maven: non-managed pom.xml"/>
+    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
+    <notificationGroup id="Maven" displayType="BALLOON"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -522,6 +528,10 @@
 
     <action id="Maven.ToggleLookNested"
             class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction">
+    </action>
+
+    <action id="Maven.UseWrapperAction"
+            class="org.jetbrains.idea.maven.project.actions.UseWrapperAction">
     </action>
 
     <action id="Maven.ToggleSkipTests"

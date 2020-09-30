@@ -3,7 +3,9 @@ package com.intellij.jps.cache.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.JpsCachesPluginUtil;
+import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.JpsLoaderNotifications;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-public class TemporaryCacheServerClient implements JpsServerClient {
+public final class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();
@@ -52,10 +55,12 @@ public class TemporaryCacheServerClient implements JpsServerClient {
 
   @NotNull
   @Override
-  public Set<String> getAllCacheKeys(@NotNull Project project) {
+  public Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project) {
     Map<String, List<String>> response = doGetRequest(project, getRequestHeaders());
-    if (response == null) return Collections.emptySet();
-    return response.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+    if (response == null) return Collections.emptyMap();
+    Map<String, Set<String>> result = new HashMap<>();
+    response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
+    return result;
   }
 
   @Nullable
@@ -166,11 +171,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
               return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<Map<String, List<String>>>() {});
             }
             else {
-              String statusLine = httpConnection.getResponseCode() + " " + httpConnection.getRequestMethod();
-              InputStream errorStream = httpConnection.getErrorStream();
-              String errorText = StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
-              LOG.info("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " +
-                        errorText);
+              String statusLine = httpConnection.getResponseCode() + ' ' + httpConnection.getRequestMethod();
+              String errorText = StreamUtil.readText(new InputStreamReader(httpConnection.getErrorStream(), StandardCharsets.UTF_8));
+              LOG.info("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " + errorText);
             }
           }
           return null;
@@ -179,7 +182,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
       Notification notification = JpsLoaderNotifications.NONE_NOTIFICATION_GROUP
-        .createNotification("Compiler Caches Loader", "Failed request to cache server: " + e.getMessage(), NotificationType.ERROR, null);
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+                            JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR, null);
       Notifications.Bus.notify(notification, project);
     }
     return null;

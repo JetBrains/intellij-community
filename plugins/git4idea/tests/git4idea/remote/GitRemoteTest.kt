@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.remote
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
 import git4idea.config.GitVersion
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
-import java.io.File
+import org.assertj.core.api.Assertions.assertThat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -85,15 +87,15 @@ class GitRemoteTest : GitPlatformTest() {
     authenticator.supplyPassword("incorrect")
 
     assertTrue("Clone didn't complete during the reasonable period of time", cloneWaiter.await(30, TimeUnit.SECONDS))
-    assertFalse("Repository directory shouldn't be created", File(testRoot, PROJECT_NAME).exists())
+    assertThat(testNioRoot.resolve(PROJECT_NAME)).describedAs("Repository directory shouldn't be created").doesNotExist()
 
     val gitVersion = vcs.version
     val expectedAuthFailureMessage = when {
       gitVersion.isLaterOrEqual(GitVersion(2, 22, 0, 0)) -> {
-        "Authentication failed for '${makeUrl()}/'"
+        StringUtil.escapeXmlEntities("Authentication failed for '${makeUrl()}/'")
       }
       gitVersion.isLaterOrEqual(GitVersion(1, 8, 3, 0)) -> {
-        "Authentication failed for '$url/'"
+        StringUtil.escapeXmlEntities("Authentication failed for '$url/'")
       }
       else -> {
         "Authentication failed"
@@ -106,7 +108,7 @@ class GitRemoteTest : GitPlatformTest() {
     val cloneWaiter = CountDownLatch(1)
     executeOnPooledThread {
       val projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "")
-      GitCheckoutProvider.doClone(project, git, projectName, testRoot.path, url)
+      GitCheckoutProvider.doClone(project, git, projectName, testNioRoot.toString(), url)
       cloneWaiter.countDown()
     }
     return cloneWaiter
@@ -114,7 +116,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private fun assertCloneSuccessful(cloneCompleted: CountDownLatch) {
     assertTrue("Clone didn't complete during the reasonable period of time", cloneCompleted.await(30, TimeUnit.SECONDS))
-    assertTrue("Repository directory was not found", File(testRoot, PROJECT_NAME).exists())
+    assertThat(testNioRoot.resolve(PROJECT_NAME)).describedAs("Repository directory was not found").exists()
   }
 
   private fun assertPasswordAsked() {

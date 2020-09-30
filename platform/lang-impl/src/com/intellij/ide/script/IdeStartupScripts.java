@@ -8,28 +8,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-final class IdeStartupScripts implements ProjectManagerListener {
+final class IdeStartupScripts implements StartupActivity.DumbAware {
   private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
 
   private static final String SCRIPT_DIR = "startup";
@@ -43,96 +41,79 @@ final class IdeStartupScripts implements ProjectManagerListener {
   }
 
   @Override
-  public void projectOpened(@NotNull Project project) {
+  public void runActivity(@NotNull Project project) {
     if (!isActive.compareAndSet(true, false)) {
       return;
     }
 
-    CompletableFuture<List<Pair<File, IdeScriptEngine>>> future = CompletableFuture.supplyAsync(IdeStartupScripts::prepareScriptsAndEngines, NonUrgentExecutor.getInstance());
-    WeakReference<Project> projectRef = new WeakReference<>(project);
-    StartupManager.getInstance(project).runAfterOpened(() -> future.thenAcceptAsync(it -> {
-      Project project1 = projectRef.get();
-      if (project1 != null) {
-        runAllScriptsImpl(project1, it);
-      }
-    }, NonUrgentExecutor.getInstance()));
+    runAllScriptsImpl(project, prepareScriptsAndEngines());
   }
 
-  private static @NotNull List<Pair<File, IdeScriptEngine>> prepareScriptsAndEngines() {
-    List<File> scripts = getScripts();
+  private static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines() {
+    List<Path> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
-    if (scripts.isEmpty()) return Collections.emptyList();
+    if (scripts.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
-    List<Pair<File, IdeScriptEngine>> result = new ArrayList<>();
-    for (File script : scripts) {
-      String extension = FileUtilRt.getExtension(script.getName());
+    List<Pair<Path, IdeScriptEngine>> result = new ArrayList<>();
+    for (Path script : scripts) {
+      String extension = FileUtilRt.getExtension(script.getFileName().toString());
       IdeScriptEngine engine = extension.isEmpty() ? null : scriptEngineManager.getEngineByFileExtension(extension, null);
-      result.add(Pair.create(script, engine));
+      if (engine == null) {
+        LOG.warn(script + " not supported (no script engine)");
+        continue;
+      }
+      result.add(new Pair<>(script, engine));
     }
     return result;
   }
 
-  private static void runImpl(@NotNull Project project,
-                              @NotNull File script,
-                              @NotNull IdeScriptEngine engine) throws IOException, IdeScriptException {
-    String scriptText = FileUtil.loadFile(script);
-    IdeConsoleScriptBindings.ensureIdeIsBound(project, engine);
-
-    LOG.info(script.getPath());
-    long start = System.currentTimeMillis();
+  private static @NotNull List<Path> getScripts() {
     try {
-      engine.eval(scriptText);
-    }
-    finally {
-      LOG.info("... completed in " + StringUtil.formatDuration(System.currentTimeMillis() - start));
-    }
-  }
-
-  private static @NotNull List<File> getScripts() {
-    File directory = getScriptsRootDirectory();
-    List<File> scripts = JBIterable.of(directory == null ? null : directory.listFiles())
-      .filter(ExtensionsRootType.regularFileFilter())
-      .toList();
-
-    ContainerUtil.sort(scripts, (f1, f2) -> {
-      String f1Name = f1 != null ? f1.getName() : null;
-      String f2Name = f2 != null ? f2.getName() : null;
-      return StringUtil.compare(f1Name, f2Name, false);
-    });
-    return scripts;
-  }
-
-  private static @Nullable File getScriptsRootDirectory() {
-    try {
-      return ExtensionsRootType.getInstance().findResourceDirectory(PluginManagerCore.CORE_ID, SCRIPT_DIR, false);
-    }
-    catch (IOException ignore) {
-    }
-    return null;
-  }
-
-  private static void runAllScriptsImpl(@NotNull Project project, @NotNull List<Pair<File, IdeScriptEngine>> result) {
-    try {
-      for (Pair<File, IdeScriptEngine> pair : result) {
-        try {
-          if (pair.second == null) {
-            LOG.warn(pair.first.getPath() + " not supported (no script engine)");
-          }
-          else {
-            runImpl(project, pair.first, pair.second);
-          }
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+      Path directory = ExtensionsRootType.getInstance().findResourceDirectory(PluginManagerCore.CORE_ID, SCRIPT_DIR, false);
+      try (Stream<Path> stream = Files.list(directory)) {
+        return stream
+          .filter(ExtensionsRootType.regularFileFilter())
+          .sorted((f1, f2) -> {
+            String f1Name = f1 == null ? null : f1.getFileName().toString();
+            String f2Name = f2 == null ? null : f2.getFileName().toString();
+            return StringUtil.compare(f1Name, f2Name, false);
+          })
+          .collect(Collectors.toList());
       }
     }
-    catch (ProcessCanceledException e) {
-      LOG.warn("... cancelled");
+    catch (NoSuchFileException ignore) {
     }
-    catch (Exception e) {
+    catch (IOException e) {
       LOG.error(e);
+    }
+    return Collections.emptyList();
+  }
+
+  private static void runAllScriptsImpl(@NotNull Project project, @NotNull List<Pair<Path, IdeScriptEngine>> result) {
+    for (Pair<Path, IdeScriptEngine> pair : result) {
+      try {
+        LOG.info(pair.first.toString());
+
+        String scriptText = PathKt.readText(pair.first);
+        IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second);
+
+        long start = System.currentTimeMillis();
+        try {
+          pair.second.eval(scriptText);
+        }
+        catch (ProcessCanceledException e) {
+          LOG.warn("... cancelled");
+        }
+        finally {
+          LOG.info("... completed in " + Formats.formatDuration(System.currentTimeMillis() - start));
+        }
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
     }
   }
 }

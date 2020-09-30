@@ -162,6 +162,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         //we select the newest matching version for a possible fix
         val jdkToDownload = lazyDownloadModel
+                              .asSequence()
                               .filter { req.matches(it) }
                               .mapNotNull {
                                 val v = JavaVersion.tryParse(it.versionString)

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
@@ -22,7 +22,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
@@ -621,9 +620,7 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestUnsupportedTypingNamedTuple(@NotNull PsiElement anchor) {
-    final QualifiedName typingNTName = QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE);
-
-    final PsiElement member = PyResolveImportUtil.resolveTopLevelMember(typingNTName, PyResolveImportUtil.fromFoothold(anchor));
+    final PsiElement member = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, anchor);
     assertInstanceOf(member, PyClass.class);
 
     doTestUnsupportedNT(
@@ -1164,7 +1161,7 @@ public class PyStubsTest extends PyTestCase {
     assertFalse(fieldsTypesIterator.hasNext());
   }
 
-  private static class DataclassFieldChecker {
+  private static final class DataclassFieldChecker {
 
     @NotNull
     private final PyClass myClass;

@@ -14,22 +14,25 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.getParentPath
-import com.intellij.util.io.*
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.util.io.copy
+import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isDirectory
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = isImportExportActionApplicable()
+    e.presentation.isEnabled = true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -43,7 +46,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
+              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message),
               ConfigurationStoreBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
@@ -53,7 +56,9 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       }
   }
 
-  protected open fun getExportableComponents(relativePaths: Set<String>): Map<Path, List<ExportableItem>> = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+  protected open fun getExportableComponents(relativePaths: Set<String>): Map<FileSpec, List<ExportableItem>> {
+    return getExportableComponentsMap(true). filterKeys { relativePaths.contains(it.relativePath) }
+  }
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
@@ -76,12 +81,12 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-          IdeBundle.message("error.file.contains.no.settings.to.import", saveFile, promptLocationMessage()),
+          ConfigurationStoreBundle.message("error.no.settings.to.import", saveFile),
           ConfigurationStoreBundle.message("title.invalid.file"))
       return
     }
 
-    val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
+    val configPath = Paths.get(PathManager.getConfigPath())
     val dialog = ChooseComponentsToExportDialog(
         getExportableComponents(relativePaths), false,
         ConfigurationStoreBundle.message("title.select.components.to.import"),
@@ -93,12 +98,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     val tempFile = Paths.get(PathManager.getPluginTempPath()).resolve(saveFile.fileName)
     saveFile.copy(tempFile)
     val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
-    StartupActionScriptManager.addActionCommands(
-      listOf(
-        StartupActionScriptManager.UnzipCommand(tempFile.toFile(), File(configPath), filenameFilter),
-        StartupActionScriptManager.DeleteCommand(tempFile.toFile())
-      )
-    )
+    StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.UnzipCommand(tempFile, configPath, filenameFilter),
+                                                        StartupActionScriptManager.DeleteCommand(tempFile)))
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
@@ -114,7 +115,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     }
   }
 
-  private fun confirmRestart(message: String): Boolean =
+  private fun confirmRestart(@NlsContexts.DialogMessage message: String): Boolean =
     (Messages.OK == showOkCancelDialog(
       title = IdeBundle.message("title.restart.needed"),
       message = message,
@@ -122,6 +123,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       icon = Messages.getQuestionIcon()
     ))
 
+  @NlsContexts.Button
   private fun getRestartActionName(): String =
     if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
     else IdeBundle.message("ide.shutdown.action")
@@ -138,30 +140,27 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   }
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
-    val result = ObjectOpenHashSet<String>()
-    val root = PathManager.getConfigDir()
+    val result = HashSet<String>()
     for (item in chosenComponents) {
-      result.add(root.relativize(item.file).systemIndependentPath)
+      result.add(item.fileSpec.relativePath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
-
-  private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 }
 
 fun getPaths(input: InputStream): Set<String> {
-  val result = ObjectOpenHashSet<String>()
+  val result = mutableSetOf<String>()
   val zipIn = ZipInputStream(input)
   zipIn.use {
     while (true) {
       val entry = zipIn.nextEntry ?: break
-      var path = entry.name
+      var path = entry.name.trimEnd('/')
       result.add(path)
       while (true) {
         path = getParentPath(path) ?: break
-        result.add("$path/")
+        result.add(path)
       }
     }
   }

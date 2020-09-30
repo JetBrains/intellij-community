@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuild
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.WebModuleTypeBase;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NotNull;
@@ -39,21 +40,21 @@ import java.util.List;
  */
 public class PyProjectStructureDetector extends ProjectStructureDetector {
   private static final Logger LOG = Logger.getInstance(PyProjectStructureDetector.class);
-  
-  
+  public static final @NlsSafe String PYTHON = "Python";
+
+
   @NotNull
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir,
                                                File @NotNull [] children,
                                                @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
-    LOG.info("Detecting roots under "  + dir);
+    LOG.info("Detecting roots under " + dir);
     for (File child : children) {
       final String name = child.getName();
       if (FileUtilRt.extensionEquals(name, "py")) {
         LOG.info("Found Python file " + child.getPath());
-        result.add(new DetectedContentRoot(dir, "Python", PythonModuleTypeBase.getInstance(),
-                                           WebModuleTypeBase.getInstance()));
+        result.add(new DetectedContentRoot(dir, PYTHON, PythonModuleTypeBase.getInstance(), WebModuleTypeBase.getInstance()));
         return DirectoryProcessingResult.SKIP_CHILDREN;
       }
       if ("node_modules".equals(name)) {

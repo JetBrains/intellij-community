@@ -15,6 +15,8 @@
  */
 package org.jetbrains.annotations;
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -22,8 +24,11 @@ import java.lang.annotation.Target;
 
 /**
  * Used to indicate that a method should be called in background thread
+ * @deprecated Use {@link RequiresBackgroundThread}.
  */
-@Retention(RetentionPolicy.SOURCE)
+@Deprecated
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInBackground {
+  boolean instrument() default true;
 }

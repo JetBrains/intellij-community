@@ -45,13 +45,13 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.simplify.$0", myReplacementText);
+    return PyPsiBundle.message("QFIX.simplify.boolean.expression", myReplacementText);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.simplify.boolean.expression");
+    return PyPsiBundle.message("QFIX.NAME.simplify.boolean.expression");
   }
 
   @Override

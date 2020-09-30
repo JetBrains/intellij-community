@@ -10,6 +10,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyEleme
     return overrideIcon;
   }
 
-  private static String getAbstractTitle() {
+  private static @Nls String getAbstractTitle() {
     return RefactoringBundle.message("make.abstract");
   }
 }

@@ -2,13 +2,11 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil.intersects
@@ -33,8 +31,12 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     val roots = dataContext.getRoots().take(2).toList()
     if (roots.isEmpty()) return checkinActionName
 
-    val messageKey = if (roots[0].isDirectory) "action.name.checkin.directory" else "action.name.checkin.file"
-    return message(pluralize(messageKey, roots.size), checkinActionName)
+    if (roots[0].isDirectory) {
+      return message("action.name.checkin.directory", checkinActionName, roots.size)
+    }
+    else {
+      return message("action.name.checkin.file", checkinActionName, roots.size)
+    }
   }
 
   override fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
@@ -58,15 +60,14 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     dataContext.getRoots().any { isApplicableRoot(it, dataContext) }
 
   protected open fun isApplicableRoot(path: FilePath, dataContext: VcsContext): Boolean {
-    val manager = ChangeListManagerImpl.getInstanceImpl(dataContext.project!!)
-    val status = manager.getStatus(path)
+    val status = ChangeListManager.getInstance(dataContext.project!!).getStatus(path)
 
     @Suppress("DEPRECATION")
     return (path.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED &&
            path.virtualFile?.let { isApplicableRoot(it, status, dataContext) } != false
   }
 
-  @Deprecated("Use `isApplicableRoot(FilePath, VcsContext)` instead", ReplaceWith("isApplicableRoot()"))
+  @Deprecated("Use `isApplicableRoot(FilePath, VcsContext)` instead", ReplaceWith("isApplicableRoot()")) // NON-NLS
   protected open fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean = true
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths

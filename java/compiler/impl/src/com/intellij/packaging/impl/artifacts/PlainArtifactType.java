@@ -34,7 +34,7 @@ public class PlainArtifactType extends ArtifactType {
   }
 
   public PlainArtifactType() {
-    super(ID, JavaCompilerBundle.message("artifact.type.plain"));
+    super(ID, JavaCompilerBundle.messagePointer("artifact.type.plain"));
   }
 
   @NotNull

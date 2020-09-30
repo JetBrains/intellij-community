@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
@@ -75,7 +75,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       ProgressManager.checkCanceled();
-      
+
       if (isCustomRegionStart(child)) {
         localFoldingStack.push(child);
       }
@@ -213,7 +213,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     return node.getFirstChildNode() != null;
   }
 
-  private static class FoldingStack extends Stack<ASTNode> {
+  private static final class FoldingStack extends Stack<ASTNode> {
     @NotNull
     private final ASTNode owner;
 

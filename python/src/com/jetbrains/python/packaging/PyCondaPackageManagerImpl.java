@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final Sdk sdk = getSdk();
 
     final String path = getCondaDirectory();
-    if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
+    if (path == null) throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.empty.conda.name", sdk.getHomePath()), command, arguments);
 
     final ArrayList<String> parameters = Lists.newArrayList(command, "-p", path);
     parameters.addAll(arguments);
@@ -134,7 +135,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (line.startsWith("#")) continue;
       final List<String> fields = StringUtil.split(line, "=");
       if (fields.size() < 3) {
-        throw new PyExecutionException("Invalid conda output format", "conda", Collections.emptyList());
+        throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.invalid.conda.output.format"), "conda", Collections.emptyList());
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
@@ -154,7 +155,10 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @NotNull
   public static String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
                                         @NotNull String version) throws ExecutionException {
-    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
+    if (condaExecutable == null) {
+      throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.conda"), "Conda", Collections.emptyList(),
+                                     new ProcessOutput());
+    }
 
     final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 

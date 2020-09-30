@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.revert;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.*;
@@ -45,6 +46,10 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
   private static class RevertStatusConvertor implements Convertor<Matcher, ProgressEvent> {
 
+    private static final @NonNls String REVERTED_CODE = "Reverted";
+    private static final @NonNls String FAILED_TO_REVERT_CODE = "Failed to revert";
+    private static final @NonNls String SKIPPED_CODE = "Skipped";
+
     @Override
     public ProgressEvent convert(@NotNull Matcher matcher) {
       String statusMessage = matcher.group(1);
@@ -57,13 +62,13 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
     public static EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
-      if ("Reverted".equals(code)) {
+      if (REVERTED_CODE.equals(code)) {
         result = EventAction.REVERT;
       }
-      else if ("Failed to revert".equals(code)) {
+      else if (FAILED_TO_REVERT_CODE.equals(code)) {
         result = EventAction.FAILED_REVERT;
       }
-      else if ("Skipped".equals(code)) {
+      else if (SKIPPED_CODE.equals(code)) {
         result = EventAction.SKIP;
       }
 

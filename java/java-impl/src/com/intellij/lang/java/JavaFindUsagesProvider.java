@@ -8,15 +8,17 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -150,7 +152,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       else {
         PsiClass aClass = (PsiClass)element;
         String qName = aClass.getQualifiedName();
-        return qName != null ? qName : ObjectUtils.notNull(aClass.getName(), "");
+        @Nullable String value = aClass.getName();
+        return qName != null ? qName : value == null ? "" : value;
       }
     }
     if (element instanceof PsiMethod) {
@@ -188,7 +191,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private static String getContainingClassDescription(PsiClass aClass, String formatted) {
+  private static @NlsSafe String getContainingClassDescription(PsiClass aClass, String formatted) {
     if (aClass instanceof PsiAnonymousClass) {
       return JavaBundle.message("java.terms.of.anonymous.class", formatted);
     }
@@ -277,7 +280,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private static String appendClassName(String s, PsiClass psiClass) {
+  private static @Nls String appendClassName(@Nls String s, PsiClass psiClass) {
     if (psiClass != null) {
       String qName = psiClass.getQualifiedName();
       if (qName != null) {
@@ -287,7 +290,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return s;
   }
 
-  public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
+  public static @NlsSafe String getPackageName(PsiDirectory directory, boolean includeRootDir) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       return directory.getVirtualFile().getPresentableUrl();
@@ -319,7 +322,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
-  public static String getPackageName(PsiPackage psiPackage) {
+  public static @NlsSafe String getPackageName(PsiPackage psiPackage) {
     if (psiPackage == null) {
       return null;
     }

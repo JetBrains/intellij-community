@@ -1,9 +1,9 @@
 #!/bin/sh
-#
+# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
 # ---------------------------------------------------------------------
-#
 
 message()
 {
@@ -55,6 +55,9 @@ IDE_BIN_HOME=`pwd`
 IDE_HOME=`dirname "$IDE_BIN_HOME"`
 cd "$OLDPWD"
 
+PRODUCT_VENDOR="__product_vendor__"
+PATHS_SELECTOR="__system_selector__"
+
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
 # Try (in order): __product_uc___JDK, __vm_options__.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
@@ -63,8 +66,8 @@ if [ -n "$__product_uc___JDK" -a -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" -a -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
-  USER_JRE=`"$CAT" $HOME/.__system_selector__/config/__vm_options__.jdk`
+if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi

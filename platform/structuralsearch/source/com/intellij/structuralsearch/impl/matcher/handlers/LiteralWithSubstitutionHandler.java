@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -21,11 +22,11 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     return match(matchedNode, matchedNode.getText(), 0, context);
   }
 
-  public boolean match(PsiElement matchedNode, String text, int textOffset, MatchContext context) {
+  public boolean match(@NotNull PsiElement matchedNode, @NotNull String text, int textOffset, @NotNull MatchContext context) {
     if (myMatcher == null) {
       myMatcher = Pattern.compile(myRegexp, (myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE) | Pattern.DOTALL).matcher(text);
     }

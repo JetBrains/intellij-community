@@ -2,10 +2,15 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +24,7 @@ public final class PluginPathManager {
   }
 
   private static class SubrepoHolder {
-    private static final Set<String> ROOT_NAMES = ContainerUtil.newTroveSet("community", "contrib", "android", "CIDR");
+    @NonNls private static final Set<String> ROOT_NAMES = ContainerUtil.newTroveSet("community", "contrib", "android", "CIDR");
     private static final List<File> subrepos = findSubrepos();
 
     private static List<File> findSubrepos() {
@@ -48,7 +53,7 @@ public final class PluginPathManager {
     }
   }
 
-  public static File getPluginHome(String pluginName) {
+  public static File getPluginHome(@NonNls String pluginName) {
     File subrepo = findSubrepo(pluginName);
     if (subrepo != null) {
       return subrepo;
@@ -78,4 +83,26 @@ public final class PluginPathManager {
     }
     return "/plugins/" + pluginName;
   }
+
+  @Nullable
+  public static File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+    try {
+      String jarPath = PathUtil.getJarPathForClass(pluginClass);
+      if (!jarPath.endsWith(".jar")) {
+        URL resource = pluginClass.getClassLoader().getResource(resourceName);
+        if (resource == null) return null;
+
+        return new File(URLUtil.decode(resource.getPath()));
+      }
+      File jarFile = new File(jarPath);
+      if (!jarFile.isFile()) return null;
+      
+      File pluginBaseDir = jarFile.getParentFile().getParentFile();
+      return new File(pluginBaseDir, resourceName);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
 }

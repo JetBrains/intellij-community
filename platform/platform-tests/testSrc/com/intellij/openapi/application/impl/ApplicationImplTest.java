@@ -494,10 +494,15 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testRunProcessWithProgressFromPooledThread() throws Throwable {
-    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        boolean result = ApplicationManagerEx.getApplicationEx()
-          .runProcessWithProgressSynchronously(EmptyRunnable.getInstance(), "title", true, getProject());
+        boolean result = ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
+          // check that defaultModalityState() carries write-safe context now
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            ApplicationManager.getApplication().assertIsWriteThread();
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+          });
+        }, "title", true, getProject());
         assertTrue(result);
       }
       catch (Throwable e) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -16,7 +17,7 @@ import java.util.Objects;
 /**
  * @author peter
  */
-public class JavaMethodMergingContributor extends CompletionContributor {
+public class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
   static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 
   @Override

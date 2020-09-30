@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
@@ -25,7 +25,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private final ComponentManager componentManager;
   private final Map<String, ExtensionPointImpl<?>> extensionPoints = new ConcurrentHashMap<>();
-  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? new Object2ObjectOpenHashMap<>() : null;
+  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? CollectionFactory.createSmallMemoryFootprintMap() : null;
 
   public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
     this.componentManager = componentManager;
@@ -51,7 +51,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> extensionPointElements) {
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends Element> extensionPointElements) {
     for (Element element : extensionPointElements) {
       registerExtensionPoint(pluginDescriptor, element);
     }
@@ -102,9 +102,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor loadedPluginDescriptor,
-                                      @NotNull List<Element> elements,
-                                      @NotNull List<Runnable> priorityListenerCallbacks,
-                                      @NotNull List<Runnable> listenerCallbacks) {
+                                      @NotNull List<? extends Element> elements,
+                                      @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                      @NotNull List<? super Runnable> listenerCallbacks) {
     ExtensionPointImpl<?> point = extensionPoints.get(extensionPointName);
     if (point == null) {
       return false;
@@ -115,7 +115,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   // extensionPoints here are raw and not initialized (not the same instance, only name can be used)
-  public void resetExtensionPoints(@NotNull List<ExtensionPointImpl<?>> rawExtensionPoints) {
+  public void resetExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> rawExtensionPoints) {
     for (ExtensionPointImpl<?> point : rawExtensionPoints) {
       ExtensionPointImpl<?> extensionPoint = extensionPoints.get(point.getName());
       if (extensionPoint != null) {
@@ -132,7 +132,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   /**
    * You must call {@link #resetExtensionPoints} before otherwise event ExtensionEvent.REMOVED will be not fired.
    */
-  public void unregisterExtensionPoints(@NotNull List<ExtensionPointImpl<?>> rawExtensionPoints) {
+  public void unregisterExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> rawExtensionPoints) {
     for (ExtensionPointImpl<?> point : rawExtensionPoints) {
       extensionPoints.remove(point.getName());
     }
@@ -160,6 +160,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
   }
 
+  @Override
+  @TestOnly
+  public void registerDynamicExtensionPoint(@NonNls @NotNull String extensionPointName,
+                                            @NotNull String extensionPointBeanClass,
+                                            ExtensionPoint.@NotNull Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, true);
+  }
+
   @TestOnly
   public void registerExtensionPoint(@NotNull BaseExtensionPointName<?> extensionPoint,
                                      @NotNull String extensionPointBeanClass,
@@ -172,8 +180,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, false);
+  }
+
+  @TestOnly
+  void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind, boolean dynamic) {
     PluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
-    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, false);
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, dynamic);
   }
 
   @TestOnly
@@ -188,7 +201,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                                                       @NotNull PluginDescriptor pluginDescriptor, boolean isInterface, boolean dynamic) {
     ExtensionPointImpl<T> point;
     if (isInterface) {
-      point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
+      point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, null, dynamic);
     }
     else {
       point = new BeanExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
@@ -215,7 +228,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
     PluginId id1 = getExtensionPoint(pointName).getPluginDescriptor().getPluginId();
     PluginId id2 = pluginDescriptor.getPluginId();
-    String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
+    @NonNls String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, epTraces.get(pointName));
     }
@@ -264,7 +277,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public void registerExtensions(@NotNull Map<String, List<Element>> extensions,
                                  @NotNull PluginDescriptor pluginDescriptor,
-                                 @Nullable List<Runnable> listenerCallbacks) {
+                                 @Nullable List<? super Runnable> listenerCallbacks) {
     extensions.forEach((name, list) -> {
       ExtensionPointImpl<?> point = extensionPoints.get(name);
       if (point != null) {
@@ -274,9 +287,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public boolean registerExtensions(@NotNull String pointName,
-                                    @NotNull List<Element> extensions,
+                                    @NotNull List<? extends Element> extensions,
                                     @NotNull PluginDescriptor pluginDescriptor,
-                                    @Nullable List<Runnable> listenerCallbacks)  {
+                                    @Nullable List<? super Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = extensionPoints.get(pointName);
     if (point == null) {
       return false;
@@ -298,7 +311,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void processExtensionPoints(@NotNull Consumer<ExtensionPointImpl<?>> consumer) {
+  public void processExtensionPoints(@NotNull Consumer<? super ExtensionPointImpl<?>> consumer) {
     extensionPoints.values().forEach(consumer);
   }
 

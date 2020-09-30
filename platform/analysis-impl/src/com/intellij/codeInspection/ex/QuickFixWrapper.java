@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class QuickFixWrapper implements IntentionAction, PriorityAction {
+public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;

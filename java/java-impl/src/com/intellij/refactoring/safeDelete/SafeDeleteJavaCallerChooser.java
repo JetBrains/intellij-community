@@ -142,7 +142,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                   OverridingMethodsSearch.search((PsiMethod)scope).findFirst() == null) {
                 final int scopeParamIdx = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
                 final Ref<Boolean> ref = new Ref<>(false);
-                if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
+                if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<>() {
                   @Override
                   public boolean process(PsiReference reference) {
                     final PsiElement element = reference.getElement();

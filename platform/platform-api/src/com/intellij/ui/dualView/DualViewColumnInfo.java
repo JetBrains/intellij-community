@@ -15,13 +15,14 @@
  */
 package com.intellij.ui.dualView;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ColumnInfo;
 
 /**
  * author: lesya
  */
 public abstract class DualViewColumnInfo<Item, Aspect> extends ColumnInfo<Item, Aspect>{
-  public DualViewColumnInfo(String name) {
+  public DualViewColumnInfo(@NlsContexts.ColumnName String name) {
     super(name);
   }
 

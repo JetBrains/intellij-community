@@ -76,7 +76,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (Info info : infos) {
       for (AnAction action : info.actions) {
-        actionGroup.add(new LineMarkerActionWrapper(element, action));
+        actionGroup.add(action instanceof Separator ? action : new LineMarkerActionWrapper(element, action));
       }
 
       if (info != infos.get(infos.size() - 1)) {

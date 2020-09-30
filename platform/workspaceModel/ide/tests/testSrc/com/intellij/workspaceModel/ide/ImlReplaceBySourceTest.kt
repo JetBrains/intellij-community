@@ -59,7 +59,7 @@ class ImlReplaceBySourceTest {
     val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl(virtualFileManager))
 
     val builder = WorkspaceEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile, configLocation, builder, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, virtualFileManager)
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -78,7 +78,7 @@ class ImlReplaceBySourceTest {
 
     val replaceWith = WorkspaceEntityStorageBuilder.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile, source, configLocation, replaceWith, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, virtualFileManager)
 
     val before = builder.toStorage()
 

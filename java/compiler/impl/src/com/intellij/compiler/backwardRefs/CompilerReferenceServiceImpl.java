@@ -293,9 +293,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
   static final class InitializationActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (CompilerReferenceService.isEnabled()) {
-        CompilerReferenceService.getInstance(project);
-      }
+      CompilerReferenceService.getInstanceIfEnabled(project);
     }
   }
 }

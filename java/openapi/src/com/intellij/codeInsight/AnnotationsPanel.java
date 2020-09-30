@@ -16,6 +16,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class AnnotationsPanel {
   protected final DefaultTableModel myTableModel;
 
   public AnnotationsPanel(Project project,
-                          String name,
+                          @NonNls String name,
                           String defaultAnnotation,
                           List<String> annotations,
                           List<String> defaultAnnotations,
@@ -67,7 +68,7 @@ public class AnnotationsPanel {
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table,
+      protected void customizeCellRenderer(@NotNull JTable table,
                                            Object value,
                                            boolean selected,
                                            boolean hasFocus,
@@ -185,7 +186,7 @@ public class AnnotationsPanel {
 
   private void chooseAnnotation(String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser("Choose " + title + " annotation", GlobalSearchScope.allScope(myProject), new ClassFilter() {
+      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
           return aClass.isAnnotationType();

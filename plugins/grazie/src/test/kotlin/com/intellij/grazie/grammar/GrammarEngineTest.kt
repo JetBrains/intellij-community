@@ -68,6 +68,6 @@ class GrammarEngineTest : GrazieTestBase() {
     assertEquals(3, fixes.size)
     fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text)
     fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text)
-    fixes[2].assertTypoIs(IntRange(23, 30), listOf("This is"), text)
+    fixes[2].assertTypoIs(IntRange(23, 26), listOf("These"), text)
   }
 }

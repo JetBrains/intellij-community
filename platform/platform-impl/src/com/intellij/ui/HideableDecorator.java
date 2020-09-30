@@ -96,10 +96,11 @@ public class HideableDecorator {
     return myOn;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.Separator String title) {
     myTitledSeparator.setText(title);
   }
 
+  @NlsContexts.Separator
   public String getTitle() {
     return myTitledSeparator.getText();
   }

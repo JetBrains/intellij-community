@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiKeyword;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +51,6 @@ class DfFloatNotValueType extends DfAntiConstantType<Float> implements DfFloatTy
 
   @Override
   public String toString() {
-    return "float, not in " + myNotValues;
+    return JavaAnalysisBundle.message("type.presentation.except.values", PsiKeyword.FLOAT, StringUtil.join(myNotValues, ", "));
   }
 }

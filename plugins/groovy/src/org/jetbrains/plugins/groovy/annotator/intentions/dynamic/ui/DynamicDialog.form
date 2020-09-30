@@ -13,7 +13,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Static"/>
+          <text resource-bundle="messages/GroovyBundle" key="dynamic.dialog.static.checkbox"/>
         </properties>
       </component>
       <grid id="28596" binding="myTablePane" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -60,7 +60,7 @@
             </constraints>
             <properties>
               <labelFor value="397c0"/>
-              <text resource-bundle="messages/GroovyIntentionsBundle" key="dynamic.property.dialog.class"/>
+              <text resource-bundle="messages/GroovyBundle" key="dynamic.dialog.class.label"/>
             </properties>
           </component>
           <component id="397c0" class="javax.swing.JComboBox" binding="myClassComboBox">
@@ -75,7 +75,7 @@
             </constraints>
             <properties>
               <labelFor value="1d610"/>
-              <text value="&amp;Type:"/>
+              <text resource-bundle="messages/GroovyBundle" key="dynamic.dialog.type.label"/>
             </properties>
           </component>
           <component id="1d610" class="javax.swing.JComboBox" binding="myTypeComboBox">

@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -15,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
@@ -145,7 +148,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public String getInstallToUserText() {
-    String userSiteText = "Install to user's site packages directory";
+    String userSiteText = PyBundle.message("button.install.to.user.site.packages.directory");
     if (!PythonSdkUtil.isRemote(mySdk))
       userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
     return userSiteText;
@@ -331,22 +334,20 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Nullable
-  private static String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @Nullable Sdk sdk) {
+  private static @DetailedDescription String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @Nullable Sdk sdk) {
     if (cause != null) {
       if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-        return "Make sure that you use a version of Python supported by this package. Currently you are using Python " +
-               languageLevel + ".";
+        return PySdkBundle.message("python.sdk.use.python.version.supported.by.this.package", languageLevel);
       }
     }
 
     if (SystemInfo.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
-      return "Make sure that you have installed Python development packages for your operating system.";
+      return PySdkBundle.message("python.sdk.check.python.development.packages.installed");
     }
 
     if ("pip".equals(e.getCommand()) && sdk != null) {
-      return "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
-             "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
+      return PySdkBundle.message("python.sdk.try.to.run.command.from.system.terminal", sdk.getHomePath());
     }
 
     return null;
@@ -384,6 +385,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     myExecutorService.execute(() -> {
+      if (myProject.isDisposed()) return;
       try {
         PyPIPackageUtil.INSTANCE.loadPackages();
         final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());

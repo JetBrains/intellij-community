@@ -8,17 +8,16 @@ import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import org.jetbrains.annotations.NotNull;
 
 public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
-
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"),
-                                                                             AllIcons.Nodes.Plugin);
+    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"), AllIcons.Nodes.Plugin);
     descriptor.addTemplate(new FileTemplateDescriptor("gradleBasedPlugin.xml", XmlFileType.INSTANCE.getIcon()) {
       @Override
-      public String getDisplayName() {
-        return "plugin.xml in Gradle-based projects";
+      public @NotNull String getDisplayName() {
+        return DevKitBundle.message("module.wizard.gradle.plugin.xml.template.display.name");
       }
     });
     descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", XmlFileType.INSTANCE.getIcon()));
@@ -35,5 +34,4 @@ public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFa
     descriptor.addTemplate(new FileTemplateDescriptor("InspectionDescription.html", HtmlFileType.INSTANCE.getIcon()));
     return descriptor;
   }
-
 }

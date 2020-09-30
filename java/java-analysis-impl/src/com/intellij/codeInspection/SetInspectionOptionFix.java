@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,24 +23,22 @@ import javax.swing.*;
 public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction, Iconable {
   private final String myID;
   private final String myProperty;
-  private final String myMessage;
+  private final @IntentionName String myMessage;
   private final boolean myValue;
 
-  public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @Nls String message, boolean value) {
+  public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, boolean value) {
     myID = inspection.getID();
     myProperty = property;
     myMessage = message;
     myValue = value;
   }
 
-  @Nls
   @NotNull
   @Override
   public String getName() {
     return myMessage;
   }
 
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {

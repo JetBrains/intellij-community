@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -238,11 +237,11 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    PsiType type = DfConstantType.getConstantOfType(state.getDfType(value), PsiType.class);
-    state.push(runner.getFactory().getObjectType(type, Nullability.NOT_NULL));
-    return nextInstruction(instruction, runner, state);
+  public DfaInstructionState[] visitIsAssignableFromInstruction(IsAssignableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.pop();
+    memState.pop();
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
+    return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

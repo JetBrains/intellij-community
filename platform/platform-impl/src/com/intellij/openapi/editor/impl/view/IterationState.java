@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,8 +27,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes 
- * (font style, foreground and background color, effect type and color).  
+ * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes
+ * (font style, foreground and background color, effect type and color).
  */
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
@@ -195,7 +195,7 @@ public class IterationState {
     advance();
   }
 
-  private class HighlighterSweep {
+  private final class HighlighterSweep {
     private final MarkupModelEx myMarkupModel;
     private final EditorColorsScheme myColorsScheme;
     private final boolean myOnlyFullLine;
@@ -221,8 +221,8 @@ public class IterationState {
                                                           new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
                                                             @Override
                                                             protected boolean accept(RangeHighlighterEx ex) {
-                                                              return (!onlyFullLine || 
-                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
+                                                              return (!onlyFullLine ||
+                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
                                                                      (!onlyFontOrForegroundAffecting ||
                                                                       EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes(myColorsScheme)));
                                                             }
@@ -751,7 +751,7 @@ public class IterationState {
     }
   }
 
-  public static class CaretData {
+  public static final class CaretData {
     private final int caretRowStart;
     private final int caretRowEnd;
     private final int[] selectionStarts;

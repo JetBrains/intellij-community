@@ -5,6 +5,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -15,7 +16,7 @@ abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<
   }
 
   @Nullable
-  protected static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
+  protected static GenericAttributeValue getAttribute(DomElement domElement, @NonNls String attributeName) {
     final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;

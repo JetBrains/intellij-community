@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogBuildType.*
 import org.junit.Test
 
 private val BUILD_TYPES = setOf(RELEASE, EAP, UNKNOWN)
-private val ENDPOINTS = setOf("send", "whitelist", "dictionary")
+private val ENDPOINTS = setOf("send", "metadata", "dictionary")
 
 class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
 
@@ -28,7 +28,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
     doTestVersions(
       versions,
       notExistingConfig = setOf(RELEASE, EAP),
-      notExistingEndpoints = setOf("send", "whitelist", "dictionary")
+      notExistingEndpoints = setOf("send", "metadata", "dictionary")
     )
   }
 
@@ -191,7 +191,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   fun `test parse endpoints from version`() {
     val endpoints = hashMapOf(
       "send" to "https://send/endpoint",
-      "whitelist" to "https://whitelist/endpoint/",
+      "metadata" to "https://metadata/endpoint/",
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
@@ -209,7 +209,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/",
+    "metadata": "https://metadata/endpoint/",
     "dictionary": "https://dictionary/endpoint/"
   }
 }""", configs, existingEndpoints = endpoints)
@@ -232,7 +232,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   }],
   "endpoints": {
   }
-}""", configs, notExistingEndpoints = setOf("send", "whitelist", "dictionary"))
+}""", configs, notExistingEndpoints = setOf("send", "metadata", "dictionary"))
   }
 
   @Test
@@ -250,7 +250,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
     "from" : 32, 
     "to" : 128
   }]
-}""", configs, notExistingEndpoints = setOf("send", "whitelist", "dictionary"))
+}""", configs, notExistingEndpoints = setOf("send", "metadata", "dictionary"))
   }
 
   @Test
@@ -384,7 +384,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   fun `test parse config`() {
     val endpoints = hashMapOf(
       "send" to "https://send/endpoint",
-      "whitelist" to "https://whitelist/endpoint/",
+      "metadata" to "https://metadata/endpoint/",
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
@@ -405,7 +405,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       }],
       "endpoints": {
         "send": "https://send/endpoint",
-        "whitelist": "https://whitelist/endpoint/",
+        "metadata": "https://metadata/endpoint/",
         "dictionary": "https://dictionary/endpoint/"
       }
     }
@@ -417,7 +417,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   fun `test parse config without product code`() {
     val endpoints = hashMapOf(
       "send" to "https://send/endpoint",
-      "whitelist" to "https://whitelist/endpoint/",
+      "metadata" to "https://metadata/endpoint/",
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
@@ -437,7 +437,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       }],
       "endpoints": {
         "send": "https://send/endpoint",
-        "whitelist": "https://whitelist/endpoint/",
+        "metadata": "https://metadata/endpoint/",
         "dictionary": "https://dictionary/endpoint/"
       }
     }
@@ -494,7 +494,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       "endpoints": {
         "send": "https://send/endpoint",
         "send": "https://send/second/endpoint",
-        "whitelist": "https://whitelist/endpoint/",
+        "metadata": "https://metadata/endpoint/",
         "dictionary": "https://dictionary/endpoint/"
       }
     }

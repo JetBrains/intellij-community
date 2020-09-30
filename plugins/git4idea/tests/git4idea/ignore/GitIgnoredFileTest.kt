@@ -15,14 +15,13 @@ import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBl
 import com.intellij.openapi.vcs.changes.ignore.psi.util.updateIgnoreBlock
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.createFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -38,7 +37,7 @@ const val SHELF = "shelf"
 
 class GitIgnoredFileTest : GitSingleRepoTest() {
 
-  override fun getProjectDirOrFile() = getProjectDirOrFile(true)
+  override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
     super.setUp()
@@ -53,7 +52,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   override fun setUpModule() {
     runWriteAction {
       myModule = createMainModule()
-      val moduleDir = myModule.moduleFile!!.parent
+      val moduleDir = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleDir)
       val outDir = moduleDir.findOrCreateDir(OUT).apply { findOrCreateChildData(this, "out.txt") }
       val excludedDir = moduleDir.findOrCreateDir(EXCLUDED).apply { findOrCreateChildData(this, "excl.txt") }
@@ -76,21 +75,25 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     // create file inside shelf dir because we don't add empty (without unversioned files) dirs to gitignore
     FileUtil.createIfDoesntExist(File(shelf, "some.patch"))
 
-    val workspaceFilePath = project.stateStore.workspaceFilePath
-    if (workspaceFilePath == null) fail("Cannot detect workspace file path")
-    val workspaceFile = File(workspaceFilePath!!)
-    val workspaceFileExist = FileUtil.createIfNotExists(workspaceFile)
-    if (!workspaceFileExist || VfsUtil.findFileByIoFile(workspaceFile, true) == null) {
+    val workspaceFile = project.stateStore.workspacePath
+    val workspaceFileExist = try {
+      workspaceFile.createFile()
+      true
+    }
+    catch (e: FileAlreadyExistsException) {
+      true
+    }
+    if (!workspaceFileExist || LocalFileSystem.getInstance().refreshAndFindFileByNioFile(workspaceFile) == null) {
       fail("Workspace file doesn't exist and cannot be created")
     }
 
-    GitUtil.generateGitignoreFileIfNeeded(project, LocalFileSystem.getInstance().refreshAndFindFileByPath(project.stateStore.directoryStorePath.systemIndependentPath)!!)
+    GitUtil.generateGitignoreFileIfNeeded(project, LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
 
     assertGitignoreValid(gitIgnore,
                          """
          # Default ignored files
          /$SHELF/
-         /${workspaceFile.name}
+         /${workspaceFile.fileName}
      """)
   }
 

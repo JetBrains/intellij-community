@@ -43,7 +43,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       if (isEmpty) {
         VcsBalloonProblemNotifier.showOverChangesView(project,
-                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification.title"),
+                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification"),
                                                       MessageType.INFO)
         return
       }
@@ -69,7 +69,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       val targetList = askTargetList(project, changes)
       if (targetList != null) {
-        val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+        val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
         changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
         if (unversionedFiles.isNotEmpty()) {

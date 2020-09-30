@@ -1,18 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.CharBuffer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ZipFileObject extends JpsFileObject {
+public final class ZipFileObject extends JpsFileObject {
   private final ZipFile myZip;
   private final ZipEntry myEntry;
   private final String myEncoding;
@@ -45,7 +45,7 @@ public class ZipFileObject extends JpsFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return myZip.getInputStream(myEntry);
+    return new BufferedInputStream(myZip.getInputStream(myEntry));
   }
 
   @Override
@@ -106,11 +106,11 @@ public class ZipFileObject extends JpsFileObject {
     try {
       final InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in);
       try {
-        return new CharArrayCharSequence(FileUtilRt.loadText(reader, (int)myEntry.getSize()));  // todo
+        return CharBuffer.wrap(FileUtilRt.loadText(reader, (int)myEntry.getSize()));
       }
       finally {
         reader.close();
-      }          
+      }
     }
     finally {
       in.close();

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -17,6 +18,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -44,6 +46,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author ilyas
@@ -229,7 +233,7 @@ public final class GroovyInlineMethodUtil {
 
   }
 
-  private static void showErrorMessage(String message, final Project project, Editor editor) {
+  private static void showErrorMessage(@DialogMessage String message, final Project project, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
   }
 
@@ -407,10 +411,6 @@ public final class GroovyInlineMethodUtil {
     @Override
     protected boolean canInlineThisOnly() {
       return myAllowInlineThisOnly;
-    }
-
-    public static String getRefactoringName() {
-      return GroovyRefactoringBundle.message("inline.method.title");
     }
   }
 
@@ -603,7 +603,7 @@ public final class GroovyInlineMethodUtil {
     return true;
   }
 
-  public static String getRefactoringName() {
+  public static @Nls(capitalization = Title) String getRefactoringName() {
     return GroovyRefactoringBundle.message("inline.method.title");
   }
 }

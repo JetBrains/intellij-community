@@ -21,16 +21,18 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class HgBranchAbstractAction extends DumbAwareAction {
   @NotNull protected final Project myProject;
   @NotNull protected final List<HgRepository> myRepositories;
   @NotNull protected final String myBranchName;
 
-  public HgBranchAbstractAction(@NotNull Project project, @NotNull String title,
+  public HgBranchAbstractAction(@NotNull Project project,
+                                @NotNull Supplier<String> dynamicText,
                                 @NotNull List<HgRepository> repositories,
                                 @NotNull String branchName) {
-    super(title);
+    super(dynamicText);
     myProject = project;
     myRepositories = repositories;
     myBranchName = branchName;

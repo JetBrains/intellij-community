@@ -16,10 +16,11 @@
 package com.intellij.codeInspection.unused;
 
 import com.intellij.lang.properties.psi.Property;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LoggerConfigPropertyUsageProvider extends ImplicitPropertyUsageProvider {
-  private final static String[] LOGGER_PROPERTIES_KEYWORDS = new String[]{"log4j", "commons-logging", "logging"};
+  private final static @NonNls String[] LOGGER_PROPERTIES_KEYWORDS = new String[]{"log4j", "commons-logging", "logging"};
 
   @Override
   protected boolean isUsed(@NotNull Property property) {

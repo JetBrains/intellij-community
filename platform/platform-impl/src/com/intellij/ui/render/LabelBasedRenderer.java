@@ -47,6 +47,7 @@ public class LabelBasedRenderer extends JLabel {
     setComponentOrientation(component.getComponentOrientation());
     setEnabled(component.isEnabled());
     setFont(component.getFont());
+    //noinspection HardCodedStringLiteral
     setText(value == null ? "" : value.toString());
     setIcon(null);
   }

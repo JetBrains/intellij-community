@@ -3,7 +3,6 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
 
-public class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener, Disposable {
+public class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener {
   private final Project  myProject;
   private final String   myOriginalPath;
   private final Document myDocument;
@@ -85,8 +84,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     return null;
   }
 
-  @Override
-  public void dispose() {
+  public void unregisterListener() {
     CodeStyleSettingsManager.removeListener(myProject, this);
   }
 }

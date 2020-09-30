@@ -4,11 +4,13 @@ package com.jetbrains.python.testing.unittestLegacy;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.run.PythonScriptExecution;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider;
@@ -88,5 +90,18 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
     if (myConfig.getTestType() != AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT ||
         !myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
       script_params.addParameter(String.valueOf(myConfig.isPureUnittest()));
+  }
+
+  @Override
+  protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                    @NotNull PythonScriptExecution testScriptExecution) {
+    if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams())) {
+      testScriptExecution.addParameter(myConfig.getParams());
+    }
+
+    if (myConfig.getTestType() != AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT ||
+        !myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY)) {
+      testScriptExecution.addParameter(String.valueOf(myConfig.isPureUnittest()));
+    }
   }
 }

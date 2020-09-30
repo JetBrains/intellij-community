@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
   private final LineMarkerInfo<T> myInfo;
   @Nullable private final String myOriginalActionId;
 
-  public NavigateAction(@NotNull String text,
+  public NavigateAction(@NotNull @NlsActions.ActionText String text,
                         @NotNull LineMarkerInfo<T> info,
                         @Nullable String originalActionId) {
     super(text);
@@ -63,12 +64,12 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
   }
 
   @NotNull
-  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull String text, @Nullable String originalActionId) {
+  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text, @Nullable String originalActionId) {
     return setNavigateAction(info, text, originalActionId, null);
   }
 
   @NotNull
-  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull String text,
+  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text,
                                                                            @Nullable String originalActionId, @Nullable Icon icon) {
     NavigateAction<T> action = new NavigateAction<>(text, info, originalActionId);
 

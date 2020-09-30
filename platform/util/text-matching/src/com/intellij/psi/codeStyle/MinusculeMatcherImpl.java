@@ -348,7 +348,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                             int patternIndex,
                                             boolean isAsciiName) {
     return !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
-           ? indexOfWordStart(name, patternIndex, startAt)
+           ? indexOfWordStart(name, patternIndex, startAt, isAsciiName)
            : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
   }
 
@@ -451,7 +451,6 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
     int i = fragmentLength;
-    int minNext = Integer.MAX_VALUE;
     while (i >= minFragment || (i > 0 && isWildcard(patternIndex + i))) {
       FList<TextRange> ranges;
       if (isWildcard(patternIndex + i)) {
@@ -460,12 +459,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       else {
         int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i + 1, patternIndex + i, isAsciiName);
         nextOccurrence = checkForSpecialChars(name, nameIndex + i, nextOccurrence, patternIndex + i);
-        if (nextOccurrence >= 0 && nextOccurrence < minNext) {
+        if (nextOccurrence >= 0) {
           ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false, isAsciiName);
-
-          // If on the next iteration we go one character back in the pattern and find an occurrence one character back in the name or further,
-          // that'd mean we've already failed to match following pattern chars against this name fragment, no need to repeat that
-          minNext = nextOccurrence - 1;
         } else {
           ranges = null;
         }
@@ -507,7 +502,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                                      int patternIndex,
                                                      int nameIndex,
                                                      boolean isAsciiName) {
-    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
+    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex, isAsciiName);
     return matchWildcards(name, patternIndex, nextWordStart, isAsciiName);
   }
 
@@ -543,21 +538,21 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
   }
 
-  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom) {
+  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {
     final char p = myPattern[patternIndex];
     if (startFrom >= name.length() ||
         myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
       return -1;
     }
-    int nextWordStart = NameUtilCore.isWordStart(name, startFrom) ? startFrom : nextWord(name, startFrom);
+    int i = startFrom;
+    boolean isSpecialSymbol = !Character.isLetterOrDigit(p);
     while (true) {
-      if (nextWordStart >= name.length()) {
-        return -1;
-      }
-      if (charEquals(p, patternIndex, name.charAt(nextWordStart), true)) {
-        return nextWordStart;
-      }
-      nextWordStart = nextWord(name, nextWordStart);
+      i = indexOfIgnoreCase(name, i, p, patternIndex, isAsciiName);
+      if (i < 0) return -1;
+
+      if (isSpecialSymbol || NameUtilCore.isWordStart(name, i)) return i;
+
+      i++;
     }
   }
 

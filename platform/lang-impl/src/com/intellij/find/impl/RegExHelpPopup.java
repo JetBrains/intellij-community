@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -85,12 +86,12 @@ public class RegExHelpPopup extends JPanel {
     add(myScrollPane, BorderLayout.CENTER);
   }
 
-  public static LinkLabel createRegExLink(@NotNull String title, @Nullable Component owner, @Nullable Logger logger) {
+  public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @Nullable Logger logger) {
     return createRegExLink(title, owner, logger, null);
   }
 
   @NotNull
-  public static LinkLabel createRegExLink(@NotNull String title, @Nullable Component owner, @Nullable Logger logger, @Nullable String place) {
+  public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @Nullable Logger logger, @Nullable String place) {
     Runnable action = createRegExLinkRunnable(owner);
     return new LinkLabel<>(title, null, new LinkListener<Object>() {
 

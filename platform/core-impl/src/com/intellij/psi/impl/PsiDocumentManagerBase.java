@@ -74,7 +74,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myPsiManager = PsiManager.getInstance(project);
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
-    myPsiManager.addPsiTreeChangeListener(mySynchronizer, this);
   }
 
   @Override
@@ -99,7 +98,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  private static @NotNull PsiFile ensureValidFile(@NotNull PsiFile psiFile, @NotNull String debugInfo) {
+  private static @NotNull PsiFile ensureValidFile(@NotNull PsiFile psiFile, @NotNull @NonNls String debugInfo) {
     if (!psiFile.isValid()) throw new PsiInvalidElementAccessException(psiFile, debugInfo);
     return psiFile;
   }
@@ -236,9 +235,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
       AppUIExecutor.onWriteThread().later().submit(() -> {
-        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-          semaphore.up();
-        });
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> semaphore.up());
       });
       while (!semaphore.waitFor(semaphoreTimeoutInMs)) {
         ProgressManager.checkCanceled();
@@ -1116,7 +1113,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static class UncommittedInfo {
+  private static final class UncommittedInfo {
     private final FrozenDocument myFrozen;
     private final ArrayList<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = new ConcurrentHashMap<>();

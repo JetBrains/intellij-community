@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
@@ -15,19 +18,11 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-@State(
-  name = "VcsManagerConfiguration",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
@@ -79,38 +74,55 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public List<String> IGNORED_UNREGISTERED_ROOTS = new ArrayList<>();
 
   public enum StandardOption {
-    ADD(VcsBundle.message("vcs.command.name.add")),
-    REMOVE(VcsBundle.message("vcs.command.name.remove")),
-    EDIT(VcsBundle.message("vcs.command.name.edit")),
-    CHECKOUT(VcsBundle.message("vcs.command.name.checkout")),
-    STATUS(VcsBundle.message("vcs.command.name.status")),
-    UPDATE(VcsBundle.message("vcs.command.name.update"));
+    ADD("Add", "vcs.command.name.add"),
+    REMOVE("Remove", "vcs.command.name.remove"),
+    EDIT("Edit", "vcs.command.name.edit"),
+    CHECKOUT("Checkout", "vcs.command.name.checkout"),
+    STATUS("Status", "vcs.command.name.status"),
+    UPDATE("Update", "vcs.command.name.update");
 
-    StandardOption(final String id) {
+    StandardOption(@NonNls @NotNull String id,
+                   @NonNls @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String key) {
       myId = id;
+      myKey = key;
     }
 
     private final String myId;
+    private final String myKey;
 
+    @NonNls
     public String getId() {
       return myId;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return VcsBundle.message(myKey);
     }
   }
 
   public enum StandardConfirmation {
-    ADD(VcsBundle.message("vcs.command.name.add")),
-    REMOVE(VcsBundle.message("vcs.command.name.remove"));
+    ADD("Add", "vcs.command.name.add"),
+    REMOVE("Remove", "vcs.command.name.remove");
 
-    StandardConfirmation(@NotNull String id) {
+    StandardConfirmation(@NonNls @NotNull String id,
+                         @NotNull @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String key) {
       myId = id;
+      myKey = key;
     }
 
     @NotNull
     private final String myId;
+    private final String myKey;
 
     @NotNull
     public String getId() {
       return myId;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return VcsBundle.message(myKey);
     }
   }
 
@@ -129,7 +141,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
   @Transient
-  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new THashMap<>();
+  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new HashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
@@ -157,7 +169,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   public static VcsConfiguration getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsConfiguration.class);
+    return project.getService(VcsConfiguration.class);
   }
 
   public void saveCommitMessage(final String comment) {
@@ -293,8 +305,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return DEFAULT_PATCH_EXTENSION;
   }
 
-  public void acceptLastCreatedPatchName(final String string) {
-    if (StringUtil.isEmptyOrSpaces(string)) return;
+  public void acceptLastCreatedPatchName(@Nullable String string) {
+    if (StringUtil.isEmptyOrSpaces(string)) {
+      return;
+    }
     if (FileUtilRt.extensionEquals(string, DIFF)) {
       DEFAULT_PATCH_EXTENSION = DIFF;
     }

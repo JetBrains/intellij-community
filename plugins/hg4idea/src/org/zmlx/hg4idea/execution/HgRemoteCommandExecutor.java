@@ -56,7 +56,9 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     if (!myIgnoreAuthorizationRequest && HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
-          .notifyError(result, HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
+          .notifyError("hg.remote.auth.error",
+                       result,
+                       HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
                        HgBundle.message("hg4idea.command.executor.remote.auth.failed.msg"));
         return null;
       }
@@ -110,7 +112,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     super.logCommand(operation, null);
   }
 
-  private static class PassReceiver extends SocketServer.Protocol {
+  private static final class PassReceiver extends SocketServer.Protocol {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private final boolean myForceAuthorization;

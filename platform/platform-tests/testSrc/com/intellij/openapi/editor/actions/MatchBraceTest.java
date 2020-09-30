@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -32,12 +31,10 @@ import org.junit.runner.RunWith;
 public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      configureByFile(getBeforeFileName());
-      //EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
-      executeAction("EditorMatchBrace");
-      checkResultByFile(getAfterFileName());
-    });
+    configureByFile(getBeforeFileName());
+    //EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+    executeAction("EditorMatchBrace");
+    checkResultByFile(getAfterFileName());
   }
 
   @Nullable

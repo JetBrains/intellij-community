@@ -16,6 +16,7 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
@@ -81,7 +82,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   public void testLocalHistoryActionDisabledWithoutProject() {
     LocalHistoryAction a = new LocalHistoryAction() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
+      protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
       }
     };
     assertStatus(a, myRoot, myProject, true);

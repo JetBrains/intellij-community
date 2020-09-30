@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -23,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends RefactoringInspectionGadgetsFix {
 
-  private final String name;
+  private final @IntentionFamilyName String name;
 
-  public MoveAnonymousToInnerClassFix(String name) {
+  public MoveAnonymousToInnerClassFix(@IntentionFamilyName String name) {
     this.name = name;
   }
 

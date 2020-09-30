@@ -116,7 +116,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   @Override
   protected boolean canSelect(PsiFileSystemItem file) {
     VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
-    vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
+    vFile = vFile == null ? null : BackedVirtualFile.getOriginFileIfBacked(vFile);
     if (vFile == null || !vFile.isValid()) return false;
 
     return canBeSelectedInProjectView(myProject, vFile);
@@ -147,7 +147,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
     if (toSelect != null) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(toSelect);
-      virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
+      virtualFile = virtualFile == null? null : BackedVirtualFile.getOriginFileIfBacked(virtualFile);
       select(toSelect, virtualFile, requestFocus);
     }
   }

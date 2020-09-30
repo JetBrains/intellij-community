@@ -4,7 +4,7 @@ import org.jcodings.specific.NonStrictUTF8Encoding;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 
-public class RegexUtil {
+public final class RegexUtil {
   private RegexUtil() {
   }
 

@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InplaceEditingLayer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +77,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
   }
 
   @Nullable
-  protected String getCommandName() {
+  protected @Nls String getCommandName() {
     return null;
   }
 }

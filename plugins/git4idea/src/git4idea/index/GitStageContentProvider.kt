@@ -4,7 +4,10 @@ package git4idea.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitStagePanel
@@ -12,16 +15,30 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-class GitStageContentProvider(private val tracker: GitStageTracker) : ChangesViewContentProvider {
+class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
   private var disposable: Disposable? = null
 
   override fun initContent(): JComponent {
+    val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    return GitStagePanel(tracker, disposable!!)
+    val gitStagePanel = GitStagePanel(tracker, isCommitToolWindow(project), disposable!!)
+    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        gitStagePanel.setDiffPreviewInEditor(isCommitToolWindow(project))
+      }
+    })
+    return gitStagePanel
   }
 
   override fun disposeContent() {
     disposable?.let { Disposer.dispose(it) }
+  }
+}
+
+class GitStageContentPreloader : ChangesViewContentProvider.Preloader {
+  override fun preloadTabContent(content: Content) {
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
+                        ChangesViewContentManager.TabOrderWeight.LOCAL_CHANGES.weight + 1)
   }
 }
 
@@ -34,3 +51,5 @@ class GitStageDisplayNameSupplier : Supplier<String> {
     return GitBundle.message("stage.tab.name")
   }
 }
+
+private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true

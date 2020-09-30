@@ -1,4 +1,4 @@
-// "Replace with 'contains'" "true"
+// "Replace with 'contains()'" "true"
 import java.util.*;
 
 class Test {

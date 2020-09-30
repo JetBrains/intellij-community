@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class DefaultExecutionTarget extends ExecutionTarget {
+public final class DefaultExecutionTarget extends ExecutionTarget {
   public static final ExecutionTarget INSTANCE = new DefaultExecutionTarget();
 
   private DefaultExecutionTarget() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +29,13 @@ public interface NavBarModelExtension {
   default Icon getIcon(Object object) { return null; }
 
   @Nullable
+  @Nls
   default String getPresentableText(Object object, boolean forPopup) {
     return getPresentableText(object);
   }
 
   @Nullable
+  @Nls
   String getPresentableText(Object object);
 
   @Nullable

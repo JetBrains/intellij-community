@@ -82,9 +82,9 @@ class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
   @NotNull
   @Override
   public Iterator<DfaVariableValue> iterator() {
-    return new Iterator<DfaVariableValue>() {
+    return new Iterator<>() {
       int pos;
-      
+
       @Override
       public boolean hasNext() {
         return pos < size();

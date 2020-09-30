@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    options.getMatchOptions().setFileType(StdFileTypes.XML);
+    options.getMatchOptions().setFileType(XmlFileType.INSTANCE);
   }
 
   public void testReplaceXmlAndHtml() {
@@ -142,7 +143,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                                                   final String replacementFileName,
                                                   final String outFileName,
                                                   final String message, boolean filepattern) throws IOException {
-    options.getMatchOptions().setFileType(StdFileTypes.HTML);
+    options.getMatchOptions().setFileType(HtmlFileType.INSTANCE);
 
     String content = loadFile(inFileName);
     String pattern = loadFile(patternFileName);
@@ -151,6 +152,6 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
     assertEquals(message, expectedResult, replace(content, pattern, replacement, filepattern));
 
-    options.getMatchOptions().setFileType(StdFileTypes.XML);
+    options.getMatchOptions().setFileType(XmlFileType.INSTANCE);
   }
 }

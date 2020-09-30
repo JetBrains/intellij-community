@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
@@ -51,12 +52,12 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DefaultActionGroup root = createRootStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
-    Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, null, getDisposable());
+    Pair<JPanel, JBList<AnAction>> pair = ActionGroupPanelWrapper.createActionGroupPanel(root, null, getDisposable());
     JPanel component = pair.first;
     myPair = pair;
     UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 
-    FlatWelcomeFrame.installQuickSearch(pair.second);
+    ActionGroupPanelWrapper.installQuickSearch(pair.second);
     return component;
   }
 

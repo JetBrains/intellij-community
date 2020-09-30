@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.newclass;
 
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
@@ -63,7 +65,7 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
 
   private static class TemplateListCellRenderer implements ListCellRenderer<Trinity<String, Icon, String>> {
     private final ListCellRenderer<Trinity<String, Icon, String>> delegateRenderer =
-      SimpleListCellRenderer.create((label, value, index) -> {
+      SimpleListCellRenderer.create((@NotNull JBLabel label, Trinity<@NlsContexts.ListItem String, Icon, String> value, int index) -> {
         if (value != null) {
           label.setText(value.first);
           label.setIcon(value.second);
@@ -82,7 +84,7 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     }
   }
 
-  private static class TemplateIconExtension implements ExtendableTextComponent.Extension {
+  private static final class TemplateIconExtension implements ExtendableTextComponent.Extension {
     private final Icon icon;
 
     private TemplateIconExtension(Icon icon) {this.icon = icon;}

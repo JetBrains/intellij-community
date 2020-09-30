@@ -13,8 +13,6 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import javax.swing.tree.TreePath
@@ -28,17 +26,13 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   lateinit var treeConsoleView: BuildTreeConsoleView
   lateinit var buildDescriptor: BuildDescriptor
 
-  @Before
   override fun setUp() {
     super.setUp()
     buildDescriptor = DefaultBuildDescriptor(Object(),
                                              "test descriptor",
                                              "fake path",
                                              1L)
-    treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, null, object : BuildViewSettingsProvider {
-      override fun isExecutionViewHidden(): Boolean = false
-      override fun isSideBySideView(): Boolean = true
-    })
+    treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, null) { false }
   }
 
   @Test
@@ -205,8 +199,6 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
 
   }
 
-
-  @After
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { Disposer.dispose(treeConsoleView) })

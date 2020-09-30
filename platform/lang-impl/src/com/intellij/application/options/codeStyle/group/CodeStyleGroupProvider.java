@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.group;
 
 import com.intellij.ConfigurableFactory;
@@ -7,13 +7,11 @@ import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.psi.codeStyle.CodeStyleGroup;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +44,9 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     myChildProviders.add(provider);
   }
 
-  public class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract {
-
-    @Nls(capitalization = Nls.Capitalization.Title)
-    @Override
-    public String getDisplayName() {
-      return myGroup.getDisplayName();
+  public class CodeStyleGroupConfigurable extends SortedConfigurableGroup {
+    public CodeStyleGroupConfigurable() {
+      super(myGroup.getId(), myGroup.getDisplayName(), myGroup.getDescription(), myGroup.getHelpTopic(), 0);
     }
 
     @Override
@@ -83,18 +78,6 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
         childConfigurables.add(wrapper);
       }
       return childConfigurables.toArray(new Configurable[0]);
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return myGroup.getId();
-    }
-
-    @Nullable
-    @Override
-    public String getHelpTopic() {
-      return myGroup.getHelpTopic();
     }
   }
 }

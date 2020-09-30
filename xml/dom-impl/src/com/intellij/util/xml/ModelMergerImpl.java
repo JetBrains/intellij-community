@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
@@ -10,7 +10,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import gnu.trove.THashSet;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -214,7 +213,7 @@ public final class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class<?>> commonClasses = getCommonClasses(new THashSet<>(), implementations);
+    final Set<Class<?>> commonClasses = getCommonClasses(new HashSet<>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     return AdvancedProxy.createProxy(handler, null, commonClasses.toArray(ArrayUtil.EMPTY_CLASS_ARRAY));

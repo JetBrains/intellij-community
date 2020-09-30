@@ -200,7 +200,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
   }
 
-  private void doTestStopEditing(Consumer<AbstractInplaceIntroducer> pass) {
+  private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();

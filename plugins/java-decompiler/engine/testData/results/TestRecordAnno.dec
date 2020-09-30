@@ -1,0 +1,39 @@
+package records;
+
+public record TestRecordAnno(@RC @TA int x, int y) {
+   public TestRecordAnno(@TA int x, @P int y) {
+      this.x = x;
+      this.y = y;
+   }
+
+   @TA
+   public int x() {
+      return this.x;
+   }
+
+   @M
+   public int y() {
+      return this.y;// 5
+   }
+}
+
+class 'records/TestRecordAnno' {
+   method '<init> (II)V' {
+      6      4
+      b      5
+      e      6
+   }
+
+   method 'x ()I' {
+      1      10
+      4      10
+   }
+
+   method 'y ()I' {
+      1      15
+      4      15
+   }
+}
+
+Lines mapping:
+5 <-> 16

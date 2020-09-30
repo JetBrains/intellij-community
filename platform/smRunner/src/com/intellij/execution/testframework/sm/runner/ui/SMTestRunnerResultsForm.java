@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +108,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private volatile boolean myTestsRunning = true;
-  private AbstractTestProxy myLastSelected;
+  private volatile AbstractTestProxy myLastSelected;
   private volatile boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
@@ -127,7 +128,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myProject = consoleProperties.getProject();
 
     //Create tests common suite root
-    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), console);
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
@@ -165,27 +166,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, testProxy -> {
       if (testProxy == null) return;
-      final AbstractTestProxy selectedProxy = testProxy;
-      //drill to the first leaf
-      while (!testProxy.isLeaf()) {
-        final List<? extends AbstractTestProxy> children = testProxy.getChildren();
-        if (!children.isEmpty()) {
-          final AbstractTestProxy firstChild = children.get(0);
-          if (firstChild != null) {
-            testProxy = firstChild;
-            continue;
-          }
-        }
-        break;
-      }
-
-      //pretend the selection on the first leaf
-      //so if test would be run, tracking would be restarted
-      myLastSelected = testProxy;
+      setLastSelected(testProxy);
 
       //ensure scroll to source on explicit selection only
-      if (ScrollToTestSourceAction.isScrollEnabled(SMTestRunnerResultsForm.this)) {
-        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedProxy, SMTestRunnerResultsForm.this);
+      if (ScrollToTestSourceAction.isScrollEnabled(this)) {
+        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(testProxy, this);
         if (descriptor != null) {
           OpenSourceUtil.navigate(false, descriptor);
         }
@@ -216,7 +201,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myIgnoredTestCount = 0;
     myTestsRunning = true;
     myLastFailed = null;
-    myLastSelected = null;
+    setLastSelected(null);
     myMentionedCategories.clear();
 
     if (myEndTime != 0) { // no need to reset when running for the first time
@@ -443,7 +428,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   @Override
-  public void setFilter(final Filter filter) {
+  public void setFilter(@NotNull final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
     final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
     treeStructure.setFilter(filter);
@@ -588,11 +573,20 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
-      if (myLastSelected == null || myLastSelected == newTestOrSuite) {
-        myLastSelected = null;
+      if (myLastSelected == null || myLastSelected == newTestOrSuite || isFiltered(myLastSelected)) {
+        setLastSelected(null);
         selectAndNotify(newTestOrSuite);
       }
     }
+  }
+
+  private boolean isFiltered(AbstractTestProxy proxy) {
+    return proxy instanceof SMTestProxy && 
+           !getTreeBuilder().getTreeStructure().getFilter().shouldAccept((SMTestProxy)proxy);
+  }
+
+  private void setLastSelected(AbstractTestProxy proxy) {
+    myLastSelected = proxy;
   }
 
   private void fireOnTestNodeAdded(@NotNull SMTestProxy test) {
@@ -748,6 +742,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private boolean isModeConsistent(boolean isCustomMessage) {
     // check that we are in consistent mode
     return isCustomMessage != (myCurrentCustomProgressCategory == null);
+  }
+
+  @ApiStatus.Internal
+  public void setIncompleteIndexUsed() {
+    myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {

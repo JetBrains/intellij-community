@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +14,11 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
   @Nullable private final FileAnnotation.PreviousFileRevisionProvider myProvider;
 
   AnnotatePreviousRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
-    super("Annotate Previous Revision", "Annotate successor of selected revision in new tab", AllIcons.Actions.Annotate,
-          annotation, vcs);
+    super(VcsBundle.messagePointer("action.annotate.previous.revision.text"),
+          VcsBundle.messagePointer("action.annotate.successor.selected.revision.in.new.tab.description"),
+          AllIcons.Actions.Annotate,
+          annotation,
+          vcs);
     myProvider = annotation.getPreviousFileRevisionProvider();
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +10,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,18 +28,30 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   private final boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
-  private MessageTreeNode(XDebuggerTree tree, @Nullable final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
+  private MessageTreeNode(XDebuggerTree tree,
+                          @Nullable final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
                           @Nullable Icon icon) {
     this(tree, parent, message, attributes, icon, null);
   }
 
-  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
-                          @Nullable Icon icon, final XDebuggerTreeNodeHyperlink link) {
+  private MessageTreeNode(XDebuggerTree tree,
+                          final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
+                          @Nullable Icon icon,
+                          final XDebuggerTreeNodeHyperlink link) {
     this(tree, parent, message, attributes, icon, false, link);
   }
 
-  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
-                          @Nullable Icon icon, final boolean ellipsis, final XDebuggerTreeNodeHyperlink link) {
+  private MessageTreeNode(XDebuggerTree tree,
+                          final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
+                          @Nullable Icon icon,
+                          final boolean ellipsis,
+                          final XDebuggerTreeNodeHyperlink link) {
     super(tree, parent, true);
     myEllipsis = ellipsis;
     myLink = link;
@@ -97,7 +96,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.GRAYED_ATTRIBUTES, null, true, null);
   }
 
-  public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {
+  public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @Nls String message, @Nullable Icon icon) {
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, icon);
   }
 
@@ -123,11 +122,13 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return messages;
   }
 
-  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message) {
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull @Nls String message) {
     return createInfoMessage(tree, message, null);
   }
 
-  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message, @Nullable HyperlinkListener hyperlinkListener) {
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree,
+                                                  @NotNull @Nls String message,
+                                                  @Nullable HyperlinkListener hyperlinkListener) {
     Matcher matcher = MessageTreeNodeWithLinks.HREF_PATTERN.matcher(message);
     if (hyperlinkListener == null || !matcher.find()) {
       return new MessageTreeNode(tree, null, message, SimpleTextAttributes.REGULAR_ATTRIBUTES,
@@ -151,7 +152,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return new MessageTreeNodeWithLinks(tree, objects);
   }
 
-  private static class MessageTreeNodeWithLinks extends MessageTreeNode {
+  private static final class MessageTreeNodeWithLinks extends MessageTreeNode {
     private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
     private final List<Object> objects;
 
@@ -179,7 +180,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     private final HyperlinkListener hyperlinkListener;
     private final String href;
 
-    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
+    public HyperlinkListenerDelegator(@NotNull @Nls String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
       super(linkText);
 
       this.hyperlinkListener = hyperlinkListener;

@@ -49,7 +49,10 @@ public class HgContinueGraftAction extends HgProcessStateAction {
           HgCommandResult result = graftCommand.continueGrafting();
           if (HgErrorUtil.isAbort(result)) {
             new HgCommandResultNotifier(project)
-              .notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message("action.hg4idea.Graft.continue.error"));
+              .notifyError("hg.graft.continue.error",
+                           result,
+                           HgBundle.message("hg4idea.hg.error"),
+                           HgBundle.message("action.hg4idea.Graft.continue.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

@@ -78,7 +78,7 @@ public class PyRemoteInterpreterUtil {
   @NotNull
   private static RemoteSdkException createException(@NotNull final ProcessOutput processOutput, String @NotNull [] command) {
     return RemoteSdkException.cantObtainRemoteCredentials(
-      new PyExecutionException("Can't obtain python version",
+      new PyExecutionException(PyBundle.message("python.sdk.can.t.obtain.python.version"),
                                command[0],
                                Lists.newArrayList(command),
                                processOutput));

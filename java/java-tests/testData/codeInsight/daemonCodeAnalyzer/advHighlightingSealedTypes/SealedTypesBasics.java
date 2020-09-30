@@ -17,3 +17,15 @@ class <error descr="sealed, non-sealed or final modifiers expected">ICSameFile</
 sealed interface ID0 {}
 non-sealed interface ID1 extends ID0 {}
 <error descr="Modifier 'non-sealed' not allowed here">non-sealed</error> interface ID extends ID1 {}
+
+enum ImplicitlySealedEnum {
+  A {}
+}
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> enum Foo {}
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> enum WithConstants {
+  BAR {}
+}
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> @interface MyAnnoType {}

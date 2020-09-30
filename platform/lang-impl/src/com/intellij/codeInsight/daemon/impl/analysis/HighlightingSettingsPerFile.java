@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@State(name="HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
@@ -38,7 +38,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     vcsIgnoreFileNames = VcsFacade.getInstance().getVcsIgnoreFileNames(project);
   }
 
-  public static HighlightingSettingsPerFile getInstance(Project project){
+  public static HighlightingSettingsPerFile getInstance(Project project) {
     return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
   }
 
@@ -56,38 +56,36 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
       Language language = array.get(i);
       if (provider.getPsi(language) == file) return i;
     }
-    throw new RuntimeException("Cannot find root for: "+ file);
+    throw new RuntimeException("Cannot find root for: " + file);
   }
 
   @NotNull
-  public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root){
+  public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
     PsiFile containingFile = root.getContainingFile();
     VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlightingSetting[] fileHighlightingSettings = myHighlightSettings.get(virtualFile);
     int index = getRootIndex(containingFile);
 
-    if(fileHighlightingSettings == null || fileHighlightingSettings.length <= index) {
-      return getDefaultHighlightingSetting(root.getProject(), virtualFile);
+    if (fileHighlightingSettings != null && fileHighlightingSettings.length > index) {
+      return fileHighlightingSettings[index];
     }
-    return fileHighlightingSettings[index];
+    return virtualFile == null ? FileHighlightingSetting.FORCE_HIGHLIGHTING : getDefaultHighlightingSetting(root.getProject(), virtualFile);
   }
 
   @NotNull
-  private static FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, VirtualFile virtualFile) {
-    if (virtualFile != null) {
-      DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
-      List<DefaultHighlightingSettingProvider> filtered = DumbService.getInstance(project).filterByDumbAwareness(providers);
-      for (DefaultHighlightingSettingProvider p : filtered) {
-        FileHighlightingSetting setting = p.getDefaultSetting(project, virtualFile);
-        if (setting != null) {
-          return setting;
-        }
+  private static FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
+    List<DefaultHighlightingSettingProvider> filtered = DumbService.getInstance(project).filterByDumbAwareness(providers);
+    for (DefaultHighlightingSettingProvider p : filtered) {
+      FileHighlightingSetting setting = p.getDefaultSetting(project, virtualFile);
+      if (setting != null) {
+        return setting;
       }
     }
     return FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
-  private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file){
+  private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {
     int rootsCount = file.getViewProvider().getLanguages().size();
     FileHighlightingSetting[] fileHighlightingSettings = new FileHighlightingSetting[rootsCount];
     Arrays.fill(fileHighlightingSettings, FileHighlightingSetting.FORCE_HIGHLIGHTING);
@@ -184,7 +182,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     return !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile);
   }
 
-  public int countRoots(FileHighlightingSetting setting) {
+  public int countRoots(@NotNull FileHighlightingSetting setting) {
     int count = 0;
     for (FileHighlightingSetting[] settingsForRoots : myHighlightSettings.values()) {
       for (FileHighlightingSetting settingForRoot : settingsForRoots) {

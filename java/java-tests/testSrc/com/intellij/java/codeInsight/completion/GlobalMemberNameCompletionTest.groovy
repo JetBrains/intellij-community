@@ -19,13 +19,14 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
 /**
  * @author peter
@@ -93,7 +94,7 @@ public class Foo {
 """)
     myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
     def element = complete()[0]
-    def presentation = LookupElementPresentation.renderElement(element)
+    def presentation = renderElement(element)
     assert 'Foo.abcfield' == presentation.itemText
     assert ' (foo)' == presentation.tailText
     assert 'int' == presentation.typeText
@@ -188,7 +189,7 @@ class Bar {{ abcmethod1()<caret> }}"""
     myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}")
     def element = complete()[0]
 
-    def tail = LookupElementPresentation.renderElement(element).tailFragments
+    def tail = renderElement(element).tailFragments
     assert tail[0].text == '(...)'
     assert !tail[0].grayed
     assert tail[1].text == ' (foo)'
@@ -208,7 +209,7 @@ class A {
 }
 """)
     def element = complete()[0]
-    def presentation = LookupElementPresentation.renderElement(element)
+    def presentation = renderElement(element)
     assert 'foo' == presentation.itemText
     myFixture.type '\n'
     myFixture.checkResult '''

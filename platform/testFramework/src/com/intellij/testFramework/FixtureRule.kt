@@ -3,7 +3,6 @@ package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.AppUIExecutor
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerExImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -31,6 +29,7 @@ import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -90,7 +89,9 @@ class ProjectTrackingRule : TestRule {
  * Encouraged using as a ClassRule to avoid project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule(private val runPostStartUpActivities: Boolean = true, private val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
+class ProjectRule(private val runPostStartUpActivities: Boolean = false,
+                  private val preloadServices: Boolean = false,
+                  private val projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
   companion object {
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
@@ -120,7 +121,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
 
   private fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
+    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
     return project
@@ -136,7 +137,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
       sharedProject = null
       sharedModule = null
     }
-    l.throwIfNotEmpty()
+    throwIfNotEmpty(l)
   }
 
   /**
@@ -170,7 +171,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
-          projectDescriptor.setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+          (projectDescriptor ?: LightProjectDescriptor()).setUpProject(project, object : LightProjectDescriptor.SetupHandler {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
@@ -268,24 +269,6 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-@JvmOverloads
-fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true): OpenProjectTask {
-  // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
-  // Also, cleanPersistedContents is called on start test application.
-  var task = OpenProjectTask(forceOpenInNewFrame = true,
-                             isRefreshVfsNeeded = false,
-                             runConversionBeforeOpen = false,
-                             runConfigurators = false,
-                             showWelcomeScreen = false,
-                             useDefaultProjectAsTemplate = false)
-  if (!runPostStartUpActivities) {
-    task = task.copy(beforeInit = {
-      it.putUserData(ProjectManagerExImpl.RUN_START_UP_ACTIVITIES, false)
-    })
-  }
-  return task
-}
-
 inline fun Project.use(task: (Project) -> Unit) {
   try {
     task(this)
@@ -362,7 +345,7 @@ suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryD
 }
 
 fun refreshProjectConfigDir(project: Project) {
-  LocalFileSystem.getInstance().findFileByPath(project.stateStore.projectConfigDir!!)!!.refresh(false, true)
+  LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
 }
 
 suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {
@@ -385,7 +368,7 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = false)
   }
   else {
-    val dir = tempDirManager.newVirtualDirectory()
+    val dir = tempDirManager.createVirtualDir()
     withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
       runNonUndoableWriteAction(dir) {
         projectCreator(dir)

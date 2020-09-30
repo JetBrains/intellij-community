@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class FontPreferences {
-  public final static @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
+  public final static @NlsSafe @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
   public static final String JETBRAINS_MONO = "JetBrains Mono";
   public final static int DEFAULT_FONT_SIZE = SystemInfo.isWindows || JETBRAINS_MONO.equalsIgnoreCase(DEFAULT_FONT_NAME) ? 13 : 12;
 
@@ -23,16 +25,17 @@ public class FontPreferences {
   public final static String WINDOWS_DEFAULT_FONT_FAMILY  = "Consolas";
 
   @NotNull
-  public List<String> getEffectiveFontFamilies() {
+  public List<@NlsSafe String> getEffectiveFontFamilies() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<String> getRealFontFamilies() {
+  public List<@NlsSafe String> getRealFontFamilies() {
     return Collections.emptyList();
   }
 
   @NotNull
+  @NlsSafe
   public String getFontFamily() {
     return FALLBACK_FONT_FAMILY;
   }
@@ -70,6 +73,7 @@ public class FontPreferences {
    *                        {@code null} if font family with the given name is registered at the current environment
    */
   @Nullable
+  @NlsSafe
   public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
     Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
@@ -78,12 +82,17 @@ public class FontPreferences {
     return null;
   }
 
+  @NlsSafe
   public static String getDefaultFontName() {
     if (SystemInfo.isJetBrainsJvm && SystemInfo.isJavaVersionAtLeast(11)) {
       return JETBRAINS_MONO;
     }
-    if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
-    if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
+    if (SystemInfo.isWindows) {
+      return WINDOWS_DEFAULT_FONT_FAMILY;
+    }
+    if (SystemInfoRt.isMac) {
+      return MAC_OS_DEFAULT_FONT_FAMILY;
+    }
     if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if (LINUX_DEFAULT_FONT_FAMILY.equals(font.getName())) {

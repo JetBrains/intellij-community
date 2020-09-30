@@ -17,6 +17,7 @@ import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EmptyIcon
 import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.Icon
 
 class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
@@ -93,7 +94,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
         Disposer.dispose(artifactTypeDisposable)
       }
     })
-    extensionPointName.getPoint().registerExtension(type, artifactTypeDisposable)
+    extensionPointName.point.registerExtension(type, artifactTypeDisposable)
   }
 
   override fun setUp() {
@@ -102,7 +103,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
   }
 }
 
-private class MockArtifactType : ArtifactType("mock", "Mock") {
+private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
   companion object {
     fun getInstance() = EP_NAME.findExtension(MockArtifactType::class.java)!!
   }
@@ -134,7 +135,7 @@ private class MockPackagingElement : PackagingElement<MockPackagingElementState>
 
 private class MockPackagingElementState(var data: String = "")
 
-private class MockPackagingElementType : PackagingElementType<MockPackagingElement>("mock-element", "Mock Element") {
+private class MockPackagingElementType : PackagingElementType<MockPackagingElement>("mock-element", Supplier { "Mock Element" }) {
   override fun canCreate(context: ArtifactEditorContext, artifact: Artifact): Boolean = true
 
   override fun chooseAndCreate(context: ArtifactEditorContext,

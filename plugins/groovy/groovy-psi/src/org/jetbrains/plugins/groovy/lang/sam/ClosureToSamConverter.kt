@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -34,5 +36,13 @@ class ClosureToSamConverter : GrTypeConverter() {
 
     findSingleAbstractSignature(targetClass) ?: return null
     return ConversionResult.OK
+  }
+
+  override fun reduceTypeConstraint(leftType: PsiType,
+                                    rightType: PsiType,
+                                    position: Position,
+                                    context: PsiElement): List<ConstraintFormula>? {
+    if (rightType !is GroovyClosureType) return null
+    return processSAMConversion(leftType, rightType, context)
   }
 }

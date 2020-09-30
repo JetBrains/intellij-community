@@ -9,6 +9,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,7 +200,7 @@ public class ArrangementStandardSettingsManager {
   }
 
   @NotNull
-  private static String getPresentationValue(@NotNull ArrangementSettingsToken token) {
+  private static @Nls String getPresentationValue(@NotNull ArrangementSettingsToken token) {
     if (token instanceof InvertibleArrangementSettingsToken) {
       return ((InvertibleArrangementSettingsToken)token).getInvertedRepresentationValue();
     }

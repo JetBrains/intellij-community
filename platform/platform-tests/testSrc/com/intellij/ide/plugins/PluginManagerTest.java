@@ -8,9 +8,11 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import org.easymock.EasyMock;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
@@ -21,8 +23,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtilKt.loadDescriptorInTest;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
@@ -165,11 +170,10 @@ public class PluginManagerTest {
   }
 
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
-    PluginManagerCore.ourPluginError = null;
+    PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     String actual = StringUtil.join(loadPluginResult.sortedPlugins, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
-                    "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
-    PluginManagerCore.ourPluginError = null;
+                    "\n\n" + PluginManagerCore.getAndClearPluginLoadingErrors().stream().map(html -> html.toString().replace("<br/>", "\n")).collect(Collectors.joining("\n"));
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
   }
 
@@ -178,11 +182,22 @@ public class PluginManagerTest {
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNotNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
+  }
+
+  @Nullable
+  private static String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
+    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
+    expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
+    expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
+    replay(mock);
+    PluginLoadingError error =
+      PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+    return error != null ? error.getDetailedMessage() : null;
   }
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)

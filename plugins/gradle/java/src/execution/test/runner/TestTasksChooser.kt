@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.TestsScope
@@ -122,7 +124,9 @@ open class TestTasksChooser {
       .show(getBestBalloonPosition(context), Balloon.Position.above)
   }
 
+  @NlsContexts.PopupTitle
   private fun suggestPopupTitle(context: DataContext): String {
+    @Suppress("HardCodedStringLiteral")
     val locationName = context.getData(LOCATION)
     return when (locationName) {
       null -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title.common")

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Set;
 
-public class InheritanceImplUtil {
+public final class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance(InheritanceImplUtil.class);
 
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {

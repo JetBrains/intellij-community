@@ -41,13 +41,13 @@ public class RemovePrefixQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return PyPsiBundle.message("INTN.remove.leading.$0", myPrefix);
+    return PyPsiBundle.message("QFIX.remove.string.prefix", myPrefix);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.remove.leading.prefix");
+    return PyPsiBundle.message("QFIX.NAME.remove.string.prefix");
   }
 
   @Override

@@ -3,11 +3,11 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
-  private String myName = PyPsiBundle.message("QFIX.add.property");
+  private final @IntentionFamilyName String myName;
 
-  public PyAddPropertyForFieldQuickFix(String name) {
+  public PyAddPropertyForFieldQuickFix(@NotNull @IntentionFamilyName String name) {
     myName = name;
   }
 

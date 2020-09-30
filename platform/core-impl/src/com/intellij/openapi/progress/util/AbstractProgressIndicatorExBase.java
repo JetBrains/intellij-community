@@ -27,7 +27,7 @@ import java.util.Collection;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
-  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates;
+  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates; // never updated inplace, only the whole array is replaced under getLock()
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
@@ -44,7 +44,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public void start() {
     synchronized (getLock()) {
       super.start();
-      delegateRunningChange(ProgressIndicator::start);
+      doDelegateRunningChange(ProgressIndicator::start);
       myWasStarted = true;
     }
   }
@@ -53,13 +53,13 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   @Override
   public void stop() {
     super.stop();
-    delegateRunningChange(ProgressIndicator::stop);
+    doDelegateRunningChange(ProgressIndicator::stop);
   }
 
   @Override
   public void cancel() {
     super.cancel();
-    delegateRunningChange(ProgressIndicator::cancel);
+    doDelegateRunningChange(ProgressIndicator::cancel);
   }
 
   @Override
@@ -75,7 +75,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
     if (!finished.addIfAbsent(task)) return;
 
-    delegateRunningChange(each -> each.finish(task));
+    doDelegateRunningChange(each -> each.finish(task));
   }
 
   @Override
@@ -170,6 +170,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
     }
+    onProgressChange();
   }
 
   public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
@@ -178,6 +179,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       if (delegates == null) return;
       myStateDelegates = ArrayUtil.remove(delegates, delegate);
     }
+    onProgressChange();
   }
 
   protected final void removeAllStateDelegates() {
@@ -186,14 +188,21 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
   }
 
-  protected void delegateProgressChange(@NotNull IndicatorAction action) {
+  private void delegateProgressChange(@NotNull IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }
 
-  protected void delegateRunningChange(@NotNull IndicatorAction action) {
+  private void doDelegateRunningChange(@NotNull IndicatorAction action) {
     delegate(action);
     onRunningChange();
+  }
+
+  /**
+   * @deprecated do not use. Instead, create new indicator and call {@link #addStateDelegate(ProgressIndicatorEx)} with it.
+   */
+  @Deprecated
+  protected void delegateRunningChange(@NotNull IndicatorAction action) {
   }
 
   private void delegate(@NotNull IndicatorAction action) {

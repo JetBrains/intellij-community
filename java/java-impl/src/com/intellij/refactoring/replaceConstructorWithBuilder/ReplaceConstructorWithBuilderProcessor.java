@@ -17,10 +17,12 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -54,7 +56,6 @@ import java.util.Map;
  * @author anna
  */
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
-  public static final String REFACTORING_NAME = "Replace Constructor with Builder";
   private final PsiMethod[] myConstructors;
   private final Map<String, ParameterData> myParametersMap;
   @NotNull
@@ -293,7 +294,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return isChained(RefactoringUtil.getChainedConstructor(first), last);
   }
 
-  private String createMethodName() {
+  private @NlsSafe String createMethodName() {
     return "create" + StringUtil.capitalize(myConstructors[0].getName());
   }
 
@@ -306,10 +307,11 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       psiFacade.findClass(StringUtil.getQualifiedName(myPackageName, myClassName), GlobalSearchScope.projectScope(myProject));
     if (builderClass == null) {
       if (!myCreateNewBuilderClass) {
-        conflicts.putValue(null, "Selected class was not found.");
+        conflicts.putValue(null, JavaRefactoringBundle.message("replace.constructor.builder.error.selected.class.was.not.found"));
       }
     } else if (myCreateNewBuilderClass){
-      conflicts.putValue(builderClass, "Class with chosen name already exist.");
+      conflicts.putValue(builderClass,
+                         JavaRefactoringBundle.message("replace.constructor.builder.error.class.with.chosen.name.already.exist"));
     }
 
     if (myMoveDestination != null && myCreateNewBuilderClass) {
@@ -318,7 +320,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
     final PsiMethod commonConstructor = getMostCommonConstructor();
     if (commonConstructor == null) {
-      conflicts.putValue(null, "Found constructors are not reducible to simple chain");
+      conflicts.putValue(null, JavaRefactoringBundle.message("replace.constructor.builder.error.no.constructor.chain"));
     }
 
     return showConflicts(conflicts, refUsages.get());
@@ -327,6 +329,6 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   @Override
   @NotNull
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return JavaRefactoringBundle.message("replace.constructor.with.builder");
   }
 }

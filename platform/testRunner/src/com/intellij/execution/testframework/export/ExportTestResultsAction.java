@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,7 +108,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
                    && Messages.showOkCancelDialog(project,
                                                   ExecutionBundle.message("export.test.results.file.exists.message", filename),
                                                   ExecutionBundle.message("export.test.results.file.exists.title"),
-                                                  TestRunnerBundle.message("inspections.settings.overwrite.action.text"),
+                                                  TestRunnerBundle.message("export.test.results.overwrite.button.text"),
                                                   CommonBundle.getCancelButtonText(),
                                                   Messages.getQuestionIcon()
       ) != Messages.OK;
@@ -256,7 +257,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
     if (exportFormat == ExportTestResultsConfiguration.ExportFormat.Xml) {
       handler = transformerFactory.newTransformerHandler();
       handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
-      handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+      handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
     }
     else {
       Source xslSource;
@@ -289,7 +290,10 @@ public class ExportTestResultsAction extends DumbAwareAction {
     return w.toString();
   }
 
-  private void showBalloon(final Project project, final MessageType type, final String text, @Nullable final HyperlinkListener listener) {
+  private void showBalloon(final Project project,
+                           final MessageType type,
+                           final @NlsContexts.PopupContent String text,
+                           final @Nullable HyperlinkListener listener) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
       if (ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId) != null) {

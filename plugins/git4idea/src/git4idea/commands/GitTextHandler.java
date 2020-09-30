@@ -105,6 +105,10 @@ public abstract class GitTextHandler extends GitHandler {
 
       @Override
       public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
+        if (OUTPUT_LOG.isDebugEnabled()) {
+          OUTPUT_LOG.debug(String.format("%s (%s):'%s'", getCommand(), outputType, event.getText()));
+        }
+
         GitTextHandler.this.onTextAvailable(event.getText(), outputType);
       }
     });

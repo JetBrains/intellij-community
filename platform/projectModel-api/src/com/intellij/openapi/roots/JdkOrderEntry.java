@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,5 +12,5 @@ public interface JdkOrderEntry extends LibraryOrSdkOrderEntry {
   Sdk getJdk();
 
   @Nullable
-  String getJdkName();
+  @NlsSafe String getJdkName();
 }

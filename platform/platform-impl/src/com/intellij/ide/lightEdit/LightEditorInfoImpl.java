@@ -12,11 +12,15 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 public class LightEditorInfoImpl implements LightEditorInfo {
 
   private final FileEditorProvider myProvider;
   private final FileEditor myFileEditor;
   private final VirtualFile myFile;
+
+  private @Nullable Path myPreferredSavePath;
 
   LightEditorInfoImpl(@NotNull FileEditorProvider provider, @NotNull FileEditor fileEditor, @NotNull VirtualFile file) {
     myProvider = provider;
@@ -68,5 +72,22 @@ public class LightEditorInfoImpl implements LightEditorInfo {
   @NotNull
   public FileEditorProvider getProvider() {
     return myProvider;
+  }
+
+  @Override
+  public boolean isSaveRequired() {
+    return isUnsaved() &&
+           (!isNew() || myFileEditor instanceof TextEditor && ((TextEditor)myFileEditor).getEditor().getDocument().getTextLength() > 0);
+  }
+
+  @Nullable
+  @Override
+  public Path getPreferredSavePath() {
+    return myPreferredSavePath;
+  }
+
+  @Override
+  public void setPreferredSavePath(@Nullable Path preferredSavePath) {
+    myPreferredSavePath = preferredSavePath;
   }
 }

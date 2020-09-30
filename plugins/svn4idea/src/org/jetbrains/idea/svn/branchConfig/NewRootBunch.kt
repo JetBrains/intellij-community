@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -56,12 +56,22 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
     if (value == null) {
       result = SvnBranchConfigurationNew()
       myMap[root] = InfoStorage(result, InfoReliability.empty)
-      myBranchesLoader.run(DefaultBranchConfigInitializer(myProject, this, root))
+      myBranchesLoader.run {
+        val defaultConfig = DefaultBranchConfig.detect(myProject, root)
+        if (defaultConfig != null) applyDefaultConfig(root, defaultConfig)
+      }
     }
     else {
       result = value.value
     }
     result
+  }
+
+  private fun applyDefaultConfig(root: VirtualFile, config: SvnBranchConfigurationNew) {
+    for (url in config.branchLocations) {
+      reloadBranchesAsync(root, url, InfoReliability.defaultValues)
+    }
+    updateForRoot(root, InfoStorage(config, InfoReliability.defaultValues), false)
   }
 
   fun reloadBranchesAsync(root: VirtualFile, branchLocation: Url, reliability: InfoReliability) {

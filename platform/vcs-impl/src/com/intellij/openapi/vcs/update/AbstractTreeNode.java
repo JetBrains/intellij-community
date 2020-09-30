@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   protected static final ArrayList<File> EMPTY_FILE_ARRAY = new ArrayList<>();
   DefaultTreeModel myTreeModel;
   private JTree myTree;
-  private String myErrorText;
+  private @Nls String myErrorText;
   protected SimpleTextAttributes myFilterAttributes;
 
   public void setTree(JTree tree) {
@@ -63,10 +64,11 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public void setErrorText(final String errorText) {
+  public void setErrorText(@Nls String errorText) {
     myErrorText = errorText;
   }
 
+  @Nls
   public String getErrorText() {
     return myErrorText;
   }
@@ -106,8 +108,9 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   public AbstractTreeNode() {
   }
 
+  @Nls
   public String getText() {
-    StringBuilder result = new StringBuilder();
+    @Nls StringBuilder result = new StringBuilder();
     result.append(getName());
     if (showStatistics()) {
       result.append(" (");
@@ -117,10 +120,12 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
     return result.toString();
   }
 
+  @Nls
   private static String getStatistics(int itemsCount) {
     return VcsBundle.message("update.tree.node.size.statistics", itemsCount);
   }
 
+  @Nls
   @NotNull
   protected abstract String getName();
 

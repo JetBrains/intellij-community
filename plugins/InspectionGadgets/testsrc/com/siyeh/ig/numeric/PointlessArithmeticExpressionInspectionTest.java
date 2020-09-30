@@ -11,6 +11,7 @@ public class PointlessArithmeticExpressionInspectionTest extends LightJavaInspec
   public void testPointlessArithmeticExpression() { doTest(); }
   public void testComments() { doQuickFixTest(); }
   public void testCast() { doQuickFixTest(); }
+  public void testCommentInsideCall() { doQuickFixTest(); }
 
   private void doQuickFixTest() {
     doTest();

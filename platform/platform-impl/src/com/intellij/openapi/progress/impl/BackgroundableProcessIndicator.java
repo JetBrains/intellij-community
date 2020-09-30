@@ -13,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,14 +49,14 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   protected void initializeOnEdtIfNeeded() {
     super.initializeOnEdtIfNeeded();
     initializeStatusBar();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initializeStatusBar() {
     if (myDisposed || myDidInitializeOnEdt) return;
     myDidInitializeOnEdt = true;
@@ -129,7 +129,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     super.background();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void doBackground(@Nullable StatusBarEx statusBar) {
     if (statusBar != null) { //not welcome screen
       statusBar.addProgress(this, myInfo);

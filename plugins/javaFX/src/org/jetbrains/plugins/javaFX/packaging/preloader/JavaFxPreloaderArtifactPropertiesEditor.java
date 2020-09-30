@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationClassBrowser;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
 
   @Override
   public String getTabName() {
-    return "JavaFX Preloader";
+    return JavaFXBundle.message("javafx.preloader.tab.name");
   }
 
   @Nullable

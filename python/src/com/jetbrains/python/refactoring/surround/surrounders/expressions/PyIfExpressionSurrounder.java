@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.refactoring.surround.surrounders.expressions;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementListContainer;
 
 public class PyIfExpressionSurrounder extends PyExpressionAsConditionSurrounder {
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "if expr";
 
   @Override
   protected String getTextToGenerate() {
@@ -45,6 +47,7 @@ public class PyIfExpressionSurrounder extends PyExpressionAsConditionSurrounder 
 
   @Override
   public String getTemplateDescription() {
-    return "if expr";
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }

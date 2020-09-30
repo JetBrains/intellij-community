@@ -6,6 +6,7 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -14,14 +15,14 @@ import java.util.Set;
  */
 public class DuplicateFilteringResultSink implements MatchResultSink {
   private final MatchResultSink delegate;
-  final Set<SmartPsiPointer> duplicates = new THashSet<>();
+  private final Set<SmartPsiPointer> duplicates = new THashSet<>();
 
-  public DuplicateFilteringResultSink(MatchResultSink delegate) {
+  public DuplicateFilteringResultSink(@NotNull MatchResultSink delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public void newMatch(MatchResult result) {
+  public void newMatch(@NotNull MatchResult result) {
     if (!duplicates.add(result.getMatchRef())) {
       return;
     }
@@ -29,12 +30,12 @@ public class DuplicateFilteringResultSink implements MatchResultSink {
   }
 
   @Override
-  public void processFile(PsiFile element) {
+  public void processFile(@NotNull PsiFile element) {
     delegate.processFile(element);
   }
 
   @Override
-  public void setMatchingProcess(MatchingProcess matchingProcess) {
+  public void setMatchingProcess(@NotNull MatchingProcess matchingProcess) {
     delegate.setMatchingProcess(matchingProcess);
   }
 

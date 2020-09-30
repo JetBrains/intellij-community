@@ -104,8 +104,8 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
       myProject,
       myRoot,
       file,
-      GitBundle.getString("rebase.interactive.edit.commit.message.dialog.title"),
-      GitBundle.getString("rebase.interactive.edit.commit.message.ok.action.title")
+      GitBundle.message("rebase.interactive.edit.commit.message.dialog.title"),
+      GitBundle.message("rebase.interactive.edit.commit.message.ok.action.title")
     );
   }
 
@@ -197,7 +197,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
       Messages.OK == showOkCancelDialog(
         myProject,
         GitBundle.message("rebase.interactive.noop.dialog.text"),
-        GitBundle.getString("rebase.interactive.noop.dialog.title"),
+        GitBundle.message("rebase.interactive.noop.dialog.title"),
         getOkButtonText(),
         getCancelButtonText(),
         getQuestionIcon()

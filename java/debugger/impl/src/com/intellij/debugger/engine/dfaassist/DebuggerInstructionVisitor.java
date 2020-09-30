@@ -80,12 +80,15 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
     if (problem != null) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression != null && problem.thrownException() != null) {
+        DfaHint hint;
         if (state.isNull(value)) {
-          DfaHint hint = problem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
-                         ? DfaHint.NPE
-                         : DfaHint.NULL_AS_NOT_NULL;
-          addHint(expression, hint);
+          hint = problem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
+                 ? DfaHint.NPE
+                 : DfaHint.NULL_AS_NOT_NULL;
+        } else {
+          hint = DfaHint.NONE;
         }
+        addHint(expression, hint);
       }
     }
     return super.checkNotNullable(state, value, problem);

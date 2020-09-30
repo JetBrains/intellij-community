@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.actions.associate.ui;
 
-import com.intellij.execution.Platform;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -64,7 +63,7 @@ public class FileTypeAssociationForm {
     return items;
   }
 
-  private static class MyFileTypeItem implements Comparable<MyFileTypeItem> {
+  private static final class MyFileTypeItem implements Comparable<MyFileTypeItem> {
     private final FileType myFileType;
     private final JBCheckBox myCheckBox;
 
@@ -73,7 +72,7 @@ public class FileTypeAssociationForm {
       myCheckBox = new JBCheckBox(getName());
     }
 
-    private String getName() {
+    private @NlsSafe String getName() {
       StringBuilder nameBuilder = new StringBuilder();
       nameBuilder.append(myFileType.getDisplayName()).append(" (");
       List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(myFileType);

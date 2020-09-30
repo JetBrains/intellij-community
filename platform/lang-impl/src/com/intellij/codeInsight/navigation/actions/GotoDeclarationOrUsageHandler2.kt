@@ -55,7 +55,9 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       }
     }
     catch (e: IndexNotReadyException) {
-      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update")
+      DumbService.getInstance(project).showDumbModeNotification(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update")
+      )
       return
     }
 

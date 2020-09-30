@@ -48,7 +48,9 @@ public class HgContinueRebaseAction extends HgProcessStateAction {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.continueRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+            new HgCommandResultNotifier(project).notifyError("hg.rebase.continue.error",
+                                                             result,
+                                                             HgBundle.message("hg4idea.hg.error"),
                                                              HgBundle.message("action.hg4idea.Rebase.Continue.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());

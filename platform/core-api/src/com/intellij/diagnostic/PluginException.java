@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
 
-  public PluginException(@NotNull String message, Throwable cause, @Nullable PluginId pluginId) {
+  public PluginException(@NotNull @NonNls String message, Throwable cause, @Nullable PluginId pluginId) {
     super(message, cause);
     myPluginId = pluginId;
   }
@@ -32,7 +33,7 @@ public class PluginException extends RuntimeException {
     myPluginId = pluginId;
   }
 
-  public PluginException(@NotNull String message, @Nullable PluginId pluginId) {
+  public PluginException(@NotNull @NonNls String message, @Nullable PluginId pluginId) {
     super(message);
     myPluginId = pluginId;
   }
@@ -44,7 +45,7 @@ public class PluginException extends RuntimeException {
 
   @Override
   @NotNull
-  public String getMessage() {
+  public @NonNls String getMessage() {
     String message = super.getMessage();
     return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
   }
@@ -54,7 +55,7 @@ public class PluginException extends RuntimeException {
    * @param pluginClass a problematic class which caused the error
    */
   @NotNull
-  public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
+  public static PluginException createByClass(@NotNull @NonNls String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
   }
 
@@ -71,7 +72,7 @@ public class PluginException extends RuntimeException {
    * Log an error caused by a problem in a plugin's code.
    * @param pluginClass a problematic class which caused the error
    */
-  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
+  public static void logPluginError(@NotNull Logger logger, @NotNull @NonNls String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     logger.error(createByClass(errorMessage, cause, pluginClass));
   }
 }

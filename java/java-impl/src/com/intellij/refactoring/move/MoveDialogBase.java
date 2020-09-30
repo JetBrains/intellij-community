@@ -4,6 +4,7 @@ package com.intellij.refactoring.move;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ public abstract class MoveDialogBase extends RefactoringDialog {
    * @deprecated use {@link MoveDialogBase#MoveDialogBase(Project, boolean, boolean)} instead
    */
   @Deprecated
-  protected String getCbTitle() {
+  protected @Nls String getCbTitle() {
     return null;
   }
 

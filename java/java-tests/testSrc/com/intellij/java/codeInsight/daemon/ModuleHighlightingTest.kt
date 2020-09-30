@@ -255,8 +255,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("module-info.java", "module M6 { requires transitive M7; exports pkg.m6.inner; }", M6)
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
+
+    addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
+    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6) TODO: uncomment to fail the test
+
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
@@ -284,6 +288,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import java.util.function.Supplier;
 
         import <error descr="Package 'pkg.libInvalid' is declared in module with an invalid name ('lib.invalid.1.2')">pkg.libInvalid</error>.LCInv;
+        
+        import pkg.m6.inner.C6_1;
+        //import pkg.m6.inner.C6_2;
 
         /** See also {@link C2Impl#I} and {@link C2Impl#make} */
         class C {{

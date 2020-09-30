@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.layout.singleRowLayout;
 
 import com.intellij.application.options.editor.EditorTabPlacementKt;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -9,6 +10,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +99,6 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   public static class CompressibleSingleRowTabsLayoutInfo extends TabsLayoutInfo {
 
     private static final String ID = "CompressibleSingleRowLayoutInfo";
-    private static final String NAME = "Compressible Single Row";
 
     @NotNull
     @Override
@@ -107,8 +108,9 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
     @NotNull
     @Override
+    @Nls
     public String getName() {
-      return NAME;
+      return IdeBundle.message("tabs.layout.compressible.name");
     }
 
     @NotNull

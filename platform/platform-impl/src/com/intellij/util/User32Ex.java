@@ -24,4 +24,6 @@ public interface User32Ex extends StdCallLibrary {
   @SuppressWarnings("UnusedReturnValue")
   boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.BOOLByReference pvParam, WinDef.UINT fWinIni);
+  boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINTByReference pvParam, WinDef.UINT fWinIni);
+  boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINT pvParam, WinDef.UINT fWinIni);
 }

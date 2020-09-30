@@ -18,6 +18,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -50,6 +51,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
@@ -111,8 +114,8 @@ public final class TerminalView {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
-        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) && myToolWindow == toolWindow &&
+      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
             toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null, true);
@@ -150,7 +153,7 @@ public final class TerminalView {
   }
 
   @NotNull
-  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable String tabName) {
+  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
@@ -205,7 +208,7 @@ public final class TerminalView {
     return content;
   }
 
-  private static String generateUniqueName(String suggestedName, List<String> tabs) {
+  private static @Nls String generateUniqueName(@Nls String suggestedName, List<@Nls String> tabs) {
     final Set<String> names = Sets.newHashSet(tabs);
 
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
@@ -230,7 +233,6 @@ public final class TerminalView {
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
-      terminalWidget.setVirtualFile(null);
       terminalWidget.moveDisposable(content);
     }
     setupTerminalWidget(toolWindow, terminalWidget, tabState, content, true);
@@ -265,8 +267,7 @@ public final class TerminalView {
       @Override
       public void onTerminalStarted() {
         if (updateContentDisplayName && (tabState == null || StringUtil.isEmpty(tabState.myTabName))) {
-          String name = terminalWidget.getSettingsProvider().tabName(terminalWidget.getTtyConnector(),
-                                                                     terminalWidget.getSessionName());
+          String name = ((JBTerminalSystemSettingsProvider)terminalWidget.getSettingsProvider()).getTabName(terminalWidget);
           List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
           contents.remove(content);
           content.setDisplayName(generateUniqueName(name, ContainerUtil.map(contents, c -> c.getDisplayName())));
@@ -289,7 +290,7 @@ public final class TerminalView {
 
       @Override
       public void onSessionClosed() {
-        terminalWidget.close();
+        terminalWidget.terminateProcess();
       }
 
       @Override
@@ -461,8 +462,22 @@ public final class TerminalView {
   public void detachWidgetAndRemoveContent(@NotNull Content content) {
     ContentManager contentManager = myToolWindow.getContentManager();
     LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
-    contentManager.removeContent(content, true);
+    TerminalTabCloseListener.Companion.executeContentOperationSilently(content, () -> {
+      contentManager.removeContent(content, true);
+      return Unit.INSTANCE;
+    });
+    Collection<TerminalContainer> containers = ContainerUtil.filter(myContainerByWidgetMap.values(),
+                                                                    (container -> container.getContent().equals(content)));
+    for (TerminalContainer container : containers) {
+      container.detachWidget();
+    }
     content.putUserData(TERMINAL_WIDGET_KEY, null);
+  }
+
+  public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
+    DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
+    ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
+    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 
   private final class TerminalDockContainer implements DockContainer {

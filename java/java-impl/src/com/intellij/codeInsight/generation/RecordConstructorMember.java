@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -44,7 +46,7 @@ public class RecordConstructorMember implements ClassMember {
   @NotNull
   @Override
   public String getText() {
-    return myCompact ? "Compact constructor" : "Canonical constructor";
+    return myCompact ? JavaBundle.message("label.compact.constructor") : JavaBundle.message("label.canonical.constructor");
   }
 
   @NotNull

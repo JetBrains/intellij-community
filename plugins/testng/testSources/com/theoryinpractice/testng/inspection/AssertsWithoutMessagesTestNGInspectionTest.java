@@ -15,6 +15,8 @@
  */
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -31,6 +33,33 @@ public class AssertsWithoutMessagesTestNGInspectionTest extends JavaCodeInsightF
   public void testInspection() {
     myFixture.enableInspections(AssertWithoutMessageInspection.class);
     myFixture.testHighlighting("AssertsWithoutMessages.java");
+  }
+
+  public void testQuickFix() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "import org.testng.annotations.Test;\n" +
+                                          "import static org.testng.Assert.*;\n" +
+
+                                          "class TestCase {\n" +
+                                          "    @Test\n" +
+                                          "    public void test() {\n" +
+                                          "        <warning descr=\"'assertEquals()' without message\"><caret>assertEquals</warning>(1, 1);\n" +
+                                          "    }\n" +
+                                          "}");
+    myFixture.enableInspections(AssertWithoutMessageInspection.class);
+    myFixture.testHighlighting(true, false, false);
+
+    final IntentionAction intention = myFixture.getAvailableIntention("Add error message");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("import org.testng.annotations.Test;\n" +
+                          "import static org.testng.Assert.*;\n" +
+
+                          "class TestCase {\n" +
+                          "    @Test\n" +
+                          "    public void test() {\n" +
+                          "        assertEquals(1, 1, \"<caret>\");\n" +
+                          "    }\n" +
+                          "}");
   }
 
   @Override

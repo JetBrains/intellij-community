@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,10 +51,10 @@ public class MavenImportingSettingsForm {
   private JBTextField myVMOptionsForImporter;
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
   private JCheckBox myAutoDetectCompilerCheckBox;
-  private JBCheckBox myJBCheckBox1;
 
-  public MavenImportingSettingsForm(boolean isDefaultProject) {
-    mySearchRecursivelyCheckBox.setVisible(isDefaultProject);
+  public MavenImportingSettingsForm(Project project) {
+    myJdkForImporterComboBox.setProject(project);
+    mySearchRecursivelyCheckBox.setVisible(project.isDefault());
     //TODO: remove this
     myProjectFormatLabel.setVisible(false);
     myProjectFormatComboBox.setVisible(false);

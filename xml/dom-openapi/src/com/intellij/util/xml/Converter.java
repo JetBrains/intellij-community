@@ -44,7 +44,7 @@ public abstract class Converter<T> {
   @InspectionMessage
   @Nullable
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return XmlDomBundle.message("error.cannot.convert.default.message", s);
+    return XmlDomBundle.message("dom.converter.cannot.convert.default", s);
   }
 
 
@@ -71,7 +71,7 @@ public abstract class Converter<T> {
 
     @Override
     public String getErrorMessage(final String s, final ConvertContext context) {
-      return XmlDomBundle.message("value.should.be.integer");
+      return XmlDomBundle.message("dom.converter.value.should.be.integer");
     }
   };
 

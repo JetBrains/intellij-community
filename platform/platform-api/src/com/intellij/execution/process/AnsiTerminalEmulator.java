@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -644,7 +644,7 @@ class AnsiTerminalEmulator {
    * </ul>
    * Also used for first 15 indexed colors from {@link AnsiCommands#SGR_COMMAND_FG_COLOR_ENCODED} and {@link AnsiCommands#SGR_COMMAND_BG_COLOR_ENCODED}
    */
-  private static class EightBitColor extends IndexedAnsiTerminalColor {
+  private static final class EightBitColor extends IndexedAnsiTerminalColor {
 
     private EightBitColor(int colorIndex) {
       super(colorIndex);

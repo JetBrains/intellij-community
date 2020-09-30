@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +68,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     setText(bytecode, 0);
   }
 
-  public void setText(final String bytecode, PsiElement element) {
+  public void setText(@NonNls final String bytecode, PsiElement element) {
     int offset = 0;
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file != null) {

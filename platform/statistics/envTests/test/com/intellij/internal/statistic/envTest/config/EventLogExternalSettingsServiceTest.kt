@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.envTest.config
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit
 
@@ -12,21 +12,21 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
   fun `test load and cache external settings`() {
     val settings = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
 
-    val metadata = loadMetadata(settings.whiteListProductUrl)
+    val metadata = loadMetadata(settings.metadataProductUrl)
     Thread.sleep(1000)
-    assertMetadata(settings.whiteListProductUrl, metadata)
+    assertMetadata(settings.metadataProductUrl, metadata)
     Thread.sleep(1000)
-    assertMetadata(settings.whiteListProductUrl, metadata)
+    assertMetadata(settings.metadataProductUrl, metadata)
   }
 
   fun `test cached external settings are invalidated`() {
     val settings = configureDynamicConfig(10)
 
-    var metadata = loadMetadata(settings.whiteListProductUrl)
+    var metadata = loadMetadata(settings.metadataProductUrl)
     Thread.sleep(1000)
-    metadata = assertNewMetadata(settings.whiteListProductUrl, metadata)
+    metadata = assertNewMetadata(settings.metadataProductUrl, metadata)
     Thread.sleep(1000)
-    assertNewMetadata(settings.whiteListProductUrl, metadata)
+    assertNewMetadata(settings.metadataProductUrl, metadata)
   }
 
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {

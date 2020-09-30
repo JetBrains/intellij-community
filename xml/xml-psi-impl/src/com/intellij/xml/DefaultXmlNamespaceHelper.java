@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -176,7 +162,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
       filtered.removeAll(Arrays.asList(tag.knownNamespaces()));
       return filtered;
     }
-    final Set<String> set = guessNamespace(file, name);
+    final Set<String> set = guessNamespace(file.getProject(), name);
     set.removeAll(Arrays.asList(tag.knownNamespaces()));
 
     final XmlTag parentTag = tag.getParentTag();
@@ -191,8 +177,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
         if (parentTag != null) {
           continue ns;
         }
-        final XmlElementDescriptor[] descriptors = nsDescriptor.getRootElementsDescriptors(document);
-        for (XmlElementDescriptor descriptor : descriptors) {
+        for (XmlElementDescriptor descriptor : nsDescriptor.getRootElementsDescriptors(document)) {
           if (descriptor == null) {
             LOG.error(nsDescriptor + " returned null element for getRootElementsDescriptors() array");
             continue;
@@ -207,12 +192,16 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     return set;
   }
 
-  private static Set<String> guessNamespace(final PsiFile file, String tagName) {
-    final Project project = file.getProject();
-    final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
-    final Set<String> possibleUris = new LinkedHashSet<>(files.size());
+  private static @NotNull Set<String> guessNamespace(@NotNull Project project, @NotNull String tagName) {
+    Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
+    if (files.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    // XmlNamespaceIndex.getFileNamespace accesses FileBasedIndex, so, cannot process values (it is prohibited to process as part of another processing)
+    Set<String> possibleUris = new LinkedHashSet<>(files.size());
     for (VirtualFile virtualFile : files) {
-      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project);
+      String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project);
       if (namespace != null) {
         possibleUris.add(namespace);
       }
@@ -221,14 +210,16 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   }
 
   @Override
-  @NotNull
-  public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
-    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(context);
-
-    HashSet<String> set = new HashSet<>();
-    for (XmlSchemaProvider provider : providers) {
-      set.addAll(provider.getAvailableNamespaces(context, tagName));
+  public @NotNull Set<String> getNamespacesByTagName(@NotNull String tagName, @NotNull XmlFile file) {
+    Set<String> set = null;
+    for (XmlSchemaProvider provider : XmlSchemaProvider.EP_NAME.getExtensionList()) {
+      if (provider.isAvailable(file)) {
+        if (set == null) {
+          set = new HashSet<>();
+        }
+        set.addAll(provider.getAvailableNamespaces(file, tagName));
+      }
     }
-    return set;
+    return set == null ? Collections.emptySet() : set;
   }
 }

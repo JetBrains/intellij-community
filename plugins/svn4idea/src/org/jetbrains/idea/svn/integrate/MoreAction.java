@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,18 +17,13 @@ import javax.swing.*;
  * @author irengrig
  */
 public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
-  public static final String LOAD_MORE = "Load more";
   protected final JLabel myLabel;
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
   private final JButton myLoadMoreBtn;
 
-  protected MoreAction() {
-    this(LOAD_MORE);
-  }
-
-  protected MoreAction(final String name) {
+  protected MoreAction(@NlsContexts.Button @NotNull String name) {
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);

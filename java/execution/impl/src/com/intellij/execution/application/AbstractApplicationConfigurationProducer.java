@@ -2,6 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,6 +51,10 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
     if (aClass == null) {
+      return false;
+    }
+    PsiFile containingFile = aClass.getContainingFile();
+    if (HighlightClassUtil.isJavaHashBangScript(containingFile)) {
       return false;
     }
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);

@@ -54,7 +54,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
@@ -87,7 +87,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final boolean[] mayBeStatic = {true};
       PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyRaiseStatement(PyRaiseStatement node) {
+        public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
           super.visitPyRaiseStatement(node);
           final PyExpression[] expressions = node.getExpressions();
           if (expressions.length == 1) {
@@ -104,7 +104,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         }
 
         @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
+        public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
           if (node.isQualified()) {
             super.visitPyReferenceExpression(node);
           }
@@ -114,7 +114,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         }
 
         @Override
-        public void visitPyCallExpression(PyCallExpression node) {
+        public void visitPyCallExpression(@NotNull PyCallExpression node) {
           super.visitPyCallExpression(node);
           if (!LanguageLevel.forElement(node).isPython2() && node.isCalleeText(PyNames.SUPER)) {
             mayBeStatic[0] = false;

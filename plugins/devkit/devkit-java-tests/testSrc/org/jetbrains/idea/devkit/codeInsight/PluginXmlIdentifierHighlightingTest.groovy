@@ -16,7 +16,8 @@ class PluginXmlIdentifierHighlightingTest extends LightJavaCodeInsightFixtureTes
   }
 
   void 'test ep references'() {
-    myFixture.configureByText 'plugin.xml', '''\
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable()) {
+      myFixture.configureByText 'plugin.xml', '''\
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="foo<caret>.bar"/>
@@ -26,7 +27,6 @@ class PluginXmlIdentifierHighlightingTest extends LightJavaCodeInsightFixtureTes
   </extensions>
 </idea-plugin>
 '''
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       def infos = myFixture.doHighlighting()
       assert infos.findAll {
         it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY

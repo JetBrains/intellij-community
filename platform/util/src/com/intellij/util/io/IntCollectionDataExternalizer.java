@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -9,7 +9,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 
-public class IntCollectionDataExternalizer implements DataExternalizer<Collection<Integer>> {
+public final class IntCollectionDataExternalizer implements DataExternalizer<Collection<Integer>> {
   @Override
   public void save(@NotNull final DataOutput out, Collection<Integer> value) throws IOException {
     DataInputOutputUtilRt.writeSeq(out, value, i -> EnumeratorIntegerDescriptor.INSTANCE.save(out, i));

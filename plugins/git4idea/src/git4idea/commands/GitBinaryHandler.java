@@ -21,7 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.config.GitExecutable;
+import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -69,7 +71,7 @@ public class GitBinaryHandler extends GitHandler {
    * @param in  the standard input
    * @param out the standard output
    */
-  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
+  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull @NonNls String cmd) {
     Thread t = new Thread(() -> {
       try {
         byte[] buffer = new byte[BUFFER_SIZE];
@@ -82,7 +84,7 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
       catch (IOException e) {
-        if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
+        if (!myException.compareAndSet(null, new VcsException(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()), e))) {
           LOG.error("Problem reading stream", e);
         }
       }
@@ -159,9 +161,10 @@ public class GitBinaryHandler extends GitHandler {
 
       @Override
       public void startFailed(@NotNull Throwable exception) {
-        VcsException e = myException.getAndSet(new VcsException("Start failed: " + exception.getMessage(), exception));
-        if (e != null) {
-          LOG.warn("Dropping previous exception: ", e);
+        VcsException err = new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception);
+        VcsException oldErr = myException.getAndSet(err);
+        if (oldErr != null) {
+          LOG.warn("Dropping previous exception: ", oldErr);
         }
       }
     });

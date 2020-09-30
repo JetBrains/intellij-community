@@ -37,7 +37,7 @@ public final class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     CodeInsightWorkspaceSettings.getInstance(project).setOptimizeImportsOnTheFly(true);
-    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask.projectIncludingAllSettings(project), false);
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, true);
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

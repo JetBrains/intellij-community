@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  *
  * @author Tagir Valeev
  */
-public class LambdaGenerationUtil {
+public final class LambdaGenerationUtil {
   /**
    * Tests the element (expression or statement) whether it could be converted to the body
    * of lambda expression mapped to functional interface which SAM does not declare any

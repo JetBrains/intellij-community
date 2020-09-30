@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
@@ -41,6 +42,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(module)
@@ -215,18 +217,12 @@ class Bar extends Foo {
     assertOutput("Bar", "239")
   }
 
-  @Override
-  void runBare() {
-    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
-    super.runBare()
-  }
-
   String getTestStartMessage() { "Starting " + getClass().name + " " + getName() }
 
   @Override
-  void runTest() {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      super.runTest()
+      super.runTestRunnable(testRunnable)
     }
     catch (Throwable e) {
       printLogs()

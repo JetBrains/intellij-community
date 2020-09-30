@@ -28,8 +28,10 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 
@@ -119,12 +121,13 @@ class ExternalDiffSettingsPanel {
     return this
   }
 
-  private fun Cell.executableTextField(title: String,
+  private fun Cell.executableTextField(title: @NlsContexts.DialogTitle String,
                                        modelGet: () -> String,
                                        modelSet: (String) -> Unit): CellBuilder<TextFieldWithBrowseButton> {
     val pathField = TextFieldWithBrowseButton()
     pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
-    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(modelGet, modelSet))
+    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText,
+                                   PropertyBinding(modelGet, modelSet))
   }
 
   private fun showTestDiff() {

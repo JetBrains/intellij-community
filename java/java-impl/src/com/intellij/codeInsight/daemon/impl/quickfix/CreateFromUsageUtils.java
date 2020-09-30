@@ -67,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CreateFromUsageUtils {
+public final class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
@@ -436,7 +436,7 @@ public class CreateFromUsageUtils {
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null &&
+          if (StringUtil.isNotEmpty(superClassName)  &&
               (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
               (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
@@ -575,10 +575,10 @@ public class CreateFromUsageUtils {
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
                                                      ((PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(parent)).getRExpression() instanceof PsiFunctionalExpression;
+        PsiElement gParent = parent.getParent();
         PsiExpressionList expressionList = ObjectUtils
-          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? parent.getParent() : parent),
-                   PsiExpressionList.class);
-        boolean forCompletion = expressionList != null || parent.getParent() instanceof PsiPolyadicExpression;
+          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? gParent : parent), PsiExpressionList.class);
+        boolean forCompletion = expressionList != null || gParent instanceof PsiPolyadicExpression && !(gParent.getParent() instanceof PsiPolyadicExpression);
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, forCompletion);
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
@@ -743,7 +743,7 @@ public class CreateFromUsageUtils {
       //Double check to avoid expensive operations on PsiClassTypes
       final Set<PsiType> typesSet = new HashSet<>();
 
-      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
         @Override
         @Nullable
         public PsiType visitType(@NotNull PsiType type) {
@@ -753,7 +753,7 @@ public class CreateFromUsageUtils {
 
           if (!typesSet.contains(type)) {
             if (type instanceof PsiClassType && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
-              PsiClass aClass = ((PsiClassType) type).resolve();
+              PsiClass aClass = ((PsiClassType)type).resolve();
               if (aClass != null) {
                 for (String fieldName : expectedFieldNames) {
                   if (aClass.findFieldByName(fieldName, true) == null) return null;

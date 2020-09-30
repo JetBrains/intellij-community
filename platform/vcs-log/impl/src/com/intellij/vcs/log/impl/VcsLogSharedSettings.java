@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "Vcs.Log.Settings", storages = {@Storage("vcs.xml")})
+@State(name = "Vcs.Log.Settings", storages = @Storage("vcs.xml"))
 public class VcsLogSharedSettings implements PersistentStateComponent<VcsLogSharedSettings.State> {
   private State myState = new State();
 

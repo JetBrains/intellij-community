@@ -2,6 +2,7 @@
 package git4idea.index
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -16,6 +17,8 @@ import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 
 const val NUL = "\u0000"
 
@@ -129,19 +132,19 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
     if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
     // format: XY_filename where _ stands for space.
     if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file
-      throwGFE("Line is too short.", output, line, '0', '0')
+      throwGFE(GitBundle.message("status.exception.message.line.is.too.short"), output, line, '0', '0')
     }
 
     val xStatus = line[0]
     val yStatus = line[1]
     if (!isKnownStatus(xStatus) || !isKnownStatus(yStatus)) {
-      throwGFE("Unexpected symbol as status.", output, line, xStatus, yStatus)
+      throwGFE(GitBundle.message("status.exception.message.unexpected"), output, line, xStatus, yStatus)
     }
 
     val pathPart = line.substring(3) // skipping the space
     if (isRenamed(xStatus) || isRenamed(yStatus)) {
       if (!it.hasNext()) {
-        throwGFE("Missing original path.", output, line, xStatus, yStatus)
+        throwGFE(GitBundle.message("status.exception.message.missing.path"), output, line, xStatus, yStatus)
         continue
       }
       val origPath = it.next() // read the "from" filepath which is separated also by NUL character.
@@ -155,9 +158,9 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
   return result
 }
 
-private fun throwGFE(message: String, output: String, line: String, xStatus: Char, yStatus: Char) {
-  throw VcsException(String.format("%s\n xStatus=[%s], yStatus=[%s], line=[%s], \noutput: \n%s",
-                                   message, xStatus, yStatus, line.replace(NUL, "!"), output))
+private fun throwGFE(@Nls message: String, @NlsSafe output: String, @NlsSafe line: String, @NlsSafe xStatus: Char, @NlsSafe yStatus: Char) {
+  throw VcsException(GitBundle.message("status.exception.message.format.message.xstatus.ystatus.line.output",
+                                       message, xStatus, yStatus, line, output))
 }
 
 private fun isKnownStatus(status: Char): Boolean {
@@ -174,7 +177,7 @@ internal fun getFileStatus(status: StatusCode): FileStatus? {
     'U' -> FileStatus.MERGED_WITH_CONFLICTS
     '!' -> FileStatus.IGNORED
     '?' -> FileStatus.UNKNOWN
-    else -> throw VcsException("Unexpected symbol as status: $status")
+    else -> throw VcsException(GitBundle.message("status.exception.message.unexpected.status", status))
   }
 }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.ActionLink;
@@ -36,11 +37,11 @@ final class Banner extends SimpleBanner {
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new ActionLink(action)));
   }
 
-  void setText(@NotNull Collection<String> names) {
+  void setText(@NotNull Collection<@NlsContexts.ConfigurableName String> names) {
     List<Crumb> crumbs = new ArrayList<>();
     if (!names.isEmpty()) {
       List<Action> actions = CopySettingsPathAction.createSwingActions(() -> names);
-      for (String name : names) {
+      for (@NlsContexts.ConfigurableName String name : names) {
         crumbs.add(new Crumb.Impl(null, name, null, actions));
       }
     }

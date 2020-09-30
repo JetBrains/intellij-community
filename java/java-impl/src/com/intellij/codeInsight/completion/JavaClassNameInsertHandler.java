@@ -52,6 +52,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     PsiJavaCodeReferenceElement ref = position != null && position.getParent() instanceof PsiJavaCodeReferenceElement ?
                                       (PsiJavaCodeReferenceElement) position.getParent() : null;
     PsiClass psiClass = item.getObject();
+    SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
     final Project project = context.getProject();
 
     final Editor editor = context.getEditor();
@@ -90,18 +91,21 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     refEnd = context.trackOffset(context.getTailOffset(), false);
 
     context.commitDocument();
+
+    psiClass = classPointer.dereference();
+
     if (item.getUserData(JavaChainLookupElement.CHAIN_QUALIFIER) == null &&
         shouldInsertParentheses(file.findElementAt(context.getTailOffset() - 1))) {
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         overwriteTopmostReference(context);
         context.commitDocument();
       }
-      if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
+      if (psiClass != null && ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }
     }
     else if (insertingAnnotation(context, item)) {
-      if (shouldHaveAnnotationParameters(psiClass)) {
+      if (psiClass != null && shouldHaveAnnotationParameters(psiClass)) {
         JavaCompletionUtil.insertParentheses(context, item, false, true);
       }
       if (context.getCompletionChar() == Lookup.NORMAL_SELECT_CHAR || context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
@@ -117,7 +121,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
     else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
-             psiClass.getTypeParameters().length == 1 &&
+             psiClass != null && psiClass.getTypeParameters().length == 1 &&
              PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
       wrapFollowingTypeInGenerics(context, context.getOffset(refEnd));
     }

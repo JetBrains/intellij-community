@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -31,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @author Denis Fokin
  */
-public class MacFileSaverDialog implements FileSaverDialog {
-
+public final class MacFileSaverDialog implements FileSaverDialog {
   private FileDialog myFileDialog;
   private final FileSaverDescriptor myDescriptor;
 
@@ -50,7 +36,6 @@ public class MacFileSaverDialog implements FileSaverDialog {
   }
 
   public MacFileSaverDialog(FileSaverDescriptor descriptor, Component parent) {
-
     String title = getChooserTitle(descriptor);
     Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, title, FileDialog.SAVE);
     Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, title, FileDialog.SAVE);
@@ -64,30 +49,27 @@ public class MacFileSaverDialog implements FileSaverDialog {
       .ifNull(frameConsumer);
   }
 
-  @Nullable
   @Override
-  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
-    myFileDialog.setDirectory(baseDir == null ? null : baseDir.getCanonicalPath());
+  public @Nullable VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
+    return doSave(baseDir == null ? null : baseDir.getCanonicalPath(), filename);
+  }
+
+  @Override
+  public @Nullable VirtualFileWrapper save(@Nullable Path baseDir, @Nullable String filename) {
+    return doSave(baseDir == null ? null : baseDir.toAbsolutePath().normalize().toString(), filename);
+  }
+
+  private @Nullable VirtualFileWrapper doSave(@Nullable String baseDir, @Nullable String filename) {
+    myFileDialog.setDirectory(baseDir);
     myFileDialog.setFile(filename);
     myFileDialog.setFilenameFilter((dir, name) -> {
-      File file = new File(dir, name);
-      return myDescriptor.isFileSelectable(fileToVirtualFile(file));
+      String vfsPath = FileUtil.toSystemIndependentName(new File(dir, name).getAbsolutePath());
+      return myDescriptor.isFileSelectable(LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath));
     });
 
     myFileDialog.setVisible(true);
 
     String file = myFileDialog.getFile();
-    if (file == null) {
-      return null;
-    }
-
-    return new VirtualFileWrapper(new File(myFileDialog.getDirectory() + File.separator + file));
+    return file == null ? null : new VirtualFileWrapper(new File(myFileDialog.getDirectory() + File.separator + file));
   }
-
-  private static VirtualFile fileToVirtualFile(File file) {
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final String vfsPath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return localFileSystem.refreshAndFindFileByPath(vfsPath);
-  }
-
 }

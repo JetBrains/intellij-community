@@ -121,7 +121,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   // get 20 scattered elements
-  private static <T> void addDumpsAttachments(List<T> from, Function<T, String> textMapper, List<Attachment> container) {
+  private static <T> void addDumpsAttachments(List<T> from, Function<? super T, String> textMapper, List<? super Attachment> container) {
     int size = Math.min(from.size(), 20);
     int step = from.size() / size;
     for (int i = 0; i < size; i++) {
@@ -324,6 +324,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
                        "Sampled time: " + sampledTime + "ms, sampling rate: " + dumpInterval + "ms";
+      String jitProblem = PerformanceWatcher.getInstance().getJitProblem();
+      if (jitProblem != null) {
+        message += ", " + jitProblem;
+      }
       long total = dumpTask.getTotalTime();
       long gcTime = dumpTask.getGcTime();
       if (total > 0) {

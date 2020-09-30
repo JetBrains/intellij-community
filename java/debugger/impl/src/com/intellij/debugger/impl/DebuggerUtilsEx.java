@@ -346,7 +346,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-    String id = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String id = JavaDebuggerBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);

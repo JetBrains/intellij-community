@@ -7,6 +7,8 @@ import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
@@ -22,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.util.text.HtmlChunk.*;
 
 public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionListener {
   private static final String BUTTONS = "BUTTONS";
@@ -229,19 +233,26 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
     if (mySteps.size() > 1) {
-      StringBuilder navHTML = new StringBuilder("<html><body>");
+      HtmlChunk.Element body = HtmlChunk.body();
       String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
       for (int i = 0; i < mySteps.size(); i++) {
-        if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
-        if (i == myIndex) navHTML.append("<b>");
-        navHTML.append(mySteps.get(i).getTitle());
-        if (i == myIndex) navHTML.append("</b>");
+        if (i > 0) {
+          body = body.children(nbsp(), raw(arrow), nbsp());
+        }
+        if (i == myIndex) {
+          body = body.children(
+            tag("b").addText(mySteps.get(i).getTitle()));
+        } else {
+          body = body.addText(mySteps.get(i).getTitle());
+        }
       }
-      myNavigationLabel.setText(navHTML.toString());
+      String navHtml = new HtmlBuilder().append(HtmlChunk.html().child(body)).toString();
+
+      myNavigationLabel.setText(navHtml);
     }
   }
 
-  @Contract("!null->!null")
+  @Contract(value = "!null->!null" ,pure = true)
   private static String ensureHTML(@Nullable String s) {
     return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXmlEntities(s) + "</html>";
   }

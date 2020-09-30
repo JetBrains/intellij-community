@@ -43,7 +43,7 @@ public class ExternalSystemException extends RuntimeException {
     this(message, null, quickFixes);
   }
 
-public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
+  public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
     super(extractMessage(message, cause));
     myQuickFixes = mergeArrays(cause instanceof ExternalSystemException
                                ? ((ExternalSystemException)cause).getQuickFixes()

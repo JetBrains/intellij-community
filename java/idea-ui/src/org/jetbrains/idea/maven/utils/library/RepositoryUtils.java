@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.ide.JavaUiBundle;
@@ -34,7 +34,7 @@ import org.jetbrains.concurrency.Promises;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RepositoryUtils {
+public final class RepositoryUtils {
   private static final Logger LOG = Logger.getInstance(RepositoryUtils.class);
 
   public static boolean libraryHasSources(@Nullable Library library) {
@@ -97,7 +97,7 @@ public class RepositoryUtils {
       ApplicationManager.getApplication().invokeLater(
         roots == null || roots.isEmpty() ?
         () -> {
-          String message = "No files were downloaded for " + properties.getMavenId();
+          String message = JavaUiBundle.message("notification.content.no.files.were.downloaded", properties.getMavenId());
           Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message(
             "notification.title.repository.library.synchronization"),
                                                     message, NotificationType.ERROR), project);

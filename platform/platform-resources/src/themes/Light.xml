@@ -5,6 +5,8 @@
     <property name="ideVersion">2019.2.0.0</property>
     <property name="modified">2019-06-07T17:20:15</property>
     <property name="originalScheme">Default</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.light.color.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="CARET_ROW_COLOR" value="fcfaed" />

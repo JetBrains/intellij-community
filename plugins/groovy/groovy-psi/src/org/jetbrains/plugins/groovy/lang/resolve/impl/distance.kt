@@ -220,7 +220,7 @@ private fun getPrimitiveDistance(from: PsiType, to: PsiType): Int {
  */
 private fun getMaximumInterfaceDistance(argument: PsiClass?, interfaceClass: PsiClass): Int {
   if (argument == null) return -1 //?
-  if (argument == interfaceClass) return 0
+  if (argument.isEquivalentTo(interfaceClass)) return 0
 
   val interfaces = argument.interfaces
   var max = -1

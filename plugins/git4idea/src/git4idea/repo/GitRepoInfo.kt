@@ -7,6 +7,7 @@ import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import gnu.trove.THashMap
+import org.jetbrains.annotations.NonNls
 
 data class GitRepoInfo(val currentBranch: GitLocalBranch?,
                        val currentRevision: String?,
@@ -26,6 +27,7 @@ data class GitRepoInfo(val currentBranch: GitLocalBranch?,
     @Deprecated("")
     get() = remoteBranchesWithHashes.keys
 
+  @NonNls
   override fun toString() = "GitRepoInfo{current=$currentBranch, remotes=$remotes, localBranches=$localBranchesWithHashes, " +
                             "remoteBranches=$remoteBranchesWithHashes, trackInfos=$branchTrackInfos, submodules=$submodules, hooks=$hooksInfo}"
 }

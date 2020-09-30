@@ -22,13 +22,13 @@ public final class ResolveProfiler {
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<>();
   private static volatile int fileCount;
 
-  private static class ThreadInfo {
+  private static final class ThreadInfo {
     private final String myFileName;
     private final Deque<Long> myTimeStack = new ArrayDeque<>();
 
     private String myPrefix = "";
 
-    private ThreadInfo(@NotNull String name) {
+    private ThreadInfo(@NotNull @NonNls String name) {
       myFileName = name;
     }
 
@@ -64,7 +64,7 @@ public final class ResolveProfiler {
     return getThreadInfo().finish();
   }
 
-  public static void write(String prefix, @NotNull PsiElement expression, long time) {
+  public static void write(@NonNls String prefix, @NotNull PsiElement expression, long time) {
     if (DISABLED) return;
 
     write(getInfo(prefix, expression, time));
@@ -101,7 +101,7 @@ public final class ResolveProfiler {
     return info;
   }
 
-  public static String getInfo(String prefix, @NotNull PsiElement expression, long time) {
+  public static @NonNls String getInfo(String prefix, @NotNull PsiElement expression, long time) {
     PsiFile file = expression.getContainingFile();
     String text = expression.getText();
     String textInfo = text != null ? StringUtil.escapeLineBreak(text) : "<null>";

@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.impl.local
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -109,7 +109,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
   @Test
   fun testAddWatchRootWithManySymbolicLinks() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
     val root = tempDir.newDirectory("root")
 
     val linkCount = 20_000

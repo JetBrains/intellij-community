@@ -1,20 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Defines a highlighting severity level for an annotation.
- *
- * @author max
+
  * @see Annotation
  */
-public class HighlightSeverity implements Comparable<HighlightSeverity> {
-  public final String myName;
+public final class HighlightSeverity implements Comparable<HighlightSeverity> {
+  public final @NlsSafe String myName;
   public final int myVal;
 
   /**
@@ -27,11 +29,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
    */
   public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING = new HighlightSeverity("SERVER PROBLEM", 100);
 
-  /**
-   * The standard severity level for 'weak' :) warning annotations.
-   *
-   * @deprecated use {@link #WEAK_WARNING}
-   */
+  /** @deprecated use {@link #WEAK_WARNING} */
   @Deprecated
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
 
@@ -61,7 +59,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
    *             if two annotations with different severity levels cover the same text range, only
    *             the annotation with a higher severity level is displayed.
    */
-  public HighlightSeverity(@NotNull String name, int val) {
+  public HighlightSeverity(@NlsSafe @NotNull String name, int val) {
     myName = name;
     myVal = val;
   }
@@ -76,8 +74,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
     return value;
   }
 
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 
@@ -92,24 +89,21 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final HighlightSeverity that = (HighlightSeverity)o;
-
-    if (myVal != that.myVal) return false;
-    return myName.equals(that.myName);
+    HighlightSeverity that = (HighlightSeverity)o;
+    return myVal == that.myVal && myName.equals(that.myName);
   }
 
   @Override
   public int hashCode() {
-    int result = myName != null ? myName.hashCode() : 0;
-    return 31 * result + myVal;
+    return 31 * Objects.hashCode(myName) + myVal;
   }
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return myName;
   }
 }

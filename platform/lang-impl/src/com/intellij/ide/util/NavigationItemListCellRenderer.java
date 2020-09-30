@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
@@ -98,7 +99,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
       if (value instanceof PsiElement && !((PsiElement)value).isValid()) {
         setIcon(IconUtil.getEmptyIcon(false));
-        append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else if (value instanceof NavigationItem) {
         NavigationItem item = (NavigationItem)value;

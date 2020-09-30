@@ -42,5 +42,5 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
 
-  public abstract ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter);
+  public abstract ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<? super SdkTypeId> sdkFilter);
 }

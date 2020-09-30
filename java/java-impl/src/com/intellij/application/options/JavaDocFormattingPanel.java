@@ -8,10 +8,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.border.CustomLineBorder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +148,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaFileType.INSTANCE;
   }
 
-    @Override
+  @Override
   protected void customizeSettings() {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE);
     if (provider != null) {
@@ -154,7 +157,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected String getTabTitle() {
+  protected @TabTitle @NotNull String getTabTitle() {
     return JavaBundle.message("title.javadoc");
   }
 
@@ -164,18 +167,22 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaLanguage.INSTANCE;
   }
 
+  @NlsContexts.Label
   public static String getOtherGroup() {
     return JavaBundle.message("group.javadoc.other");
   }
 
+  @NlsContexts.Label
   public static String getInvalidTagsGroup() {
     return JavaBundle.message("group.javadoc.invalid.tags");
   }
 
+  @NlsContexts.Label
   public static String getBlankLinesGroup() {
     return JavaBundle.message("group.javadoc.blank.lines");
   }
 
+  @NlsContexts.Label
   public static String getAlignmentGroup() {
     return JavaBundle.message("group.javadoc.alignment");
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -667,15 +668,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
 
-  public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
-    return initPane(new Html(text), hintHint, layeredPane);
+  public static JEditorPane initPane(@Tooltip String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
+    return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
-    return initPane(html, hintHint, layeredPane, true);
-  }
-
-  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
+  public static JEditorPane initPane(@Tooltip Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
                                      boolean limitWidthToScreen) {
     final Ref<Dimension> prefSize = new Ref<>(null);
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);

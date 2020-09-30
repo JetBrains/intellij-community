@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -403,7 +404,7 @@ public class DfaExpressionFactory {
 
     public GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
-      if (STABLE_METHODS.methodMatches(getter)) {
+      if (STABLE_METHODS.methodMatches(getter) || getter instanceof LightRecordMethod) {
         myStable = true;
       } else {
         PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);

@@ -17,8 +17,10 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -604,13 +606,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new OptimizeImportsAction(onTheFly);
+    return new OptimizeImportsFix(onTheFly);
   }
 
-  private static final class OptimizeImportsAction implements IntentionAction {
+  private static final class OptimizeImportsFix implements IntentionAction {
     private final boolean myOnTheFly;
 
-    private OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+    private OptimizeImportsFix(boolean onTheFly) {myOnTheFly = onTheFly;}
 
     @NotNull
     @Override
@@ -863,7 +865,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+    return new RunRefactoringAction(new JavaPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
@@ -886,7 +888,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
+  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @IntentionName String message) {
     return new CreateDefaultBranchFix(switchBlock, message);
   }
 
@@ -928,5 +930,28 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAssignFieldFromParameterFix() {
     return new AssignFieldFromParameterAction(true);
+  }
+
+  @Override
+  public @NotNull IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier) {
+    return new FillPermitsListFix(classIdentifier);
+  }
+
+  @Override
+  public @NotNull IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass,
+                                                            @NotNull PsiClass superClass) {
+    return new AddToPermitsListFix(subClass, superClass);
+  }
+
+  @Override
+  public IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
+    return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
+  }
+
+  @Override
+  public @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
+                                                                     @NotNull PsiClass parentClass,
+                                                                     @NotNull PsiClass subClass) {
+    return Arrays.asList(ImplementOrExtendFix.createActions(subclassRef, subClass, parentClass, false));
   }
 }

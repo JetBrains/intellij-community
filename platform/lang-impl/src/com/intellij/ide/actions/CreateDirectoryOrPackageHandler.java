@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -38,7 +39,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private PsiFileSystemItem myCreatedElement = null;
   @NotNull private final String myDelimiters;
   @Nullable private final Component myDialogParent;
-  private String myErrorText;
+  private @NlsContexts.DetailedDescription String myErrorText;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
@@ -212,7 +213,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
                                                                       : IdeBundle.message("command.create.package"), null);
   }
 
-  private void showErrorDialog(String message) {
+  private void showErrorDialog(@NlsContexts.DialogMessage String message) {
     String title = CommonBundle.getErrorTitle();
     Icon icon = Messages.getErrorIcon();
     if (myDialogParent != null) {

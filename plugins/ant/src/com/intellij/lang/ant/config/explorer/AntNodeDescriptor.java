@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanceEx {
@@ -20,7 +21,7 @@ abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanc
 
   @Override
   @NotNull
-  public String getText() {
+  public @Nls String getText() {
     return toString();
   }
 }

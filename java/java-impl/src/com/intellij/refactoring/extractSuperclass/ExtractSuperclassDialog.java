@@ -93,11 +93,11 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.superclass"),
+    final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(JavaRefactoringBundle.message("members.to.form.superclass.title"),
                                                                                myMemberInfos, RefactoringBundle.message("make.abstract"));
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     final MemberInfoModel<PsiMember, MemberInfo> memberInfoModel =
-      new UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo>(mySourceClass, null, false, myContainmentVerifier) {
+      new UsesAndInterfacesDependencyMemberInfoModel<>(mySourceClass, null, false, myContainmentVerifier) {
         @Override
         public Boolean isFixedAbstract(MemberInfo member) {
           return Boolean.TRUE;

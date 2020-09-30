@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
@@ -26,7 +25,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
@@ -193,21 +191,6 @@ public class RemoteConnectionBuilder {
     if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
       String versionString = jdk.getVersionString();
       throw new ExecutionException(JavaDebuggerBundle.message("error.unsupported.jdk.version", versionString));
-    }
-    if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
-      final VirtualFile homeDirectory = jdk.getHomeDirectory();
-      if (homeDirectory == null || !homeDirectory.isValid()) {
-        String versionString = jdk.getVersionString();
-        throw new ExecutionException(JavaDebuggerBundle.message("error.invalid.jdk.home", versionString));
-      }
-      File dllFile = new File(
-        homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll"
-      );
-      if (!dllFile.exists()) {
-        GetJPDADialog dialog = new GetJPDADialog();
-        dialog.show();
-        throw new ExecutionException(JavaDebuggerBundle.message("error.debug.libraries.missing"));
-      }
     }
   }
 

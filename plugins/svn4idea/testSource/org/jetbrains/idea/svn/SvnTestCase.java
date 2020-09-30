@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -34,6 +34,7 @@ import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -52,14 +53,13 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.RunAll.runAll;
-import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
-import static com.intellij.testFramework.UsefulTestCase.assertExists;
+import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -104,8 +104,14 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return getPluginHomePath("svn4idea");
   }
 
+  @BeforeClass
+  public static void assumeNotMacUnderTeamCity() {
+    String message = "Mac svn binaries are not added yet";
+    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac);
+  }
+
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
     resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
@@ -185,7 +191,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     new RunAll(
       () -> changeListManager.waitEverythingDoneInTestMode(),
       () -> runInEdtAndWait(this::tearDownProject),
@@ -229,12 +235,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   protected void undo() {
     runInEdtAndWait(() -> {
-      final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+      final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
         UndoManager.getInstance(myProject).undo(null);
       }
       finally {
-        Messages.setTestDialog(oldTestDialog);
+        TestDialogManager.setTestDialog(oldTestDialog);
       }
     });
   }

@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.AbstractBundle;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
@@ -188,7 +189,7 @@ public class FileParser {
   }
 
   @NotNull
-  private static String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
+  private static @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }
 }

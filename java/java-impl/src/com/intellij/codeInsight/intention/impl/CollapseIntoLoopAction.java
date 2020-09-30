@@ -57,7 +57,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
     return true;
   }
 
-  private static class LoopModel {
+  private static final class LoopModel {
     final @NotNull List<PsiExpression> myLoopElements;
     final @NotNull List<PsiExpression> myExpressionsToReplace;
     final @NotNull List<PsiStatement> myStatements;
@@ -140,7 +140,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
         last = cur;
       }
       if (start == null || step == null) return null;
-      // Prefer for(int x : new int[] {12, 17}) over for(int x = 12; x <= 17; x+= 5)  
+      // Prefer for(int x : new int[] {12, 17}) over for(int x = 12; x <= 17; x+= 5)
       if (myLoopElements.size() == 2 && step != 1L && step != -1L) return null;
       PsiElement parent = myStatements.get(0).getParent();
       boolean mustBeEffectivelyFinal = myExpressionsToReplace.stream()
@@ -171,7 +171,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
       PsiElement pos = file.findElementAt(offset);
       PsiStatement statement = PsiTreeUtil.getParentOfType(pos, PsiStatement.class, false, PsiMember.class, PsiCodeBlock.class);
       if (statement == null) return Collections.emptyList();
-      return StreamEx.iterate(statement, LoopModel::isAllowedStatement, 
+      return StreamEx.iterate(statement, LoopModel::isAllowedStatement,
                               st -> PsiTreeUtil.getNextSiblingOfType(st, PsiStatement.class)).toList();
     }
 

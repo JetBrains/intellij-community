@@ -19,18 +19,12 @@ import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable PsiElement psiElement) {
     final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(this, false);
@@ -40,12 +34,5 @@ abstract class XsltInspection extends LocalInspectionTool implements CustomSuppr
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     return InspectionUtil.isSuppressed(this, element);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return "XSLT";
   }
 }

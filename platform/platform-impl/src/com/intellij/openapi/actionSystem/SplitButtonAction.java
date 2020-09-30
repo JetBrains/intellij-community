@@ -186,7 +186,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       HelpTooltip.hide(this);
 
       if (mousePressType == MousePressType.Popup) {
-        showPopupMenu(event, myActionGroup);
+        showGroupInPopupMenu(event, myActionGroup);
       }
       else if (selectedActionEnabled()) {
         AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
@@ -195,7 +195,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
 
     @Override
-    protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+    protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {

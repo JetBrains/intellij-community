@@ -35,16 +35,15 @@ class MemoryAgentImpl implements MemoryAgent {
     return MemoryAgentOperations.estimateObjectsSizes(evaluationContext, references);
   }
 
-  @NotNull
   @Override
-  public ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ObjectReference reference,
-                                                   int limit) throws EvaluateException {
-    if (!myCapabilities.canGetReferringObjects()) {
-      throw new UnsupportedOperationException("Memory agent can't provide referring objects");
+  public @NotNull ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                 @NotNull ObjectReference reference,
+                                                                 int pathsNumber, int objectsNumber) throws EvaluateException {
+    if (!myCapabilities.canFindPathsToClosestGcRoots()) {
+      throw new UnsupportedOperationException("Memory agent can't provide paths to closest gc roots");
     }
 
-    return MemoryAgentOperations.findReferringObjects(evaluationContext, reference, limit);
+    return MemoryAgentOperations.findPathsToClosestGCRoots(evaluationContext, reference, pathsNumber, objectsNumber);
   }
 
   @NotNull

@@ -1,9 +1,12 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,11 @@ public interface PyFrameAccessor {
    *                                  or the corresponding array has more than two dimensions
    */
   ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException;
+
+  default DataViewerCommandResult executeDataViewerCommand(DataViewerCommandBuilder builder) throws PyDebuggerException {
+    Logger.getInstance(this.getClass()).warn("executeDataViewerCommand is not supported on this PyFrameAccessor");
+    return DataViewerCommandResult.NOT_IMPLEMENTED;
+  }
 
   @Nullable
   XSourcePosition getSourcePositionForName(@Nullable String name, @Nullable String parentType);

@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Advanced"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="advanced.panel.title"/>
         <children>
           <component id="843" class="javax.swing.JLabel">
             <constraints>
@@ -25,8 +25,8 @@
             </constraints>
             <properties>
               <labelFor value="7bf4e"/>
-              <text value="&amp;Value pattern:"/>
-              <toolTipText value="&lt;html&gt;Enter a regular expression that selects the parts of the tag's or attribute's value the language should be injected into.&lt;br&gt;The pattern should contain exactly one capturing group.&lt;/html&gt;"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="label.value.pattern"/>
+              <toolTipText resource-bundle="messages/IntelliLangBundle" key="advanced.panel.tooltip.regular.expression.html"/>
             </properties>
           </component>
           <component id="7bf4e" class="com.intellij.ui.EditorTextField" binding="myValuePattern" custom-create="true">
@@ -43,8 +43,8 @@
             </constraints>
             <properties>
               <labelFor value="a6f2"/>
-              <text value="&amp;XPath condition:"/>
-              <toolTipText value="&lt;html&gt;Enter an XPath expression that the tag/attribute must match additionally to the name-condition specified above.&lt;br&gt;This requires the XPathView plugin to be installed&lt;/html&gt;"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="advanced.panel.xpath.condition"/>
+              <toolTipText resource-bundle="messages/IntelliLangBundle" key="advanced.panel.tooltip.xpath.expression.html"/>
             </properties>
           </component>
           <component id="a6f2" class="com.intellij.ui.EditorTextField" binding="myXPathCondition" custom-create="true">
@@ -60,7 +60,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Single &amp;file"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="checkbox.single.file"/>
             </properties>
           </component>
         </children>

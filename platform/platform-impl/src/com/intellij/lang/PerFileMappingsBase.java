@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -28,7 +28,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,7 +275,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       }
 
       myDeferredMappings = null;
-      THashMap<String, T> valuesMap = new THashMap<>();
+      Map<String, T> valuesMap = new HashMap<>();
       for (T value : getAvailableValues()) {
         String key = serialize(value);
         if (key != null) {

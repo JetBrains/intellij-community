@@ -64,8 +64,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);

@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -121,8 +123,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void loadDevelopersList() {
     ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
-    Developers developers = configurable.getDeveloper();
-    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+    DeveloperList developers = configurable.getDeveloperList();
+    if (developers.isUpToDateAt()) {
       setDevelopers(developers);
     }
     else {
@@ -130,9 +132,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
+            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator));
             UIUtil.invokeLaterIfNeeded(() -> {
-              configurable.setDeveloper(updatedDevelopers);
+              configurable.setDeveloperList(updatedDevelopers);
               if (isShowing()) {
                 setDevelopers(updatedDevelopers);
               }
@@ -152,7 +154,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void setDevelopers(@Nullable Developers developers) {
+  private void setDevelopers(@Nullable DeveloperList developers) {
     if (developers != null) {
       myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
       myDevelopersTimestamp = developers.getTimestamp();
@@ -202,10 +204,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(0, 10), 0, 2));
-    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.insets(3, 0), 0, 0));
+    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(3, 10), 0, 2));
+    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
@@ -214,6 +216,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    ((ActionToolbarImpl)toolbar).setForceMinimumSize(true);
     return toolbar.getComponent();
   }
 
@@ -269,7 +272,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
-      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create("<none>", Developer::getDisplayText));
+      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create(DiagnosticBundle.message("errors.dialog.assignee.none"), Developer::getDisplayText));
       myAssigneeCombo.setPrototypeDisplayValue(new Developer(0, StringUtil.repeatSymbol('-', 30)));
       myAssigneeCombo.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -283,6 +286,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
+    //noinspection HardCodedStringLiteral,DialogTitleCapitalization
     myCredentialsLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         ErrorReportSubmitter submitter = selectedCluster().submitter;
@@ -749,7 +753,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ClearErrorsAction extends AbstractAction {
+  private final class ClearErrorsAction extends AbstractAction {
     private ClearErrorsAction() {
       super(DiagnosticBundle.message("error.dialog.clear.all.action"));
     }
@@ -761,7 +765,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class AnalyzeAction extends AbstractAction {
+  private final class AnalyzeAction extends AbstractAction {
     private final AnAction myAnalyze;
 
     private AnalyzeAction(AnAction analyze) {
@@ -782,7 +786,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static class AttachmentsList extends CheckBoxList<String> {
     private boolean myEditable = true;
 
-    private void addItem(String item, boolean selected) {
+    private void addItem(@NlsContexts.Checkbox String item, boolean selected) {
       addItem(item, item + "  ", selected);
     }
 

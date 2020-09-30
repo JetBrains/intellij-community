@@ -1,6 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.groupBy;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.map2MapNotNull;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static git4idea.commands.GitAuthenticationMode.NONE;
+import static git4idea.commands.GitAuthenticationMode.SILENT;
+import static git4idea.config.GitIncomingCheckStrategy.Auto;
+import static git4idea.config.GitIncomingCheckStrategy.Never;
+import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
+import static git4idea.repo.GitRefUtil.getResolvedHashes;
+import static java.util.stream.Collectors.toSet;
+import static one.util.streamex.StreamEx.of;
+
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +30,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -27,34 +42,40 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitAuthenticationListener;
+import git4idea.commands.GitAuthenticationMode;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
-import git4idea.repo.*;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRefUtil;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
+import git4idea.repo.GitRepositoryManager;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.commands.GitAuthenticationMode.NONE;
-import static git4idea.commands.GitAuthenticationMode.SILENT;
-import static git4idea.config.GitIncomingCheckStrategy.Auto;
-import static git4idea.config.GitIncomingCheckStrategy.Never;
-import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
-import static git4idea.repo.GitRefUtil.getResolvedHashes;
-import static java.util.stream.Collectors.toSet;
-import static one.util.streamex.StreamEx.of;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
 
@@ -151,7 +172,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void stopScheduling() {
     if (myPeriodicalUpdater != null) {
       myPeriodicalUpdater.cancel(true);

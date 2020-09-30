@@ -84,20 +84,23 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     int textLength = text.length();
     if (BasePasteHandler.isContentTooLarge(textLength)) throw new TooLargeContentException(textLength);
 
-    if (editor.getCaretModel().supportsMultipleCarets()) {
+    CaretModel caretModel = editor.getCaretModel();
+    if (caretModel.supportsMultipleCarets()) {
       CaretStateTransferableData caretData = null;
-      int caretCount = editor.getCaretModel().getCaretCount();
+      int caretCount = caretModel.getCaretCount();
       if (caretCount == 1 && editor.isColumnMode()) {
         int pastedLineCount = LineTokenizer.calcLineCount(text, true);
-        EditorModificationUtil.deleteSelectedText(editor);
-        Caret caret = editor.getCaretModel().getPrimaryCaret();
-        for (int i = 0; i < pastedLineCount - 1; i++) {
-          caret = caret.clone(false);
-          if (caret == null) {
-            break;
+        if (pastedLineCount <= caretModel.getMaxCaretCount()) {
+          EditorModificationUtil.deleteSelectedText(editor);
+          Caret caret = caretModel.getPrimaryCaret();
+          for (int i = 0; i < pastedLineCount - 1; i++) {
+            caret = caret.clone(false);
+            if (caret == null) {
+              break;
+            }
           }
+          caretCount = caretModel.getCaretCount();
         }
-        caretCount = editor.getCaretModel().getCaretCount();
       }
       else {
         caretData = CaretStateTransferableData.getFrom(content);
@@ -105,7 +108,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
       final int[] index = {0};
-      editor.getCaretModel().runForEachCaret(caret -> {
+      caretModel.runForEachCaret(caret -> {
         String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
         normalizedText = trimTextIfNeeded(editor, normalizedText);
         int caretOffset = caret.getOffset();
@@ -115,7 +118,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       return ranges;
     }
     else {
-      int caretOffset = editor.getCaretModel().getOffset();
+      int caretOffset = caretModel.getOffset();
       String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
       normalizedText = trimTextIfNeeded(editor, normalizedText);
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);

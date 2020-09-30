@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -393,7 +394,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public String getLabel() {
-    return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    @NlsSafe String label = calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    return label;
   }
 
   public ValueDescriptorImpl getFullValueDescriptor() {

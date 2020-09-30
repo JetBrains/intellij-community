@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
 * @author peter
@@ -35,21 +36,24 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   @Nullable private final MemberLookupHelper myHelper;
   private final Color myColor;
   private final String myTailText;
+  private final boolean myNegatable;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
   private String myForcedQualifier;
 
   public VariableLookupItem(PsiVariable var) {
-    super(var, var.getName());
-    myHelper = null;
-    myColor = getInitializerColor(var);
-    myTailText = getInitializerText(var);
+    this(var, null);
   }
 
   public VariableLookupItem(PsiField field, boolean shouldImport) {
-    super(field, field.getName());
-    myHelper = new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false);
-    myColor = getInitializerColor(field);
-    myTailText = getInitializerText(field);
+    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false));
+  }
+
+  private VariableLookupItem(@NotNull PsiVariable var, @Nullable MemberLookupHelper helper) {
+    super(var, Objects.requireNonNull(var.getName()));
+    myHelper = helper;
+    myColor = getInitializerColor(var);
+    myTailText = getInitializerText(var);
+    myNegatable = PsiType.BOOLEAN.isAssignableFrom(var.getType());
   }
 
   @ApiStatus.Internal
@@ -171,6 +175,10 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
   }
 
+  public boolean isNegatable() {
+    return myNegatable;
+  }
+
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     PsiVariable variable = getObject();
@@ -229,7 +237,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
-    else if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(variable.getType())) {
+    else if (completionChar == '!' && myNegatable) {
       context.setAddCompletionChar(false);
       if (ref != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);

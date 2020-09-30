@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +178,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
 
   private class PrintablesWrapper {
 
-    private static final String HYPERLINK = "hyperlink";
+    private static final @NonNls String HYPERLINK = "hyperlink";
 
     private File myFile;
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();

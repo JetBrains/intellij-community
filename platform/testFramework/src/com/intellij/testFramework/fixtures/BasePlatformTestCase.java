@@ -16,7 +16,10 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 /**
  * Base class for light tests.
@@ -97,21 +100,17 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
    }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (isWriteActionRequired()) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> doRunTests());
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      doRunTests();
+      super.runTestRunnable(testRunnable);
     }
   }
 
   protected boolean isWriteActionRequired() {
     return false;
-  }
-
-  protected void doRunTests() throws Throwable {
-    super.runTest();
   }
 
   protected Project getProject() {

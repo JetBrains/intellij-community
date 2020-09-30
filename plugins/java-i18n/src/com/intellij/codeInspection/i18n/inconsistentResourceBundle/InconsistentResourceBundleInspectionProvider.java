@@ -19,6 +19,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public interface InconsistentResourceBundleInspectionProvider {
   @NotNull
   String getName();
 
-  @NotNull
+  @NotNull @NlsContexts.Checkbox
   String getPresentableName();
 
   void check(BidirectionalMap<PropertiesFile, PropertiesFile> parents,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ class MyBaseLanguage extends Language {
   }
 }
 
-class MyTestLanguage extends Language {
+final class MyTestLanguage extends Language {
 
   public static final Language INSTANCE = new MyTestLanguage();
 
@@ -33,7 +33,7 @@ class MyTestLanguage extends Language {
   }
 }
 
-class MyTestLanguage2 extends Language {
+final class MyTestLanguage2 extends Language {
 
   public static final Language INSTANCE = new MyTestLanguage2();
 
@@ -42,7 +42,7 @@ class MyTestLanguage2 extends Language {
   }
 }
 
-class MyMetaLanguage extends MetaLanguage {
+final class MyMetaLanguage extends MetaLanguage {
 
   public static final MetaLanguage INSTANCE = new MyMetaLanguage();
 

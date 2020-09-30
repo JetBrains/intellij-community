@@ -12,13 +12,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ReplaceAssertEqualsFix extends InspectionGadgetsFix {
   @NotNull
   private final String myMethodName;
 
-  ReplaceAssertEqualsFix(@NotNull String methodName) {
+  ReplaceAssertEqualsFix(@NotNull @NonNls String methodName) {
     myMethodName = methodName;
   }
 

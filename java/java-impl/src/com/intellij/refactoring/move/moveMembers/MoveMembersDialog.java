@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -258,7 +259,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   @Nullable
-  private String validateInputData() {
+  private @NlsContexts.DialogMessage String validateInputData() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
     if (fqName != null && fqName.isEmpty()) {

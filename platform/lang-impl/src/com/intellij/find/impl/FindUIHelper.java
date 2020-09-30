@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -175,7 +176,7 @@ public class FindUIHelper implements Disposable {
     findSettings.setFileMask(myModel.getFileFilter());
   }
 
-  String getTitle() {
+  @Nls String getTitle() {
     if (myModel.isReplaceState()){
       return myModel.isMultipleFiles()
              ? FindBundle.message("find.replace.in.project.dialog.title")

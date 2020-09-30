@@ -56,7 +56,7 @@ public class CreateRendererAction extends AnAction {
         DebuggerUIUtil.invokeLater(() -> {
           final UserRenderersConfigurable ui = new UserRenderersConfigurable();
           ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings> configurable =
-            new ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings>(
+            new ConfigurableBase<>(
               "reference.idesettings.debugger.typerenderers",
               JavaDebuggerBundle.message("user.renderers.configurable.display.name"),
               "reference.idesettings.debugger.typerenderers") {

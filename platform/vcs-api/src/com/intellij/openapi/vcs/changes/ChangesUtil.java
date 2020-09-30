@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -83,21 +84,25 @@ public final class ChangesUtil {
     return false;
   }
 
-  @Nullable
-  public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
-    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
-
-    return result != null ? result : ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+  public static @Nullable AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
-  @NotNull
-  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
-    return ContainerUtil.map2SetNotNull(changes, change -> getVcsForChange(change, project));
+  public static @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
   @NotNull
   public static Set<AbstractVcs> getAffectedVcsesForFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
-    return ContainerUtil.map2SetNotNull(files, file -> getVcsForFile(file, project));
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return ContainerUtil.map2SetNotNull(files, file -> vcsManager.getVcsFor(file));
+  }
+
+  @NotNull
+  public static Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files, @NotNull Project project) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return ContainerUtil.map2SetNotNull(files, file -> vcsManager.getVcsFor(file));
   }
 
   @Nullable
@@ -244,7 +249,7 @@ public final class ChangesUtil {
     });
   }
 
-  public static @Nullable String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
+  public static @Nullable @NlsSafe String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
     if (fileName == null) {
       return null;
     }
@@ -277,12 +282,12 @@ public final class ChangesUtil {
   public static <T> void processItemsByVcs(@NotNull Collection<? extends T> items,
                                            @NotNull VcsSeparator<? super T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
-      () -> StreamEx.<T>of(items)
+    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(() -> {
+      return StreamEx.<T>of(items)
         .mapToEntry(separator::getVcsFor, identity())
         .nonNullKeys()
-        .grouping()
-    );
+        .grouping();
+    });
 
     changesByVcs.forEach(processor::process);
   }
@@ -296,7 +301,12 @@ public final class ChangesUtil {
   public static void processVirtualFilesByVcs(@NotNull Project project,
                                               @NotNull Collection<? extends VirtualFile> files,
                                               @NotNull PerVcsProcessor<VirtualFile> processor) {
-    processItemsByVcs(files, file -> getVcsForFile(file, project), processor);
+    if (files.isEmpty()) {
+      return;
+    }
+
+    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
+    processItemsByVcs(files, file -> projectLevelVcsManager.getVcsFor(file), processor);
   }
 
   public static void processFilePathsByVcs(@NotNull Project project,
@@ -311,9 +321,13 @@ public final class ChangesUtil {
   }
 
   public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {
-    return changes.stream()
-      .map(ChangesUtil::getFilePath)
-      .anyMatch(path -> !path.isDirectory());
+    for (Change change : changes) {
+      FilePath path = getFilePath(change);
+      if (!path.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void markInternalOperation(@NotNull Iterable<? extends Change> changes, boolean set) {

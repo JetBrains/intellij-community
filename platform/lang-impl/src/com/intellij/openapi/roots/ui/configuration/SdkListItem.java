@@ -1,20 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
 public abstract class SdkListItem {
-  private SdkListItem() {}
+  private SdkListItem() { }
 
   /**
    * A class the represents a reference to an {@link Sdk}. Is it up to
@@ -22,38 +22,23 @@ public abstract class SdkListItem {
    * of that type.
    */
   public static final class SdkReferenceItem extends SdkListItem {
-    private final SdkType mySdkType;
-    private final String myName;
-    private final String myVersionString;
-    private final boolean myHasValidPath;
+    public final @NotNull SdkType sdkType;
+    public final @NotNull String name;
+    public final @NlsSafe @Nullable String versionString;
+    public final boolean hasValidPath;
 
-    SdkReferenceItem(@NotNull SdkType sdkType,
-                     @NotNull String name,
-                     @Nullable String versionString,
-                     boolean hasValidPath) {
-      mySdkType = sdkType;
-      myName = name;
-      myVersionString = versionString;
-      myHasValidPath = hasValidPath;
+    SdkReferenceItem(@NotNull SdkType sdkType, @NotNull String name, @Nullable String versionString, boolean hasValidPath) {
+      this.sdkType = sdkType;
+      this.name = name;
+      this.versionString = versionString;
+      this.hasValidPath = hasValidPath;
     }
 
-    @NotNull
-    public SdkType getSdkType() {
-      return mySdkType;
-    }
-
-    @NotNull
-    public String getName() {
-      return myName;
-    }
-
-    @Nullable
-    public String getVersionString() {
-      return myVersionString;
-    }
-
-    public boolean isValid() {
-      return myHasValidPath;
+    /** @deprecated use {@link #name} */
+    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
+    @Deprecated
+    public @NotNull String getName() {
+      return name;
     }
 
     @Override
@@ -61,39 +46,37 @@ public abstract class SdkListItem {
       if (this == o) return true;
       if (!(o instanceof SdkReferenceItem)) return false;
       SdkReferenceItem item = (SdkReferenceItem)o;
-      return mySdkType.equals(item.mySdkType) &&
-             myName.equals(item.myName);
+      return sdkType.equals(item.sdkType) && name.equals(item.name);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(mySdkType, myName);
+      return Objects.hash(sdkType, name);
     }
   }
 
-  public static abstract class SdkItem extends SdkListItem {
-    private final Sdk mySdk;
+  public abstract static class SdkItem extends SdkListItem {
+    public final @NotNull Sdk sdk;
 
     SdkItem(@NotNull Sdk sdk) {
-      mySdk = sdk;
+      this.sdk = sdk;
     }
 
-    @NotNull
-    public final Sdk getSdk() {
-      return mySdk;
+    /** @deprecated use {@link #sdk} */
+    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
+    @Deprecated
+    public @NotNull Sdk getSdk() {
+      return sdk;
     }
 
     @Override
     public final boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof SdkItem)) return false;
-      SdkItem item = (SdkItem)o;
-      return mySdk.equals(item.mySdk);
+      return this == o || o instanceof SdkItem && sdk.equals(((SdkItem)o).sdk);
     }
 
     @Override
     public final int hashCode() {
-      return Objects.hash(mySdk);
+      return sdk.hashCode();
     }
 
     abstract boolean hasSameSdk(@NotNull Sdk value);
@@ -124,100 +107,63 @@ public abstract class SdkListItem {
   }
 
   public static final class InvalidSdkItem extends SdkListItem {
-    private final String mySdkName;
+    public final @NotNull String sdkName;
 
     InvalidSdkItem(@NotNull String name) {
-      mySdkName = name;
-    }
-
-    @NotNull
-    public String getSdkName() {
-      return mySdkName;
+      sdkName = name;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof InvalidSdkItem)) return false;
-      InvalidSdkItem item = (InvalidSdkItem)o;
-      return mySdkName.equals(item.mySdkName);
+      return this == o || o instanceof InvalidSdkItem && sdkName.equals(((InvalidSdkItem)o).sdkName);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(mySdkName);
+      return sdkName.hashCode();
     }
   }
 
   public static final class SuggestedItem extends SdkListItem {
-    private final SdkType mySdkType;
-    private final String myHomePath;
-    private final String myVersion;
+    public final @NotNull SdkType sdkType;
+    public final @NlsSafe String version;
+    public final @NotNull String homePath;
 
-    SuggestedItem(@NotNull SdkType sdkType, @NotNull String version, @NotNull String homePath) {
-      mySdkType = sdkType;
-      myHomePath = homePath;
-      myVersion = version;
-    }
-
-    @NotNull
-    public SdkType getSdkType() {
-      return mySdkType;
-    }
-
-    @NotNull
-    public String getHomePath() {
-      return myHomePath;
-    }
-
-    @NotNull
-    public String getVersion() {
-      return myVersion;
+    SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
+      this.sdkType = sdkType;
+      this.version = version;
+      this.homePath = homePath;
     }
   }
 
-  public enum ActionRole {
-    DOWNLOAD, ADD
-  }
+  public enum ActionRole {DOWNLOAD, ADD}
 
   public static final class ActionItem extends SdkListItem {
-    @Nullable final GroupItem myGroup;
-    @NotNull final ActionRole myRole;
-    @NotNull final NewSdkAction myAction;
+    public final @NotNull ActionRole role;
+    public final @NotNull NewSdkAction action;
+    public final @Nullable GroupItem group;
 
     ActionItem(@NotNull ActionRole role, @NotNull NewSdkAction action, @Nullable GroupItem group) {
-      myRole = role;
-      myAction = action;
-      myGroup = group;
+      this.role = role;
+      this.action = action;
+      this.group = group;
     }
 
-    @NotNull
-    public ActionRole getRole() {
-      return myRole;
-    }
-
-    @NotNull
-    public NewSdkAction getAction() {
-      return myAction;
-    }
-
-    @NotNull
-    ActionItem withGroup(@NotNull GroupItem group) {
-      return new ActionItem(myRole, myAction, group);
+    @Contract(pure = true)
+    @NotNull ActionItem withGroup(@NotNull GroupItem group) {
+      return new ActionItem(role, action, group);
     }
   }
 
   public static final class GroupItem extends SdkListItem {
-    final Icon myIcon;
-    final String myCaption;
-    final List<? extends SdkListItem> mySubItems;
+    public final @NotNull Icon icon;
+    public final @Nls @NotNull String caption;
+    public final @NotNull List<? extends SdkListItem> subItems;
 
-    GroupItem(@NotNull Icon icon,
-              @NotNull String caption,
-              @NotNull List<ActionItem> subItems) {
-      myIcon = icon;
-      myCaption = caption;
-      mySubItems = ImmutableList.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));
+    GroupItem(@NotNull Icon icon, @Nls @NotNull String caption, @NotNull List<ActionItem> subItems) {
+      this.icon = icon;
+      this.caption = caption;
+      this.subItems = ImmutableList.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));
     }
   }
 }

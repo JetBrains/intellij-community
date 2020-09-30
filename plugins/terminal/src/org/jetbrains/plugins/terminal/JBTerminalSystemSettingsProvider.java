@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TtyConnector;
+import org.jetbrains.annotations.NotNull;
 
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
   @Override
@@ -22,6 +25,14 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
     }
   }
 
+  public @NlsSafe String getTabName(@NotNull JBTerminalWidget terminalWidget) {
+    TtyConnector connector = terminalWidget.getTtyConnector();
+    if (connector instanceof PtyProcessTtyConnector) {
+      // use name from settings for local terminal
+      return TerminalOptionsProvider.getInstance().getTabName();
+    }
+    return terminalWidget.getSessionName();
+  }
 
   @Override
   public boolean audibleBell() {

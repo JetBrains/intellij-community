@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import javax.swing.Icon
@@ -31,7 +32,7 @@ object LocalAttachHostPresentationGroup: XAttachPresentationGroup<XAttachHost> {
   }
 
   override fun getItemDisplayText(project: Project, info: XAttachHost, dataHolder: UserDataHolder): String {
-    return "Local Host"
+    return XDebuggerBundle.message("xdebugger.attach.local.host")
   }
 
   override fun compare(o1: XAttachHost?, o2: XAttachHost?): Int {

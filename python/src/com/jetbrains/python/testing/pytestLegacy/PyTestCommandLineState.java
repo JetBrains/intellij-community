@@ -7,11 +7,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.run.PythonScriptExecution;
+import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +53,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected void addAfterParameters(GeneralCommandLine cmd)  {
+  protected void addAfterParameters(GeneralCommandLine cmd) {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     String params = myConfiguration.getParams();
@@ -62,7 +65,25 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     if (!StringUtil.isEmptyOrSpaces(keywords)) {
       script_params.addParameter("-k " + keywords);
     }
+  }
 
+  @Override
+  protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) {
+    testScriptExecution.addParameters("-p", "pytest_teamcity");
+  }
+
+  @Override
+  protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                    @NotNull PythonScriptExecution testScriptExecution) {
+    String params = myConfiguration.getParams();
+    if (!StringUtil.isEmptyOrSpaces(params)) {
+      PythonScripts.addParametersString(testScriptExecution, params);
+    }
+
+    String keywords = myConfiguration.getKeywords();
+    if (!StringUtil.isEmptyOrSpaces(keywords)) {
+      testScriptExecution.addParameter("-k " + keywords);
+    }
   }
 
   @Override

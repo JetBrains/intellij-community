@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -69,7 +69,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
            myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isApplicable(file));
   }
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends JPanel {
     private OptionsPanel() {
       super(new BorderLayout());
       final Splitter mainPanel = new Splitter(true);

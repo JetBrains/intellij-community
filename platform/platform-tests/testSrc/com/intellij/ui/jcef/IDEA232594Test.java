@@ -50,8 +50,9 @@ public class IDEA232594Test {
     JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
     jsQuery.addHandler(result -> {
       CALLBACL_COUNT.incrementAndGet();
-      System.out.println("JBCefJSQuery result: " + result);
-      browser.loadHTML("about:blank");
+      String str = "JBCefJSQuery result: " + result;
+      System.out.println(str);
+      browser.loadHTML("<html><body>" + str + "</body></html>");
       return null;
     });
 

@@ -4,9 +4,7 @@ package com.intellij.lang.ant
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newBooleanMetric
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.ant.config.AntConfiguration
 import com.intellij.openapi.project.Project

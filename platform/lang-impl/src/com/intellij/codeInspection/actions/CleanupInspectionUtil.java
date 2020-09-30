@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public interface CleanupInspectionUtil {
   }
 
   default AbstractPerformFixesTask applyFixes(@NotNull Project project,
-                                              @NotNull String presentationText,
+                                              @NotNull @Nls String presentationText,
                                               @NotNull List<? extends ProblemDescriptor> descriptions,
                                               @Nullable Class<?> quickfixClass,
                                               boolean startInWriteAction) {

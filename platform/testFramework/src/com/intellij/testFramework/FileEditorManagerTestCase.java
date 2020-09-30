@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,19 +47,19 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    Project project = getProject();
     RunAll.runAll(
-      () -> {
-        myManager.closeAllFiles();
-        EditorHistoryManager.getInstance(getProject()).removeAllFiles();
-        ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
-      },
+      () -> myManager.closeAllFiles(),
+      () -> { if (project != null) EditorHistoryManager.getInstance(project).removeAllFiles(); },
+      () -> ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders(),
       () -> Disposer.dispose(myManager),
       () -> {
         myManager = null;
-
-        DockManager dockManager = getProject().getServiceIfCreated(DockManager.class);
-        Set<DockContainer> containers = dockManager == null ? Collections.emptySet() : dockManager.getContainers();
-        assertEmpty(containers);
+        if (project != null) {
+          DockManager dockManager = project.getServiceIfCreated(DockManager.class);
+          Set<DockContainer> containers = dockManager == null ? Collections.emptySet() : dockManager.getContainers();
+          assertEmpty(containers);
+        }
       },
       () -> super.tearDown()
     );

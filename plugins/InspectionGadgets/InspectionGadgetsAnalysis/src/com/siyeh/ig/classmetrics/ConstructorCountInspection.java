@@ -22,6 +22,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class ConstructorCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  protected String getConfigurationLabel() {
+  protected @Nls String getConfigurationLabel() {
     return InspectionGadgetsBundle.message("too.many.constructors.count.limit.option");
   }
 

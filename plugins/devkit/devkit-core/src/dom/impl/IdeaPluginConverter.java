@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +23,10 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class IdeaPluginConverter extends IdeaPluginConverterBase {
-
+public final class IdeaPluginConverter extends IdeaPluginConverterBase {
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> plugin.hasRealPluginId();
 
   @Override
@@ -40,7 +39,7 @@ public class IdeaPluginConverter extends IdeaPluginConverterBase {
   @NotNull
   @Override
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    final THashSet<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       for (PluginModule module : ideaPlugin.getModules()) {
         ContainerUtil.addIfNotNull(result, module.getValue().getValue());

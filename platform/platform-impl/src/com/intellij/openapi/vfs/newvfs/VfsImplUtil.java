@@ -7,26 +7,29 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.Function;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
@@ -91,10 +94,12 @@ public final class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return pair(null, last);
+      if (file == null) {
+        return new Pair<>(null, last);
+      }
     }
 
-    return pair(file, null);
+    return new Pair<>(file, null);
   }
 
   @Nullable
@@ -144,7 +149,7 @@ public final class VfsImplUtil {
     }
 
     Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return pair(root, parts);
+    return new Pair<>(root, parts);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -156,18 +161,18 @@ public final class VfsImplUtil {
 
   /**
    * Guru method for force synchronous file refresh.
-   *
+   * <p>
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
-   *
+   * <p>
    * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
-   *
+   * <p>
    * Likely you need this method if you have following code:
    *
    * <code>
-   *  FileDocumentManager.getInstance().saveDocument(document);
-   *  runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
-   *  VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
+   * FileDocumentManager.getInstance().saveDocument(document);
+   * runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
+   * VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
    * </code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
@@ -176,8 +181,9 @@ public final class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY); // guarded by ourLock
-  private static final Map<String, Set<String>> ourDominatorsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap();
+    // guarded by ourLock
+  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap();
 
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
@@ -193,11 +199,11 @@ public final class VfsImplUtil {
 
       if (record == null) {
         handler = producer.fun(localPath);
-        record = pair(vfs, handler);
+        record = new Pair<>(vfs, handler);
         ourHandlerCache.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
-          Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> new THashSet<>());
+          Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> new HashSet<>());
           handlers.add(localPath);
         });
       }
@@ -290,12 +296,45 @@ public final class VfsImplUtil {
     return state;
   }
 
+  /**
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(Path)}.
+   * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
+   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
+   * Otherwise, return null.
+   */
+  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName, @Nullable Path computedChildPath) {
+    if (!((VirtualDirectoryImpl)parent).isChildrenCaseSensitivityKnown() && FileSystemUtil.isCaseToggleable(childName)) {
+      if (computedChildPath == null) {
+        try {
+          computedChildPath = Paths.get(parent.getPath(), childName);
+        }
+        catch (InvalidPathException e) {
+          VfsEventGenerationHelper.LOG.warn("Invalid child name: '" + childName + "'", e);
+        }
+      }
+      if (computedChildPath != null) {
+        FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(computedChildPath);
+        if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
+          if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+            // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
+            return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                                FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
+          }
+          else {
+            PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private static class InvalidationState {
     private Set<Pair<String, ArchiveFileSystem>> myRootsToRefresh;
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
       if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
-      myRootsToRefresh.add(pair(path, vfs));
+      myRootsToRefresh.add(new Pair<>(path, vfs));
     }
 
     private void scheduleRefresh() {
@@ -325,7 +364,8 @@ public final class VfsImplUtil {
    * For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" events.
    */
   @NotNull
-  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
+  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event,
+                                                                @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {

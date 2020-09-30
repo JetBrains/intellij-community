@@ -842,7 +842,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
     return elements.length == 0 ? Collections.emptyListIterator() : new COWIterator(elements, index);
   }
 
-  private class COWIterator implements ListIterator<E> {
+  private final class COWIterator implements ListIterator<E> {
     /**
      * Snapshot of the array
      */

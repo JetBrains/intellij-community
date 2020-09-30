@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.progress
 
+import com.intellij.build.BuildWorkspaceConfiguration
 import com.intellij.compiler.BaseCompilerTestCase
+import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.compiler.CompileStatusNotification
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -66,8 +71,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
       assertThat(output).startsWith("Clearing build system data...\n" +
                                     "Executing pre-compile tasks...\n" +
-                                    "Loading Ant Configuration...\n" +
-                                    "Running Ant Tasks...\n" +
+                                    "Loading Ant configuration...\n" +
+                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories...\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -80,8 +85,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant Configuration...\n" +
-                                  "Running Ant Tasks...\n" +
+                                  "Loading Ant configuration...\n" +
+                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
 
@@ -89,8 +94,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
       assertThat(output).startsWith("Executing pre-compile tasks...\n" +
-                                    "Loading Ant Configuration...\n" +
-                                    "Running Ant Tasks...\n" +
+                                    "Loading Ant configuration...\n" +
+                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories...\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -103,8 +108,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant Configuration...\n" +
-                                  "Running Ant Tasks...\n" +
+                                  "Loading Ant configuration...\n" +
+                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
   }
@@ -113,6 +118,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     val file = createFile("src/A.java", "public class A a{}foo")
     val srcRoot = file.parent
     val module = addModule("a", srcRoot)
+
     build(module, true)
     buildViewTestFixture.assertBuildViewTreeEquals(
       "-\n" +
@@ -121,7 +127,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
       "   '{' expected\n" +
       "   reached end of file while parsing"
     )
-
     rebuildProject(true)
     buildViewTestFixture.assertBuildViewTreeEquals(
       "-\n" +
@@ -139,6 +144,50 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
       "   '{' expected\n" +
       "   reached end of file while parsing"
     )
+  }
+
+  fun `test build workspace settings sync`() {
+    val workspaceConfiguration = myProject.service<CompilerWorkspaceConfiguration>()
+    val oldAutoShowErrorsInEditor = workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR
+
+    assertEquals(oldAutoShowErrorsInEditor, myProject.service<BuildWorkspaceConfiguration>().isShowFirstErrorInEditor)
+    try {
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = false
+      assertFalse(myProject.service<BuildWorkspaceConfiguration>().isShowFirstErrorInEditor)
+
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = true
+      assertTrue(myProject.service<BuildWorkspaceConfiguration>().isShowFirstErrorInEditor)
+    } finally {
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = oldAutoShowErrorsInEditor
+    }
+  }
+
+  fun `test build autoShowFirstError`() {
+    val workspaceConfiguration = myProject.service<CompilerWorkspaceConfiguration>()
+    val oldAutoShowErrorsInEditor = workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR
+
+    try {
+      val file = createFile("src/A.java", "public class A a{}foo")
+      val srcRoot = file.parent
+      val module = addModule("a", srcRoot)
+
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = false
+      build(module, true)
+
+      val fileEditorManager = FileEditorManager.getInstance(myProject)
+      assertThat(fileEditorManager.selectedFiles).isEmpty()
+      assertNull(fileEditorManager.selectedEditor)
+
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = true
+      rebuildProject(true)
+
+      assertThat(fileEditorManager.selectedFiles).containsExactly(file)
+      val logicalPosition = (fileEditorManager.selectedEditor as TextEditor).editor.caretModel.logicalPosition
+      assertEquals(0, logicalPosition.line)
+      assertEquals(14, logicalPosition.column)
+    } finally {
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = oldAutoShowErrorsInEditor
+    }
   }
 
   private fun build(module: Module, errorsExpected: Boolean = false): CompilationLog? {

@@ -64,7 +64,7 @@ public class AssignmentToNullInspection extends BaseInspection {
     if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
       return null;
     }
-    return new DelegatingFix(new AddAnnotationPsiFix(annotation, variable, PsiNameValuePair.EMPTY_ARRAY));
+    return new DelegatingFix(new AddAnnotationPsiFix(annotation, variable));
   }
 
   @Override

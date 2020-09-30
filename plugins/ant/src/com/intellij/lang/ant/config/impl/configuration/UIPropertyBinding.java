@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.util.Factory;
@@ -12,6 +12,8 @@ import com.intellij.util.config.ListProperty;
 import com.intellij.util.config.StorageProperty;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,8 +51,8 @@ public abstract class UIPropertyBinding {
 
   public abstract void addAllPropertiesTo(Collection<? super AbstractProperty> properties);
 
-  public static class Composite extends UIPropertyBinding {
-    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
+  public static final class Composite extends UIPropertyBinding {
+    private final List<UIPropertyBinding> myBindings = new ArrayList<>();
 
     public void bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
@@ -61,7 +63,7 @@ public abstract class UIPropertyBinding {
       myBindings.add(new IntTextBinding(textComponent, property));
     }
 
-    public TextBinding bindString(JTextComponent textComponent, AbstractProperty<String> property) {
+    public TextBinding bindString(JTextComponent textComponent, AbstractProperty<@Nls String> property) {
       TextBinding textBinding = new TextBinding(textComponent, property);
       myBindings.add(textBinding);
       return textBinding;
@@ -88,7 +90,7 @@ public abstract class UIPropertyBinding {
       }
     }
 
-    public void bindString(JComboBox comboBox, AbstractProperty<String> property) {
+    public void bindString(JComboBox comboBox, AbstractProperty<@Nls String> property) {
       myBindings.add(new ComboBoxBinding(comboBox, property));
     }
 
@@ -129,8 +131,8 @@ public abstract class UIPropertyBinding {
       return binding;
     }
 
-    public void bindString(JLabel label, AbstractProperty<String> property) {
-      addBinding(new ComponentBinding<JLabel, AbstractProperty<String>>(label, property) {
+    public void bindString(JLabel label, AbstractProperty<@Nls String> property) {
+      addBinding(new ComponentBinding<JLabel, AbstractProperty<@Nls String>>(label, property) {
         @Override
         public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
           getComponent().setText(getProperty().get(container));
@@ -206,7 +208,7 @@ public abstract class UIPropertyBinding {
     public static final ListenerInstaller<JToggleButton, ItemListener> TOGGLE_BUTTON =
       new ListenerInstaller<JToggleButton, ItemListener>() {
         @Override
-        public ItemListener create(final PropertyChangeSupport changeSupport, final String propertyName) {
+        public ItemListener create(final PropertyChangeSupport changeSupport, final @NonNls String propertyName) {
           return new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -226,7 +228,7 @@ public abstract class UIPropertyBinding {
         }
       };
 
-    public abstract Listener create(PropertyChangeSupport changeSupport, String propertyName);
+    public abstract Listener create(PropertyChangeSupport changeSupport, @NonNls String propertyName);
 
     public abstract void setListener(Comp component, Listener documentListener);
 
@@ -235,7 +237,7 @@ public abstract class UIPropertyBinding {
     public final static ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
       new ListenerInstaller<JTextComponent, DocumentListener>() {
         @Override
-        public DocumentListener create(final PropertyChangeSupport changeSupport, final String propertyName) {
+        public DocumentListener create(final PropertyChangeSupport changeSupport, final @NonNls String propertyName) {
           return new DocumentAdapter() {
             @Override
             protected void textChanged(@NotNull DocumentEvent e) {
@@ -261,9 +263,9 @@ public abstract class UIPropertyBinding {
     private final ListenerInstaller<Comp, Listener> myInstaller;
     private final PropertyChangeSupport myChangeSupport;
     private Listener myChangeListener = null;
-    private final String myPropertyName;
+    private final @NonNls String myPropertyName;
 
-    ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, String propertyName) {
+    ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, @NonNls String propertyName) {
       myComponent = component;
       myPropertyName = propertyName;
       myChangeSupport = new PropertyChangeSupport(myPropertyName);
@@ -272,7 +274,7 @@ public abstract class UIPropertyBinding {
 
     public static <Comp extends JComponent, Listener> ChangeValueSupport create(Comp component,
                                                                                 ListenerInstaller<Comp, Listener> installer,
-                                                                                String propertyName) {
+                                                                                @NonNls String propertyName) {
       return new ChangeValueSupport<>(component, installer, propertyName);
     }
 
@@ -299,10 +301,10 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class TextBinding extends ComponentBinding<JTextComponent, AbstractProperty<String>> {
+  public static class TextBinding extends ComponentBinding<JTextComponent, AbstractProperty<@Nls String>> {
     private final ChangeValueSupport myChangeSupport;
 
-    public TextBinding(JTextComponent textComponent, AbstractProperty<String> property) {
+    public TextBinding(JTextComponent textComponent, AbstractProperty<@Nls String> property) {
       super(textComponent, property);
       myChangeSupport = ChangeValueSupport.create(textComponent, ListenerInstaller.TEXT_LISTENER_INSTALLER, property.getName());
     }
@@ -356,7 +358,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
+  public static final class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
     private final ListProperty<T> myProperty;
     private final ListTableModel<T> myModel;
     private final Collection<JComponent> myComponents = new ArrayList<>();
@@ -402,11 +404,11 @@ public abstract class UIPropertyBinding {
     @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
-        BaseTableView.restoreWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
+        BaseTableView.restoreWidth(s -> myColumnWidthProperty.get(container).get(s), getComponent().getColumnModel());
       }
       myModel.setItems(myProperty.getModifiableList(container));
       if (myModel.isSortable()) {
-        final ColumnInfo[] columnInfos = myModel.getColumnInfos();
+        ColumnInfo[] columnInfos = myModel.getColumnInfos();
         for (ColumnInfo columnInfo : columnInfos) {
           if (columnInfo.isSortable()) {
             break;
@@ -438,7 +440,7 @@ public abstract class UIPropertyBinding {
     @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
-        BaseTableView.storeWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
+        BaseTableView.storeWidth((s, s2) -> myColumnWidthProperty.get(container).put(s, s2), getComponent().getColumnModel());
       }
     }
 
@@ -453,7 +455,7 @@ public abstract class UIPropertyBinding {
   }
 
   private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
-    private final ArrayList<JComponent> myComponents = new ArrayList<>();
+    private final List<JComponent> myComponents = new ArrayList<>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
 
@@ -484,7 +486,7 @@ public abstract class UIPropertyBinding {
     @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       ListModel model = myList.getModel();
-      ArrayList<Item> list = new ArrayList<>();
+      List<Item> list = new ArrayList<>();
       for (int i = 0; i < model.getSize(); i++) {
         list.add((Item)model.getElementAt(i));
       }
@@ -546,8 +548,8 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class ComboBoxBinding extends ComponentBinding<JComboBox, AbstractProperty<String>> {
-    public ComboBoxBinding(JComboBox comboBox, AbstractProperty<String> property) {
+  public static class ComboBoxBinding extends ComponentBinding<JComboBox, AbstractProperty<@Nls String>> {
+    public ComboBoxBinding(JComboBox comboBox, AbstractProperty<@Nls String> property) {
       super(comboBox, property);
     }
 

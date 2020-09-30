@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
@@ -286,7 +286,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.addFileToProject("my.png", "");
     myFixture.addFileToProject("sample.css", ".root{}");
     configureByFile(getTestName(true) + ".fxml");
-    assertTrue(myItems.length == 1);
+    assertEquals(1, myItems.length);
     LookupElement selectionElement = null;
     for (LookupElement item : myItems) {
       if (item.getLookupString().equals("sample.css")) {

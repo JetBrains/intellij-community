@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ExceptionUtils {
+public final class ExceptionUtils {
 
   private ExceptionUtils() { }
 
@@ -237,7 +237,7 @@ public class ExceptionUtils {
     return false;
   }
 
-  private static class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static final class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<PsiClassType> m_exceptionsThrown;
 

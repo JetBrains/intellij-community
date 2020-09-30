@@ -1,18 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MatchVariableConstraintTest {
+public class MatchVariableConstraintTest extends LightPlatformTestCase {
 
-  @Test
   public void testConvertRegExpToTypeString() {
     assertEquals("convert array types correctly",
                  "char[]|int[]", MatchVariableConstraint.convertRegExpTypeToTypeString("char\\[]|int\\[\\]"));
@@ -22,12 +19,10 @@ public class MatchVariableConstraintTest {
     assertEquals("parentheses", "int|long", MatchVariableConstraint.convertRegExpTypeToTypeString("(int|long)"));
   }
 
-  @Test
   public void testConvertTypeStringToRegExp() {
     assertEquals("char\\[\\]|int\\[\\]", MatchVariableConstraint.convertTypeStringToRegExp("char[]|int[]"));
   }
 
-  @Test
   public void testWriteExternal() {
     final MatchVariableConstraint constraint = new MatchVariableConstraint();
     constraint.setName("elephant");
@@ -37,6 +32,40 @@ public class MatchVariableConstraintTest {
     constraint.writeExternal(test);
     assertEquals("<constraint name=\"elephant\" nameOfExprType=\"String\" nameOfFormalType=\"String\" within=\"\" contains=\"\" />",
                  JDOMUtil.writeElement(test));
+  }
+
+  public void testAdditionalConstraints() {
+    final MatchVariableConstraint constraint = new MatchVariableConstraint();
+    assertNull(constraint.getAdditionalConstraint("hypergolic"));
+    try {
+      constraint.putAdditionalConstraint("reférence", "test");
+      fail();
+    } catch (IllegalArgumentException ignored) {}
+    try {
+      constraint.putAdditionalConstraint("Capital", "test");
+      fail();
+    } catch (IllegalArgumentException ignored) {}
+    try {
+      constraint.putAdditionalConstraint("words with spaces", "test");
+      fail();
+    } catch (IllegalArgumentException ignored) {}
+
+    constraint.putAdditionalConstraint("test", "test");
+    assertFalse(constraint.equals(new MatchVariableConstraint()));
+
+    final Element element = new Element("constraint");
+    constraint.writeExternal(element);
+    assertEquals("<constraint name=\"\" within=\"\" contains=\"\" _test=\"test\" />",
+                 JDOMUtil.writeElement(element));
+    final MatchVariableConstraint constraint2 = new MatchVariableConstraint();
+    constraint2.readExternal(element);
+    assertEquals("test", constraint2.getAdditionalConstraint("test"));
+    final MatchVariableConstraint constraint3 = constraint2.copy();
+    assertEquals("test", constraint3.getAdditionalConstraint("test"));
+    assertEquals(String.valueOf(constraint2.getAllAdditionalConstraints()), 1, constraint2.getAllAdditionalConstraints().size());
+
+    constraint.putAdditionalConstraint("test", null);
+    assertTrue(constraint.equals(new MatchVariableConstraint()));
   }
 
 }

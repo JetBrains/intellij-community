@@ -14,6 +14,7 @@
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
   <component name="copyright">
     <Base>

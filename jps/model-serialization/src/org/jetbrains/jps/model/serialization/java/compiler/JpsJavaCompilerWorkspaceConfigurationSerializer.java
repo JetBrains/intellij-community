@@ -38,8 +38,4 @@ public class JpsJavaCompilerWorkspaceConfigurationSerializer extends JpsProjectE
     String clearOutputDirectory = JDOMExternalizerUtil.readField(componentTag, "CLEAR_OUTPUT_DIRECTORY");
     configuration.setClearOutputDirectoryOnRebuild(clearOutputDirectory == null || Boolean.parseBoolean(clearOutputDirectory));
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-  }
 }

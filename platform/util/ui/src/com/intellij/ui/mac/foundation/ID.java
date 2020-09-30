@@ -17,6 +17,9 @@ public class ID extends NativeLong {
     super(peer);
   }
 
-  public static final ID NIL = new ID(0);
+  public static final ID NIL = new ID(0L);
 
+  public boolean booleanValue() {
+    return intValue() != 0;
+  }
 }

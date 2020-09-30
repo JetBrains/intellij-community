@@ -20,6 +20,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -27,12 +28,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -62,6 +65,18 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   @Nullable
   protected abstract PsiElement getNavigationElement(@NotNull T createdElement);
+
+  @Override
+  protected void postProcess(@NotNull T createdElement, String templateName, Map<String, String> customProperties) {
+    super.postProcess(createdElement, templateName, customProperties);
+    PsiElement element = getNavigationElement(createdElement);
+    if (element != null) {
+      Editor editor = PsiEditorUtil.findEditor(element);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(element.getTextOffset());
+      }
+    }
+  }
 
   @Override
   protected boolean isAvailable(final DataContext dataContext) {

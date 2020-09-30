@@ -11,10 +11,10 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,14 +27,13 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   private final JBCheckBox myRepositoryCheckbox;
   private final PushTargetPanel<T> myDestPushTargetPanelComponent;
-  private final JBLabel myLocalBranch;
-  private final JLabel myArrowLabel;
-  private final JLabel myRepositoryLabel;
+  private final @Nls String myRepositoryName;
+  private final @Nls String mySourceName;
   private final ColoredTreeCellRenderer myTextRenderer;
   @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull String repoName,
-                                   @NotNull String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
+  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull @Nls String repoName,
+                                   @NotNull @Nls String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
@@ -47,9 +46,8 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
         fireOnSelectionChange(myRepositoryCheckbox.isSelected());
       }
     });
-    myRepositoryLabel = new JLabel(repoName);
-    myLocalBranch = new JBLabel(sourceName);
-    myArrowLabel = new JLabel(" " + UIUtil.rightArrow() + " ");
+    myRepositoryName = repoName;
+    mySourceName = sourceName;
     myDestPushTargetPanelComponent = destPushTargetPanelComponent;
     myTextRenderer = new ColoredTreeCellRenderer() {
       @Override
@@ -90,17 +88,20 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     add(panel, BorderLayout.CENTER);
   }
 
+  @Nls
   @NotNull
   public String getRepositoryName() {
-    return myRepositoryLabel.getText();
+    return myRepositoryName;
   }
 
+  @Nls
   public String getSourceName() {
-    return myLocalBranch.getText();
+    return mySourceName;
   }
 
+  @Nls
   public String getArrow() {
-    return myArrowLabel.getText();
+    return " " + UIUtil.rightArrow() + " ";
   }
 
   @NotNull
@@ -143,7 +144,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myDestPushTargetPanelComponent.addTargetEditorListener(new PushTargetEditorListener() {
 
       @Override
-      public void onTargetInEditModeChanged(@NotNull String value) {
+      public void onTargetInEditModeChanged(@NotNull @Nls String value) {
         for (RepositoryNodeListener listener : myListeners) {
           listener.onTargetInEditMode(value);
         }

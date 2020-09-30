@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.Set;
  * @author Alexander Lobas
  */
 public class VerticalLayout extends AbstractLayoutManager {
-  public static final String FILL_HORIZONTAL = "fill_h";
+  @NonNls public static final String FILL_HORIZONTAL = "fill_h";
 
   private final int myOffset;
   private final int myWidth;

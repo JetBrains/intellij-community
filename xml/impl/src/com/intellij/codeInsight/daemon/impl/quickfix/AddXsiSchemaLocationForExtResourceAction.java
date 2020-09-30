@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -20,6 +19,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import java.util.List;
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
   @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
-  public static final String KEY = "add.xsi.schema.location.for.external.resource";
+  private static final String KEY = "xml.intention.add.xsi.schema.location.for.external.resource";
 
   @Override
   protected String getQuickFixKeyId() {
@@ -71,7 +71,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }
-      }, XmlErrorBundle.message("select.namespace.location.title"), this, editor);
+      }, XmlPsiBundle.message("xml.action.select.namespace.location.title"), this, editor);
   }
 
   private static void doIt(final PsiFile file, final Editor editor, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {

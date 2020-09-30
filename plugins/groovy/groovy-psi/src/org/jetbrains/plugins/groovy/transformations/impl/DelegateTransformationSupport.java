@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -88,7 +89,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     });
   }
 
-  private static class DelegateProcessor extends GrScopeProcessorWithHints {
+  private static final class DelegateProcessor extends GrScopeProcessorWithHints {
 
     private final TransformationContext myContext;
     private final boolean myInterfaces;
@@ -231,8 +232,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     }
   }
 
-  private static final Set<String> OBJECT_METHODS = ContainerUtil.newHashSet(
-    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize"
+  private static final Set<@NlsSafe String> OBJECT_METHODS = ContainerUtil.newHashSet(
+    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize" // NON-NLS
   );
   private static final Set<String> GROOVY_OBJECT_METHODS = ContainerUtil.newHashSet(
     "invokeMethod", "getProperty", "setProperty", "getMetaClass", "setMetaClass"

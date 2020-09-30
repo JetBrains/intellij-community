@@ -2,6 +2,7 @@
 package com.intellij.internal.ml;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public interface DecisionFunction {
   List<String> getUnknownFeatures(@NotNull Collection<String> features);
 
   @Nullable
+  @NonNls
   String version();
 
   double predict(double[] features);

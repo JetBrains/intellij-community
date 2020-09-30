@@ -1,13 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.util.containers.FList
+import java.util.*
+import kotlin.NoSuchElementException
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 /**
- * Map for fast finding values by the prefix of thier keys
+ * Map for fast finding values by the prefix of their keys
  */
-class PrefixTreeMap<K, V> : Map<List<K>, V> {
-
+internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
   /**
    * Gets all descendant entries for [key]
    *
@@ -31,11 +35,17 @@ class PrefixTreeMap<K, V> : Map<List<K>, V> {
 
   override val size get() = root.size
   override val keys get() = root.getEntries().map { it.key }.toSet()
-  override val values get() = root.getEntries().map { it.value }.toList()
+
+  override val values: List<V>
+    get() = valueSequence.toList()
+
+  val valueSequence: Sequence<V>
+    get() = root.getEntries().map { it.value }
+
   override val entries get() = root.getEntries().toSet()
   override fun get(key: List<K>) = root.get(key.toFList())?.value?.getOrNull()
   override fun containsKey(key: List<K>) = root.containsKey(key.toFList())
-  override fun containsValue(value: V) = values.any { it == value }
+  override fun containsValue(value: V) = root.getEntries().any { it.value == value }
   override fun isEmpty() = root.isEmpty
 
   operator fun set(path: List<K>, value: V) = root.put(path.toFList(), value).getOrNull()
@@ -106,11 +116,11 @@ class PrefixTreeMap<K, V> : Map<List<K>, V> {
     fun getEntries(): Sequence<Map.Entry<FList<K>, V>> {
       return sequence {
         if (value.isPresent) {
-          yield(Entry(FList.emptyList(), value.get()))
+          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
         }
         for ((key, child) in children) {
           for ((path, value) in child.getEntries()) {
-            yield(Entry(path.prepend(key), value))
+            yield(AbstractMap.SimpleImmutableEntry(path.prepend(key), value))
           }
         }
       }
@@ -119,25 +129,22 @@ class PrefixTreeMap<K, V> : Map<List<K>, V> {
     fun getAllAncestors(path: FList<K>): Sequence<Map.Entry<FList<K>, V>> {
       return sequence {
         if (value.isPresent) {
-          yield(Entry(FList.emptyList(), value.get()))
+          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
         }
         if (path.isEmpty()) return@sequence
         val (head, tail) = path
         val child = children[head] ?: return@sequence
         for ((relative, value) in child.getAllAncestors(tail)) {
-          yield(Entry(relative.prepend(head), value))
+          yield(AbstractMap.SimpleImmutableEntry(relative.prepend(head), value))
         }
       }
     }
 
     fun getAllDescendants(path: FList<K>) =
-      root.get(path)?.getEntries()?.map { Entry(path + it.key, it.value) } ?: emptySequence()
+      root.get(path)?.getEntries()?.map { AbstractMap.SimpleImmutableEntry(path + it.key, it.value) } ?: emptySequence()
   }
 
-  data class Entry<K, V>(override val key: K, override val value: V) : Map.Entry<K, V>
-
   private class Value<out T> private constructor(val isPresent: Boolean, private val value: Any?) {
-
     fun get(): T {
       @Suppress("UNCHECKED_CAST")
       if (isPresent) return value as T

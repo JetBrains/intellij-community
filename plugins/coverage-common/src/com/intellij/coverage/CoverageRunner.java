@@ -16,9 +16,11 @@ public abstract class CoverageRunner {
   public abstract ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite baseCoverageSuite);
 
   @NotNull
+  @NonNls
   public abstract String getPresentableName();
 
   @NotNull
+  @NonNls
   public abstract String getId();
 
   @NotNull

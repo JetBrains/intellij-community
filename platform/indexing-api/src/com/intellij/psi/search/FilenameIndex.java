@@ -12,10 +12,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public final class FilenameIndex {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
-  public static String @NotNull [] getAllFilenames(@Nullable Project project) {
+  public static @NotNull String @NotNull [] getAllFilenames(@Nullable Project project) {
     Set<String> names = new HashSet<>();
     processAllFileNames((String s) -> {
       names.add(s);
@@ -58,7 +58,7 @@ public final class FilenameIndex {
     return getVirtualFilesByNameIgnoringCase(name, scope, null);
   }
 
-  public static PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
@@ -114,7 +114,7 @@ public final class FilenameIndex {
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
                                                                     @Nullable final IdFilter idFilter) {
-    Set<String> keys = new ObjectOpenHashSet<>();
+    Set<String> keys = CollectionFactory.createSmallMemoryFootprintSet();
     processAllFileNames(value -> {
       if (name.equalsIgnoreCase(value)) {
         keys.add(value);
@@ -123,17 +123,17 @@ public final class FilenameIndex {
     }, scope, idFilter);
 
     // values accessed outside of processAllKeys
-    Set<VirtualFile> files = new ObjectOpenHashSet<>();
+    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
     for (String each : keys) {
       files.addAll(getVirtualFilesByName(each, scope, idFilter));
     }
     return files;
   }
 
-  public static PsiFileSystemItem @NotNull [] getFilesByName(@NotNull Project project,
-                                                             @NotNull String name,
-                                                             @NotNull final GlobalSearchScope scope,
-                                                             boolean directories) {
+  public static @NotNull PsiFileSystemItem @NotNull [] getFilesByName(@NotNull Project project,
+                                                                      @NotNull String name,
+                                                                      @NotNull final GlobalSearchScope scope,
+                                                                      boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
     processFilesByName(name, directories, processor, scope, project, null);
@@ -181,7 +181,7 @@ public final class FilenameIndex {
   private static Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
                                                               @NotNull GlobalSearchScope scope,
                                                               IdFilter filter) {
-    Set<VirtualFile> files = new ObjectOpenHashSet<>();
+    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
     FileBasedIndex.getInstance().processValues(NAME, name, null, (file, value) -> {
       files.add(file);
       return true;

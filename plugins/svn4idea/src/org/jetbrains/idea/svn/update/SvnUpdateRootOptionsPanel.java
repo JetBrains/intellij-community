@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -109,14 +109,15 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
   private boolean isRevisionCanBeSpecifiedForRoot() {
     final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
-    if (info != null) {
-      boolean isExternalOrSwitched = NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType());
-      if (isExternalOrSwitched) {
-        myCopyType.setText(info.getType().getName() + " copy");
-      }
-      return !isExternalOrSwitched;
-    }
-    return true;
+    if (info == null) return true;
+
+    boolean isExternal = NestedCopyType.external.equals(info.getType());
+    boolean isSwitched = NestedCopyType.switched.equals(info.getType());
+
+    if (isExternal) myCopyType.setText(message("label.external.copy"));
+    if (isSwitched) myCopyType.setText(message("label.switched.copy"));
+
+    return !isExternal && !isSwitched;
   }
 
   private void chooseBranch() {
@@ -141,7 +142,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         }
         myBranchField.setText(url.getTail());
       }
-    }, message("select.branch.popup.general.title"), myPanel);
+    }, message("popup.title.select.branch"), myPanel);
   }
 
   private void chooseUrl() {
@@ -203,14 +204,14 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         rootInfo.setUrl(createUrl(myURLText.getText(), false));
       }
       catch (SvnBindException e) {
-        throw new ConfigurationException("Invalid url: " + myURLText.getText());
+        throw new ConfigurationException(message("error.invalid.url", myURLText.getText()));
       }
     }
 
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
     final Revision revision = Revision.parse(myRevisionText.getText());
      if (!revision.isValid()) {
-       throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionText.getText()));
+       throw new ConfigurationException(message("error.invalid.svn.revision", myRevisionText.getText()));
     }
     rootInfo.setRevision(revision);
   }

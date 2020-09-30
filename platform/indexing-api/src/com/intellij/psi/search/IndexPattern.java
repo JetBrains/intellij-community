@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,7 @@ public class IndexPattern {
   }
 
   @NotNull
+  @NlsSafe
   public String getPatternString() {
     return myPatternString;
   }

@@ -15,6 +15,6 @@ const element = (
             it is <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human
         </p>
 
-        It <warning descr="I_MOVING">working</warning> for <warning descr="MUCH_COUNTABLE">much</warning> warnings, {formatName(user)}!
+        <warning descr="PRP_VBG">It working</warning> for <warning descr="MUCH_COUNTABLE">much</warning> warnings, {formatName(user)}!
     </h1>
 );

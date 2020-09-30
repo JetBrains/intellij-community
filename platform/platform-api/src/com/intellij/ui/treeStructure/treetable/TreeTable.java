@@ -58,6 +58,7 @@ public class TreeTable extends JBTable {
     private final Action action;
 
     private TreeAction(@NotNull String tableActionId, @NotNull String treeActionId) {
+      //noinspection HardCodedStringLiteral
       super(tableActionId + " -> " + treeActionId);
       actionId = treeActionId;
       ActionMap map = getActionMap();

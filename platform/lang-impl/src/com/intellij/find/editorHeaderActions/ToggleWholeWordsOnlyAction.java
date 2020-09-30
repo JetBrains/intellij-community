@@ -5,9 +5,10 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction implements Embeddable {
+public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction implements Embeddable, TooltipDescriptionProvider {
   public ToggleWholeWordsOnlyAction() {
     super(FindBundle.message("find.whole.words"),
           AllIcons.Actions.Words,

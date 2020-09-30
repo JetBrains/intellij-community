@@ -33,6 +33,6 @@ public class EditMacrosAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ActionMacro[] macros = ActionMacroManager.getInstance().getAllMacros();
-    e.getPresentation().setEnabled(macros != null && macros.length > 0);
+    e.getPresentation().setEnabled(macros.length > 0);
   }
 }

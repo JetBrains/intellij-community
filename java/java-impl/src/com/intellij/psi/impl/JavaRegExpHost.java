@@ -8,7 +8,10 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.util.ObjectUtils;
 import org.intellij.lang.regexp.AsciiUtil;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -405,5 +408,14 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public String[] @NotNull [] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
+  }
+
+  @Override
+  public boolean belongsToConditionalExpression(@NotNull PsiElement psiElement) {
+    PsiElement parentElement = psiElement.getParent();
+    if (parentElement instanceof PsiConditionalExpression) return true;
+
+    PsiPolyadicExpression parentExpr = ObjectUtils.tryCast(parentElement, PsiPolyadicExpression.class);
+    return parentExpr != null && parentExpr.getParent() instanceof PsiConditionalExpression;
   }
 }

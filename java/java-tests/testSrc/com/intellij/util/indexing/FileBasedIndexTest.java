@@ -30,6 +30,6 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
       text[i] = i < clazz.length() ? clazz.charAt(i) : ' ';
     }
     final LightVirtualFile file = new LightVirtualFile("Foo.java", new CharArrayCharSequence(text));
-    assertFalse(((FileBasedIndexImpl)FileBasedIndex.getInstance()).isIndexingCandidate(file, StubUpdatingIndex.INDEX_ID));
+    assertFalse(FileBasedIndex.getInstance().isIndexingCandidate(file, StubUpdatingIndex.INDEX_ID));
   }
 }

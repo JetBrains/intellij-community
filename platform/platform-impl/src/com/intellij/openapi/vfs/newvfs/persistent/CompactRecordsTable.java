@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.PagePool;
@@ -20,8 +6,8 @@ import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.BitSet;
 
 // Twice as compact as AbstractRecordsTable: 8 bytes per record: int offset ([0..Integer.MAX_INT]), int ((capacity [0..0xFFFF) << 16) | (size [-1..0xFFFF)))
@@ -29,11 +15,11 @@ import java.util.BitSet;
 // hold long offset and original record contains negative new record number,
 // same if size / capacity is overflowed: new record is created to hold integer offset / capacity and original record contains its
 // negative number
-class CompactRecordsTable extends AbstractRecordsTable {
+final class CompactRecordsTable extends AbstractRecordsTable {
   private final byte[] zeroes;
   private final boolean forceSplit;
 
-  public CompactRecordsTable(File recordsFile, PagePool pool, boolean forceSplit) throws IOException {
+  CompactRecordsTable(@NotNull Path recordsFile, PagePool pool, boolean forceSplit) throws IOException {
     super(recordsFile, pool);
     zeroes = new byte[getRecordSize()];
     this.forceSplit = forceSplit;

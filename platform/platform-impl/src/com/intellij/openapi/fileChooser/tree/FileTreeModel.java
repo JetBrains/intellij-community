@@ -360,7 +360,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     }
   }
 
-  private static class Root extends Node {
+  private static final class Root extends Node {
     private final MapBasedTree<VirtualFile, Node> tree;
 
     private Root(State state, VirtualFile file) {

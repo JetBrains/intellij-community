@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
+import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.ThrowableConsumer;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +16,13 @@ import java.util.*;
 
 public class ToolingStreamApiUtils {
   public static final String OBJECT_ID_FIELD = "objectID";
+
+  // todo what about PooledBlockAllocatorProvider?
+  public static @NotNull IonBinaryWriterBuilder createIonWriter() {
+    return IonBinaryWriterBuilder.standard()
+      .withLocalSymbolTableAppendEnabled()
+      .withStreamCopyOptimized(true);
+  }
 
   @Nullable
   public static String readString(@NotNull IonReader reader, @Nullable String fieldName) {
@@ -60,10 +66,10 @@ public class ToolingStreamApiUtils {
     return readFilesSet(reader, null);
   }
 
-  public static Set<File> readFilesSet(@NotNull IonReader reader, @Nullable String fieldName) {
+  public static @NotNull Set<File> readFilesSet(@NotNull IonReader reader, @Nullable String fieldName) {
     reader.next();
     assertFieldName(reader, fieldName);
-    Set<File> set = new THashSet<File>();
+    Set<File> set = new HashSet<File>();
     reader.stepIn();
     File file;
     while ((file = readFile(reader, null)) != null) {
@@ -85,7 +91,7 @@ public class ToolingStreamApiUtils {
                                          @NotNull Getter<? extends V> valueReader) {
     reader.next();
     reader.stepIn();
-    Map<K, V> map = new THashMap<K, V>();
+    Map<K, V> map = new HashMap<K, V>();
     while (reader.next() != null) {
       reader.stepIn();
       map.put(keyReader.get(), valueReader.get());
@@ -167,7 +173,7 @@ public class ToolingStreamApiUtils {
   }
 
   public static Set<String> readStringSet(@NotNull IonReader reader) {
-    Set<String> set = new THashSet<String>();
+    Set<String> set = new HashSet<String>();
     reader.next();
     reader.stepIn();
     String nextString;

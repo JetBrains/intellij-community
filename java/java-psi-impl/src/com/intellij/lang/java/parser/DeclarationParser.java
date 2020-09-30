@@ -3,6 +3,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -71,12 +72,11 @@ public class DeclarationParser {
         return null;
       }
       final IElementType afterIdent = builder.lookAhead(2);
-      // No parser recovery for local records without < or ( to support for light stubs
+      // No parser recovery for local records without < or ( to support light stubs
       // (look at com.intellij.psi.impl.source.JavaLightStubBuilder.CodeBlockVisitor.visit)
       if (context == Context.CODE_BLOCK && afterIdent != JavaTokenType.LPARENTH && afterIdent != JavaTokenType.LT) {
         // skipping record kw and identifier
-        builder.advanceLexer();
-        builder.advanceLexer();
+        PsiBuilderUtil.advance(builder, 2);
         error(builder, JavaPsiBundle.message("expected.lt.or.lparen"));
         declaration.drop();
         return null;
@@ -103,11 +103,11 @@ public class DeclarationParser {
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
-    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW)) {
-      if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-          PsiKeyword.PERMITS.equals(builder.getTokenText())) {
-        builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
-      }
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+        PsiKeyword.PERMITS.equals(builder.getTokenText())) {
+      builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
+    }
+    if (builder.getTokenType() == JavaTokenType.PERMITS_KEYWORD) {
       refParser.parseReferenceList(builder, JavaTokenType.PERMITS_KEYWORD, JavaElementType.PERMITS_LIST, JavaTokenType.COMMA);
     }
 
@@ -439,8 +439,7 @@ public class DeclarationParser {
       return false;
     }
     PsiBuilder.Marker maybeNonSealed = builder.mark();
-    builder.advanceLexer();
-    builder.advanceLexer();
+    PsiBuilderUtil.advance(builder, 2);
     boolean isNonSealed = PsiKeyword.SEALED.equals(builder.getTokenText());
     maybeNonSealed.rollbackTo();
     return isNonSealed;
@@ -465,9 +464,7 @@ public class DeclarationParser {
       }
       if (isNonSealedToken(builder, tokenType)) {
         PsiBuilder.Marker nonSealed = builder.mark();
-        builder.advanceLexer();
-        builder.advanceLexer();
-        builder.advanceLexer();
+        PsiBuilderUtil.advance(builder, 3);
         nonSealed.collapse(JavaTokenType.NON_SEALED_KEYWORD);
         isEmpty = false;
       }

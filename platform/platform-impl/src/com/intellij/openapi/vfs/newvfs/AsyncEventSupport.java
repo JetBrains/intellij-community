@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,10 +12,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +29,7 @@ public final class AsyncEventSupport {
   private static final Logger LOG = Logger.getInstance(AsyncEventSupport.class);
 
   @ApiStatus.Internal
-  public static final ExtensionPointName<AsyncFileListener> EP_NAME = ExtensionPointName.create("com.intellij.vfs.asyncListener");
+  public static final ExtensionPointName<AsyncFileListener> EP_NAME = new ExtensionPointName<>("com.intellij.vfs.asyncListener");
   private static boolean ourSuppressAppliers;
 
   public static void startListening() {
@@ -55,7 +53,6 @@ public final class AsyncEventSupport {
         appliersFromBefore = null;
         afterVfsChange(appliers);
       }
-
     });
   }
 
@@ -68,10 +65,7 @@ public final class AsyncEventSupport {
     }
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    List<AsyncFileListener> allListeners = new ArrayList<>();
-    // must be the first
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAsyncFileListenerTo(allListeners);
-    allListeners.addAll(EP_NAME.getExtensionList());
+    List<AsyncFileListener> allListeners = new ArrayList<>(EP_NAME.getExtensionList());
     ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).addAsyncFileListenersTo(allListeners);
     for (AsyncFileListener listener : allListeners) {
       ProgressManager.checkCanceled();

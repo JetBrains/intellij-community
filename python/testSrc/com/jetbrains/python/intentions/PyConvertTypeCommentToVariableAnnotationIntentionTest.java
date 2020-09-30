@@ -20,11 +20,12 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyIntentionTestCase {
   private void doPositiveTest() {
-    doTest(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation.text"), LanguageLevel.PYTHON36);
+    doTest(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation"), LanguageLevel.PYTHON36);
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation.text")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message(
+      "INTN.convert.type.comment.to.variable.annotation")));
   }
 
   public void testSimpleAssignment() {
@@ -32,7 +33,8 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   }
 
   public void testBadLanguageLevel() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doNegativeTest(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation.text")));
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doNegativeTest(PyPsiBundle.message(
+      "INTN.convert.type.comment.to.variable.annotation")));
   }
 
   public void testChainedAssignment() {

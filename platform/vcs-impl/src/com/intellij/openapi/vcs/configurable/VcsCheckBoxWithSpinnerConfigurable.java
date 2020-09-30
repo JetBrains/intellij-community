@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,12 +14,12 @@ import java.awt.event.ActionListener;
 
 public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable {
   protected final Project myProject;
-  private final String myCheckboxText;
-  private final String myMeasure;
+  private final @NlsContexts.Checkbox String myCheckboxText;
+  private final @NlsContexts.Label String myMeasure;
   protected JCheckBox myHighlightRecentlyChanged;
   protected JSpinner myHighlightInterval;
 
-  public VcsCheckBoxWithSpinnerConfigurable(Project project, final String checkboxText, final String measure) {
+  public VcsCheckBoxWithSpinnerConfigurable(Project project, @NlsContexts.Checkbox String checkboxText, @NlsContexts.Label String measure) {
     myProject = project;
     myCheckboxText = checkboxText;
     myMeasure = measure;

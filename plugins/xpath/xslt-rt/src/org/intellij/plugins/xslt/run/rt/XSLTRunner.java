@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /** @noinspection CallToPrintStackTrace, UseOfSystemOutOrSystemErr, IOResourceOpenedButNotSafelyClosed, SocketOpenedButNotSafelyClosed */
-public class XSLTRunner implements XSLTMain {
+public final class XSLTRunner implements XSLTMain {
 
     private XSLTRunner() {
     }

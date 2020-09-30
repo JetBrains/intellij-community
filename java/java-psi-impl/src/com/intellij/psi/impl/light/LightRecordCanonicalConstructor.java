@@ -3,7 +3,6 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
@@ -41,7 +40,7 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     final RowIcon baseIcon =
       IconManager.getInstance().createLayeredIcon(this, PlatformIcons.METHOD_ICON, ElementPresentationUtil.getFlags(this, false));
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
-      VisibilityIcons.setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PUBLIC, baseIcon);
+      VisibilityIcons.setVisibilityIcon(getContainingClass().getModifierList(), baseIcon);
     }
     return baseIcon;
   }

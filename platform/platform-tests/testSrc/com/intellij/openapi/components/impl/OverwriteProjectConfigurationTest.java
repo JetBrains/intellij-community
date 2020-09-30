@@ -8,8 +8,8 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.testFramework.FixtureRuleKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   }
 
   public void testOverwriteModulesList() {
-    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
       createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
@@ -36,7 +36,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
 
-    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
       PlatformTestUtil.saveProject(project);
       assertThat(ModuleManager.getInstance(project).getModules()).isEmpty();
@@ -47,7 +47,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   }
 
   public void testOverwriteModuleType() {
-    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
       Path imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
@@ -57,7 +57,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
 
-    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
       createModule(project, "module", ModuleTypeId.WEB_MODULE);
       PlatformTestUtil.saveProject(project);

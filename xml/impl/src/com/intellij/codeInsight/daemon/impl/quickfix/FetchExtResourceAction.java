@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -11,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -51,7 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
+public final class FetchExtResourceAction extends BaseExtResourceAction {
   private static final Logger LOG = Logger.getInstance(FetchExtResourceAction.class);
   @NonNls private static final String HTML_MIME = "text/html";
   @NonNls private static final String HTTP_PROTOCOL = "http://";
@@ -59,6 +60,16 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @NonNls private static final String FTP_PROTOCOL = "ftp://";
   @NonNls private static final String EXT_RESOURCES_FOLDER = "extResources";
   private final boolean myForceResultIsValid;
+  private static final String KEY = "xml.intention.fetch.name";
+
+  static final class MyWatchedRootsProvider implements WatchedRootsProvider {
+    @Override
+    public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
+      String path = getExternalResourcesPath();
+      Path file = checkExists(path);
+      return Collections.singleton(file.toAbsolutePath().toString());
+    }
+  }
 
   public FetchExtResourceAction() {
     myForceResultIsValid = false;
@@ -70,7 +81,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
   @Override
   protected String getQuickFixKeyId() {
-    return "fetch.external.resource";
+    return KEY;
   }
 
   @Override
@@ -110,29 +121,18 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return uri;
   }
 
-  @Override
-  @NotNull
-  public Set<String> getRootsToWatch() {
-    String path = getExternalResourcesPath();
-    Path file = checkExists(path);
-    return Collections.singleton(file.toAbsolutePath().toString());
-  }
-
-  @NotNull
-  private static Path checkExists(String dir) {
+  private static @NotNull Path checkExists(String dir) {
     Path path = Paths.get(dir);
-    if (!path.toFile().isDirectory()) {
-      try {
-        Files.createDirectories(path);
-      }
-      catch (IOException e) {
-        LOG.warn("Unable to create: " + path, e);
-      }
+    try {
+      Files.createDirectories(path);
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to create: " + path, e);
     }
     return path;
   }
 
-  static class FetchingResourceIOException extends IOException {
+  static final class FetchingResourceIOException extends IOException {
     private final String url;
 
     FetchingResourceIOException(Throwable cause, String url) {
@@ -152,7 +152,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message("fetching.resource.title")) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message(
+      "xml.intention.fetch.progress.fetching.resource")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         while (true) {
@@ -166,13 +167,13 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             LOG.info(ex);
             @SuppressWarnings("InstanceofCatchParameter")
             String problemUrl = ex instanceof FetchingResourceIOException ? ((FetchingResourceIOException)ex).url : url;
-            String message = XmlBundle.message("error.fetching.title");
+            String message = XmlBundle.message("xml.intention.fetch.error.fetching.title");
 
             if (!url.equals(problemUrl)) {
-              message = XmlBundle.message("error.fetching.dependent.resource.title");
+              message = XmlBundle.message("xml.intention.fetch.error.fetching.dependent.resource");
             }
 
-            if (!IOExceptionDialog.showErrorDialog(message, XmlBundle.message("error.fetching.resource", problemUrl))) {
+            if (!IOExceptionDialog.showErrorDialog(message, XmlBundle.message("xml.intention.fetch.error.fetching.resource", problemUrl))) {
               break; // cancel fetching
             }
           }
@@ -336,7 +337,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                                      String extResourcesPath,
                                      @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
-      () -> indicator.setText(XmlBundle.message("fetching.progress.indicator", resourceUrl))
+      () -> indicator.setText(XmlBundle.message("xml.intention.fetch.progress.fetching", resourceUrl))
     );
 
     FetchResult result = fetchData(project, resourceUrl, indicator);
@@ -366,7 +367,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       // remote url does not contain file with extension
       final String extension =
         result.contentType != null &&
-        result.contentType.contains(HTML_MIME) ? StdFileTypes.HTML.getDefaultExtension() : StdFileTypes.XML.getDefaultExtension();
+        result.contentType.contains(HTML_MIME) ? HtmlFileType.INSTANCE.getDefaultExtension() : XmlFileType.INSTANCE.getDefaultExtension();
       resPath += "." + extension;
     }
 
@@ -385,8 +386,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         result.contentType.contains(HTML_MIME) &&
         new String(result.bytes, StandardCharsets.UTF_8).contains("<html")) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
-                                                                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                                                                     XmlBundle.message("invalid.url.title"),
+                                                                                     XmlBundle.message(
+                                                                                       "xml.intention.fetch.error.invalid.url.no.xml.file.at.location", resourceUrl),
+                                                                                     XmlBundle.message(
+                                                                                       "xml.intention.fetch.error.invalid.url.title"),
                                                                                      Messages.getErrorIcon()), indicator.getModalityState());
       return false;
     }
@@ -497,8 +500,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
-                                                                                       XmlBundle.message("invalid.url.message", dtdUrl),
-                                                                                       XmlBundle.message("invalid.url.title"),
+                                                                                       XmlBundle.message(
+                                                                                         "xml.intention.fetch.error.invalid.url.message", dtdUrl),
+                                                                                       XmlBundle.message(
+                                                                                         "xml.intention.fetch.error.invalid.url.title"),
                                                                                        Messages.getErrorIcon()), indicator.getModalityState());
       }
     }

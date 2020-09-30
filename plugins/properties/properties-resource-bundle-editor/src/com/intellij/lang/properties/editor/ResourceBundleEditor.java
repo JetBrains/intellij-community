@@ -438,8 +438,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       gc.weighty = 1;
       gc.anchor = GridBagConstraints.CENTER;
 
-      String title = propertiesFile.getName();
-      title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
+      String title = propertiesFile.getName() + PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
       JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
@@ -550,7 +549,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       updateEditorsFromProperties(true);
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
       if (statusBar != null) {
-        statusBar.setInfo("Selected property: " + getSelectedPropertyName());
+        statusBar.setInfo(ResourceBundleEditorBundle.message("status.bar.selection.changed.message", getSelectedPropertyName()));
       }
     });
   }
@@ -712,7 +711,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @Override
   @NotNull
   public String getName() {
-    return "Resource Bundle";
+    return ResourceBundleEditorBundle.message("resource.bundle.editor.title");
   }
 
   @Override
@@ -862,7 +861,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
         group.addSeparator();
-        group.add(new AnAction(EditorBundle.messagePointer("action.ResourceBundleEditor.Anonymous.text.propagate.value.across.of.resource.bundle")) {
+        group.add(new AnAction(ResourceBundleEditorBundle.messagePointer("action.PropagateValue.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final String valueToPropagate = editor.getDocument().getText();
@@ -870,7 +869,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
             if (currentSelectedProperty == null) {
               return;
             }
-            ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+            ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, ResourceBundleEditorBundle.message("action.PropagateValue.text"), null, () -> {
               try {
                 final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
                   final IProperty property = f.findPropertyByKey(currentSelectedProperty);
@@ -895,7 +894,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
   }
 
-  private class DataProviderPanel extends JPanel implements DataProvider {
+  private final class DataProviderPanel extends JPanel implements DataProvider {
     private DataProviderPanel(final JPanel panel) {
       super(new BorderLayout());
       add(panel, BorderLayout.CENTER);
@@ -908,7 +907,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
-  private class MyJPanel extends JPanel implements Scrollable{
+  private final class MyJPanel extends JPanel implements Scrollable{
     private MyJPanel(LayoutManager layout) {
       super(layout);
     }

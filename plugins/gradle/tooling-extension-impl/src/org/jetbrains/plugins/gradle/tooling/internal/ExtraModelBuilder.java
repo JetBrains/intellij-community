@@ -170,7 +170,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     return root;
   }
 
-  private static class MyModelBuilderContext implements ModelBuilderContext {
+  private static final class MyModelBuilderContext implements ModelBuilderContext {
     private final Map<DataProvider, Object> myMap = new IdentityHashMap<DataProvider, Object>();
     private final Gradle myGradle;
     @Nullable private ModelBuilderService.Parameter myParameter = null;

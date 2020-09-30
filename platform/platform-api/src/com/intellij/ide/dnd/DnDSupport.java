@@ -15,7 +15,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
+public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
   private final JComponent myComponent;
   private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
   private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
@@ -130,7 +130,7 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
     }
   }
 
-  private static class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
+  private static final class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
     @NotNull private final DnDSupport myTarget;
 
     private DnDNativeTargetWrapper(@NotNull DnDSupport target) {
@@ -164,8 +164,8 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);
     final Ref<Boolean> asNativeTarget = Ref.create(false);
-    final Ref<Function<DnDActionInfo, DnDImage>> imageProvider = Ref.create(null);
-    final Ref<Function<DnDActionInfo, DnDDragStartBean>> beanProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDImage>> imageProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDDragStartBean>> beanProvider = Ref.create(null);
     final Ref<Runnable> dropEnded = Ref.create(null);
     final Ref<Disposable> disposable = Ref.create(null);
     final Ref<DnDDropHandler.WithResult> dropHandler = Ref.create(null);
@@ -193,13 +193,13 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
       }
 
       @Override
-      public DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> fun) {
+      public DnDSupportBuilder setImageProvider(Function<? super DnDActionInfo, ? extends DnDImage> fun) {
         imageProvider.set(fun);
         return this;
       }
 
       @Override
-      public DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> fun) {
+      public DnDSupportBuilder setBeanProvider(Function<? super DnDActionInfo, ? extends DnDDragStartBean> fun) {
         beanProvider.set(fun);
         return this;
       }

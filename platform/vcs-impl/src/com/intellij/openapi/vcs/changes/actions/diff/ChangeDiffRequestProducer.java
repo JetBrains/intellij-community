@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -281,14 +282,14 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (file == null) {
       file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
     }
-    if (file == null) throw new DiffRequestProducerException("Can't show merge conflict - file not found");
+    if (file == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.merge.file.not.found"));
 
     if (project == null) {
-      throw new DiffRequestProducerException("Can't show merge conflict - project is unknown");
+      throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.merge.project.not.found"));
     }
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
     if (vcs == null || vcs.getMergeProvider() == null) {
-      throw new DiffRequestProducerException("Can't show merge conflict - operation not supported");
+      throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.merge.operation.not.supported"));
     }
     try {
       MergeData mergeData = vcs.getMergeProvider().loadRevisions(file);
@@ -326,7 +327,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
 
     if (bRev == null && aRev == null) {
       LOG.warn("Both revision contents are empty");
-      throw new DiffRequestProducerException("Bad revisions contents");
+      throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.content.not.found"));
     }
     if (bRev != null) checkContentRevision(project, bRev, context, indicator);
     if (aRev != null) checkContentRevision(project, aRev, context, indicator);
@@ -374,13 +375,13 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                           request);
   }
 
-  public static @NotNull String getRequestTitle(@NotNull Change change) {
+  public static @NotNull @Nls String getRequestTitle(@NotNull Change change) {
     FilePath bPath = ChangesUtil.getBeforePath(change);
     FilePath aPath = ChangesUtil.getAfterPath(change);
     return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
   }
 
-  public static @NotNull String getRevisionTitle(@Nullable ContentRevision revision, @NotNull String defaultValue) {
+  public static @NotNull @Nls String getRevisionTitle(@Nullable ContentRevision revision, @NotNull @Nls String defaultValue) {
     if (revision == null) {
       return defaultValue;
     }
@@ -401,19 +402,25 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
 
       if (revision instanceof CurrentContentRevision) {
         VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
-        if (vFile == null || !vFile.isValid()) throw new DiffRequestProducerException("Can't get current revision content");
+        if (vFile == null || !vFile.isValid()) {
+          throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"));
+        }
         return contentFactory.create(project, vFile);
       }
 
       DiffContent content;
       if (revision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
-        if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
+        if (revisionContent == null) {
+          throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"));
+        }
         content = contentFactory.createFromBytes(project, revisionContent, filePath);
       }
       else {
         String revisionContent = revision.getContent();
-        if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
+        if (revisionContent == null) {
+          throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"));
+        }
         content = contentFactory.create(project, revisionContent, filePath);
       }
 
@@ -432,7 +439,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                           @NotNull UserDataHolder context,
                                           @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
     if (rev.getFile().isDirectory()) {
-      throw new DiffRequestProducerException("Can't show diff for directory");
+      throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.cant.show.for.directory"));
     }
   }
 
@@ -450,18 +457,22 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return hashCode(myChange);
   }
 
+  @Nls
   public static String getYourVersion() {
     return DiffBundle.message("merge.version.title.our");
   }
 
+  @Nls
   public static String getServerVersion() {
     return DiffBundle.message("merge.version.title.their");
   }
 
+  @Nls
   public static String getBaseVersion() {
     return DiffBundle.message("merge.version.title.base");
   }
 
+  @Nls
   public static String getMergedVersion() {
     return DiffBundle.message("merge.version.title.merged");
   }

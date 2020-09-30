@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.getValueList;
 
-public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccessor<T, List<String>> {
+public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccessor<T, List<String>> implements CodeStyleValueList {
   public ValueListPropertyAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }

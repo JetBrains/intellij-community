@@ -23,7 +23,7 @@ open class LocalChangesCommitter(
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext,
-  private val localHistoryActionName: String = "Commit Changes"
+  private val localHistoryActionName: String = message("commit.changes")
 ) : AbstractCommitter(project, changes, commitMessage, commitContext) {
 
   private var myAction = LocalHistoryAction.NULL

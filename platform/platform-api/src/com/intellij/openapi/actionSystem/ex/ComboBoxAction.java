@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.TooltipTitle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -50,7 +52,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
-  private String myPopupTitle;
+  private @NlsContexts.PopupTitle String myPopupTitle;
 
 
   protected ComboBoxAction() {
@@ -69,7 +71,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   @NotNull
-  private ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     DefaultActionGroup group = createPopupActionGroup(component, context);
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       myPopupTitle, group, context, false, shouldShowDisabledActions(), false, disposeCallback, getMaxRows(), getPreselectCondition());
@@ -108,7 +110,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     mySmallVariant = smallVariant;
   }
 
-  public void setPopupTitle(String popupTitle) {
+  public void setPopupTitle(@NlsContexts.PopupTitle String popupTitle) {
     myPopupTitle = popupTitle;
   }
 
@@ -136,10 +138,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return 1;
   }
 
-  protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
+  public class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed;
-    private String myTooltipText;
+    private @TooltipTitle String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -369,6 +371,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override public void updateUI() {
       super.updateUI();
+      updateMargin();
+    }
+
+    protected void updateMargin() {
       setMargin(JBUI.insets(0, 8, 0, 5));
     }
 

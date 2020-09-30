@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -15,6 +16,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
@@ -47,7 +49,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     if (rows.size == 1) {
-      ui.jumpToRow(rows.single(), false)
+      jumpToRow(ui, rows.single(), false)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -65,7 +67,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
-          ui.jumpToRow(row, false)
+          jumpToRow(ui, row, false)
         }
       }
     }
@@ -76,6 +78,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent_commit", parent) }
   }
 
+  @NlsActions.ActionText
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {
     if (commitMetadata !is LoadingDetails) {
       val time: Long = commitMetadata.authorTime

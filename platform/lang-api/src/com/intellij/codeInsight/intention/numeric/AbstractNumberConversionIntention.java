@@ -5,11 +5,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,14 +27,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractNumberConversionIntention implements IntentionAction {
-  private static final String TITLE = "Convert number to...";
-  private String myText;
+  private @IntentionName String myText;
 
   @IntentionName
   @NotNull
   @Override
   public String getText() {
-    return myText == null ? TITLE : myText;
+    return myText == null ? LangBundle.message("intention.name.convert.number.to") : myText;
   }
 
   @IntentionFamilyName
@@ -79,8 +80,8 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     return context;
   }
 
-  public String getActionName(NumberConverter converter, String convertedText) {
-    return String.format("Convert number to %s (%s)", converter, convertedText);
+  public @IntentionName String getActionName(NumberConverter converter, String convertedText) {
+    return LangBundle.message("intention.name.convert.number.to.with.text", converter, convertedText);
   }
 
   @Override
@@ -109,7 +110,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
         }, file);
       }
 
-      private String getName() {
+      private @NlsContexts.Command String getName() {
         return getActionName(myConverter, myResult);
       }
 
@@ -129,8 +130,8 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     }
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setAccessibleName(TITLE)
-      .setTitle(StringUtil.wordsToBeginFromUpperCase(TITLE))
+      .setAccessibleName(LangBundle.message("intention.name.convert.number.to"))
+      .setTitle(StringUtil.wordsToBeginFromUpperCase(LangBundle.message("intention.name.convert.number.to")))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)

@@ -53,7 +53,7 @@ public class AppEngineEnhancerBuilderTest extends JpsBuildTestCase {
   }
 
   private void assertEnhanced(final String... paths) {
-    assertCompiled(AppEngineEnhancerBuilder.NAME, paths);
+    assertCompiled(AppEngineEnhancerBuilder.NAME_SUPPLIER.get(), paths);
   }
 
   private void addAppEngineModule(final String moduleName, final boolean runEnhancerOnMake, String srcRoot) {

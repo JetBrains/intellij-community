@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -446,7 +447,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public static String getScanningPackagesMessage() {
+  public static @NlsContexts.ProgressText String getScanningPackagesMessage() {
     return CodeInsightBundle.message("package.dependencies.build.progress.text");
   }
 

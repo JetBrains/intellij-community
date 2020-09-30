@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx;
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -30,7 +29,6 @@ import org.junit.Test;
  */
 public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImportingTestCase {
 
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -39,7 +37,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
-    PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
     String appClass = "package my;\n" +
                       "import java.util.Arrays;\n" +

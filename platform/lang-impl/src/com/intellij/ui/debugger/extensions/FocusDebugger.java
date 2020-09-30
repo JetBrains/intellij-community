@@ -25,9 +25,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -113,7 +115,9 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
       final StringWriter s = new StringWriter();
       final PrintWriter writer = new PrintWriter(s);
       element.getAllocation().printStackTrace(writer);
-      myAllocation.setText(s.toString());
+
+      @NlsSafe String trace = s.toString();
+      myAllocation.setText(trace);
     }
   }
 
@@ -141,11 +145,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
 
 
-    final SimpleColoredText text = new SimpleColoredText();
-    text.append(evt.getPropertyName(), maybeGrayOut(new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null), affectsDebugger));
-    text.append(" newValue=", maybeGrayOut(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, affectsDebugger));
+    SimpleColoredText text = new SimpleColoredText();
+    @NlsSafe String propertyName = evt.getPropertyName();
+    text.append(propertyName, maybeGrayOut(new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null), affectsDebugger));
+    text.append(" " + IdeBundle.message("focus.debugger.label.newvalue"), maybeGrayOut(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, affectsDebugger));
     text.append(String.valueOf(evt.getNewValue()), maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
-    text.append(" oldValue=" + evt.getOldValue(), maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
+    text.append(" " + IdeBundle.message("focus.debugger.label.oldvalue") + evt.getOldValue(), maybeGrayOut(SimpleTextAttributes.REGULAR_ATTRIBUTES, affectsDebugger));
 
 
     myLogModel.addElement(new FocusElement(text, new Throwable()));
@@ -173,7 +178,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
                                          boolean hasFocus) {
       clear();
       final SimpleColoredText text = value.getText();
-      final ArrayList<String> strings = text.getTexts();
+      final ArrayList<@Nls String> strings = text.getTexts();
       final ArrayList<SimpleTextAttributes> attributes = value.getText().getAttributes();
       for (int i = 0; i < strings.size(); i++) {
         append(strings.get(i), attributes.get(i));

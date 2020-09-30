@@ -1,13 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
@@ -18,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,6 +44,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
       }
     };
 
+  @NotNull
   private final String myExternalName;
   private final TextAttributes myDefaultAttributes;
   private final TextAttributesKey myFallbackAttributeKey;
@@ -70,7 +69,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
     Element myDefaultAttributesElement = JDOMExternalizerUtil.readOption(element, "myDefaultAttributes");
     TextAttributes defaultAttributes = myDefaultAttributesElement == null ? null : new TextAttributes(myDefaultAttributesElement);
-    myExternalName = name;
+    myExternalName = Objects.requireNonNull(name);
     myDefaultAttributes = defaultAttributes;
     myFallbackAttributeKey = null;
   }
@@ -81,11 +80,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   }
 
   @Override
+  @NlsSafe
   public String toString() {
     return myExternalName;
   }
 
   @NotNull
+  @NlsSafe
   public String getExternalName() {
     return myExternalName;
   }

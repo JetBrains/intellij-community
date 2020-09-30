@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.event.TreeExpansionEvent;
@@ -26,6 +28,12 @@ import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.containers.ContainerUtil.set;
 
 public final class TreeUtilVisitTest {
+  @Before
+  public void setUp() {
+    TestApplicationManager.getInstance();
+  }
+
+
   @Test
   public void testAcceptDepth1() {
     testFind(() -> new DepthVisitor(1), 1);
@@ -622,7 +630,7 @@ public final class TreeUtilVisitTest {
       -> test.assertTree(expected, true, test::done)));
   }
 
-  private static void select(@NotNull TreeTest test, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+  private static void select(@NotNull TreeTest test, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(consumer);
   }
 
@@ -703,7 +711,7 @@ public final class TreeUtilVisitTest {
     testMultiSelect(array, count, expected, TreeTest::done);
   }
 
-  private static void testMultiSelect(TreeVisitor @NotNull [] array, int count, @NotNull String expected, @NotNull Consumer<TreeTest> then) {
+  private static void testMultiSelect(TreeVisitor @NotNull [] array, int count, @NotNull String expected, @NotNull Consumer<? super TreeTest> then) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test -> TreeUtil.promiseSelect(test.getTree(), Stream.of(array)).onProcessed(paths -> {
       test.invokeSafely(() -> {
         if (count == 0) {
@@ -883,7 +891,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectSelection(@NotNull Consumer<TreeTest> consumer) {
+  private static void testCollectSelection(@NotNull Consumer<? super TreeTest> consumer) {
     TreeVisitor[] array = {
       convertArrayToVisitor("1", "11"),
       convertArrayToVisitor("2", "22", "222"),

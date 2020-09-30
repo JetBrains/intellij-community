@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -47,16 +48,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
@@ -552,7 +553,7 @@ public final class ControlFlowUtils {
     }
   }
 
-  private static class BreakFinder extends GroovyRecursiveElementVisitor {
+  private static final class BreakFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
     private final GrStatement m_target;
 
@@ -581,7 +582,7 @@ public final class ControlFlowUtils {
     }
   }
 
-  private static class ContinueFinder extends GroovyRecursiveElementVisitor {
+  private static final class ContinueFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
     private final GrStatement m_target;
 
@@ -763,6 +764,36 @@ public final class ControlFlowUtils {
     }
 
     return result;
+  }
+
+  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
+  getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner) {
+    return CachedValuesManager.getCachedValue(owner, () -> {
+      Set<ResolvedVariableDescriptor> foreignDescriptors = getForeignVariableDescriptors(owner, __ -> true);
+      return CachedValueProvider.Result.create(foreignDescriptors, owner);
+    });
+  }
+
+  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
+  getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
+                                @NotNull Predicate<? super ReadWriteVariableInstruction> instructionFilter) {
+    Set<ResolvedVariableDescriptor> usedDescriptors = new LinkedHashSet<>();
+    for (Instruction instruction : owner.getControlFlow()) {
+      PsiElement element = instruction.getElement();
+      if (instruction instanceof ReadWriteVariableInstruction && instructionFilter.test((ReadWriteVariableInstruction)instruction)) {
+        VariableDescriptor immediateDescriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
+        if (immediateDescriptor instanceof ResolvedVariableDescriptor) {
+          usedDescriptors.add((ResolvedVariableDescriptor)immediateDescriptor);
+        }
+      }
+      if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
+        usedDescriptors.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, instructionFilter));
+      }
+    }
+    return usedDescriptors.stream()
+      .filter(descriptor -> descriptor.getVariable().getContext() != owner &&
+                            PsiTreeUtil.getParentOfType(descriptor.getVariable(), GrControlFlowOwner.class) != owner)
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   @Nullable

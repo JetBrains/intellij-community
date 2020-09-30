@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * User : catherine
  */
-public class RestUtil {
+public final class RestUtil {
   private RestUtil() {}
 
   public static String[] SPHINX_DIRECTIVES = new String[] {

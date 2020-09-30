@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ExceptionUtil
 
+@Suppress("HardCodedStringLiteral")
 class ValidateHistoryAction : AnAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal

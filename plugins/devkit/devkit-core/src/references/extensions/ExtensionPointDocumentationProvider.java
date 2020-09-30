@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -16,8 +20,10 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -30,22 +36,26 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
     final XmlFile epDeclarationFile = DomUtil.getFile(extensionPoint);
 
-    StringBuilder epClassesText = new StringBuilder();
+    final Module epModule = ModuleUtilCore.findModuleForFile(epDeclarationFile.getVirtualFile(), element.getProject());
+    HtmlBuilder builder = new HtmlBuilder();
+    if (epModule != null) {
+      builder.append("[" + epModule.getName() + "]").br();
+    }
+
+    builder.append(HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold());
+    builder.append(" ");
+    builder.append("(" + epDeclarationFile.getName() + ")");
+    builder.br();
+
     if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
-      generateClassLink(epClassesText, extensionPoint.getBeanClass().getValue());
-      epClassesText.append("<br/>");
+      builder.append(generateClassLink(extensionPoint.getBeanClass().getValue()));
+      builder.br();
     }
 
     final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
-    generateClassLink(epClassesText, extensionPointClass);
+    builder.append(generateClassLink(extensionPointClass));
 
-    final Module epModule = ModuleUtilCore.findModuleForFile(epDeclarationFile.getVirtualFile(), element.getProject());
-    String moduleName = (epModule == null ? "" : "[" + epModule.getName() + "]<br/>");
-
-    return moduleName +
-           "<b>" + extensionPoint.getEffectiveQualifiedName() + "</b>" +
-           " (" + epDeclarationFile.getName() + ")<br/>" +
-           epClassesText;
+    return builder.toString();
   }
 
   @Override
@@ -53,15 +63,15 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
 
-    StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
-    sb.append("<b>").append(extensionPoint.getEffectiveQualifiedName()).append("</b>");
-    sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
+    HtmlBuilder defBuilder = new HtmlBuilder();
+    defBuilder.append(HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold());
+    defBuilder.br().append(DomUtil.getFile(extensionPoint).getName());
 
     final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
     if (beanClass != null) {
-      generateClassDoc(sb, beanClass);
+      defBuilder.append(generateClassDoc(beanClass));
 
-      StringBuilder bindingText = new StringBuilder();
+      HtmlBuilder bindingRows = new HtmlBuilder();
 
       new ExtensionPointBinding(beanClass).visit(new ExtensionPointBinding.BindingVisitor() {
         @Override
@@ -71,7 +81,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
         @Override
         public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
-          visitAttribute(field, "&lt;" + tagName + ">", required);
+          visitAttribute(field, "<" + tagName + ">", required);
         }
 
         @Override
@@ -79,42 +89,37 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
                                      @Nullable String tagName,
                                      @NotNull PsiAnnotation collectionAnnotation,
                                      boolean required) {
-          visitAttribute(field, "&lt;" + tagName + ">...", required);
+          visitAttribute(field, "<" + tagName + ">...", required);
         }
 
-        private void appendFieldBindingText(@NotNull PsiField field, @NotNull String displayName, boolean required) {
-          StringBuilder hyperLink = new StringBuilder();
-          DocumentationManagerUtil.createHyperlink(hyperLink, field,
-                                                   JavaDocUtil.getReferenceText(field.getProject(), field), displayName, false);
-
+        private void appendFieldBindingText(@NotNull PsiField field, @NotNull @NlsSafe String displayName, boolean required) {
+          HtmlChunk hyperLink = createLink(JavaDocUtil.getReferenceText(field.getProject(), field), displayName);
 
           final String typeText = field.getType().getPresentableText();
+          final String requiredText = required ? " " + DevKitBundle.message("extension.point.documentation.field.required.suffix") : "";
           final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
-
-          appendSection(bindingText, hyperLink.toString(), typeText + (required ? " (required)" : "") + initializer);
+          bindingRows.append(createSectionRow(hyperLink, typeText + requiredText + initializer));
         }
       });
 
-      if (bindingText.length() > 0) {
-        sb.append(DocumentationMarkup.SECTIONS_START);
-        sb.append(bindingText);
-        sb.append("<br/>");
-        sb.append(DocumentationMarkup.SECTIONS_END);
+      if (!bindingRows.isEmpty()) {
+        defBuilder.append(bindingRows.br().wrapWith(DocumentationMarkup.SECTIONS_TABLE));
       }
     }
+    HtmlChunk.Element definition = defBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
 
-    sb.append(DocumentationMarkup.DEFINITION_END);
-
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(definition);
 
     final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
     if (extensionPointClass != null) { // e.g. ServiceDescriptor
-      sb.append(DocumentationMarkup.CONTENT_START);
-      sb.append("<h2>Extension Point Implementation</h2>");
-      generateClassDoc(sb, extensionPointClass);
-      sb.append(DocumentationMarkup.CONTENT_END);
+      HtmlBuilder content = new HtmlBuilder();
+      content.append(HtmlChunk.text(DevKitBundle.message("extension.point.documentation.implementation.section")).wrapWith("h2"));
+      content.append(generateClassDoc(extensionPointClass));
+      builder.append(content.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
     }
 
-    return sb.toString();
+    return builder.toString();
   }
 
   @Override
@@ -122,27 +127,27 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
-  private static void generateClassLink(StringBuilder epClassText, @Nullable PsiClass epClass) {
-    if (epClass == null) return;
+  private static HtmlChunk generateClassLink(@Nullable PsiClass epClass) {
+    if (epClass == null) return HtmlChunk.empty();
 
-    DocumentationManagerUtil.createHyperlink(epClassText, epClass, epClass.getQualifiedName(), epClass.getName(), false);
+    return createLink(epClass.getQualifiedName(), epClass.getName());
   }
 
-  private static void generateClassDoc(StringBuilder sb, @Nullable PsiElement element) {
-    if (element == null) {
-      sb.append("??? not found ???");
-      return;
-    }
+  private static HtmlChunk createLink(String refText, @Nls String label) {
+    HtmlChunk text = HtmlChunk.text(label).wrapWith("code");
+    String link = DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + refText;
+    return HtmlChunk.tag("a").attr("href", link).child(text);
+  }
 
+  private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    sb.append(documentationProvider.generateDoc(element, null));
+    return HtmlChunk.raw(StringUtil.notNullize(documentationProvider.generateDoc(element, null)));
   }
 
-  private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
-    sb.append(DocumentationMarkup.SECTION_HEADER_START).append(sectionName)
-      .append(DocumentationMarkup.SECTION_SEPARATOR);
-    sb.append(sectionContent);
-    sb.append(DocumentationMarkup.SECTION_END);
+  private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {
+    HtmlChunk headerCell = DocumentationMarkup.SECTION_HEADER_CELL.child(sectionName.wrapWith("p"));
+    HtmlChunk contentCell = DocumentationMarkup.SECTION_CONTENT_CELL.addText(sectionContent);
+    return HtmlChunk.tag("tr").children(headerCell, contentCell);
   }
 
   @Nullable

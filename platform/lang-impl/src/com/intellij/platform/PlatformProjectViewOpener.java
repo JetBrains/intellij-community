@@ -63,10 +63,10 @@ final class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
     }
 
     @Override
-    public void toolWindowsRegistered(@NotNull List<String> id) {
+    public void toolWindowsRegistered(@NotNull List<String> id, @NotNull ToolWindowManager toolWindowManager) {
       if (id.contains(ToolWindowId.PROJECT_VIEW)) {
         Disposer.dispose(this);
-        activateProjectToolWindow(myProject, ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW));
+        activateProjectToolWindow(myProject, toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW));
       }
     }
 

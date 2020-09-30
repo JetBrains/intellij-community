@@ -20,7 +20,7 @@ public final class Ksuid {
   private static final int EPOCH = 1400000000;
   private static final int TIMESTAMP_LENGTH = 4;
   private static final int PAYLOAD_LENGTH = 16;
-  private static final int MAX_ENCODED_LENGTH = 27;
+  public static final int MAX_ENCODED_LENGTH = 27;
 
   public static @NotNull String generate() {
     ByteBuffer byteBuffer = ByteBuffer.allocate(TIMESTAMP_LENGTH + PAYLOAD_LENGTH);

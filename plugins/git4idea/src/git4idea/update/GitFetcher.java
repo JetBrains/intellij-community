@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,11 +21,11 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.fetch.GitFetchSupport;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -220,25 +221,31 @@ public class GitFetcher {
 
   public static void displayFetchResult(@NotNull Project project,
                                         @NotNull GitFetchResult result,
-                                        @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
+                                        @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
+                                        @NotNull Collection<? extends Exception> errors) {
+    VcsNotifier notifier = VcsNotifier.getInstance(project);
     if (result.isSuccess()) {
-      VcsNotifier.getInstance(project).notifySuccess("Fetched successfully" + result.getAdditionalInfo());
-    } else if (result.isCancelled()) {
-      VcsNotifier.getInstance(project).notifyMinorWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
-    } else if (result.isNotAuthorized()) {
-      String title;
-      String description;
+      notifier.notifySuccess("git.fetch.success", "",
+                             GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
+    }
+    else if (result.isCancelled()) {
+      notifier.notifyMinorWarning("", GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
+    }
+    else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
-        title = errorNotificationTitle;
-        description = "Fetch failed: couldn't authorize";
-      } else {
-        title = "Fetch failed";
-        description = "Couldn't authorize";
+        notifier.notifyError("git.fetch.error",
+                             errorNotificationTitle,
+                             GitBundle.message("notification.content.fetch.failed.couldn.t.authorize") + result.getAdditionalInfo());
       }
-      description += result.getAdditionalInfo();
-      GitUIUtil.notifyMessage(project, title, description, true, null);
-    } else {
-      GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
+      else {
+        notifier.notifyError("git.fetch.error",
+                             GitBundle.message("notification.title.fetch.failed"),
+                             GitBundle.message("notification.content.couldn.t.authorize") + result.getAdditionalInfo());
+      }
+    }
+    else {
+      VcsNotifier.getInstance(project)
+        .notifyError("git.fetch.failed", GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
     }
   }
 
@@ -255,7 +262,8 @@ public class GitFetcher {
    */
   @Deprecated
   public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
-                                     @Nullable String errorNotificationTitle, boolean notifySuccess) {
+                                     @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
+                                     boolean notifySuccess) {
     MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), false, true);
     for (GitRepository repository : roots) {
       LOG.info("fetching " + repository);
@@ -272,11 +280,11 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      VcsNotifier.getInstance(myProject).notifySuccess("Fetched successfully");
+      VcsNotifier.getInstance(myProject).notifySuccess("git.fetch.success", "", GitBundle.message("notification.content.fetched.successfully"));
     }
 
     if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", additionalInfo.asString());
+      VcsNotifier.getInstance(myProject).notifyMinorInfo(null, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
     }
 
     return true;

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -30,7 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +34,7 @@ import java.util.*;
 /**
 * @author vlan
 */
-public class PyPackageManagerUI {
+public final class PyPackageManagerUI {
   @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
 
   @Nullable private final Listener myListener;
@@ -83,45 +68,52 @@ public class PyPackageManagerUI {
     ProgressManager.getInstance().run(new UninstallTask(myProject, mySdk, myListener, packages));
   }
 
-  private boolean checkDependents(@NotNull final List<PyPackage> packages) {
+  private boolean checkDependents(@NotNull List<PyPackage> packages) {
     try {
-      final Map<String, Set<PyPackage>> dependentPackages = collectDependents(packages, mySdk);
-      final int[] warning = {0};
-      if (!dependentPackages.isEmpty()) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          if (dependentPackages.size() == 1) {
-            List<String> dep = new ArrayList<>();
-            int size = 1;
-            for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-              final Set<PyPackage> value = entry.getValue();
-              size = value.size();
-              dep.add(PyBundle.message(
-                "python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package.single.package.description",
-                entry.getKey(),
-                StringUtil.join(value, ", ")));
-            }
-            String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package",
-                                              StringUtil.join(dep, "\n"),
-                                              size);
-            warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
-                                                  AllIcons.General.BalloonWarning);
-          }
-          else {
-            List<String> dep = new ArrayList<>();
-            for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-              dep.add(PyBundle.message(
-                "python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages.single.package.description",
-                entry.getKey(),
-                StringUtil.join(entry.getValue(), ", ")));
-            }
-            String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages",
-                                              StringUtil.join(dep, "\n"));
-            warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
-                                                  AllIcons.General.BalloonWarning);
-          }
-        }, ModalityState.current());
+      Map<String, Set<PyPackage>> dependentPackages = collectDependents(packages, mySdk);
+      if (dependentPackages.isEmpty()) {
+        return false;
       }
-      if (warning[0] != Messages.YES) return true;
+
+      boolean[] warning = {true};
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (dependentPackages.size() == 1) {
+          List<String> dep = new ArrayList<>();
+          int size = 1;
+          for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+            final Set<PyPackage> value = entry.getValue();
+            size = value.size();
+            dep.add(PyBundle.message(
+              "python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package.single.package.description",
+              entry.getKey(),
+              StringUtil.join(value, ", ")));
+          }
+          String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package",
+                                            StringUtil.join(dep, "\n"),
+                                            size);
+          warning[0] =
+            MessageDialogBuilder.yesNo(PyBundle.message("python.packaging.warning"), message)
+              .asWarning()
+              .ask(myProject);
+        }
+        else {
+          List<String> dep = new ArrayList<>();
+          for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+            dep.add(PyBundle.message(
+              "python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages.single.package.description",
+              entry.getKey(),
+              StringUtil.join(entry.getValue(), ", ")));
+          }
+          String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.several.dependent.packages",
+                                            StringUtil.join(dep, "\n"));
+          warning[0] = MessageDialogBuilder.yesNo(PyBundle.message("python.packaging.warning"), message)
+            .asWarning()
+            .ask(myProject);
+        }
+      }, ModalityState.current());
+      if (!warning[0]) {
+        return true;
+      }
     }
     catch (ExecutionException e) {
       LOG.info("Error loading packages dependents: " + e.getMessage(), e);

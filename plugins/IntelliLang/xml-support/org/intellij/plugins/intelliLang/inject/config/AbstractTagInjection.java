@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
@@ -49,13 +50,10 @@ public abstract class AbstractTagInjection extends BaseInjection {
 
   private static final Logger LOG = Logger.getInstance(AbstractTagInjection.class);
 
-  @NotNull @NonNls
-  private StringMatcher myTagName = StringMatcher.ANY;
+  private @NotNull @NlsSafe StringMatcher myTagName = StringMatcher.ANY;
 
-  @NotNull @NonNls
-  private Set<String> myTagNamespace = Collections.emptySet();
-  @NotNull @NonNls
-  private String myXPathCondition = "";
+  private @NotNull @NlsSafe Set<String> myTagNamespace = Collections.emptySet();
+  private @NotNull @NlsSafe String myXPathCondition = "";
 
   private volatile Condition<XmlElement> myCompiledXPathCondition;
   private boolean myApplyToSubTags;
@@ -64,12 +62,11 @@ public abstract class AbstractTagInjection extends BaseInjection {
     super(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
-  @NotNull
-  public String getTagName() {
+  public @NotNull String getTagName() {
     return myTagName.getPattern();
   }
 
-  public void setTagName(@NotNull @NonNls String tagName) {
+  public void setTagName(@NotNull @NlsSafe String tagName) {
     myTagName = StringMatcher.create(tagName);
   }
 
@@ -79,8 +76,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
            (!(element instanceof XmlElement) || matchXPath((XmlElement)element));
   }
 
-  @NotNull
-  public String getTagNamespace() {
+  public @NotNull @NlsSafe String getTagNamespace() {
     return StringUtil.join(myTagNamespace, "|");
   }
 
@@ -88,8 +84,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
     myTagNamespace = new TreeSet<>(StringUtil.split(tagNamespace, "|"));
   }
 
-  @NotNull
-  public String getXPathCondition() {
+  public @NotNull String getXPathCondition() {
     return myXPathCondition;
   }
 

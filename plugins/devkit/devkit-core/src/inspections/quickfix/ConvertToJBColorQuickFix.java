@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertToJBColorQuickFix implements LocalQuickFix {
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Convert to JBColor";
+    return DevKitBundle.message("inspections.use.jb.color.new.color.fix.family.name");
   }
 
   @Override

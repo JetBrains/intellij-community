@@ -17,13 +17,14 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class MigrationMap {
-  private String myName;
-  private String myDescription;
+  private @Nls String myName;
+  private @Nls String myDescription;
   private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<>();
   private String myFileName;
 
@@ -49,19 +50,19 @@ public class MigrationMap {
     return newMap;
   }
 
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 
-  public void setName(String name) {
+  public void setName(@Nls String name) {
     myName = name;
   }
 
-  public String getDescription() {
+  public @Nls String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@Nls String description) {
     myDescription = description;
   }
 

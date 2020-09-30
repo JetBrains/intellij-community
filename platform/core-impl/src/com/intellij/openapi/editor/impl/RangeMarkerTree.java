@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     return node;
   }
-  private String errMsg(@NotNull RMNode<T> node) {
+  private @NonNls String errMsg(@NotNull RMNode<T> node) {
     System.gc();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(t -> {

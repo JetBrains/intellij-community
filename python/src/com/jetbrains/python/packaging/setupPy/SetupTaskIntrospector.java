@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.setupPy;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -97,7 +98,7 @@ public class SetupTaskIntrospector {
     return result;
   }
 
-  private static SetupTask createTaskFromFile(PyFile file, @NotNull String name, boolean setuptools) {
+  private static SetupTask createTaskFromFile(PyFile file, @NotNull @NlsSafe String name, boolean setuptools) {
     SetupTask task = new SetupTask(name);
     // setuptools wraps the build_ext command class in a way that we cannot understand; use the distutils class which it delegates to
     final PyClass taskClass = (name.equals("build_ext") && setuptools)

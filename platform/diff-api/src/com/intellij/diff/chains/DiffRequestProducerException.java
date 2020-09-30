@@ -15,16 +15,18 @@
  */
 package com.intellij.diff.chains;
 
+import org.jetbrains.annotations.Nls;
+
 public class DiffRequestProducerException extends Exception {
   public DiffRequestProducerException(Throwable cause) {
     super(cause.getMessage(), cause);
   }
 
-  public DiffRequestProducerException(String message, Throwable cause) {
+  public DiffRequestProducerException(@Nls String message, Throwable cause) {
     super(message, cause);
   }
 
-  public DiffRequestProducerException(String message) {
+  public DiffRequestProducerException(@Nls String message) {
     super(message);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.print.PageFormat;
@@ -162,7 +163,7 @@ public class TextPrintHandler extends PrintActionHandler {
           }
           catch (PrinterException e) {
             LOG.warn(e);
-            String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
+            @NonNls String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
             Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), message, NotificationType.ERROR));
           }
           catch (Exception e) {

@@ -18,8 +18,8 @@ public class JBCefTestHelper {
       @Override
       public void onLoadEnd(CefBrowser cefBrowser, CefFrame frame, int httpStatusCode) {
         System.out.println("onLoadEnd on " + browser);
-        latch.countDown();
         browser.getJBCefClient().removeLoadHandler(this, cefBrowser);
+        latch.countDown();
       }
     }, browser.getCefBrowser());
 

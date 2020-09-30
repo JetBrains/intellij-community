@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -28,7 +28,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
   private static final CallMatcher APPEND = CallMatcher.instanceCall("java.lang.AbstractStringBuilder", "append").parameterCount(1);
 
   public boolean ADD_MATH_MAX = true;
-  
+
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
@@ -69,7 +69,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
     return call;
   }
 
-  private static class StringRepeatCanBeUsedFix implements LocalQuickFix {
+  private static final class StringRepeatCanBeUsedFix implements LocalQuickFix {
     private final boolean myAddMathMax;
 
     private StringRepeatCanBeUsedFix(boolean addMathMax) {

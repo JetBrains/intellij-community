@@ -17,6 +17,7 @@ package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LineCol {
@@ -53,6 +54,7 @@ public class LineCol {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("{ line: %s, column: %s }", line, column);

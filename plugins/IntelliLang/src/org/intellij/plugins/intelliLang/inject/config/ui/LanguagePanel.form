@@ -9,7 +9,7 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="none" title="Language"/>
+    <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="language.title"/>
     <children>
       <component id="be722" class="javax.swing.JLabel">
         <constraints>
@@ -17,7 +17,7 @@
         </constraints>
         <properties>
           <labelFor value="4ece4"/>
-          <text value="&amp;ID:"/>
+          <text resource-bundle="messages/IntelliLangBundle" key="language.label.id"/>
         </properties>
       </component>
       <component id="6d86b" class="javax.swing.JLabel">
@@ -26,7 +26,7 @@
         </constraints>
         <properties>
           <labelFor value="96508"/>
-          <text value="&amp;Prefix:"/>
+          <text resource-bundle="messages/IntelliLangBundle" key="language.label.prefix"/>
         </properties>
       </component>
       <component id="c3d91" class="javax.swing.JLabel">
@@ -35,7 +35,7 @@
         </constraints>
         <properties>
           <labelFor value="dcdf7"/>
-          <text value="&amp;Suffix:"/>
+          <text resource-bundle="messages/IntelliLangBundle" key="language.label.suffix"/>
         </properties>
       </component>
       <component id="4ece4" class="com.intellij.openapi.ui.ComboBox" binding="myLanguage">

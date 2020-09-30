@@ -95,7 +95,7 @@ public class UiDebugger extends JPanel implements Disposable {
 
       @Override
       protected Action @NotNull [] createActions() {
-        return new Action[] {new AbstractAction("Close") {
+        return new Action[] {new AbstractAction(LangBundle.message("button.close")) {
           @Override
           public void actionPerformed(ActionEvent e) {
             doOKAction();

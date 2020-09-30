@@ -25,9 +25,11 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     val model = editor.inlayModel
     val range = file.textRange
     val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
+    val afterLineElements = model.getAfterLineEndElementsInRange(range.startOffset, range.endOffset)
     val blockElements = model.getBlockElementsInRange(range.startOffset, range.endOffset)
     val inlays = mutableListOf<InlayData>()
     inlineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
+    afterLineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
     blockElements.mapTo(inlays) { InlayData(it, InlayType.Block) }
     val document = myFixture.getDocument(file)
     inlays.sortBy { it.effectiveOffset(document) }

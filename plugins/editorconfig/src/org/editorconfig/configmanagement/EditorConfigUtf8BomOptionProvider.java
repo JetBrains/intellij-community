@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorConfigUtf8BomOptionProvider implements Utf8BomOptionProvider {
+final class EditorConfigUtf8BomOptionProvider implements Utf8BomOptionProvider {
   @Override
   public boolean shouldAddBOMForNewUtf8File(@NotNull VirtualFile file) {
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);

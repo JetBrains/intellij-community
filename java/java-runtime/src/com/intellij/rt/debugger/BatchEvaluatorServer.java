@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class BatchEvaluatorServer {
+public final class BatchEvaluatorServer {
   /**
    * Serialize result in one String to avoid multiple getValue commands from the resulting array
    */

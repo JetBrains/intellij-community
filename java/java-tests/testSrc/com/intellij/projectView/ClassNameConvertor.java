@@ -34,7 +34,7 @@ class ClassNameConvertor implements TreeStructureProvider {
       Object o = treeNode.getValue();
       if (o instanceof PsiFile && ((PsiFile)o).getVirtualFile().getExtension().equals("java")) {
         final String name = ((PsiFile)o).getName();
-        ProjectViewNode viewNode = new ProjectViewNode<PsiFile>(myProject, (PsiFile)o, settings) {
+        ProjectViewNode viewNode = new ProjectViewNode<>(myProject, (PsiFile)o, settings) {
           @Override
           @NotNull
           public Collection<AbstractTreeNode<?>> getChildren() {
@@ -59,7 +59,6 @@ class ClassNameConvertor implements TreeStructureProvider {
           @Override
           public void update(@NotNull PresentationData presentation) {
           }
-
         };
         result.add(viewNode);
       }

@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
@@ -69,7 +70,8 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else if (userObject != null) {
-        append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        @NlsSafe String userObjectString = userObject.toString();
+        append(userObjectString, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     }
   };

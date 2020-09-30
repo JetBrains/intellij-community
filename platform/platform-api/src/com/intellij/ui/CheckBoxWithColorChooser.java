@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ public class CheckBoxWithColorChooser extends JPanel {
   private Color myColor;
   private final JCheckBox myCheckbox;
 
-  public CheckBoxWithColorChooser(String text, boolean selected, Color color) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text, boolean selected, Color color) {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     myColor = color;
     myCheckbox = new JCheckBox(text, selected);
@@ -23,11 +24,11 @@ public class CheckBoxWithColorChooser extends JPanel {
     add(new MyColorButton());
   }
 
-  public CheckBoxWithColorChooser(String text, boolean selected) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text, boolean selected) {
     this(text, selected, Color.WHITE);
   }
 
-  public CheckBoxWithColorChooser(String text) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text) {
     this(text, false);
   }
 

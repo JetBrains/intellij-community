@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.runInEdtAndWait
@@ -36,18 +37,23 @@ class ExternalSystemRunConfigurationJavaExtensionTest : ExecutionTestCase() {
     ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), testRootDisposable)
     val configuration = createExternalSystemRunConfiguration()
     val notificationsCollector = NotificationsCollector()
-    Messages.setTestDialog(notificationsCollector)
-    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-      override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
-        // don't fail this if `LOG.error()` was called for our exception somewhere
-        if (t is FakeExecutionException) return
-        super.processError(message, t, details, logger)
+    val oldTestDialog = TestDialogManager.setTestDialog(notificationsCollector)
+    try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
+          // don't fail this if `LOG.error()` was called for our exception somewhere
+          if (t is FakeExecutionException) return
+          super.processError(message, t, details, logger)
+        }
+      })
+      runInEdtAndWait {
+        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
       }
-    })
-    runInEdtAndWait {
-      ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+      assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
     }
-    assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
+    finally {
+      TestDialogManager.setTestDialog(oldTestDialog)
+    }
   }
 
   fun `test only applicable configuration extensions should be processed`() {

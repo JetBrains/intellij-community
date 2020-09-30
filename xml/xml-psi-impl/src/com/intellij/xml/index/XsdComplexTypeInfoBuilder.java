@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
+public final class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
   private final static String SIGN = "";
   public static final String HTTP_WWW_W3_ORG_2001_XMLSCHEMA = "http://www.w3.org/2001/XMLSchema";
   // base type -> inherited types
@@ -173,7 +173,7 @@ public class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
     return new SchemaTypeInfo(element, isType, nsUri);
   }
 
-  private static class NameSpaceHelper extends NanoXmlUtil.EmptyValidator {
+  private static final class NameSpaceHelper extends NanoXmlUtil.EmptyValidator {
     public static final String XMLNS = "xmlns";
     public static final String XMLNS_ = "xmlns:";
     private boolean myInSchema;

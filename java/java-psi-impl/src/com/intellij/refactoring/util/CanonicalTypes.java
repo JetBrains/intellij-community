@@ -20,7 +20,7 @@ import java.util.Objects;
 /**
  * @author dsl
  */
-public class CanonicalTypes {
+public final class CanonicalTypes {
   private CanonicalTypes() { }
 
   public abstract static class Type {
@@ -49,7 +49,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class Primitive extends AnnotatedType {
+  private static final class Primitive extends AnnotatedType {
     private final PsiPrimitiveType myType;
 
     private Primitive(@NotNull PsiPrimitiveType type) {
@@ -99,7 +99,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class Ellipsis extends Array {
+  private static final class Ellipsis extends Array {
     private Ellipsis(@NotNull PsiType original, @NotNull Type componentType) {
       super(original, componentType);
     }
@@ -110,7 +110,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class WildcardType extends AnnotatedType {
+  private static final class WildcardType extends AnnotatedType {
     private final boolean myIsExtending;
     private final Type myBound;
 
@@ -162,7 +162,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class UnresolvedType extends Type {
+  private static final class UnresolvedType extends Type {
     private final String myPresentableText;
     private final String myCanonicalText;
 
@@ -187,7 +187,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class ClassType extends AnnotatedType {
+  private static final class ClassType extends AnnotatedType {
     private final String myPresentableText;
     private final String myClassQName;
     private final Map<String, Type> mySubstitutor;
@@ -233,7 +233,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class LogicalOperationType extends Type {
+  private static final class LogicalOperationType extends Type {
     private final List<? extends Type> myTypes;
     private final boolean myDisjunction;
 

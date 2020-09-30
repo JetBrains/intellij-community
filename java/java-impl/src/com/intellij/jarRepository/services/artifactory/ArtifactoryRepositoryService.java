@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -93,7 +94,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
 
     String className = template.getClassNames();
     final String searchString = className.endsWith("*") || className.endsWith("?") ? className : className + ".class";
-    Url requestUrl = toUrl(url, "search/archive", "name=" + URLEncoder.encode(searchString.trim(), "UTF-8"));
+    Url requestUrl = toUrl(url, "search/archive", "name=" + URLEncoder.encode(searchString.trim(), StandardCharsets.UTF_8));
     ArtifactoryModel.ArchiveResults results = gson.fromJson(
       HttpRequests.request(requestUrl)
         .productNameAsUserAgent().readString(),

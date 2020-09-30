@@ -27,8 +27,8 @@ class ResourceBundleEditorKeepEmptyValueToggleAction extends CheckboxAction {
   private final static String SELECTION_KEY = "resource.bundle.editor.insert.empty.values";
 
   ResourceBundleEditorKeepEmptyValueToggleAction() {
-    super("Do not insert properties with empty value",
-          "Do not create value if value text field is empty. Delete existed value if text field become empty.", null);
+    super(ResourceBundleEditorBundle.message("action.keep.empty.value.description"),
+          ResourceBundleEditorBundle.message("action.keep.empty.value.text"), null);
   }
 
   @Override

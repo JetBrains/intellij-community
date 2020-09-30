@@ -84,7 +84,12 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         return false;
       }
     }.searchImplementations(editor, source, offset);
-    if (targets == null) return null;
+    if (targets == null) {
+      //canceled search
+      GotoData data = new GotoData(source, PsiElement.EMPTY_ARRAY, Collections.emptyList());
+      data.isCanceled = true;
+      return data;
+    }
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override

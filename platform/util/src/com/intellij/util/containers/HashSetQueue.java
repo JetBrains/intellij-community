@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
@@ -29,10 +16,10 @@ import java.util.Queue;
  * <li>The {@link #contains(Object)} method is O(1)</li>
  * <li>The {@link #remove(Object)} method is O(1)</li>
  * </ul>
- * Implementation is backed by {@link gnu.trove.THashSet} containing double-linked QueueEntry nodes holding elements themselves.
+ * Implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
-public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
-  private final OpenTHashSet<QueueEntry<T>> set = new OpenTHashSet<>();
+public final class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
+  private final ObjectOpenHashSet<QueueEntry<T>> set = new ObjectOpenHashSet<>();
   // Entries in the queue are double-linked circularly, the TOMB serving as a sentinel.
   // TOMB.next is the first entry; TOMB.prev is the last entry;
   // TOMB.next == TOMB.prev == TOMB means the queue is empty
@@ -60,6 +47,11 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     public boolean equals(Object obj) {
       //noinspection unchecked
       return obj instanceof QueueEntry && t.equals(((QueueEntry<T>)obj).t);
+    }
+
+    @Override
+    public String toString() {
+      return t.toString();
     }
   }
 
@@ -184,7 +176,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     };
   }
 
-  private static class MyIteratorPosition<T> implements PositionalIterator.IteratorPosition<T> {
+  private static final class MyIteratorPosition<T> implements PositionalIterator.IteratorPosition<T> {
     private final QueueEntry<T> cursor;
     private final long count;
     private final QueueEntry<T> TOMB;

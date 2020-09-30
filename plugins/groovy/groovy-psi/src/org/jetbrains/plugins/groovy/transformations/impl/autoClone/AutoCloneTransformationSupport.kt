@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl.autoClone
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.light.LightMethodBuilder
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
@@ -17,8 +19,11 @@ import org.jetbrains.plugins.groovy.transformations.plusAssign
 class AutoCloneTransformationSupport : AstTransformationSupport {
 
   private companion object {
+    @NlsSafe
     const val AUTO_CLONE_FQN = "groovy.transform.AutoClone"
+    @NonNls
     const val ORIGIN_INFO = "created by @AutoClone"
+    @NlsSafe
     const val CNSE_FQN = "java.lang.CloneNotSupportedException"
   }
 

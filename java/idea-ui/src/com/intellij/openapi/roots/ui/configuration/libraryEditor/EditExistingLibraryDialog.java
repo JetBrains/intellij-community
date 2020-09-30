@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Objects;
 
-public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
+public final class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private final ExistingLibraryEditor myLibraryEditor;
   private final boolean myCommitChanges;
   private final LibraryTable.ModifiableModel myTableModifiableModel;

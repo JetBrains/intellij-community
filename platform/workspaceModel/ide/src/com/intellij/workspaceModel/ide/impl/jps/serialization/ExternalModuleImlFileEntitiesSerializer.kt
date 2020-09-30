@@ -14,7 +14,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        internalEntitySource: JpsFileEntitySource)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, null) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource) {
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
@@ -91,7 +91,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 }
 
 internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, null) {
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
   override val isExternalStorage: Boolean
     get() = true
 
@@ -109,7 +109,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
     return "${entity.name}.xml"
   }
 
-  override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
+  override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
     val fileName = PathUtil.getFileName(fileUrl.url)
     val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
       externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
@@ -118,6 +118,6 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       fileUrl
     }
     val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, null), actualFileUrl, internalSource)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, internalSource)
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -61,7 +62,7 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
     for (GrAnnotation aliased : annotations) {
-      Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(aliased, holder);
+      Pair<PsiElement, @InspectionMessage String> r = AnnotationChecker.checkAnnotationArgumentList(aliased, holder);
       if (r != null && r.getSecond() != null) {
         AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, r.getSecond());
         PsiElement element = r.getFirst();

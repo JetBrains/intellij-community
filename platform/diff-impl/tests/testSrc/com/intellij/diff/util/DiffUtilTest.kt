@@ -31,6 +31,7 @@
 package com.intellij.diff.util
 
 import com.intellij.diff.DiffRequestFactoryImpl
+import com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_SEPARATOR
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
@@ -88,8 +89,8 @@ class DiffUtilTest : DiffTestCase() {
     fun doTest(path: String, expected: String) {
       val filePath = createFilePath(path)
       val actual1 = DiffRequestFactoryImpl.getContentTitle(filePath)
-      val actual2 = DiffRequestFactoryImpl.getTitle(filePath, null, " <-> ")
-      val actual3 = DiffRequestFactoryImpl.getTitle(null, filePath, " <-> ")
+      val actual2 = DiffRequestFactoryImpl.getTitle(filePath, null, DIFF_TITLE_SEPARATOR)
+      val actual3 = DiffRequestFactoryImpl.getTitle(null, filePath, DIFF_TITLE_SEPARATOR)
 
       val expectedNative = expected.replace('/', File.separatorChar)
       assertEquals(expectedNative, actual1)
@@ -106,7 +107,7 @@ class DiffUtilTest : DiffTestCase() {
     fun doTest(path1: String, path2: String, expected: String) {
       val filePath1 = createFilePath(path1)
       val filePath2 = createFilePath(path2)
-      val actual = DiffRequestFactoryImpl.getTitle(filePath1, filePath2, " <-> ")
+      val actual = DiffRequestFactoryImpl.getTitle(filePath1, filePath2, DIFF_TITLE_SEPARATOR)
       assertEquals(expected.replace('/', File.separatorChar), actual)
     }
 
@@ -114,20 +115,20 @@ class DiffUtilTest : DiffTestCase() {
     doTest("/path/to/file1.txt", "/path/to/file1.txt", "file1.txt (/path/to)")
     doTest("/path/to/dir1/", "/path/to/dir1/", "/path/to/dir1")
 
-    doTest("file1.txt", "file2.txt", "file1.txt <-> file2.txt")
-    doTest("/path/to/file1.txt", "/path/to/file2.txt", "file1.txt <-> file2.txt (/path/to)")
-    doTest("/path/to/dir1/", "/path/to/dir2/", "dir1 <-> dir2 (/path/to)")
+    doTest("file1.txt", "file2.txt", "file1.txt - file2.txt")
+    doTest("/path/to/file1.txt", "/path/to/file2.txt", "file1.txt - file2.txt (/path/to)")
+    doTest("/path/to/dir1/", "/path/to/dir2/", "dir1 - dir2 (/path/to)")
 
-    doTest("/path/to/file1.txt", "/path/to_another/file1.txt", "file1.txt (/path/to <-> /path/to_another)")
-    doTest("/path/to/file1.txt", "/path/to_another/file2.txt", "file1.txt <-> file2.txt (/path/to <-> /path/to_another)")
-    doTest("/path/to/dir1/", "/path/to_another/dir2/", "dir1 <-> dir2 (/path/to <-> /path/to_another)")
+    doTest("/path/to/file1.txt", "/path/to_another/file1.txt", "file1.txt (/path/to - /path/to_another)")
+    doTest("/path/to/file1.txt", "/path/to_another/file2.txt", "file1.txt - file2.txt (/path/to - /path/to_another)")
+    doTest("/path/to/dir1/", "/path/to_another/dir2/", "dir1 - dir2 (/path/to - /path/to_another)")
 
-    doTest("file1.txt", "/path/to/file1.txt", "file1.txt <-> /path/to/file1.txt")
-    doTest("file1.txt", "/path/to/file2.txt", "file1.txt <-> /path/to/file2.txt")
+    doTest("file1.txt", "/path/to/file1.txt", "file1.txt - /path/to/file1.txt")
+    doTest("file1.txt", "/path/to/file2.txt", "file1.txt - /path/to/file2.txt")
 
-    doTest("/path/to/dir1/", "/path/to/file2.txt", "dir1/ <-> file2.txt (/path/to)")
-    doTest("/path/to/file1.txt", "/path/to/dir2/", "file1.txt <-> dir2/ (/path/to)")
-    doTest("/path/to/dir1/", "/path/to_another/file2.txt", "dir1/ <-> file2.txt (/path/to <-> /path/to_another)")
+    doTest("/path/to/dir1/", "/path/to/file2.txt", "dir1/ - file2.txt (/path/to)")
+    doTest("/path/to/file1.txt", "/path/to/dir2/", "file1.txt - dir2/ (/path/to)")
+    doTest("/path/to/dir1/", "/path/to_another/file2.txt", "dir1/ - file2.txt (/path/to - /path/to_another)")
   }
 
   fun `test applyModification`() {

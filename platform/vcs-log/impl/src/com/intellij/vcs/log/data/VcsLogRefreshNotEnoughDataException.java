@@ -15,9 +15,11 @@
  */
 package com.intellij.vcs.log.data;
 
+import org.jetbrains.annotations.NonNls;
+
 public class VcsLogRefreshNotEnoughDataException extends RuntimeException {
 
-  private final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block"; // NON-NLS
+  @NonNls private final static String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
 
   public VcsLogRefreshNotEnoughDataException() {
     super(NOT_ENOUGH_FIRST_BLOCK);

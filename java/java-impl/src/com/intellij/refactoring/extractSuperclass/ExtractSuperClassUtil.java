@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -34,7 +35,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class ExtractSuperClassUtil {
+public final class ExtractSuperClassUtil {
   private static final Logger LOG = Logger.getInstance(ExtractSuperClassUtil.class);
 
   public static final String REFACTORING_EXTRACT_SUPER_ID = "refactoring.extractSuper";
@@ -225,7 +226,7 @@ public class ExtractSuperClassUtil {
       if (targetDirectory != null &&
           module != null &&
           !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetDirectory.getVirtualFile())) {
-        conflicts.putValue(subclass, "Superclass won't be accessible in subclass");
+        conflicts.putValue(subclass, JavaRefactoringBundle.message("superclass.cannot.be.accessed.in.subclass"));
       }
     }
   }

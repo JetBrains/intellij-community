@@ -16,6 +16,8 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,8 +25,11 @@ import java.lang.annotation.Target;
 
 /**
  * Used to indicate that a method should be called holding read lock
+ * @deprecated Use {@link RequiresReadLock}.
  */
-@Retention(RetentionPolicy.SOURCE)
+@Deprecated
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledWithReadLock {
+  boolean instrument() default true;
 }

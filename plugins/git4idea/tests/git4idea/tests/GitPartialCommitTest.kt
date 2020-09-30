@@ -200,33 +200,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   }
 
   private fun withTrackedDocument(fileName: String, newContent: String, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
-    invokeAndWaitIfNeeded {
-      val lstm = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
 
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
-      val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+    withPartialTracker(file, newContent) { document, tracker ->
+      // Assume that initial changes are included into commit
+      tracker.setExcludedFromCommit(false)
 
-      runWriteAction {
-        document.setText(newContent)
-      }
-      changeListManager.waitUntilRefreshed()
-      UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
-
-      lstm.requestTrackerFor(document, this)
-      try {
-        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
-        lstm.waitUntilBaseContentsLoaded()
-
-        // Assume that initial changes are included into commit
-        tracker.setExcludedFromCommit(false)
-
-        task(document, tracker)
-
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
-      finally {
-        lstm.releaseTrackerFor(document, this)
-      }
+      task(document, tracker)
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 }

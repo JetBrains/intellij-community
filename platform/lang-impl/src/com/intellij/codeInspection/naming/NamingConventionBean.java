@@ -4,6 +4,7 @@
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ public class NamingConventionBean {
 
   private final Set<String> myPredefinedNames = new HashSet<>();
 
-  public NamingConventionBean(String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
+  public NamingConventionBean(@NonNls String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
     m_regex = regex;
     m_minLength = minLength;
     m_maxLength = maxLength;

@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
@@ -13,6 +12,8 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.*
+import com.intellij.util.ui.codereview.OpenReviewButton
+import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -29,11 +30,8 @@ import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.FlowLayout
-import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -77,8 +75,8 @@ internal object GHPRListComponent {
     }.also {
       ScrollingUtil.installActions(it)
       ListUtil.installAutoSelectOnMouseMove(it)
-      GithubUIUtil.Lists.installSelectionOnFocus(it)
-      GithubUIUtil.Lists.installSelectionOnRightClick(it)
+      ListUiUtil.Selection.installSelectionOnFocus(it)
+      ListUiUtil.Selection.installSelectionOnRightClick(it)
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
@@ -90,8 +88,10 @@ internal object GHPRListComponent {
       ListSpeedSearch(it) { item -> item.title }
     }
 
-    val openButtonViewModel = GHPROpenButtonViewModel()
-    installOpenButtonListeners(list, openButtonViewModel)
+    val openButtonViewModel = OpenReviewButtonViewModel()
+    OpenReviewButton.installOpenButtonListeners(list, openButtonViewModel) {
+      ActionManager.getInstance().getAction("Github.PullRequest.Show")
+    }
 
     val avatarIconsProvider = dataContext.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
     val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
@@ -185,44 +185,7 @@ internal object GHPRListComponent {
     return progressStripe
   }
 
-  private fun installOpenButtonListeners(list: JBList<GHPullRequestShort>,
-                                         openButtonViewModel: GHPROpenButtonViewModel) {
 
-    list.addMouseMotionListener(object : MouseMotionAdapter() {
-      override fun mouseMoved(e: MouseEvent) {
-        val point = e.point
-        var index = list.locationToIndex(point)
-        val cellBounds = list.getCellBounds(index, index)
-        if (cellBounds == null || !cellBounds.contains(point)) index = -1
-
-        openButtonViewModel.hoveredRowIndex = index
-        openButtonViewModel.isButtonHovered = if (index == -1) false else isInsideButton(cellBounds, point)
-        list.repaint()
-      }
-    })
-
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        val point = event.point
-        val index = list.locationToIndex(point)
-        val cellBounds = list.getCellBounds(index, index)
-        if (cellBounds == null || !cellBounds.contains(point)) return false
-
-        if (isInsideButton(cellBounds, point)) {
-          val action = ActionManager.getInstance().getAction("Github.PullRequest.Show")
-          ActionUtil.invokeAction(action, list, ActionPlaces.UNKNOWN, event, null)
-          return true
-        }
-        return false
-      }
-    }.installOn(list)
-  }
-
-  private fun isInsideButton(cellBounds: Rectangle, point: Point): Boolean {
-    val iconSize = EmptyIcon.ICON_16.iconWidth
-    val rendererRelativeX = point.x - cellBounds.x
-    return (cellBounds.width - rendererRelativeX) <= iconSize
-  }
 
   private class ListEmptyTextController(private val listLoader: GHListLoader<*>,
                                         private val searchHolder: GHPRSearchQueryHolder,

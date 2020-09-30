@@ -39,7 +39,10 @@ public class HgQPushCommand {
       new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qpush", Arrays.asList("--move", patchName));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QPushAction.error"), HgBundle.message("action.hg4idea.QPushAction.error.msg", patchName));
+        .notifyError("hg.qpush.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QPushAction.error"),
+                     HgBundle.message("action.hg4idea.QPushAction.error.msg", patchName));
     }
     myRepository.update();
   }

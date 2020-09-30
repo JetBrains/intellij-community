@@ -26,8 +26,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
-    <notificationAllowlist groupIds="Compile Output Loader;Compile Output Loader Status"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
+    <notificationGroup id="Compile Output Loader Status" displayType="NONE"/>
+    <notificationGroup id="Compile Output Loader" displayType="STICKY_BALLOON"/>
   </extensions>
 
   <projectListeners>
@@ -38,7 +39,7 @@
     <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true">
+    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>

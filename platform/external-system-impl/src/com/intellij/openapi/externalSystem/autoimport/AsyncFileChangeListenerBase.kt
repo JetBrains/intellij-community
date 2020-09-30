@@ -17,7 +17,9 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
   protected abstract fun apply()
 
-  protected abstract fun isRelevant(path: String): Boolean
+  protected open fun isRelevant(path: String): Boolean = false
+
+  protected open fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = false
 
   protected abstract fun updateFile(file: VirtualFile, event: VFileEvent)
 
@@ -45,7 +47,7 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
   }
 
   private fun processFile(f: VirtualFile, event: VFileEvent) {
-    if (isRelevant(f.path)) {
+    if (isRelevant(f.path) || isRelevant(f, event)) {
       updateFile(f, event)
     }
   }
@@ -53,7 +55,7 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
   private fun processRecursively(f: VirtualFile, event: VFileEvent) {
     VfsUtilCore.visitChildrenRecursively(f, object : VirtualFileVisitor<Void>() {
       override fun visitFile(f: VirtualFile): Boolean {
-        if (isRelevant(f.path)) {
+        if (isRelevant(f.path) || isRelevant(f, event)) {
           updateFile(f, event)
         }
         return true

@@ -71,6 +71,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
     List<RemoteServer<C>> servers = new ArrayList<>();
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type)) {
+        //noinspection unchecked
         servers.add((RemoteServer<C>)server);
       }
     }
@@ -82,6 +83,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   public <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type) {
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type) && server.getName().equals(name)) {
+        //noinspection unchecked
         return (RemoteServer<C>)server;
       }
     }

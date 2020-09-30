@@ -2,10 +2,12 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public abstract class SerializationManager {
   public static SerializationManager getInstance() {
@@ -16,17 +18,16 @@ public abstract class SerializationManager {
    * Use {@link StubElementTypeHolderEP} to register stub serializer instead of manual registration.
    */
   @ApiStatus.Internal
-  public void registerSerializer(ObjectStubSerializer serializer) {
-    registerSerializer(serializer.getExternalId(), new Computable.PredefinedValueComputable<>(serializer));
+  public void registerSerializer(ObjectStubSerializer<?, Stub> serializer) {
+    registerSerializer(serializer.getExternalId(), () -> serializer);
   }
 
   /**
    * Use {@link StubElementTypeHolderEP} to register stub serializer instead of manual registration.
    */
   @ApiStatus.Internal
-  protected abstract void registerSerializer(String externalId, Computable<ObjectStubSerializer> lazySerializer);
+  protected abstract void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, Stub>> lazySerializer);
 
-  @Nullable
   @Contract("null -> null")
-  public abstract String internString(@Nullable String string);
+  public abstract @Nullable String internString(@Nullable String string);
 }

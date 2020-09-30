@@ -346,7 +346,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
 
-  public void testParentInLocalRepository() throws IOException {
+  public void testParentInLocalRepository() throws Exception {
     if (!hasMavenInstallation()) return;
 
     final VirtualFile parent = createModulePom("parent",

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
@@ -11,7 +11,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExtensionPointLocator {
+public final class ExtensionPointLocator {
   private final PsiClass myPsiClass;
 
   public ExtensionPointLocator(PsiClass psiClass) {
@@ -29,13 +28,13 @@ public class ExtensionPointLocator {
 
 
   public Set<ExtensionPointCandidate> findDirectCandidates() {
-    Set<ExtensionPointCandidate> candidates = new SmartHashSet<>();
+    Set<ExtensionPointCandidate> candidates = new HashSet<>();
     findExtensionPointCandidates(myPsiClass, candidates);
     return candidates;
   }
 
   public Set<ExtensionPointCandidate> findSuperCandidates() {
-    Set<ExtensionPointCandidate> candidates = new SmartHashSet<>();
+    Set<ExtensionPointCandidate> candidates = new HashSet<>();
     findExtensionPointCandidatesInHierarchy(myPsiClass, candidates, new HashSet<>());
     return candidates;
   }

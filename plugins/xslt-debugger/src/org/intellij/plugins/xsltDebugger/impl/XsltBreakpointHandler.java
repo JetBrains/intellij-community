@@ -21,6 +21,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
 import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
@@ -63,7 +64,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
       final XDebugSession session = myXsltDebugProcess.getSession();
-      session.reportMessage("Target VM is not responding. Breakpoint can not be set", MessageType.ERROR);
+      session.reportMessage(XsltDebuggerBundle.message("notification.content.target.vm.not.responding.breakpoint.can.not.be.set"), MessageType.ERROR);
       session.setBreakpointInvalid(breakpoint, "Target VM is not responding. Breakpoint can not be set");
     }
   }
@@ -97,7 +98,8 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
       }
     } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
-      myXsltDebugProcess.getSession().reportMessage("Target VM is not responding. Breakpoint can not be removed", MessageType.ERROR);
+      myXsltDebugProcess.getSession().reportMessage(
+        XsltDebuggerBundle.message("notification.content.target.vm.not.responding.breakpoint.can.not.be.removed"), MessageType.ERROR);
     }
   }
 

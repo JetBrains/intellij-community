@@ -4,6 +4,7 @@ package com.intellij.lang.ant.config.explorer;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
@@ -12,8 +13,6 @@ import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
@@ -88,7 +87,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     if (vFile != null) {
       for (AntBeforeRunTask task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
         if (task.isRunningTarget(myTarget)) {
-          myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
+          myHighlightedText.getEnding().addText(AntBundle.message("ant.target.node.before.run.debug"), ourPostfixAttributes);
           break;
         }
       }

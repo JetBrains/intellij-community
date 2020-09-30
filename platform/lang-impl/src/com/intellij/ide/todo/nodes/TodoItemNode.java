@@ -199,7 +199,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     return myAdditionalLines;
   }
 
-  private static class AdditionalTodoLine implements HighlightedRegionProvider {
+  private static final class AdditionalTodoLine implements HighlightedRegionProvider {
     private final String myText;
     private final List<HighlightedRegion> myHighlights;
 

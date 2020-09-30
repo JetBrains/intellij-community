@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.HelpTooltipManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -14,10 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -34,8 +33,8 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,11 +70,11 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   private JPanel myCenterPanel;
   private Component myHoveredComponent;
 
-  private String myInfo;
+  private @NlsContexts.StatusBarText String myInfo;
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
-  private final Set<IdeStatusBarImpl> myChildren = new THashSet<>();
+  private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
 
   private static final class WidgetBean {
     JComponent component;
@@ -110,7 +109,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return frame != null ? frame.getStatusBar() : this;
   }
 
-  private void updateChildren(@NotNull Consumer<IdeStatusBarImpl> consumer) {
+  private void updateChildren(@NotNull Consumer<? super IdeStatusBarImpl> consumer) {
     for (IdeStatusBarImpl child : myChildren) {
       consumer.accept(child);
     }
@@ -294,6 +293,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     }
     panel.add(c, getPositionIndex(position, anchor));
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, position, c, anchor));
+    if (c instanceof StatusBarWidgetWrapper) {
+      ((StatusBarWidgetWrapper)c).beforeUpdate();
+    }
     widget.install(this);
     panel.revalidate();
     Disposer.register(this, widget);
@@ -392,7 +394,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public void setInfo(@Nullable String s, @Nullable String requestor) {
+  public void setInfo(@Nullable @Nls String s, @Nullable String requestor) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myInfoAndProgressPanel != null) {
         myInfo = myInfoAndProgressPanel.setText(s, requestor).first;
@@ -401,6 +403,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
+  @NlsContexts.StatusBarText
   public String getInfo() {
     return myInfo;
   }
@@ -516,7 +519,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private boolean dispatchMouseEvent(@NotNull MouseEvent e) {
-    if (myRightPanel == null || myCenterPanel == null) {
+    if (myRightPanel == null || myCenterPanel == null || !myRightPanel.isVisible()) {
       return false;
     }
     Component component = e.getComponent();
@@ -589,14 +592,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       if (widgetComponent != null) {
         if (widgetComponent instanceof StatusBarWidgetWrapper) {
           ((StatusBarWidgetWrapper)widgetComponent).beforeUpdate();
-
-          StatusBarWidget.WidgetPresentation presentation = ((StatusBarWidgetWrapper)widgetComponent).getPresentation();
-          widgetComponent.setToolTipText(presentation.getTooltipText());
-          if (Registry.is("ide.helptooltip.enabled")) {
-            widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
-          }
         }
-
         widgetComponent.repaint();
       }
 

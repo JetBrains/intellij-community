@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.storage.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FileContainerDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerScope
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -58,8 +57,10 @@ class FilePointerProviderTest {
     val url = file.toVirtualFileUrl(virtualFileManager)
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-    val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val pointer1 = provider.getAndCacheContentRoot(url)
+    val parentDisposable = Disposer.newDisposable().also { Disposer.register(disposable.disposable, it) }
+    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.rename(null, "y.txt") }
@@ -67,8 +68,9 @@ class FilePointerProviderTest {
 
     file.writeText("")
 
-    val pointer2 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val pointer2 = provider.getAndCacheContentRoot(url)
+    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertEquals(url.url, pointer2.url)
     assertEquals(url.url, container2.urls.single())
@@ -90,8 +92,10 @@ class FilePointerProviderTest {
     val urlAfterMove = fileAfterMove.toVirtualFileUrl(virtualFileManager)
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-    val pointer1 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val pointer1 = provider.getAndCacheContentRoot(url)
+    val parentDisposable = Disposer.newDisposable().also { Disposer.register(disposable.disposable, it) }
+    val container1 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.move(null, targetFolderVirtualFile) }
@@ -99,8 +103,9 @@ class FilePointerProviderTest {
 
     file.writeText("")
 
-    val pointer2 = provider.getAndCacheFilePointer(url, FilePointerScope.Test)
-    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()))
+    val pointer2 = provider.getAndCacheContentRoot(url)
+    val container2 = provider.getAndCacheFileContainer(FileContainerDescription(urls = listOf(url), jarDirectories = emptyList()),
+                                                       parentDisposable)
 
     assertEquals(url.url, pointer2.url)
     assertEquals(url.url, container2.urls.single())
@@ -116,21 +121,21 @@ class FilePointerProviderTest {
 
     val pointerProvider = FilePointerProvider.getInstance(module) as FilePointerProviderImpl
 
-    assertTrue(pointerProvider.getFilePointers().isEmpty())
+    assertTrue(pointerProvider.getContentRootPointers().isEmpty())
 
     val modModuleRootModel = ModuleRootManager.getInstance(module).modifiableModel
     val contentUrl = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("first").toFile().absolutePath)
     modModuleRootModel.addContentEntry(contentUrl)
     modModuleRootModel.commit()
 
-    val pointer = pointerProvider.getFilePointers().values.single().first
+    val pointer = pointerProvider.getContentRootPointers().values.single().first
 
     val modModuleRootModel2 = ModuleRootManager.getInstance(module).modifiableModel
     val contentUrl2 = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("second").toFile().absolutePath)
     modModuleRootModel2.addContentEntry(contentUrl2)
     modModuleRootModel2.commit()
 
-    val pointers = pointerProvider.getFilePointers().values.map { it.first }
+    val pointers = pointerProvider.getContentRootPointers().values.map { it.first }
     assertEquals(2, pointers.size)
     assertSame(pointer, pointers.first())
   }
@@ -143,14 +148,14 @@ class FilePointerProviderTest {
 
     val pointerProvider = FilePointerProvider.getInstance(module) as FilePointerProviderImpl
 
-    assertTrue(pointerProvider.getFilePointers().isEmpty())
+    assertTrue(pointerProvider.getContentRootPointers().isEmpty())
 
     val modModuleRootModel = ModuleRootManager.getInstance(module).modifiableModel
     val contentUrl = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("first").toFile().absolutePath)
     val contentEntry = modModuleRootModel.addContentEntry(contentUrl)
     modModuleRootModel.commit()
 
-    val pointer = pointerProvider.getFilePointers().values.single().first
+    val pointer = pointerProvider.getContentRootPointers().values.single().first
 
     val modModuleRootModel2 = ModuleRootManager.getInstance(module).modifiableModel
     modModuleRootModel2.removeContentEntry(contentEntry)

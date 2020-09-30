@@ -3,13 +3,14 @@ package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.TreeActions;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import javax.swing.tree.TreePath;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.function.Consumer;
@@ -61,7 +62,7 @@ final class TreeAction extends AbstractAction implements UIResource {
   private final Consumer<JTree> action;
   private final List<KeyStroke> keys;
 
-  private TreeAction(@NotNull Consumer<JTree> action, @NotNull String name, KeyStroke @NotNull ... keys) {
+  private TreeAction(@NotNull Consumer<JTree> action, @NotNull @NonNls String name, KeyStroke @NotNull ... keys) {
     this.name = name;
     this.action = action;
     this.keys = asList(keys);

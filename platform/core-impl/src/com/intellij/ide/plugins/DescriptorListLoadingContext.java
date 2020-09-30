@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,13 +188,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final List<String> CLASS_NAME_LIST = Arrays.asList(
+  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
     "implementation-class", "implementation",
     "serviceImplementation", "class", "className", "beanClass",
     "serviceInterface", "interface", "interfaceClass", "instance",
-    "qualifiedName");
-
-  private static final Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(CLASS_NAME_LIST);
+    "qualifiedName"));
   private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
                                                                   PluginManagerCore.VENDOR_JETBRAINS,
                                                                   XmlReader.APPLICATION_SERVICE,

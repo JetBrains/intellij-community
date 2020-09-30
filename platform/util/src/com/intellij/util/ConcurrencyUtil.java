@@ -156,15 +156,16 @@ public final class ConcurrencyUtil {
         thread.join(unit.toMillis(timeout));
       }
       catch (InterruptedException e) {
-        StringBuilder trace = new StringBuilder().append("Thread leaked: ").append(thread).append("; ")
+        @NonNls StringBuilder trace = new StringBuilder().append("Thread leaked: ").append(thread).append("; ")
           .append(thread.getState()).append(" (").append(thread.isAlive()).append(")\n--- its stacktrace:\n");
         for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
           trace.append(" at ").append(stackTraceElement).append("\n");
         }
         trace.append("---\n");
-        System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
-                           "Thread "+thread+" dump:\n" + trace+
-                           "all thread dump:\n"+ThreadDumper.dumpThreadsToString() + "\n/////");
+        @NonNls String message = "Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
+                                 "Thread " + thread + " dump:\n" + trace +
+                                 "all thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n/////";
+        System.err.println(message);
         break;
       }
     }

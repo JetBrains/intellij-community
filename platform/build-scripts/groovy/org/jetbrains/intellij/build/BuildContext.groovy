@@ -30,7 +30,7 @@ abstract class BuildContext implements CompilationContext {
   MacDistributionCustomizer macDistributionCustomizer
   ProprietaryBuildTools proprietaryBuildTools
   BundledJreManager bundledJreManager
-  DependenciesProperties dependenciesProperties = new DependenciesProperties(this)
+  DependenciesProperties dependenciesProperties
 
   /**
    * Build number without product code (e.g. '162.500.10')

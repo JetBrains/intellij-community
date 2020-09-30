@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.HtmlChunk;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,7 +15,7 @@ import static com.intellij.ui.SimpleColoredComponent.formatText;
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T> {
-  private StringBuilder myText;
+  private @Nls StringBuilder myText;
 
   public HtmlListCellRenderer() { }
 
@@ -27,7 +29,7 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
         setText(null);
       }
       else {
-        setText(myText.insert(0, "<html><body style=\"white-space:nowrap\">").append("</body></html>").toString());
+        setText(HtmlChunk.body().attr("style", "white-space:nowrap").addText(myText.toString()).wrapWith("html").toString());
       }
     }
     finally {
@@ -37,15 +39,15 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   protected abstract void doCustomize(JList list, T value, int index, boolean selected, boolean hasFocus);
 
-  public void append(@NotNull String fragment) {
+  public void append(@NotNull @Nls String fragment) {
     append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes) {
     formatText(myText, fragment, attributes);
   }
 
-  public void appendLink(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, @NotNull String url) {
+  public void appendLink(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, @NotNull String url) {
     formatLink(myText, fragment, attributes, url);
   }
 

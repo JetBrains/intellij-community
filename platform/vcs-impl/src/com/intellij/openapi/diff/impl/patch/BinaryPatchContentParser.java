@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public final class BinaryPatchContentParser {
 
   public static class EofBinaryPatchSyntaxException extends PatchSyntaxException {
     public EofBinaryPatchSyntaxException(int line) {
-      super(line, "Unexpected end of binary patch");
+      super(line, VcsBundle.message("patch.unexpected.end.of.binary.patch"));
     }
   }
 }

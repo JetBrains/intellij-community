@@ -29,20 +29,19 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.RestBundle;
+import com.jetbrains.rest.PythonRestBundle;
 import com.jetbrains.rest.RestFile;
 import com.jetbrains.rest.RestTokenTypes;
 import com.jetbrains.rest.RestUtil;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -138,13 +137,15 @@ public class RestRoleInspection extends RestInspection {
         }
       }
       if (definedRoles.contains(node.getRoleName())) return;
-      registerProblem(node, "Not defined role '" + node.getRoleName() + "'", new AddIgnoredRoleFix(node.getRoleName(), RestRoleInspection.this));
+      registerProblem(
+        node, PythonRestBundle.message("python.rest.inspection.message.not.defined.role", node.getRoleName()),
+        new AddIgnoredRoleFix(node.getRoleName(), RestRoleInspection.this));
     }
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm("Ignore roles", ignoredRoles);
+    ListEditForm form = new ListEditForm(PythonRestBundle.message("python.rest.inspections.role.ignore.roles"), ignoredRoles);
     return form.getContentPanel();
   }
 }

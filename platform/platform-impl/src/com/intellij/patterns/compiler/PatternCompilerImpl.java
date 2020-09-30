@@ -15,8 +15,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +89,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static Set<Method> getStaticMethods(List<Class<?>> patternClasses) {
-    return new THashSet<>(ContainerUtil.concat(
+    return new HashSet<>(ContainerUtil.concat(
       patternClasses,
       aClass -> ContainerUtil.findAll(aClass.getMethods(),
                               method -> Modifier.isStatic(method.getModifiers()) &&
@@ -343,8 +341,8 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   @Override
   public String dumpContextDeclarations() {
     final StringBuilder sb = new StringBuilder();
-    final Map<Class<?>, Collection<Class<?>>> classes = new THashMap<>();
-    final Set<Class<?>> missingClasses = new THashSet<>();
+    final Map<Class<?>, Collection<Class<?>>> classes = new HashMap<>();
+    final Set<Class<?>> missingClasses = new HashSet<>();
     classes.put(Object.class, missingClasses);
     for (Method method : myStaticMethods) {
       for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
@@ -352,7 +350,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
         if (enclosingClass != null) {
           Collection<Class<?>> list = classes.get(enclosingClass);
           if (list == null) {
-            list = new THashSet<>();
+            list = new HashSet<>();
             classes.put(enclosingClass, list);
           }
           list.add(type);

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -73,7 +74,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
     )
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
-    val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+    @Suppress("DialogTitleCapitalization") val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
     )
 
@@ -191,10 +192,13 @@ private interface UnstableApiUsageMessageProvider {
 
   val problemHighlightType: ProblemHighlightType
 
+  @InspectionMessage
   fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
+  @InspectionMessage
   fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
+  @InspectionMessage
   fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
     referencedApi: PsiModifierListOwner,
     annotatedTypeUsedInSignature: AnnotatedContainingDeclaration

@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.MavenDomParent
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.model.MavenId

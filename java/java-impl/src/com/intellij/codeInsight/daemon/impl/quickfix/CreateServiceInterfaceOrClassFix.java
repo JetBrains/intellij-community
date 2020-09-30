@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,13 +32,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
-import static com.intellij.refactoring.util.CommonRefactoringUtil.capitalize;
-
 /**
  * @author Pavel.Dolgov
  */
 public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase {
-  private String myInterfaceName;
+  private @NlsSafe String myInterfaceName;
 
   public CreateServiceInterfaceOrClassFix(PsiJavaCodeReferenceElement referenceElement) {
     referenceElement = findTopmostReference(referenceElement);
@@ -154,9 +153,9 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-      myKindCombo.addItem(capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
-      myKindCombo.addItem(capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
-      myKindCombo.addItem(capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 
       init();
     }

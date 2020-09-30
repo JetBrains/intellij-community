@@ -85,9 +85,6 @@ class CompilationContextImpl implements CompilationContext {
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
     def jbrDir = jbrDir(projectHome, options)
-    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
-    JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
-    sdks << "IDEA jdk"
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
@@ -180,6 +177,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
+    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
     // Android Studio: modified by Change Ibf21a74c / commit 4904fa8
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
 
@@ -256,7 +254,12 @@ class CompilationContextImpl implements CompilationContext {
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-    cleanOutput(outputDirectoriesToKeep)
+
+    if (options.cleanOutputFolder) {
+      cleanOutput(outputDirectoriesToKeep)
+    } else {
+      messages.info("cleanOutput step was skipped")
+    }
   }
 
   static final String CLASSES_DIR_NAME = "classes"

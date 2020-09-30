@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public interface CoverageSuite extends JDOMExternalizable {
   @NotNull
   String getCoverageDataFileName();
 
-  String getPresentableName();
+  @NlsSafe String getPresentableName();
 
   long getLastCoverageTimeStamp();
 

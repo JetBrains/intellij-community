@@ -3,10 +3,7 @@ package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.ArrayUtil
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
@@ -20,9 +17,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
-// Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
-private val FORBIDDEN_PORTS = intArrayOf(6953, 6969, 6970)
-
 class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val port: Int, private val channelRegistrar: ChannelRegistrar) : Disposable {
   val isRunning: Boolean
     get() = !channelRegistrar.isEmpty
@@ -30,7 +24,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
   companion object {
     init {
       // IDEA-120811
-      if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      if (System.getProperty("io.netty.random.id", "true")!!.toBoolean()) {
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
         System.setProperty("io.netty.processId", Random().nextInt(65535).toString())
       }
@@ -56,36 +50,17 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
     }
 
     @JvmStatic
-    val recommendedWorkerCount: Int
-      get() = if (PlatformUtils.isIdeaCommunity()) 2 else 3
-
-    @Throws(Exception::class)
-    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
-      return start(multiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
+    fun start(firstPort: Int, portsCount: Int, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
+      val eventLoopGroup = multiThreadEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, BuiltInServerThreadFactory())
+      return start(eventLoopGroup, true, firstPort, portsCount, tryAnyPort = false, handler = handler)
     }
 
-    @JvmStatic
-    fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)?): BuiltInServer {
-      val threadFactory = BuiltInServerThreadFactory()
-      val loopGroup: EventLoopGroup = try {
-        multiThreadEventLoopGroup(workerCount, threadFactory)
-      }
-      catch (e: IllegalStateException) {
-        logger<BuiltInServer>().warn(e)
-        @Suppress("DEPRECATION")
-        (io.netty.channel.oio.OioEventLoopGroup(1, threadFactory))
-      }
-
-      return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler)
-    }
-
-    @Throws(Exception::class)
     fun start(eventLoopGroup: EventLoopGroup,
               isEventLoopGroupOwner: Boolean,
               firstPort: Int,
               portsCount: Int,
               tryAnyPort: Boolean,
-              handler: (Supplier<ChannelHandler>)?): BuiltInServer {
+              handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = serverBootstrap(eventLoopGroup)
       configureChildHandler(bootstrap, channelRegistrar, handler)
@@ -103,7 +78,6 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       })
     }
 
-    @Throws(Exception::class)
     private fun bind(firstPort: Int,
                      portsCount: Int,
                      tryAnyPort: Boolean,
@@ -111,11 +85,10 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
                      channelRegistrar: ChannelRegistrar,
                      isEventLoopGroupOwner: Boolean): Int {
       val address = InetAddress.getLoopbackAddress()
-
-      for (i in 0 until portsCount) {
-        val port = firstPort + i
-
-        if (ArrayUtil.indexOf(FORBIDDEN_PORTS, i) >= 0) {
+      val maxPort = (firstPort + portsCount) - 1
+      for (port in firstPort..maxPort) {
+        // some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent
+        if (port == 6953 || port == 6969 || port == 6970) {
           continue
         }
 
@@ -124,12 +97,12 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
           channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
           return port
         }
-        else if (!tryAnyPort && i == portsCount - 1) {
-          ExceptionUtil.rethrowAll(future.cause())
+        else if (!tryAnyPort && port == maxPort) {
+          throw future.cause()
         }
       }
 
-      logger<BuiltInServer>().info("We cannot bind to our default range, so, try to bind to any free port")
+      logger<BuiltInServer>().info("Cannot bind to our default range, so, try to bind to any free port")
       val future = bootstrap.bind(address, 0).awaitUninterruptibly()
       if (future.isSuccess) {
         channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)

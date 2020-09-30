@@ -42,20 +42,23 @@ class PyPipEnvSdkProvider : PySdkProvider {
 
   override fun createMissingSdkFix(module: Module, file: PyFile): PyInterpreterInspectionQuickFixData? = when {
     isApplicable(module) -> PyInterpreterInspectionQuickFixData(
-      UsePipEnvQuickFix(null, module), PyPsiBundle.message("python.sdk.no.interpreter.configured.owner", "project"))
+      UsePipEnvQuickFix(null, module), PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project"))
     else -> null
   }
 
-  override fun createEnvironmentAssociationFix(module: Module, sdk: Sdk, isPyCharm: Boolean, associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
+  override fun createEnvironmentAssociationFix(module: Module,
+                                               sdk: Sdk,
+                                               isPyCharm: Boolean,
+                                               associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
     if (sdk.isPipEnv) {
       val message = when {
         associatedModulePath != null -> when {
-          isPyCharm -> "Pipenv interpreter is associated with another project: '$associatedModulePath'"
-          else -> "Pipenv interpreter is associated with another module: '$associatedModulePath'"
+          isPyCharm -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.project", associatedModulePath)
+          else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.module", associatedModulePath)
         }
         else -> when {
-          isPyCharm -> "Pipenv interpreter is not associated with any project"
-          else -> "Pipenv interpreter is not associated with any module"
+          isPyCharm -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.project")
+          else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module")
         }
       }
       return PyInterpreterInspectionQuickFixData(UsePipEnvQuickFix(sdk, module), message)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -32,23 +32,17 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
-    return file.getFileType().isBinary() ?
-           new LargeBinaryFileEditor(file) :
-           new LargeTextFileEditor(project, file, this);
+  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
+    return file.getFileType().isBinary() ? new LargeBinaryFileEditor(file) : new LargeTextFileEditor(project, file, this);
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "LargeFileEditor";
   }
 
   public static class LargeTextFileEditor extends TextEditorImpl {
-    LargeTextFileEditor(@NotNull Project project,
-                        @NotNull VirtualFile file,
-                        @NotNull TextEditorProvider provider) {
+    LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
       super(project, file, provider);
       ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
     }
@@ -61,11 +55,9 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
-      JLabel label = new JLabel(
-        IdeBundle.message("label.binary.file.0.is.too.large.1", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
+    public @NotNull JComponent getComponent() {
+      JLabel label = new JLabel(IdeBundle.message("binary.file.too.large", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
@@ -75,21 +67,18 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
-      return "Large file editor";
+    public @NotNull String getName() {
+      return IdeBundle.message("large.file.editor.name");
     }
 
-    @NotNull
     @Override
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
       return new TextEditorState();
     }
 
     @Override
-    public void setState(@NotNull FileEditorState state) {
-    }
+    public void setState(@NotNull FileEditorState state) { }
 
     @Override
     public boolean isModified() {
@@ -102,20 +91,16 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public void selectNotify() {
-    }
+    public void selectNotify() { }
 
     @Override
-    public void deselectNotify() {
-    }
+    public void deselectNotify() { }
 
     @Override
-    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
-    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
@@ -133,7 +118,6 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public void dispose() {
-    }
+    public void dispose() { }
   }
 }

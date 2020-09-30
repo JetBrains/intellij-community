@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -821,6 +822,19 @@ public class PyBlock implements ASTBlock {
       if (isInsideFStringFragmentWithEqualsSign(myNode)) {
         return Spacing.getReadOnlySpacing();
       }
+      if (childType1 == PyTokenTypes.FSTRING_FRAGMENT_START) {
+        final LeafElement firstLeaf = TreeUtil.findFirstLeaf(node2);
+        if (firstLeaf != null && firstLeaf.getElementType() == PyTokenTypes.LBRACE) {
+          return Spacing.createSpacing(1, 1, 0, false, 0);
+        }
+      }
+
+      if (childType2 == PyTokenTypes.FSTRING_FRAGMENT_END) {
+        final ASTNode lastLeaf = TreeUtil.findLastLeaf(node1);
+        if (lastLeaf != null && lastLeaf.getElementType() == PyTokenTypes.RBRACE) {
+          return Spacing.createSpacing(1, 1, 0, false, 0);
+        }
+      }
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
@@ -1176,8 +1190,7 @@ public class PyBlock implements ASTBlock {
   private static boolean isInsideFStringFragmentWithEqualsSign(@NotNull ASTNode node) {
     final ASTNode fStringFragmentParent = node.getElementType() == PyElementTypes.FSTRING_FRAGMENT
                                     ? node
-                                    : TreeUtil.findParent(node, TokenSet.create(PyElementTypes.FSTRING_FRAGMENT),
-                                                          stopAtTokens);
+                                    : TreeUtil.findParent(node, TokenSet.create(PyElementTypes.FSTRING_FRAGMENT), stopAtTokens);
     if (fStringFragmentParent == null) return false;
     return fStringFragmentParent.findChildByType(PyTokenTypes.EQ) != null;
   }

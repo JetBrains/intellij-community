@@ -21,7 +21,7 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class ThreadingUtils {
+final class ThreadingUtils {
 
   private ThreadingUtils() {
   }

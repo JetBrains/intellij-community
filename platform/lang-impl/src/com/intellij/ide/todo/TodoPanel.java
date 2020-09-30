@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
@@ -329,7 +330,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return TodoTreeBuilder.getFileForNode(node);
   }
 
-  protected void setDisplayName(String tabName) {
+  protected void setDisplayName(@NlsContexts.TabTitle  String tabName) {
     myContent.setDisplayName(tabName);
   }
 

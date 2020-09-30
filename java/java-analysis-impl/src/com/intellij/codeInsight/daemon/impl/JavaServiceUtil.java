@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-class JavaServiceUtil {
+final class JavaServiceUtil {
   static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
 
   static boolean isServiceProviderMethod(@NotNull PsiMethod method) {

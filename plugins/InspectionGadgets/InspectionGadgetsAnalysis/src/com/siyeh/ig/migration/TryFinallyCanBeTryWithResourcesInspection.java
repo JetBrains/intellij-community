@@ -20,6 +20,7 @@ import com.siyeh.ig.psiutils.*;
 import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       List<ResourceVariable> after = partition.second;
       String resourceListBefore = joinToString(before);
       String resourceListAfter = joinToString(after);
-      StringBuilder sb = new StringBuilder("try(");
+      @NonNls StringBuilder sb = new StringBuilder("try(");
       PsiResourceList resourceListElement = tryStatement.getResourceList();
       if (!before.isEmpty()) {
         sb.append(resourceListBefore);
@@ -224,7 +225,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
   }
 
-  private static class Context {
+  private static final class Context {
     final @NotNull List<ResourceVariable> myResourceVariables;
     final @NotNull Set<PsiStatement> myStatementsToDelete;
 

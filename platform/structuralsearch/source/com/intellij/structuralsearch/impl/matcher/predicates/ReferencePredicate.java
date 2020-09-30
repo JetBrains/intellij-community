@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,12 +21,12 @@ public final class ReferencePredicate extends MatchPredicate {
 
   private final Matcher matcher;
 
-  public ReferencePredicate(String constraint, LanguageFileType fileType, Project project) {
+  public ReferencePredicate(@NotNull String constraint, @NotNull LanguageFileType fileType, @NotNull Project project) {
     matcher = Matcher.buildMatcher(project, fileType, constraint);
   }
 
   @Override
-  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context) {
     matchedNode = StructuralSearchUtil.getParentIfIdentifier(matchedNode);
     final List<PsiReference> references = PsiReferenceService.getService().getReferences(matchedNode, PsiReferenceService.Hints.NO_HINTS);
     return references.stream().map(PsiReference::resolve).filter(Objects::nonNull).anyMatch(t -> matcher.matchNode(t));

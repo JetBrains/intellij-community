@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -19,6 +23,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -35,7 +40,7 @@ public final class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  @SuppressWarnings("unused") public static final int UNSUPPORTED_JAVA_VERSION = 10;  // left for compatibility/reserved for future use
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
@@ -48,10 +53,10 @@ public final class Main {
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
-  private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -61,9 +66,10 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>();
     startupTimings.put("startup begin", System.nanoTime());
-    if (args.length == 1 && "%f".equals(args[0])) {
+
+    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
       args = NO_ARGS;
     }
 
@@ -78,16 +84,22 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
+    if (!SystemInfo.isJavaVersionAtLeast(11)) {
+      showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
+                  BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
+      System.exit(UNSUPPORTED_JAVA_VERSION);
+    }
+
     try {
       bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
-      showMessage("Start Failed", t);
+      showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t);
       System.exit(STARTUP_EXCEPTION);
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -112,23 +124,20 @@ public final class Main {
     WindowsCommandLineProcessor.ourMainRunnerClass = klass;
     Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
     startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings);
+    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
   }
 
   private static void installPluginUpdates() {
-    if (!isCommandLine() || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      try {
-        StartupActionScriptManager.executeActionScript();
-      }
-      catch (IOException e) {
-        String message =
-          "The IDE failed to install some plugins.\n\n" +
-          "Most probably, this happened because of a change in a serialization format.\n" +
-          "Please try again, and if the problem persists, please report it\n" +
-          "to http://jb.gg/ide/critical-startup-errors" +
-          "\n\nThe cause: " + e.getMessage();
-        showMessage("Plugin Installation Error", message, false);
-      }
+    if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
+      return;
+    }
+
+    try {
+      StartupActionScriptManager.executeActionScript();
+    }
+    catch (IOException e) {
+      showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.installation.error"),
+                  BootstrapBundle.message("bootstrap.error.message.plugin.installation.error", e.getMessage()), false);
     }
   }
 
@@ -151,15 +160,25 @@ public final class Main {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    boolean isFirstArgRegularFile;
-    try {
-      isFirstArgRegularFile = args.length > 0 && Files.isRegularFile(Paths.get(args[0]));
-    }
-    catch (Throwable t) {
-      isFirstArgRegularFile = false;
-    }
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+  }
 
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || isFirstArgRegularFile;
+  private static boolean isFileAfterOptions(String @NotNull [] args) {
+    for (String arg : args) {
+      if (!arg.startsWith("-")) { // If not an option
+        try {
+          Path path = Paths.get(arg);
+          return Files.isRegularFile(path) || !Files.exists(path);
+        }
+        catch (Throwable t) {
+          return false;
+        }
+      }
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) { // NON-NLS
+        return true;
+      }
+    }
+    return false;
   }
 
   @TestOnly
@@ -179,12 +198,14 @@ public final class Main {
     }
 
     String firstArg = args[0];
-    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
+    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
   }
 
   private static boolean checkGraphics() {
     if (GraphicsEnvironment.isHeadless()) {
-      showMessage("Startup Error", "Unable to detect graphics environment", true);
+      showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
+                  true);
       return false;
     }
 
@@ -196,19 +217,20 @@ public final class Main {
     return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
   }
 
-  public static void showMessage(String title, Throwable t) {
-    StringWriter message = new StringWriter();
+  public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title, Throwable t) {
+    @Nls(capitalization = Nls.Capitalization.Sentence) StringWriter message = new StringWriter();
 
     AWTError awtError = findGraphicsError(t);
     if (awtError != null) {
-      message.append("Failed to initialize graphics environment\n\n");
+      message.append(BootstrapBundle.message("bootstrap.error.message.failed.to.initialize.graphics.environment"));
+      message.append("\n\n");
       hasGraphics = false;
       t = awtError;
     }
     else {
-      message.append("Internal error. Please refer to ");
-      boolean studio = isStudio();
-      message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
+      boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors";
+      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
       message.append("\n\n");
     }
 
@@ -219,9 +241,9 @@ public final class Main {
     String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
     String arch = sp.getProperty("os.arch", "(unknown arch)");
     String home = sp.getProperty("java.home", "(unknown java.home)");
-    message.append("\n-----\nJRE ").append(jre).append(' ').append(arch).append(" by ").append(vendor).append('\n').append(home);
+    message.append(BootstrapBundle.message("bootstrap.error.title.jre.0.os.arch.1.by.vendor.2.java.home.3", jre, arch, vendor, home));
 
-    showMessage(title, message.toString(), true);
+    showMessage(title, message.toString(), true); //NON-NLS
   }
 
   private static AWTError findGraphicsError(Throwable t) {
@@ -235,9 +257,13 @@ public final class Main {
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
-  public static void showMessage(String title, String message, boolean error) {
+  public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                                 @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                 boolean error) {
     PrintStream stream = error ? System.err : System.out;
-    stream.println("\n" + title + ": " + message);
+    stream.println();
+    stream.println(title);
+    stream.println(message);
 
     boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
     if (!headless) {
@@ -265,7 +291,8 @@ public final class Main {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {
-        stream.println("\nAlso, a UI exception occurred on an attempt to show the above message:");
+        stream.println();
+        stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
         t.printStackTrace(stream);
       }
     }

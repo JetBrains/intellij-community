@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ abstract class CreateGroupHandler implements InputValidatorEx {
   @NotNull protected final PsiDirectory myDirectory;
 
   @Nullable protected PsiFileSystemItem createdElement;
-  @Nullable protected String errorText;
+  @Nullable protected @NlsContexts.DetailedDescription String errorText;
 
   CreateGroupHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     myProject = project;

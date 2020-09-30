@@ -6,9 +6,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.EVENTS_SCHEME_FILE
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence.EVENTS_SCHEME_FILE
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,16 +23,7 @@ class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDe
                     AllIcons.FileTypes.Config) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-
-    val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId)
-    val file = if (settings != null && settings.isUseCustomPath) {
-      File(settings.customPath)
-    }
-    else {
-      BaseEventLogWhitelistPersistence.getDefaultMetadataFile(myRecorderId, EVENTS_SCHEME_FILE, null)
-    }
-
-    openFileInEditor(file, project)
+    openFileInEditor(getEventsSchemeFile(myRecorderId), project)
   }
 
   companion object {
@@ -43,6 +34,16 @@ class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDe
         return
       }
       FileEditorManager.getInstance(project).openFile(virtualFile, true)
+    }
+
+    fun getEventsSchemeFile(recorderId: String): File {
+      val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(recorderId)
+      return if (settings != null && settings.isUseCustomPath) {
+        File(settings.customPath)
+      }
+      else {
+        BaseEventLogMetadataPersistence.getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null)
+      }
     }
   }
 

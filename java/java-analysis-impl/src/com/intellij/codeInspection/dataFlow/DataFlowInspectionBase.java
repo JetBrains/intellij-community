@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,10 +38,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -444,18 +443,17 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       ContainerUtil.addIfNotNull(fixes, createExplainFix(ref, new TrackingRunner.ValueDfaProblemType(value)));
     }
 
-    String valueText;
     ProblemHighlightType type;
+    String message;
     if (ref instanceof PsiMethodCallExpression || ref instanceof PsiPolyadicExpression) {
       type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      valueText = "Result of";
+      message = JavaAnalysisBundle.message("dataflow.message.constant.expression", presentableName);
     }
     else {
       type = ProblemHighlightType.WEAK_WARNING;
-      valueText = "Value";
+      message = JavaAnalysisBundle.message("dataflow.message.constant.value", presentableName);
     }
-    reporter.registerProblem(ref, MessageFormat.format("{0} <code>#ref</code> #loc is always ''{1}''", valueText, presentableName),
-                             type, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    reporter.registerProblem(ref, message, type, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
   private static boolean shouldReportZero(PsiExpression ref) {
@@ -476,7 +474,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiMethodCallExpression call = (PsiMethodCallExpression)ref;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (PsiUtil.isConstantExpression(qualifier) &&
-          Stream.of(call.getArgumentList().getExpressions()).allMatch(PsiUtil::isConstantExpression)) {
+          ContainerUtil.and(call.getArgumentList().getExpressions(), PsiUtil::isConstantExpression)) {
         return false;
       }
     }
@@ -551,7 +549,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  private void reportMutabilityViolations(ProblemsHolder holder, Set<PsiElement> violations, String message) {
+  private void reportMutabilityViolations(ProblemsHolder holder, Set<PsiElement> violations, @InspectionMessage String message) {
     for (PsiElement violation : violations) {
       holder.registerProblem(violation, message, createMutabilityViolationFix(violation, holder.isOnTheFly()));
     }
@@ -696,7 +694,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  private static @NotNull String getContractMessage(List<? extends MethodContract> contracts) {
+  private static @NotNull @InspectionMessage String getContractMessage(List<? extends MethodContract> contracts) {
     if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(ContractValue::isBoundCheckingCondition))) {
       return JavaAnalysisBundle.message("dataflow.message.contract.fail.index");
     }
@@ -725,18 +723,18 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     nullArgs.forEach((anchor, alwaysPresent) -> {
       if (alwaysPresent == ThreeState.UNSURE) return;
       if (alwaysPresent.toBoolean()) {
-        reporter.registerProblem(anchor, "Passing a non-null argument to <code>Optional</code>",
+        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.non.null.argument.to.optional"),
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(anchor));
       }
       else {
-        reporter.registerProblem(anchor, "Passing <code>null</code> argument to <code>Optional</code>",
+        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.null.argument.to.optional"),
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor));
       }
     });
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter,
-                                                           String message,
+                                                           @InspectionMessage String message,
                                                            PsiExpression expression,
                                                            PsiExpression top) {
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(top);
@@ -750,7 +748,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private void reportNullableAssignedToNonAnnotatedField(ProblemReporter reporter,
                                                          PsiExpression top,
                                                          PsiExpression expression,
-                                                         String message) {
+                                                         @InspectionMessage String message) {
     PsiField field = getAssignedField(top);
     if (field != null) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly());
@@ -769,7 +767,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return null;
   }
 
-  private void reportCallMayProduceNpe(ProblemReporter reporter, String message, PsiMethodCallExpression callExpression) {
+  private void reportCallMayProduceNpe(ProblemReporter reporter, @InspectionMessage String message, PsiMethodCallExpression callExpression) {
     PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
     List<LocalQuickFix> fixes = createNPEFixes(methodExpression.getQualifierExpression(), callExpression, reporter.isOnTheFly());
     ContainerUtil.addIfNotNull(fixes, ReplaceWithObjectsEqualsFix.createFix(callExpression, methodExpression));
@@ -988,11 +986,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
-        final LocalQuickFix[] fixes =
-          PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
-          ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtilRt.toStringArray(manager.getNotNulls()))};
-        reporter.registerProblem(expr, text, fixes);
+        PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
+        final LocalQuickFix fix = surroundingMethod == null ? null :
+                                  new AddAnnotationPsiFix(defaultNullable, surroundingMethod,
+                                                          ArrayUtilRt.toStringArray(manager.getNotNulls()));
+        reporter.registerProblem(expr, text, fix);
       }
     }
   }
@@ -1243,19 +1241,19 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       myScope = scope;
     }
 
-    public void registerProblem(PsiElement element, String message, LocalQuickFix... fixes) {
+    public void registerProblem(PsiElement element, @InspectionMessage String message, LocalQuickFix... fixes) {
       if (register(element)) {
         myHolder.registerProblem(element, message, fixes);
       }
     }
 
-    void registerProblem(PsiElement element, String message, ProblemHighlightType type, LocalQuickFix... fixes) {
+    void registerProblem(PsiElement element, @InspectionMessage String message, ProblemHighlightType type, LocalQuickFix... fixes) {
       if (register(element)) {
         myHolder.registerProblem(element, message, type, fixes);
       }
     }
 
-    void registerProblem(PsiElement element, TextRange range, String message, LocalQuickFix... fixes) {
+    void registerProblem(PsiElement element, TextRange range, @InspectionMessage String message, LocalQuickFix... fixes) {
       if (range == null) {
         registerProblem(element, message, fixes);
       }

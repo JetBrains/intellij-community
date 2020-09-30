@@ -112,6 +112,31 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                           "class Foo {}");
   }
 
+  public void testNoStubPsiMismatchOnRecordInsideImportList2() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "" +
+                                        "import java.ut<caret>il.Set;record \n" +
+                                        "import x java.util.Map;\n\n" +
+                                        "import java.util.Map;\n\n" +
+                                        "class Foo {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+
+    // whatever: main thing it didn't throw
+    myFixture.checkResult("record\n" +
+                          "java.util.Map;\n" +
+                          "\n" +
+                          "class Foo {}");
+  }
+
+  public void testRemovingAllUnusedImports() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "package p;\n\n" +
+                                        "import java.<caret>util.Set;\n" +
+                                        "import java.util.Map;\n\n");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    myFixture.checkResult("package p;\n\n");
+  }
+
   public void testPerFileImportSettings() {
     CodeStyle.dropTemporarySettings(getProject());
     MockCodeStyleSettingsModifier modifier = new MockCodeStyleSettingsModifier(

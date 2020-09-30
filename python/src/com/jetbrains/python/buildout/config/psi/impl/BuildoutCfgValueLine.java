@@ -7,12 +7,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.buildout.config.psi.BuildoutPsiUtil;
 import com.jetbrains.python.buildout.config.ref.BuildoutPartReference;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BuildoutCfgValueLine extends BuildoutCfgPsiElement {
+  @NonNls private static final String PARTS_OPTION = "parts";
+
   public BuildoutCfgValueLine(@NotNull final ASTNode node) {
     super(node);
   }
@@ -24,7 +27,7 @@ public class BuildoutCfgValueLine extends BuildoutCfgPsiElement {
 
   @Override
   public PsiReference @NotNull [] getReferences() {
-    if (BuildoutPsiUtil.isInBuildoutSection(this) && BuildoutPsiUtil.isAssignedTo(this, "parts")) {
+    if (BuildoutPsiUtil.isInBuildoutSection(this) && BuildoutPsiUtil.isAssignedTo(this, PARTS_OPTION)) {
       List<BuildoutPartReference> refs = new ArrayList<>();
       List<Pair<String, Integer>> names = StringUtil.getWordsWithOffset(getText());
       for (Pair<String, Integer> name : names) {

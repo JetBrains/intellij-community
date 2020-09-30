@@ -27,7 +27,6 @@ import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
@@ -42,11 +41,13 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
-  public static final String HIDE_ID_LABEL = "HideIdLabel";
-  private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
+  @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
 
   private final @NotNull ContentManager contentManager;
 
@@ -68,7 +69,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private ToolWindowContentUiType type;
 
-  public Predicate<Point> isResizableArea = p -> true;
+  public Predicate<Point> isResizableArea = __ -> true;
 
   private final JPanel tabComponent = new TabPanel();
 
@@ -163,7 +164,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   private boolean isResizeable(@NotNull Point point) {
-    return isResizableArea.apply(point);
+    return isResizableArea.test(point);
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
@@ -487,7 +488,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", content.getTitlePrefix())) {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -497,7 +498,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
-    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", groupId.getDisplayName())) {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ContentUtilEx.mergeTabs(manager, groupId);
@@ -553,6 +554,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     else if (MorePopupAware.KEY.is(dataId)) {
       ContentLayout layout = getCurrentLayout();
       return  (layout instanceof TabContentLayout) ? layout : null;
+    }
+    else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
+      return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
     }
     return null;
   }

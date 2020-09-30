@@ -28,6 +28,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -94,14 +95,17 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
-        @Override
-        public boolean execute(@NotNull PsiClass aClass) {
-          AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
-          convertLocalToField(local, aClass, editor, isStatic);
-          return false;
-        }
-      }, preselection).showInBestPositionFor(editor);
+      String title = myIsConstant ? JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.constant")
+                                  : JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.field");
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
+                                        title, new PsiElementProcessor<>() {
+          @Override
+          public boolean execute(@NotNull PsiClass aClass) {
+            AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
+            convertLocalToField(local, aClass, editor, isStatic);
+            return false;
+          }
+        }, preselection).showInBestPositionFor(editor);
     }
 
     return true;
@@ -400,7 +404,7 @@ public abstract class LocalToFieldHandler {
     }
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("convert.local.to.field.title");
   }
 }

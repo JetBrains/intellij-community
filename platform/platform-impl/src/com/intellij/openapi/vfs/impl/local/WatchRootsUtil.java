@@ -22,7 +22,7 @@ final class WatchRootsUtil {
 
   static <T> void collectByPrefix(@NotNull NavigableMap<String, T> paths,
                                   @NotNull String prefix,
-                                  @NotNull Consumer<Map.Entry<String, T>> collector) {
+                                  @NotNull Consumer<? super Map.Entry<String, T>> collector) {
     for (Map.Entry<String, T> entry : paths.tailMap(prefix, false).entrySet()) {
       if (OSAgnosticPathUtil.startsWith(entry.getKey(), prefix)) {
         collector.accept(entry);
@@ -44,7 +44,7 @@ final class WatchRootsUtil {
     }
   }
 
-  static void forEachPathSegment(@NotNull String path, char separator, @NotNull Predicate<String> consumer) {
+  static void forEachPathSegment(@NotNull String path, char separator, @NotNull Predicate<? super String> consumer) {
     int position = path.indexOf(separator);
     int length = path.length();
     while (position >= 0 && position < length) {

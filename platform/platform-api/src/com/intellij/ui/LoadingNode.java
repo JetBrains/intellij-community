@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -26,11 +27,11 @@ public class LoadingNode extends DefaultMutableTreeNode {
   }
 
   @NotNull
-  public static String getText() {
+  public static @Nls String getText() {
     return IdeBundle.message("treenode.loading");
   }
 
-  public LoadingNode(@NotNull String text) {
+  public LoadingNode(@Nls @NotNull String text) {
     super(text);
   }
 }

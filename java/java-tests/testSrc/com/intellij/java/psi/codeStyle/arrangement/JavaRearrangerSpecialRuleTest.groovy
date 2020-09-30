@@ -16,7 +16,6 @@
 package com.intellij.java.psi.codeStyle.arrangement
 
 import groovy.transform.CompileStatic
-import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
@@ -29,7 +28,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 @CompileStatic
 class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
 
-  @Before
   void setUp() {
     super.setUp()
     commonSettings.BLANK_LINES_AROUND_METHOD = 0

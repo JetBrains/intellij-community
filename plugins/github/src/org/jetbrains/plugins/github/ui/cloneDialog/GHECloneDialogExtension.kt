@@ -42,7 +42,7 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
     GHECloneDialogExtensionComponent(project)
 }
 
-private class GHECloneDialogExtensionComponent(project: Project) : BaseCloneDialogExtensionComponent(
+private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
   project,
   GithubAuthenticationManager.getInstance(),
   GithubApiRequestExecutorManager.getInstance(),

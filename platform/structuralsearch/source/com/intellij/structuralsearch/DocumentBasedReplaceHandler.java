@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void replace(ReplacementInfo info, ReplaceOptions options) {
+  public void replace(@NotNull ReplacementInfo info, @NotNull ReplaceOptions options) {
     final RangeMarker rangeMarker = myRangeMarkers.get(info);
     final Document document = rangeMarker.getDocument();
     document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
@@ -33,7 +34,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void prepare(ReplacementInfo info) {
+  public void prepare(@NotNull ReplacementInfo info) {
     final PsiElement firstElement = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
     if (firstElement == null) return;
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(firstElement.getContainingFile());

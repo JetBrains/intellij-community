@@ -2,21 +2,25 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class DeprecationUtil {
-  public static final String DEPRECATION_SHORT_NAME = "Deprecation";
+  public static final @NonNls String DEPRECATION_SHORT_NAME = "Deprecation";
 
-  public static final String DEPRECATION_ID = "deprecation";
+  public static final @NonNls String DEPRECATION_ID = "deprecation";
 
-  public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
+  public static final @NonNls String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
 
-  public static final String FOR_REMOVAL_ID = "removal";
+  public static final @NonNls String FOR_REMOVAL_ID = "removal";
 
-  public static String getDeprecationDisplayName() {
+  public static @Nls(capitalization = Sentence) String getDeprecationDisplayName() {
     return AnalysisBundle.message("inspection.deprecated.display.name");
   }
 
-  public static String getForRemovalDisplayName() {
+  public static @Nls(capitalization = Sentence) String getForRemovalDisplayName() {
     return AnalysisBundle.message("inspection.marked.for.removal.display.name");
   }
 }

@@ -11,9 +11,9 @@ public interface Filterable<T> {
   @NotNull
   Predicate<T> getFilter();
 
-  void addFilter(@NotNull Predicate<T> filter);
+  void addFilter(@NotNull Predicate<? super T> filter);
 
-  void removeFilter(@NotNull Predicate<T> filter);
+  void removeFilter(@NotNull Predicate<? super T> filter);
 
-  boolean contains(@NotNull Predicate<T> filter);
+  boolean contains(@NotNull Predicate<? super T> filter);
 }

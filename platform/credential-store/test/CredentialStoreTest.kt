@@ -4,10 +4,9 @@ package com.intellij.credentialStore
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AssumptionViolatedException
 import org.junit.Test
@@ -115,13 +114,13 @@ internal class CredentialStoreTest {
     val store = wrappedInMemory()
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       store.set(attributes, c1)
       assertThat(store.get(attributes)).isEqualTo(c1)
       store.set(attributes, null)
       PlatformTestUtil.dispatchNextEventIfAny(IdeEventQueue.getInstance())
       assertThat(store.get(attributes)).isNull()
-    })
+    }
   }
 
   @Test
@@ -130,13 +129,13 @@ internal class CredentialStoreTest {
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
     val attributes2 = CredentialAttributes("attr", c1.userName)
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       store.set(attributes, c1)
       assertThat(store.get(attributes)).isEqualTo(c1)
       store.set(attributes, null)
       assertThat(store.get(attributes)).isNull()
       assertThat(store.get(attributes2)).isNull()
-    })
+    }
   }
 
 
@@ -146,13 +145,13 @@ internal class CredentialStoreTest {
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
     val c2 = Credentials("u2", "p2")
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       store.set(attributes, c1)
       assertThat(store.get(attributes)).isEqualTo(c1)
       store.set(attributes, c2)
       PlatformTestUtil.dispatchNextEventIfAny(IdeEventQueue.getInstance())
       assertThat(store.get(attributes)).isEqualTo(c2)
-    })
+    }
   }
 
 

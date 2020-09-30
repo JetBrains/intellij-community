@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.*;
 
-public class CreateMethodFromUsageFix {
+public final class CreateMethodFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
 
   public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
@@ -166,7 +166,7 @@ public class CreateMethodFromUsageFix {
   public static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
     final String typeParameterName = typeParameter.getName();
 
-    final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<Boolean>() {
+    final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<>() {
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();

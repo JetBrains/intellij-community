@@ -22,11 +22,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vfs.VirtualFile.PROP_NAME;
-import static com.intellij.util.ObjectUtils.doIfNotNull;
-
-class SymbolicLinkRefresher {
-
+final class SymbolicLinkRefresher {
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
     "File SymbolicLinkRefresher", 1);
 
@@ -57,8 +53,9 @@ class SymbolicLinkRefresher {
     Consumer<String> queuePath = path -> toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
     Consumer<VirtualFile> queueFile = file -> {
       if (file instanceof VirtualFileSystemEntry) {
-        if (((VirtualFileSystemEntry)file).hasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
-          file = doIfNotNull(file.getCanonicalPath(), mySystem::findFileByPathIfCached);
+        if (((VirtualFileSystemEntry)file).parentHasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
+          String obj = file.getCanonicalPath();
+          file = obj == null ? null : mySystem.findFileByPathIfCached(obj);
           if (file != null && fileWatcher.belongsToWatchRoots(FileUtil.toSystemDependentName(file.getPath()), !file.isDirectory())) {
             toRefresh.add(file.getPath());
           }
@@ -79,7 +76,7 @@ class SymbolicLinkRefresher {
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         VirtualFile file = ((VFilePropertyChangeEvent)event).getFile();
-        if (((VFilePropertyChangeEvent)event).getPropertyName().equals(PROP_NAME)) {
+        if (((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
           queuePath.accept(((VFilePropertyChangeEvent)event).getOldPath());
           queueFile.accept(file.getParent());
         }
@@ -124,7 +121,7 @@ class SymbolicLinkRefresher {
   }
 
   private static boolean isUnderRecursiveOrCircularSymlink(@NotNull VirtualFile file) {
-    if (((VirtualFileSystemEntry)file).hasSymlink()) {
+    if (((VirtualFileSystemEntry)file).parentHasSymlink()) {
       while (file != null && !file.is(VFileProperty.SYMLINK)) {
         file = file.getParent();
       }

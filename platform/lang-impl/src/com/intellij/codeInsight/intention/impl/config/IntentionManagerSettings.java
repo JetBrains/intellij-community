@@ -8,17 +8,14 @@ import com.intellij.ide.ui.search.SearchableOptionContributor;
 import com.intellij.ide.ui.search.SearchableOptionProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +28,11 @@ import java.util.regex.Pattern;
 public final class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
-  private static final class MetaDataKey extends Pair<String, String> {
-    private static final Interner<String> ourInterner = WeakInterner.createWeakInterner();
-    private MetaDataKey(String @NotNull [] categoryNames, @NotNull final String familyName) {
-      super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
+  private static final class MetaDataKey extends AbstractMap.SimpleImmutableEntry<String, String> {
+    private static final Interner<String> ourInterner = Interner.createWeakInterner();
+
+    private MetaDataKey(String @NotNull [] categoryNames, @NotNull String familyName) {
+      super(String.join(":", categoryNames), ourInterner.intern(familyName));
     }
   }
 
@@ -54,7 +52,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe(extension -> registerMetaDataForEp(extension));
 
-    IntentionManagerImpl.EP_INTENTION_ACTIONS.getPoint().addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         // on each plugin load/unload SearchableOptionsRegistrarImpl drops the cache, so, it will be recomputed later on demand
@@ -75,7 +73,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
           topHitCache.invalidateCachedOptions(IntentionsOptionsTopHitProvider.class);
         }
       }
-    }, false, ApplicationManager.getApplication());
+    }, null);
   }
 
   private void registerMetaDataForEp(@NotNull IntentionActionBean extension) {
@@ -103,9 +101,8 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     }
   }
 
-  @NotNull
-  public static IntentionManagerSettings getInstance() {
-    return ServiceManager.getService(IntentionManagerSettings.class);
+  public static @NotNull IntentionManagerSettings getInstance() {
+    return ApplicationManager.getApplication().getService(IntentionManagerSettings.class);
   }
 
   void registerIntentionMetaData(@NotNull IntentionAction intentionAction,
@@ -156,7 +153,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   }
 
   private static String getFamilyName(@NotNull IntentionActionMetaData metaData) {
-    return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.getAction().getFamilyName();
+    return String.join("/", metaData.myCategory) + '/' + metaData.getAction().getFamilyName();
   }
 
   private static String getFamilyName(@NotNull IntentionAction action) {
@@ -187,7 +184,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
   private static void processMetaData(@NotNull IntentionActionMetaData metaData, @NotNull SearchableOptionProcessor processor) {
     try {
-      String descriptionText = StringUtil.toLowerCase(metaData.getDescription().getText());
+      String descriptionText = Strings.toLowerCase(metaData.getDescription().getText());
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
       String displayName = IntentionSettingsConfigurable.getDisplayNameText();
       String configurableId = IntentionSettingsConfigurable.HELP_ID;

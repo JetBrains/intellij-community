@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ExceptionUtil
 import com.jetbrains.python.PythonCondaBundle
 import com.jetbrains.python.conda.InstallCondaUtils
@@ -71,11 +72,11 @@ class InstallCondaAction : AnAction(ActionsBundle.message("action.SetupMiniconda
       project)
   }
 
-  private fun reportFailure(project: Project?, e: Exception) {
-    return reportFailure(project, ExceptionUtil.getNonEmptyMessage(e, "Internal error"))
+  private fun reportFailure(project: Project?, @NlsSafe e: Exception) {
+    return reportFailure(project, ExceptionUtil.getNonEmptyMessage(e, ActionsBundle.message("action.SetupMiniconda.internal.error")))
   }
 
-  private fun reportFailure(project: Project?, message: String = "Internal error") {
+  private fun reportFailure(project: Project?, @NlsSafe message: String = ActionsBundle.message("action.SetupMiniconda.internal.error")) {
     Notifications.Bus.notify(
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                    ActionsBundle.message("action.SetupMiniconda.installFailed"),

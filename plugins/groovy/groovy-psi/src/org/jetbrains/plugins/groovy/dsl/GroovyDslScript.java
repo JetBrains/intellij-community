@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
@@ -123,6 +124,7 @@ public class GroovyDslScript {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "GroovyDslScript: " + myPath;
   }

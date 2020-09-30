@@ -26,7 +26,7 @@ public interface CodeReferenceSearcher {
   /**
    * Returned language is used to restrict effective search scope.
    */
-  @NotNull Language getReferencingLanguage();
+  @NotNull Language getReferencingLanguage(@NotNull Symbol target);
 
   @Nullable SearchRequest getSearchRequest(@NotNull Project project, @NotNull Symbol target);
 

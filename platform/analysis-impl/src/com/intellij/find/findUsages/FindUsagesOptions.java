@@ -2,6 +2,7 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -94,6 +95,6 @@ public class FindUsagesOptions implements Cloneable {
 
   @NotNull
   public String generateUsagesString() {
-    return "Usages";
+    return AnalysisBundle.message("find.usages.panel.title.usages");
   }
 }

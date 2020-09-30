@@ -16,7 +16,7 @@ PyFile:FStringTerminatedByLineBreakInNestedLiteralPart.py
               PsiElement(Py:FSTRING_TEXT)('foo')
               PsiErrorElement:' expected
                 <empty list>
-          PsiErrorElement:type conversion, : or } expected
+          PsiErrorElement:Type conversion, ':' or '}' expected
             <empty list>
         PsiErrorElement:" expected
           <empty list>

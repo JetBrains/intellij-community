@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,10 +29,10 @@ public abstract class PredefinedCodeStyle {
     ExtensionPointName.create("com.intellij.predefinedCodeStyle");
 
   public static final PredefinedCodeStyle[] EMPTY_ARRAY = {};
-  private final String myName;
+  private final @NlsContexts.ListItem String myName;
   private final Language myLanguage;
 
-  public PredefinedCodeStyle(@NotNull String name, @NotNull Language language) {
+  public PredefinedCodeStyle(@NotNull @NlsContexts.ListItem String name, @NotNull Language language) {
     myName = name;
     myLanguage = language;
   }
@@ -72,7 +73,7 @@ public abstract class PredefinedCodeStyle {
     return result;
   }
 
-  public String getName() {
+  public @NlsContexts.ListItem String getName() {
     return myName;
   }
 

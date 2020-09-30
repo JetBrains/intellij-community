@@ -83,7 +83,8 @@ class HelpSearch {
         finally {
           indexDirectory?.close()
           reader?.close()
-          for (f in indexDir.toFile().listFiles()) f.delete()
+          val tempFiles = indexDir.toFile().listFiles()
+          tempFiles?.forEach { it.delete() }
           Files.delete(indexDir)
         }
       return NOT_FOUND

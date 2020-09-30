@@ -25,7 +25,7 @@ abstract class ProjectRootFinder {
 
   protected abstract boolean requiresConfirmation();
 
-  protected boolean containsChild(@NotNull VirtualFile file, @NotNull Predicate<VirtualFile> predicate) {
+  protected boolean containsChild(@NotNull VirtualFile file, @NotNull Predicate<? super VirtualFile> predicate) {
     if (file.isDirectory()) {
       for (VirtualFile child : file.getChildren()) {
         if (predicate.test(child)) return true;

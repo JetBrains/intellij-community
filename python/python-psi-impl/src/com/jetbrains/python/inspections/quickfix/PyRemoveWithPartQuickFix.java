@@ -21,7 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyWithItem;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveWithPartQuickFix implements LocalQuickFix {

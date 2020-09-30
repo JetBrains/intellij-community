@@ -214,7 +214,7 @@ public class FunctionParsing extends Parsing {
         if (myContext.getLanguageLevel().isPython2()) {
           parameter.rollbackTo();
           parameter = myBuilder.mark();
-          advanceError(myBuilder, "Single star parameter is not supported in Python 2");
+          advanceError(myBuilder, message("PARSE.single.star.parameter.not.supported.py2"));
         }
         parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
         return true;

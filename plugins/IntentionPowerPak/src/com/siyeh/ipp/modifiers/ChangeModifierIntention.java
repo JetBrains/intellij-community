@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -228,10 +229,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     private final boolean myExtendLeft, myExtendRight;
     private final String myOriginalText;
     private final RangeMarker myMarker;
-    private final String myActionName;
+    private final @NlsContexts.Command String myActionName;
     private final PsiFile myFile;
 
-    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull String actionName) {
+    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull @NlsContexts.Command String actionName) {
       myDocument = document;
       myFile = file;
       myActionName = actionName;

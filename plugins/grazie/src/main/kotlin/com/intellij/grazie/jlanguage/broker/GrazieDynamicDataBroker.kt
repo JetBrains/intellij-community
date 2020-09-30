@@ -2,7 +2,7 @@
 package com.intellij.grazie.jlanguage.broker
 
 import com.intellij.grazie.GrazieDynamic
-import org.languagetool.tools.databroker.ResourceDataBroker
+import org.languagetool.broker.ResourceDataBroker
 import java.io.InputStream
 import java.net.URL
 import java.util.*
@@ -21,6 +21,15 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
     return resourceAsStream
   }
 
+  override fun getFromResourceDirAsLines(path: String): MutableList<String> {
+    val lines: MutableList<String> = ArrayList()
+
+    getFromResourceDirAsStream(path).use { stream ->
+      stream.bufferedReader().useLines { lines.addAll(it) }
+    }
+
+    return lines
+  }
 
   override fun getFromResourceDirAsUrl(path: String): URL {
     val completePath = getCompleteResourceUrl(path)
@@ -38,6 +47,22 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
     return resourceAsStream
   }
 
+  override fun getRulesDir(): String {
+    return ResourceDataBroker.RULES_DIR;
+  }
+
+  override fun getFromResourceDirAsUrls(path: String): MutableList<URL> {
+    val completePath = getCompleteResourceUrl(path)
+    val resources = GrazieDynamic.getResources(completePath).toMutableList()
+    require(resources.isNotEmpty()) { "Path $path not found in class path at $completePath" }
+    return resources
+  }
+
+  override fun getAsURLs(path: String): MutableList<URL> {
+    val resources = GrazieDynamic.getResources(path).toMutableList()
+    require(resources.isNotEmpty()) { "Path $path not found in class path at $path" }
+    return resources
+  }
 
   override fun getFromRulesDirAsUrl(path: String): URL {
     val completePath = getCompleteRulesUrl(path)
@@ -66,9 +91,7 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
 
   override fun ruleFileExists(path: String) = getAsURL(getCompleteRulesUrl(path)) != null
 
-  override val resourceDir: String
-    get() = ResourceDataBroker.RESOURCE_DIR
-
-  override val rulesDir: String
-    get() = ResourceDataBroker.RULES_DIR
+  override fun getResourceDir(): String {
+    return ResourceDataBroker.RESOURCE_DIR;
+  }
 }

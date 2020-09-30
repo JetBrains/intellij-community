@@ -96,33 +96,35 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     if (identifierPsi == null) return;
 
     holder.registerProblem(identifierPsi,
-                           DevKitBundle.message("inspections.unregistered.named.color", key),
-                           new LocalQuickFix() {
+                           DevKitBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
-                             @Nls(capitalization = Nls.Capitalization.Sentence)
-                             @NotNull
-                             @Override
-                             public String getFamilyName() {
-                               return "Navigate to Theme metadata file";
-                             }
+        @Nls(capitalization = Nls.Capitalization.Sentence)
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return DevKitBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file");
+        }
 
-                             @Override
-                             public boolean startInWriteAction() {
-                               return false;
-                             }
+        @Override
+        public boolean startInWriteAction() {
+          return false;
+        }
 
-                             @Override
-                             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                               final Collection<VirtualFile> metadataFiles =
-                                 FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactory.EXTENSION);
-                               if (metadataFiles.isEmpty()) return;
+        @Override
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          final Collection<VirtualFile> metadataFiles =
+            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactory.EXTENSION);
+          if (metadataFiles.isEmpty()) return;
 
-                               final PsiFile[] psiFiles =
-                                 PsiUtilCore.toPsiFiles(PsiManager.getInstance(project), metadataFiles).toArray(PsiFile.EMPTY_ARRAY);
-                               DataManager.getInstance().getDataContextFromFocusAsync()
-                                 .onSuccess(context -> NavigationUtil.getPsiElementPopup(psiFiles, "Theme Metadata Files")
-                                   .showInBestPositionFor(context));
-                             }
-                           });
+          final PsiFile[] psiFiles =
+            PsiUtilCore.toPsiFiles(PsiManager.getInstance(project), metadataFiles).toArray(PsiFile.EMPTY_ARRAY);
+          DataManager.getInstance().getDataContextFromFocusAsync()
+            .onSuccess(context -> {
+              NavigationUtil.getPsiElementPopup(psiFiles,
+                                                DevKitBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file.popup.title"))
+                .showInBestPositionFor(context);
+            });
+        }
+      });
   }
 }

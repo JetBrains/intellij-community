@@ -4,7 +4,6 @@ package com.intellij.refactoring.removemiddleman;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.MyUsageViewUtil;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,7 @@ class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactorJBundle
-      .message("references.to.expose.usage.view", MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference"));
+      .message("references.to.expose.usage.view", usagesCount, filesCount);
   }
 
   @Override

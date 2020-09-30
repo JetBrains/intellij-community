@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,7 @@ public class RecentsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String RECENT_ELEMENT_NAME = "recent";
   @NonNls protected static final String NAME_ATTR = "name";
 
-  private final Map<String, LinkedList<String>> myMap = new THashMap<>();
+  private final Map<String, LinkedList<String>> myMap = new HashMap<>();
   private int myRecentsNumberToKeep = 5;
 
   @NotNull

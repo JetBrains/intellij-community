@@ -16,10 +16,10 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +69,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
                 final String message = JavaRefactoringBundle.message("0.uses.a.package.local.1",
                                                                  RefactoringUIUtil.getDescription(container, true),
                                                                  RefactoringUIUtil.getDescription(resolved, true));
-                myConflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));
+                myConflicts.putValue(resolved, StringUtil.capitalize(message));
                 reportedRefs.add(container);
               }
             }

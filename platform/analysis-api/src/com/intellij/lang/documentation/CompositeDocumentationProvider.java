@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.documentation;
 
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
+public final class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
   private static final Logger LOG = Logger.getInstance(CompositeDocumentationProvider.class);
 
   private final List<DocumentationProvider> myProviders;
@@ -170,7 +170,7 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
   }
 
   @Override
-  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     for (DocumentationProvider provider : getAllProviders()) {
       provider.collectDocComments(file, sink);
     }

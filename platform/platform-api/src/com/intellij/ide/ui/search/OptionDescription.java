@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -33,10 +34,12 @@ public class OptionDescription implements Comparable<OptionDescription> {
     myGroupName = groupName;
   }
 
+  @Nls
   public String getOption() {
     return myOption;
   }
 
+  @Nls
   @Nullable
   public String getHit() {
     return myHit;

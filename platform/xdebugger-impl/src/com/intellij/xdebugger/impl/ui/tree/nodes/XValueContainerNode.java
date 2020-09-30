@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +13,7 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,7 +189,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     invokeNodeUpdate(() -> setMessageNodes(MessageTreeNode.createMessages(myTree, this, message, link, icon, attributes), false));
   }
 
-  public void setInfoMessage(@NotNull String message, @Nullable HyperlinkListener hyperlinkListener) {
+  public void setInfoMessage(@NotNull @Nls String message, @Nullable HyperlinkListener hyperlinkListener) {
     invokeNodeUpdate(() -> setMessageNodes(Collections.singletonList(MessageTreeNode.createInfoMessage(myTree, message, hyperlinkListener)), false));
   }
 
@@ -213,7 +214,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @NotNull
-  public XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable String text) {
+  public XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable @Nls String text) {
     if (isLeaf()) {
       setLeaf(false);
     }

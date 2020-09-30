@@ -66,7 +66,13 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     EntryInfo info = map.get(entryName);
-    if (info != null) return info;
+    if (info != null) {
+      if (!isDirectory) {
+        Logger.getInstance(ZipHandlerBase.class).info(
+          "Duplicated entry: " + getFile() + "!/" + entryName + ' ' + info.length + '/' + entry.getSize());
+      }
+      return info;
+    }
 
     Trinity<String, String, String> path = splitPathAndFix(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
@@ -117,6 +123,18 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     return info;
+  }
+
+  public long getEntryCrc(@NotNull String relativePath) throws IOException {
+    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
+      ZipFile zip = zipRef.get();
+      ZipEntry entry = zip.getEntry(relativePath);
+      if (entry != null) {
+        return entry.getCrc();
+      }
+    }
+
+    throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
   @Override

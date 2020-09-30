@@ -48,7 +48,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     Module[] modules = ModuleManager.getInstance(project).getModules();
-    Set<Library> processedLibraries = new HashSet<>();
+    Map<String, List<Library>> processedLibraries = new HashMap<>();
     Set<Sdk> processedSdk = new HashSet<>();
 
     for (Module module : modules) {
@@ -59,8 +59,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
           final Library library = libraryOrderEntry.getLibrary();
           if (library == null) continue;
-          if (processedLibraries.contains(library)) continue;
-          processedLibraries.add(library);
+          String libraryPresentableName = libraryOrderEntry.getPresentableName();
+          List<Library> librariesWithSameName = processedLibraries.getOrDefault(libraryPresentableName, new ArrayList<>());
+          if (librariesWithSameName.stream().anyMatch(processedLibrary -> processedLibrary.hasSameContent(library))) continue;
+          librariesWithSameName.add(library);
+          processedLibraries.put(libraryPresentableName, librariesWithSameName);
 
           if (!hasExternalEntries(fileIndex, libraryOrderEntry)) continue;
 

@@ -14,10 +14,12 @@ import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.*;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class AppIcon {
@@ -48,6 +49,9 @@ public abstract class AppIcon {
       if (SystemInfo.isMac) {
         ourIcon = new MacAppIcon();
       }
+      else if (SystemInfo.isXWindow) {
+        ourIcon = new XAppIcon();
+      }
       else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
       }
@@ -59,9 +63,9 @@ public abstract class AppIcon {
     return ourIcon;
   }
 
-  public abstract boolean setProgress(Project project, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+  public abstract boolean setProgress(Project project, @NonNls Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
-  public abstract boolean hideProgress(Project project, Object processId);
+  public abstract boolean hideProgress(Project project, @NonNls Object processId);
 
   public abstract void setErrorBadge(Project project, String text);
 
@@ -69,8 +73,24 @@ public abstract class AppIcon {
 
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
+  /**
+   * This method requests OS to activate the specified application window. This might cause the window to steal focus from another
+   * (currently active) application, which is generally not considered acceptable. So it should be used only in special cases, when we know
+   * that the user definitely expects such behaviour. In most cases, requesting focus in the target window via standard AWT mechanism and
+   * {@link #requestAttention(Project, boolean)} should be used instead, to request user attention but not switch the focus to it
+   * automatically.
+   * <p>
+   * This method might resort to requesting user attention to target window, if focus stealing is not supported by OS
+   * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
+   */
   public void requestFocus(IdeFrame frame) {
+    Window window = frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent());
+    requestFocus(window);
+  }
+
+  protected void requestFocus(Window window) {
     requestFocus();
+    if (window != null) window.toFront();
   }
 
   public void requestFocus() {
@@ -134,8 +154,9 @@ public abstract class AppIcon {
 
     public abstract void _requestAttention(@Nullable JFrame frame, boolean critical);
 
-    @Nullable
-    protected abstract JFrame getIdeFrame(@Nullable Project project);
+    private static @Nullable JFrame getIdeFrame(@Nullable Project project) {
+      return WindowManager.getInstance().getFrame(project);
+    }
 
     private boolean isAppActive() {
       Application app = ApplicationManager.getApplication();
@@ -235,12 +256,6 @@ public abstract class AppIcon {
       catch (Exception e) {
         LOG.error(e);
       }
-    }
-
-    @Nullable
-    @Override
-    protected JFrame getIdeFrame(@Nullable Project project) {
-      return null;
     }
 
     @Override
@@ -376,7 +391,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static Method getAppMethod(final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
+    private static Method getAppMethod(@NonNls final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
       return getAppClass().getMethod(name, args);
     }
 
@@ -636,17 +651,48 @@ public abstract class AppIcon {
       }
     }
 
-    @Nullable
     @Override
-    protected JFrame getIdeFrame(@Nullable Project project) {
-      return WindowManager.getInstance().getFrame(project);
+    public void requestFocus() {
+      try {
+        // This is required for the focus stealing mechanism to work reliably,
+        // see WinFocusStealer.setFocusStealingEnabled's javadoc for details
+        Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
     }
-
-    @Override
-    public void requestFocus(IdeFrame frame) { }
 
     private static boolean isValid(@Nullable JFrame frame) {
       return frame != null && frame.isDisplayable();
+    }
+  }
+
+  private static class XAppIcon extends BaseIcon {
+    @Override
+    public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      return false;
+    }
+
+    @Override
+    public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      return false;
+    }
+
+    @Override
+    public void _setTextBadge(@Nullable JFrame frame, String text) {}
+
+    @Override
+    public void _setOkBadge(@Nullable JFrame frame, boolean visible) {}
+
+    @Override
+    public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      if (frame != null) X11UiUtil.requestAttention(frame);
+    }
+
+    @Override
+    public void requestFocus(Window window) {
+      if (window != null) X11UiUtil.activate(window);
     }
   }
 

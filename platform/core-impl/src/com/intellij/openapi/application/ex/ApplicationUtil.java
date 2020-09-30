@@ -162,7 +162,7 @@ public final class ApplicationUtil {
     }
   }
 
-  public static class CannotRunReadActionException extends ProcessCanceledException {
+  public static final class CannotRunReadActionException extends ProcessCanceledException {
     // When ForkJoinTask joins task which was exceptionally completed from the other thread
     // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
     // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().

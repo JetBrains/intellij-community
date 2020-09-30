@@ -89,7 +89,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
-  private static class ComponentPanelTest extends DialogWrapper {
+  private static final class ComponentPanelTest extends DialogWrapper {
 
     private static final Set<String> ALLOWED_VALUES = ContainerUtil
       .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
@@ -353,7 +353,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         { setIpad(JBUI.emptyInsets()); } // Reset standard pads
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
                                              boolean hasFocus, int row, int column) {
           if (value == null) {
             append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -396,7 +396,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                            Arrays.asList("Label 1",
                                          "Label 2 long long long long long long label",
                                          "Label 3", "Label 4", "Label 5", "Label 6"),
-                           t -> System.out.println("[" + t + "] selected"), false);
+                           t -> System.out.println("[" + t + "] selected"));
 
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
@@ -672,7 +672,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
-    private class ProgressTimerRequest implements Runnable {
+    private final class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
       private ProgressTimerRequest(JProgressBar progressBar) {

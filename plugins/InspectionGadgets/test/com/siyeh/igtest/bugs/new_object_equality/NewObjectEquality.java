@@ -5,15 +5,15 @@ import java.util.*;
 public class NewObjectEquality
 {
   void testNew(StringBuilder s) {
-    if(s <warning descr="New object is compared using '=='">==</warning> new StringBuilder()) {}
-    if(new StringBuilder() <warning descr="New object is compared using '=='">==</warning> s) {}
+    if(s == <warning descr="New object is compared using '=='">new StringBuilder()</warning>) {}
+    if(<warning descr="New object is compared using '=='">new StringBuilder()</warning> == s) {}
     StringBuilder s1 = new StringBuilder();
-    if(s1 <warning descr="New object is compared using '=='">==</warning> s) {}
+    if(<warning descr="New object is compared using '=='">s1</warning> == s) {}
   }
 
   void testInferredContract(Foo foo, List<?> c) {
-    if(foo <warning descr="New object is compared using '=='">==</warning> Foo.create()) {}
-    if(c <warning descr="New object is compared using '=='">==</warning> Collections.unmodifiableList(c)) {}
+    if(foo == <warning descr="New object is compared using '=='">Foo.create()</warning>) {}
+    if(c == <warning descr="New object is compared using '=='">Collections.unmodifiableList(c)</warning>) {}
   }
 }
 class Foo {

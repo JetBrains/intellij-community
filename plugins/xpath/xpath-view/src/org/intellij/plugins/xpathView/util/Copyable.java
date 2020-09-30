@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public interface Copyable<T> {
     T copy();
 
-    class Util {
+    final class Util {
         private Util() { }
 
         @SuppressWarnings({"unchecked"})

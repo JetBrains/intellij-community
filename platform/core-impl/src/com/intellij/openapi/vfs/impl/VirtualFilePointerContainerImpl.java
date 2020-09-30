@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
@@ -191,7 +192,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   public String @NotNull [] getUrls() {
     if (myTimeStampOfCachedThings == UNINITIALIZED) {
       // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
-      return myList.stream().map(VirtualFilePointer::getUrl).toArray(String[]::new);
+      return ContainerUtil.map2Array(myList, ArrayUtil.EMPTY_STRING_ARRAY, VirtualFilePointer::getUrl);
     }
     return getOrCache().first;
   }

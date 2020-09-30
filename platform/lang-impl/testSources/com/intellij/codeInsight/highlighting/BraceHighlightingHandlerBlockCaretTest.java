@@ -12,20 +12,16 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/braceHighlighterBlock/")
 public class BraceHighlightingHandlerBlockCaretTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    runInEdtAndWait(() -> {
-      configureByFile(myFileSuffix);
-      Editor editor = getEditor();
-      editor.getSettings().setBlockCursor(true);
-      String result = BraceHighlightingHandlerTest.getEditorTextWithHighlightedBraces(getEditor(), getFile());
-      UsefulTestCase.assertSameLinesWithFile(getAnswerFilePath(), result);
-    });
+    configureByFile(myFileSuffix);
+    Editor editor = getEditor();
+    editor.getSettings().setBlockCursor(true);
+    String result = BraceHighlightingHandlerTest.getEditorTextWithHighlightedBraces(getEditor(), getFile());
+    UsefulTestCase.assertSameLinesWithFile(getAnswerFilePath(), result);
   }
 
   @Nullable

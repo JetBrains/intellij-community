@@ -16,6 +16,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.valueEditors.IntegerValueEditor;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class IntegerField extends JBTextField {
     myValueEditor.validateContent();
   }
 
-  public void setDefaultValueText(@NotNull String text) {
+  public void setDefaultValueText(@NotNull @NlsContexts.StatusText String text) {
     getEmptyText().setText(text);
   }
 

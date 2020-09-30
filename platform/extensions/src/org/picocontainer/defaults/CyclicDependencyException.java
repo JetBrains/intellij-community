@@ -10,6 +10,7 @@
 
 package org.picocontainer.defaults;
 
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.PicoIntrospectionException;
 
 import java.util.LinkedList;
@@ -44,7 +45,7 @@ public class CyclicDependencyException extends PicoIntrospectionException {
     }
 
     @Override
-    public String getMessage() {
+    public @NonNls String getMessage() {
         return "Cyclic dependency: " + stack.toString();
     }
 }

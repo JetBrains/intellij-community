@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
 
-public class AntProcessHandler extends KillableColoredProcessHandler {
+public final class AntProcessHandler extends KillableColoredProcessHandler {
   private final Extractor myOut;
   private final Extractor myErr;
 

@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.shared;
 
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,7 +53,7 @@ public final class BorderType {
     return myName;
   }
 
-  public Border createBorder(final String title,
+  public Border createBorder(@Nls(capitalization = Nls.Capitalization.Title) final String title,
                              final int titleJustification,
                              final int titlePosition,
                              final Font titleFont,
@@ -100,12 +101,12 @@ public final class BorderType {
 
   public static BorderType[] getAllTypes() {
     return new BorderType[]{
-          BorderType.NONE,
-          BorderType.EMPTY,
-          BorderType.BEVEL_LOWERED,
-          BorderType.BEVEL_RAISED,
-          BorderType.ETCHED,
-          BorderType.LINE
+          NONE,
+          EMPTY,
+          BEVEL_LOWERED,
+          BEVEL_RAISED,
+          ETCHED,
+          LINE
         };
   }
 }

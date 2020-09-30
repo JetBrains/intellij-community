@@ -1,4 +1,4 @@
-// "Replace with Test.class" "true"
+// "Replace with 'Test.class'" "true"
 
 class Test {
   static void foo() {

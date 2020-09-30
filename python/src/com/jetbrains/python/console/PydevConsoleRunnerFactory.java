@@ -8,12 +8,15 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.run.EnvironmentController;
+import com.jetbrains.python.run.PlainEnvironmentController;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -107,7 +110,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
     putIPythonEnvFlag(project, envs);
 
-    Consumer<String> rerunAction = title -> {
+    Consumer<String> rerunAction = (@NlsContexts.TabTitle String title) -> {
       PydevConsoleRunner runner = createConsoleRunner(project, module);
       if (runner instanceof PydevConsoleRunnerImpl) {
         ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);
@@ -128,9 +131,13 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                consoleParameters.mySettingsProvider, consoleParameters.myRerunAction, consoleParameters.mySetupFragment);
   }
 
-  public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull Map<String, String> envs) {
+    putIPythonEnvFlag(project, new PlainEnvironmentController(envs));
+  }
+
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull EnvironmentController environmentController) {
     String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
-    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+    environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
   @Nullable
@@ -215,7 +222,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                         @NotNull PythonRunConfiguration config) {
     final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
 
-    Consumer<String> rerunAction = title -> {
+    Consumer<String> rerunAction = (@NlsContexts.TabTitle String title) -> {
       PydevConsoleRunner runner = createConsoleRunnerWithFile(project, contextModule, runFileText, config);
       if (runner instanceof PydevConsoleRunnerImpl) {
         ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);

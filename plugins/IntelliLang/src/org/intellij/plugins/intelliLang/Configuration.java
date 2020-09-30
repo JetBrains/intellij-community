@@ -15,7 +15,11 @@
  */
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.*;
@@ -28,6 +32,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -72,26 +77,78 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION =
     o -> Language.findLanguageByID(o.getInjectedLanguageId()) != null;
 
+  {
+    LanguageInjectionSupport.CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
+    LanguageInjectionSupport.EP_NAME.addChangeListener(this::reloadInjections, null);
+  }
+
+  protected void reloadInjections() {
+    Element state = getState();
+    myInjections.clear();
+    PatternCompilerFactory.getFactory().dropCache();
+    loadState(state);
+    configurationModified();
+  }
+
+  protected void invokeAfterReload(Runnable runnable) { runnable.run(); }
+
   @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
-  public static class App extends Configuration {
-    private final List<BaseInjection> myDefaultInjections;
+  public static final class App extends Configuration implements Disposable {
+    private volatile @NotNull List<BaseInjection> myDefaultInjections;
+    private volatile @Nullable List<BaseInjection> myUnloadingDefaultInjections = null;
+    private final Deque<Runnable> myActionsPostponedUntilUnloadingEnds = new ArrayDeque<>();
+
     private final AdvancedConfiguration myAdvancedConfiguration;
 
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
-      LanguageInjectionSupport.CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
-      LanguageInjectionSupport.EP_NAME.addChangeListener(this::reloadInjections, null);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          // myDefaultInjections could change while we perform the unloading, but we need to have original state until plugin is fully unloaded
+          myUnloadingDefaultInjections = getDefaultInjections();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          reloadInjections();
+          myUnloadingDefaultInjections = null;
+          while (!myActionsPostponedUntilUnloadingEnds.isEmpty()) {
+            myActionsPostponedUntilUnloadingEnds.removeLast().run();
+          }
+          configurationModified();
+        }
+      });
     }
 
-    private void reloadInjections() {
-      myDefaultInjections.clear();
-      myDefaultInjections.addAll(Configuration.loadDefaultInjections());
+    @Override
+    public void dispose() { }
+
+    @Override
+    protected void invokeAfterReload(Runnable runnable) {
+      if (myUnloadingDefaultInjections == null) {
+        runnable.run();
+      }
+      else {
+        myActionsPostponedUntilUnloadingEnds.add(runnable);
+      }
+    }
+
+    @Override
+    protected void reloadInjections() {
+      super.reloadInjections();
+      myDefaultInjections = loadDefaultInjections();
     }
 
     @Override
     public List<BaseInjection> getDefaultInjections() {
-      return myDefaultInjections;
+      if (myUnloadingDefaultInjections != null) {
+        return myUnloadingDefaultInjections;
+      }
+      else {
+        return myDefaultInjections;
+      }
     }
 
     @Override
@@ -106,7 +163,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
 
     @Override
-    public Element getState() {
+    public @NotNull Element getState() {
       final Element element = new Element(COMPONENT_NAME);
       myAdvancedConfiguration.writeState(element);
       return getState(element);
@@ -147,6 +204,16 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     public Configuration getParentConfiguration() {
       return myParentConfiguration;
+    }
+
+    @Override
+    protected void invokeAfterReload(Runnable runnable) {
+      Configuration parentConfiguration = getParentConfiguration();
+      if(parentConfiguration != null){
+        parentConfiguration.invokeAfterReload(runnable);
+        return;
+      }
+      super.invokeAfterReload(runnable);
     }
 
     public List<BaseInjection> getOwnInjections(final String injectorId) {
@@ -242,7 +309,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
 
-    importPlaces(getDefaultInjections());
+    invokeAfterReload(() -> importPlaces(getDefaultInjections()));
   }
 
   private static InjectionPlace @Nullable [] dropKnownInvalidPlaces(InjectionPlace[] places) {
@@ -303,15 +370,15 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         defaultInjections.addAll(imported);
       }
     }
-    return defaultInjections;
+    return Collections.unmodifiableList(defaultInjections);
   }
 
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     return getState(new Element(COMPONENT_NAME));
   }
 
-  protected Element getState(Element element) {
+  protected @NotNull Element getState(Element element) {
     Comparator<BaseInjection> comparator = (o1, o2) -> {
       int rc = Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
       if (rc != 0) return rc;
@@ -339,7 +406,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public static Configuration getProjectInstance(Project project) {
-    return ServiceManager.getService(project, Configuration.class);
+    return project.getService(Configuration.class);
   }
 
   public List<BaseInjection> getDefaultInjections() {
@@ -422,7 +489,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
   }
 
-  private void configurationModified() {
+  protected void configurationModified() {
     incModificationCount();
   }
 

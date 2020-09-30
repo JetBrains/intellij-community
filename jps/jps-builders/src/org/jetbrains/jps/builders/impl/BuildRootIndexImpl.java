@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -39,19 +25,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class BuildRootIndexImpl implements BuildRootIndex {
+public final class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private final HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private final THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
+  private final Map<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
+  private final Map<File,List<BuildRootDescriptor>> myRootToDescriptors;
   private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
-  
+
   public BuildRootIndexImpl(BuildTargetRegistry targetRegistry, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
     myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<>();
-    myRootToDescriptors = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    myRootToDescriptors = FileCollectionFactory.createCanonicalFileMap();
     myFileFilters = new ConcurrentHashMap<>(16, 0.75f, 1);
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
@@ -157,7 +143,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root) {
     Map<File, BuildRootDescriptor> rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
     if (rootToDescriptorMap == null) {
-      rootToDescriptorMap = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+      rootToDescriptorMap = FileCollectionFactory.createCanonicalFileMap();
       ROOT_DESCRIPTOR_MAP.set(context, rootToDescriptorMap);
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -18,6 +19,7 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ import java.util.Arrays;
 
 public abstract class InspectionToolsConfigurable implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
-  public static final String ID = "Errors";
+  @NonNls public static final String ID = "Errors";
 
   protected final BaseInspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
@@ -256,7 +258,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   }
 
   @NotNull
-  public static String getInspectionsDisplayName() {
+  public static @NlsContexts.ConfigurableName String getInspectionsDisplayName() {
     return CodeInsightBundle.message("configurable.InspectionToolsConfigurable.display.name");
   }
 }

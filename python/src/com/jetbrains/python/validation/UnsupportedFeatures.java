@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
@@ -51,7 +52,7 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   @Override
   protected void registerProblem(@NotNull PsiElement node,
                                  @NotNull TextRange range,
-                                 @NotNull String message,
+                                 @NotNull @InspectionMessage String message,
                                  @Nullable LocalQuickFix localQuickFix,
                                  boolean asError) {
     if (range.isEmpty()) {
@@ -68,14 +69,14 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   @NotNull
-  private static IntentionAction createIntention(@NotNull PsiElement node, @NotNull String message, @NotNull LocalQuickFix localQuickFix) {
+  private static IntentionAction createIntention(@NotNull PsiElement node, @NotNull @InspectionMessage String message, @NotNull LocalQuickFix localQuickFix) {
     return createIntention(node, null, message, localQuickFix);
   }
 
   @NotNull
   private static IntentionAction createIntention(@NotNull PsiElement node,
                                                  @Nullable TextRange range,
-                                                 @NotNull String message,
+                                                 @NotNull @InspectionMessage String message,
                                                  @NotNull LocalQuickFix localQuickFix) {
     final LocalQuickFix[] quickFixes = {localQuickFix};
     final CommonProblemDescriptorImpl descr =

@@ -22,7 +22,7 @@ import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,19 +39,19 @@ public abstract class DiffManagerEx extends DiffManager {
   // Usage
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer request, @NotNull DiffDialogHints hints);
 
   @NotNull

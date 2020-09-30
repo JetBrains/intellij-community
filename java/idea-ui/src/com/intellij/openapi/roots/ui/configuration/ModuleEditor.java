@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -282,7 +283,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
     ProjectModelExternalSource externalSource = ModuleRootManager.getInstance(myModule).getExternalSource();
     if (externalSource != null && isModified()) {
-      myModificationOfImportedModelWarningComponent.showWarning("Module '" + myModule.getName() + "'", externalSource);
+      myModificationOfImportedModelWarningComponent.showWarning(
+        JavaUiBundle.message("project.roots.module.banner.text", myModule.getName()), externalSource);
     }
     else {
       myModificationOfImportedModelWarningComponent.hideWarning();

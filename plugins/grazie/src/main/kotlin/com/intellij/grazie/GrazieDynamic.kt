@@ -3,12 +3,16 @@ package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.ide.plugins.CannotUnloadPluginException
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.delete
 import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
-import org.languagetool.language.Language
-import org.languagetool.language.Languages
+import org.languagetool.Language
+import org.languagetool.Languages
 import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
@@ -16,7 +20,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-internal object GrazieDynamic {
+
+internal object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
       file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
@@ -26,11 +31,26 @@ internal object GrazieDynamic {
       file.delete()
     }
 
+    ApplicationManager.getApplication().messageBus.connect()
+      .subscribe(DynamicPluginListener.TOPIC, this)
+
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
         .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toUri().toURL() }).get()
     )
+  }
+
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+      myDynClassLoaders.clear()
+    }
+  }
+
+  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
+    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+        if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
+    }
   }
 
   fun addDynClassLoader(classLoader: ClassLoader) = myDynClassLoaders.add(classLoader)
@@ -47,7 +67,11 @@ internal object GrazieDynamic {
 
   fun loadLang(lang: Lang): Language? {
     lang.remote.langsClasses.forEach { className ->
-      (loadClass("org.languagetool.language.$className")?.newInstance() as Language?)?.let { Languages.add(it) }
+      try {
+        Languages.getOrAddLanguageByClassName("org.languagetool.language.$className")
+      } catch (e: RuntimeException) {
+        if (e.cause !is ClassNotFoundException) throw e
+      }
     }
     return Languages.get().find { it::class.java.simpleName == lang.className }
   }
@@ -69,6 +93,20 @@ internal object GrazieDynamic {
   fun getResource(path: String): URL? {
     return forClassLoader { it.getResource(path) }
            ?: if (path.startsWith("/")) forClassLoader { it.getResource(path.drop(1)) } else null
+  }
+
+  fun getResources(path: String): List<URL> {
+    var result = forClassLoader { loader ->
+      loader.getResources(path).toList().takeIf { it.isNotEmpty() }
+    }
+
+    if (result == null && path.startsWith("/")) {
+      result = forClassLoader { loader ->
+        loader.getResources(path.drop(1)).toList().takeIf { it.isNotEmpty() }
+      }
+    }
+
+    return result.orEmpty()
   }
 
   fun getResourceBundle(baseName: String, locale: Locale) = forClassLoader {

@@ -31,5 +31,10 @@ public abstract class JpsSdkPropertiesSerializer<P extends JpsElement> extends J
   @NotNull
   public abstract P loadProperties(@Nullable Element propertiesElement);
 
-  public abstract void saveProperties(@NotNull P properties, @NotNull Element element);
+  /**
+   * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
+   */
+  @Deprecated
+  public void saveProperties(@NotNull P properties, @NotNull Element element) {
+  }
 }

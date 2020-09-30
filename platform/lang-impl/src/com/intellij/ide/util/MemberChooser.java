@@ -12,16 +12,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +38,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsLast;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   protected Tree myTree;
@@ -590,7 +597,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreTree();
   }
 
-  protected String getAllContainersNodeName() {
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getAllContainersNodeName() {
     return IdeBundle.message("node.memberchooser.all.classes");
   }
 
@@ -796,8 +803,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class SortEmAction extends ToggleAction {
     SortEmAction() {
-      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), PlatformEditorBundle.messagePointer("action.sort.alphabetically"),
-            AllIcons.ObjectBrowser.Sorted);
+      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
@@ -816,12 +822,20 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected ShowContainersAction getShowContainersAction() {
-    return new ShowContainersAction(IdeBundle.message("action.show.classes"), PlatformIcons.CLASS_ICON);
+    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"), PlatformIcons.CLASS_ICON);
   }
 
   protected class ShowContainersAction extends ToggleAction {
-    public ShowContainersAction(final String text, final Icon icon) {
-      super(text, text, icon);
+    /**
+     * @deprecated use {@linkplain #ShowContainersAction(Supplier, Icon)} instead
+     */
+    @Deprecated
+    public ShowContainersAction(@NlsActions.ActionText String text, final Icon icon) {
+      this(() -> text, icon);
+    }
+
+    public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
+      super(text, icon);
     }
 
     @Override
@@ -844,7 +858,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class ExpandAllAction extends AnAction {
     ExpandAllAction() {
-      super(IdeBundle.messagePointer("action.expand.all"), IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
+      super(IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
 
     @Override
@@ -855,7 +869,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class CollapseAllAction extends AnAction {
     CollapseAllAction() {
-      super(IdeBundle.messagePointer("action.collapse.all"), IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
+      super(IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }
 
     @Override
@@ -880,9 +894,15 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (n1.getDelegate() instanceof ClassMemberWithElement && n2.getDelegate() instanceof ClassMemberWithElement) {
         PsiElement element1 = ((ClassMemberWithElement)n1.getDelegate()).getElement();
         PsiElement element2 = ((ClassMemberWithElement)n2.getDelegate()).getElement();
-        if (Comparing.equal(element1.getContainingFile(), element2.getContainingFile()) &&
-            !(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
-          return element1.getTextOffset() - element2.getTextOffset();
+        if (!(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
+          final PsiFile file1 = element1.getContainingFile();
+          final PsiFile file2 = element2.getContainingFile();
+          if (Comparing.equal(file1, file2)) {
+            return element1.getTextOffset() - element2.getTextOffset();
+          }
+          else {
+            return comparing(PsiFile::getVirtualFile, nullsLast(comparing(VirtualFile::getPath))).compare(file1, file2);
+          }
         }
       }
       return n1.getOrder() - n2.getOrder();

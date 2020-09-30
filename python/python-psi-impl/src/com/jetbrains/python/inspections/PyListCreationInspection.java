@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.ListCreationQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class PyListCreationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       if (!(node.getAssignedValue() instanceof PyListLiteralExpression))return;
       final PyExpression[] targets = node.getTargets();
       if (targets.length != 1) return;
@@ -57,7 +58,7 @@ public class PyListCreationInspection extends PyInspection {
 
       ListCreationQuickFix quickFix = null;
 
-      final String message = "This list creation could be rewritten as a list literal";
+      final String message = PyPsiBundle.message("INSP.list.creation.this.list.creation.could.be.rewritten.as.list.literal");
       while (expressionStatement instanceof PyExpressionStatement) {
         final PyExpression statement = ((PyExpressionStatement)expressionStatement).getExpression();
         if (!(statement instanceof PyCallExpression)) break;

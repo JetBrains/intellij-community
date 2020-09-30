@@ -17,14 +17,14 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
       () -> {
-        doIntentionTest(PyPsiBundle.message("INTN.add.type.hints.for.function.family"), getTestName(true) + ".py", "foo_decl.py");
+        doIntentionTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), getTestName(true) + ".py", "foo_decl.py");
         myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
       }
     );
   }
 
   public void testTypeComment() {
-    doTest(PyPsiBundle.message("INTN.add.type.hints.for.function.family"), LanguageLevel.PYTHON27);
+    doTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), LanguageLevel.PYTHON27);
   }
 
   public void testLibraryDefinition() {
@@ -32,13 +32,13 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     myFixture.copyDirectoryToProject(testDir, "");
     runWithAdditionalClassEntryInSdkRoots(testDir + "/lib", () -> {
       myFixture.configureByFile(testDir + "/main.py");
-      assertEmpty(myFixture.filterAvailableIntentions(PyPsiBundle.message("INTN.add.type.hints.for.function.family")));
+      assertEmpty(myFixture.filterAvailableIntentions(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function")));
     });
   }
 
   // PY-30713
   public void testResolveAmbiguity() {
-    doNegativeTest(PyPsiBundle.message("INTN.add.type.hints.for.function.family"));
+    doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"));
   }
 
   // PY-30825
@@ -47,6 +47,6 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest() {
-    doTest(PyPsiBundle.message("INTN.add.type.hints.for.function.family"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), LanguageLevel.PYTHON34);
   }
 }

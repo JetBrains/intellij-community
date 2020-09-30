@@ -88,7 +88,7 @@ public class InconvertibleTypesChecker {
     NEVER, ALWAYS, IF_CHEAP
   }
 
-  public static class TypeMismatch {
+  public static final class TypeMismatch {
     private final @NotNull PsiType myLeft;
     private final @NotNull PsiType myRight;
     private final boolean myConvertible;

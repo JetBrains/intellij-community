@@ -43,7 +43,7 @@ public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandl
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
+    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
       @Override
       public void pass(PsiElement[] elements) {
         if (!introduceStrategy(project, editor, file, elements)) {

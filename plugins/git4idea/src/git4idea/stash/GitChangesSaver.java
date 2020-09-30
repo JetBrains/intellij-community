@@ -13,6 +13,7 @@ import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,6 @@ import java.util.Collection;
  * @author Kirill Likhodedov
  */
 public abstract class GitChangesSaver {
-
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
@@ -45,7 +45,7 @@ public abstract class GitChangesSaver {
   public static GitChangesSaver getSaver(@NotNull Project project,
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
-                                         @NotNull String stashMessage,
+                                         @NotNull @Nls String stashMessage,
                                          @NotNull GitSaveChangesPolicy saveMethod) {
     if (saveMethod == GitSaveChangesPolicy.SHELVE) {
       return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
@@ -80,7 +80,7 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        GitBundle.getString("restore.notification.failed.title"),
+        "git.local.changes.not.restored", GitBundle.getString("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
           GitBundle.getString("restore.notification.failed.stash.message"),
           GitBundle.getString("restore.notification.failed.shelf.message")
@@ -136,7 +136,7 @@ public abstract class GitChangesSaver {
     return GitBundle.getString("save.load.conflict.dialog.diff.left.title");
   }
 
-  protected class ShowSavedChangesNotificationListener implements NotificationListener {
+  protected final class ShowSavedChangesNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
         showSavedChanges();

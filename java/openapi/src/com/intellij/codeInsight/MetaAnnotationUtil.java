@@ -43,7 +43,7 @@ import static java.util.Collections.emptyList;
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  */
 public abstract class MetaAnnotationUtil {
-  private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
+  private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(PsiClass object) {
       String qualifiedName = object.getQualifiedName();

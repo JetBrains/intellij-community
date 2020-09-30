@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -34,13 +20,10 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 class AddFacetOfTypeAction extends DumbAwareAction {
-  private final FacetType myFacetType;
+  private final FacetType<?, ?> myFacetType;
   private final StructureConfigurableContext myContext;
 
   AddFacetOfTypeAction(final FacetType type, final StructureConfigurableContext context) {
@@ -51,10 +34,10 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final FacetType type = myFacetType;
+    final FacetType<?, ?> type = myFacetType;
     if (type == null) return;
 
-    final FacetTypeId underlyingFacetType = type.getUnderlyingFacetType();
+    final FacetTypeId<?> underlyingFacetType = type.getUnderlyingFacetType();
     if (underlyingFacetType == null) {
       addFacetToModule(type);
     }
@@ -63,7 +46,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     }
   }
 
-  private void addSubFacet(FacetType type, FacetTypeId<?> underlyingType) {
+  private void addSubFacet(FacetType<?, ?> type, FacetTypeId<?> underlyingType) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     List<Facet> suitableParents = new ArrayList<>();
     for (Module module : myContext.getModules()) {
@@ -74,7 +57,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
     final Iterator<Facet> iterator = suitableParents.iterator();
     while (iterator.hasNext()) {
-      Facet parent = iterator.next();
+      Facet<?> parent = iterator.next();
       if (type.isOnlyOneFacetAllowed() && facetsConfigurator.hasFacetOfType(parent.getModule(), parent, type.getId())) {
         iterator.remove();
       }
@@ -92,13 +75,13 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     dialog.show();
     final List<Facet> chosen = dialog.getChosenElements();
     if (!dialog.isOK() || chosen.size() != 1) return;
-    final Facet parent = chosen.get(0);
-    final Facet facet =
+    final Facet<?> parent = chosen.get(0);
+    final Facet<?> facet =
       ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, parent.getModule(), parent);
     ProjectStructureConfigurable.getInstance(project).select(facet, true);
   }
 
-  private void addFacetToModule(@NotNull FacetType type) {
+  private void addFacetToModule(@NotNull FacetType<?, ?> type) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     List<Module> suitableModules = new ArrayList<>(Arrays.asList(myContext.getModules()));
     final Iterator<Module> iterator = suitableModules.iterator();
@@ -115,22 +98,23 @@ class AddFacetOfTypeAction extends DumbAwareAction {
       return;
     }
 
-    final ChooseModulesDialog dialog = new ChooseModulesDialog(project, suitableModules, "Choose Module",
-                                                               type.getPresentableName() + " facet will be added to selected module");
+    final ChooseModulesDialog dialog = new ChooseModulesDialog(project, suitableModules, JavaUiBundle.message("choose.module"),
+                                                               JavaUiBundle.message("facet.will.be.added.to.selected.module",
+                                                                                    type.getPresentableName()));
     dialog.setSingleSelectionMode();
     dialog.show();
     final List<Module> elements = dialog.getChosenElements();
     if (!dialog.isOK() || elements.size() != 1) return;
 
     final Module module = elements.get(0);
-    final Facet facet = ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, module, null);
+    final Facet<?> facet = ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, module, null);
     ProjectStructureConfigurable.getInstance(project).select(facet, true);
   }
 
   public static AnAction[] createAddFacetActions(FacetStructureConfigurable configurable) {
     final List<AnAction> result = new ArrayList<>();
     final StructureConfigurableContext context = configurable.myContext;
-    for (FacetType type : FacetTypeRegistry.getInstance().getSortedFacetTypes()) {
+    for (FacetType<?, ?> type : FacetTypeRegistry.getInstance().getSortedFacetTypes()) {
       if (hasSuitableModules(context, type)) {
         result.add(new AddFacetOfTypeAction(type, context));
       }
@@ -138,7 +122,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType type) {
+  private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType<?, ?> type) {
     for (Module module : context.getModules()) {
       if (type.isSuitableModuleType(ModuleType.get(module))) {
         return true;
@@ -147,15 +131,15 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     return false;
   }
 
-  private static class ChooseParentFacetDialog extends ChooseElementsDialog<Facet> {
+  private static final class ChooseParentFacetDialog extends ChooseElementsDialog<Facet> {
     private ChooseParentFacetDialog(Project project, List<? extends Facet> items) {
-      super(project, items, "Select Parent Facet", null, true);
+      super(project, items, JavaUiBundle.message("select.parent.facet"), null, true);
       myChooser.setSingleSelectionMode();
     }
 
     @Override
     protected String getItemText(Facet item) {
-      return item.getName() + " (module " + item.getModule().getName() + ")";
+      return JavaUiBundle.message("item.name.with.module", item.getName(), item.getModule().getName());
     }
 
     @Override

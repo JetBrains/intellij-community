@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -40,36 +42,41 @@ public interface FileStatus {
   @Deprecated Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", PlatformEditorBundle
-    .message("file.status.name.up.to.date"));
+    .messagePointer("file.status.name.up.to.date"), null);
   FileStatus NOT_CHANGED_IMMEDIATE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_IMMEDIATE", PlatformEditorBundle
-    .message("file.status.name.up.to.date.immediate.children"));
+    .messagePointer("file.status.name.up.to.date.immediate.children"), null);
   FileStatus NOT_CHANGED_RECURSIVE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_RECURSIVE", PlatformEditorBundle
-    .message("file.status.name.up.to.date.recursive.children"));
-  FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", PlatformEditorBundle.message("file.status.name.deleted"));
+    .messagePointer("file.status.name.up.to.date.recursive.children"), null);
+  FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", PlatformEditorBundle
+    .messagePointer("file.status.name.deleted"), null);
   FileStatus MODIFIED = FileStatusFactory.getInstance().createFileStatus("MODIFIED", PlatformEditorBundle
-    .message("file.status.name.modified"));
-  FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", PlatformEditorBundle.message("file.status.name.added"));
-  FileStatus MERGE = FileStatusFactory.getInstance().createFileStatus("MERGED", PlatformEditorBundle.message("file.status.name.merged"));
-  FileStatus UNKNOWN = FileStatusFactory.getInstance().createFileStatus("UNKNOWN", PlatformEditorBundle.message("file.status.name.unknown"));
+    .messagePointer("file.status.name.modified"), null);
+  FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", PlatformEditorBundle
+    .messagePointer("file.status.name.added"), null);
+  FileStatus MERGE = FileStatusFactory.getInstance().createFileStatus("MERGED", PlatformEditorBundle
+    .messagePointer("file.status.name.merged"), null);
+  FileStatus UNKNOWN = FileStatusFactory.getInstance().createFileStatus("UNKNOWN", PlatformEditorBundle
+    .messagePointer("file.status.name.unknown"), null);
   FileStatus IGNORED = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_IGNORED", PlatformEditorBundle
-    .message("file.status.name.ignored"));
+    .messagePointer("file.status.name.ignored"), null);
   FileStatus HIJACKED = FileStatusFactory.getInstance().createFileStatus("HIJACKED", PlatformEditorBundle
-    .message("file.status.name.hijacked"));
+    .messagePointer("file.status.name.hijacked"), null);
   FileStatus MERGED_WITH_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", PlatformEditorBundle
-    .message("file.status.name.merged.with.conflicts"));
+    .messagePointer("file.status.name.merged.with.conflicts"), null);
   FileStatus MERGED_WITH_BOTH_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", PlatformEditorBundle
-    .message("file.status.name.merged.with.both.conflicts"));
+    .messagePointer("file.status.name.merged.with.both.conflicts"), null);
   FileStatus MERGED_WITH_PROPERTY_CONFLICTS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", PlatformEditorBundle
-    .message("file.status.name.merged.with.property.conflicts"));
+    .messagePointer("file.status.name.merged.with.property.conflicts"), null);
   FileStatus DELETED_FROM_FS = FileStatusFactory.getInstance().createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", PlatformEditorBundle
-    .message("file.status.name.deleted.from.file.system"));
+    .messagePointer("file.status.name.deleted.from.file.system"), null);
   FileStatus SWITCHED = FileStatusFactory.getInstance().createFileStatus("SWITCHED", PlatformEditorBundle
-    .message("file.status.name.switched"));
+    .messagePointer("file.status.name.switched"), null);
   FileStatus OBSOLETE = FileStatusFactory.getInstance().createFileStatus("OBSOLETE", PlatformEditorBundle
-    .message("file.status.name.obsolete"));
+    .messagePointer("file.status.name.obsolete"), null);
   FileStatus SUPPRESSED = FileStatusFactory.getInstance().createFileStatus("SUPPRESSED", PlatformEditorBundle
-    .message("file.status.name.suppressed"));
+    .messagePointer("file.status.name.suppressed"), null);
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getText();
 
   Color getColor();
@@ -78,5 +85,6 @@ public interface FileStatus {
   ColorKey getColorKey();
 
   @NotNull
+  @NonNls
   String getId();
 }

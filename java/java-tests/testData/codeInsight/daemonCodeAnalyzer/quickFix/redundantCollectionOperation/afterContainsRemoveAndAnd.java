@@ -1,4 +1,4 @@
-// "Remove the 'contains' check" "true"
+// "Remove 'contains()' check" "true"
 import java.util.List;
 
 class Test {

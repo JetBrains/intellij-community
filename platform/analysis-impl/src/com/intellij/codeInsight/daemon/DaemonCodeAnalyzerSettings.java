@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NonNls;
 
 public class DaemonCodeAnalyzerSettings {
   private boolean myNextErrorActionGoesToErrorsFirst = true;
@@ -45,7 +46,7 @@ public class DaemonCodeAnalyzerSettings {
   }
 
   protected boolean myShowAddImportHints = true;
-  public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
+  public @NonNls String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SHOW_METHOD_SEPARATORS;
 
   @Transient

@@ -73,11 +73,6 @@ class PluginLayout extends BaseLayout {
     private boolean directoryNameSetExplicitly
     private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
 
-    /**
-     * @deprecated version of the plugin is automatically set to build number of IDE it's built with
-     */
-    String version
-
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
       this.layout = layout
@@ -154,13 +149,6 @@ class PluginLayout extends BaseLayout {
      */
     void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
       layout.resourceGenerators << Pair.create(generator, relativeOutputPath)
-    }
-
-    /**
-     * @deprecated use {@link #withModule} instead
-     */
-    void withJpsModule(String moduleName) {
-      withModule(moduleName, "jps/${moduleName}.jar")
     }
 
     /**

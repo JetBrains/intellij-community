@@ -24,6 +24,7 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
@@ -87,5 +88,7 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>

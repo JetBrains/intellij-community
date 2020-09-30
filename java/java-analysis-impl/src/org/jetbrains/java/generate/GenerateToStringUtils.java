@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Utility methods for GenerationToStringAction and the inspections.
  */
-public class GenerateToStringUtils {
+public final class GenerateToStringUtils {
 
     private static final Logger log = Logger.getInstance("#GenerateToStringUtils");
 

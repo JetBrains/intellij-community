@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.execution.runners.ExecutionUtil;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -47,7 +48,7 @@ import java.util.List;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -81,7 +82,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final DataProvider myDataProviderDelegate;
 
   private boolean myMultilineMode;
-  @NotNull private String myStatusText = "";
+  @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = UIUtil.getLabelForeground();
   private DefaultActionGroup myTouchbarActions;
 
@@ -101,7 +102,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                  @NotNull DefaultActionGroup replaceFieldActions,
                                  @Nullable Runnable replaceAction,
                                  @Nullable Runnable closeAction,
-                                 @Nullable DataProvider dataProvider) {
+                                 @Nullable DataProvider dataProvider,
+                                 boolean showOnlySearchPanel) {
     myProject = project;
     myTargetComponent = targetComponent;
     mySearchToolbarModifiedFlagGetter = searchToolbar1ModifiedFlagGetter;
@@ -190,18 +192,22 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myRightPanel.add(searchPair);
     myRightPanel.add(myReplaceToolbarWrapper);
 
-    OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
-    myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
-    splitter.setFirstComponent(myLeftPanel);
-    splitter.setSecondComponent(myRightPanel);
-    splitter.setHonorComponentsMinimumSize(true);
-    splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    splitter.setHonorComponentsPreferredSize(true);
-    splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-    splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-    splitter.setOpaque(false);
-    splitter.getDivider().setOpaque(false);
-    add(splitter, BorderLayout.CENTER);
+    if (showOnlySearchPanel) {
+      add(myLeftPanel, BorderLayout.CENTER);
+    } else {
+      OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
+      myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
+      splitter.setFirstComponent(myLeftPanel);
+      splitter.setSecondComponent(myRightPanel);
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+      splitter.setHonorComponentsPreferredSize(true);
+      splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+      splitter.setOpaque(false);
+      splitter.getDivider().setOpaque(false);
+      add(splitter, BorderLayout.CENTER);
+    }
 
     update("", "", false, false);
 
@@ -247,12 +253,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
   }
 
-  public void setStatusText(@NotNull String status) {
+  public void setStatusText(@NotNull @NlsContexts.Label String status) {
     myStatusText = status;
   }
 
   @NotNull
-  public String getStatusText() {
+  public @NlsContexts.Label String getStatusText() {
     return myStatusText;
   }
 
@@ -601,7 +607,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static class Builder {
+  public static final class Builder {
     private final Project myProject;
     private final JComponent myTargetComponent;
 
@@ -618,6 +624,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     private final DefaultActionGroup myReplaceActions = DefaultActionGroup.createFlatGroup(() -> "replace bar 1");
     private final DefaultActionGroup myExtraReplaceActions = DefaultActionGroup.createFlatGroup(() -> "replace bar 1");
     private final DefaultActionGroup myReplaceFieldActions = DefaultActionGroup.createFlatGroup(() -> "replace field actions");
+
+    private boolean myShowOnlySearchPanel = false;
 
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
@@ -693,6 +701,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
 
     @NotNull
+    public Builder withShowOnlySearchPanel() {
+      myShowOnlySearchPanel = true;
+      return this;
+    }
+
+    @NotNull
     public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
@@ -705,7 +719,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                         myReplaceFieldActions,
                                         myReplaceAction,
                                         myCloseAction,
-                                        myDataProvider);
+                                        myDataProvider,
+                                        myShowOnlySearchPanel);
     }
   }
 

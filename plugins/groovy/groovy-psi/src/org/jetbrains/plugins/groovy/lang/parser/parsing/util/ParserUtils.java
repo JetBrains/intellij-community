@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser.parsing.util;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 
 /**
@@ -21,7 +22,7 @@ public abstract class ParserUtils {
    * @param errorMsg Message, that displays if element was not found; if errorMsg == null nothing displays
    * @return true if element parsed
    */
-  public static void getToken(PsiBuilder builder, IElementType elem, String errorMsg) {
+  public static void getToken(PsiBuilder builder, IElementType elem, @ParsingError String errorMsg) {
     if (elem.equals(builder.getTokenType())) {
       builder.advanceLexer();
     }
