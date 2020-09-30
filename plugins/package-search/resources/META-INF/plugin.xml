@@ -9,8 +9,6 @@ Find and manage dependencies for JVM and Kotlin Multiplatform projects.
 Supports Maven and Gradle projects.
 <br>
 <a href="https://package-search.jetbrains.com">Package Search on the web</a><br>
-<a href="https://youtrack.jetbrains.com/issues/PKGS">Issue tracker (data, website)</a><br>
-<a href="https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem: {Package Search}">Issue tracker (plugin)</a><br>
 ]]></description>
 
     <extensionPoints>
@@ -28,8 +26,6 @@ Supports Maven and Gradle projects.
                         area="IDEA_PROJECT"
                         dynamic="true"/>
     </extensionPoints>
-
-    <idea-version since-build="203.3645.34" until-build="203.3645.*"/>
 
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
