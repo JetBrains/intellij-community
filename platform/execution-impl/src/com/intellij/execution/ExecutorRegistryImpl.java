@@ -11,6 +11,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.segmentedRunDebugWidget.RunDebugConfigManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
@@ -96,9 +97,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
     registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
     registerAction(actionManager, executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionIdToAction);
-    if(executor.isRDCAction()) {
-      registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RDC_GROUP,
-                     myRunDebugIdToAction);
+
+    AnAction wrappedRDCAction = RunDebugConfigManager.wrapAction(executor, toolbarAction);
+
+    if(wrappedRDCAction != null) {
+      registerAction(actionManager, RunDebugConfigManager.generateActionID(executor), wrappedRDCAction, RDC_GROUP, myRunDebugIdToAction);
     }
 
     myContextActionIdSet.add(executor.getContextActionId());

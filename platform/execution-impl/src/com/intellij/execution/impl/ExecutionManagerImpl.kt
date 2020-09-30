@@ -655,11 +655,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       if(executorIds.contains(id)) {
         val processHandler = entry.descriptor.processHandler
         if (processHandler != null && !processHandler.isProcessTerminated) {
-          result[id] ?: kotlin.run {
+          val list = result[id] ?: kotlin.run {
             val smartList = SmartList<RunnerAndConfigurationSettings>()
             result[id] = smartList
             smartList
-          }.add(entry.settings)
+          }
+          list.add(entry.settings)
         }
       }
     }

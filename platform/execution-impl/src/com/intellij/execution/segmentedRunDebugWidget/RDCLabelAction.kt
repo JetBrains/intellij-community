@@ -4,7 +4,7 @@ package com.intellij.execution.segmentedRunDebugWidget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction
 
-class RunDebugLabelAction : ToolbarLabelAction() {
+class RDCLabelAction : ToolbarLabelAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 

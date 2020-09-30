@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillActionCompo
 import com.intellij.openapi.project.DumbAware
 import javax.swing.SwingUtilities
 
-class SegmentedRunDebugControlAction : PillActionComponent(), DumbAware {
+class SegmentedRDCAction : PillActionComponent(), DumbAware {
   init {
-    ActionManager.getInstance().getAction("SegmentedRunDebugActionGroup")?.let {
+    ActionManager.getInstance().getAction("SegmentedRunDebugConfigActionGroup")?.let {
       if(it is ActionGroup) {
         SwingUtilities.invokeLater {
           actionGroup = it

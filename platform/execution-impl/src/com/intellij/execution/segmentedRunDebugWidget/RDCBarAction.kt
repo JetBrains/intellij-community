@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 import javax.swing.SwingUtilities
 
-class RunDebugBarAction : SegmentedBarActionComponent() {
+class RDCBarAction : SegmentedBarActionComponent() {
   init {
-    ActionManager.getInstance().getAction("RunDebugActionsBarGroup")?.let {
+    ActionManager.getInstance().getAction("RunDebugConfigActionBarGroup")?.let {
       if(it is ActionGroup) {
         SwingUtilities.invokeLater {
           actionGroup = it

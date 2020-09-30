@@ -498,14 +498,14 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <action id="RunDebugControlAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRunDebugControlAction"/>
+    <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction"/>
 
-    <group id="SegmentedRunDebugActionGroup">
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugBarAction"/>
+    <group id="SegmentedRunDebugConfigActionGroup">
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCLabelAction"/>
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
     </group>
 
-    <group id="RunDebugActionsBarGroup" popup="false">
+    <group id="RunDebugConfigActionBarGroup" popup="false">
       <reference ref="RunConfiguration"/>
       <group id="RunDebugConfigRunnerActions"/>
       <reference ref="Stop"/>

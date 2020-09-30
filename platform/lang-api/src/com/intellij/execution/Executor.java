@@ -123,10 +123,6 @@ public abstract class Executor {
     return true;
   }
 
-  public boolean isRDCAction() {
-    return false;
-  }
-
   /**
    * Too long names don't fit into UI controls and have to be trimmed
    */

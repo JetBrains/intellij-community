@@ -4,13 +4,14 @@ package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-open class PillActionComponent: AnAction(), CustomComponentAction {
+open class PillActionComponent: AnAction(), CustomComponentAction, DumbAware {
   protected var actionGroup: ActionGroup? = null
     set(value) {
       field?.let { return }
@@ -25,7 +26,6 @@ open class PillActionComponent: AnAction(), CustomComponentAction {
 
   private fun initialize(group: ActionGroup) {
     val bar = ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true)
-    bar.setHideDisabled(true)
     this.component = bar.component
 
     pane.add(component)
@@ -44,12 +44,10 @@ open class PillActionComponent: AnAction(), CustomComponentAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    hidePill()
 
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    showPill()
     return pane
   }
 
