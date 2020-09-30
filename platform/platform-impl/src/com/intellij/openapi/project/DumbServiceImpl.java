@@ -42,7 +42,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.exception.FrequentErrorLogger;
-import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
@@ -79,6 +78,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
   private final DumbServiceHeavyActivities myHeavyActivities;
   private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
+  private final DumbModeProgressTitle myDumbModeTitle;
 
   //used from EDT
   private final DumbServiceBalloon myBalloon;
@@ -89,6 +89,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue);
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
+    myDumbModeTitle = DumbModeProgressTitle.getInstance(myProject);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
@@ -508,7 +509,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void showModalProgress() {
     NoAccessDuringPsiEvents.checkCallContext("modal indexing");
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing"), () -> {
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, myDumbModeTitle.getDumbModeProgressTitle(), () -> {
         assertState(State.SCHEDULED_TASKS);
         runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
         assertState(State.SMART, State.WAITING_FOR_FINISH);
@@ -541,7 +542,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void startBackgroundProcess() {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myDumbModeTitle.getDumbModeProgressTitle(), false) {
         @Override
         public void run(final @NotNull ProgressIndicator visibleIndicator) {
           runBackgroundProcess(visibleIndicator);
@@ -563,6 +564,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
+      myDumbModeTitle.attachDumbModeProgress(visibleIndicator);
 
       IdeActivity activity = IdeActivity.started(myProject, "indexing");
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
@@ -586,6 +588,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         LOG.error(unexpected);
       }
       finally {
+        myDumbModeTitle.removeDumpModeProgress(visibleIndicator);
+
         shutdownTracker.unregisterStopperThread(self);
         // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
         // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
