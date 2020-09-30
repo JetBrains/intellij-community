@@ -34,8 +34,6 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
     entityStorage = storage
   }
 
-  override fun getAllEntities(): List<WorkspaceEntity> = index.keys.map { entityStorage.entityDataByIdOrDie(it).createEntity(entityStorage) }
-
   override fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit) {
     index.forEach { (key, value) -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
   }
@@ -154,6 +152,5 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
-  override fun getAllEntities(): List<WorkspaceEntity> = emptyList()
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
 }
