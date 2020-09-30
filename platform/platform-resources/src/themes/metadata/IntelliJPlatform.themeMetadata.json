@@ -892,66 +892,98 @@
     },
     {
       "key": "VersionControl.FileHistory.Commit.selectedBranchBackground",
-      "description": "The VCS | Git | Show History action, the \"Show All Branches\" setting"
+      "description": "Background color for the selected branch in \"History Up to Here\" when \"Show All Branches\" option is turned on",
+      "since": "2019.1"
     },
     {
       "key": "VersionControl.GitLog.headIconColor",
-      "description": "A label-like icon in the ref label"
+      "description": "A color for the label-like icon in the HEAD label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.GitLog.localBranchIconColor"
+      "key": "VersionControl.GitLog.localBranchIconColor",
+      "description": "A color for the label-like icon in the local branch label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.GitLog.otherIconColor"
+      "key": "VersionControl.GitLog.otherIconColor",
+      "description": "A color for the label-like icon in the reference labels of other kinds",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.GitLog.remoteBranchIconColor"
+      "key": "VersionControl.GitLog.remoteBranchIconColor",
+      "description": "A color for the label-like icon in the remote branch label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.GitLog.tagIconColor"
+      "key": "VersionControl.GitLog.tagIconColor",
+      "description": "A color for the label-like icon in the tag label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.bookmarkIconColor"
+      "key": "VersionControl.HgLog.bookmarkIconColor",
+      "description": "A color for the label-like icon in the bookmark label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.branchIconColor"
+      "key": "VersionControl.HgLog.branchIconColor",
+      "description": "A color for the label-like icon in the branch label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.closedBranchIconColor"
+      "key": "VersionControl.HgLog.closedBranchIconColor",
+      "description": "A color for the label-like icon in the closed branch label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.headIconColor"
+      "key": "VersionControl.HgLog.headIconColor",
+      "description": "A color for the label-like icon in the head label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.localTagIconColor"
+      "key": "VersionControl.HgLog.localTagIconColor",
+      "description": "A color for the label-like icon in the local tag label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.mqTagIconColor"
+      "key": "VersionControl.HgLog.mqTagIconColor",
+      "description": "A color for the label-like icon in the MQ tag label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.tagIconColor"
+      "key": "VersionControl.HgLog.tagIconColor",
+      "description": "A color for the label-like icon in the tag label",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.HgLog.tipIconColor"
+      "key": "VersionControl.HgLog.tipIconColor",
+      "description": "A color for the label-like icon in the tip label",
+      "since": "2019.1"
     },
     {
       "key": "VersionControl.Log.Commit.currentBranchBackground",
-      "description": "Version Control tool window | Log tab, the \"Current branch\" setting under the \"eye\" icon"
+      "description": "Background color for the commits in the current branch in the Version Control | Log tab (\"Highlight Current Branch\" setting under the \"eye\" icon)",
+      "since": "2019.1"
     },
     {
       "key": "VersionControl.Log.Commit.unmatchedForeground",
-      "description": "Version Control tool window | Log tab, the \"Merge commits\" setting under the \"eye\" icon"
+      "description": "Text color for the \"unmatched\" commits (such as merge commits or cherry-picked commits) in the Version Control | Log tab (\"Highlight Merge commits\" and \"Highlight Not Cherry-Picked Commits\" settings under the \"eye\" icon",
+      "since": "2019.1"
     },
     {
       "key": "VersionControl.RefLabel.backgroundBase",
-      "description": "Ref label background"
+      "description": "Reference label background base color",
+      "since": "2019.1"
     },
     {
       "key": "VersionControl.RefLabel.backgroundBrightness",
-      "description": "Transparency of the ref label. 0 is transparent, 1 is opaque."
+      "description": "Transparency of the reference label background (0 is transparent, 1 is opaque)",
+      "since": "2019.1"
     },
     {
-      "key": "VersionControl.RefLabel.foreground"
+      "key": "VersionControl.RefLabel.foreground",
+      "description": "Reference label text color",
+      "since": "2019.1"
     },
     {
       "key": "WelcomeScreen.background"
