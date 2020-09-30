@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
@@ -21,13 +20,18 @@ import org.jetbrains.annotations.TestOnly
 fun VirtualFileUrlManager.Companion.getInstance(project: Project) = project.service<VirtualFileUrlManager>()
 
 class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlManager {
-  private var disposable = Disposer.newDisposable(project, "VirtualFileUrlManager")
+  private var testDisposable: Disposable? = null
+  private var projectDisposable = Disposer.newDisposable(project, "VirtualFileUrlManager")
   private val filePointerManager = VirtualFilePointerManager.getInstance()
   private val rootsValidityChangedListener
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
   override fun fromUrl(url: String): VirtualFileUrl {
-    return filePointerManager.create(url, disposable, rootsValidityChangedListener) as VirtualFileUrl
+    return filePointerManager.create(url, testDisposable ?: projectDisposable, rootsValidityChangedListener) as VirtualFileUrl
+  }
+
+  fun fromDirUrl(url: String): VirtualFileUrl {
+    return filePointerManager.createDirectoryPointer(url, true, testDisposable ?: projectDisposable, rootsValidityChangedListener) as VirtualFileUrl
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
@@ -42,9 +46,16 @@ class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlMa
   }
 
   @TestOnly
-  fun disposeProjectRelatedPointers() {
-    Disposer.dispose(disposable)
-    disposable = Disposer.newDisposable(project, "VirtualFileUrlManager")
+  fun startTrackPointersCreatedInTest() {
+    testDisposable = Disposer.newDisposable("VirtualFileUrlManager")
+  }
+
+  @TestOnly
+  fun disposePointersCreatedInTest() {
+    if (testDisposable != null) {
+      Disposer.dispose(testDisposable!!)
+      testDisposable = null
+    }
   }
 }
 

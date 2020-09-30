@@ -73,11 +73,10 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkPointersUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -109,6 +108,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
 
+  private LegacyBridgeTestFrameworkPointersUtil myLegacyBridgeTestFrameworkPointersUtil;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
@@ -249,6 +249,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+      myLegacyBridgeTestFrameworkPointersUtil = new LegacyBridgeTestFrameworkPointersUtil(getProject());
+      myLegacyBridgeTestFrameworkPointersUtil.startTrackPointersCreatedInTest();
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     });
   }
@@ -407,6 +409,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
       },
+      () -> myLegacyBridgeTestFrameworkPointersUtil.disposePointersCreatedInTest(),
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();

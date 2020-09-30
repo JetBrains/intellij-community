@@ -22,7 +22,25 @@ object LegacyBridgeTestFrameworkUtils {
       for (module in ModuleManager.getInstance(project).modules) {
         (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()
       }
-      (VirtualFileUrlManager.getInstance(project) as VirtualFileUrlManagerImpl).disposeProjectRelatedPointers()
     }
+  }
+}
+
+class LegacyBridgeTestFrameworkPointersUtil(project: Project) {
+  private val enabled = LegacyBridgeProjectLifecycleListener.enabled(project)
+  private val virtualFileUrlManager: VirtualFileUrlManagerImpl?
+
+  init {
+    virtualFileUrlManager = if (enabled) VirtualFileUrlManager.getInstance(project) as VirtualFileUrlManagerImpl else null
+  }
+
+  @ApiStatus.Internal
+  fun startTrackPointersCreatedInTest() {
+    if (enabled) virtualFileUrlManager?.startTrackPointersCreatedInTest()
+  }
+
+  @ApiStatus.Internal
+  fun disposePointersCreatedInTest() {
+    if (enabled) virtualFileUrlManager?.disposePointersCreatedInTest()
   }
 }
