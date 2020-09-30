@@ -41,7 +41,7 @@ public final class ActionGroupUtil {
            !((ActionGroup)o).canBePerformed(e.getDataContext()) ? ((ActionGroup)o).getChildren(e) : null)
       .withRoots(actionGroup.getChildren(e))
       .filter(o -> !(o instanceof Separator) &&
-                   (o instanceof ActionGroup || isActionEnabledAndVisible(o, e, isInModalContext, action2presentation)));
+                   isActionEnabledAndVisible(o, e, isInModalContext, action2presentation));
   }
 
   private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
