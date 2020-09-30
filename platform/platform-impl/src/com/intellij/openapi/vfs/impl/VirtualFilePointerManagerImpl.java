@@ -231,23 +231,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                                       @Nullable VirtualFilePointerListener listener) {
     IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
     if (pointer == null) {
-      pointer = new IdentityVirtualFilePointer(found, url, listener) {
-        @Override
-        public void dispose() {
-          //noinspection SynchronizeOnThis
-          synchronized (VirtualFilePointerManagerImpl.this) {
-            super.dispose();
-            myUrlToIdentity.remove(url);
-          }
-        }
-
-        @Override
-        public String toString() {
-          return "identity: url='"+url+"'; file="+found;
-        }
-      };
+      pointer = new IdentityVirtualFilePointer(found, url, myUrlToIdentity, this, listener);
       myUrlToIdentity.put(url, pointer);
-
       DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     }
     pointer.incrementUsageCount(1);

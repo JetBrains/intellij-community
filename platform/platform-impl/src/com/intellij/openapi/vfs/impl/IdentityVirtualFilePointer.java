@@ -19,14 +19,27 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity;
+  private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final VirtualFile myFile;
   private final String myUrl;
 
   IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, VirtualFilePointerListener listener) {
+    this(file, url, CollectionFactory.createSmallMemoryFootprintMap(), null, listener);
+  }
+
+  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, Map<String, IdentityVirtualFilePointer> urlToIdentity,
+                             VirtualFilePointerManagerImpl virtualFilePointerManager,
+                             VirtualFilePointerListener listener) {
     super(listener);
+    myVirtualFilePointerManager = virtualFilePointerManager;
+    myUrlToIdentity = urlToIdentity;
     myFile = file;
     myUrl = url;
   }
@@ -61,6 +74,18 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
 
   @Override
   public void dispose() {
-    incrementUsageCount(-1);
+    if (myVirtualFilePointerManager != null) {
+      synchronized (myVirtualFilePointerManager) {
+        incrementUsageCount(-1);
+        myUrlToIdentity.remove(myUrl);
+      }
+    } else {
+      incrementUsageCount(-1);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "identity: url='" + myUrl + "'; file=" + myFile;
   }
 }

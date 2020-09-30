@@ -236,6 +236,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
     if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
+    if (entity is VirtualFileUrl) return
 
     kClass.memberProperties.forEach {
       val retType = (it.returnType as Any).toString()
@@ -244,9 +245,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
           && !retType.startsWith("kotlin.collections.List")
           && !retType.startsWith("java.util.List")
       ) return@forEach
-
-      // VirtualFileUrl serializer was manually registered before
-      if (retType.endsWith("VirtualFileUrl")) return@forEach
 
       if (it.visibility != KVisibility.PUBLIC) return@forEach
       val property = it.getter.call(entity) ?: run {
