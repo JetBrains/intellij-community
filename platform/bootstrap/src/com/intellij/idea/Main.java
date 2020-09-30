@@ -66,7 +66,7 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>();
+    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>(6);
     startupTimings.put("startup begin", System.nanoTime());
 
     if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS

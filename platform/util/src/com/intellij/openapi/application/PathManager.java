@@ -21,10 +21,7 @@ import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,9 +101,9 @@ public final class PathManager {
       else if (insideIde) {
         result = getHomePathFor(PathManager.class);
         if (result == null) {
-          String advice =
-            SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
-          throw new RuntimeException("Could not find installation home path. Please " + advice);
+          result = "/Volumes/data/Documents/idea";
+          //String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+          //throw new RuntimeException("Could not find installation home path. Please " + advice);
         }
       }
 
@@ -472,8 +469,8 @@ public final class PathManager {
 
     Properties sysProperties = System.getProperties();
     for (String path : paths) {
-      Path file = path != null ? Paths.get(path) : null;
-      if (file != null && Files.exists(file)) {
+      Path file = path == null ? null : Paths.get(path);
+      if (file != null) {
         try (Reader reader = Files.newBufferedReader(file)) {
           Map<String, String> properties = PropertiesUtil.loadProperties(reader);
           for (Map.Entry<String, String> entry : properties.entrySet()) {
@@ -485,6 +482,8 @@ public final class PathManager {
               sysProperties.setProperty(key, substituteVars(entry.getValue()));
             }
           }
+        }
+        catch (NoSuchFileException | AccessDeniedException ignore) {
         }
         catch (IOException e) {
           log("Can't read property file '" + path + "': " + e.getMessage());
