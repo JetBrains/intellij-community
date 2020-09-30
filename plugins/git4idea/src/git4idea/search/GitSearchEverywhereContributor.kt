@@ -89,6 +89,8 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     }
 
     if (Registry.`is`("git.search.everywhere.commit.by.message")) {
+      if (pattern.length < 3) return
+
       val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
       if (!allRootsIndexed) return
 

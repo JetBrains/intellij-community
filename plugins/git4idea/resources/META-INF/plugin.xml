@@ -493,7 +493,7 @@
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 
-    <registryKey key="git.search.everywhere.commit.by.message" defaultValue="false"
+    <registryKey key="git.search.everywhere.commit.by.message" defaultValue="true"
                  description="Use Git log index to lookup commits by message in Search Everywhere" restartRequired="false"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
