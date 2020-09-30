@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
@@ -1022,7 +1021,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
     AnAction action = ActionManager.getInstance().getAction("SelectInProjectView");
     if (action != null) titleActions.add(action);
-    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new DefaultTreeExpander(() -> {
+
+    DefaultTreeExpander expander = new DefaultTreeExpander(() -> {
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
       return pane == null ? null : pane.myTree;
     }) {
@@ -1030,9 +1030,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       protected void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
         super.collapseAll(tree, false, keepSelectionLevel);
       }
-    }, getComponent());
-    collapseAllAction.getTemplatePresentation().setIcon(AllIcons.Actions.Collapseall);
-    titleActions.add(collapseAllAction);
+    };
+    titleActions.add(CommonActionsManager.getInstance().createExpandAllAction(expander, getComponent()));
+    titleActions.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, getComponent()));
   }
 
   protected boolean isShowMembersOptionSupported() {
