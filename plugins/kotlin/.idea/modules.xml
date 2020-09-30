@@ -923,6 +923,7 @@
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/noarg-compiler-plugin/kotlinc-delegator.noarg-compiler-plugin.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/noarg-compiler-plugin/kotlinc-delegator.noarg-compiler-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/sam-with-receiver-compiler-plugin/kotlinc-delegator.sam-with-receiver-compiler-plugin.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/sam-with-receiver-compiler-plugin/kotlinc-delegator.sam-with-receiver-compiler-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/util.delegator-patcher/util.delegator-patcher.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/util.delegator-patcher/util.delegator-patcher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" filepath="$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlin.intellij-kotlin.iml" filepath="$PROJECT_DIR$/kotlin.intellij-kotlin.iml" />
     </modules>
   </component>
