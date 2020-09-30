@@ -9,9 +9,9 @@ option java_package = "com.intellij.execution.process.elevation.rpc";
 option java_outer_classname = "ElevatorProto";
 
 service Elevator {
-  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply) {}
-  rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply) {}
-  rpc Release (ReleaseRequest) returns (google.protobuf.Empty) {}
+  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
+  rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
+  rpc Release (ReleaseRequest) returns (google.protobuf.Empty);
 }
 
 message CreateProcessRequest {
