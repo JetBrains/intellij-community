@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import java.lang.reflect.Field;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
@@ -123,17 +122,14 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
    */
   protected void defaultWriteSettings(@NotNull Element node, final @NonNls String... excludedProperties) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
-      @Override
-      public boolean isAccept(@NotNull Field field) {
-        final String name = field.getName();
-        for (String property : excludedProperties) {
-          if (name.equals(property)) {
-            return false;
-          }
+    DefaultJDOMExternalizer.write(this, node, field -> {
+      final String name = field.getName();
+      for (String property : excludedProperties) {
+        if (name.equals(property)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 

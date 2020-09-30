@@ -478,12 +478,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void writeExternal(@NotNull final Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+    DefaultJDOMExternalizer.write(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
       @Override
-      public boolean isAccept(@NotNull Field field) {
-        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      public boolean test(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.test(field);
       }
     });
 

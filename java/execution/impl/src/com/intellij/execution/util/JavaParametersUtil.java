@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -31,10 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-/**
- * @author lex
- */
 public final class JavaParametersUtil {
   private JavaParametersUtil() { }
 
@@ -178,19 +175,15 @@ public final class JavaParametersUtil {
     }
   }
 
-  @SuppressWarnings("deprecation")
   @NotNull
-  public static DefaultJDOMExternalizer.JDOMFilter getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
-    return new DefaultJDOMExternalizer.JDOMFilter() {
-      @Override
-      public boolean isAccept(@NotNull Field field) {
-        String name = field.getName();
-        if ((name.equals("ALTERNATIVE_JRE_PATH_ENABLED") && !parameters.isAlternativeJrePathEnabled()) ||
-            (name.equals("ALTERNATIVE_JRE_PATH") && StringUtil.isEmpty(parameters.getAlternativeJrePath()))) {
-          return false;
-        }
-        return true;
+  public static Predicate<Field> getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
+    return field -> {
+      String name = field.getName();
+      if ((name.equals("ALTERNATIVE_JRE_PATH_ENABLED") && !parameters.isAlternativeJrePathEnabled()) ||
+          (name.equals("ALTERNATIVE_JRE_PATH") && StringUtil.isEmpty(parameters.getAlternativeJrePath()))) {
+        return false;
       }
+      return true;
     };
   }
 }

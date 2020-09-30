@@ -528,8 +528,6 @@ object DynamicPlugins {
           }
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
-          @Suppress("DEPRECATION")
-          com.intellij.openapi.util.DefaultJDOMExternalizer.clearFieldCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
           PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.updateAllToolbarsImmediately()
