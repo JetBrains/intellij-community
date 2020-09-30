@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,6 +72,16 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
     return false;
   }
 
+  /**
+   * If true then {@code <key hash> -> <virtual file id>} mapping will be saved in the persistent index structure.
+   * It will then be used inside {@link FileBasedIndex#processAllKeys(ID, Processor, Project)},
+   * accepting {@link IdFilter} as a coarse filter to exclude keys from unrelated virtual files from further processing.
+   * Otherwise, {@link IdFilter} parameter of this method will be ignored.
+   * <p>
+   * This property might come useful for optimizing "Go to File/Symbol" and completion performance in case of multiple indexed projects.
+   *
+   * @see IdFilter#buildProjectIdFilter(Project, boolean)
+   */
   public boolean traceKeyHashToVirtualFileMapping() {
     return false;
   }
