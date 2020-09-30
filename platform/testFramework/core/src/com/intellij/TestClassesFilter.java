@@ -33,7 +33,10 @@ public abstract class TestClassesFilter {
       String filter = aFilter.trim();
       if (filter.length() == 0) continue;
       if (shouldEscape()) {
-        filter = filter.replace("$", "\\$").replace("*", ".*");
+        filter = filter.
+          replace("$", "\\$").
+          replace(".", "\\.").
+          replace("*", ".*");
       }
       Pattern pattern = Pattern.compile(filter);
       patterns.add(pattern);
