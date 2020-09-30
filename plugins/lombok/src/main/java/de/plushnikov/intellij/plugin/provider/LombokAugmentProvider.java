@@ -82,10 +82,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return emptyResult;
     }
 
-    // Don't filter !isPhysical elements or code auto completion will not work
-    if (!element.isValid()) {
-      return emptyResult;
-    }
     final PsiClass psiClass = (PsiClass) element;
     // Skip processing of Annotations and Interfaces
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
