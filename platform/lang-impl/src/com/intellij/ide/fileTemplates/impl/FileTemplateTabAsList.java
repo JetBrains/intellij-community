@@ -16,12 +16,14 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +45,10 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       label.setText(value.getName());
       if (!value.isDefault() && myList.getSelectedIndex() != index) {
         label.setForeground(MODIFIED_FOREGROUND);
+      }
+      if (FileTemplateBase.isChild(value)) {
+        label.setBorder(JBUI.Borders.emptyLeft(JBUI.scale(20)));
+        label.setText(value.getFileName().isEmpty() ? IdeBundle.message("label.empty.file.name") : value.getFileName());  //NON-NLS
       }
     }));
     myList.addListSelectionListener(__ -> onTemplateSelected());
@@ -106,6 +112,11 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   @Override
   public void addTemplate(FileTemplate newTemplate) {
     myModel.addElement(newTemplate);
+  }
+
+  @Override
+  public void insertTemplate(FileTemplate newTemplate, int index) {
+    myModel.insertElementAt(newTemplate, index);
   }
 
   @Override

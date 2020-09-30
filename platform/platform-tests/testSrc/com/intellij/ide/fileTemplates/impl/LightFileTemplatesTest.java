@@ -76,7 +76,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     try {
       configurable.createComponent();
       configurable.reset();
-      FileTemplate template = configurable.createTemplate("foo", "bar", "hey");
+      FileTemplate template = configurable.createTemplate("foo", "bar", "hey", false);
       assertTrue(configurable.isModified());
       FileTemplate[] templates = configurable.getTabs()[0].getTemplates();
       assertTrue(ArrayUtil.contains(template, templates));
@@ -248,6 +248,38 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       PluginException pluginException = ((PluginException)e.getCause());
       assertEquals("test", pluginException.getPluginId().getIdString());
     }
+  }
+
+  public void _testMultiFile() {
+    FileTemplate template = myTemplateManager.addTemplate("foo", "txt");
+    CustomFileTemplate child =
+      (CustomFileTemplate)myTemplateManager.addTemplate("foo.txt" + FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX + "1", "txt");
+    template.setChildren(new FileTemplate[]{child});
+    myTemplateManager.saveAllTemplates();
+    FTManager ftManager = ServiceManager.getService(ProjectManager.getInstance().getDefaultProject(), FileTemplateSettings.class).getDefaultTemplatesManager();
+    ftManager.getTemplates().clear();
+    ftManager.loadCustomizedContent();
+    FileTemplateBase loaded = ftManager.getTemplate("foo.txt");
+    assertNotNull(loaded);
+    assertEquals(1, loaded.getChildren().length);
+    FileTemplateBase t = ftManager.getTemplate(child.getQualifiedName());
+    assertNotNull(t);
+  }
+
+    public void testMultiFileSettings() {
+      FileTemplate template = myTemplateManager.addTemplate("foo", "txt");
+      CustomFileTemplate child = new CustomFileTemplate("child", "txt");
+      child.setReformatCode(false);
+      template.setChildren(new FileTemplate[]{child});
+      FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+      Element state = settings.getState();
+      assertNotNull(state);
+      Element element = state.getChildren().get(0).getChildren().get(0);
+      assertEquals("<template name=\"foo.txt\" reformat=\"true\" live-template-enabled=\"false\">\n" +
+                   "  <template name=\"child.txt\" reformat=\"false\" live-template-enabled=\"false\" />\n" +
+                   "</template>", JDOMUtil.writeElement(element));
+      myTemplateManager.removeTemplate(template);
+      myTemplateManager.removeTemplate(child);
   }
 
   private FileTemplateManagerImpl myTemplateManager;

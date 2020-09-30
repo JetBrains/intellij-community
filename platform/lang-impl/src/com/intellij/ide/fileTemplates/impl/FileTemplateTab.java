@@ -75,6 +75,8 @@ abstract class FileTemplateTab {
 
   public abstract void addTemplate(FileTemplate newTemplate);
 
+  public abstract void insertTemplate(FileTemplate newTemplate, int index);
+
   public @NlsContexts.TabTitle String getTitle() {
     return myTitle;
   }
