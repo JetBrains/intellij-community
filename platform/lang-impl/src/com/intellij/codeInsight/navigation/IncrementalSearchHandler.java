@@ -67,7 +67,7 @@ public final class IncrementalSearchHandler {
 
   private static class PerEditorSearchData {
     LightweightHint hint;
-    String lastSearch;
+    @NlsContexts.Label String lastSearch;
   }
 
   public static boolean isHintVisible(final Editor editor) {

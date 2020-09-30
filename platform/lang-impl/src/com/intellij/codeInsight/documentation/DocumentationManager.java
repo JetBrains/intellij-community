@@ -498,7 +498,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  PsiElement original,
                                  boolean requestFocus,
                                  @Nullable Runnable closeCallback,
-                                 @Nullable String documentation,
+                                 @Nullable @Nls String documentation,
                                  boolean useStoredPopupSize,
                                  boolean onAutoUpdate) {
     if (!element.isValid()) {
@@ -700,7 +700,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                    @NotNull PopupUpdateProcessor updateProcessor,
                                    PsiElement originalElement,
                                    @Nullable Runnable closeCallback,
-                                   @Nullable String documentation,
+                                   @Nullable @Nls String documentation,
                                    boolean useStoredPopupSize,
                                    boolean onAutoUpdate) {
     if (!myProject.isOpen()) return;

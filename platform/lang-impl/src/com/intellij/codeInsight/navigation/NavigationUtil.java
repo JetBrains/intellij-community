@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -377,7 +378,9 @@ public final class NavigationUtil {
           final GotoRelatedItem item = itemsMap.get(element);
           if (item != null && !StringUtil.equals(current, item.getGroup())) {
             current = item.getGroup();
-            separators.put(element, new ListSeparator(hasTitle && StringUtil.isEmpty(current) ? "Other" : current));
+            separators.put(element, new ListSeparator(
+              hasTitle && StringUtil.isEmpty(current) ? CodeInsightBundle.message("goto.related.items.separator.other") : current)
+            );
             if (!hasTitle && !StringUtil.isEmpty(current)) {
               hasTitle = true;
             }
