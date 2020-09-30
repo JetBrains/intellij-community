@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.idea.Bombed;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -489,6 +490,35 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       assertFalse(jarPointer.isValid());
     }
     LOG.debug("i = " + i);
+  }
+
+  @Bombed(month = Calendar.OCTOBER, day = 12, user = "Alexey Kudravtsev", description = "Test for IDEA-251779")
+  @Test
+  public void updateJarFilePointerWhenJarFileIsRestored() throws IOException {
+    File jarParent = new File(tempDir.getRoot(), "jarParent");
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    getVirtualFile(jar);
+    VirtualFile jarFile1 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
+    assertNotNull(jarFile1);
+    FileUtil.delete(jar);
+    //it's important to refresh only JAR file here, not the corresponding local file
+    jarFile1.refresh(false, false);
+    assertFalse(jarFile1.isValid());
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+    assertFalse(jarPointer.isValid());
+    assertNull(jarPointer.getFile());
+
+    FileUtil.copy(originalJar, jar);
+    getVirtualFile(jar);
+    VirtualFile jarFile2 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
+    assertNotNull(jarFile2);
+    assertTrue(jarPointer.isValid());
+    assertEquals(jarFile2, jarPointer.getFile());
   }
 
   @Test
