@@ -22,17 +22,16 @@ public final class BaseFilterLexerUtil {
   private static final ScanContent EMPTY = new ScanContent(Collections.emptyMap(), Collections.emptyMap());
 
   public static ScanContent scanContent(FileContent content, IdAndToDoScannerBasedOnFilterLexer indexer) {
-    IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
-    if (patterns.length <= 0) return EMPTY;
-
     ScanContent data = content.getUserData(scanContentKey);
     if (data != null) {
       content.putUserData(scanContentKey, null);
       return data;
     }
 
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
     final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
+    IndexPattern[] todoPatterns = IndexPatternUtil.getIndexPatterns();
+    if (!needIdIndex && todoPatterns.length <= 0) return EMPTY;
+    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
 
     final IdDataConsumer consumer = needIdIndex ? new IdDataConsumer() : null;
     final OccurrenceConsumer todoOccurrenceConsumer = new OccurrenceConsumer(consumer, needTodo);
@@ -43,7 +42,7 @@ public final class BaseFilterLexerUtil {
 
     Map<TodoIndexEntry,Integer> todoMap = null;
     if (needTodo) {
-      for (IndexPattern indexPattern : patterns) {
+      for (IndexPattern indexPattern : todoPatterns) {
           final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
           if (count > 0) {
             if (todoMap == null) todoMap = new THashMap<>();
