@@ -15,6 +15,7 @@ import java.nio.file.Path;
 
 public final class LocalDesktopEntryCreator {
   private static final String DESKTOP_ENTRY_PATH = ".local/share/applications";
+  public static final String DESKTOP_ENTRY_PREFIX = "open-jb-";
 
   private LocalDesktopEntryCreator() {
   }
@@ -51,7 +52,7 @@ public final class LocalDesktopEntryCreator {
   }
 
   private static String getDesktopEntryFileName() {
-    return ApplicationNamesInfo.getInstance().getDefaultLauncherName() + ".desktop";
+    return DESKTOP_ENTRY_PREFIX + ApplicationNamesInfo.getInstance().getDefaultLauncherName() + ".desktop";
   }
 
   private static String getLauncherPath() {
