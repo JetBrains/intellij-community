@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
@@ -244,7 +244,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     if (!isDirectoryBased) {
       return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
     }
-    return PathUtil.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
+    return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
 
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()

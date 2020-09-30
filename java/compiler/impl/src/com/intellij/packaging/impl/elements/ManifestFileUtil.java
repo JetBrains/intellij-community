@@ -278,7 +278,7 @@ public final class ManifestFileUtil {
                                              final @NotNull CompositePackagingElement<?> element) {
     context.editLayout(context.getArtifact(), () -> {
       final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
-      if (file == null || !PathUtil.pathEqualsTo(file, path)) {
+      if (file == null || !VfsUtilCore.pathEqualsTo(file, path)) {
         PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
       }
     });

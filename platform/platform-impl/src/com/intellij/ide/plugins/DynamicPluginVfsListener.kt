@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 
 /**
@@ -91,11 +90,11 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   private fun findPluginByPath(file: VirtualFile): IdeaPluginDescriptorImpl? {
-    if (!PathUtil.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
+    if (!VfsUtilCore.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
       return null
     }
     return PluginManager.getPlugins().firstOrNull {
-      PathUtil.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
+      VfsUtilCore.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
     } as IdeaPluginDescriptorImpl?
   }
 

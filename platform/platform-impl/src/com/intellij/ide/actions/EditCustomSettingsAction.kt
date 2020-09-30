@@ -21,12 +21,12 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
-import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
@@ -137,7 +137,8 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomPropertiesAction.file.value == null) false else PathUtil.pathEqualsTo(file, EditCustomPropertiesAction.file.value!!.systemIndependentPath)
+    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomPropertiesAction.file.value == null) false else VfsUtilCore.pathEqualsTo(
+      file, EditCustomPropertiesAction.file.value!!.systemIndependentPath)
   }
 }
 
@@ -152,6 +153,7 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   fun isEnabled(): Boolean = file() != null
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomVmOptionsAction.file.value == null) false else PathUtil.pathEqualsTo(file, EditCustomVmOptionsAction.file.value!!.systemIndependentPath)
+    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomVmOptionsAction.file.value == null) false else VfsUtilCore.pathEqualsTo(
+      file, EditCustomVmOptionsAction.file.value!!.systemIndependentPath)
   }
 }

@@ -107,7 +107,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
     for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
+      if (VfsUtilCore.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }

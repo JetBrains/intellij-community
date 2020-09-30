@@ -21,11 +21,11 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -191,6 +191,6 @@ class TestDirectory extends TestPackage {
                                        PsiDirectory testDir) {
     return JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) &&
            testDir != null &&
-           PathUtil.pathEqualsTo(testDir.getVirtualFile(), configuration.getPersistentData().getDirName());
+           VfsUtilCore.pathEqualsTo(testDir.getVirtualFile(), configuration.getPersistentData().getDirName());
   }
 }
