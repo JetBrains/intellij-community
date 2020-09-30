@@ -1084,7 +1084,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.oneToManyContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
 
       //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
@@ -1101,7 +1101,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.oneToOneContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
 
       //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
@@ -1117,7 +1117,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
@@ -1138,7 +1138,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
@@ -1165,17 +1165,15 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int) {
 
     var counter = 0
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: run {
-      LOG.error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
-      return
-    }
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]
+                       ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      LOG.assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
+      assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
       counter++
     }
 
-    LOG.assert(counter == connectionKeys.size) { "Store is inconsistent" }
+    assert(counter == connectionKeys.size) { "Store is inconsistent" }
   }
 
   private fun checkStrongAbstractConnection(connectionKeys: Set<EntityId>, entityFamilyClasses: Set<Int>, debugInfo: String) {
@@ -1183,18 +1181,15 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     entityFamilyClasses.forEach { entityFamilyClass ->
       checkAllStrongConnections(entityFamilyClass, keys, debugInfo)
     }
-    LOG.assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
+    assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
   }
 
   private fun checkAllStrongConnections(entityFamilyClass: Int, keys: MutableSet<EntityId>, debugInfo: String) {
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: run {
-      LOG.error("Entity family doesn't exist. $debugInfo")
-      return
-    }
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
       val removed = keys.remove(entity.createPid())
-      LOG.assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
+      assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
     }
   }
 
@@ -1280,13 +1275,13 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
-    LOG.assert(entitiesByType[clazz]?.get(id) != null) {
+    assert(entitiesByType[clazz]?.get(id) != null) {
       "Reference to ${clazz.findEntityClass<WorkspaceEntity>()}-:-$id cannot be resolved"
     }
   }
 
   private fun assertCorrectEntityClass(connectionClass: Int, entityId: EntityId) {
-    LOG.assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
+    assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
       "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
     }
   }

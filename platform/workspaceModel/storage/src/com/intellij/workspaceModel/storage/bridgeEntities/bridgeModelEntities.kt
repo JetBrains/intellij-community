@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
@@ -239,7 +238,7 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>(), Wi
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     val thisEntity = this.createEntity(storage)
     val attachedSourceRoot = thisEntity.sourceRoot
-    thisLogger().assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
       """
       |Entity source of source root entity and it's java source root entity differs. 
       |   Source root entity source: ${attachedSourceRoot.entitySource}
@@ -277,7 +276,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     val thisEntity = this.createEntity(storage)
     val attachedSourceRoot = thisEntity.sourceRoot
-    thisLogger().assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
       """
       |Entity source of source root entity and it's java resource root entity differs. 
       |   Source root entity source: ${attachedSourceRoot.entitySource}
@@ -312,7 +311,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     val thisEntity = this.createEntity(storage)
     val attachedSourceRoot = thisEntity.sourceRoot
-    thisLogger().assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
       """
       |Entity source of source root entity and it's CustomSourceRootProperties entity differs. 
       |   Source root entity source: ${attachedSourceRoot.entitySource}
@@ -352,7 +351,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
 
     val thisEntity = this.createEntity(storage)
     val attachedModule = thisEntity.module
-    thisLogger().assert(thisEntity.entitySource == attachedModule.entitySource) {
+    assert(thisEntity.entitySource == attachedModule.entitySource) {
       """
       |Entity source of content root entity and it's module entity differs. 
       |   Module entity source: ${attachedModule.entitySource}
@@ -392,7 +391,7 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>(), 
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     val thisEntity = this.createEntity(storage)
     val attachedContentRoot = thisEntity.contentRootEntity
-    thisLogger().assert(thisEntity.entitySource == attachedContentRoot.entitySource) {
+    assert(thisEntity.entitySource == attachedContentRoot.entitySource) {
       """
       |Entity source of content root entity and it's SourceRootOrderEntity entity differs. 
       |   Content root entity source: ${attachedContentRoot.entitySource}
@@ -522,7 +521,7 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     val propertiesEntity = this.createEntity(storage)
     val attachedLibrary = propertiesEntity.library
-    thisLogger().assert(attachedLibrary.entitySource == this.entitySource) { """
+    assert(attachedLibrary.entitySource == this.entitySource) { """
       |Entity source of library and it's properties differs. 
       |   Library entity source: ${attachedLibrary.entitySource}
       |   Properties entity source: ${this.entitySource}
