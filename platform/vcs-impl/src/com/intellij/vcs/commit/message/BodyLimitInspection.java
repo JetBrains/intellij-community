@@ -4,17 +4,15 @@ package com.intellij.vcs.commit.message;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,15 +99,9 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                            @NotNull Document document,
                            int rightMargin,
                            @NotNull TextRange range) {
-      CodeFormatterFacade codeFormatter = new CodeFormatterFacade(new CodeStyleSettings(false) {
-        @Override
-        public int getRightMargin(@Nullable Language language) {
-          return rightMargin;
-        }
-      }, null);
       List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
-
-      codeFormatter.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(), enabledRanges);
+      EditorFacade.getInstance().doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
+                                                            enabledRanges, rightMargin);
     }
   }
 }

@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.diagnostic.PluginException;
@@ -14,7 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -839,7 +840,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     private void restoreVisualPosition() {
       if (myVisualColumnToRestore < 0) {
-        EditorUtil.runWithAnimationDisabled(myEditor, () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE));
+        EditorFacade.getInstance().runWithAnimationDisabled(myEditor, () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE));
         return;
       }
       VisualPosition position = myCaretModel.getVisualPosition();
@@ -952,7 +953,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @NotNull
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     Language language = file.getLanguage();
-    LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    LanguageCodeStyleProvider settingsProvider = CodeStyleSettingsService.getLanguageCodeStyleProvider(language);
     if (settingsProvider != null) {
       return settingsProvider.getDocCommentSettings(CodeStyle.getSettings(file));
     }
@@ -986,7 +987,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
             );
           });
         },
-        LangBundle.message("command.name.reformat"), null
+        CodeStyleBundle.message("command.name.reformat"), null
       )
     );
   }

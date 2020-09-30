@@ -174,7 +174,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private static @NlsContexts.ProgressText String getProgressText() {
-    return CodeInsightBundle.message("reformat.progress.common.text");
+    return CodeStyleBundle.message("reformat.progress.common.text");
   }
 
   public static @NlsContexts.Command String getCommandName() {

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +45,9 @@ public enum FormattingStateId {
   private final Supplier<@NlsContexts.ProgressText String> myDescription;
   private final double myWeight;
 
-  FormattingStateId(double weight, @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) String descriptionKey) {
+  FormattingStateId(double weight, @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) String descriptionKey) {
     myWeight = weight;
-    myDescription = CodeInsightBundle.messagePointer(descriptionKey);
+    myDescription = CodeStyleBundle.messagePointer(descriptionKey);
   }
 
   /**

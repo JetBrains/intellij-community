@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,10 +55,10 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   private static @NotNull @NlsContexts.DialogTitle String getTitle(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
     if (virtualFile == null) {
-      return CodeInsightBundle.message("reformat.progress.common.text");
+      return CodeStyleBundle.message("reformat.progress.common.text");
     }
     else {
-      return CodeInsightBundle.message("reformat.progress.file.with.known.name.text", virtualFile.getName());
+      return CodeStyleBundle.message("reformat.progress.file.with.known.name.text", virtualFile.getName());
     }
   }
 
@@ -126,7 +125,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   public void beforeApplyingFormatChanges(@NotNull Collection<LeafBlockWrapper> modifiedBlocks) {
     myBlocksToModifyNumber = modifiedBlocks.size();
     updateTextIfNecessary(FormattingStateId.APPLYING_CHANGES);
-    setCancelText(IdeBundle.message("action.stop"));
+    setCancelText(CodeStyleBundle.message("action.stop"));
   }
 
   @Override
@@ -182,10 +181,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
         return;
       }
 
-      UndoManager manager = UndoManager.getInstance(myProject);
-      while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
-        manager.undo(editor);
-      }
+      EditorFacade.getInstance().undo(myProject, editor, document, myDocumentModificationStampBefore);
     }
   }
 }

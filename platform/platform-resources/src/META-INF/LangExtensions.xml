@@ -82,6 +82,8 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
                         serviceImplementation="com.intellij.psi.codeStyle.CodeStyleSettingsServiceImpl" />
+    <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
+                        serviceImplementation="com.intellij.openapi.editor.ex.util.EditorFacadeImpl" />
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
