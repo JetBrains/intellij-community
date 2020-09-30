@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
@@ -81,7 +82,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     initTables();
 
     myTreeTable = createOptionsTree(getSettings());
-    myTreeTable.setBackground(UIUtil.getPanelBackground());
     myTreeTable.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
     JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
       @Override
@@ -704,24 +704,23 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       if (!table.isEnabled()) {
         isEnabled = false;
       }
-
-      Color background = table.getBackground();
       if (key != null && value != null) {
         JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
         if (customRenderer != null) {
+          updateColors(customRenderer, table, isSelected);
           return customRenderer;
         }
       }
       if (value instanceof Boolean) {
         myCheckBox.setSelected(((Boolean)value).booleanValue());
-        myCheckBox.setBackground(background);
         myCheckBox.setEnabled(isEnabled);
+        updateColors(myCheckBox, table, isSelected);
         return myCheckBox;
       }
       else if (value instanceof String) {
         myComboBox.setText((String)value);
-        myComboBox.setBackground(background);
         myComboBox.setEnabled(isEnabled);
+        updateColors(myComboBox, table, isSelected);
         return myComboBox;
       }
       else if (value instanceof Integer) {
@@ -732,10 +731,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           @NlsSafe String text = value.toString();
           myIntLabel.setText(text);
         }
+        updateColors(myIntLabel, table, isSelected);
         return myIntLabel;
       }
-
-      myEmptyLabel.setBackground(background);
+      updateColors(myEmptyLabel, table, isSelected);
       return myEmptyLabel;
     }
 
@@ -990,11 +989,19 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         setEnabled(true);
       }
       mySearchHelper.setLabelText(this, text, attributes.getStyle(), attributes.getFgColor(), attributes.getBgColor());
+      setBackground(RenderingUtil.getBackground(tree, selected));
+      setForeground(RenderingUtil.getForeground(tree, selected));
     }
   }
 
   @Override
   public void highlightOptions(@NotNull String searchString) {
     mySearchHelper.find(searchString);
+  }
+
+  private static void updateColors(@NotNull JComponent component, @NotNull JTable table, boolean isSelected) {
+    component.setOpaque(isSelected);
+    component.setBackground(RenderingUtil.getBackground(table, isSelected));
+    component.setForeground(RenderingUtil.getForeground(table, isSelected));
   }
 }
