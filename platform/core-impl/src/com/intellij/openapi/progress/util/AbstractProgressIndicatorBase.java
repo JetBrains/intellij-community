@@ -300,11 +300,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     synchronized (getLock()) {
       myRunning = indicator.isRunning();
       myCanceled = indicator.isCanceled();
-      setFraction(indicator.getFraction());
-      setIndeterminate(indicator.isIndeterminate());
+      boolean indeterminate = indicator.isIndeterminate();
+      setIndeterminate(indeterminate);
+      // avoid "This progress indicator is indeterminate blah blah"
+      if (!indeterminate || indicator.getFraction() != 0) {
+        setFraction(indicator.getFraction());
+      }
       setText(indicator.getText());
       setText2(indicator.getText2());
-      setFraction(indicator.getFraction());
 
       if (indicator instanceof AbstractProgressIndicatorBase) {
         AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
