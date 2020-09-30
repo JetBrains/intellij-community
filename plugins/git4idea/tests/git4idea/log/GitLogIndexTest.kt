@@ -89,9 +89,34 @@ class GitLogIndexTest : GitSingleRepoTest() {
     TestCase.assertEquals(expected, actual)
   }
 
-  fun `test text filter with multiple patterns`() {
-    val keyword1 = "keyword1"
-    val keyword2 = "keyword2"
+  fun `test regexp text filter`() {
+    val expected = mutableSetOf<Int>()
+    val pattern = "[A-Z]+\\-\\d+"
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with ABC-18")))
+
+    append(file, "and some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with CDE-239")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    append(file, "and even more content")
+    expected.add(getCommitIndex(repo.addCommit("message with XYZ-42")))
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
     val expected = mutableSetOf<Int>()
 
     val file = "file.txt"
@@ -111,7 +136,19 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
 
-    TestCase.assertEquals(expected.sorted(), actual.sorted())
+    assertEquals(expected.sorted(), actual.sorted())
+  }
+
+  fun `test text filter with multiple patterns`() {
+    `test text filter with multiple patterns`("keyword1", "keyword2")
+  }
+
+  fun `test text filter with short and long patterns`() {
+    `test text filter with multiple patterns`("k1", "keyword2")
+  }
+
+  fun `test text filter with short patterns`() {
+    `test text filter with multiple patterns`("k1", "k2")
   }
 
   fun `test author filter`() {
