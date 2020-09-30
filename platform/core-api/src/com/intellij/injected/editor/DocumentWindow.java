@@ -10,7 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * A document used for injected PSI, based on one or several ranges from a "real" document hosting that injected PSI.
+ * @see com.intellij.lang.injection.InjectedLanguageManager
+ */
 public interface DocumentWindow extends Document {
+  /**
+   * @return the host document of the injected PSI corresponding to this document
+   */
   @NotNull
   Document getDelegate();
 
@@ -44,6 +51,10 @@ public interface DocumentWindow extends Document {
 
   boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
 
+  /**
+   * @return whether this injected document hasn't been invalidated (which could happen
+   * e.g. if its document window ranges were removed or injected PSI was invalidated).
+   */
   boolean isValid();
 
   boolean containsRange(int hostStart, int hostEnd);
