@@ -1,0 +1,114 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.impl.storage
+
+import com.intellij.util.indexing.IdFilter
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.util.io.EnumeratorStringDescriptor
+import junit.framework.TestCase
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+
+class KeyHashLogTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
+
+  @Rule
+  @JvmField
+  val temporaryDirectory = TemporaryDirectory()
+
+  @Test
+  fun testAdd() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 2)
+      it.addKeyHashToVirtualFileMapping("asd", 2)
+
+      val hashes = it.getSuitableKeyHashes(setOf(1, 2).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe", "asd").toHashes(), hashes)
+    }
+  }
+
+  @Test
+  fun testAddRemove() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.removeKeyHashToVirtualFileMapping("qwe", 1)
+      it.removeKeyHashToVirtualFileMapping("asd", 2)
+      it.addKeyHashToVirtualFileMapping("zxc", 3)
+      it.removeKeyHashToVirtualFileMapping("zxc", 3)
+
+      val hashes = it.getSuitableKeyHashes(setOf(1, 2, 3).toFilter(), project)
+      TestCase.assertEquals(setOf<String>().toHashes(), hashes)
+    }
+  }
+
+  @Test
+  fun testAddRemoveAdd() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.removeKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+
+      val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+    }
+  }
+
+  @Test
+  fun testIdFilterIntersection() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+
+      val hashes = it.getSuitableKeyHashes(setOf(2).toFilter(), project)
+      TestCase.assertEquals(setOf<String>().toHashes(), hashes)
+    }
+  }
+
+  @Test
+  fun testCompaction() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.removeKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+
+      TestCase.assertFalse(it.isRequiresCompaction)
+      val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
+      TestCase.assertTrue(it.isRequiresCompaction)
+
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+    }
+
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      TestCase.assertFalse(it.isRequiresCompaction)
+      val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+    }
+  }
+
+  private val project = ProjectManager.getInstance().defaultProject
+
+  private fun Set<Int>.toFilter() : IdFilter = object : IdFilter() {
+    override fun containsFileId(id: Int): Boolean {
+      return contains(id)
+    }
+
+    override fun getFilteringScopeType(): FilterScopeType {
+      return FilterScopeType.PROJECT
+    }
+  }
+
+  private fun Set<String>.toHashes(): Set<Int> {
+    return map { it.hashCode() }.toSet()
+  }
+}

@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
@@ -415,14 +416,20 @@ public final class StubIndexImpl extends StubIndexEx {
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
     final UpdatableIndex<K, Void, FileContent> index = getIndex(indexKey); // wait for initialization to finish
+    FileBasedIndexEx fileBasedIndexEx = (FileBasedIndexEx)FileBasedIndex.getInstance();
     if (index == null ||
-        !((FileBasedIndexEx)FileBasedIndex.getInstance()).ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
+        !fileBasedIndexEx.ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
       return true;
     }
 
+    if (idFilter == null) {
+      idFilter = fileBasedIndexEx.projectIndexableFiles(scope.getProject());
+    }
+
     try {
+      @Nullable IdFilter finalIdFilter = idFilter;
       return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, ()->FileBasedIndexImpl.disableUpToDateCheckIn(()->
-        index.processAllKeys(processor, scope, idFilter)));
+        index.processAllKeys(processor, scope, finalIdFilter)));
     }
     catch (StorageException e) {
       forceRebuild(e);

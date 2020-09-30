@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ProjectIndexableFilesFilter extends IdFilter {
   private static final int SHIFT = 6;
@@ -44,5 +45,11 @@ public final class ProjectIndexableFilesFilter extends IdFilter {
 
   public int getModificationCount() {
     return myModificationCount;
+  }
+
+  @NotNull
+  @Override
+  public FilterScopeType getFilteringScopeType() {
+    return FilterScopeType.PROJECT_AND_LIBRARIES;
   }
 }
