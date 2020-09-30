@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializ
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
 import java.io.File
 import java.nio.file.Paths
 import kotlin.system.exitProcess

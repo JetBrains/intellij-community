@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNull

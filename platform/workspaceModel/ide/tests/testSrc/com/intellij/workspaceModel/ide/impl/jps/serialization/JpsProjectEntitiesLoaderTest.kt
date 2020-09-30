@@ -14,6 +14,8 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -77,9 +79,9 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(true, mainJavaSettings.excludeOutput)
     assertNull(mainJavaSettings.compilerOutput)
     assertNull(mainJavaSettings.compilerOutputForTests)
-    assertEquals(projectDir.absolutePath, JpsPathUtil.urlToOsPath(assertOneElement(mainModule.contentRoots.toList()).url.url))
+    assertEquals(projectDir.absolutePath, JpsPathUtil.urlToOsPath(assertOneElement(mainModule.contentRoots.toList()).url.getUrl()))
     val mainModuleSrc = assertOneElement(mainModule.sourceRoots.toList())
-    assertEquals(File(projectDir, "src").absolutePath, JpsPathUtil.urlToOsPath(mainModuleSrc.url.url))
+    assertEquals(File(projectDir, "src").absolutePath, JpsPathUtil.urlToOsPath(mainModuleSrc.url.getUrl()))
     assertFalse(mainModuleSrc.tests)
 
     assertEquals(6, mainModule.dependencies.size)
@@ -105,19 +107,19 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val utilJavaSettings = utilModule.javaSettings!!
     assertEquals(false, utilJavaSettings.inheritedCompilerOutput)
     assertEquals(true, utilJavaSettings.excludeOutput)
-    assertEquals("$projectUrl/out/production-util", utilJavaSettings.compilerOutput?.url)
-    assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.url)
+    assertEquals("$projectUrl/out/production-util", utilJavaSettings.compilerOutput?.getUrl())
+    assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.getUrl())
     val utilContentRoot = assertOneElement(utilModule.contentRoots.toList())
-    assertEquals("$projectUrl/util", utilContentRoot.url.url)
-    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url)
+    assertEquals("$projectUrl/util", utilContentRoot.url.getUrl())
+    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).getUrl())
     assertEquals(listOf("*.xml", "cvs"), utilContentRoot.excludedPatterns)
     val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
-    assertEquals("$projectUrl/util/src", utilModuleSrc.url.url)
+    assertEquals("$projectUrl/util/src", utilModuleSrc.url.getUrl())
     val utilModuleLibraries = utilModule.getModuleLibraries(storage).sortedBy { it.name }.toList()
     val log4jModuleLibrary = utilModuleLibraries[1]
     assertEquals("log4j", log4jModuleLibrary.name)
     val log4jRoot = log4jModuleLibrary.roots[0]
-    assertTrue(log4jRoot.url.url.contains("log4j.jar"))
+    assertTrue(log4jRoot.url.getUrl().contains("log4j.jar"))
     assertEquals("CLASSES", log4jRoot.type.name)
     assertEquals(LibraryRoot.InclusionOptions.ROOT_ITSELF, log4jRoot.inclusionOptions)
 
@@ -127,7 +129,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val xxxJavaSettings = modules[2].javaSettings!!
     assertEquals(false, xxxJavaSettings.inheritedCompilerOutput)
     assertEquals(true, xxxJavaSettings.excludeOutput)
-    assertEquals("$projectUrl/xxx/output", xxxJavaSettings.compilerOutput?.url)
+    assertEquals("$projectUrl/xxx/output", xxxJavaSettings.compilerOutput?.getUrl())
     assertNull(xxxJavaSettings.compilerOutputForTests)
 
     val projectLibraries = storage.projectLibraries.sortedBy { it.name }.toList()
@@ -146,7 +148,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
     assertEquals("dir", artifacts[0].name)
     assertTrue(artifacts[0].includeInProjectBuild)
-    assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl.url))
+    assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl.getUrl()))
     val children = artifacts[0].rootElement.children.sortedBy { it::class.qualifiedName }.toList()
     assertEquals(2, children.size)
     val innerJar = children[0] as ArchivePackagingElementEntity
@@ -158,15 +160,15 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(5, innerChildren.size)
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == log4jModuleLibrary })
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == junitProjectLibrary })
-    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().file.url))
-    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().directory.url))
+    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().file.getUrl()))
+    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().directory.getUrl()))
     innerChildren.filterIsInstance<ExtractedDirectoryPackagingElementEntity>().single().let {
-      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.archive.url))
+      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.archive.getUrl()))
       assertEquals("/junit/", it.pathInArchive)
     }
 
     assertEquals("jar", artifacts[1].name)
-    assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl.url))
+    assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl.getUrl()))
     val archiveRoot = artifacts[1].rootElement as ArchivePackagingElementEntity
     assertEquals("jar.jar", archiveRoot.fileName)
     val archiveChildren = archiveRoot.children.toList()

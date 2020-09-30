@@ -6,8 +6,8 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.project.isDirectoryBased
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 sealed class JpsProjectConfigLocation {
   val baseDirectoryUrlString: String
-    get() = baseDirectoryUrl.url
+    get() = baseDirectoryUrl.getUrl()
 
   abstract val baseDirectoryUrl: VirtualFileUrl
   abstract fun exists(): Boolean
@@ -25,13 +25,13 @@ sealed class JpsProjectConfigLocation {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
 
-    override fun exists() = JpsPathUtil.urlToFile(projectDir.url).exists()
+    override fun exists() = JpsPathUtil.urlToFile(projectDir.getUrl()).exists()
   }
-  data class FileBased(val iprFile: VirtualFileUrl) : JpsProjectConfigLocation() {
+  data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
-      get() = iprFile.parent!!
+      get() = iprFileParent
 
-    override fun exists() = JpsPathUtil.urlToFile(iprFile.url).exists()
+    override fun exists() = JpsPathUtil.urlToFile(iprFile.getUrl()).exists()
   }
 }
 
@@ -44,7 +44,9 @@ sealed class JpsFileEntitySource : EntitySource {
   /**
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
    */
-  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource()
+  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+    override fun getVirtualFileUrl(): VirtualFileUrl? = file
+  }
 
   /**
    * Represents an xml file located in the specified [directory] which contains configuration of some entities of IntelliJ IDEA project.
@@ -61,6 +63,8 @@ sealed class JpsFileEntitySource : EntitySource {
       private val nextId = AtomicInteger()
     }
 
+    override fun getVirtualFileUrl(): VirtualFileUrl? = directory
+
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       return other is FileInDirectory && directory == other.directory && projectLocation == other.projectLocation && fileNameId == other.fileNameId
@@ -74,7 +78,7 @@ sealed class JpsFileEntitySource : EntitySource {
 
 /**
  * Represents entities which configuration is loaded from an JPS format configuration file (e.g. *.iml, stored in [originalSource]) and some additional configuration
- * files (e.g. '.classpath' and *.eml files for Eclipse projects).  
+ * files (e.g. '.classpath' and *.eml files for Eclipse projects).
  */
 interface JpsFileDependentEntitySource {
   val originalSource: JpsFileEntitySource
@@ -94,6 +98,7 @@ data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
                                    val storedExternally: Boolean) : EntitySource, JpsFileDependentEntitySource {
   override val originalSource: JpsFileEntitySource
     get() = internalFile
+  override fun getVirtualFileUrl(): VirtualFileUrl? = internalFile.getVirtualFileUrl()
 }
 
 fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
@@ -107,8 +112,15 @@ object NonPersistentEntitySource : EntitySource
  */
 val Project.configLocation: JpsProjectConfigLocation?
   get() = if (isDirectoryBased) {
-    basePath?.let { JpsProjectConfigLocation.DirectoryBased(VirtualFileUrlManager.getInstance(this).fromPath(it)) }
+    basePath?.let {
+      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(this)
+      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromPath(it))
+    }
   }
   else {
-    projectFilePath?.let { JpsProjectConfigLocation.FileBased(VirtualFileUrlManager.getInstance(this).fromPath(it)) }
+    projectFilePath?.let {
+      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(this)
+      val iprFile = virtualFileUrlManager.fromPath(it)
+      JpsProjectConfigLocation.FileBased(iprFile, virtualFileUrlManager.getParentVirtualUrl(iprFile)!!)
+    }
   }

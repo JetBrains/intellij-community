@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -54,7 +56,9 @@ interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceE
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface EntitySource
+interface EntitySource {
+  fun getVirtualFileUrl(): VirtualFileUrl? = null
+}
 
 /**
  * Base interface for entities which may need to find all entities referring to them.

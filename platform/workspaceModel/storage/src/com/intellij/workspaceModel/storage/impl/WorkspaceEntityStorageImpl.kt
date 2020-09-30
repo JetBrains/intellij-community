@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.impl.exceptions.*
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlIndex
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap

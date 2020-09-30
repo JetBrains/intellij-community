@@ -17,6 +17,8 @@ import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import java.util.*
 
 class CompilerModuleExtensionBridge(
@@ -61,13 +63,13 @@ class CompilerModuleExtensionBridge(
   override fun isExcludeOutput(): Boolean = javaSettings?.excludeOutput ?: true
   override fun isCompilerOutputPathInherited(): Boolean = javaSettings?.inheritedCompilerOutput ?: true
 
-  override fun getCompilerOutputUrl(): String? = getCompilerOutput()?.url
+  override fun getCompilerOutputUrl(): String? = getCompilerOutput()?.getUrl()
   override fun getCompilerOutputPath(): VirtualFile? = getCompilerOutput()?.virtualFile
   override fun getCompilerOutputPointer(): VirtualFilePointer? = getCompilerOutput()?.let {
     FilePointerProvider.getInstance(module).getAndCacheModuleRoot(module.name, it)
   }
 
-  override fun getCompilerOutputUrlForTests(): String? = getCompilerOutputForTests()?.url
+  override fun getCompilerOutputUrlForTests(): String? = getCompilerOutputForTests()?.getUrl()
   override fun getCompilerOutputPathForTests(): VirtualFile? = getCompilerOutputForTests()?.virtualFile
   override fun getCompilerOutputForTestsPointer(): VirtualFilePointer? = getCompilerOutputForTests()?.let {
     FilePointerProvider.getInstance(module).getAndCacheModuleRoot(module.name, it)

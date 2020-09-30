@@ -29,6 +29,8 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -188,8 +190,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
       val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null
       val pointerManager = VirtualFilePointerManager.getInstance()
-      val contentRoots = moduleEntity.contentRoots.sortedBy { contentEntry -> contentEntry.url.url }
-        .map { contentEntry -> pointerManager.create(contentEntry.url.url, this, null) }.toMutableList()
+      val contentRoots = moduleEntity.contentRoots.sortedBy { contentEntry -> contentEntry.url.getUrl() }
+        .map { contentEntry -> pointerManager.create(contentEntry.url.getUrl(), this, null) }.toMutableList()
       val dependencyModuleNames = moduleEntity.dependencies.filterIsInstance(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
         .map { moduleDependency -> moduleDependency.module.name }
 

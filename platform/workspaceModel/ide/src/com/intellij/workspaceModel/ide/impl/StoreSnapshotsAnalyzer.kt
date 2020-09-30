@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.SimpleEntityTypesResolver
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
 import java.io.File
 
 /**

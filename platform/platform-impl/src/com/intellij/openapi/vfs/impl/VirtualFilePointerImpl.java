@@ -24,11 +24,12 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
+class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer, VirtualFileUrl {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerImpl.class);
 
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();

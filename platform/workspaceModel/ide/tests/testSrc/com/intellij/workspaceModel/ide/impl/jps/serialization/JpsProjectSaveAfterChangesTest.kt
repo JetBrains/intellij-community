@@ -3,25 +3,32 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.append
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
 class JpsProjectSaveAfterChangesTest {
+  @Rule
+  @JvmField
+  val projectModel = ProjectModelRule(true)
+
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManagerImpl(projectModel.project)
   }
 
   @Test
@@ -30,7 +37,7 @@ class JpsProjectSaveAfterChangesTest {
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
-        url = configLocation.baseDirectoryUrl.append("util/src2")
+        url = configLocation.baseDirectoryUrl.append(virtualFileManager, "util/src2")
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
         rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
@@ -71,7 +78,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId.COMPILED)
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation, virtualFileManager)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
   }
@@ -85,10 +92,10 @@ class JpsProjectSaveAfterChangesTest {
       builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
         type = "JAVA_MODULE"
       }
-      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList(), emptyList(),
-                                                           module)
-      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"), false,
-                                                         "java-source", source)
+      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append(virtualFileManager, "new"), emptyList(),
+                                                           emptyList(), module)
+      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append(virtualFileManager, "new"),
+                                                         false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
     }

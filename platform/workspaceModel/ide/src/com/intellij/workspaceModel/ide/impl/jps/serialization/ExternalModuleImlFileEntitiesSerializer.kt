@@ -5,8 +5,11 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -31,7 +34,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun readExternalSystemOptions(reader: JpsFileContentReader,
                                          moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
-    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem", getBaseDirPath()) ?: return Pair(emptyMap(), null)
+    val componentTag = reader.loadComponent(fileUrl.getUrl(), "ExternalSystem", getBaseDirPath()) ?: return Pair(emptyMap(), null)
     val options = componentTag.attributes.associateBy({ it.name }, { it.value })
     return Pair(options, options["externalSystem"])
   }
@@ -73,12 +76,12 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
       saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
-      writer.saveComponent(fileUrl.url, "ExternalSystem", componentTag)
+      writer.saveComponent(fileUrl.getUrl(), "ExternalSystem", componentTag)
     }
     if (moduleType != null) {
       val componentTag = JDomSerializationUtil.createComponentElement("DeprecatedModuleOptionManager")
       componentTag.addContent(Element("option").setAttribute("key", "type").setAttribute("value", moduleType))
-      writer.saveComponent(fileUrl.url, "DeprecatedModuleOptionManager", componentTag)
+      writer.saveComponent(fileUrl.getUrl(), "DeprecatedModuleOptionManager", componentTag)
     }
   }
 
@@ -94,8 +97,9 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   }
 }
 
-internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
+internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl,
+                                            private val virtualFileManager: VirtualFileUrlManager) :
+  ModuleListSerializerImpl(externalStorageRoot.append(virtualFileManager, "project/modules.xml").getUrl()) {
   override val isExternalStorage: Boolean
     get() = true
 
@@ -114,14 +118,14 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    val fileName = PathUtil.getFileName(fileUrl.url)
+    val fileName = PathUtil.getFileName(fileUrl.getUrl())
     val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
-      externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
+      externalStorageRoot.append(virtualFileManager, "modules/${fileName.substringBeforeLast('.')}.xml")
     }
     else {
       fileUrl
     }
-    val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
+    val filePath = JpsPathUtil.urlToPath(fileUrl.getPresentableUrl())
     return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, internalSource, this)
   }
 }

@@ -22,6 +22,8 @@ import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -55,7 +57,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val enabledModuleListSerializers = moduleListSerializers.filter { enableExternalStorage || !it.isExternalStorage }
     val moduleFiles = enabledModuleListSerializers.flatMap { it.loadFileList(reader, virtualFileManager) }
     for ((moduleFile, moduleGroup) in moduleFiles) {
-      val internalSource = createFileInDirectorySource(moduleFile.parent!!, moduleFile.file!!.name)
+      val internalSource = createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(moduleFile)!!, moduleFile.getFileName())
       for (moduleListSerializer in enabledModuleListSerializers) {
         val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile, moduleGroup)
         moduleSerializers[moduleSerializer] = moduleListSerializer
@@ -65,7 +67,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
                              serializerToDirectoryFactory.keys + moduleSerializers.keys
     allFileSerializers.forEach {
-      fileSerializersByUrl.put(it.fileUrl.url, it)
+      fileSerializersByUrl.put(it.fileUrl.getUrl(), it)
     }
   }
 
@@ -133,7 +135,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val obsoleteSerializersForFactory = oldSerializers.filter { it.fileUrl !in newFileUrlsSet }
         obsoleteSerializersForFactory.forEach { moduleSerializers.remove(it, serializerFactory) }
         val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
-          serializerFactory.createSerializer(createFileInDirectorySource(it.first.parent!!, it.first.file!!.name), it.first, it.second)
+          serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
+                                                                         it.first.getFileName()), it.first, it.second)
         }
         newFileSerializersForFactory.associateWithTo(moduleSerializers) { serializerFactory }
         obsoleteSerializers.addAll(obsoleteSerializersForFactory)
@@ -142,10 +145,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (newSerializer in newFileSerializers) {
-      fileSerializersByUrl.put(newSerializer.fileUrl.url, newSerializer)
+      fileSerializersByUrl.put(newSerializer.fileUrl.getUrl(), newSerializer)
     }
     for (obsoleteSerializer in obsoleteSerializers) {
-      fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
+      fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.getUrl(), obsoleteSerializer)
     }
 
     val affectedFileLoaders = (change.changedFileUrls + addedFileUrls).toCollection(HashSet()).flatMap { fileSerializersByUrl.getValues(it) }
@@ -237,10 +240,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun getActualFileUrl(source: JpsFileEntitySource) = when (source) {
-    is JpsFileEntitySource.ExactFile -> source.file.url
+    is JpsFileEntitySource.ExactFile -> source.file.getUrl()
     is JpsFileEntitySource.FileInDirectory -> {
       val fileName = fileIdToFileName.get(source.fileNameId)
-      if (fileName != null) source.directory.url + "/" + fileName else null
+      if (fileName != null) source.directory.getUrl() + "/" + fileName else null
     }
   }
 
@@ -318,7 +321,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val newSerializers = createSerializersForDirectoryEntities(factory, added)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.first] = factory
-            fileSerializersByUrl.put(it.first.fileUrl.url, it.first)
+            fileSerializersByUrl.put(it.first.fileUrl.getUrl(), it.first)
           }
           serializersToRun.addAll(newSerializers)
         }
@@ -335,7 +338,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           @Suppress("ReplacePutWithAssignment")
           fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
           if (oldFileName != null) {
-            processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true)
+            processObsoleteSource("${actualFileSource.directory.getUrl()}/$oldFileName", true)
           }
           processNewlyAddedDirectoryEntities(entities)
         }
@@ -386,7 +389,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   private fun calculateFileNameForEntity(source: JpsFileEntitySource.FileInDirectory,
                                          originalSource: EntitySource,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
-    val directoryFactory = directorySerializerFactoriesByUrl[source.directory.url]
+    val directoryFactory = directorySerializerFactoriesByUrl[source.directory.getUrl()]
     if (directoryFactory != null) {
       return getDefaultFileNameForEntity(directoryFactory, entities)
     }
@@ -434,7 +437,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                                                           entities: List<WorkspaceEntity>)
     : List<Pair<JpsFileEntitiesSerializer<*>, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>> {
     val nameGenerator = UniqueNameGenerator(serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList(), Function {
-      PathUtil.getFileName(it.fileUrl.url)
+      PathUtil.getFileName(it.fileUrl.getUrl())
     })
     return entities
       .filter { @Suppress("UNCHECKED_CAST") factory.entityFilter(it as E) }

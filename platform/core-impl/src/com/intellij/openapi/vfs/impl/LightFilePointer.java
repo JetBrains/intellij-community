@@ -23,10 +23,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LightFilePointer implements VirtualFilePointer {
+public class LightFilePointer implements VirtualFilePointer, VirtualFileUrl {
   
   @NotNull
   private final String myUrl;

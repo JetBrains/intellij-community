@@ -37,11 +37,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.toBuilder
-import com.intellij.workspaceModel.storage.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -99,7 +99,7 @@ class ModuleBridgesTest {
 
       assertArrayEquals(
         ModuleRootManager.getInstance(module).contentRootUrls,
-        arrayOf(contentRootUrl.url)
+        arrayOf(contentRootUrl.getUrl())
       )
 
       moduleManager.modifiableModel.let {
@@ -119,10 +119,10 @@ class ModuleBridgesTest {
         val rootModel = m.rootManager.modifiableModel
 
         val temp = temporaryDirectoryRule.newPath()
-        rootModel.addContentEntry(temp.toVirtualFileUrl(virtualFileManager).url)
+        rootModel.addContentEntry(temp.toVirtualFileUrl(virtualFileManager).getUrl())
         rootModel.commit()
 
-        assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).url), m.rootManager.contentRootUrls)
+        assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).getUrl()), m.rootManager.contentRootUrls)
       } finally {
         modulesModifiableModel.dispose()
       }
@@ -166,9 +166,9 @@ class ModuleBridgesTest {
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
 
-      val moduleFile = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.file
-      assertNotNull(moduleFile)
-      assertEquals(newNameFile, moduleFile)
+      val moduleFilePath = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.getPresentableUrl()
+      assertNotNull(moduleFilePath)
+      assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
@@ -336,13 +336,13 @@ class ModuleBridgesTest {
       assertNotNull(module)
 
       assertArrayEquals(
-        arrayOf(virtualFileUrl.url),
+        arrayOf(virtualFileUrl.getUrl()),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      assertEquals(virtualFileUrl.url, sourceRootUrl)
+      assertEquals(virtualFileUrl.getUrl(), sourceRootUrl)
     }
 
   @Test
@@ -433,7 +433,7 @@ class ModuleBridgesTest {
       assertTrue(libraryOrderEntry.isModuleLevel)
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
-      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
+      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).getUrl())
     }
   }
 
@@ -450,7 +450,7 @@ class ModuleBridgesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager), virtualFileManager)
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
@@ -466,7 +466,7 @@ class ModuleBridgesTest {
       assertNotNull(library)
 
       assertEquals(JpsLibraryTableSerializer.PROJECT_LEVEL, library!!.table.tableLevel)
-      assertSameElements(library.getUrls(OrderRootType.CLASSES), jarUrl.url)
+      assertSameElements(library.getUrls(OrderRootType.CLASSES), jarUrl.getUrl())
     }
   }
 
@@ -504,15 +504,15 @@ class ModuleBridgesTest {
 
       val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
-        .sortedBy { it.sourceRoot.url.url }
+        .sortedBy { it.sourceRoot.url.getUrl() }
       assertEquals(2, customRoots.size)
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
-      assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
+      assertEquals("$url/root1", customRoots[0].sourceRoot.url.getUrl())
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
 
       assertEquals("<sourceFolder />", customRoots[1].propertiesXmlTag)
-      assertEquals("$url/root2", customRoots[1].sourceRoot.url.url)
+      assertEquals("$url/root2", customRoots[1].sourceRoot.url.getUrl())
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[1].sourceRoot.rootType)
     }
   }

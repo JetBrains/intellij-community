@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File

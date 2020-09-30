@@ -7,6 +7,8 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -72,7 +74,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
   override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
                             reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
-    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
+    val libraryTableTag = reader.loadComponent(fileUrl.getUrl(), LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag) ?: continue
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
@@ -92,7 +94,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     mainEntities.sortedBy { it.name }.forEach {
       componentTag.addContent(saveLibrary(it, getExternalSystemId(it)))
     }
-    writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
+    writer.saveComponent(fileUrl.getUrl(), LIBRARY_TABLE_COMPONENT_NAME, componentTag)
   }
 
   protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? = null
@@ -173,12 +175,12 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
   rootsMap.entries.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {it.key.name}).forEach { (rootType, roots) ->
     val rootTypeTag = Element(rootType.name)
     roots.forEach {
-      rootTypeTag.addContent(Element(ROOT_TAG).setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.url))
+      rootTypeTag.addContent(Element(ROOT_TAG).setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.getUrl()))
     }
-    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {it.url.url}).forEach {
+    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {it.url.getUrl()}).forEach {
       if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
         val jarDirectoryTag = Element(JAR_DIRECTORY_TAG)
-        jarDirectoryTag.setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.url)
+        jarDirectoryTag.setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url.getUrl())
         jarDirectoryTag.setAttribute(RECURSIVE_ATTRIBUTE, (it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY).toString())
         if (rootType.name != DEFAULT_JAR_DIRECTORY_TYPE) {
           jarDirectoryTag.setAttribute(TYPE_ATTRIBUTE, rootType.name)
@@ -192,7 +194,7 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
   if (excludedRoots.isNotEmpty()) {
     val excludedTag = Element("excluded")
     excludedRoots.forEach {
-      excludedTag.addContent(Element(ROOT_TAG).setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.url))
+      excludedTag.addContent(Element(ROOT_TAG).setAttribute(JpsModuleRootModelSerializer.URL_ATTRIBUTE, it.getUrl()))
     }
     libraryTag.addContent(excludedTag)
   }

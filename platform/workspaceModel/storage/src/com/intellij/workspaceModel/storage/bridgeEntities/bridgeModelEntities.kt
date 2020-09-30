@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.references.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import java.io.Serializable
 
 /**

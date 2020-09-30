@@ -6,18 +6,17 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.assertTrue
@@ -28,6 +27,10 @@ import java.io.File
 class DelayedProjectSynchronizerTest {
   @Rule
   @JvmField
+  val projectModel = ProjectModelRule(true)
+
+  @Rule
+  @JvmField
   var disposableRule = DisposableRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -36,7 +39,7 @@ class DelayedProjectSynchronizerTest {
   @Before
   fun setUp() {
     WorkspaceModelImpl.forceEnableCaching = true
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, true)
   }
 

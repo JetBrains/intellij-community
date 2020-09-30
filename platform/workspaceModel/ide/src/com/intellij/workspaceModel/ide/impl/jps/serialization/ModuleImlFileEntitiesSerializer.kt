@@ -11,6 +11,7 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
@@ -18,6 +19,9 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -27,6 +31,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
+import java.net.URI
 import java.nio.file.Paths
 import java.util.*
 import kotlin.Comparator
@@ -87,10 +92,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                builder: WorkspaceEntityStorageBuilder,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
-    if (skipLoadingIfFileDoesNotExist) {
-      val fileExists = fileUrl.file?.exists() ?: false
-      if (!fileExists) return null
-    }
+    if (skipLoadingIfFileDoesNotExist && !Paths.get(URI.create(fileUrl.getUrl())).exists()) return null
 
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
@@ -134,7 +136,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     else {
       loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
 
-      val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, getBaseDirPath())?.clone()
+      val rootManagerElement = reader.loadComponent(fileUrl.getUrl(), MODULE_ROOT_MANAGER_COMPONENT_NAME, getBaseDirPath())?.clone()
       if (rootManagerElement != null) {
         loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager)
       }
@@ -154,7 +156,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun readModuleOptions(reader: JpsFileContentReader): Map<String?, String?> {
-    val component = reader.loadComponent(fileUrl.url, "DeprecatedModuleOptionManager", getBaseDirPath()) ?: return emptyMap()
+    val component = reader.loadComponent(fileUrl.getUrl(), "DeprecatedModuleOptionManager", getBaseDirPath()) ?: return emptyMap()
     return component.getChildren("option").associateBy({ it.getAttributeValue("key") },
                                                        { it.getAttributeValue("value") })
   }
@@ -390,18 +392,18 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     rootManagerElement.attributes.sortWith(knownAttributesComparator)
     //todo ensure that custom data is written in proper order
 
-    val contentEntities = module.contentRoots.filter { it.entitySource == module.entitySource }.sortedBy { it.url.url }
+    val contentEntities = module.contentRoots.filter { it.entitySource == module.entitySource }.sortedBy { it.url.getUrl() }
 
     contentEntities.forEach { contentEntry ->
       val contentRootTag = Element(CONTENT_TAG)
-      contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
+      contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.getUrl())
 
       contentEntry.sourceRoots.sortedWith(contentEntry.getSourceRootsComparator()).forEach {
         contentRootTag.addContent(saveSourceRoot(it))
       }
 
       contentEntry.excludedUrls.forEach {
-        contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url))
+        contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.getUrl()))
       }
       contentEntry.excludedPatterns.forEach {
         contentRootTag.addContent(Element(EXCLUDE_PATTERN_TAG).setAttribute(EXCLUDE_PATTERN_ATTRIBUTE, it))
@@ -415,7 +417,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       rootManagerElement.addContent(saveDependencyItem(it, moduleLibraries))
     }
 
-    writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
+    writer.saveComponent(fileUrl.getUrl(), MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
   }
 
   private fun createEntitySource(externalSystemId: String?): EntitySource {
@@ -444,11 +446,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       rootManagerElement.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, true.toString())
     }
     else {
-      val outputUrl = javaSettings.compilerOutput?.url
+      val outputUrl = javaSettings.compilerOutput?.getUrl()
       if (outputUrl != null) {
         rootManagerElement.addContent(Element(OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, outputUrl))
       }
-      val testOutputUrl = javaSettings.compilerOutputForTests?.url
+      val testOutputUrl = javaSettings.compilerOutputForTests?.getUrl()
       if (testOutputUrl != null) {
         rootManagerElement.addContent(Element(TEST_OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, testOutputUrl))
       }
@@ -522,7 +524,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
     if (componentTag.children.isNotEmpty()) {
-      writer.saveComponent(fileUrl.url, "DeprecatedModuleOptionManager", componentTag)
+      writer.saveComponent(fileUrl.getUrl(), "DeprecatedModuleOptionManager", componentTag)
     }
   }
 
@@ -539,7 +541,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   private fun saveSourceRoot(sourceRoot: SourceRootEntity): Element {
     val sourceRootTag = Element(SOURCE_FOLDER_TAG)
-    sourceRootTag.setAttribute(URL_ATTRIBUTE, sourceRoot.url.url)
+    sourceRootTag.setAttribute(URL_ATTRIBUTE, sourceRoot.url.getUrl())
     val rootType = sourceRoot.rootType
     if (rootType !in listOf(JAVA_SOURCE_ROOT_TYPE_ID, JAVA_TEST_ROOT_TYPE_ID)) {
       sourceRootTag.setAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE, rootType)
@@ -609,7 +611,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
                                                 internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), moduleGroup), fileUrl, source,
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.getPresentableUrl()), moduleGroup), fileUrl, source,
                                       internalModuleListSerializer,
                                       externalModuleListSerializer,
                                       externalStorageConfigurationManager)
@@ -681,7 +683,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   }
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
-                               module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
+                               module: ModuleEntity) = source.directory.getUrl() + "/" + module.name + ".iml"
 }
 
 fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,

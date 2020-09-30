@@ -32,7 +32,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import it.unimi.dsi.fastutil.objects.Object2IntMap
@@ -205,7 +205,7 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
 
   private fun updateCollection(collection: Object2IntMap<String>, fileUrl: VirtualFileUrl, removeAction: Boolean) {
     synchronized(collection) {
-      collection.compute(fileUrl.url) { _, usagesCount ->
+      collection.compute(fileUrl.getUrl()) { _, usagesCount ->
         if (removeAction) {
           if (usagesCount == null || usagesCount - 1 <= 0) return@compute null else return@compute usagesCount - 1
         } else {

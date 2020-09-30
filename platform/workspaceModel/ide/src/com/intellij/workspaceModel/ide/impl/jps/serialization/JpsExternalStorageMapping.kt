@@ -2,10 +2,11 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.append
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.append
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 
 interface JpsExternalStorageMapping {
@@ -13,17 +14,19 @@ interface JpsExternalStorageMapping {
   val externalStorageRoot: VirtualFileUrl
 }
 
-class JpsExternalStorageMappingImpl(override val externalStorageRoot: VirtualFileUrl, private val projectLocation: JpsProjectConfigLocation) : JpsExternalStorageMapping {
+class JpsExternalStorageMappingImpl(override val externalStorageRoot: VirtualFileUrl,
+                                    private val virtualFileManager: VirtualFileUrlManager,
+                                    private val projectLocation: JpsProjectConfigLocation) : JpsExternalStorageMapping {
   override fun getExternalSource(internalSource: JpsFileEntitySource) = when (internalSource) {
     is JpsFileEntitySource.FileInDirectory -> {
-      val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.url)
+      val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.getUrl())
       val directoryName = PathUtil.getFileName(directoryPath)
       val parentPath = PathUtil.getParentPath(directoryPath)
       if (PathUtil.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {
-        JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/$directoryName.xml"), projectLocation)
+        JpsFileEntitySource.ExactFile(externalStorageRoot.append(virtualFileManager, "project/$directoryName.xml"), projectLocation)
       }
       else {
-        JpsFileEntitySource.FileInDirectory(externalStorageRoot.append("modules"), projectLocation)
+        JpsFileEntitySource.FileInDirectory(externalStorageRoot.append(virtualFileManager, "modules"), projectLocation)
       }
     }
     else -> throw IllegalArgumentException("Unsupported internal entity source $internalSource")

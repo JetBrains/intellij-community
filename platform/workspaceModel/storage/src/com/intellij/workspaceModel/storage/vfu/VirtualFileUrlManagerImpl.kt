@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.storage.impl
+package com.intellij.workspaceModel.storage.vfu
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.impl.IntIdGenerator
+import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
 class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
-  private val EMPTY_URL = VirtualFileUrl(0, this)
+  private val EMPTY_URL = VirtualFileUrlImpl(0, this)
   private val fileNameStore = VirtualFileNameStore()
   private val id2NodeMapping = Int2ObjectOpenHashMap<FilePathNode>()
   private val rootNode = FilePathNode(0, 0)
@@ -26,15 +26,18 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
-  override fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping.get(id)?.parent?.let {
-    VirtualFileUrl(it.nodeId, this)
+  override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
+    vfu as VirtualFileUrlImpl
+    return id2NodeMapping.get(vfu.id)?.parent?.let { VirtualFileUrlImpl(it.nodeId, this) }
   }
 
   @Synchronized
-  override fun getSubtreeVirtualUrlsById(id: Int) = id2NodeMapping.get(id).getSubtreeNodes().map { VirtualFileUrl(it.nodeId, this) }
+  fun getSubtreeVirtualUrlsById(id: Int): List<VirtualFileUrl>  {
+    return id2NodeMapping.get(id).getSubtreeNodes().map { VirtualFileUrlImpl(it.nodeId, this) }
+  }
 
   @Synchronized
-  override fun getUrlById(id: Int): String {
+  fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
     var node = id2NodeMapping[id]
@@ -71,7 +74,7 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) {
           rootNode.addChild(newNode)
-          return VirtualFileUrl(nodeId, this)
+          return VirtualFileUrlImpl(nodeId, this)
         }
         latestNode = newNode
         rootNode.addChild(newNode)
@@ -80,7 +83,7 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
       if (latestNode === findRootNode(latestNode.contentId)) {
         if (latestNode.contentId == nameId) {
-          if (index == latestElement) return VirtualFileUrl(
+          if (index == latestElement) return VirtualFileUrlImpl(
             latestNode.nodeId, this)
           continue
         }
@@ -94,11 +97,11 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         latestNode.addChild(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return VirtualFileUrl(nodeId, this)
+        if (index == latestElement) return VirtualFileUrlImpl(nodeId, this)
       }
       else {
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return VirtualFileUrl(node.nodeId, this)
+        if (index == latestElement) return VirtualFileUrlImpl(node.nodeId, this)
         latestNode = node
       }
     }
@@ -180,7 +183,7 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
   fun print() = rootNode.print()
 
-  override fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
+  fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
     if (parentNodeId == 0 && childNodeId == 0) return true
 
     var current = childNodeId

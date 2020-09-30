@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -25,6 +26,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.MutablePicoContainer
 
@@ -58,6 +60,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
 
     container.registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
+    container.registerService(VirtualFileUrlManager::class.java, VirtualFileUrlManagerImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
 
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)

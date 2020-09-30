@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 
 internal abstract class ContentFolderBridge(private val entry: ContentEntryBridge, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryBridge = entry
-  override fun getUrl(): String = contentFolderUrl.url
+  override fun getUrl(): String = contentFolderUrl.getUrl()
   override fun isSynthetic(): Boolean = false
   override fun equals(other: Any?): Boolean = contentFolderUrl == (other as? ContentFolderBridge)?.contentFolderUrl
   override fun hashCode(): Int = contentFolderUrl.hashCode()

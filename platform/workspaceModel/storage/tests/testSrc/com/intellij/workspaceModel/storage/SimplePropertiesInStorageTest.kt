@@ -3,12 +3,13 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.util.Ref
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
 import com.intellij.workspaceModel.storage.entities.ModifiableSecondSampleEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntitySource
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -57,7 +58,7 @@ class SimplePropertiesInStorageTest {
     assertEquals("foo", modified.stringProperty)
     assertEquals(listOf("first"), modified.stringListProperty)
     assertTrue(modified.booleanProperty)
-    assertEquals("file:///xxx", modified.fileProperty.url)
+    assertEquals("file:///xxx", modified.fileProperty.getUrl())
   }
 
   @Test

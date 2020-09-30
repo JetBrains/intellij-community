@@ -17,6 +17,8 @@ import com.intellij.workspaceModel.storage.impl.containers.*
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import org.objenesis.instantiator.ObjectInstantiator
@@ -46,10 +48,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.isRegistrationRequired = registrationRequired
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
+    kryo.addDefaultSerializer(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
       override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
         // TODO Write IDs only
-        output.writeString(obj.url)
+        output.writeString(obj.getUrl())
       }
 
       override fun read(kryo: Kryo, input: Input, type: Class<VirtualFileUrl>): VirtualFileUrl =
@@ -242,6 +244,9 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
           && !retType.startsWith("kotlin.collections.List")
           && !retType.startsWith("java.util.List")
       ) return@forEach
+
+      // VirtualFileUrl serializer was manually registered before
+      if (retType.endsWith("VirtualFileUrl")) return@forEach
 
       if (it.visibility != KVisibility.PUBLIC) return@forEach
       val property = it.getter.call(entity) ?: run {

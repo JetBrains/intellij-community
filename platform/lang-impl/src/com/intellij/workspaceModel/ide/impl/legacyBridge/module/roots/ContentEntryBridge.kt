@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -29,7 +30,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
     return filePointerProvider.getAndCacheContentRoot(entity.url).file
   }
 
-  override fun getUrl(): String = entity.url.url
+  override fun getUrl(): String = entity.url.getUrl()
 
   override fun getSourceFolders(): Array<SourceFolder> = sourceFolders.toTypedArray()
   override fun getExcludeFolders(): Array<ExcludeFolder> = excludeFolders.toTypedArray()

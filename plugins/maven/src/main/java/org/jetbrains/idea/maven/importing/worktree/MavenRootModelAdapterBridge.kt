@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -108,7 +108,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   override fun hasRegisteredSourceSubfolder(f: File): Boolean {
     val url: String = toUrl(f.path).url
-    return builder.entities(SourceRootEntity::class.java).filter { VfsUtilCore.isEqualOrAncestor(url, it.url.url) }.any()
+    return builder.entities(SourceRootEntity::class.java).filter { VfsUtilCore.isEqualOrAncestor(url, it.url.getUrl()) }.any()
   }
 
   private fun toUrl(path: String): Url {
@@ -129,7 +129,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   override fun isAlreadyExcluded(f: File): Boolean {
     val url = toUrl(f.path).url
     return moduleEntity.contentRoots.filter { cre ->
-      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.url })
+      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.getUrl() })
     }.any()
   }
 
@@ -143,7 +143,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   }
 
   private fun getContentRootFor(url: Url): ContentRootEntity? {
-    return moduleEntity.contentRoots.firstOrNull { VfsUtilCore.isEqualOrAncestor(it.url.url, url.url) }
+    return moduleEntity.contentRoots.firstOrNull { VfsUtilCore.isEqualOrAncestor(it.url.getUrl(), url.url) }
   }
 
   @NotRequiredToImplement

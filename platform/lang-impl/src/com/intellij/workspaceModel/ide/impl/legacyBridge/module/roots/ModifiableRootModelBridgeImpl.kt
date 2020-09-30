@@ -30,6 +30,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -85,7 +87,7 @@ class ModifiableRootModelBridgeImpl(
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
     val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
-    val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
+    val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.getUrl() }.toList()
 
     contentEntries.map {
       ModifiableContentEntryBridge(
@@ -143,7 +145,7 @@ class ModifiableRootModelBridgeImpl(
     entry.clearSourceFolders()
     diff.removeEntity(entity)
 
-    if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.url }) {
+    if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.getUrl() }) {
       error("removeContentEntry: removed content entry url '$contentEntryUrl' still exists after removing")
     }
   }

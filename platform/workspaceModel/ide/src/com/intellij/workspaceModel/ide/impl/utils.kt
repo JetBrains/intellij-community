@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 
 // TODO Drop? Use standard function? Review usages.
 fun executeOrQueueOnDispatchThread(block: () -> Unit) {
@@ -19,7 +19,7 @@ fun executeOrQueueOnDispatchThread(block: () -> Unit) {
 
 // TODO In the future it may be optimised by caching virtualFile in every trie node
 val VirtualFileUrl.virtualFile
-  get() = VirtualFileManager.getInstance().findFileByUrl(url)
+  get() = VirtualFileManager.getInstance().findFileByUrl(getUrl())
 
 // TODO: use segment names from virtualFiles?
 fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager) = virtualFileManager.fromUrl(this.url)

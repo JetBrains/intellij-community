@@ -6,6 +6,7 @@ import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
 import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream

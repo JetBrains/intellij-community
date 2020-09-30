@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -163,9 +163,9 @@ fun WorkspaceEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
  * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
  */
 fun WorkspaceEntityStorageDiffBuilder.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
-                                                           excludedUrls: List<VirtualFileUrl>,
-                                                           excludedPatterns: List<String>,
-                                                           module: ModuleEntity, source: EntitySource) = addEntity(
+                                                                                 excludedUrls: List<VirtualFileUrl>,
+                                                                                 excludedPatterns: List<String>,
+                                                                                 module: ModuleEntity, source: EntitySource) = addEntity(
   ModifiableContentRootEntity::class.java, source) {
   this.url = url
   this.excludedUrls = excludedUrls
@@ -216,7 +216,7 @@ class ModifiableSdkEntity : ModifiableWorkspaceEntityBase<SdkEntity>() {
 
 fun WorkspaceEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
                                                    homeUrl: VirtualFileUrl, source: EntitySource) = addEntity(ModifiableSdkEntity::class.java,
-                                                                                                          source) {
+                                                                                                              source) {
   this.library = library
   this.homeUrl = homeUrl
 }

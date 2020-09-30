@@ -14,7 +14,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
 import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -59,8 +63,8 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
-  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
+  val cacheDirUrl = configLocation.baseDirectoryUrl.append(virtualFileManager, "cache")
+  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.getUrl())).toPath(),
                                               TestErrorReporter, virtualFileManager)
 }
 
@@ -123,7 +127,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = moduleSerializers.getKeysByValue(fileSerializer) ?: emptyList()
     val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
-    assertEquals(urlsFromFactory.map { it.first.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
+    assertEquals(urlsFromFactory.map { it.first.getUrl() }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
   fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }.forEach { (url, serializers) ->
@@ -159,7 +163,8 @@ internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): J
 
 internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
   if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
-    return JpsProjectConfigLocation.FileBased(file.toVirtualFileUrl(virtualFileManager))
+    val iprFile = file.toVirtualFileUrl(virtualFileManager)
+    return JpsProjectConfigLocation.FileBased(iprFile, virtualFileManager.getParentVirtualUrl(iprFile)!!)
   }
   else {
     return JpsProjectConfigLocation.DirectoryBased(file.toVirtualFileUrl(virtualFileManager))
@@ -243,6 +248,6 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
 
 internal object TestErrorReporter : ErrorReporter {
   override fun reportError(message: String, file: VirtualFileUrl) {
-    throw AssertionFailedError("Failed to load ${file.url}: $message")
+    throw AssertionFailedError("Failed to load ${file.getUrl()}: $message")
   }
 }
