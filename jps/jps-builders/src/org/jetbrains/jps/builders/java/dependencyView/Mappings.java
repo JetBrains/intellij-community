@@ -2178,10 +2178,11 @@ public class Mappings {
       });
     }
 
-    private void calculateAffectedFiles(final DiffState state) {
+    private boolean calculateAffectedFiles(final DiffState state) {
       debug("Checking dependent classes:");
       assert myAffectedFiles != null;
       assert myCompiledFiles != null;
+      final Ref<Boolean> incrementalMode = new Ref<>(Boolean.TRUE);
 
       state.myDependants.forEach(new TIntProcedure() {
         @Override
@@ -2190,6 +2191,9 @@ public class Mappings {
           if (depFiles != null) {
             for (File depFile : depFiles) {
               processDependentFile(depClass, depFile);
+              if (!incrementalMode.get()) {
+                return false;
+              }
             }
           }
           return true;
@@ -2206,12 +2210,24 @@ public class Mappings {
           if (repr == null) {
             return;
           }
-          if (repr instanceof ClassRepr && !((ClassRepr)repr).hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
-            // Classes containing inlined constants from other classes and compiled against older constant values
-            // may need to be recompiled several times within a compile session.
-            // Otherwise it is safe to skip the file if it has already been compiled in this session.
-            return;
+          if (repr instanceof ClassRepr) {
+            final ClassRepr clsRepr = (ClassRepr)repr;
+            if (!clsRepr.hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
+              // Classes containing inlined constants from other classes and compiled against older constant values
+              // may need to be recompiled several times within a compile session.
+              // Otherwise it is safe to skip the file if it has already been compiled in this session.
+              return;
+            }
+            // If among affected files are annotation processor-generated, then we might need to re-generate them.
+            // To achieve this, we need to recompile the whole chunk which will cause processors to re-generate these affected files
+
+            if (clsRepr.isGenerated()) {
+              debug("Turning non-incremental for the BuildTarget because dependent class is annotation-processor generated");
+              incrementalMode.set(Boolean.FALSE);
+              return;
+            }
           }
+
           final Set<UsageRepr.Usage> depUsages = repr.getUsages();
           if (depUsages == null || depUsages.isEmpty()) {
             return;
@@ -2244,6 +2260,7 @@ public class Mappings {
           }
         }
       });
+      return incrementalMode.get();
     }
 
     boolean differentiate() {
@@ -2309,7 +2326,10 @@ public class Mappings {
             processAddedClasses(state);
 
             if (!myEasyMode) {
-              calculateAffectedFiles(state);
+              if (!calculateAffectedFiles(state)) {
+                // turning non-incremental
+                return false;
+              }
             }
           }
 
@@ -2771,10 +2791,10 @@ public class Mappings {
       private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
 
       @Override
-      public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
+      public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
         synchronized (myLock) {
           final int classFileNameS = myContext.get(classFileName);
-          final ClassFileRepr result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
+          final ClassFileRepr result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr, isGenerated);
           if (result != null) {
             // since java9 'repr' can represent either a class or a compiled module-info.java
             final int className = result.name;
@@ -2813,11 +2833,6 @@ public class Mappings {
             }
           }
         }
-      }
-
-      @Override
-      public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
-        associate(classFileName, Collections.singleton(sourceFileName), cr);
       }
 
       @Override

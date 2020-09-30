@@ -5340,6 +5340,15 @@ public final class JavacRemoteProto {
          */
         com.google.protobuf.ByteString
             getLocationBytes();
+
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        boolean hasIsGenerated();
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        boolean getIsGenerated();
       }
       /**
        * Protobuf type {@code org.jetbrains.javac.Message.Response.OutputObject}
@@ -5847,6 +5856,35 @@ public final class JavacRemoteProto {
           location_ = value.toStringUtf8();
         }
 
+        public static final int IS_GENERATED_FIELD_NUMBER = 9;
+        private boolean isGenerated_;
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        public boolean hasIsGenerated() {
+          return ((bitField0_ & 0x00000080) == 0x00000080);
+        }
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        public boolean getIsGenerated() {
+          return isGenerated_;
+        }
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        private void setIsGenerated(boolean value) {
+          bitField0_ |= 0x00000080;
+          isGenerated_ = value;
+        }
+        /**
+         * <code>required bool is_generated = 9;</code>
+         */
+        private void clearIsGenerated() {
+          bitField0_ = (bitField0_ & ~0x00000080);
+          isGenerated_ = false;
+        }
+
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -5872,6 +5910,9 @@ public final class JavacRemoteProto {
           }
           if (((bitField0_ & 0x00000040) == 0x00000040)) {
             output.writeString(8, getLocation());
+          }
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            output.writeBool(9, isGenerated_);
           }
           unknownFields.writeTo(output);
         }
@@ -5917,6 +5958,10 @@ public final class JavacRemoteProto {
           if (((bitField0_ & 0x00000040) == 0x00000040)) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(8, getLocation());
+          }
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBoolSize(9, isGenerated_);
           }
           size += unknownFields.getSerializedSize();
           memoizedSerializedSize = size;
@@ -6378,6 +6423,35 @@ public final class JavacRemoteProto {
             return this;
           }
 
+          /**
+           * <code>required bool is_generated = 9;</code>
+           */
+          public boolean hasIsGenerated() {
+            return instance.hasIsGenerated();
+          }
+          /**
+           * <code>required bool is_generated = 9;</code>
+           */
+          public boolean getIsGenerated() {
+            return instance.getIsGenerated();
+          }
+          /**
+           * <code>required bool is_generated = 9;</code>
+           */
+          public Builder setIsGenerated(boolean value) {
+            copyOnWrite();
+            instance.setIsGenerated(value);
+            return this;
+          }
+          /**
+           * <code>required bool is_generated = 9;</code>
+           */
+          public Builder clearIsGenerated() {
+            copyOnWrite();
+            instance.clearIsGenerated();
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.OutputObject)
         }
         private byte memoizedIsInitialized = 2;
@@ -6399,6 +6473,9 @@ public final class JavacRemoteProto {
                 return null;
               }
               if (!hasFilePath()) {
+                return null;
+              }
+              if (!hasIsGenerated()) {
                 return null;
               }
               return DEFAULT_INSTANCE;
@@ -6435,6 +6512,9 @@ public final class JavacRemoteProto {
               location_ = visitor.visitString(
                   hasLocation(), location_,
                   other.hasLocation(), other.location_);
+              isGenerated_ = visitor.visitBoolean(
+                  hasIsGenerated(), isGenerated_,
+                  other.hasIsGenerated(), other.isGenerated_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
                 bitField0_ |= other.bitField0_;
@@ -6516,6 +6596,11 @@ public final class JavacRemoteProto {
                       java.lang.String s = input.readString();
                       bitField0_ |= 0x00000040;
                       location_ = s;
+                      break;
+                    }
+                    case 72: {
+                      bitField0_ |= 0x00000080;
+                      isGenerated_ = input.readBool();
                       break;
                     }
                   }

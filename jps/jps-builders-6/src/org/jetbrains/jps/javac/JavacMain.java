@@ -24,8 +24,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class JavacMain {
-  private static final String JAVA_VERSION = System.getProperty("java.version", "");
-
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
@@ -38,8 +36,9 @@ public final class JavacMain {
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
-  private static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty("jps.track.ap.dependencies", "true"));
 
+  public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
+  public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
 
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,

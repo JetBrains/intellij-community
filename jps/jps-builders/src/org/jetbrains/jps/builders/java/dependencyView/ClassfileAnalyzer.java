@@ -309,6 +309,7 @@ class ClassfileAnalyzer {
     private boolean myTakeIntoAccount = false;
     private boolean myIsModule = false;
     private final int myFileName;
+    private final boolean myIsGenerated;
     private int myAccess;
     private int myName;
     private int myVersion; // for class contains a class bytecode version, for module contains a module version
@@ -334,9 +335,10 @@ class ClassfileAnalyzer {
     private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
     private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
 
-    ClassCrawler(final int fn) {
+    ClassCrawler(final int fn, boolean isGenerated) {
       super(ASM_API_VERSION);
       myFileName = fn;
+      myIsGenerated = isGenerated;
     }
 
     private boolean notPrivate(final int access) {
@@ -353,7 +355,7 @@ class ClassfileAnalyzer {
       return new ClassRepr(
         myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
         myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
-        myAnonymousClassFlag.get(), myUsages
+        myAnonymousClassFlag.get(), myUsages, myIsGenerated
       );
     }
 
@@ -826,8 +828,8 @@ class ClassfileAnalyzer {
     }
   }
 
-  public ClassFileRepr analyze(int fileName, ClassReader cr) {
-    ClassCrawler visitor = new ClassCrawler(fileName);
+  public ClassFileRepr analyze(int fileName, ClassReader cr, boolean isGenerated) {
+    ClassCrawler visitor = new ClassCrawler(fileName, isGenerated);
 
     try {
       cr.accept(visitor, 0);
