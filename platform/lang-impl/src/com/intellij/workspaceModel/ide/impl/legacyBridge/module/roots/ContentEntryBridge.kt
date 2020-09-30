@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -25,10 +24,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
     sourceRootEntities.map { SourceFolderBridge(this, it) }
   }
 
-  override fun getFile(): VirtualFile? {
-    val filePointerProvider = FilePointerProvider.getInstance(model.moduleBridge)
-    return filePointerProvider.getAndCacheContentRoot(entity.url).file
-  }
+  override fun getFile(): VirtualFile? = (entity.url as VirtualFilePointer).file
 
   override fun getUrl(): String = entity.url.getUrl()
 

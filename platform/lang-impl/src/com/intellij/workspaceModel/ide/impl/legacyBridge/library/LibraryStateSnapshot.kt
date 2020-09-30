@@ -16,9 +16,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FileContainerDescription
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.JarDirectoryDescription
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.getAndCacheVirtualFilePointerContainer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -26,7 +24,6 @@ import java.io.StringReader
 
 internal class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
-  internal val filePointerProvider: FilePointerProvider,
   val storage: WorkspaceEntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
@@ -70,43 +67,34 @@ internal class LibraryStateSnapshot(
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module
 
   fun getFiles(rootType: OrderRootType): Array<VirtualFile> {
-    return roots[rootType.toLibraryRootType()]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
-             ?.files ?: VirtualFile.EMPTY_ARRAY
+    return roots[rootType.toLibraryRootType()]?.getFiles() ?: VirtualFile.EMPTY_ARRAY
   }
 
   fun getUrls(rootType: OrderRootType): Array<String> {
     return roots[rootType.toLibraryRootType()]
              ?.run { urls + jarDirectories.map { it.directoryUrl } }
-             ?.map { it.url }?.toTypedArray() ?: ArrayUtil.EMPTY_STRING_ARRAY
+             ?.map { it.getUrl() }?.toTypedArray() ?: ArrayUtil.EMPTY_STRING_ARRAY
   }
 
   val excludedRootUrls: Array<String>
-    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)?.urls
-            ?: ArrayUtil.EMPTY_STRING_ARRAY
+    get() = excludedRootsContainer?.getUrls() ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   val excludedRoots: Array<VirtualFile>
-    get() = excludedRootsContainer?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)?.files
-            ?: VirtualFile.EMPTY_ARRAY
+    get() = excludedRootsContainer?.getFiles() ?: VirtualFile.EMPTY_ARRAY
 
   fun isValid(url: String, rootType: OrderRootType): Boolean {
     return roots[rootType.toLibraryRootType()]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
              ?.findByUrl(url)?.isValid ?: false
   }
 
   fun getInvalidRootUrls(type: OrderRootType): List<String> {
-    return roots[type.toLibraryRootType()]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
-             ?.list?.filterNot { it.isValid }?.map { it.url } ?: emptyList()
+    return roots[type.toLibraryRootType()]?.getList()?.filterNot { it.isValid }?.map { it.url } ?: emptyList()
   }
 
   fun isJarDirectory(url: String) = isJarDirectory(url, OrderRootType.CLASSES)
 
   fun isJarDirectory(url: String, rootType: OrderRootType): Boolean {
-    return roots[rootType.toLibraryRootType()]
-             ?.getAndCacheVirtualFilePointerContainer(filePointerProvider, parentDisposable)
-             ?.jarDirectories?.any { it.first == url } ?: false
+    return roots[rootType.toLibraryRootType()]?.isJarDirectory(url) ?: false
   }
 
   val externalSource: ProjectModelExternalSource?

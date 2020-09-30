@@ -1,38 +1,95 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Trinity
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
-import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.Function
+import com.intellij.util.containers.ConcurrentList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.toArray
+import com.intellij.util.io.URLUtil
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import java.util.*
 
-data class FileContainerDescription(
-  val urls: List<VirtualFileUrl>,
-  val jarDirectories: List<JarDirectoryDescription>
-)
+class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {
+  private val myList: ConcurrentList<VirtualFilePointer> = ContainerUtil.createConcurrentList()
+   init {
+     urls.forEach { myList.addIfAbsent(it as VirtualFilePointer) }
+     jarDirectories.forEach { myList.addIfAbsent(it.directoryUrl as VirtualFilePointer) }
+   }
 
-data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
+  fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.getUrl() == url }
+  fun findByUrl(url: String): VirtualFilePointer? = myList.find { it.url == url }
+  fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(myList)
+  fun getUrls(): Array<String> = myList.map { it.url }.toTypedArray()
+  fun getFiles(): Array<VirtualFile> = cacheFiles()
 
-interface FilePointerProvider {
-  fun getAndCacheSourceRoot(url: VirtualFileUrl): VirtualFilePointer
-  fun getAndCacheContentRoot(url: VirtualFileUrl): VirtualFilePointer
-  fun getAndCacheExcludedRoot(url: VirtualFileUrl): VirtualFilePointer
-  fun getAndCacheModuleRoot(name: String, url: VirtualFileUrl): VirtualFilePointer
-  fun getAndCacheFileContainer(description: FileContainerDescription, scope: Disposable): VirtualFilePointerContainer
+  private fun cacheFiles(): Array<VirtualFile> {
+    val cachedFiles: MutableList<VirtualFile> = ArrayList(myList.size)
+    val cachedDirectories: MutableList<VirtualFile> = ArrayList(myList.size / 3)
+    var allFilesAreDirs = true
+    for (v in myList) {
+      val file = v.file
+      if (file != null) {
+        cachedFiles.add(file)
+        if (file.isDirectory) {
+          cachedDirectories.add(file)
+        }
+        else {
+          allFilesAreDirs = false
+        }
+      }
+    }
 
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): FilePointerProvider = project.service()
-
-    @JvmStatic
-    fun getInstance(module: Module): FilePointerProvider =
-      module.getService(FilePointerProvider::class.java)!!
-
+    for (jarDirectory in jarDirectories) {
+      val directoryFile = (jarDirectory.directoryUrl as VirtualFilePointer).file
+      if (directoryFile != null) {
+        cachedDirectories.remove(directoryFile)
+        if (jarDirectory.recursive) {
+          VfsUtilCore.visitChildrenRecursively(directoryFile, object : VirtualFileVisitor<Void?>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+              if (!file.isDirectory && FileTypeRegistry.getInstance().getFileTypeByFileName(
+                  file.nameSequence) === ArchiveFileType.INSTANCE) {
+                val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR)
+                if (jarRoot != null) {
+                  cachedFiles.add(jarRoot)
+                  cachedDirectories.add(jarRoot)
+                  return false
+                }
+              }
+              return true
+            }
+          })
+        } else {
+          val children = directoryFile.children
+          for (file in children) {
+            if (!file.isDirectory && FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence) === ArchiveFileType.INSTANCE) {
+              val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR)
+              if (jarRoot != null) {
+                cachedFiles.add(jarRoot)
+                cachedDirectories.add(jarRoot)
+              }
+            }
+          }
+        }
+      }
+    }
+    val directories = VfsUtilCore.toVirtualFileArray(cachedDirectories)
+    return if (allFilesAreDirs) directories else VfsUtilCore.toVirtualFileArray(cachedFiles)
   }
 }
 
-fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
-  provider.getAndCacheFileContainer(this, scope)
+data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)

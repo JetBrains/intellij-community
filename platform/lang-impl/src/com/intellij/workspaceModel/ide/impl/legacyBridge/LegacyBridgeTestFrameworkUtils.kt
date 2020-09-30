@@ -5,9 +5,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {
@@ -19,10 +20,9 @@ object LegacyBridgeTestFrameworkUtils {
 
     WriteAction.runAndWait<RuntimeException> {
       for (module in ModuleManager.getInstance(project).modules) {
-        (FilePointerProvider.getInstance(module) as FilePointerProviderImpl).clearCaches()
         (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()
       }
-      (FilePointerProvider.getInstance(project) as FilePointerProviderImpl).clearCaches()
+      (VirtualFileUrlManager.getInstance(project) as VirtualFileUrlManagerImpl).disposeProjectRelatedPointers()
     }
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -19,8 +18,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
@@ -58,7 +55,6 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerComponent(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, true)
     (container.picoContainer as MutablePicoContainer).unregisterComponent(ExternalModuleListStorage::class.java)
 
-    container.registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(VirtualFileUrlManager::class.java, VirtualFileUrlManagerImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)

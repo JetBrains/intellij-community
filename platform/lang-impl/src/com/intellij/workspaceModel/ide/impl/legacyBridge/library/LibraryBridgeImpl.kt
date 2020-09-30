@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
@@ -50,8 +49,6 @@ internal class LibraryBridgeImpl(
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
-  val filePointerProvider: FilePointerProvider = FilePointerProvider.getInstance(project)
-
   var entityStorage: VersionedEntityStorage = initialEntityStorage
     internal set(value) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -74,7 +71,6 @@ internal class LibraryBridgeImpl(
   private val librarySnapshotCached = CachedValue { storage ->
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
-      filePointerProvider = filePointerProvider,
       storage = storage,
       libraryTable = libraryTable,
       parentDisposable = this

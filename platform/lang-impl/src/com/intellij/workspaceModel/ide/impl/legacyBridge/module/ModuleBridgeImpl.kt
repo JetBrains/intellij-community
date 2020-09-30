@@ -14,8 +14,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -74,7 +72,6 @@ internal class ModuleBridgeImpl(
       registerComponent(FacetManager::class.java, FacetManagerBridge::class.java, corePlugin, true)
       (picoContainer as MutablePicoContainer).unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
-      registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, corePlugin, false)
       try { //todo improve
         val apiClass = Class.forName("com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager", true, javaClass.classLoader)
         val implClass = Class.forName("com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge", true,
