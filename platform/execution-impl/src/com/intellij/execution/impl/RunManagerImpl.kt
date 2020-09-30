@@ -222,7 +222,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
     })
 
-    BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
+    BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(stringIdToBeforeRunProvider::drop, project)
   }
 
   private fun clearSelectedConfigurationIcon() {
@@ -283,7 +283,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       val configuration = settings.configuration
       if (type.id == configuration.type.id) {
         if (result == null) {
-          result = SmartList<RunConfiguration>()
+          result = SmartList()
         }
         result.add(configuration)
       }
@@ -410,7 +410,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
     val newId = settings.uniqueID
-    var existingId: String? = null
+    var existingId: String?
     lock.write {
       listManager.immutableSortedSettingsList = null
 
@@ -528,7 +528,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       for (settings in idToSettings.values) {
         if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
           if (removed == null) {
-            removed = SmartList<RunnerAndConfigurationSettings>()
+            removed = SmartList()
           }
           removed!!.add(settings)
           if (--excess <= 0) {
@@ -850,7 +850,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     if (selectedConfiguration == null) {
       // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: "";
+      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
     }
   }
@@ -1119,7 +1119,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     for (task in getBeforeRunTasks(settings)) {
       if (task.providerId === taskProviderId) {
         if (result == null) {
-          result = SmartList<T>()
+          result = SmartList()
         }
         @Suppress("UNCHECKED_CAST")
         result.add(task as T)

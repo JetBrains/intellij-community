@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import org.jetbrains.idea.reposearch.SearchParameters
 
 object MavenDependencySearchStatisticsCollector {
-  private val GROUP_ID = "build.maven.packagesearch"
+  private const val GROUP_ID = "build.maven.packagesearch"
 
   @JvmStatic
   fun notifyError(endPoint: String,
