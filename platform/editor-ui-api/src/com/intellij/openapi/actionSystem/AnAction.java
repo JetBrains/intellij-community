@@ -140,7 +140,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @NotNull Icon icon) {
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
     this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
