@@ -249,7 +249,8 @@ public final class MavenModuleImporter {
             addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
           }
 
-          if (IMPORTED_CLASSIFIERS.contains(artifact.getClassifier())
+          String classifier = artifact.getClassifier();
+          if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
               && !isTestJar
               && !"system".equals(artifact.getScope())
               && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
@@ -259,7 +260,7 @@ public final class MavenModuleImporter {
               artifact.getVersion(),
               artifact.getBaseVersion(),
               dependencyType,
-              artifact.getClassifier(),
+              classifier,
               artifact.getScope(),
               artifact.isOptional(),
               artifact.getExtension(),
