@@ -1,12 +1,11 @@
 package com.intellij.space.auth
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.util.io.URLUtil
+import com.intellij.ui.AppUIUtil
 import java.io.File
 
 internal fun createAuthPage(server: String): String = html()
@@ -52,13 +51,10 @@ private fun loadAuthResourceFileContent(fileName: String): String {
 
 @NlsSafe
 private fun loadProductSvg(): String? {
-  ApplicationInfoEx.getInstanceEx().applicationSvgIconUrl?.let { iconPath ->
-    val url = ApplicationInfoEx::class.java.getResource(iconPath)
-    if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) {
-      val iconFile = File(URLUtil.urlToFile(url).absolutePath)
-      if (iconFile.exists() && iconFile.isFile) {
-        return iconFile.readText(Charsets.UTF_8)
-      }
+  AppUIUtil.findIcon().takeIf { it?.endsWith(".svg") ?: false }?.let { iconPath ->
+    val iconFile = File(iconPath)
+    if (iconFile.exists() && iconFile.isFile) {
+      return iconFile.readText(Charsets.UTF_8)
     }
   }
   return null
