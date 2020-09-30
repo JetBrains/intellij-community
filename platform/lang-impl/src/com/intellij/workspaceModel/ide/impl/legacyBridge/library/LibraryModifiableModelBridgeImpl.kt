@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -145,7 +146,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = (virtualFileManager as VirtualFileUrlManagerImpl).fromDirUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
