@@ -26,7 +26,8 @@
     },
     {
       "key": "CompletionPopup.matchForeground",
-      "description": "The string in the completion suggestions list that matches the entered string "
+      "description": "The string in the completion suggestions list that matches the entered string ",
+      "since": "2019.2"
     },
     {
       "key": "CompletionPopup.matchSelectionForeground",
@@ -40,24 +41,32 @@
     },
     {
       "key": "CompletionPopup.foreground",
-      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
+      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground.",
+      "since": "2019.2"
     },
     {
       "key": "CompletionPopup.nonFocusedMask",
-      "description": "Color mask with alpha to draw over not focused completion list"
+      "description": "Color mask with alpha to draw over not focused completion list",
+      "since": "2019.2"
     },
     {
-      "key": "CompletionPopup.selectionBackground"
+      "key": "CompletionPopup.selectionBackground",
+      "description": "Selected item background color of focused completion popup",
+      "since": "2019.2"
     },
     {
       "key": "CompletionPopup.selectionForeground",
+      "description": "Not used, selection foreground doesn't change",
       "deprecated": true
     },
     {
-      "key": "CompletionPopup.selectionInactiveBackground"
+      "key": "CompletionPopup.selectionInactiveBackground",
+      "description": "Selected item background color of non focused completion popup",
+      "since": "2019.2"
     },
     {
       "key": "CompletionPopup.selectionInfoForeground",
+      "description": "Not used, selection foreground doesn't change",
       "deprecated": true
     },
     {
@@ -319,21 +328,28 @@
     },
     {
       "key": "HelpTooltip.background",
+      "description": "Use ToolTip.background instead",
       "deprecated": true
     },
     {
-      "key": "HelpTooltip.borderColor"
+      "key": "HelpTooltip.borderColor",
+      "description": "Use ToolTip.borderColor instead",
+      "deprecated": false
     },
     {
       "key": "HelpTooltip.foreground",
+      "description": "Use ToolTip.foreground instead",
       "deprecated": true
     },
     {
       "key": "HelpTooltip.shortcutForeground",
+      "description": "Use ToolTip.shortcutForeground instead",
       "deprecated": true
     },
     {
-      "key": "HelpTooltip.infoForeground"
+      "key": "HelpTooltip.infoForeground",
+      "description": "Use ToolTip.infoForeground instead",
+      "deprecated": true
     },
     {
       "key": "InformationHint.borderColor"
@@ -359,10 +375,12 @@
     },
     {
       "key": "MemoryIndicator.usedBackground",
+      "description": "Memory indicator color for used memory rectangle",
       "since": "2019.2"
     },
     {
       "key": "MemoryIndicator.allocatedBackground",
+      "description": "Memory indicator color for allocated memory rectangle",
       "since": "2019.2"
     },
     {
@@ -613,7 +631,9 @@
       "key": "SearchEverywhere.Tab.selectedForeground"
     },
     {
-      "key": "SearchField.errorBackground"
+      "key": "SearchField.errorBackground",
+      "description": "Inplace search field background of not found entries",
+      "since": "2019.1"
     },
     {
       "key": "SearchMatch.endBackground",
@@ -761,16 +781,23 @@
     },
     {
       "key": "ToolTip.infoForeground",
-      "description": "\"Inspection Info\" text in inspection error tooltips"
+      "description": "\"Inspection Info\" text in inspection error tooltips",
+      "since": "2019.2"
     },
     {
-      "key": "ToolTip.shortcutForeground"
+      "key": "ToolTip.shortcutForeground",
+      "description": "Shortcut text foreground color in compound tooltips",
+      "since": "2019.2"
     },
     {
-      "key": "ToolTip.borderColor"
+      "key": "ToolTip.borderColor",
+      "description": "Tooltip border color",
+      "since": "2019.2"
     },
     {
-      "key": "ToolTip.paintBorder"
+      "key": "ToolTip.paintBorder",
+      "description": "True if tooltip should paint its border, false otherwise",
+      "since": "2019.2"
     },
     {
       "key": "ToolTip.Actions.background",
