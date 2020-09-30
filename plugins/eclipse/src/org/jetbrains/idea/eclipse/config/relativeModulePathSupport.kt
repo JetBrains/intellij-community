@@ -10,6 +10,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSeria
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
@@ -18,14 +20,14 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
                                  private val virtualFileManager: VirtualFileUrlManager) {
   private val moduleFileUrls by lazy {
     (moduleListSerializer?.loadFileList(reader, virtualFileManager) ?: emptyList()).associateBy(
-      { getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.url)) },
+      { getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.getUrl())) },
       { it.first }
     )
   }
 
   fun resolve(moduleName: String, relativePath: String?): String? {
     val moduleFile = moduleFileUrls[moduleName] ?: return null
-    val component = reader.loadComponent(moduleFile.url, "DeprecatedModuleOptionManager", null)
+    val component = reader.loadComponent(moduleFile.getUrl(), "DeprecatedModuleOptionManager", null)
     val baseDir = component?.getChildren("option")
       ?.firstOrNull { it.getAttributeValue("key") == JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE }
       ?.getAttributeValue("value")
@@ -37,7 +39,7 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
   }
 }
 
-class ModulePathShortener(private val storage: WorkspaceEntityStorage) {
+class ModulePathShortener(private val storage: WorkspaceEntityStorage, private val virtualFileManager: VirtualFileUrlManager) {
   private val contentRootsToModule by lazy {
     storage.entities(ContentRootEntity::class.java).associateBy({ it.url.url }, { it.module.name })
   }
@@ -50,13 +52,13 @@ class ModulePathShortener(private val storage: WorkspaceEntityStorage) {
       if (moduleName != null) {
         return "/$moduleName${file.url.substring(current.url.length)}"
       }
-      current = current.parent
+      current = virtualFileManager.getParentVirtualUrl(current)
     }
     return null
   }
 
   fun isUnderContentRoots(file: VirtualFile): Boolean {
     val map = contentRootsToModule
-    return generateSequence(file, {it.parent}).any { it.url in map }
+    return generateSequence(file, {virtualFileManager.getParentVirtualUrl(it)}).any { it.url in map }
   }
 }

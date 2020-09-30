@@ -5,10 +5,10 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleCompon
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
@@ -25,7 +25,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
                              imlFileUrl: VirtualFileUrl,
                              errorReporter: ErrorReporter,
                              virtualFileManager: VirtualFileUrlManager) {
-    val componentTag = reader.loadComponent(imlFileUrl.url, "EclipseModuleManager") ?: return
+    val componentTag = reader.loadComponent(imlFileUrl.getUrl(), "EclipseModuleManager") ?: return
     val entity = builder.addEclipseProjectPropertiesEntity(moduleEntity, moduleEntity.entitySource)
     builder.modifyEntity(ModifiableEclipseProjectPropertiesEntity::class.java, entity) {
       componentTag.getChildren(LIBELEMENT).forEach {
@@ -62,7 +62,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
 
     val componentTag = JDomSerializationUtil.createComponentElement("EclipseModuleManager")
     eclipseProperties.eclipseUrls.forEach {
-      componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
+      componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.getUrl()))
     }
     eclipseProperties.variablePaths.forEach { name, path ->
       val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
@@ -86,6 +86,6 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)
-    writer.saveComponent(imlFileUrl.url, "EclipseModuleManager", componentTag)
+    writer.saveComponent(imlFileUrl.getUrl(), "EclipseModuleManager", componentTag)
   }
 }

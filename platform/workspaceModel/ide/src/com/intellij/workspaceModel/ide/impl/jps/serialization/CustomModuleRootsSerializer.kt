@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,5 +38,6 @@ interface CustomModuleRootsSerializer {
                 writer: JpsFileContentWriter,
                 customDir: String?,
                 imlFileUrl: VirtualFileUrl,
-                storage: WorkspaceEntityStorage)
+                storage: WorkspaceEntityStorage,
+                virtualFileManager: VirtualFileUrlManager)
 }

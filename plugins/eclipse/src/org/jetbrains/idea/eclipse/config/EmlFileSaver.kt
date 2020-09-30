@@ -60,9 +60,9 @@ internal class EmlFileSaver(private val module: ModuleEntity,
             is LibraryTableId.ModuleLibraryTableId -> {
               if (library != null) {
                 val srcRoots = library.roots.filter { it.type.name == OrderRootType.SOURCES.name() }
-                val eclipseUrl = srcRoots.firstOrNull()?.url?.url?.substringBefore(JarFileSystem.JAR_SEPARATOR)
+                val eclipseUrl = srcRoots.firstOrNull()?.url?.getUrl()?.substringBefore(JarFileSystem.JAR_SEPARATOR)
                 srcRoots.forEach {
-                  val url = it.url.url
+                  val url = it.url.getUrl()
                   val srcTag = Element(IdeaSpecificSettings.SRCROOT_ATTR).setAttribute("url", url)
                   if (!EPathUtil.areUrlsPointTheSame(url, eclipseUrl)) {
                     srcTag.setAttribute(IdeaSpecificSettings.SRCROOT_BIND_ATTR, false.toString())
@@ -122,14 +122,14 @@ internal class EmlFileSaver(private val module: ModuleEntity,
 
   private fun saveContentRoots(root: Element) {
     module.contentRoots.forEach { contentRoot ->
-      val contentRootTag = Element(CONTENT_ENTRY_TAG).setAttribute(URL_ATTR, contentRoot.url.url)
+      val contentRootTag = Element(CONTENT_ENTRY_TAG).setAttribute(URL_ATTR, contentRoot.url.getUrl())
       contentRoot.sourceRoots.forEach { sourceRoot ->
         if (sourceRoot.tests) {
-          contentRootTag.addContent(Element(TEST_FOLDER_TAG).setAttribute(URL_ATTR, sourceRoot.url.url))
+          contentRootTag.addContent(Element(TEST_FOLDER_TAG).setAttribute(URL_ATTR, sourceRoot.url.getUrl()))
         }
         val packagePrefix = sourceRoot.asJavaSourceRoot()?.packagePrefix
         if (!packagePrefix.isNullOrEmpty()) {
-          contentRootTag.addContent(Element(PACKAGE_PREFIX_TAG).setAttribute(URL_ATTR, sourceRoot.url.url)
+          contentRootTag.addContent(Element(PACKAGE_PREFIX_TAG).setAttribute(URL_ATTR, sourceRoot.url.getUrl())
                                       .setAttribute(PACKAGE_PREFIX_VALUE_ATTR, packagePrefix))
         }
       }
@@ -137,7 +137,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       contentRoot.excludedUrls.forEach { excluded ->
         val excludedFile = excluded.virtualFile
         if (rootFile == null || excludedFile == null || VfsUtilCore.isAncestor(rootFile, excludedFile, false)) {
-          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url))
+          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.getUrl()))
         }
       }
       if (!JDOMUtil.isEmpty(contentRootTag)) {
@@ -149,7 +149,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
   private fun saveCustomJavaSettings(root: Element) {
     module.javaSettings?.let { javaSettings ->
       javaSettings.compilerOutputForTests?.let { testOutput ->
-        root.addContent(Element(OUTPUT_TEST_TAG).setAttribute(URL_ATTR, testOutput.url))
+        root.addContent(Element(OUTPUT_TEST_TAG).setAttribute(URL_ATTR, testOutput.getUrl()))
       }
       if (javaSettings.inheritedCompilerOutput) {
         root.setAttribute(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, true.toString())

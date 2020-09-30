@@ -57,7 +57,8 @@ object JpsProjectEntitiesLoader {
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
+                                                                             virtualFileManager)
     serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
   }
 
@@ -100,7 +101,8 @@ object JpsProjectEntitiesLoader {
       entityTypeSerializers = listOf(JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, internalLibrariesDirUrl)),
       directorySerializersFactories = directorySerializersFactories,
       moduleListSerializers = listOf(
-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", externalModuleListSerializer, externalStorageConfigurationManager),
+        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", virtualFileManager, externalModuleListSerializer,
+                                 externalStorageConfigurationManager),
         externalModuleListSerializer
       ),
       configLocation = configLocation,
@@ -131,7 +133,7 @@ object JpsProjectEntitiesLoader {
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
-      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.getUrl())),
+      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.getUrl(), virtualFileManager)),
       configLocation = configLocation,
       reader = reader,
       virtualFileManager = virtualFileManager,

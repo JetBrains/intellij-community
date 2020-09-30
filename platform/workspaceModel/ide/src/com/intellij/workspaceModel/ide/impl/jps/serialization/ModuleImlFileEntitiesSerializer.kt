@@ -48,6 +48,7 @@ private val STANDARD_MODULE_OPTIONS = setOf(
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
+                                                    private val virtualFileManager: VirtualFileUrlManager,
                                                     private val internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
@@ -361,7 +362,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val serializer = CUSTOM_ROOTS_SERIALIZER_EP.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
-        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage)
+        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
       }
       else {
         LOG.warn("Classpath storage provider $customSerializerId not found")
@@ -601,6 +602,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 }
 
 internal open class ModuleListSerializerImpl(override val fileUrl: String,
+                                             private val virtualFileManager: VirtualFileUrlManager,
                                              private val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                              private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
   : JpsModuleListSerializer {
@@ -608,10 +610,12 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
                                                 moduleGroup: String?,
                                                 source: JpsFileEntitySource,
+                                                virtualFileManager: VirtualFileUrlManager,
                                                 internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.getPresentableUrl()), moduleGroup), fileUrl, source,
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.getPresentableUrl()), moduleGroup),
+                                      fileUrl, source, virtualFileManager,
                                       internalModuleListSerializer,
                                       externalModuleListSerializer,
                                       externalStorageConfigurationManager)
@@ -632,7 +636,8 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, this, externalModuleListSerializer, externalStorageConfigurationManager)
+    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, virtualFileManager, this, externalModuleListSerializer,
+                                          externalStorageConfigurationManager)
   }
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {

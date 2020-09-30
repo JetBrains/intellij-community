@@ -6,10 +6,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
@@ -18,13 +17,15 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.IllegalArgumentException
+import java.net.URI
+import java.nio.file.Paths
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]
  */
 internal class EmlFileLoader(
   private val module: ModuleEntity, private val builder: WorkspaceEntityStorageBuilder,
-  private val expandMacroToPathMap: ExpandMacroToPathMap, private val errorReporter: ErrorReporter,
+  private val expandMacroToPathMap: ExpandMacroToPathMap,
   private val virtualFileManager: VirtualFileUrlManager
 ) {
   fun loadEml(emlTag: Element, contentRoot: ContentRootEntity) {
@@ -200,7 +201,7 @@ internal class EmlFileLoader(
       { it.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR)!! }
     )
     for (sourceRoot in entity.sourceRoots) {
-      val url = sourceRoot.url.url
+      val url = sourceRoot.url.getUrl()
       val isForTests = url in testSourceFolders
       if (isForTests != sourceRoot.tests) {
         builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
@@ -225,7 +226,7 @@ internal class EmlFileLoader(
 
     val excludedUrls = contentEntryTag.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)
       .mapNotNull { it.getAttributeValue(IdeaXml.URL_ATTR) }
-      .filter { FileUtil.isAncestor(entity.url.file!!, JpsPathUtil.urlToFile(it), false) }
+      .filter { FileUtil.isAncestor(Paths.get(URI.create(entity.url.getUrl())).toFile(), JpsPathUtil.urlToFile(it), false) }
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(ModifiableContentRootEntity::class.java, entity) {
