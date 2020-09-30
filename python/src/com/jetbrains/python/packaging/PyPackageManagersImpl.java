@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -66,6 +67,9 @@ public class PyPackageManagersImpl extends PyPackageManagers {
         }
       }
       cache.put(key, manager);
+      if (sdk instanceof Disposable) {
+        Disposer.register((Disposable)sdk, () -> clearCache(sdk));
+      }
     }
     return manager;
   }
