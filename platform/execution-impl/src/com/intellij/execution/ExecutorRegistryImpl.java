@@ -25,6 +25,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
+  public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
   public static final String RDC_GROUP = "RunDebugConfigRunnerActions";
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
@@ -95,34 +98,58 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
-    registerAction(actionManager, executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    registerActionInGroup(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
+
+    AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
+    if (isExecutorInMainGroup(executor)) {
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP)).add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
+    }
+    else {
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE)).add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
+    }
 
     AnAction wrappedRDCAction = RunDebugConfigManager.wrapAction(executor, toolbarAction);
 
     if(wrappedRDCAction != null) {
-      registerAction(actionManager, RunDebugConfigManager.generateActionID(executor), wrappedRDCAction, RDC_GROUP, myRunDebugIdToAction);
+      registerActionInGroup(actionManager, RunDebugConfigManager.generateActionID(executor), wrappedRDCAction, RDC_GROUP, myRunDebugIdToAction);
     }
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
 
-  private static void registerAction(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+  private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
+    return !Registry.is("executor.actions.submenu") || executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG);
+  }
+
+  private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+    AnAction action = registerAction(actionManager, actionId, anAction, map);
+    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+  }
+
+  @NotNull
+  private static AnAction registerAction(@NotNull ActionManager actionManager,
+                                         @NotNull String actionId,
+                                         @NotNull AnAction anAction,
+                                         @NotNull Map<String, AnAction> map) {
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, anAction);
       map.put(actionId, anAction);
       action = anAction;
     }
-
-    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+    return action;
   }
 
   synchronized void deinitExecutor(@NotNull Executor executor) {
     myContextActionIdSet.remove(executor.getContextActionId());
 
     unregisterAction(executor.getId(), RUNNERS_GROUP, myIdToAction);
-    unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    if (isExecutorInMainGroup(executor)) {
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    }
+    else {
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
+    }
     unregisterAction(executor.getContextActionId(), RDC_GROUP, myRunDebugIdToAction);
   }
 

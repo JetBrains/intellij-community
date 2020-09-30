@@ -13,9 +13,12 @@
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
-      <group id="RunContextGroupInner"/>
+      <group id="RunContextGroupInner">
+        <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
+          <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+        </group>
+      </group>
       <separator/>
-      <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     </group>
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
