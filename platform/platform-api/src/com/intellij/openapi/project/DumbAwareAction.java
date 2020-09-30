@@ -57,7 +57,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, dynamicDescription, icon);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText, @NotNull Icon icon) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText, @Nullable Icon icon) {
     super(dynamicText, icon);
   }
 
