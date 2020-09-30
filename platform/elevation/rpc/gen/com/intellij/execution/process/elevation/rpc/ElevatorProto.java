@@ -69,15 +69,15 @@ public final class ElevatorProto {
       "\013working_dir\030\002 \001(\t\022;\n\014environ_vars\030\003 \003(\013" +
       "2%.elevation.rpc.CommandLine.EnvironVar\032" +
       ")\n\nEnvironVar\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001" +
-      "(\t2\215\002\n\010Elevator\022Y\n\rCreateProcess\022#.eleva" +
+      "(\t2\207\002\n\010Elevator\022W\n\rCreateProcess\022#.eleva" +
       "tion.rpc.CreateProcessRequest\032!.elevatio" +
-      "n.rpc.CreateProcessReply\"\000\022b\n\020AwaitTermi" +
-      "nation\022&.elevation.rpc.AwaitTerminationR" +
-      "equest\032$.elevation.rpc.AwaitTerminationR" +
-      "eply\"\000\022B\n\007Release\022\035.elevation.rpc.Releas" +
-      "eRequest\032\026.google.protobuf.Empty\"\000B?\n,co" +
-      "m.intellij.execution.process.elevation.r" +
-      "pcB\rElevatorProtoP\001b\006proto3"
+      "n.rpc.CreateProcessReply\022`\n\020AwaitTermina" +
+      "tion\022&.elevation.rpc.AwaitTerminationReq" +
+      "uest\032$.elevation.rpc.AwaitTerminationRep" +
+      "ly\022@\n\007Release\022\035.elevation.rpc.ReleaseReq" +
+      "uest\032\026.google.protobuf.EmptyB?\n,com.inte" +
+      "llij.execution.process.elevation.rpcB\rEl" +
+      "evatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
