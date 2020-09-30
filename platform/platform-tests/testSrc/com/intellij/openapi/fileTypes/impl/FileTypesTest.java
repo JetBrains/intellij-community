@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,7 +44,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
-import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +73,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.THROW);
+    ConflictingMappingTracker.throwOnConflict(true);
     Assume.assumeTrue("Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in this class",
                       StdFileTypes.JSPX == StdFileTypes.PLAIN_TEXT);
   }
@@ -83,7 +81,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.LOG_ERROR);
+      ConflictingMappingTracker.throwOnConflict(false);
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
@@ -373,20 +371,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     doReassignTest(PlainTextFileType.INSTANCE, "dtd");
   }
 
-  private void doReassignTest(@NotNull FileType fileType, @NotNull String newExtension) {
-    FileType oldFileType = myFileTypeManager.getFileTypeByExtension(newExtension);
+  private void doReassignTest(@NotNull FileType fileType, @NotNull String extension) {
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
-      DefaultLogger.disableStderrDumping(getTestRootDisposable());
+      ConflictingMappingTracker.throwOnConflict(false);
       myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + extension));
 
-      if (oldFileType != FileTypes.UNKNOWN) {
-        ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(fileType, newExtension));
-        ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher(newExtension), oldFileType.getName(), true));
-      }
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + newExtension));
-
-      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + newExtension));
+      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
 
       Element element = myFileTypeManager.getState();
 
@@ -394,14 +385,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
-      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + newExtension));
+      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(fileType, "*." + newExtension));
-      if (oldFileType != FileTypes.UNKNOWN) {
-        ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associateExtension(fileType, newExtension));
-        ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.getRemovedMappingTracker().removeIf((matcher, name) -> name.equals(oldFileType.getName()) && matcher instanceof ExtensionFileNameMatcher && ((ExtensionFileNameMatcher)matcher).getExtension().equals(newExtension)));
-      }
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(fileType, "*." + extension));
     }
   }
 
@@ -514,7 +501,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ConflictingMappingTracker.throwOnConflict(false);
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin"));
 
     Element element = myFileTypeManager.getState();
@@ -628,13 +615,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     initStandardFileTypes();
     myFileTypeManager.initializeComponent();
 
-    @Language("XML")
-    String xml = "<component name=\"FileTypeManager\" version=\"13\">\n" +
-                 "   <extensionMap>\n" +
-                 "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
-                 "   </extensionMap>\n" +
-                 "</component>";
-    Element element = JDOMUtil.load(xml);
+    Element element = JDOMUtil.load(
+      "<component name=\"FileTypeManager\" version=\"13\">\n" +
+      "   <extensionMap>\n" +
+      "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
+      "   </extensionMap>\n" +
+      "</component>");
 
     myFileTypeManager.loadState(element);
     myFileTypeManager.initializeComponent();
@@ -647,38 +633,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     if (map != null) {
       List<Element> mapping = map.getChildren("mapping");
       assertNull(ContainerUtil.find(mapping, o -> "zip".equals(o.getAttributeValue("ext"))));
-    }
-  }
-
-  public void testRemovedMappingsMustNotLeadToDuplicates() throws Exception {
-    @Language("XML")
-    String xml = "<blahblah>\n" +
-                 "   <extensionMap>\n" +
-                 "   </extensionMap>\n" +
-                 "</blahblah>";
-    Element element = JDOMUtil.load(xml);
-
-    myFileTypeManager.loadState(element);
-    myFileTypeManager.initializeComponent();
-
-    List<RemovedMappingTracker.RemovedMapping> removedMappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
-    assertEmpty(removedMappings);
-
-    FileType type = myFileTypeManager.getFileTypeByFileName("x.txt");
-    assertEquals(PlainTextFileType.INSTANCE, type);
-
-    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("txt"), PlainTextFileType.INSTANCE.getName(), true);
-
-    try {
-      Element result = myFileTypeManager.getState().getChildren().get(0);
-      @Language("XML")
-      String resultXml = "<extensionMap>\n" +
-                         "  <removed_mapping ext=\"txt\" approved=\"true\" type=\"PLAIN_TEXT\" />\n" +
-                         "</extensionMap>";
-      assertEquals(resultXml, JDOMUtil.write(result));
-    }
-    finally {
-      myFileTypeManager.getRemovedMappingTracker().removeIf((matcher, name) -> matcher instanceof ExtensionFileNameMatcher && ((ExtensionFileNameMatcher)matcher).getExtension().equals("txt") && name.equals(PlainTextFileType.INSTANCE.getName()));
     }
   }
 

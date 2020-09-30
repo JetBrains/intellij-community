@@ -81,7 +81,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
-  private final ConflictingMappingTracker myConflictingMappingTracker = new ConflictingMappingTracker(myRemovedMappingTracker);
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
   private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
@@ -919,8 +918,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void readGlobalMappings(@NotNull Element e, boolean isAddToInit) {
-    myRemovedMappingTracker.load(e);
-
     for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(e)) {
       String fileTypeName = association.getSecond();
       FileNameMatcher matcher = association.getFirst();
@@ -956,6 +953,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
+    myRemovedMappingTracker.load(e);
     for (RemovedMappingTracker.RemovedMapping mapping : myRemovedMappingTracker.getRemovedMappings()) {
       FileType fileType = getFileTypeByName(mapping.getFileTypeName());
       if (fileType != null) {
@@ -1131,14 +1129,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (addScheme) {
       mySchemeManager.addScheme(fileType);
     }
-    List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(fileType.getName());
     for (FileNameMatcher matcher : matchers) {
-      if (removedMappings.contains(matcher)) {
-        continue;
-      }
       FileType oldType = myPatternsTable.addAssociation(matcher, fileType);
       if (oldType != null && !oldType.equals(fileType) && !(oldType instanceof AbstractFileType)) {
-        myConflictingMappingTracker.addConflict(null, matcher, oldType.getName(), fileType.getName());
+        new ConflictingMappingTracker().addConflict(null, matcher, oldType.getName(), fileType.getName());
       }
 
       myInitialAssociations.addAssociation(matcher, fileType);
