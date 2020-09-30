@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.withMavenCentral
@@ -18,6 +19,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
+
+  private val debugString = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address="
 
   @Test
   fun `daemon is started with debug flags only if script debugging is enabled`() {
@@ -52,7 +55,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
 
     val reportFile = File(projectPath, "args.txt")
     assertTrue(reportFile.exists())
-    assertTrue(reportFile.readText().contains("-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address="))
+    assertTrue(reportFile.readText().contains(debugString))
 
     reportFile.delete()
 
@@ -60,8 +63,101 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     executeRunConfiguration(gradleRC)
 
     assertTrue(reportFile.exists())
-    assertFalse(reportFile.readText().contains("-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address="))
+    assertFalse(reportFile.readText().contains(debugString))
 
+  }
+
+
+  @Test
+  fun `only explicitly called tasks are debugged by default`() {
+
+    createProjectSubFile("src/main/java/pack/AClass.java", """
+      package pack;
+      import java.io.BufferedWriter;
+      import java.io.FileWriter;
+      import java.io.File;
+      import java.lang.management.ManagementFactory;
+      import java.lang.management.RuntimeMXBean;
+      import java.util.List;
+      
+      public class AClass {
+        public static void main(String[] args) {
+          File file = new File(args[0]);
+	        BufferedWriter os = null;
+          try {
+            os = new BufferedWriter(new FileWriter(file, false));
+            RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+            List<String> arguments = runtimeMxBean.getInputArguments();
+            os.write(arguments.toString());
+          } catch (Exception e) {
+            e.printStackTrace();
+          } finally {
+            try {
+              os.close();
+            } catch (Exception e1) {
+              e1.printStackTrace();
+            }
+          }
+        }
+      }
+    """.trimIndent())
+
+    val implicitArgsFileName = "implicitTaskArgs.txt"
+    val explicitArgsFileName = "explicitTaskArgs.txt"
+
+    importProject(
+      GradleBuildScriptBuilderEx()
+        .withMavenCentral()
+        .applyPlugin("'java'")
+        .addPostfix("""
+                              
+          task implicitTask(type: JavaExec) {
+            classpath = sourceSets.main.runtimeClasspath
+            main = 'pack.AClass'
+            args '$implicitArgsFileName'
+          }
+          
+          task explicitTask(dependsOn: implicitTask, type: JavaExec) {
+            classpath = sourceSets.main.runtimeClasspath
+            main = 'pack.AClass'
+            args '$explicitArgsFileName'
+          }
+        """.trimIndent())
+        .generate()
+    )
+
+    val gradleRC = createEmptyGradleRunConfiguration("myRC")
+    gradleRC.settings.apply {
+      externalProjectPath = projectPath
+      taskNames = listOf("explicitTask")
+    }
+    gradleRC.isScriptDebugEnabled = false
+
+    val implicitArgsFile = File(projectPath, implicitArgsFileName)
+    val explicitArgsFile = File(projectPath, explicitArgsFileName)
+
+    assertThat(implicitArgsFile).doesNotExist()
+    assertThat(explicitArgsFile).doesNotExist()
+
+    executeRunConfiguration(gradleRC)
+
+    assertThat(implicitArgsFile.readText()).describedAs("Task 'implicitTask' should not be debugged").doesNotContain(debugString)
+    assertThat(explicitArgsFile.readText()).describedAs("Task 'explicitTask' should be debugged").contains(debugString)
+
+    gradleRC.isDebugAllEnabled = true // also check that debugging of all supported tasks in tasks graph works
+
+    implicitArgsFile.delete()
+    explicitArgsFile.delete()
+
+    executeRunConfiguration(gradleRC)
+
+    assertThat(implicitArgsFile.readText())
+      .describedAs("Task 'implicitTask' should be debugged when debug all is set")
+      .contains(debugString)
+
+    assertThat(explicitArgsFile.readText())
+      .describedAs("Task 'explicitTask' should be debugged when debug all is set")
+      .contains(debugString)
   }
 
   private fun executeRunConfiguration(gradleRC: GradleRunConfiguration) {

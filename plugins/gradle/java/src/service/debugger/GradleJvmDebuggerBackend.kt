@@ -32,13 +32,18 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     //language=Gradle
     """
     import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
+    def taskNamesList = gradle.getStartParameter().getTaskNames()
+    if (taskNamesList.isEmpty()) {
+      taskNamesList = project.getDefaultTasks() 
+    }
     gradle.taskGraph.whenReady { taskGraph ->
       taskGraph.allTasks.each { Task task ->
         if (task instanceof org.gradle.api.tasks.testing.Test) {
           task.maxParallelForks = 1
           task.forkEvery = 0
         }
-        if (task instanceof JavaForkOptions) {
+        def debugAllIsEnabled = Boolean.valueOf(System.properties["ij.gradle.debug.all"])
+        if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskNamesList.contains(task.name))) {
           task.doFirst {
             def moduleDir = task.project.projectDir.path
             def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
