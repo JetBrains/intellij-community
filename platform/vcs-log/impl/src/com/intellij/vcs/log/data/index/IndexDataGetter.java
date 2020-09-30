@@ -21,6 +21,7 @@ import com.intellij.vcs.log.history.VcsDirectoryRenamesProvider;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -190,23 +191,26 @@ public final class IndexDataGetter {
   @NotNull
   private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
     if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
-      IntSet resultByTrigrams = executeAndCatch(() -> {
+      return executeAndCatch(() -> {
+        IntSet result = new IntOpenHashSet();
         List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
                                       ((VcsLogMultiplePatternsTextFilter)filter).getPatterns() :
                                       Collections.singletonList(filter.getText());
-        IntCollection commitsForSearch = new IntOpenHashSet();
+        List<String> noTrigramSources = new ArrayList<>();
         for (String string : trigramSources) {
           IntSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
-          if (commits == null) return null;
-          commitsForSearch.addAll(TroveUtil.intersect(candidates, commits));
+          if (commits == null) {
+            noTrigramSources.add(string);
+          } else {
+            result.addAll(filter(myIndexStorage.messages, TroveUtil.intersect(candidates, commits), filter::matches));
+          }
         }
-        return filter(myIndexStorage.messages, commitsForSearch, filter::matches);
+        if (!noTrigramSources.isEmpty()) {
+          VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
+          result.addAll(filter(myIndexStorage.messages, candidates, noTrigramFilter::matches));
+        }
+        return result;
       }, IntSets.EMPTY_SET);
-
-      //noinspection ConstantConditions
-      if (resultByTrigrams != null) {
-        return resultByTrigrams;
-      }
     }
 
     return executeAndCatch(() -> {
