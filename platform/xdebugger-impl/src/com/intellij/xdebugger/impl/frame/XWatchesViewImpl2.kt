@@ -25,8 +25,8 @@ class XWatchesViewImpl2(
     XWatchesViewImpl(session, watchesInVariables, isVertical, false), DnDNativeTarget, XWatchesView {
 
     init {
-        val customizer = session.debugProcess as? XDebugSessionTabCustomizer
-        if (customizer == null)
+        val bottomLocalsComponentProvider = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider
+        if (bottomLocalsComponentProvider == null)
             super.createToolbar(AnAction.EMPTY_ARRAY)
         else {
             // it's hacky, we change default watches component to splitter, this way allows not to change base components
@@ -35,13 +35,13 @@ class XWatchesViewImpl2(
                 dividerWidth = 1
                 divider.background = UIUtil.CONTRAST_BORDER_COLOR
             }
-            super.createToolbar(arrayOf(createExtraAction(splitter, customizer)))
+            super.createToolbar(arrayOf(createExtraAction(splitter, bottomLocalsComponentProvider)))
             val toolbar = myComponent.getComponent(1) as ActionToolbarImpl
             val locals = myComponent.getComponent(0) as JPanel
             splitter.firstComponent = locals
 
             if (PropertiesComponent.getInstance().getBoolean("debugger.immediate.window.in.watches", true))
-                splitter.secondComponent = customizer.createBottomLocalsComponent(layoutDisposable)
+                splitter.secondComponent = bottomLocalsComponentProvider.createBottomLocalsComponent(layoutDisposable)
 
             myComponent = BorderLayoutPanel()
             myComponent.add(splitter)
@@ -50,8 +50,11 @@ class XWatchesViewImpl2(
         }
     }
 
-    fun createExtraAction(splitter: Splitter, customizer: XDebugSessionTabCustomizer): AnAction {
-        return object : ToggleAction() {
+    fun createExtraAction(
+        splitter: Splitter,
+        sessionTabComponentProvider: XDebugSessionTabCustomizer.SessionTabComponentProvider
+    ): AnAction {
+        return object : ToggleAction(sessionTabComponentProvider.componentIconPopupText, null, sessionTabComponentProvider.componentIcon) {
             private var bottomComponentIsVisible: Boolean =
                 PropertiesComponent.getInstance().getBoolean("debugger.immediate.window.in.watches", true)
             override fun isSelected(e: AnActionEvent): Boolean = bottomComponentIsVisible
@@ -59,13 +62,13 @@ class XWatchesViewImpl2(
                 bottomComponentIsVisible = !bottomComponentIsVisible
                 splitter.apply {
                     if (bottomComponentIsVisible)
-                        secondComponent = customizer.createBottomLocalsComponent(layoutDisposable)
+                        secondComponent = sessionTabComponentProvider.createBottomLocalsComponent(layoutDisposable)
                     else
                         secondComponent = null
                     revalidate()
                     repaint()
                 }
-                customizer.visibilityBottomLocalsComponentChange(bottomComponentIsVisible)
+                sessionTabComponentProvider.visibilityChanged(bottomComponentIsVisible)
                 PropertiesComponent.getInstance().setValue("debugger.immediate.window.in.watches", bottomComponentIsVisible, true)
             }
         }
