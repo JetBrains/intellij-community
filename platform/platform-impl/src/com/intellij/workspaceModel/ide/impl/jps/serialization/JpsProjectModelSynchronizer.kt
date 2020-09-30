@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.google.common.io.Files
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.impl.*
@@ -14,12 +20,14 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.*
@@ -27,12 +35,14 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.ArrayList
@@ -137,6 +147,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
             }
           }
         }
+      }
+    })
+    project.messageBus.connect().subscribe(VirtualFilePointerListener.TOPIC, object : VirtualFilePointerListener {
+      override fun beforeValidityChanged(pointers: Array<out VirtualFilePointer>) {
+        val virtualFileUrlIndex = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
+        pointers.forEach { virtualFileUrlIndex.findEntitiesByUrl(it as VirtualFileUrl).forEach { sourcesToSave.add(it.first.entitySource) } }
       }
     })
   }
