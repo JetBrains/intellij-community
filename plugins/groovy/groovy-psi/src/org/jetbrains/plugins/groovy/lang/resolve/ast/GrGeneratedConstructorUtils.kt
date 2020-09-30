@@ -11,10 +11,13 @@ import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.parentOfType
 import groovy.transform.Undefined
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
 import java.util.*
@@ -158,7 +161,10 @@ private fun acceptClass(clazz: PsiClass,
   val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
   fun addParameter(origin: PsiField) {
-    if (!includeStatic && origin.hasModifierProperty(PsiModifier.STATIC)) return
+    if (!includeStatic) {
+      val modifierList = origin.modifierList
+      if (modifierList is GrModifierList && hasModifierProperty(modifierList, PsiModifier.STATIC, false)) return
+    }
     collector.add(origin)
   }
 
@@ -210,7 +216,11 @@ fun getGroupedClassMembers(psiClass: PsiClass): Triple<List<PsiField>, List<PsiM
   }
 
   val methods: Array<out PsiMethod> = if (psiClass is GrTypeDefinition) psiClass.codeMethods else psiClass.methods
-  val propertySetters = PropertyUtilBase.getAllProperties(true, false, methods)
+  val propertySetters = methods.filterIsInstance<GrMethod>().filter {
+    hasModifierProperty(it.modifierList, "public", false) &&
+    !hasModifierProperty(it.modifierList, "static", false) &&
+    PropertyUtilBase.isSimplePropertySetter(it)
+  }.map { PropertyUtilBase.getPropertyName(it) to it }.toMap()
   val fieldNames = allFields.map(PsiField::getName)
   val setters: List<PsiMethod> = propertySetters.filterKeys { !fieldNames.contains(it) }.values.toList()
 

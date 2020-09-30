@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -83,7 +83,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   public List<PsiMethod> getDefEnumMethods() {
     PsiManagerEx manager = getManager();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiClassType thisType = factory.createType(this);
+    PsiClassType thisType = factory.createType(this, PsiSubstitutor.EMPTY);
     List<PsiMethod> result = Arrays.asList(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
         .setMethodReturnType(new PsiArrayType(thisType))
