@@ -68,7 +68,6 @@ OUT="$(get_absolute_path "$OUT")"
 DIST="$(get_absolute_path "$DIST")"
 
 ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
-BAZEL="../base/bazel/bazel"
 
 echo "## Building android-studio ##"
 echo "## Dist dir: $DIST"
@@ -90,10 +89,6 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-echo "## BAZEL: $BAZEL"
-readonly BAZEL_BIN="$($BAZEL info "bazel-bin")"
-echo "## BAZEL_BIN: $BAZEL_BIN"
-
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 
 declare -ar BUILD_PROPERTIES=(
@@ -109,40 +104,11 @@ $ANT "${BUILD_PROPERTIES[@]}" build
 
 $ANT "-Dstudio.sdk=${STUDIO_SDK}" "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
-if [[ "${STUDIO_SDK}" == "false" ]]; then
-  $BAZEL build //tools/idea/updater:updater_deploy.jar
-fi
-
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 if [ "$ASWB" = true ]; then
   cp -Rfv "$OUT"/artifacts/aswb* "$DIST"
 else
   cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
-
-  if [[ "${STUDIO_SDK}" == "false" ]]; then
-    cp -Rfv "${BAZEL_BIN}"/tools/idea/updater/updater_deploy.jar "$DIST"/android-studio-updater.jar
-    cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
-
-    # write the version number into the windows installer dir
-    echo $BNUM > ../adt/idea/native/installer/win/version
-    (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
-  else
-    cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar
-  fi
-fi
-
-if [[ "${STUDIO_SDK}" == "false" ]]; then
-  # execute a bunch of sanity checks on the final artifacts
-  $BAZEL test \
-    --config=cloud_resultstore \
-    //tools/idea:test_studio \
-    --test_arg=--java_home="$JAVA_HOME" \
-    --test_arg=--out="$OUT" \
-    --test_arg=--dist="$DIST" \
-    --test_arg=--build=$AS_BUILD_NUMBER \
-    --test_arg=--aswb=$ASWB \
-    --test_strategy=standalone \
-    --spawn_strategy=standalone \
-    --nocache_test_results
+  cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar
 fi
