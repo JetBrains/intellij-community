@@ -61,7 +61,7 @@ internal class PredictionService(val project: Project) : Disposable {
   private val gitHistoryTraverserListener = object : GitHistoryTraverserListener {
     override fun traverserCreated(newTraverser: GitHistoryTraverser) = synchronized(LOCK) {
       updateTraverser(newTraverser)
-      Disposer.register(newTraverser, Disposable { disposeTraverser() })
+      Disposer.register(newTraverser, Disposable { onTraverserDisposed() })
     }
 
     override fun graphUpdated() = synchronized(LOCK) {
@@ -144,7 +144,7 @@ internal class PredictionService(val project: Project) : Disposable {
     calculatePrediction()
   }
 
-  private fun disposeTraverser() {
+  private fun onTraverserDisposed() {
     setEmptyPrediction(PredictionData.EmptyPredictionReason.TRAVERSER_INVALID)
     val (filesHistoryProvider) = predictionRequirements ?: return
     predictionRequirements = null
@@ -196,7 +196,7 @@ internal class PredictionService(val project: Project) : Disposable {
   private fun shutdownService() = synchronized(LOCK) {
     nodeExpandedListener.unsubscribe()
 
-    disposeTraverser()
+    onTraverserDisposed()
 
     Disposer.dispose(serviceDisposable)
   }
