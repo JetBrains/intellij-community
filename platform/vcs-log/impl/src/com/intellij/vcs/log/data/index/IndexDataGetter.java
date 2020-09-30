@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.IntConsumer;
 
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
@@ -190,9 +191,18 @@ public final class IndexDataGetter {
 
   @NotNull
   private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
+    IntSet result = new IntOpenHashSet();
+    filterMessages(filter, candidates, result::add);
+    return result;
+  }
+
+  public void filterMessages(@NotNull VcsLogTextFilter filter, @NotNull IntConsumer consumer) {
+    filterMessages(filter, null, consumer);
+  }
+
+  private void filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates, @NotNull IntConsumer consumer) {
     if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
-      return executeAndCatch(() -> {
-        IntSet result = new IntOpenHashSet();
+      executeAndCatch(() -> {
         List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
                                       ((VcsLogMultiplePatternsTextFilter)filter).getPatterns() :
                                       Collections.singletonList(filter.getText());
@@ -201,47 +211,45 @@ public final class IndexDataGetter {
           IntSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
           if (commits == null) {
             noTrigramSources.add(string);
-          } else {
-            result.addAll(filter(myIndexStorage.messages, TroveUtil.intersect(candidates, commits), filter::matches));
+          }
+          else {
+            filter(myIndexStorage.messages, TroveUtil.intersect(candidates, commits), filter::matches, consumer);
           }
         }
-        if (!noTrigramSources.isEmpty()) {
-          VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
-          result.addAll(filter(myIndexStorage.messages, candidates, noTrigramFilter::matches));
-        }
-        return result;
-      }, IntSets.EMPTY_SET);
-    }
+        if (noTrigramSources.isEmpty()) return;
 
-    return executeAndCatch(() -> {
-      return filter(myIndexStorage.messages, candidates, filter::matches);
-    }, IntSets.EMPTY_SET);
+        VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
+        filter(myIndexStorage.messages, candidates, noTrigramFilter::matches, consumer);
+      });
+    }
+    else {
+      executeAndCatch(() -> {
+        filter(myIndexStorage.messages, candidates, filter::matches, consumer);
+      });
+    }
   }
 
-  @NotNull
-  private <T> IntSet filter(@NotNull PersistentMap<Integer, T> map, @Nullable IntIterable candidates,
-                            @NotNull Condition<? super T> condition) throws IOException {
-    IntSet result = new IntOpenHashSet();
+  private <T> void filter(@NotNull PersistentMap<Integer, T> map, @Nullable IntIterable candidates,
+                          @NotNull Condition<? super T> condition, @NotNull IntConsumer consumer) throws IOException {
     if (candidates == null) {
-      processKeys(map, commit -> filterCommit(map, commit, condition, result));
-      return result;
+      processKeys(map, commit -> filterCommit(map, commit, condition, consumer));
     }
-
-    for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
-      if (!filterCommit(map, iterator.nextInt(), condition, result)) {
-        break;
+    else {
+      for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
+        if (!filterCommit(map, iterator.nextInt(), condition, consumer)) {
+          break;
+        }
       }
     }
-    return result;
   }
 
   private <T> boolean filterCommit(@NotNull PersistentMap<Integer, T> map, int commit,
-                                   @NotNull Condition<? super T> condition, @NotNull IntSet result) {
+                                   @NotNull Condition<? super T> condition, @NotNull IntConsumer consumer) {
     try {
       T value = map.get(commit);
       if (value != null) {
         if (condition.value(value)) {
-          result.add(commit);
+          consumer.accept(commit);
         }
       }
     }
@@ -399,13 +407,21 @@ public final class IndexDataGetter {
     return myLogStorage;
   }
 
-  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<? super Integer> processor) throws IOException {
+  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<? super Integer> processor)
+    throws IOException {
     if (map instanceof PersistentHashMap) {
       ((PersistentHashMap<Integer, T>)map).processKeysWithExistingMapping(processor);
     }
     else {
       map.processKeys(processor);
     }
+  }
+
+  private void executeAndCatch(@NotNull Throwable2Runnable<IOException, StorageException> runnable) {
+    executeAndCatch(() -> {
+      runnable.run();
+      return null;
+    }, null);
   }
 
   @Nullable
@@ -445,5 +461,10 @@ public final class IndexDataGetter {
     CorruptedDataException(@NotNull String message) {
       super(message);
     }
+  }
+
+  @FunctionalInterface
+  private interface Throwable2Runnable<E1 extends Throwable, E2 extends Throwable> {
+    void run() throws E1, E2;
   }
 }
