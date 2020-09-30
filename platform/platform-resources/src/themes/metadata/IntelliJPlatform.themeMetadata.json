@@ -670,26 +670,32 @@
     },
     {
       "key": "List.hoverBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in a focused list if hover is allowed."
     },
     {
       "key": "List.hoverInactiveBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
     },
     {
       "key": "Tree.hoverBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in a focused tree if hover is allowed."
     },
     {
       "key": "Tree.hoverInactiveBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
     },
     {
       "key": "Table.hoverBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in a focused table if hover is allowed."
     },
     {
       "key": "Table.hoverInactiveBackground",
+      "since": "2020.3",
       "description": "A background of a hovered row in an unfocused table if hover is allowed."
     },
     {
