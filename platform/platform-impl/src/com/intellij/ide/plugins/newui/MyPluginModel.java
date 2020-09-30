@@ -81,7 +81,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
   private final Set<IdeaPluginDescriptor> myPluginsToRemoveOnCancel = new HashSet<>();
 
-  private final @NotNull Map<IdeaPluginDescriptor, Boolean> myPerProjectPlugins = new HashMap<>();
+  private final @NotNull Map<IdeaPluginDescriptor, PluginEnabledState> myDiff = new HashMap<>();
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
@@ -104,35 +104,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isModified() {
-    if (needRestart ||
-        !myDynamicPluginsToInstall.isEmpty() ||
-        !myDynamicPluginsToUninstall.isEmpty() ||
-        !myPluginsToRemoveOnCancel.isEmpty() ||
-        !myPerProjectPlugins.isEmpty()) {
-      return true;
-    }
-
-    for (IdeaPluginDescriptor descriptor : getAllPlugins()) {
-      boolean enabledInTable = isEnabled(descriptor);
-
-      if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId())) {
-          continue; // was disabled automatically on startup
-        }
-        return true;
-      }
-    }
-
-    for (Map.Entry<PluginId, PluginEnabledState> entry : getEnabledMap().entrySet()) {
-      PluginEnabledState enabled = entry.getValue();
-      if (enabled != null &&
-          !enabled.isEnabled() &&
-          !PluginManagerCore.isDisabled(entry.getKey())) {
-        return true;
-      }
-    }
-
-    return false;
+    return needRestart ||
+           !myDynamicPluginsToInstall.isEmpty() ||
+           !myDynamicPluginsToUninstall.isEmpty() ||
+           !myPluginsToRemoveOnCancel.isEmpty() ||
+           !myDiff.isEmpty();
   }
 
   /**
@@ -206,12 +182,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     ProjectPluginTracker pluginTracker = getPluginTracker();
     if (pluginTracker != null) {
-      myPerProjectPlugins.forEach((descriptor, perProject) -> pluginTracker.changeEnableDisable(
-        descriptor,
-        getState(descriptor, perProject))
-      );
+      myDiff.forEach(pluginTracker::changeEnableDisable);
     }
-    myPerProjectPlugins.clear();
+    myDiff.clear();
 
     boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent);
     myDynamicPluginsToUninstall.clear();
@@ -808,22 +781,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
-    ProjectPluginTracker pluginTracker = getPluginTracker();
-    Boolean perProject = myPerProjectPlugins.get(descriptor);
-
-    return getState(
-      descriptor,
-      perProject != null ?
-      perProject :
-      pluginTracker != null && (pluginTracker.isEnabled(descriptor) || pluginTracker.isDisabled(descriptor))
-    );
+    PluginEnabledState newState = myDiff.get(descriptor);
+    return newState != null ? newState : getTableState(descriptor);
   }
 
-  private @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor,
-                                               boolean perProject) {
+  private @NotNull PluginEnabledState getTableState(@NotNull IdeaPluginDescriptor descriptor) {
+    ProjectPluginTracker pluginTracker = getPluginTracker();
     return PluginEnabledState.getState(
       isEnabled(descriptor),
-      perProject
+      pluginTracker != null && (pluginTracker.isEnabled(descriptor) || pluginTracker.isDisabled(descriptor))
     );
   }
 
@@ -877,13 +843,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @Override
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
                                                @NotNull PluginEnabledState newState) {
+    if (myDiff.get(descriptor) != getTableState(descriptor)) {
+      myDiff.put(descriptor, newState);
+    }
+    else {
+      myDiff.remove(descriptor);
+    }
+
     PluginId pluginId = descriptor.getPluginId();
     myErrorPluginsToDisable.remove(pluginId);
-
-    myPerProjectPlugins.put(
-      descriptor,
-      newState.isPerProject()
-    );
 
     if (newState.isEnabled() ||
         descriptor.isEnabled()) {
