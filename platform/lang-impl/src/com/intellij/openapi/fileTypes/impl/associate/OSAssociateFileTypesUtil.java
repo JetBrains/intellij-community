@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,11 +97,17 @@ public class OSAssociateFileTypesUtil {
         String name =
           ((ExtensionFileNameMatcher)matcher).getExtension().equals(originalType.getDefaultExtension())
           ? originalType.getName()
-          : originalType.getName() + "-" + matcher.getPresentableString().replaceAll("\\*", "x").replaceAll("\\.", "-");
+          : getSubtypeName(originalType.getName(), (ExtensionFileNameMatcher)matcher);
         subtypes.add(new MyFileSubtype(originalType, matcher, name, matcher.getPresentableString()));
       }
     }
     return subtypes;
+  }
+
+  private static String getSubtypeName(@NotNull String baseName, @NotNull ExtensionFileNameMatcher matcher) {
+    String ext = StringUtils.removeStart(matcher.getExtension(), ".");
+    ext = ext.replaceAll("\\+", "-plus");
+    return baseName + "-x-" + ext;
   }
 
   public static @Nullable FileNameMatcher getSubtypeMatcher(@NotNull FileType fileType) {

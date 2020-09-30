@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 
 public class FileTypeAssociationForm {
 
+  public static final int SPLIT_EXTENSIONS_THRESHOLD = 5;
+
   private JPanel               myTopPanel;
   private JBScrollPane         myScrollPane;
   private JBLabel              myDescLabel;
@@ -105,23 +107,29 @@ public class FileTypeAssociationForm {
     List<MyFileTypeItem> items = new ArrayList<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
-      int matchersCount = OSAssociateFileTypesUtil.getExtensionMatchers(fileType).size();
-      if (matchersCount > 0) {
-        if (fileType instanceof PlainTextFileType && matchersCount > 1) {
-          items.add(new MyFileTypeItem(fileType, null, true));
-          OSAssociateFileTypesUtil.createSubtypes(fileType).forEach(
-            subtype -> items.add(new MyFileTypeItem(subtype, fileType, false))
-          );
-        }
-        else {
-          if (!fileType.isReadOnly()) {
-            items.add(new MyFileTypeItem(fileType, null, false));
+      if (isSupported(fileType)) {
+        int matchersCount = OSAssociateFileTypesUtil.getExtensionMatchers(fileType).size();
+        if (matchersCount > 0) {
+          if (matchersCount > SPLIT_EXTENSIONS_THRESHOLD) {
+            items.add(new MyFileTypeItem(fileType, null, true));
+            OSAssociateFileTypesUtil.createSubtypes(fileType).forEach(
+              subtype -> items.add(new MyFileTypeItem(subtype, fileType, false))
+            );
+          }
+          else {
+            if (!fileType.isReadOnly()) {
+              items.add(new MyFileTypeItem(fileType, null, false));
+            }
           }
         }
       }
     }
     Collections.sort(items);
     return new ArrayList<>(items);
+  }
+
+  private static boolean isSupported(@NotNull FileType fileType) {
+    return !(fileType instanceof NativeFileType);
   }
 
   private void onItemStateChange(@NotNull MyFileTypeItem currItem, boolean isSelected) {
