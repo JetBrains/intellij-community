@@ -193,11 +193,20 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alert, "setAlertStyle:", /*NSCriticalAlertStyle*/2)
       }
 
+      var enableEscape = true
+
       for (button in info.buttons) {
-        Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+        val nsButton = Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+        // don't equals with nls "button.cancel"
+        if (button == "Cancel") {
+          Foundation.invoke(nsButton, "setKeyEquivalent:", Foundation.nsString("\u001b"))
+          enableEscape = false
+        }
       }
 
-      enableEscapeToCloseTheMessage(alert)
+      if (enableEscape) {
+        enableEscapeToCloseTheMessage(alert)
+      }
 
       if (info.doNotAskDialogOption != null && info.doNotAskDialogOption.canBeHidden()) {
         Foundation.invoke(alert, "setShowsSuppressionButton:", 1)
