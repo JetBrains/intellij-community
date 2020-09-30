@@ -98,6 +98,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
       inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
+      profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
     }
   }
@@ -152,6 +153,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     configuration.setUuid(null);
     inspection.addConfiguration(configuration);
     addInspectionToProfile(project, profile, configuration);
+    if (profile instanceof InspectionProfileModifiableModel) {
+      ((InspectionProfileModifiableModel)profile).setModified(true);
+    }
     InspectionProfileUtil.fireProfileChanged(profile);
     profile.getProfileManager().fireProfileChanged(profile);
     return true;
