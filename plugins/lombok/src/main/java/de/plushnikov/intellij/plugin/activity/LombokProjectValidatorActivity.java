@@ -36,6 +36,8 @@ import java.util.regex.Pattern;
  */
 public class LombokProjectValidatorActivity implements StartupActivity {
 
+  private static final Pattern LOMBOK_VERSION_PATTERN = Pattern.compile("(.*:)([\\d.]+)(.*)");
+
   @Override
   public void runActivity(@NotNull Project project) {
     // If plugin is not enabled - no point to continue
@@ -151,8 +153,7 @@ public class LombokProjectValidatorActivity implements StartupActivity {
     String result = null;
     if (null != orderEntry) {
       final String presentableName = orderEntry.getPresentableName();
-      Pattern pattern = Pattern.compile("(.*:)([\\d.]+)(.*)");
-      final Matcher matcher = pattern.matcher(presentableName);
+      final Matcher matcher = LOMBOK_VERSION_PATTERN.matcher(presentableName);
       if (matcher.find()) {
         result = matcher.group(2);
       }
