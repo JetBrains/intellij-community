@@ -13,6 +13,7 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
@@ -33,6 +34,17 @@ public final class BaseFilterLexerUtil {
     if (!needIdIndex && todoPatterns.length <= 0) return EMPTY;
     final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
 
+    data = doScanContent(content, indexer, needIdIndex, needTodo, todoPatterns);
+
+    if (needIdIndex && needTodo) content.putUserData(scanContentKey, data);
+    return data;
+  }
+
+  public static @NotNull ScanContent doScanContent(@NotNull FileContent content,
+                                                   @NotNull IdAndToDoScannerBasedOnFilterLexer indexer,
+                                                   boolean needIdIndex,
+                                                   boolean needTodo,
+                                                   IndexPattern @NotNull [] todoPatterns) {
     final IdDataConsumer consumer = needIdIndex ? new IdDataConsumer() : null;
     final OccurrenceConsumer todoOccurrenceConsumer = new OccurrenceConsumer(consumer, needTodo);
     final Lexer filterLexer = indexer.createLexer(todoOccurrenceConsumer);
@@ -51,12 +63,10 @@ public final class BaseFilterLexerUtil {
         }
     }
 
-    data = new ScanContent(
+    return new ScanContent(
       consumer != null? consumer.getResult():Collections.emptyMap(),
       todoMap != null ? todoMap: Collections.emptyMap()
     );
-    if (needIdIndex && needTodo) content.putUserData(scanContentKey, data);
-    return data;
   }
 
   public static class ScanContent {
