@@ -16,10 +16,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
-/**
- * @author spleaner
- */
-public class ImageInfoReader {
+public final class ImageInfoReader {
   @Nullable
   public static Info getInfo(byte @NotNull [] data) {
     Info info = getSvgInfo(data);

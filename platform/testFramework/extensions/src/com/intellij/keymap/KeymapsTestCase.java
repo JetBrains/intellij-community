@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -430,19 +429,19 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   }};
   // @formatter:on
 
-  @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = ContainerUtil.set(
+  @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
     "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow",
     "ActivateDebugToolWindow", "ActivateServicesToolWindow", "ActivateFindToolWindow", "ActivateHierarchyToolWindow",
     "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",
     "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow", "ActivateTerminalToolWindow",
-    "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
+    "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
     "ActivateErrorsInSolutionToolWindow", "ActivateUnitTestsToolWindow", "ActivateInspectionResultsToolWindow",
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     ""
   );
 
-  @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = ContainerUtil.set(
+  @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = Set.of(
     "EditorDelete",
     "List-selectLastRowExtendSelection",
     "List-selectLastRow",
@@ -453,7 +452,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectFirstExtendSelection",
     "Tree-selectFirst"
   );
-  protected static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
+  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
     List.of("Log.KeymapGroup", "UsageGroupingActionGroup", "SearchEverywhereActions", "Images.ThumbnailViewActions", "Images.ImageViewActions",
             "ArrangementRulesGroup", "ServiceViewTreeToolbar", "TodoViewGroupByGroup", "ChangesView.GroupBy");
 

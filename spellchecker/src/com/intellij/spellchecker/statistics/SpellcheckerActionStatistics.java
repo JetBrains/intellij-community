@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class SpellcheckerActionStatistics {
+public final class SpellcheckerActionStatistics {
 
   public static void reportAction(@NotNull String action, @NotNull Project project) {
     FUCounterUsageLogger.getInstance().logEvent(project, "spellchecker.events", action);

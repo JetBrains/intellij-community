@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class JsonSchemaCatalogManager {
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
-  private static final Set<String> SCHEMA_URLS_WITH_TOO_MANY_VARIANTS = ImmutableSet.of(
+  private static final Set<String> SCHEMA_URLS_WITH_TOO_MANY_VARIANTS = Set.of(
     "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json"
   );
 
@@ -48,6 +47,8 @@ public final class JsonSchemaCatalogManager {
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
   private VirtualFile myTestSchemaStoreFile;
+
+  private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = CollectionFactory.createConcurrentWeakMap();
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;
@@ -104,7 +105,8 @@ public final class JsonSchemaCatalogManager {
       if (NO_CACHE.equals(schemaUrl)) return null;
       myResolvedMappings.put(name, StringUtil.notNullize(schemaUrl, EMPTY));
     }
-    if (SCHEMA_URLS_WITH_TOO_MANY_VARIANTS.contains(schemaUrl)) {
+
+    if (schemaUrl == null || SCHEMA_URLS_WITH_TOO_MANY_VARIANTS.contains(schemaUrl)) {
       return null;
     }
     return JsonFileResolver.resolveSchemaByReference(file, schemaUrl);
@@ -118,7 +120,6 @@ public final class JsonSchemaCatalogManager {
     return ContainerUtil.emptyList();
   }
 
-  private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = CollectionFactory.createConcurrentWeakMap();
   public void registerCatalogUpdateCallback(Runnable callback) {
     if (myCatalog instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)myCatalog).getFileInfo();
