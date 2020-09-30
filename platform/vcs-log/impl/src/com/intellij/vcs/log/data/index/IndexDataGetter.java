@@ -200,40 +200,27 @@ public final class IndexDataGetter {
           if (commits == null) return null;
           commitsForSearch.addAll(TroveUtil.intersect(candidates, commits));
         }
-        IntSet result = new IntOpenHashSet();
-        for (IntIterator iterator = commitsForSearch.iterator(); iterator.hasNext(); ) {
-          int commit = iterator.nextInt();
-          try {
-            String value = myIndexStorage.messages.get(commit);
-            if (value != null && filter.matches(value)) {
-              result.add(commit);
-            }
-          }
-          catch (IOException e) {
-            myFatalErrorsConsumer.consume(this, e);
-            break;
-          }
-        }
-        return result;
-      });
+        return filter(myIndexStorage.messages, commitsForSearch, filter::matches);
+      }, IntSets.EMPTY_SET);
 
+      //noinspection ConstantConditions
       if (resultByTrigrams != null) {
         return resultByTrigrams;
       }
     }
 
-    return filter(myIndexStorage.messages, candidates, filter::matches);
+    return executeAndCatch(() -> {
+      return filter(myIndexStorage.messages, candidates, filter::matches);
+    }, IntSets.EMPTY_SET);
   }
 
   @NotNull
   private <T> IntSet filter(@NotNull PersistentMap<Integer, T> map, @Nullable IntIterable candidates,
-                            @NotNull Condition<? super T> condition) {
+                            @NotNull Condition<? super T> condition) throws IOException {
     IntSet result = new IntOpenHashSet();
     if (candidates == null) {
-      return executeAndCatch(() -> {
-        processKeys(map, commit -> filterCommit(map, commit, condition, result));
-        return result;
-      }, result);
+      processKeys(map, commit -> filterCommit(map, commit, condition, result));
+      return result;
     }
 
     for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
