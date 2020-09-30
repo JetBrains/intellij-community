@@ -164,7 +164,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config.junit", false)) {
+    if (Registry.is("ide.new.run.config.junit", true)) {
       return new JUnitSettingsEditor(this);
     }
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
