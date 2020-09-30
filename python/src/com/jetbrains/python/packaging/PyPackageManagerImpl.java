@@ -9,6 +9,7 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,8 +26,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
-import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.*;
@@ -168,7 +169,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
     mySdk = sdk;
     subscribeToLocalChanges();
-    Disposer.register(PyPackageManagers.getInstance(), this);
+    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : PyPackageManagers.getInstance();
+    Disposer.register(parentDisposable, this);
   }
 
   protected void subscribeToLocalChanges() {
