@@ -211,7 +211,7 @@ private val latestChangeCommitsGuard = Any()
  * @param path path relative to [repo]
  */
 internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
-  val file = repo.resolve(path).toRealPath().toString()
+  val file = repo.resolve(path).toAbsolutePath().toString()
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
