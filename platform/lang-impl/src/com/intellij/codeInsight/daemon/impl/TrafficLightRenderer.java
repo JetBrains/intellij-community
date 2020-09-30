@@ -369,7 +369,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (count > 0) {
         HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         if (severity != null) {
-          String name = count > 1 ? StringUtil.pluralize(StringUtil.toLowerCase(severity.getName())) : StringUtil.toLowerCase(severity.getName());
+          String name = count > 1 ? severity.getDisplayLowercasePluralName() : severity.getDisplayLowercaseName();
           text.append(status.errorAnalyzingFinished
                       ? DaemonBundle.message("errors.found", count, name)
                       : DaemonBundle.message("errors.found.so.far", count, name)).append("<br/>");
@@ -433,10 +433,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         if (count > 0) {
           HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
           if (severity != null) {
-            String name = StringUtil.toLowerCase(severity.getName());
-            if (count > 1) {
-              name = StringUtil.pluralize(name);
-            }
+            String name = count > 1 ? severity.getDisplayLowercasePluralName() : severity.getDisplayLowercaseName();
 
             Icon icon = mySeverityRegistrar.getRendererIconByIndex(i);
             statusItems.add(new StatusItem(Integer.toString(count), icon, name));

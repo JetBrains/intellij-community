@@ -189,7 +189,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static @Nls String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
-    return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
+    return severity.getDisplayLowercaseCapitalizedName();
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,

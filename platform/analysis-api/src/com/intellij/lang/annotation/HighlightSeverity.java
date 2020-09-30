@@ -1,49 +1,58 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 /**
  * Defines a highlighting severity level for an annotation.
-
+ *
  * @see Annotation
  */
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
-  public final @NlsSafe String myName;
+  @NotNull
+  public final @NonNls String myName;
+  @Nullable
+  private final String myBundleKey;
+
   public final int myVal;
 
   /**
    * The standard severity level for information annotations.
    */
-  public static final HighlightSeverity INFORMATION = new HighlightSeverity("INFORMATION", 10);
+  public static final HighlightSeverity INFORMATION = new HighlightSeverity("INFORMATION", 10, "information.severity");
 
   /**
    * The severity level for errors or warnings obtained from server.
    */
-  public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING = new HighlightSeverity("SERVER PROBLEM", 100);
+  public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING =
+    new HighlightSeverity("SERVER PROBLEM", 100, "server.problem.severity");
 
   /** @deprecated use {@link #WEAK_WARNING} */
   @Deprecated
-  public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
+  public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200, "info.severity");
 
-  public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK WARNING", 200);
+  public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK WARNING", 200, "weak.warning.severity");
 
   /**
    * The standard severity level for warning annotations.
    */
-  public static final HighlightSeverity WARNING = new HighlightSeverity("WARNING", 300);
+  public static final HighlightSeverity WARNING = new HighlightSeverity("WARNING", 300, "warning.severity");
 
   /**
    * The standard severity level for error annotations.
    */
-  public static final HighlightSeverity ERROR = new HighlightSeverity("ERROR", 400);
+  public static final HighlightSeverity ERROR = new HighlightSeverity("ERROR", 400, "error.severity");
 
   /**
    * Standard severity levels.
@@ -58,14 +67,20 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * @param val  the value of the highlighting level. Used for comparing the annotations -
    *             if two annotations with different severity levels cover the same text range, only
    *             the annotation with a higher severity level is displayed.
+   * @param bundleKey the key for the localized name of the highlighting level.
    */
-  public HighlightSeverity(@NlsSafe @NotNull String name, int val) {
+  public HighlightSeverity(@NotNull String name, int val, @Nullable String bundleKey) {
     myName = name;
     myVal = val;
+    myBundleKey = bundleKey;
+  }
+
+  public HighlightSeverity(@NotNull String name, int val) {
+    this(name, val, null);
   }
 
   public HighlightSeverity(@NotNull Element element) {
-    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")));
+    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")), null);
   }
 
   private static String readField(Element element, String name) {
@@ -74,8 +89,30 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     return value;
   }
 
-  public @NlsSafe @NotNull String getName() {
+  public @NonNls @NotNull String getName() {
     return myName;
+  }
+
+  public @Nls @NotNull String getDisplayName() {
+    return getBundleText("");
+  }
+
+  public @Nls @NotNull String getDisplayLowercaseName() {
+    return getBundleText(".lowercase");
+  }
+
+  public @Nls @NotNull String getDisplayLowercaseCapitalizedName() {
+    return getBundleText(".lowercase.capitalized");
+  }
+
+  public @Nls @NotNull String getDisplayLowercasePluralName() {
+    return getBundleText(".lowercase.plural");
+  }
+
+  private @NotNull @Nls String getBundleText(@NotNull String suffix) {
+    if (myBundleKey != null) return InspectionsBundle.message(myBundleKey + suffix);
+    @NlsSafe String name = myName;
+    return name;
   }
 
   @Override
@@ -103,7 +140,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   @Override
-  public @NlsSafe String toString() {
+  public String toString() {
     return myName;
   }
 }
