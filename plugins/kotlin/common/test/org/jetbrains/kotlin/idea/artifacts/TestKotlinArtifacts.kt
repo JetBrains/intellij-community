@@ -95,6 +95,10 @@ object AdditionalKotlinArtifacts {
     val kotlinStdlibCommonSources: File by lazy {
         findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlinc_kotlin_stdlib_common.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
     }
+
+    val parcelizeRuntime: File by lazy {
+        KotlinArtifacts.instance.kotlincDistDir.resolve("lib/parcelize-runtime.jar")
+    }
 }
 
 private enum class RepoLocation {
