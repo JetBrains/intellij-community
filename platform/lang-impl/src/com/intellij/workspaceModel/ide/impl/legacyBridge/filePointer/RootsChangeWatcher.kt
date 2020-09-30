@@ -58,7 +58,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
   private val recursiveJarDirectories: Object2IntMap<String> = Object2IntOpenHashMap()
 
   private val moduleManager = ModuleManager.getInstance(project)
-  internal val rootFilePointers = LegacyModelRootsFilePointers(project)
 
   private val myExecutor = if (ApplicationManager.getApplication().isUnitTestMode) ConcurrencyUtil.newSameThreadExecutorService()
   else AppExecutorUtil.createBoundedApplicationPoolExecutor("Workspace Model Project Root Manager", 1)
@@ -68,13 +67,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
     val messageBusConnection = project.messageBus.connect()
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        //VirtualFilePointers are automatically updated when files are moved or renamed; if we try to create new instances inside that process,
-        //this may leave them in incorrect state
-        if (rootFilePointers.isInsideFilePointersUpdate) {
-          LOG.debug("Skipping update of the storage happened inside VirtualFilePointers updated")
-          return
-        }
-
         LOG.debug("Process file pointers after storage change")
         event.getAllChanges().forEach { change ->
           when (change) {
@@ -100,14 +92,6 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
       }
     })
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun before(events: List<VFileEvent>): Unit = events.forEach { event ->
-        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
-
-        if (oldUrl != newUrl) {
-          rootFilePointers.onVfsChange(oldUrl, newUrl)
-        }
-      }
-
       override fun after(events: List<VFileEvent>) = events.forEach { event ->
         if (event is VFilePropertyChangeEvent) propertyChanged(event)
 

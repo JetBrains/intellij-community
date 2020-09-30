@@ -131,10 +131,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
-          }
+          rootsChangeListener.beforeChanged(event)
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -184,11 +181,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          // Roots changed should be sent after syncing with legacy bridge
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.changed(event)
-          }
+          rootsChangeListener.changed(event)
         }
       })
     }
@@ -541,7 +534,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
     val entitySource = (moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource
     val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath!!
+      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.getPresentableUrl()!!
       // TODO Is this fallback fake path ok?
       else -> outOfTreeModulesPath
     }
