@@ -145,7 +145,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
     final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
     return new ProjectStructureProblemDescription(result,
-                                                  (HtmlChunk) null,
+                                                  HtmlChunk.empty(),
                                                   createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"),
                                                   ProjectStructureProblemDescription.ProblemLevel.PROJECT,

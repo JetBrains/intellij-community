@@ -37,7 +37,7 @@ public class ProjectStructureProblemDescription {
   private final boolean myCanShowPlace;
 
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable HtmlChunk description,
+                                            @NotNull HtmlChunk description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
@@ -45,7 +45,7 @@ public class ProjectStructureProblemDescription {
   }
 
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable HtmlChunk description,
+                                            @NotNull HtmlChunk description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull ProblemLevel level,
@@ -82,7 +82,7 @@ public class ProjectStructureProblemDescription {
                                             @NotNull ProblemLevel level,
                                             @NotNull List<? extends ConfigurationErrorQuickFix> fixes, final boolean canShowPlace) {
     this(message,
-         description != null ? HtmlChunk.raw(description) : null,
+         description != null ? HtmlChunk.raw(description) : HtmlChunk.empty(),
          place,
          problemType,
          level,
