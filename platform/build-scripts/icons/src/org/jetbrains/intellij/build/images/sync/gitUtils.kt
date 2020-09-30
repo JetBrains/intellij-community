@@ -20,8 +20,8 @@ internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?
   }
 }
 
-internal fun gitPull(repo: Path): Any {
-  return try {
+internal fun gitPull(repo: Path) {
+  try {
     execute(repo, GIT, "pull", "--rebase")
   }
   catch (e: Exception) {

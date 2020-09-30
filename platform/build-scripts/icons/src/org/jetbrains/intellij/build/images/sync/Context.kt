@@ -160,8 +160,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun verifyDevIcons(repos: Collection<Path>): Unit? {
-    return try {
+  fun verifyDevIcons(repos: Collection<Path>) {
+    try {
       devIconsVerifier?.accept(repos)
     }
     catch (e: Exception) {
