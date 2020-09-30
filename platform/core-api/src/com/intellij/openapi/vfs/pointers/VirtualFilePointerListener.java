@@ -10,6 +10,9 @@ public interface VirtualFilePointerListener {
   default void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
   }
 
+  default void beforeValidityChangedForPointersWithOldName(@NotNull VirtualFilePointer @NotNull [] pointer) {
+  }
+
   default void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
   }
 }
