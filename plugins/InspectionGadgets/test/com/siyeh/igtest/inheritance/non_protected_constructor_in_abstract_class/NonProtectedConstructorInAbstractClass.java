@@ -9,5 +9,5 @@ public abstract class NonProtectedConstructorInAbstractClass
     {
     }
 
-    public <error descr="Illegal type: 'void'">void</error>();
+    public <error descr="Identifier expected">void</error>();
 }

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,20 +32,20 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       JavaPsiBundle.message("expected.class.or.interface"))) {
       PsiElement child = errorElement.getFirstChild();
       if (child instanceof PsiIdentifier) {
-        HighlightingFeature feature;
         switch (child.getText()) {
           case PsiKeyword.RECORD:
-            feature = HighlightingFeature.RECORDS;
+            HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement,
+                                                             HighlightingFeature.RECORDS);
+            if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, new ConvertRecordToClassFix(errorElement));
+            }
             break;
           case PsiKeyword.SEALED:
-            feature = HighlightingFeature.SEALED_CLASSES;
+            HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement,
+                                                             HighlightingFeature.SEALED_CLASSES);
             break;
           default:
-            feature = null;
             break;
-        }
-        if (feature != null) {
-          HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement, feature);
         }
       }
     }

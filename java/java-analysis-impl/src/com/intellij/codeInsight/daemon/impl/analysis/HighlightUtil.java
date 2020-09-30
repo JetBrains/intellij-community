@@ -2403,6 +2403,7 @@ public final class HighlightUtil {
     if (!PsiKeyword.VOID.equals(type.getText())) return null;
 
     PsiElement parent = type.getParent();
+    if (parent instanceof PsiErrorElement) return null;
     if (parent instanceof PsiTypeElement) {
       PsiElement typeOwner = parent.getParent();
       if (typeOwner != null) {
