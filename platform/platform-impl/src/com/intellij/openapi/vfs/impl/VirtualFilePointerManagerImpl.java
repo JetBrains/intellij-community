@@ -161,7 +161,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       if (fileSystem == null) {
         // will always be null
-        return new LightFilePointer(url);
+        return new LightFilePointerUrl(url);
       }
     }
     else {
@@ -177,7 +177,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       // so for now we create normal pointers only when there are listeners.
       // maybe, later we'll fix all those tests
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
-      return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
+      return found == null ? new LightFilePointerUrl(url) : new LightFilePointerUrl(found);
     }
 
     if (!(fileSystem instanceof VirtualFilePointerCapableFileSystem)) {
