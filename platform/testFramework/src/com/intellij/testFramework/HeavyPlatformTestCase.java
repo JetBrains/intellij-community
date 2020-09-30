@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.project.ProjectKt;
 import com.intellij.project.TestProjectManager;
@@ -579,7 +578,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     TestRunnerUtil.replaceIdeEventQueueSafely();
     try {
-      runBareImpl(testRunnable);
+      wrapTestRunnable(() -> runBareImpl(testRunnable)).run();
     }
     finally {
       try {
