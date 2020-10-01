@@ -105,7 +105,7 @@ interface SdkLookupBuilder {
    * [withSdkHomeFilter] is not tested for this call!
    */
   @Contract(pure = true)
-  fun onSdkNameResolved(callback: (Sdk?) -> Unit) : SdkLookupBuilder
+  fun onSdkNameResolved(handler: (Sdk?) -> Unit) : SdkLookupBuilder
 
   /**
    * The [Sdk.getSdkType] may not match the proposed sdk type [withSdkType] if the
