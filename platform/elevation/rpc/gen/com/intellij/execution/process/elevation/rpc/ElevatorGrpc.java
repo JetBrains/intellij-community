@@ -89,6 +89,68 @@ public final class ElevatorGrpc {
     return getAwaitTerminationMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.WriteStreamRequest,
+      com.google.protobuf.Empty> getWriteStreamMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "WriteStream",
+      requestType = com.intellij.execution.process.elevation.rpc.WriteStreamRequest.class,
+      responseType = com.google.protobuf.Empty.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING)
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.WriteStreamRequest,
+      com.google.protobuf.Empty> getWriteStreamMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.WriteStreamRequest, com.google.protobuf.Empty> getWriteStreamMethod;
+    if ((getWriteStreamMethod = ElevatorGrpc.getWriteStreamMethod) == null) {
+      synchronized (ElevatorGrpc.class) {
+        if ((getWriteStreamMethod = ElevatorGrpc.getWriteStreamMethod) == null) {
+          ElevatorGrpc.getWriteStreamMethod = getWriteStreamMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.WriteStreamRequest, com.google.protobuf.Empty>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "WriteStream"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.elevation.rpc.WriteStreamRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.google.protobuf.Empty.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("WriteStream"))
+              .build();
+        }
+      }
+    }
+    return getWriteStreamMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReadStreamRequest,
+      com.intellij.execution.process.elevation.rpc.DataChunk> getReadStreamMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "ReadStream",
+      requestType = com.intellij.execution.process.elevation.rpc.ReadStreamRequest.class,
+      responseType = com.intellij.execution.process.elevation.rpc.DataChunk.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReadStreamRequest,
+      com.intellij.execution.process.elevation.rpc.DataChunk> getReadStreamMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReadStreamRequest, com.intellij.execution.process.elevation.rpc.DataChunk> getReadStreamMethod;
+    if ((getReadStreamMethod = ElevatorGrpc.getReadStreamMethod) == null) {
+      synchronized (ElevatorGrpc.class) {
+        if ((getReadStreamMethod = ElevatorGrpc.getReadStreamMethod) == null) {
+          ElevatorGrpc.getReadStreamMethod = getReadStreamMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.ReadStreamRequest, com.intellij.execution.process.elevation.rpc.DataChunk>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ReadStream"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.elevation.rpc.ReadStreamRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.elevation.rpc.DataChunk.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("ReadStream"))
+              .build();
+        }
+      }
+    }
+    return getReadStreamMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReleaseRequest,
       com.google.protobuf.Empty> getReleaseMethod;
 
@@ -184,6 +246,20 @@ public final class ElevatorGrpc {
 
     /**
      */
+    public io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.WriteStreamRequest> writeStream(
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      return asyncUnimplementedStreamingCall(getWriteStreamMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void readStream(com.intellij.execution.process.elevation.rpc.ReadStreamRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.DataChunk> responseObserver) {
+      asyncUnimplementedUnaryCall(getReadStreamMethod(), responseObserver);
+    }
+
+    /**
+     */
     public void release(com.intellij.execution.process.elevation.rpc.ReleaseRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(getReleaseMethod(), responseObserver);
@@ -205,6 +281,20 @@ public final class ElevatorGrpc {
                 com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
                 com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>(
                   this, METHODID_AWAIT_TERMINATION)))
+          .addMethod(
+            getWriteStreamMethod(),
+            asyncClientStreamingCall(
+              new MethodHandlers<
+                com.intellij.execution.process.elevation.rpc.WriteStreamRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_WRITE_STREAM)))
+          .addMethod(
+            getReadStreamMethod(),
+            asyncServerStreamingCall(
+              new MethodHandlers<
+                com.intellij.execution.process.elevation.rpc.ReadStreamRequest,
+                com.intellij.execution.process.elevation.rpc.DataChunk>(
+                  this, METHODID_READ_STREAM)))
           .addMethod(
             getReleaseMethod(),
             asyncUnaryCall(
@@ -248,6 +338,22 @@ public final class ElevatorGrpc {
 
     /**
      */
+    public io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.WriteStreamRequest> writeStream(
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      return asyncClientStreamingCall(
+          getChannel().newCall(getWriteStreamMethod(), getCallOptions()), responseObserver);
+    }
+
+    /**
+     */
+    public void readStream(com.intellij.execution.process.elevation.rpc.ReadStreamRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.DataChunk> responseObserver) {
+      asyncServerStreamingCall(
+          getChannel().newCall(getReadStreamMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
     public void release(com.intellij.execution.process.elevation.rpc.ReleaseRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
@@ -281,6 +387,14 @@ public final class ElevatorGrpc {
     public com.intellij.execution.process.elevation.rpc.AwaitTerminationReply awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return blockingUnaryCall(
           getChannel(), getAwaitTerminationMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public java.util.Iterator<com.intellij.execution.process.elevation.rpc.DataChunk> readStream(
+        com.intellij.execution.process.elevation.rpc.ReadStreamRequest request) {
+      return blockingServerStreamingCall(
+          getChannel(), getReadStreamMethod(), getCallOptions(), request);
     }
 
     /**
@@ -332,7 +446,9 @@ public final class ElevatorGrpc {
 
   private static final int METHODID_CREATE_PROCESS = 0;
   private static final int METHODID_AWAIT_TERMINATION = 1;
-  private static final int METHODID_RELEASE = 2;
+  private static final int METHODID_READ_STREAM = 2;
+  private static final int METHODID_RELEASE = 3;
+  private static final int METHODID_WRITE_STREAM = 4;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -359,6 +475,10 @@ public final class ElevatorGrpc {
           serviceImpl.awaitTermination((com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest) request,
               (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>) responseObserver);
           break;
+        case METHODID_READ_STREAM:
+          serviceImpl.readStream((com.intellij.execution.process.elevation.rpc.ReadStreamRequest) request,
+              (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.DataChunk>) responseObserver);
+          break;
         case METHODID_RELEASE:
           serviceImpl.release((com.intellij.execution.process.elevation.rpc.ReleaseRequest) request,
               (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
@@ -373,6 +493,9 @@ public final class ElevatorGrpc {
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
+        case METHODID_WRITE_STREAM:
+          return (io.grpc.stub.StreamObserver<Req>) serviceImpl.writeStream(
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
         default:
           throw new AssertionError();
       }
@@ -426,6 +549,8 @@ public final class ElevatorGrpc {
               .setSchemaDescriptor(new ElevatorFileDescriptorSupplier())
               .addMethod(getCreateProcessMethod())
               .addMethod(getAwaitTerminationMethod())
+              .addMethod(getWriteStreamMethod())
+              .addMethod(getReadStreamMethod())
               .addMethod(getReleaseMethod())
               .build();
         }

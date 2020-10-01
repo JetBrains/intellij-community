@@ -7,6 +7,8 @@ import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
 import io.grpc.Status
 import io.grpc.StatusException
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
 import java.io.File
 import java.io.IOException
 
@@ -41,6 +43,34 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
   override suspend fun release(request: ReleaseRequest): Empty {
     processManager.release(request.pid)
     return Empty.getDefaultInstance()
+  }
+
+  override fun readStream(request: ReadStreamRequest): Flow<DataChunk> {
+    val handle = request.handle
+    return processManager.readStream(handle.pid, handle.fd)
+      .map { buffer ->
+        DataChunk.newBuilder()
+          .setBuffer(buffer)
+          .build()
+      }
+  }
+
+  override suspend fun writeStream(requests: Flow<WriteStreamRequest>): Empty = coroutineScope {
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    val receiveChannel = requests.produceIn(this)
+
+    val handle = receiveChannel.receive().also { request ->
+      require(request.hasHandle()) { "the first request must specify the handle" }
+    }.handle
+
+    val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
+      require(request.hasChunk()) { "got handle in the middle of the stream" }
+      request.chunk.buffer
+    }
+
+    processManager.writeStream(handle.pid, handle.fd, chunkFlow)
+
+    return@coroutineScope Empty.getDefaultInstance()
   }
 
   companion object {

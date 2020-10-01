@@ -40,6 +40,26 @@ public final class ElevatorProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_elevation_rpc_ReleaseRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_FileHandle_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_FileHandle_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_DataChunk_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_DataChunk_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_ReadStreamRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_ReadStreamRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_WriteStreamRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_WriteStreamRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_elevation_rpc_CommandLine_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -65,19 +85,29 @@ public final class ElevatorProto {
       "pid\030\001 \001(\004\"&\n\027AwaitTerminationRequest\022\013\n\003" +
       "pid\030\001 \001(\004\"*\n\025AwaitTerminationReply\022\021\n\tex" +
       "it_code\030\001 \001(\r\"\035\n\016ReleaseRequest\022\013\n\003pid\030\001" +
-      " \001(\004\"\233\001\n\013CommandLine\022\017\n\007command\030\001 \003(\t\022\023\n" +
-      "\013working_dir\030\002 \001(\t\022;\n\014environ_vars\030\003 \003(\013" +
-      "2%.elevation.rpc.CommandLine.EnvironVar\032" +
-      ")\n\nEnvironVar\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001" +
-      "(\t2\207\002\n\010Elevator\022W\n\rCreateProcess\022#.eleva" +
-      "tion.rpc.CreateProcessRequest\032!.elevatio" +
-      "n.rpc.CreateProcessReply\022`\n\020AwaitTermina" +
-      "tion\022&.elevation.rpc.AwaitTerminationReq" +
-      "uest\032$.elevation.rpc.AwaitTerminationRep" +
-      "ly\022@\n\007Release\022\035.elevation.rpc.ReleaseReq" +
-      "uest\032\026.google.protobuf.EmptyB?\n,com.inte" +
-      "llij.execution.process.elevation.rpcB\rEl" +
-      "evatorProtoP\001b\006proto3"
+      " \001(\004\"%\n\nFileHandle\022\013\n\003pid\030\001 \001(\004\022\n\n\002fd\030\002 " +
+      "\001(\r\"\033\n\tDataChunk\022\016\n\006buffer\030\001 \001(\014\">\n\021Read" +
+      "StreamRequest\022)\n\006handle\030\001 \001(\0132\031.elevatio" +
+      "n.rpc.FileHandle\"\202\001\n\022WriteStreamRequest\022" +
+      "+\n\006handle\030\001 \001(\0132\031.elevation.rpc.FileHand" +
+      "leH\000\022)\n\005chunk\030\002 \001(\0132\030.elevation.rpc.Data" +
+      "ChunkH\000B\024\n\022FileHandleOrBuffer\"\233\001\n\013Comman" +
+      "dLine\022\017\n\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 " +
+      "\001(\t\022;\n\014environ_vars\030\003 \003(\0132%.elevation.rp" +
+      "c.CommandLine.EnvironVar\032)\n\nEnvironVar\022\014" +
+      "\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\237\003\n\010Elevator" +
+      "\022W\n\rCreateProcess\022#.elevation.rpc.Create" +
+      "ProcessRequest\032!.elevation.rpc.CreatePro" +
+      "cessReply\022`\n\020AwaitTermination\022&.elevatio" +
+      "n.rpc.AwaitTerminationRequest\032$.elevatio" +
+      "n.rpc.AwaitTerminationReply\022J\n\013WriteStre" +
+      "am\022!.elevation.rpc.WriteStreamRequest\032\026." +
+      "google.protobuf.Empty(\001\022J\n\nReadStream\022 ." +
+      "elevation.rpc.ReadStreamRequest\032\030.elevat" +
+      "ion.rpc.DataChunk0\001\022@\n\007Release\022\035.elevati" +
+      "on.rpc.ReleaseRequest\032\026.google.protobuf." +
+      "EmptyB?\n,com.intellij.execution.process." +
+      "elevation.rpcB\rElevatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -114,8 +144,32 @@ public final class ElevatorProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_ReleaseRequest_descriptor,
         new java.lang.String[] { "Pid", });
-    internal_static_elevation_rpc_CommandLine_descriptor =
+    internal_static_elevation_rpc_FileHandle_descriptor =
       getDescriptor().getMessageTypes().get(5);
+    internal_static_elevation_rpc_FileHandle_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_FileHandle_descriptor,
+        new java.lang.String[] { "Pid", "Fd", });
+    internal_static_elevation_rpc_DataChunk_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_elevation_rpc_DataChunk_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_DataChunk_descriptor,
+        new java.lang.String[] { "Buffer", });
+    internal_static_elevation_rpc_ReadStreamRequest_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_elevation_rpc_ReadStreamRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_ReadStreamRequest_descriptor,
+        new java.lang.String[] { "Handle", });
+    internal_static_elevation_rpc_WriteStreamRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_elevation_rpc_WriteStreamRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_WriteStreamRequest_descriptor,
+        new java.lang.String[] { "Handle", "Chunk", "FileHandleOrBuffer", });
+    internal_static_elevation_rpc_CommandLine_descriptor =
+      getDescriptor().getMessageTypes().get(9);
     internal_static_elevation_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_CommandLine_descriptor,
