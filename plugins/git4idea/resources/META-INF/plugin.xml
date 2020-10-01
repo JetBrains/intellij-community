@@ -524,7 +524,6 @@
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
-    <projectService serviceImplementation="git4idea.index.vfs.GitIndexVirtualFileCache"/>
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
 

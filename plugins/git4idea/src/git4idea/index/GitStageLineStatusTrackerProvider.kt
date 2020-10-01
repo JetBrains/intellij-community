@@ -3,7 +3,6 @@ package git4idea.index
 
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -19,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
-import git4idea.index.vfs.GitIndexVirtualFileCache
+import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
@@ -74,8 +73,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
 
-    val indexFileCache = project.service<GitIndexVirtualFileCache>()
-    val indexFile = indexFileCache.get(repository.root, status.path(ContentVersion.STAGED))
+    val indexFileRefresher = GitIndexFileSystemRefresher.getInstance(project)
+    val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED))
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
 
     if (!status.has(ContentVersion.HEAD)) return StagedTrackerContent("", indexDocument)

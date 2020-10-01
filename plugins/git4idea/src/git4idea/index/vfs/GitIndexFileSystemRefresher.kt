@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -26,7 +27,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
-  private val cache get() = project.serviceIfCreated<GitIndexVirtualFileCache>()
+  private val cache = GitIndexVirtualFileCache(project)
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
@@ -46,9 +47,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     })
   }
 
+  fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
+    return cache.get(root, filePath)
+  }
+
   fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
-    val filesToRefresh = cache?.filesMatching(condition)
-    if (filesToRefresh == null || filesToRefresh.isEmpty()) return
+    val filesToRefresh = cache.filesMatching(condition)
+    if (filesToRefresh.isEmpty()) return
     refresh(filesToRefresh)
   }
 
@@ -89,6 +94,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   override fun dispose() {
+    Disposer.dispose(cache)
   }
 
   companion object {
