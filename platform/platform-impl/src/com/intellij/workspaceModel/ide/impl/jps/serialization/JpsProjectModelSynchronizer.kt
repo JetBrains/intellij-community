@@ -28,8 +28,8 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*

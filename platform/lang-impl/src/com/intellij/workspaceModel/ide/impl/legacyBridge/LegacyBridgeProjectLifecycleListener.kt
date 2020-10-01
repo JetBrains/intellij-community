@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.MutablePicoContainer
 

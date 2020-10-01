@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.storage.vfu
+package com.intellij.workspaceModel.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SmartList
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
 import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 

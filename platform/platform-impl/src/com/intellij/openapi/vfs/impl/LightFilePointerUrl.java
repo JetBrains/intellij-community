@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
 
 public class LightFilePointerUrl extends LightFilePointer implements VirtualFileUrl {

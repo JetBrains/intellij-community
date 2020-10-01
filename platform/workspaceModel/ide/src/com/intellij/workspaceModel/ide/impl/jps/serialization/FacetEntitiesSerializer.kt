@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity

@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {

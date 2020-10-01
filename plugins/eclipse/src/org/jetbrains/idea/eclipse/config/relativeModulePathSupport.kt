@@ -10,8 +10,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSeria
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 

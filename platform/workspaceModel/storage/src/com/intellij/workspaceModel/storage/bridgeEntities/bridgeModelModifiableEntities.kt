@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase

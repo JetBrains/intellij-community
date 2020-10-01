@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge

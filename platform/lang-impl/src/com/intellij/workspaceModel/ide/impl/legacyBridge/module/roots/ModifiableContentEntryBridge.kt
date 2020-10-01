@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootEntity

@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 
 /**

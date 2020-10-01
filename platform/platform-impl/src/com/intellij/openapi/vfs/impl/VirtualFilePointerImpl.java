@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

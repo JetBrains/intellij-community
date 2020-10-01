@@ -37,11 +37,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.toBuilder
-import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties

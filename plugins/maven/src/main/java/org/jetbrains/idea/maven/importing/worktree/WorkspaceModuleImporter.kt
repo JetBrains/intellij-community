@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing.worktree
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter

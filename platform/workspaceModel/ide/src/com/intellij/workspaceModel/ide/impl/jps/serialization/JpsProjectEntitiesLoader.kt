@@ -12,9 +12,9 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer

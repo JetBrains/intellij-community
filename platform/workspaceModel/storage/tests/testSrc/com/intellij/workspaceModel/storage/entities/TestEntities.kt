@@ -8,9 +8,9 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlNullablePr
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlProperty
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
 internal data class SampleEntitySource(val name: String) : EntitySource
 

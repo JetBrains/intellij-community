@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 // TODO Drop? Use standard function? Review usages.
 fun executeOrQueueOnDispatchThread(block: () -> Unit) {

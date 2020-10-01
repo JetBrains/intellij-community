@@ -2,13 +2,13 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableVFUEntity
 import com.intellij.workspaceModel.storage.entities.addNullableVFUEntity
 import com.intellij.workspaceModel.storage.entities.addVFU2Entity
 import com.intellij.workspaceModel.storage.entities.addVFUEntity
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

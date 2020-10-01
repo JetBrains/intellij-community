@@ -24,7 +24,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity

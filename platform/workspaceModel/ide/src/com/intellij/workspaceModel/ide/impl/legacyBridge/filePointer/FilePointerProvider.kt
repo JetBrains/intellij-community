@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 
 class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {

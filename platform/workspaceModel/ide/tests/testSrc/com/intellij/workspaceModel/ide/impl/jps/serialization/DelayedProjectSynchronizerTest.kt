@@ -8,13 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import org.apache.commons.lang.RandomStringUtils

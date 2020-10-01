@@ -12,8 +12,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileCont
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.vfu.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.junit.*
 import org.junit.Assert
 import org.junit.ClassRule

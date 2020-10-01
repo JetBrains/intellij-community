@@ -3,13 +3,13 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.util.Ref
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
 import com.intellij.workspaceModel.storage.entities.ModifiableSecondSampleEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntitySource
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

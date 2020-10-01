@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries

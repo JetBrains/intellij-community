@@ -3,14 +3,13 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.util.JpsPathUtil

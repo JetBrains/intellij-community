@@ -8,7 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.EPathUtil

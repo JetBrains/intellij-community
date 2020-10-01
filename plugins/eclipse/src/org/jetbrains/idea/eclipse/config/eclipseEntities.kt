@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneParent
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 data class EclipseProjectFile(
   val classpathFile: VirtualFileUrl,

@@ -6,8 +6,8 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.project.isDirectoryBased
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 

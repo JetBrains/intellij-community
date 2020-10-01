@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
-import com.intellij.workspaceModel.storage.vfu.VirtualFileUrlIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
