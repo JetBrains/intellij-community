@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -38,10 +38,9 @@ class VmOptionsGenerator {
   private static List<String> vmMemoryOptions(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
       // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
-      case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', defaultCodeCacheSetting]
+      case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
     }
     throw new AssertionError(arch)
   }
 }
-
