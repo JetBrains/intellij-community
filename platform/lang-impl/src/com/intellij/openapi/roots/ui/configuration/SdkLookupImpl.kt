@@ -28,7 +28,6 @@ import java.util.function.Predicate
 private open class SdkLookupContext(private val params: SdkLookupParameters) {
   private val sdkNameCallbackExecuted = AtomicBoolean(false)
   private val sdkCallbackExecuted = AtomicBoolean(false)
-  val rootProgressIndicator = ProgressIndicatorBase()
 
   val sdkName= params.sdkName
   val sdkType = params.sdkType
@@ -45,10 +44,12 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
 
-  init {
-    val indicator = params.progressIndicator
+  fun attachIndicatorIfNeeded(rootProgressIndicator: ProgressIndicatorBase) {
+    val indicator = params.progressIndicator ?: return
     if (indicator is ProgressIndicatorEx) {
       rootProgressIndicator.addStateDelegate(indicator)
+    } else {
+      rootProgressIndicator.addStateDelegate(RelayUiToDelegateIndicator(indicator))
     }
   }
 
@@ -94,6 +95,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
   fun lookup() {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
+    val rootProgressIndicator = ProgressIndicatorBase()
+    attachIndicatorIfNeeded(rootProgressIndicator)
+
     sequence {
       val namedSdk = runReadAction {
         sdkName?.let {
@@ -110,7 +114,7 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
       yield(namedSdk)
 
       yieldAll(testSdkSequence)
-    }
+    } .onEach { rootProgressIndicator.checkCanceled() }
       .filterNotNull()
       .filter { candidate -> sdkType == null || candidate.sdkType == sdkType }
       .filter { checkSdkVersion(it) }
@@ -217,7 +221,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                           indicator: ProgressIndicator): Boolean {
     val localFix = resolvers
                      .asSequence()
+                     .onEach { indicator.checkCanceled() }
                      .mapNotNull { it.proposeLocalFix(unknownSdk, indicator) }
+                     .onEach { indicator.checkCanceled() }
                      .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
                      .filter { versionFilter?.invoke(it.versionString) != false }
                      .filter { sdkHomeFilter?.invoke(it.existingSdkHome) != false }
@@ -233,7 +239,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                                  indicator: ProgressIndicator): Boolean {
     val downloadFix = resolvers
                         .asSequence()
+                        .onEach { indicator.checkCanceled() }
                         .mapNotNull { it.proposeDownload(unknownSdk, indicator) }
+                        .onEach { indicator.checkCanceled() }
                         .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
                         .filter { versionFilter?.invoke(it.versionString) != false }
                         .firstOrNull() ?: return false
