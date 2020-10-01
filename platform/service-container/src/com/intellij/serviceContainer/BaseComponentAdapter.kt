@@ -67,7 +67,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     return getInstanceUncached(componentManager, keyClass, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
+  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
     checkContainerIsActive(componentManager, indicator)
 
@@ -137,6 +137,15 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
 
     if (componentManager.isDisposed) {
       throwAlreadyDisposedError(componentManager, indicator)
+    }
+    componentManager.componentContainerIsReadonly?.let {
+      val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason: $it, container=${componentManager})")
+      if (indicator == null) {
+        throw error
+      }
+      else {
+        throw ProcessCanceledException(error)
+      }
     }
   }
 

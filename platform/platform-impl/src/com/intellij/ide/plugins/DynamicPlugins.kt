@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -488,6 +489,7 @@ object DynamicPlugins {
     val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl
                                  ?: return false
 
+    var forbidGettingServicesToken: AccessToken? = null
     try {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
@@ -495,6 +497,7 @@ object DynamicPlugins {
       TipDialog.hideForProject(null)
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
+      forbidGettingServicesToken = app.forbidGettingServices("Plugin ${pluginDescriptor.pluginId} being unloaded.")
 
       IdeEventQueue.getInstance().flushQueue()
 
@@ -560,6 +563,7 @@ object DynamicPlugins {
       logger<DynamicPlugins>().error(e)
     }
     finally {
+      forbidGettingServicesToken?.finish()
       IdeEventQueue.getInstance().flushQueue()
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
