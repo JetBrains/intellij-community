@@ -189,7 +189,7 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
       override fun toString() = "SdkLookup{${sdkType.presentableName}, ${versionPredicate} }"
     }
 
-    runWithProgress(rootProgressIndicator, onCancelled = { onSdkResolved(null) }) { indicator ->
+    runWithProgress(rootProgressIndicator) { indicator ->
       try {
         val resolvers = UnknownSdkResolver.EP_NAME.iterable
           .mapNotNull { it.createResolver(project, indicator) }
@@ -252,7 +252,6 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
   }
 
   private fun runWithProgress(rootProgressIndicator: ProgressIndicatorBase,
-                              onCancelled: () -> Unit,
                               action: (ProgressIndicator) -> Unit) {
     val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
     val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
@@ -273,10 +272,6 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
         finally {
           rootProgressIndicator.removeStateDelegate(relayToVisibleIndicator)
         }
-      }
-
-      override fun onCancel() {
-        onCancelled()
       }
     })
   }
