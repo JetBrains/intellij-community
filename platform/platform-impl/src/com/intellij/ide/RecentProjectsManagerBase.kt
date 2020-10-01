@@ -57,7 +57,7 @@ import kotlin.collections.component2
 /**
  * Used directly by IntelliJ IDEA.
  */
-@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU = 6
@@ -95,20 +95,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
 
-  final override fun getState(): RecentProjectManagerState {
-    synchronized(stateLock) {
-      // https://youtrack.jetbrains.com/issue/TBX-3756
-      @Suppress("DEPRECATION")
-      state.recentPaths.clear()
-      @Suppress("DEPRECATION")
-      state.recentPaths.addAll(state.additionalInfo.keys.reversed())
-      if (state.pid == null) {
-        //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
-        state.pid = null
-      }
-      return state
-    }
-  }
+  final override fun getState() = state
 
   fun getProjectMetaInfo(file: Path): RecentProjectMetaInfo? {
     synchronized(stateLock) {
@@ -159,6 +146,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           state.additionalInfo.clear()
           state.additionalInfo.putAll(newAdditionalInfo)
         }
+
+        @Suppress("DEPRECATION")
+        state.recentPaths.clear()
       }
     }
   }
