@@ -110,7 +110,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final long myCreatedTimestamp;
   private long myStampShown = 0;
   private boolean myShown = false;
-  private boolean myDisposed = false;
   private boolean myHidden = false;
   private boolean mySelectionTouched;
   private LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
@@ -518,7 +517,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "finishLookup should be called without a write action");
     final PsiFile file = getPsiFile();
     boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+    if (isLookupDisposed()) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
 
@@ -540,7 +539,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
 
-    if (myDisposed) { // DeferredUserLookupValue could close us in any way
+    if (isLookupDisposed()) { // DeferredUserLookupValue could close us in any way
       return;
     }
 
@@ -563,7 +562,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       });
     }
 
-    if (myDisposed) { // any document listeners could close us
+    if (isLookupDisposed()) { // any document listeners could close us
       return;
     }
 
@@ -627,7 +626,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myEditor.getDocument().stopGuardedBlockChecking();
       myGuardedChanges--;
     }
-    if (!result || myDisposed) {
+    if (!result || isLookupDisposed()) {
       hideLookup(false);
       return false;
     }
@@ -1085,7 +1084,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
-    if (myDisposed) {
+    if (isLookupDisposed()) {
       LOG.error(formatDisposeTrace());
     }
     else {
@@ -1096,7 +1095,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
         Disposer.dispose(this);
         ToolTipManager.sharedInstance().unregisterComponent(myList);
-        assert myDisposed;
+        assert isLookupDisposed();
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -1119,14 +1118,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert myHidden;
-    if (myDisposed) {
-      LOG.error(formatDisposeTrace());
-      return;
-    }
 
     myOffsets.disposeMarkers();
     disposeTrace = new Throwable();
-    myDisposed = true;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Disposing lookup:", disposeTrace);
     }
@@ -1170,11 +1164,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean isLookupDisposed() {
-    return myDisposed;
+    return Disposer.isDisposed(this);
   }
 
   public void checkValid() {
-    if (myDisposed) {
+    if (isLookupDisposed()) {
       throw new AssertionError("Disposed at: " + formatDisposeTrace());
     }
   }
