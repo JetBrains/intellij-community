@@ -10,7 +10,12 @@ option java_outer_classname = "ElevatorProto";
 
 service Elevator {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
+
   rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
+
+  rpc WriteStream (stream WriteStreamRequest) returns (google.protobuf.Empty);
+  rpc ReadStream (ReadStreamRequest) returns (stream DataChunk);
+
   rpc Release (ReleaseRequest) returns (google.protobuf.Empty);
 }
 
@@ -32,6 +37,26 @@ message AwaitTerminationReply {
 
 message ReleaseRequest {
   uint64 pid = 1;
+}
+
+message FileHandle {
+  uint64 pid = 1;
+  uint32 fd = 2;
+}
+
+message DataChunk {
+  bytes buffer = 1;
+}
+
+message ReadStreamRequest {
+  FileHandle handle = 1;
+}
+
+message WriteStreamRequest {
+  oneof FileHandleOrBuffer {
+    FileHandle handle = 1;
+    DataChunk chunk = 2;
+  }
 }
 
 message CommandLine {

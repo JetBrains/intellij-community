@@ -1,17 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.google.protobuf.ByteString
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.elevation.daemon.ElevatorDaemonRuntimeClasspath
 import com.intellij.execution.process.elevation.daemon.ElevatorServer
-import com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest
-import com.intellij.execution.process.elevation.rpc.CommandLine
-import com.intellij.execution.process.elevation.rpc.CreateProcessRequest
+import com.intellij.execution.process.elevation.rpc.*
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
-import com.intellij.execution.process.elevation.rpc.ReleaseRequest
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -22,13 +20,13 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.inprocess.InProcessChannelBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.LAZY
-import java.io.Closeable
-import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
+import kotlinx.coroutines.flow.*
+import java.io.*
 import java.lang.ref.Cleaner
 import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 import kotlin.collections.ArrayList
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -102,6 +100,10 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
     }
   }
 
+  private val stdin: OutputStream = createPipedOutputStream(0)
+  private val stdout: InputStream = createPipedInputStream(1)
+  private val stderr: InputStream = createPipedInputStream(2)
+
   private val termination: Deferred<Int> = handle.async {
     handle.rpc {
       elevatorClient.awaitTermination(pid.await())
@@ -110,9 +112,56 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
 
   override fun pid(): Long = handle.pid.blockingGet()
 
-  override fun getOutputStream(): OutputStream = OutputStream.nullOutputStream()
-  override fun getInputStream(): InputStream = InputStream.nullInputStream()
-  override fun getErrorStream(): InputStream = InputStream.nullInputStream()
+  override fun getOutputStream(): OutputStream = stdin
+  override fun getInputStream(): InputStream = stdout
+  override fun getErrorStream(): InputStream = stderr
+
+  private fun createPipedOutputStream(fd: Int): PipedOutputStream {
+    val inputStream = PipedInputStream()
+    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    handle.launch(dispatcher) {
+      handle.rpc {
+        val buffer = ByteArray(8192)
+
+        @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
+        val chunkFlow = flow<ByteString> {
+          while (true) {
+            val n = inputStream.read(buffer)
+            if (n < 0) break
+            val chunk = ByteString.copyFrom(buffer, 0, n)
+            emit(chunk)
+          }
+        }.onCompletion {
+          inputStream.close()
+        }.flowOn(dispatcher)
+        elevatorClient.writeStream(pid.await(), fd, chunkFlow)
+      }
+    }.invokeOnCompletion {
+      dispatcher.close()
+    }
+    return PipedOutputStream(inputStream)
+  }
+
+  private fun createPipedInputStream(fd: Int): PipedInputStream {
+    val outputStream = PipedOutputStream()
+    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    handle.launch(dispatcher) {
+      handle.rpc {
+        @Suppress("BlockingMethodInNonBlockingContext")
+        outputStream.use { outputStream ->
+          elevatorClient.readStream(pid.await(), fd).collect { chunk ->
+            withContext(dispatcher) {
+              outputStream.write(chunk.toByteArray())
+              outputStream.flush()
+            }
+          }
+        }
+      }
+    }.invokeOnCompletion {
+      dispatcher.close()
+    }
+    return PipedInputStream(outputStream)
+  }
 
   override fun waitFor(): Int = termination.blockingGet()
 
@@ -234,6 +283,43 @@ private class ElevatorClient(
     return reply.exitCode
   }
 
+  fun readStream(pid: Long, fd: Int): Flow<ByteString> {
+    val handle = FileHandle.newBuilder()
+      .setPid(pid)
+      .setFd(fd)
+      .build()
+    val request = ReadStreamRequest.newBuilder()
+      .setHandle(handle)
+      .build()
+    val chunkFlow = stub.readStream(request)
+    return chunkFlow.map { chunk ->
+      chunk.buffer
+    }
+  }
+
+  suspend fun writeStream(pid: Long, fd: Int, chunkFlow: Flow<ByteString>) {
+    val handle = FileHandle.newBuilder()
+      .setPid(pid)
+      .setFd(fd)
+      .build()
+    val requests = flow {
+      val handleRequest = WriteStreamRequest.newBuilder()
+        .setHandle(handle)
+        .build()
+      emit(handleRequest)
+
+      emitAll(chunkFlow.map { buffer ->
+        val chunk = DataChunk.newBuilder()
+          .setBuffer(buffer)
+          .build()
+        WriteStreamRequest.newBuilder()
+          .setChunk(chunk)
+          .build()
+      })
+    }
+    stub.writeStream(requests)
+  }
+
   suspend fun release(pid: Long) {
     val request = ReleaseRequest.newBuilder()
       .setPid(pid)
@@ -258,7 +344,7 @@ private class ElevatorClient(
 
 fun main() {
   //org.apache.log4j.BasicConfigurator.configure()
-  val commandLine = GeneralCommandLine("/bin/echo", "hello")
+  val commandLine = GeneralCommandLine("/bin/cat")
 
   val elevatorServer = ElevatorServer.createLocalElevatorServerForTesting()
   elevatorServer.start()
@@ -267,6 +353,16 @@ fun main() {
     val elevatedProcess = ElevatedProcess.create(elevatorClient,
                                                  commandLine.toProcessBuilder())
     println("pid: ${elevatedProcess.pid()}")
+    OutputStreamWriter(elevatedProcess.outputStream).use {
+      it.write("Hello ")
+      it.flush()
+      Thread.sleep(1000)
+      it.write("World\n")
+      it.flush()
+    }
+    val output = BufferedReader(InputStreamReader(elevatedProcess.inputStream))
+      .lines().collect(Collectors.joining("\n"));
+    println("output: ${output}")
     println("waitFor: ${elevatedProcess.waitFor()}")
     println("exitValue: ${elevatedProcess.exitValue()}")
   }
