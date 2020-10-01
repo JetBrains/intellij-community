@@ -427,14 +427,17 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InlineVariables = load("/general/inlineVariables.svg", 8073845700601085490L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("/general/inlineVariablesHover.svg", -8704262145129771018L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("/general/inspectionsError.svg", -3535121862077461586L, 0);
+    /** 16x16 */ public static final @NotNull Icon InspectionsErrorEmpty = load("/general/inspectionsErrorEmpty.svg", 11387647216617727L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("/general/inspectionsEye.svg", 987133420215082110L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("/general/inspectionsMixed.svg", 892665075895944816L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("/general/inspectionsOK.svg", 815541511953739551L, 2);
+    /** 16x17 */ public static final @NotNull Icon InspectionsOKEmpty = load("/general/inspectionsOKEmpty.svg", 1892781370825832798L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("/general/inspectionsPause.svg", -3427796083793425173L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg", -6535434752240636975L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg", -7518723217038940423L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsTypos = load("/general/inspectionsTypos.svg", 338425689313129264L, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsWarning = load("/general/inspectionsWarning.svg", -5154740693456021444L, 0);
+    /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("/general/inspectionsWarningEmpty.svg", 4759846980735283470L, 0);
     /** 16x16 */ public static final @NotNull Icon Layout = load("/general/layout.svg", -621162843408662039L, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorOnly = load("/general/layoutEditorOnly.svg", -7231040619932830967L, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg", -859496470404664277L, 2);

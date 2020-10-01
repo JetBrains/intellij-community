@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
@@ -183,6 +182,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public String reasonWhySuspended;
 
     private HeavyProcessLatch.Type heavyProcessType;
+    private boolean fullInspect = true; // By default full inspect mode is expected
 
     public DaemonCodeAnalyzerStatus() {
     }
@@ -237,13 +237,19 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     FileViewProvider provider = psiFile.getViewProvider();
     Set<Language> languages = provider.getLanguages();
-    HighlightingSettingsPerFile levelSettings = HighlightingSettingsPerFile.getInstance(myProject);
     boolean shouldHighlight = languages.isEmpty();
+
+    HighlightingLevelManager hlManager = HighlightingLevelManager.getInstance(getProject());
     for (Language language : languages) {
-      PsiFile root = provider.getPsi(language);
-      FileHighlightingSetting level = levelSettings.getHighlightingSettingForRoot(root);
-      shouldHighlight |= level != FileHighlightingSetting.SKIP_HIGHLIGHTING;
+      PsiFile psiRoot = provider.getPsi(language);
+
+      boolean highlight = hlManager.shouldHighlight(psiRoot);
+      boolean inspect = hlManager.shouldInspect(psiRoot);
+
+      shouldHighlight |= highlight;
+      status.fullInspect &= highlight && inspect;
     }
+
     if (!shouldHighlight) {
       status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.level.is.none");
       status.errorAnalyzingFinished = true;
@@ -342,7 +348,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     int lastNotNullIndex = ArrayUtil.lastIndexOfNot(status.errorCount, 0);
-    Icon icon = lastNotNullIndex == -1 ? AllIcons.General.InspectionsOK : mySeverityRegistrar.getRendererIconByIndex(lastNotNullIndex);
+    Icon icon = lastNotNullIndex == -1 ? AllIcons.General.InspectionsOK :
+                mySeverityRegistrar.getRendererIconByIndex(lastNotNullIndex, status.fullInspect);
 
     if (status.errorAnalyzingFinished) {
       boolean isDumb = DumbService.isDumb(myProject);
@@ -435,7 +442,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           if (severity != null) {
             String name = count > 1 ? severity.getDisplayLowercasePluralName() : severity.getDisplayLowercaseName();
 
-            Icon icon = mySeverityRegistrar.getRendererIconByIndex(i);
+            Icon icon = mySeverityRegistrar.getRendererIconByIndex(i, status.fullInspect);
             statusItems.add(new StatusItem(Integer.toString(count), icon, name));
 
             if (mainIcon == null) {
@@ -447,7 +454,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
       if (!statusItems.isEmpty()) {
         if (mainIcon == null) {
-          mainIcon = AllIcons.General.InspectionsOK;
+          mainIcon = status.fullInspect ? AllIcons.General.InspectionsOK : AllIcons.General.InspectionsOKEmpty;
         }
         AnalyzerStatus result = new AnalyzerStatus(mainIcon, title, "", () -> createUIController(editor)).
           withNavigation().
@@ -475,7 +482,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, () -> createUIController(editor)).
             withTextStatus(UtilBundle.message("heavyProcess.type.indexing")).
             withAnalyzingType(AnalyzingType.SUSPENDED) :
-          new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"), details, () -> createUIController(editor));
+          new AnalyzerStatus(status.fullInspect ? AllIcons.General.InspectionsOK : AllIcons.General.InspectionsOKEmpty,
+                             DaemonBundle.message("no.errors.or.warnings.found"), details, () -> createUIController(editor));
       }
 
       //noinspection ConstantConditions
