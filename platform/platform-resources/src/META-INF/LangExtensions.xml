@@ -1336,7 +1336,7 @@
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
     <notificationGroup id="Execution" displayType="NONE"/>
     <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results"/>
-    <notificationGroup id="Find in Path" displayType="TOOL_WINDOW" toolWindowId="Find" isLogByDefault="false"/>
+    <notificationGroup id="Find in Path" displayType="TOOL_WINDOW" toolWindowId="Find" isLogByDefault="false" bundle="messages.FindBundle" key="find.in.files.notification.group"/>
     <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer"/>
     <notificationGroup id="Suggest Run Dashboard" displayType="BALLOON"/>
     <notificationGroup id="Parameter Name Hints" displayType="BALLOON"/>
