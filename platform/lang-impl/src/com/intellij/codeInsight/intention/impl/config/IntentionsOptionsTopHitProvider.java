@@ -62,7 +62,8 @@ final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.App
       for (String category : data.myCategory) {
         sb.append(category).append(": ");
       }
-      return sb.append(data.getFamily()).toString();
+      sb.append(data.getFamily());
+      return sb.toString();
     }
   }
 }
