@@ -51,7 +51,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   protected BaseHtmlLexer(@NotNull Lexer _baseLexer, boolean _caseInsensitive) {
     super(_baseLexer);
     caseInsensitive = _caseInsensitive;
-    List<HtmlEmbeddedContentSupport> supports = getEmbeddedContentSupports();
+    List<HtmlEmbeddedContentSupport> supports = getEmbeddedContentSupportList();
     myEmbeddedContentProviders = supports.stream()
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
@@ -178,7 +178,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return myTagEmbedmentStartTokens.contains(tokenType);
   }
 
-  private List<HtmlEmbeddedContentSupport> getEmbeddedContentSupports() {
+  protected List<HtmlEmbeddedContentSupport> getEmbeddedContentSupportList() {
     List<HtmlEmbeddedContentSupport> supports = new ArrayList<>();
     try {
       HtmlEmbeddedContentSupport.Companion.getEP_NAME$intellij_xml_psi_impl().extensions()
