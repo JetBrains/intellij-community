@@ -29,6 +29,7 @@ public class TestNGSearchScope extends GlobalSearchScope {
   private final ProjectFileIndex myFileIndex;
 
   public TestNGSearchScope(Project project) {
+    super(project);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
