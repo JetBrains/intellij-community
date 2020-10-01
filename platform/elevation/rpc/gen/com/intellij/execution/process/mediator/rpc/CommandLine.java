@@ -18,6 +18,9 @@ private static final long serialVersionUID = 0L;
   private CommandLine() {
     command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     workingDir_ = "";
+    inFile_ = "";
+    outFile_ = "";
+    errFile_ = "";
     environVars_ = java.util.Collections.emptyList();
   }
 
@@ -68,6 +71,24 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 26: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            inFile_ = s;
+            break;
+          }
+          case 34: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            outFile_ = s;
+            break;
+          }
+          case 42: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            errFile_ = s;
+            break;
+          }
+          case 50: {
             if (!((mutable_bitField0_ & 0x00000002) != 0)) {
               environVars_ = new java.util.ArrayList<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar>();
               mutable_bitField0_ |= 0x00000002;
@@ -905,17 +926,131 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int ENVIRON_VARS_FIELD_NUMBER = 3;
+  public static final int IN_FILE_FIELD_NUMBER = 3;
+  private volatile java.lang.Object inFile_;
+  /**
+   * <code>string in_file = 3;</code>
+   * @return The inFile.
+   */
+  @java.lang.Override
+  public java.lang.String getInFile() {
+    java.lang.Object ref = inFile_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      inFile_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string in_file = 3;</code>
+   * @return The bytes for inFile.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getInFileBytes() {
+    java.lang.Object ref = inFile_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      inFile_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int OUT_FILE_FIELD_NUMBER = 4;
+  private volatile java.lang.Object outFile_;
+  /**
+   * <code>string out_file = 4;</code>
+   * @return The outFile.
+   */
+  @java.lang.Override
+  public java.lang.String getOutFile() {
+    java.lang.Object ref = outFile_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      outFile_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string out_file = 4;</code>
+   * @return The bytes for outFile.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getOutFileBytes() {
+    java.lang.Object ref = outFile_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      outFile_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ERR_FILE_FIELD_NUMBER = 5;
+  private volatile java.lang.Object errFile_;
+  /**
+   * <code>string err_file = 5;</code>
+   * @return The errFile.
+   */
+  @java.lang.Override
+  public java.lang.String getErrFile() {
+    java.lang.Object ref = errFile_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      errFile_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string err_file = 5;</code>
+   * @return The bytes for errFile.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getErrFileBytes() {
+    java.lang.Object ref = errFile_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      errFile_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ENVIRON_VARS_FIELD_NUMBER = 6;
   private java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> environVars_;
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   @java.lang.Override
   public java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> getEnvironVarsList() {
     return environVars_;
   }
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   @java.lang.Override
   public java.util.List<? extends com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder> 
@@ -923,21 +1058,21 @@ private static final long serialVersionUID = 0L;
     return environVars_;
   }
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   @java.lang.Override
   public int getEnvironVarsCount() {
     return environVars_.size();
   }
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar getEnvironVars(int index) {
     return environVars_.get(index);
   }
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
@@ -965,8 +1100,17 @@ private static final long serialVersionUID = 0L;
     if (!getWorkingDirBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, workingDir_);
     }
+    if (!getInFileBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, inFile_);
+    }
+    if (!getOutFileBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, outFile_);
+    }
+    if (!getErrFileBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, errFile_);
+    }
     for (int i = 0; i < environVars_.size(); i++) {
-      output.writeMessage(3, environVars_.get(i));
+      output.writeMessage(6, environVars_.get(i));
     }
     unknownFields.writeTo(output);
   }
@@ -988,9 +1132,18 @@ private static final long serialVersionUID = 0L;
     if (!getWorkingDirBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, workingDir_);
     }
+    if (!getInFileBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, inFile_);
+    }
+    if (!getOutFileBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, outFile_);
+    }
+    if (!getErrFileBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, errFile_);
+    }
     for (int i = 0; i < environVars_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(3, environVars_.get(i));
+        .computeMessageSize(6, environVars_.get(i));
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -1011,6 +1164,12 @@ private static final long serialVersionUID = 0L;
         .equals(other.getCommandList())) return false;
     if (!getWorkingDir()
         .equals(other.getWorkingDir())) return false;
+    if (!getInFile()
+        .equals(other.getInFile())) return false;
+    if (!getOutFile()
+        .equals(other.getOutFile())) return false;
+    if (!getErrFile()
+        .equals(other.getErrFile())) return false;
     if (!getEnvironVarsList()
         .equals(other.getEnvironVarsList())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
@@ -1030,6 +1189,12 @@ private static final long serialVersionUID = 0L;
     }
     hash = (37 * hash) + WORKING_DIR_FIELD_NUMBER;
     hash = (53 * hash) + getWorkingDir().hashCode();
+    hash = (37 * hash) + IN_FILE_FIELD_NUMBER;
+    hash = (53 * hash) + getInFile().hashCode();
+    hash = (37 * hash) + OUT_FILE_FIELD_NUMBER;
+    hash = (53 * hash) + getOutFile().hashCode();
+    hash = (37 * hash) + ERR_FILE_FIELD_NUMBER;
+    hash = (53 * hash) + getErrFile().hashCode();
     if (getEnvironVarsCount() > 0) {
       hash = (37 * hash) + ENVIRON_VARS_FIELD_NUMBER;
       hash = (53 * hash) + getEnvironVarsList().hashCode();
@@ -1172,6 +1337,12 @@ private static final long serialVersionUID = 0L;
       bitField0_ = (bitField0_ & ~0x00000001);
       workingDir_ = "";
 
+      inFile_ = "";
+
+      outFile_ = "";
+
+      errFile_ = "";
+
       if (environVarsBuilder_ == null) {
         environVars_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1211,6 +1382,9 @@ private static final long serialVersionUID = 0L;
       }
       result.command_ = command_;
       result.workingDir_ = workingDir_;
+      result.inFile_ = inFile_;
+      result.outFile_ = outFile_;
+      result.errFile_ = errFile_;
       if (environVarsBuilder_ == null) {
         if (((bitField0_ & 0x00000002) != 0)) {
           environVars_ = java.util.Collections.unmodifiableList(environVars_);
@@ -1280,6 +1454,18 @@ private static final long serialVersionUID = 0L;
       }
       if (!other.getWorkingDir().isEmpty()) {
         workingDir_ = other.workingDir_;
+        onChanged();
+      }
+      if (!other.getInFile().isEmpty()) {
+        inFile_ = other.inFile_;
+        onChanged();
+      }
+      if (!other.getOutFile().isEmpty()) {
+        outFile_ = other.outFile_;
+        onChanged();
+      }
+      if (!other.getErrFile().isEmpty()) {
+        errFile_ = other.errFile_;
         onChanged();
       }
       if (environVarsBuilder_ == null) {
@@ -1524,6 +1710,234 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private java.lang.Object inFile_ = "";
+    /**
+     * <code>string in_file = 3;</code>
+     * @return The inFile.
+     */
+    public java.lang.String getInFile() {
+      java.lang.Object ref = inFile_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        inFile_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string in_file = 3;</code>
+     * @return The bytes for inFile.
+     */
+    public com.google.protobuf.ByteString
+        getInFileBytes() {
+      java.lang.Object ref = inFile_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        inFile_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string in_file = 3;</code>
+     * @param value The inFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setInFile(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      inFile_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string in_file = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearInFile() {
+      
+      inFile_ = getDefaultInstance().getInFile();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string in_file = 3;</code>
+     * @param value The bytes for inFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setInFileBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      inFile_ = value;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object outFile_ = "";
+    /**
+     * <code>string out_file = 4;</code>
+     * @return The outFile.
+     */
+    public java.lang.String getOutFile() {
+      java.lang.Object ref = outFile_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        outFile_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string out_file = 4;</code>
+     * @return The bytes for outFile.
+     */
+    public com.google.protobuf.ByteString
+        getOutFileBytes() {
+      java.lang.Object ref = outFile_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        outFile_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string out_file = 4;</code>
+     * @param value The outFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setOutFile(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      outFile_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string out_file = 4;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearOutFile() {
+      
+      outFile_ = getDefaultInstance().getOutFile();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string out_file = 4;</code>
+     * @param value The bytes for outFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setOutFileBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      outFile_ = value;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object errFile_ = "";
+    /**
+     * <code>string err_file = 5;</code>
+     * @return The errFile.
+     */
+    public java.lang.String getErrFile() {
+      java.lang.Object ref = errFile_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        errFile_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string err_file = 5;</code>
+     * @return The bytes for errFile.
+     */
+    public com.google.protobuf.ByteString
+        getErrFileBytes() {
+      java.lang.Object ref = errFile_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        errFile_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string err_file = 5;</code>
+     * @param value The errFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setErrFile(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      errFile_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string err_file = 5;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearErrFile() {
+      
+      errFile_ = getDefaultInstance().getErrFile();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string err_file = 5;</code>
+     * @param value The bytes for errFile to set.
+     * @return This builder for chaining.
+     */
+    public Builder setErrFileBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      errFile_ = value;
+      onChanged();
+      return this;
+    }
+
     private java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> environVars_ =
       java.util.Collections.emptyList();
     private void ensureEnvironVarsIsMutable() {
@@ -1537,7 +1951,7 @@ private static final long serialVersionUID = 0L;
         com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder> environVarsBuilder_;
 
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> getEnvironVarsList() {
       if (environVarsBuilder_ == null) {
@@ -1547,7 +1961,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public int getEnvironVarsCount() {
       if (environVarsBuilder_ == null) {
@@ -1557,7 +1971,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar getEnvironVars(int index) {
       if (environVarsBuilder_ == null) {
@@ -1567,7 +1981,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder setEnvironVars(
         int index, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar value) {
@@ -1584,7 +1998,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder setEnvironVars(
         int index, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder builderForValue) {
@@ -1598,7 +2012,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder addEnvironVars(com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar value) {
       if (environVarsBuilder_ == null) {
@@ -1614,7 +2028,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder addEnvironVars(
         int index, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar value) {
@@ -1631,7 +2045,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder addEnvironVars(
         com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder builderForValue) {
@@ -1645,7 +2059,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder addEnvironVars(
         int index, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder builderForValue) {
@@ -1659,7 +2073,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder addAllEnvironVars(
         java.lang.Iterable<? extends com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> values) {
@@ -1674,7 +2088,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder clearEnvironVars() {
       if (environVarsBuilder_ == null) {
@@ -1687,7 +2101,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public Builder removeEnvironVars(int index) {
       if (environVarsBuilder_ == null) {
@@ -1700,14 +2114,14 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder getEnvironVarsBuilder(
         int index) {
       return getEnvironVarsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
         int index) {
@@ -1717,7 +2131,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public java.util.List<? extends com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder> 
          getEnvironVarsOrBuilderList() {
@@ -1728,14 +2142,14 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder addEnvironVarsBuilder() {
       return getEnvironVarsFieldBuilder().addBuilder(
           com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.getDefaultInstance());
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder addEnvironVarsBuilder(
         int index) {
@@ -1743,7 +2157,7 @@ private static final long serialVersionUID = 0L;
           index, com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.getDefaultInstance());
     }
     /**
-     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
      */
     public java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar.Builder> 
          getEnvironVarsBuilderList() {

@@ -18,7 +18,8 @@ typealias Pid = Long
 internal class ProcessMediatorProcessManager {
   private val processMap = ConcurrentHashMap<Pid, Process>()
 
-  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Pid {
+  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
+                            inFile: File?, outFile: File?, errFile: File?): Pid {
     val processBuilder = ProcessBuilder().apply {
       command(command)
       directory(workingDir)
@@ -26,6 +27,9 @@ internal class ProcessMediatorProcessManager {
         clear()
         putAll(environVars)
       }
+      inFile?.let { redirectInput(it) }
+      outFile?.let { redirectOutput(it) }
+      errFile?.let { redirectError(it) }
     }
 
     val process = withContext(Dispatchers.IO) {
