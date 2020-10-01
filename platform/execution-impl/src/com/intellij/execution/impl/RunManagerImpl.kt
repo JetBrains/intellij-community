@@ -259,9 +259,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private fun createConfiguration(configuration: RunConfiguration, template: RunnerAndConfigurationSettingsImpl): RunnerAndConfigurationSettings {
     val settings = RunnerAndConfigurationSettingsImpl(this, configuration)
     settings.importRunnerAndConfigurationSettings(template)
-    if (!settings.isShared) {
-      shareConfiguration(settings, template.isShared)
-    }
     configuration.beforeRunTasks = template.configuration.beforeRunTasks
     return settings
   }

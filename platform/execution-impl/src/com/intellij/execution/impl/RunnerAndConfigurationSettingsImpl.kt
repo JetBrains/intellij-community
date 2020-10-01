@@ -102,6 +102,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
+    pathIfStoredInArbitraryFile = null
   }
 
   override fun storeInLocalWorkspace() {
@@ -394,6 +395,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
     copy.importRunnerAndConfigurationSettings(this)
+
+    copy.level = this.level
+    copy.pathIfStoredInArbitraryFile = this.pathIfStoredInArbitraryFile
+
     return copy
   }
 
@@ -403,8 +408,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
-    level = template.level
-    pathIfStoredInArbitraryFile = template.pathIfStoredInArbitraryFile
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
