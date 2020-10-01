@@ -79,7 +79,16 @@ private data class MissingSdkInfo(
   override fun getSdkType() = mySdkType
 }
 
-open class UnknownSdkCollector(private val myProject: Project) {
+interface UnknownSdkBlockingCollector {
+  /**
+   * Starts collection of SDKs blocking inside one read action.
+   * For background activities it's more recommended to use [UnknownSdkCollector.collectSdksPromise]
+   * instead to allow better concurrency
+   */
+  fun collectSdksBlocking() : UnknownSdkSnapshot
+}
+
+open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlockingCollector {
   companion object {
     private val LOG = logger<UnknownSdkCollector>()
   }
@@ -97,7 +106,7 @@ open class UnknownSdkCollector(private val myProject: Project) {
    * For background activities it's more recommended to use [collectSdksPromise]
    * instead to allow better concurrency
    */
-  fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
+  override fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
 
   protected open fun checkProjectSdk(project: Project) : Boolean = true
   protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(myProject).modules.toList()

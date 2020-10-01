@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
@@ -56,8 +57,8 @@ public class UnknownSdkTracker {
     return Registry.is("unknown.sdk") && UnknownSdkResolver.EP_NAME.hasAnyExtensions();
   }
 
-  public void updateUnknownSdksBlocking(@NotNull UnknownSdkCollector collector,
-                                        @NotNull ShowStatusCallback showStatus) {
+  public void collectUnknownSdksBlocking(@NotNull UnknownSdkBlockingCollector collector,
+                                         @NotNull ShowStatusCallback showStatus) {
     if (!isEnabled() || !Registry.is("unknown.sdk.modal")) {
       showStatus.showEmptyStatus();
       return;
@@ -75,6 +76,19 @@ public class UnknownSdkTracker {
           action.run(indicator);
         }
       });
+  }
+
+  public @NotNull List<UnknownSdkFix> collectUnknownSdks(@NotNull UnknownSdkBlockingCollector collector,
+                                                         @NotNull ProgressIndicator indicator) {
+    if (!isEnabled() || !Registry.is("unknown.sdk.modal")) {
+      return List.of();
+    }
+
+    var snapshot = collector.collectSdksBlocking();
+
+    var action = createProcessSdksAction(snapshot);
+    if (action == null) return List.of();
+    return action.apply(indicator);
   }
 
   @NotNull
@@ -160,14 +174,14 @@ public class UnknownSdkTracker {
   }
 
   @Nullable
-  private Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
-                                              @NotNull ShowStatusCallback showStatus) {
+  private Function<ProgressIndicator, List<UnknownSdkFix>> createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
     //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
     List<UnknownSdk> fixable = filterOnlyAllowedEntries(snapshot.getResolvableSdks());
     List<Sdk> usedSdks = filterOnlyAllowedSdkEntries(snapshot.getKnownSdks());
 
     if (fixable.isEmpty() && usedSdks.isEmpty()) {
-      showStatus.showEmptyStatus();
       return null;
     }
 
@@ -236,17 +250,37 @@ public class UnknownSdkTracker {
                                                            theFixAction));
                }
 
-               showStatus.showStatus(fixProposals, indicator);
+               return List.copyOf(fixProposals);
              } catch (Throwable t) {
-               if (t instanceof ControlFlowException) {
-                 showStatus.showInterruptedStatus();
-                 ExceptionUtil.rethrow(t);
-               }
-
+               if (t instanceof ControlFlowException) ExceptionUtil.rethrow(t);
                LOG.warn("Failed to complete SDKs lookup. " + t.getMessage(), t);
-               showStatus.showEmptyStatus();
+               return List.of();
              }
          };
+  }
+
+  @Nullable
+  private Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
+                                              @NotNull ShowStatusCallback showStatus) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
+    var task = createProcessSdksAction(snapshot);
+    if (task == null) return null;
+
+    return indicator -> {
+      try {
+        var result = task.apply(indicator);
+        showStatus.showStatus(result, indicator);
+      } catch (Throwable t) {
+        if (t instanceof ControlFlowException) {
+          showStatus.showInterruptedStatus();
+          ExceptionUtil.rethrow(t);
+        }
+
+        LOG.warn("Failed to complete SDKs lookup. " + t.getMessage(), t);
+        showStatus.showEmptyStatus();
+      }
+    };
   }
 
   public interface ShowStatusCallback {
