@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,8 +55,10 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     executionManager
       .executePreparationTasks(environment, state)
       .onSuccess(__ -> {
-        executionManager.startRunProfile(environment, state, state1 -> {
-          return doExecute(state, environment);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          executionManager.startRunProfile(environment, state, state1 -> {
+            return doExecute(state, environment);
+          });
         });
       });
   }
