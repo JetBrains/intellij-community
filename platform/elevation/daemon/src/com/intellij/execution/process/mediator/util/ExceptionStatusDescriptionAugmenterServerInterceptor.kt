@@ -10,7 +10,7 @@ internal object ExceptionStatusDescriptionAugmenterServerInterceptor : ServerInt
     return next.startCall(object : ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {
       override fun close(status: Status, trailers: Metadata) {
         val newStatus = status.cause?.let { cause ->
-          status.augmentDescription(cause.message)
+          status.augmentDescription(cause.toString())
         } ?: status
         super.close(newStatus, trailers)
       }
