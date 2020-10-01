@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
+import com.intellij.util.EmptyConsumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,15 @@ final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase
 
   @Override
   protected @NotNull UnknownSdkDownloadTask createTask() {
-    return UnknownSdkTracker.createDownloadFixTask(mySdk, myFix, sdk -> { }, sdk -> { });
+    return new UnknownSdkDownloadTask(mySdk,
+                                      myFix,
+                                      task -> UnknownMissingSdkFix.createNewSdk(mySdk, task::getSuggestedSdkName),
+                                      EmptyConsumer.getInstance(),
+                                      sdk -> {
+                                        if (sdk == null) return;
+                                        myFix.configureSdk(sdk);
+                                        UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
+                                      });
   }
 
   @Override

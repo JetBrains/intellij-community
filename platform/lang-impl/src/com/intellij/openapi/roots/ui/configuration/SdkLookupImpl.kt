@@ -13,7 +13,8 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
+import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
+import java.util.function.Supplier
 
 private open class SdkLookupContext(private val params: SdkLookupParameters) {
   private val sdkNameCallbackExecuted = AtomicBoolean(false)
@@ -75,6 +77,20 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   fun checkSdkVersion(sdk: Sdk?) : Boolean {
     val versionString = sdk?.versionString ?: return false
     return params.versionFilter?.invoke(versionString) != false
+  }
+
+  val listener = object: UnknownSdkFixAction.Listener {
+    override fun onSdkNameResolved(sdk: Sdk) {
+      this@SdkLookupContext.onSdkNameResolved(sdk)
+    }
+
+    override fun onSdkReady(sdk: Sdk) {
+      this@SdkLookupContext.onSdkNameResolved(sdk)
+    }
+
+    override fun onResolveFailed() {
+      this@SdkLookupContext.onSdkNameResolved(null)
+    }
   }
 
   override fun toString(): String = "SdkLookupContext($params)"
@@ -193,15 +209,18 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
 
         indicator.checkCanceled()
 
-        if (tryLocalFix(resolvers, unknownSdk, indicator)) return@runWithProgress
+        val possibleFix = UnknownMissingSdk.createMissingFixAction(
+          unknownSdk,
+          Supplier { resolveLocalFix(resolvers, unknownSdk, indicator) },
+          Supplier { resolveDownloadFix(resolvers, unknownSdk, indicator) }
+        )
 
-        indicator.checkCanceled()
+        if (possibleFix != null) {
+          possibleFix.addSuggestionListener(listener)
+          possibleFix.applySuggestionAsync(project)
+        }
 
-        if (tryDownloadableFix(resolvers, unknownSdk, indicator)) return@runWithProgress
-
-        indicator.checkCanceled()
-
-        onSdkResolved(null)
+        return@runWithProgress onSdkNameResolved(null)
       } catch (e: ProcessCanceledException) {
         onSdkResolved(null)
         throw e
@@ -228,17 +247,6 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                      .firstOrNull()
   }
 
-  private fun tryLocalFix(resolvers: List<UnknownSdkLookup>,
-                          unknownSdk: UnknownSdk,
-                          indicator: ProgressIndicator): Boolean = indicator.withPushPop {
-    indicator.text = ProjectBundle.message("progress.text.looking.for.local.sdks")
-
-    val localFix = resolveLocalFix(resolvers, unknownSdk, indicator) ?: return false
-    indicator.checkCanceled()
-    UnknownSdkTracker.configureLocalSdk(unknownSdk, localFix, onSdkResolvedConsumer)
-    return true
-  }
-
   private fun resolveDownloadFix(resolvers: List<UnknownSdkLookup>,
                                  unknownSdk: UnknownSdk,
                                  indicator: ProgressIndicator) = indicator.withPushPop {
@@ -251,15 +259,6 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                         .onEach { indicator.checkCanceled() }
                         .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
                         .firstOrNull()
-  }
-
-  private fun tryDownloadableFix(resolvers: List<UnknownSdkLookup>,
-                                 unknownSdk: UnknownSdk,
-                                 indicator: ProgressIndicator): Boolean {
-    val downloadFix = resolveDownloadFix(resolvers, unknownSdk, indicator) ?: return false
-    indicator.checkCanceled()
-    UnknownSdkTracker.downloadFix(project, unknownSdk, downloadFix, onSdkNameResolvedConsumer, onSdkResolvedConsumer)
-    return true
   }
 
   private fun runWithProgress(rootProgressIndicator: ProgressIndicatorBase,

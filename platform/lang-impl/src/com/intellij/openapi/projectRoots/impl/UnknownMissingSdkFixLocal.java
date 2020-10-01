@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +70,31 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
   @Override
   protected Sdk applyLocalFix() {
     try {
-      return UnknownSdkTracker.applyLocalFix(mySdk, myFix);
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
+      String actualSdkName = mySdk.getSdkName();
+      if (actualSdkName == null) {
+        actualSdkName = myFix.getSuggestedSdkName();
+      }
+
+      Sdk sdk = UnknownMissingSdkFix.createNewSdk(mySdk, myFix::getSuggestedSdkName);
+      SdkModificator mod = sdk.getSdkModificator();
+      mod.setHomePath(FileUtil.toSystemIndependentName(myFix.getExistingSdkHome()));
+      mod.setVersionString(myFix.getVersionString());
+      mod.commitChanges();
+
+      try {
+        mySdk.getSdkType().setupSdkPaths(sdk);
+      }
+      catch (Exception error) {
+        LOG.warn("Failed to setupPaths for " + sdk + ". " + error.getMessage(), error);
+      }
+
+      myFix.configureSdk(sdk);
+      UnknownMissingSdkFix.registerNewSdkInJdkTable(actualSdkName, sdk);
+
+      LOG.info("Automatically set Sdk " + mySdk + " to " + myFix.getExistingSdkHome());
+      return sdk;
     } catch (Throwable t) {
       LOG.warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
       throw t;
