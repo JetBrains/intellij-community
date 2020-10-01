@@ -245,7 +245,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     processHandler.startNotify();
   }
 
-  protected abstract RunProfileState getRunProfileState(@NotNull Target target, @NotNull Parameters configuration, @NotNull Executor executor)
+  protected abstract RunProfileState getRunProfileState(@NotNull Target target,
+                                                        @NotNull Parameters configuration,
+                                                        @NotNull Executor executor)
     throws ExecutionException;
 
   private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
@@ -342,7 +344,17 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
               if (text.startsWith(prefix)) {
                 String pair = text.substring(prefix.length()).trim();
                 int idx = pair.indexOf("/");
-                result = new RunningInfo(info.handler, Integer.parseInt(pair.substring(0, idx)), pair.substring(idx + 1));
+                int port = Integer.parseInt(pair.substring(0, idx));
+
+                int idxEnd = pair.indexOf("#");
+                if (idxEnd > 0) {
+                  String name = pair.substring(idx + 1, idxEnd);
+                  int servicePort = Integer.parseInt(pair.substring(idxEnd + 1));
+                  result = new RunningInfo(info.handler, port, name, servicePort);
+                }
+                else {
+                  result = new RunningInfo(info.handler, port, pair.substring(idx + 1));
+                }
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
               }
@@ -374,7 +386,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected void onProcessTerminated(ProcessEvent event) {}
 
-  protected void sendDataAfterStart(ProcessHandler handler){}
+  protected void sendDataAfterStart(ProcessHandler handler) {}
 
   @NotNull
   private static String getLocalHost() {
@@ -422,7 +434,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   @NotNull
-  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration) throws Exception {
+  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
+    throws Exception {
     return () -> null;
   }
 
@@ -452,12 +465,18 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private static class RunningInfo extends Info {
     final int port;
     final String name;
+    final int servicePort; //port number when was exported with RemoteServer.start(knownPort=true), -1 otherwise
     Object entryPointHardRef;
 
     RunningInfo(ProcessHandler handler, int port, String name) {
+      this(handler, port, name, -1);
+    }
+
+    RunningInfo(ProcessHandler handler, int port, String name, int servicePort) {
       super(handler);
       this.port = port;
       this.name = name;
+      this.servicePort = servicePort;
     }
 
     @Override
