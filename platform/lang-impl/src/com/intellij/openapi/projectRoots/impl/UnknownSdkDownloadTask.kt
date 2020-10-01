@@ -16,45 +16,45 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
+import com.intellij.util.EmptyConsumer
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 private val LOG = logger<UnknownSdkDownloadTask>()
 
 @ApiStatus.Internal
-internal class UnknownSdkDownloadTask(
+internal data class UnknownSdkDownloadTask
+@JvmOverloads constructor(
   private val info: UnknownSdk,
   private val fix: UnknownSdkDownloadableSdkFix,
   private val createSdk: Function<in SdkDownloadTask?, out Sdk>,
-  private val onSdkNameReady: Consumer<in Sdk?>,
-  private val onCompleted: Consumer<in Sdk?>
+  private val onSdkNameReady: Consumer<in Sdk?> = EmptyConsumer.getInstance(),
+  private val onCompleted: Consumer<in Sdk?> = EmptyConsumer.getInstance()
 ) {
-  private val isRunning = AtomicBoolean(false)
 
-  private fun testAndRun() : Boolean {
-    if (!isRunning.compareAndSet(false, true)) return false
+  fun withListener(listener : UnknownSdkFixAction.Listener) = copy(
+    onSdkNameReady = {
+      this.onSdkNameReady.consume(it)
+      it?.let { listener.onSdkNameResolved(it) }
+    },
 
-    if (!Registry.`is`("unknown.sdk.apply.download.fix")) {
-      invokeLater { onCompleted.consume(null) }
-      return false
+    onCompleted = {
+      this.onCompleted.consume(it)
+      if (it != null) {
+        listener.onSdkNameResolved(it)
+      } else {
+        listener.onResolveFailed()
+      }
     }
-
-    return true
-  }
+  )
 
   fun runBlocking(indicator: ProgressIndicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    if (!testAndRun()) return
-
     runImpl(indicator)
   }
 
   fun runAsync(project: Project?) {
-    if (!testAndRun()) return
-
     val title = ProjectBundle.message("progress.title.downloading.sdk")
     object : Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {

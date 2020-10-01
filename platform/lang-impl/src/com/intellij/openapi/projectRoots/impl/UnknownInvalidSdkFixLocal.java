@@ -2,16 +2,16 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
+class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
   private @NotNull final UnknownSdkLocalSdkFix myFix;
 
@@ -42,27 +42,21 @@ class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
                                  mySdk.mySdk.getName());
   }
 
+  @NotNull
   @Override
-  public void applySuggestionAsync(@Nullable Project project) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      applyLocalFix();
-    });
-  }
+  protected Sdk applyLocalFix() {
+    try {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      String sdkFixVersionString = myFix.getVersionString();
+      String sdkHome = myFix.getExistingSdkHome();
 
-  @Override
-  public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      applyLocalFix();
-    });
-  }
-
-  private void applyLocalFix() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    String sdkFixVersionString = myFix.getVersionString();
-    String sdkHome = myFix.getExistingSdkHome();
-
-    mySdk.copySdk(sdkFixVersionString, sdkHome);
-    myFix.configureSdk(mySdk.mySdk);
+      mySdk.copySdk(sdkFixVersionString, sdkHome);
+      myFix.configureSdk(mySdk.mySdk);
+      return mySdk.mySdk;
+    } catch (Throwable t) {
+      Logger.getInstance(getClass()).warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
+      throw t;
+    }
   }
 
   @Override

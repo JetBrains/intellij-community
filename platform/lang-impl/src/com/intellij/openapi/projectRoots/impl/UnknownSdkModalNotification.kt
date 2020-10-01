@@ -161,7 +161,7 @@ class UnknownSdkModalNotification(
     for (suggestion in suggestions) {
       try {
         indicator.withPushPop {
-          suggestion.applySuggestionModal(indicator)
+          suggestion.applySuggestionBlocking(indicator)
         }
       }
       catch (t: Throwable) {

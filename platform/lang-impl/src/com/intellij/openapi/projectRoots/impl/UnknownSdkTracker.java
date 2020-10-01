@@ -311,7 +311,7 @@ public class UnknownSdkTracker {
 
       for (UnknownMissingSdkFixLocal fix : new ArrayList<>(localFixes)) {
         try {
-          fix.applySuggestionModal(indicator);
+          fix.applySuggestionBlocking(indicator);
         }
         catch (Throwable t) {
           LOG.warn("Failed to apply SDK fix: " + fix + ". " + t.getMessage(), t);
@@ -388,11 +388,6 @@ public class UnknownSdkTracker {
                                        @NotNull UnknownSdkLocalSdkFix fix,
                                        @NotNull Consumer<? super Sdk> onCompleted) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (!Registry.is("unknown.sdk.apply.local.fix")) {
-        onCompleted.consume(null);
-        return;
-      }
-
       try {
         Sdk sdk = applyLocalFix(info, fix);
         onCompleted.consume(sdk);
@@ -403,10 +398,9 @@ public class UnknownSdkTracker {
     });
   }
 
-  @Nullable
+  @NotNull
   static Sdk applyLocalFix(@NotNull UnknownSdk info, @NotNull UnknownSdkLocalSdkFix fix) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!Registry.is("unknown.sdk.apply.local.fix")) return null;
 
     String actualSdkName = info.getSdkName();
     if (actualSdkName == null) {

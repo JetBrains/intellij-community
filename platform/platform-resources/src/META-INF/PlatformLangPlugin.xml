@@ -53,8 +53,6 @@
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal" defaultValue="true" description="Checks and resolves unknown SDKs in blocking when executed"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
-    <registryKey key="unknown.sdk.apply.local.fix" defaultValue="true" description="Debug option to avoid applying local SDK fixes from being applied"/>
-    <registryKey key="unknown.sdk.apply.download.fix" defaultValue="true" description="Debug option to avoid downloading SDK fixes from being applied"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>

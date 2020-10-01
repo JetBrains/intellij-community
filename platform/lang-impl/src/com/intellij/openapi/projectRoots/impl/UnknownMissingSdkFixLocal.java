@@ -1,19 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-final class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
+final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFixLocal.class);
 
   private @NotNull final UnknownSdkLocalSdkFix myFix;
@@ -66,22 +63,15 @@ final class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
 
   }
 
+  @NotNull
   @Override
-  public void applySuggestionAsync(@Nullable Project project) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      try {
-        UnknownSdkTracker.applyLocalFix(mySdk, myFix);
-      } catch (Throwable t) {
-        LOG.warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
-      }
-    });
-  }
-
-  @Override
-  public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      UnknownSdkTracker.applyLocalFix(mySdk, myFix);
-    });
+  protected Sdk applyLocalFix() {
+    try {
+      return UnknownSdkTracker.applyLocalFix(mySdk, myFix);
+    } catch (Throwable t) {
+      LOG.warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
+      throw t;
+    }
   }
 
   @Override

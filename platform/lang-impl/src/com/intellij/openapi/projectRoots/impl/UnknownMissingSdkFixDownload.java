@@ -1,16 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
+final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
   private @NotNull final UnknownSdkDownloadableSdkFix myFix;
   private @NotNull final UnknownSdk mySdk;
 
@@ -40,19 +37,9 @@ final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
     );
   }
 
-  @NotNull
-  private UnknownSdkDownloadTask createDownloadTask() {
+  @Override
+  protected @NotNull UnknownSdkDownloadTask createTask() {
     return UnknownSdkTracker.createDownloadFixTask(mySdk, myFix, sdk -> { }, sdk -> { });
-  }
-
-  @Override
-  public void applySuggestionAsync(@Nullable Project project) {
-    createDownloadTask().runAsync(project);
-  }
-
-  @Override
-  public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    createDownloadTask().runBlocking(indicator);
   }
 
   @Override

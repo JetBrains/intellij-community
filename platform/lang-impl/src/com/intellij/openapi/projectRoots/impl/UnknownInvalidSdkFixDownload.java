@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
+class UnknownInvalidSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
   private @NotNull final UnknownSdkDownloadableSdkFix myFix;
 
@@ -35,23 +32,11 @@ class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
   }
 
   @Override
-  public void applySuggestionAsync(@Nullable Project project) {
-    newSdkDownloadTask().runAsync(project);
-  }
-
-  @Override
-  public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    newSdkDownloadTask().runBlocking(indicator);
-  }
-
-  @NotNull
-  UnknownSdkDownloadTask newSdkDownloadTask() {
+  protected @NotNull UnknownSdkDownloadTask createTask() {
     return new UnknownSdkDownloadTask(
       mySdk,
       myFix,
-      __ -> mySdk.mySdk,
-      __ -> { },
-      __ -> { }
+      __ -> mySdk.mySdk
     );
   }
 
