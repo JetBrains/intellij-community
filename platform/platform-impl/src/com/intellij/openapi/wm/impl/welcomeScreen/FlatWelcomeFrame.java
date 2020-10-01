@@ -64,7 +64,7 @@ import java.awt.dnd.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
@@ -306,11 +306,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           setDnd(false);
           e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
           Transferable transferable = e.getTransferable();
-          List<File> list = FileCopyPasteUtil.getFileList(transferable);
+          List<Path> list = FileCopyPasteUtil.getFiles(transferable);
           if (list != null && list.size() > 0) {
             PluginDropHandler pluginHandler = new PluginDropHandler();
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              ProjectUtil.tryOpenFileList(null, list, "WelcomeFrame");
+              ProjectUtil.tryOpenFiles(null, list, "WelcomeFrame");
             }
             e.dropComplete(true);
             return;
@@ -471,18 +471,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return mainPanel;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
         return myTouchbarActions;
       }
       return null;
-    }
-
-    @Override
-    public void setupFrame(JFrame frame) {
-
     }
 
     private JComponent createUpdatePluginsLink() {
@@ -494,11 +488,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return wrap;
     }
 
+    @Override
     public void showPluginUpdates(@NotNull Runnable callback) {
       myUpdatePluginsLink.setListener((__, ___) -> callback.run(), null);
       myUpdatePluginsLink.setVisible(true);
     }
 
+    @Override
     public void hidePluginUpdates() {
       myUpdatePluginsLink.setListener(null, null);
       myUpdatePluginsLink.setVisible(false);

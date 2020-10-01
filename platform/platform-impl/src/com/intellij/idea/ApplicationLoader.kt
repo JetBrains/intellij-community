@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -147,7 +147,7 @@ private fun startApp(app: ApplicationImpl,
     }, nonEdtExecutor)
 
   if (!headless) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       runActivity("mac app init") {
         MacOSApplicationProvider.initApplication()
       }

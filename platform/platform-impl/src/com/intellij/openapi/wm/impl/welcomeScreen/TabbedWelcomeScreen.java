@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
@@ -9,7 +8,6 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -29,10 +27,9 @@ import java.awt.*;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
-import static com.intellij.ui.UIBundle.*;
+import static com.intellij.ui.UIBundle.message;
 
-public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
-
+public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   TabbedWelcomeScreen() {
     setBackground(getMainTabListBackground());
 
@@ -114,12 +111,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     return null;
   }
 
-  @Override
-  public void setupFrame(JFrame frame) {
-  }
-
-  private static class MyCellRenderer extends CellRendererPane implements ListCellRenderer<WelcomeScreenTab> {
-
+  private static final class MyCellRenderer extends CellRendererPane implements ListCellRenderer<WelcomeScreenTab> {
     @Override
     public Component getListCellRendererComponent(JList<? extends WelcomeScreenTab> list,
                                                   WelcomeScreenTab value,

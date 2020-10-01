@@ -45,8 +45,7 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentF
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public class ProjectsTabFactory implements WelcomeTabFactory {
-
+public final class ProjectsTabFactory implements WelcomeTabFactory {
   static final int PRIMARY_BUTTONS_NUM = 3;
 
   @Override
@@ -189,7 +188,9 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
     return new DnDNativeTarget() {
       @Override
       public boolean update(DnDEvent event) {
-        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) return false;
+        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+          return false;
+        }
         event.setDropPossible(true);
         return false;
       }
@@ -197,7 +198,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       @Override
       public void drop(DnDEvent event) {
         List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
-        if (!ContainerUtil.isEmpty(files)) {
+        if (files.isEmpty()) {
           ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
         }
       }
