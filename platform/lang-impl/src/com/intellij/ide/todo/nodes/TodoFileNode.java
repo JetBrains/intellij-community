@@ -136,6 +136,11 @@ public final class TodoFileNode extends PsiFileNode {
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return !mySingleFileMode;
+  }
+
+  @Override
   protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     String newName;
