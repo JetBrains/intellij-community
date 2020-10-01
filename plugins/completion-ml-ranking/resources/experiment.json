@@ -35,13 +35,20 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 14,
+      "description": "New CatBoost model without arrows",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
     {
       "id": "java",
       "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 8, 11, 12, 13 ]
+      "includeGroups": [ 7, 8, 11, 12, 13, 14 ]
     },
     {
       "id": "python",
