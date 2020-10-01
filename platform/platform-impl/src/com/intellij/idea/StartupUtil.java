@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.Patches;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.*;
+import com.intellij.ide.AssertiveRepaintManager;
+import com.intellij.ide.BootstrapBundle;
+import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
@@ -763,19 +765,7 @@ public final class StartupUtil {
   }
 
   private static void patchSystemForUi(@NotNull Logger log) {
-    // Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
-    // because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
-    //
-    // At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
-    //
-    // This matters only if {@code swing.bufferPerWindow = true} and we don't invoke JComponent.getGraphics() directly.
-    //
-    // True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-    // frame buffer content without the usual repainting, even when the EDT is blocked.
-    if (Patches.REPAINT_MANAGER_LEAK) {
-      RepaintManager.setCurrentManager(new IdeRepaintManager());
-    }
-    else if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
+    if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
       RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 

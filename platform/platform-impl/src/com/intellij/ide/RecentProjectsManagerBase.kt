@@ -10,7 +10,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -391,7 +390,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {
-      val options = OpenProjectTask(forceOpenInNewFrame = true, sendFrameBack = someProjectWasOpened, showWelcomeScreen = false, frame = value.frame, projectWorkspaceId = value.projectWorkspaceId)
+      val options = OpenProjectTask(forceOpenInNewFrame = true,
+                                    sendFrameBack = someProjectWasOpened,
+                                    showWelcomeScreen = false,
+                                    frame = value.frame,
+                                    projectWorkspaceId = value.projectWorkspaceId)
       val project = openProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
@@ -604,8 +607,8 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
 
 @Service
 @State(name = "RecentDirectoryProjectsManager",
-       storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)],
-       reportStatistic = false)
+                                                                            storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)],
+                                                                            reportStatistic = false)
 private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
   var loadedState: RecentProjectManagerState? = null
 
