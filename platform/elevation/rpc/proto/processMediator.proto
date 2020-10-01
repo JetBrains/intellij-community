@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package intellij.process.mediator.rpc;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "com.intellij.execution.process.mediator.rpc";
+option java_outer_classname = "ProcessMediatorProto";
+
+service ProcessMediator {
+  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
+
+  rpc DestroyProcess (DestroyProcessRequest) returns (google.protobuf.Empty);
+  rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
+
+  rpc WriteStream (stream WriteStreamRequest) returns (google.protobuf.Empty);
+  rpc ReadStream (ReadStreamRequest) returns (stream DataChunk);
+
+  rpc Release (ReleaseRequest) returns (google.protobuf.Empty);
+}
+
+message CreateProcessRequest {
+  CommandLine command_line = 1;
+}
+
+message CreateProcessReply {
+  uint64 pid = 1;
+}
+
+message DestroyProcessRequest {
+  uint64 pid = 1;
+  bool force = 2;
+}
+
+message AwaitTerminationRequest {
+  uint64 pid = 1;
+}
+
+message AwaitTerminationReply {
+  uint32 exit_code = 1;
+}
+
+message ReleaseRequest {
+  uint64 pid = 1;
+}
+
+message FileHandle {
+  uint64 pid = 1;
+  uint32 fd = 2;
+}
+
+message DataChunk {
+  bytes buffer = 1;
+}
+
+message ReadStreamRequest {
+  FileHandle handle = 1;
+}
+
+message WriteStreamRequest {
+  oneof FileHandleOrBuffer {
+    FileHandle handle = 1;
+    DataChunk chunk = 2;
+  }
+}
+
+message CommandLine {
+  repeated string command = 1;
+  string working_dir = 2;
+  repeated EnvironVar environ_vars = 3;
+
+  message EnvironVar {
+    string name = 1;
+    string value = 2;
+  }
+}
+
