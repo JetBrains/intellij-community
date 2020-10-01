@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebugSession;
@@ -33,7 +32,7 @@ public class PauseAction extends XDebuggerActionBase {
 
   @Override
   protected boolean isHidden(AnActionEvent event) {
-    if (!ApplicationManager.getApplication().isInternal() || !Registry.is("debugger.merge.pause.and.resume")) {
+    if (!isPauseResumeMerged()) {
       return super.isHidden(event);
     }
     Project project = event.getProject();
@@ -45,5 +44,9 @@ public class PauseAction extends XDebuggerActionBase {
       return false;
     }
     return super.isHidden(event) || session.isPaused();
+  }
+
+  static boolean isPauseResumeMerged() {
+    return Registry.is("debugger.merge.pause.and.resume");
   }
 }
