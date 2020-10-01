@@ -190,7 +190,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
     myReplaceToolbarWrapper.setBorder(JBUI.Borders.emptyTop(3));
 
-    if(closeAction != null) {
+    if (closeAction != null) {
       JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
       closeLabel.setBorder(JBUI.Borders.empty(2));
       closeLabel.addMouseListener(new MouseAdapter() {
@@ -208,37 +208,34 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     if (showOnlySearchPanel) {
       add(leftPanel, BorderLayout.CENTER);
-    } else if (maximizeLeftPanelOnResize){
-      mySplitter = new OnePixelSplitter(false, 0.33F);
-      rightPanel.setLayout(new FlowLayout(CENTER, 0 , 0));
-      rightPanel.setMinimumSize(new Dimension(mySearchActionsToolbar.getActions().size()
-                                              * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
-      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
-      mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-      rightPanel.setBorder(JBUI.Borders.emptyLeft(RIGHT_PANEL_WEST_OFFSET));
-      mySplitter.setFirstComponent(leftPanel);
-      mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setHonorComponentsMinimumSize(true);
-      mySplitter.setHonorComponentsPreferredSize(false);
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-      mySplitter.setOpaque(false);
-      mySplitter.getDivider().setOpaque(false);
-      add(mySplitter, BorderLayout.CENTER);
-    } else {
-      mySplitter = new OnePixelSplitter(false, .33F);
-      rightPanel.setBorder(JBUI.Borders.emptyLeft(6));
-      mySplitter.setFirstComponent(leftPanel);
-      mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setHonorComponentsMinimumSize(true);
-      mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-      mySplitter.setHonorComponentsPreferredSize(true);
-      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-      mySplitter.setOpaque(false);
-      mySplitter.getDivider().setOpaque(false);
-      add(mySplitter, BorderLayout.CENTER);
     }
+    else {
+      mySplitter = new OnePixelSplitter(false, 0.33F);
+      mySplitter.setFirstComponent(leftPanel);
+      mySplitter.setSecondComponent(rightPanel);
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+      mySplitter.setOpaque(false);
+      mySplitter.getDivider().setOpaque(false);
+      add(mySplitter, BorderLayout.CENTER);
 
+      if (maximizeLeftPanelOnResize) {
+        rightPanel.setLayout(new FlowLayout(CENTER, 0, 0));
+        rightPanel.setBorder(JBUI.Borders.emptyLeft(RIGHT_PANEL_WEST_OFFSET));
+        rightPanel.setMinimumSize(new Dimension(mySearchActionsToolbar.getActions().size()
+                                                * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
+        mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+        mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+        mySplitter.setHonorComponentsMinimumSize(true);
+        mySplitter.setHonorComponentsPreferredSize(false);
+      }
+      else {
+        rightPanel.setBorder(JBUI.Borders.emptyLeft(6));
+        mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+        mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+        mySplitter.setHonorComponentsMinimumSize(true);
+        mySplitter.setHonorComponentsPreferredSize(true);
+      }
+    }
 
     update("", "", false, false);
 
@@ -465,8 +462,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceActionsToolbar.updateActionsImmediately();
     JComponent textComponent = mySearchFieldWrapper.getTargetComponent();
     if (textComponent instanceof SearchTextArea) {
-      ((SearchTextArea) textComponent).updateExtraActions();
-      ((SearchTextArea) textComponent).setMultilineEnabled(myMultilineEnabled);
+      ((SearchTextArea)textComponent).updateExtraActions();
+      ((SearchTextArea)textComponent).setMultilineEnabled(myMultilineEnabled);
     }
     textComponent = myReplaceFieldWrapper.getTargetComponent();
     if (textComponent instanceof SearchTextArea) ((SearchTextArea)textComponent).updateExtraActions();
@@ -477,7 +474,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     if (text.length() > 0) {
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
       if (textField == mySearchTextComponent) {
-        if(myAddSearchResultsToGlobalSearch) {
+        if (myAddSearchResultsToGlobalSearch) {
           findInProjectSettings.addStringToFind(text);
         }
         if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
@@ -501,18 +498,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     @NotNull JTextComponent innerTextComponent;
     @NotNull JComponent outerComponent;
 
-    if(myUseSearchField) {
+    if (myUseSearchField) {
       outerComponent = new SearchTextField(true, this.toString());
-      innerTextComponent = ((SearchTextField) outerComponent).getTextEditor();
+      innerTextComponent = ((SearchTextField)outerComponent).getTextEditor();
       innerTextComponent.setBorder(BorderFactory.createEmptyBorder());
-    }else{
+    }
+    else {
       innerTextComponent = new JBTextArea() {
         @Override
         public Dimension getPreferredScrollableViewportSize() {
           Dimension defaultSize = super.getPreferredScrollableViewportSize();
-          if (mySplitter != null && mySplitter.getSecondComponent() != null && Registry.is("ide.find.expand.search.field.on.typing", true)) {
+          if (mySplitter != null &&
+              mySplitter.getSecondComponent() != null &&
+              Registry.is("ide.find.expand.search.field.on.typing", true)) {
             Dimension preferredSize = getPreferredSize();
-            int spaceForLeftPanel = mySplitter.getWidth() - mySplitter.getSecondComponent().getPreferredSize().width - mySplitter.getDividerWidth();
+            int spaceForLeftPanel =
+              mySplitter.getWidth() - mySplitter.getSecondComponent().getPreferredSize().width - mySplitter.getDividerWidth();
             int allSearchTextAreaIcons = JBUI.scale(180);
             int w = spaceForLeftPanel - allSearchTextAreaIcons;
             return new Dimension(Math.min(Math.max(defaultSize.width, preferredSize.width), w), defaultSize.height);
@@ -525,11 +526,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       outerComponent = new SearchTextArea(((JBTextArea)innerTextComponent), search);
       if (search) {
         myExtraSearchButtons.clear();
-        myExtraSearchButtons.addAll(((SearchTextArea) outerComponent).setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
-        ((SearchTextArea) outerComponent).setMultilineEnabled(myMultilineEnabled);
-      } else {
+        myExtraSearchButtons
+          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
+        ((SearchTextArea)outerComponent).setMultilineEnabled(myMultilineEnabled);
+      }
+      else {
         myExtraReplaceButtons.clear();
-        myExtraReplaceButtons.addAll(((SearchTextArea) outerComponent).setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
+        myExtraReplaceButtons
+          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
       }
     }
 
@@ -538,7 +542,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     if (search) {
       innerTextComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.search.accessible.name"));
-    } else {
+    }
+    else {
       innerTextComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
     }
     // Display empty text only when focused
