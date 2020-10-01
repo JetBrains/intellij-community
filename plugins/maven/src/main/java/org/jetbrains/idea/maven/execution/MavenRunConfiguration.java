@@ -352,7 +352,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     protected JavaParameters createJavaParameters() throws ExecutionException {
       TargetEnvironmentRequest targetEnvironmentRequest = getTargetEnvironmentRequest();
       if (targetEnvironmentRequest == null || targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest) {
-        return MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
+        JavaParameters parameters = MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
+        JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
+          MavenRunConfiguration.this,
+          parameters,
+          getEnvironment().getRunnerSettings(),
+          getEnvironment().getExecutor()
+        );
+        return parameters;
       } else {
         return new JavaParameters();
       }
