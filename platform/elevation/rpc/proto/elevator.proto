@@ -11,6 +11,7 @@ option java_outer_classname = "ElevatorProto";
 service Elevator {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
 
+  rpc DestroyProcess (DestroyProcessRequest) returns (google.protobuf.Empty);
   rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
 
   rpc WriteStream (stream WriteStreamRequest) returns (google.protobuf.Empty);
@@ -25,6 +26,11 @@ message CreateProcessRequest {
 
 message CreateProcessReply {
   uint64 pid = 1;
+}
+
+message DestroyProcessRequest {
+  uint64 pid = 1;
+  bool force = 2;
 }
 
 message AwaitTerminationRequest {

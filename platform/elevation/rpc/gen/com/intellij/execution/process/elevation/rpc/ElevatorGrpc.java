@@ -58,6 +58,37 @@ public final class ElevatorGrpc {
     return getCreateProcessMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.DestroyProcessRequest,
+      com.google.protobuf.Empty> getDestroyProcessMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "DestroyProcess",
+      requestType = com.intellij.execution.process.elevation.rpc.DestroyProcessRequest.class,
+      responseType = com.google.protobuf.Empty.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.DestroyProcessRequest,
+      com.google.protobuf.Empty> getDestroyProcessMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.DestroyProcessRequest, com.google.protobuf.Empty> getDestroyProcessMethod;
+    if ((getDestroyProcessMethod = ElevatorGrpc.getDestroyProcessMethod) == null) {
+      synchronized (ElevatorGrpc.class) {
+        if ((getDestroyProcessMethod = ElevatorGrpc.getDestroyProcessMethod) == null) {
+          ElevatorGrpc.getDestroyProcessMethod = getDestroyProcessMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.DestroyProcessRequest, com.google.protobuf.Empty>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "DestroyProcess"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.elevation.rpc.DestroyProcessRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.google.protobuf.Empty.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("DestroyProcess"))
+              .build();
+        }
+      }
+    }
+    return getDestroyProcessMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
       com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> getAwaitTerminationMethod;
 
@@ -239,6 +270,13 @@ public final class ElevatorGrpc {
 
     /**
      */
+    public void destroyProcess(com.intellij.execution.process.elevation.rpc.DestroyProcessRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(getDestroyProcessMethod(), responseObserver);
+    }
+
+    /**
+     */
     public void awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> responseObserver) {
       asyncUnimplementedUnaryCall(getAwaitTerminationMethod(), responseObserver);
@@ -274,6 +312,13 @@ public final class ElevatorGrpc {
                 com.intellij.execution.process.elevation.rpc.CreateProcessRequest,
                 com.intellij.execution.process.elevation.rpc.CreateProcessReply>(
                   this, METHODID_CREATE_PROCESS)))
+          .addMethod(
+            getDestroyProcessMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.intellij.execution.process.elevation.rpc.DestroyProcessRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_DESTROY_PROCESS)))
           .addMethod(
             getAwaitTerminationMethod(),
             asyncUnaryCall(
@@ -326,6 +371,14 @@ public final class ElevatorGrpc {
         io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.CreateProcessReply> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(getCreateProcessMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void destroyProcess(com.intellij.execution.process.elevation.rpc.DestroyProcessRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getDestroyProcessMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
@@ -384,6 +437,13 @@ public final class ElevatorGrpc {
 
     /**
      */
+    public com.google.protobuf.Empty destroyProcess(com.intellij.execution.process.elevation.rpc.DestroyProcessRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getDestroyProcessMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
     public com.intellij.execution.process.elevation.rpc.AwaitTerminationReply awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return blockingUnaryCall(
           getChannel(), getAwaitTerminationMethod(), getCallOptions(), request);
@@ -429,6 +489,14 @@ public final class ElevatorGrpc {
 
     /**
      */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> destroyProcess(
+        com.intellij.execution.process.elevation.rpc.DestroyProcessRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getDestroyProcessMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> awaitTermination(
         com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return futureUnaryCall(
@@ -445,10 +513,11 @@ public final class ElevatorGrpc {
   }
 
   private static final int METHODID_CREATE_PROCESS = 0;
-  private static final int METHODID_AWAIT_TERMINATION = 1;
-  private static final int METHODID_READ_STREAM = 2;
-  private static final int METHODID_RELEASE = 3;
-  private static final int METHODID_WRITE_STREAM = 4;
+  private static final int METHODID_DESTROY_PROCESS = 1;
+  private static final int METHODID_AWAIT_TERMINATION = 2;
+  private static final int METHODID_READ_STREAM = 3;
+  private static final int METHODID_RELEASE = 4;
+  private static final int METHODID_WRITE_STREAM = 5;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -470,6 +539,10 @@ public final class ElevatorGrpc {
         case METHODID_CREATE_PROCESS:
           serviceImpl.createProcess((com.intellij.execution.process.elevation.rpc.CreateProcessRequest) request,
               (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.CreateProcessReply>) responseObserver);
+          break;
+        case METHODID_DESTROY_PROCESS:
+          serviceImpl.destroyProcess((com.intellij.execution.process.elevation.rpc.DestroyProcessRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
         case METHODID_AWAIT_TERMINATION:
           serviceImpl.awaitTermination((com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest) request,
@@ -548,6 +621,7 @@ public final class ElevatorGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new ElevatorFileDescriptorSupplier())
               .addMethod(getCreateProcessMethod())
+              .addMethod(getDestroyProcessMethod())
               .addMethod(getAwaitTerminationMethod())
               .addMethod(getWriteStreamMethod())
               .addMethod(getReadStreamMethod())

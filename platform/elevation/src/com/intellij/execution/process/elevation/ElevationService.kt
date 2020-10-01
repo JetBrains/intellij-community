@@ -176,7 +176,20 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
   }
 
   override fun destroy() {
-    TODO("Not yet implemented")
+    destroy(false)
+  }
+
+  override fun destroyForcibly(): Process {
+    destroy(true)
+    return this
+  }
+
+  fun destroy(force: Boolean) {
+    handle.launch {
+      handle.rpc {
+        elevatorClient.destroyProcess(pid.await(), force)
+      }
+    }
   }
 }
 
@@ -275,6 +288,14 @@ private class ElevatorClient(
     return response.pid
   }
 
+  suspend fun destroyProcess(pid: Long, force: Boolean) {
+    val request = DestroyProcessRequest.newBuilder()
+      .setPid(pid)
+      .setForce(force)
+      .build()
+    stub.destroyProcess(request)
+  }
+
   suspend fun awaitTermination(pid: Long): Int {
     val request = AwaitTerminationRequest.newBuilder()
       .setPid(pid)
@@ -360,6 +381,7 @@ fun main() {
       it.write("World\n")
       it.flush()
     }
+    elevatedProcess.destroy()
     val output = BufferedReader(InputStreamReader(elevatedProcess.inputStream))
       .lines().collect(Collectors.joining("\n"));
     println("output: ${output}")
