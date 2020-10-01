@@ -141,9 +141,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void reset() {
     RunnerAndConfigurationSettings configuration = getSettings();
-    if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
-      configuration = ((RunnerAndConfigurationSettingsImpl)configuration).clone();
-    }
     setNameText(configuration.getName());
     super.reset();
     if (myComponent == null) {
