@@ -200,10 +200,10 @@ class EclipseClasspathTest {
     @JvmStatic
     fun setUpModule(path: String, project: Project): Module {
       val classpathFile = File(path, EclipseXml.DOT_CLASSPATH_EXT)
-      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$".toRegex(),
+      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$",
                                                               PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
       if (!SystemInfo.isWindows) {
-        fileText = fileText.replace((EclipseXml.FILE_PROTOCOL + "/").toRegex(), EclipseXml.FILE_PROTOCOL)
+        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
       }
       val classpathElement = JDOMUtil.load(fileText)
       val module = WriteCommandAction.runWriteCommandAction(null, (Computable {
@@ -228,10 +228,10 @@ class EclipseClasspathTest {
     fun checkModule(path: String?, module: Module) {
       val classpathFile1 = File(path, EclipseXml.DOT_CLASSPATH_EXT)
       if (!classpathFile1.exists()) return
-      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$".toRegex(),
+      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$",
                                                                 PlatformTestUtil.getOrCreateProjectBaseDir(module.project).path)
       if (!SystemInfo.isWindows) {
-        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
       }
       val classpathElement1 = JDOMUtil.load(fileText1)
       val model: ModuleRootModel = ModuleRootManager.getInstance(module)
