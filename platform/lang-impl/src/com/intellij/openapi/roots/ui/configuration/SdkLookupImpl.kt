@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -65,13 +66,15 @@ internal class SdkLookupImpl : SdkLookup {
   override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
 
   override fun lookup(lookup: SdkLookupParameters): Unit = SdkLookupContext(lookup).run {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
     val rootProgressIndicator = ProgressIndicatorBase()
 
     if (progressIndicator is ProgressIndicatorEx) {
       rootProgressIndicator.addStateDelegate(progressIndicator)
     }
 
-    val sdk = sequence {
+    sequence {
       val namedSdk = runReadAction {
         sdkName?.let {
           when (sdkType) {
@@ -91,40 +94,53 @@ internal class SdkLookupImpl : SdkLookup {
       .filterNotNull()
       .filter { candidate -> sdkType == null || candidate.sdkType == sdkType }
       .filter { checkSdkVersion(it) }
-      .firstOrNull()
-
-    if (sdk != null) {
-      val disposable = Disposer.newDisposable()
-      val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
-        Disposer.dispose(disposable)
-
-        val finalSdk = when {
-          onSucceeded && checkSdkHomeAndVersion(sdk) ->  sdk
-          else -> null
-        }
-
-        onSdkResolved(finalSdk)
+      .forEach {
+        if (waitForDownloadingSdk(it, rootProgressIndicator)) return
       }
-
-      val isDownloading = SdkDownloadTracker
-        .getInstance()
-        .tryRegisterDownloadingListener(
-          sdk,
-          disposable,
-          rootProgressIndicator,
-          onDownloadCompleted)
-
-      if (isDownloading) {
-        return@run onSdkNameResolved(sdk)
-      }
-
-      Disposer.dispose(disposable)
-      if (checkSdkHomeAndVersion(sdk)) {
-        return@run onSdkResolved(sdk)
-      }
-    }
 
     continueSdkLookupWithSuggestions(rootProgressIndicator)
+  }
+
+  private fun SdkLookupContext.waitForDownloadingSdk(sdk: Sdk, rootProgressIndicator: ProgressIndicatorBase) : Boolean {
+    val disposable = Disposer.newDisposable()
+    val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
+      Disposer.dispose(disposable)
+
+      val finalSdk = when {
+        onSucceeded && checkSdkHomeAndVersion(sdk) ->  sdk
+        onSucceeded -> {
+          LOG.warn("Just downloaded SDK: $sdk has failed the checkSdkHomeAndVersion test")
+          null
+        }
+        else -> null
+      }
+
+      onSdkResolved(finalSdk)
+    }
+
+    val isDownloading = SdkDownloadTracker
+      .getInstance()
+      .tryRegisterDownloadingListener(
+        sdk,
+        disposable,
+        rootProgressIndicator,
+        onDownloadCompleted)
+
+    if (isDownloading) {
+      //it will be notified later when the download is completed
+      onSdkNameResolved(sdk)
+      return true
+    }
+
+    Disposer.dispose(disposable)
+
+    //it could be the case with an ordinary SDK, it may not pass the test below
+    if (checkSdkHomeAndVersion(sdk)) {
+      onSdkResolved(sdk)
+      return true
+    }
+
+    return false
   }
 
   private fun SdkLookupContext.continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicatorBase) {
