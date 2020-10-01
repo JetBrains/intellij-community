@@ -39,7 +39,7 @@ data class UnknownSdkSnapshot(
   val knownSdks: List<Sdk>
 ) {
 
-  private val sdkState = run {
+  private val sdkState by lazy {
     val hasher = Hashing.goodFastHash(128).newHasher()
     knownSdks.sortedBy { it.name }.forEach { sdk ->
       hasher.putByte(42)
