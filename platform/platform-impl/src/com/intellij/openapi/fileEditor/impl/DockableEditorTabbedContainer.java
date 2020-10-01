@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -19,6 +18,7 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.update.Activatable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -269,7 +269,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57);
 
     @Override
     public boolean needsRepaint() {
@@ -280,7 +279,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.withAlpha(myColor, .2));
+      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
       g.fill(myBoundingBox);
     }
 
@@ -288,7 +287,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myBoundingBox = null;
       setNeedsRepaint(true);
 
-      Rectangle r = new Rectangle(myCurrentOver.getComponent().getBounds());
+      Rectangle r = TabsUtil.getDropArea(myCurrentOver);
       int currentDropSide = getCurrentDropSide();
       if (currentDropSide == -1) {
         return;
@@ -300,16 +299,18 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         case LEFT:
           r.width /= 2;
           break;
-        case RIGHT:
-          r.width /= 2;
-          r.x += r.width;
-          break;
         case BOTTOM:
-          r.height /= 2;
-          r.y += r.height;
+          int h = r.height / 2;
+          r.height -= h;
+          r.y += h;
+          break;
+        case RIGHT:
+          int w = r.width / 2;
+          r.width -= w;
+          r.x += w;
           break;
       }
-      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
+      myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }
 }

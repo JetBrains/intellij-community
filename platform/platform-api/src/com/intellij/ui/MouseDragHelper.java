@@ -232,11 +232,10 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     if (!myDragComponent.isShowing()) return false;
     Component component = me.getComponent();
     if (NullableComponent.Check.isNullOrHidden(component)) return false;
-    final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
-    return canFinishDragging(myDragComponent, dragComponentPoint);
+    return canFinishDragging(myDragComponent, new RelativePoint(me));
   }
 
-  protected boolean canFinishDragging(@NotNull JComponent component, @NotNull Point point) {
+  protected boolean canFinishDragging(@NotNull JComponent component, @NotNull RelativePoint point) {
     return true;
   }
 
