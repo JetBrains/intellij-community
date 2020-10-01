@@ -25,16 +25,36 @@ import com.intellij.util.Consumer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 
-private open class SdkLookupContext(private val lookupParameters: SdkLookupParameters) : SdkLookupParameters by lookupParameters {
+private open class SdkLookupContext(private val params: SdkLookupParameters) {
   private val sdkNameCallbackExecuted = AtomicBoolean(false)
   private val sdkCallbackExecuted = AtomicBoolean(false)
+  val rootProgressIndicator = ProgressIndicatorBase()
+
+  val sdkName= params.sdkName
+  val sdkType = params.sdkType
+  val testSdkSequence = params.testSdkSequence
+  val project = params.project
+  val progressMessageTitle = params.progressMessageTitle
+
+  val sdkHomeFilter= params.sdkHomeFilter
+  val versionFilter= params.versionFilter
+  val onBeforeSdkSuggestionStarted = params.onBeforeSdkSuggestionStarted
+  val onLocalSdkSuggested = params.onLocalSdkSuggested
+  val onDownloadableSdkSuggested = params.onDownloadableSdkSuggested
 
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
 
+  init {
+    val indicator = params.progressIndicator
+    if (indicator is ProgressIndicatorEx) {
+      rootProgressIndicator.addStateDelegate(indicator)
+    }
+  }
+
   fun onSdkNameResolved(sdk: Sdk?) {
     if (!sdkNameCallbackExecuted.compareAndSet(false, true)) return
-    onSdkNameResolved.invoke(sdk)
+    params.onSdkNameResolved.invoke(sdk)
   }
 
   fun onSdkResolved(sdk: Sdk?) {
@@ -43,23 +63,23 @@ private open class SdkLookupContext(private val lookupParameters: SdkLookupParam
     if (!sdkCallbackExecuted.compareAndSet(false, true)) return
 
     if (sdk != null && !checkSdkHomeAndVersion(sdk)) {
-      onSdkResolved.invoke(null)
+      params.onSdkResolved.invoke(null)
     } else {
-      onSdkResolved.invoke(sdk)
+      params.onSdkResolved.invoke(sdk)
     }
   }
 
   fun checkSdkHomeAndVersion(sdk: Sdk?): Boolean {
     val sdkHome = sdk?.homePath ?: return false
-    return sdkHomeFilter?.invoke(sdkHome) != false && checkSdkVersion(sdk)
+    return params.sdkHomeFilter?.invoke(sdkHome) != false && checkSdkVersion(sdk)
   }
 
   fun checkSdkVersion(sdk: Sdk?) : Boolean {
     val versionString = sdk?.versionString ?: return false
-    return versionFilter?.invoke(versionString) != false
+    return params.versionFilter?.invoke(versionString) != false
   }
 
-  override fun toString(): String = "SdkLookupContext($lookupParameters)"
+  override fun toString(): String = "SdkLookupContext($params)"
 }
 
 private val LOG = logger<SdkLookupImpl>()
@@ -70,14 +90,9 @@ internal class SdkLookupImpl : SdkLookup {
 }
 
 private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
-  val rootProgressIndicator = ProgressIndicatorBase()
 
   fun lookup() {
     ApplicationManager.getApplication().assertIsDispatchThread()
-
-    if (progressIndicator is ProgressIndicatorEx) {
-      rootProgressIndicator.addStateDelegate(progressIndicator)
-    }
 
     sequence {
       val namedSdk = runReadAction {
