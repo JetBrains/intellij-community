@@ -42,6 +42,10 @@ object ElevatorGrpcKt {
     @JvmStatic
     get() = ElevatorGrpc.getCreateProcessMethod()
 
+  val destroyProcessMethod: MethodDescriptor<DestroyProcessRequest, Empty>
+    @JvmStatic
+    get() = ElevatorGrpc.getDestroyProcessMethod()
+
   val awaitTerminationMethod: MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
     @JvmStatic
     get() = ElevatorGrpc.getAwaitTerminationMethod()
@@ -82,6 +86,23 @@ object ElevatorGrpcKt {
     suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = unaryRpc(
       channel,
       ElevatorGrpc.getCreateProcessMethod(),
+      request,
+      callOptions,
+      Metadata()
+    )
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return The single response from the server.
+     */
+    suspend fun destroyProcess(request: DestroyProcessRequest): Empty = unaryRpc(
+      channel,
+      ElevatorGrpc.getDestroyProcessMethod(),
       request,
       callOptions,
       Metadata()
@@ -184,6 +205,20 @@ object ElevatorGrpcKt {
         StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.CreateProcess is unimplemented"))
 
     /**
+     * Returns the response to an RPC for elevation.rpc.Elevator.DestroyProcess.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open suspend fun destroyProcess(request: DestroyProcessRequest): Empty = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.DestroyProcess is unimplemented"))
+
+    /**
      * Returns the response to an RPC for elevation.rpc.Elevator.AwaitTermination.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
@@ -249,6 +284,11 @@ object ElevatorGrpcKt {
       context = this.context,
       descriptor = ElevatorGrpc.getCreateProcessMethod(),
       implementation = ::createProcess
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = ElevatorGrpc.getDestroyProcessMethod(),
+      implementation = ::destroyProcess
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,

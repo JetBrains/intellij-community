@@ -33,6 +33,11 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
       .build()
   }
 
+  override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
+    processManager.destroyProcess(request.pid, true)
+    return Empty.getDefaultInstance()
+  }
+
   override suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply {
     val exitCode = processManager.awaitTermination(request.pid)
     return AwaitTerminationReply.newBuilder()

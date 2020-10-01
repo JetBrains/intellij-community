@@ -36,6 +36,16 @@ internal class ElevatorProcessManager {
     return registerProcess(process)
   }
 
+  fun destroyProcess(pid: Pid, force: Boolean) {
+    val process = getProcess(pid)
+    if (force) {
+      process.destroyForcibly()
+    }
+    else {
+      process.destroy()
+    }
+  }
+
   suspend fun awaitTermination(pid: Pid): Int {
     val process = getProcess(pid)
 
@@ -86,7 +96,7 @@ internal class ElevatorProcessManager {
   }
 
   fun release(pid: Pid) {
-    unregisterProcess(pid)
+    unregisterProcess(pid).destroyForcibly()
   }
 
   private fun registerProcess(process: Process): Pid {
