@@ -29,13 +29,7 @@ public final class IndexedHashesSupport {
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
     byte[] hash = content.getHash();
     if (hash != null) return hash;
-
-    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
-    if (contentHash == null) {
-      contentHash = getBinaryContentHash(content.getContent());
-      // todo store content hash in FS
-    }
-
+    byte[] contentHash = getBinaryContentHash(content.getContent());
     hash = calculateIndexedHash(content, contentHash, false);
     content.setHashes(hash);
     return hash;
