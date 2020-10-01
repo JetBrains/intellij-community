@@ -203,7 +203,7 @@ class EclipseClasspathTest {
       var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$".toRegex(),
                                                               PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
       if (!SystemInfo.isWindows) {
-        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+        fileText = fileText.replace((EclipseXml.FILE_PROTOCOL + "/").toRegex(), EclipseXml.FILE_PROTOCOL)
       }
       val classpathElement = JDOMUtil.load(fileText)
       val module = WriteCommandAction.runWriteCommandAction(null, (Computable {
