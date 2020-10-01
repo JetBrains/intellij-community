@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeExpandAllActionBase extends DumbAwareAction {
-  protected abstract @Nullable TreeExpander getExpander(DataContext context);
+  protected abstract @Nullable TreeExpander getExpander(@NotNull DataContext context);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
