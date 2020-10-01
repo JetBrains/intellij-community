@@ -36,17 +36,16 @@ class SVGPreBuilder {
     }
   }
 
-  static void prebuildSVGIcons(BuildContext buildContext, List<String> modules) {
+  static void prebuildSVGIcons(BuildContext buildContext) {
     buildContext.executeStep("Prebuild SVG icons", BuildOptions.SVGICONS_PREBUILD_STEP, {
-      Set<String> modulesToProcess = new TreeSet<>(modules)
-      buildContext.messages.progress("Prebuild SVG icons for ${modulesToProcess.size()} modules")
-      buildContext.messages.debug("Prebuild SVG icons are going to be built for the following modules: $modulesToProcess")
+      buildContext.messages.progress("Prebuild SVG icons")
 
       Path requestFile = Paths.get(buildContext.paths.temp, "svg-prebuild", "request.txt")
 
       StringBuilder requestBuilder = new StringBuilder()
-      for (String moduleName : modulesToProcess) {
-        requestBuilder.append(buildContext.getModuleOutputPath(buildContext.findRequiredModule(moduleName))).append('\n')
+      // build for all modules - so, icon db will be suitable for any non-bundled plugin
+      for (JpsModule module : buildContext.getProject().getModules()) {
+        requestBuilder.append(buildContext.getModuleOutputPath(module)).append('\n')
       }
       Files.createDirectories(requestFile.getParent())
       Files.writeString(requestFile, requestBuilder)
@@ -60,7 +59,7 @@ class SVGPreBuilder {
   @CompileStatic(TypeCheckingMode.SKIP)
   private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
     buildContext.ant.java(classname: "org.jetbrains.intellij.build.images.ImageSvgPreCompiler", fork: true, failonerror: true) {
-      jvmarg(line: "-ea -Xmx500m")
+      jvmarg(line: "-ea -Xmx768m")
       sysproperty(key: "java.awt.headless", value: true)
       arg(path: getDbFile(buildContext))
       arg(path: requestFile.toString())
