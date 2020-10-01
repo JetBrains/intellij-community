@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +21,11 @@ public interface UnknownSdkFixAction {
    * The implementation is responsible to implement necessary
    * progress dialogs, invoke later calls and so on
    */
-  void applySuggestionAsync();
+  void applySuggestionAsync(@Nullable Project project);
 
   /**
-   * Applies suggestions in a modal progress, e.g. as a part of
-   * the {@link UnknownSdkModalNotification}
+   * Applies suggestions under a modal progress, e.g. as a part of
+   * the {@link UnknownSdkModalNotification}.
    */
   void applySuggestionModal(@NotNull ProgressIndicator indicator);
 }

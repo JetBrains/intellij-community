@@ -4,35 +4,43 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnknownMissingSdkFix implements UnknownSdkFix {
-  @NotNull private final Project myProject;
-  @NotNull private final String mySdkName;
-  @NotNull private final SdkType mySdkType;
+final class UnknownMissingSdkFix implements UnknownSdkFix {
+  @Nullable private final Project myProject;
+  @NotNull private final UnknownSdk mySdk;
   @Nullable private final UnknownSdkFixAction myAction;
 
-  public UnknownMissingSdkFix(@NotNull Project project,
-                              @NotNull String sdkName,
-                              @NotNull SdkType sdkType,
-                              @Nullable UnknownSdkFixAction action) {
+  UnknownMissingSdkFix(@Nullable Project project,
+                       @NotNull UnknownSdk unknownSdk,
+                       @Nullable UnknownSdkFixAction action) {
     myProject = project;
-    mySdkName = sdkName;
-    mySdkType = sdkType;
+    mySdk = unknownSdk;
     myAction = action;
   }
 
-  @Override
-  public @NotNull Project getProject() {
-    return myProject;
+  @NotNull
+  String getSdkNameForUi() {
+    return UnknownMissingSdk.getSdkNameForUi(mySdk);
   }
 
   @Override
-  public @NotNull SdkType getSdkType() {
-    return mySdkType;
+  public boolean isRelevantFor(@NotNull Project project) {
+    return myProject == null || project == myProject;
+  }
+
+  @Override
+  public boolean isRelevantFor(@NotNull Project project, @NotNull VirtualFile file) {
+    return isRelevantFor(project) && mySdk.getSdkType().isRelevantForFile(project, file);
+  }
+
+  private @NotNull SdkType getSdkType() {
+    return mySdk.getSdkType();
   }
 
   @Override
@@ -42,27 +50,27 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
 
   @Override
   public @Nls @NotNull String getIntentionActionText() {
-    String sdkTypeName = mySdkType.getPresentableName();
-    return ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
+    String sdkTypeName = mySdk.getSdkType().getPresentableName();
+    return ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
-  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler() {
+  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler(@NotNull Project project) {
     return UnknownSdkTracker
-      .getInstance(myProject)
-      .createSdkSelectionPopup(mySdkName, mySdkType);
+      .getInstance(project)
+      .createSdkSelectionPopup(getSdkNameForUi(), mySdk.getSdkType());
   }
 
   @Override
   public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = getSdkType().getPresentableName();
-    return ProjectBundle.message("notification.text.config.unknown.sdk", sdkTypeName, mySdkName);
+    return ProjectBundle.message("notification.text.config.unknown.sdk", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
   public @Nls @NotNull String getSdkTypeAndNameText() {
     String sdkTypeName = getSdkType().getPresentableName();
-    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
+    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
@@ -72,6 +80,6 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
 
   @Override
   public String toString() {
-    return "SdkFixInfo { name: " + mySdkName + ", " + myAction + "}";
+    return "SdkFixInfo {" + mySdk + ", " + myAction + "}";
   }
 }

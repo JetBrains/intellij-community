@@ -48,9 +48,8 @@ public class UnknownInvalidSdk implements UnknownSdk {
     return mySdk.getVersionString();
   }
 
-  void copySdk(@NotNull Project project,
-                       @NotNull String sdkFixVersionString,
-                       @NotNull String sdkHome) {
+  void copySdk(@NotNull String sdkFixVersionString,
+               @NotNull String sdkHome) {
     WriteAction.run(() -> {
       SdkModificator mod = mySdk.getSdkModificator();
       mod.setVersionString(sdkFixVersionString);
@@ -59,8 +58,6 @@ public class UnknownInvalidSdk implements UnknownSdk {
 
       mySdkType.setupSdkPaths(mySdk);
     });
-
-    UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
   }
 
   @NotNull
@@ -112,9 +109,9 @@ public class UnknownInvalidSdk implements UnknownSdk {
                                        @Nullable UnknownSdkDownloadableSdkFix downloadableSdkFix) {
     UnknownSdkFixAction action = null;
     if (localSdkFix != null) {
-      action = new UnknownInvalidSdkFixLocal(this, project, localSdkFix);
+      action = new UnknownInvalidSdkFixLocal(this, localSdkFix);
     } else if (downloadableSdkFix != null) {
-      action = new UnknownInvalidSdkFixDownload(this, project, downloadableSdkFix);
+      action = new UnknownInvalidSdkFixDownload(this, downloadableSdkFix);
     }
 
     return new UnknownInvalidSdkFix(project, this, action);

@@ -13,14 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
-  private @NotNull final Project myProject;
   private @NotNull final UnknownSdkLocalSdkFix myFix;
 
   UnknownInvalidSdkFixLocal(@NotNull UnknownInvalidSdk sdk,
-                            @NotNull Project project,
                             @NotNull UnknownSdkLocalSdkFix localSdkFix) {
     mySdk = sdk;
-    myProject = project;
     myFix = localSdkFix;
   }
 
@@ -46,22 +43,25 @@ class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
   }
 
   @Override
-  public void applySuggestionAsync() {
-    applyLocalFix(myProject);
+  public void applySuggestionAsync(@Nullable Project project) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      applyLocalFix();
+    });
   }
 
   @Override
   public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      applyLocalFix(myProject);
+      applyLocalFix();
     });
   }
 
-  private void applyLocalFix(@NotNull Project project) {
+  private void applyLocalFix() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     String sdkFixVersionString = myFix.getVersionString();
     String sdkHome = myFix.getExistingSdkHome();
 
-    mySdk.copySdk(project, sdkFixVersionString, sdkHome);
+    mySdk.copySdk(sdkFixVersionString, sdkHome);
     myFix.configureSdk(mySdk.mySdk);
   }
 

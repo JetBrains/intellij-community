@@ -4,31 +4,30 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
+final class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFixLocal.class);
 
-  private @NotNull final String mySdkName;
   private @NotNull final UnknownSdkLocalSdkFix myFix;
   private @NotNull final UnknownSdk mySdk;
 
-  UnknownMissingSdkFixLocal(@NotNull String sdkName,
-                            @NotNull UnknownSdk sdk,
+  UnknownMissingSdkFixLocal(@NotNull UnknownSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix fix) {
-    mySdkName = sdkName;
     myFix = fix;
     mySdk = sdk;
   }
 
   @NotNull
-  String getSdkName() {
-    return mySdkName;
+  String getSdkNameForUi() {
+    return UnknownMissingSdk.getSdkNameForUi(mySdk);
   }
 
   @NotNull
@@ -43,10 +42,6 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
 
   @Override
   public @NotNull @Nls String getActionTooltipText() {
-    return getUsedSdkPath();
-  }
-
-  public @NotNull @Nls String getUsedSdkPath() {
     return SdkListPresenter.presentDetectedSdkPath(myFix.getExistingSdkHome(), 90, 40);
   }
 
@@ -57,7 +52,7 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   }
 
   public @NotNull @Nls String getActionAppliedMessage() {
-    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", mySdkName, myFix.getVersionString());
+    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", getSdkNameForUi(), myFix.getVersionString());
   }
 
   @Override
@@ -67,12 +62,12 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
                                  sdkTypeName,
                                  myFix.getPresentableVersionString(),
                                  sdkTypeName,
-                                 mySdkName);
+                                 getSdkNameForUi());
 
   }
 
   @Override
-  public void applySuggestionAsync() {
+  public void applySuggestionAsync(@Nullable Project project) {
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
         UnknownSdkTracker.applyLocalFix(mySdk, myFix);

@@ -8,18 +8,21 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
-  private @NotNull final Project myProject;
   private @NotNull final UnknownSdkDownloadableSdkFix myFix;
   private @NotNull final UnknownSdk mySdk;
 
-  UnknownMissingSdkFixDownload(@NotNull Project project,
-                               @NotNull UnknownSdk sdk,
+  UnknownMissingSdkFixDownload(@NotNull UnknownSdk sdk,
                                @NotNull UnknownSdkDownloadableSdkFix fix) {
-    myProject = project;
     myFix = fix;
     mySdk = sdk;
+  }
+
+  @NotNull
+  String getSdkNameForUi() {
+    return UnknownMissingSdk.getSdkNameForUi(mySdk);
   }
 
   @Override
@@ -33,23 +36,18 @@ final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
     return ProjectBundle.message("label.text.download.for.missing.sdk",
                                  myFix.getDownloadDescription(),
                                  sdkTypeName,
-                                 mySdk.getSdkName()
+                                 getSdkNameForUi()
     );
   }
 
   @NotNull
   private UnknownSdkDownloadTask createDownloadTask() {
-    return UnknownSdkTracker.createDownloadFixTask(mySdk, myFix, sdk -> {
-    }, sdk -> {
-      if (sdk != null) {
-        UnknownSdkTracker.getInstance(myProject).updateUnknownSdksNow();
-      }
-    });
+    return UnknownSdkTracker.createDownloadFixTask(mySdk, myFix, sdk -> { }, sdk -> { });
   }
 
   @Override
-  public void applySuggestionAsync() {
-    createDownloadTask().runAsync(myProject);
+  public void applySuggestionAsync(@Nullable Project project) {
+    createDownloadTask().runAsync(project);
   }
 
   @Override

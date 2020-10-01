@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +32,16 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
   }
 
   @Override
-  public @NotNull Project getProject() {
-    return myProject;
+  public boolean isRelevantFor(@NotNull Project project) {
+    return myProject == project;
   }
 
   @Override
-  public @NotNull SdkType getSdkType() {
+  public boolean isRelevantFor(@NotNull Project project, @NotNull VirtualFile file) {
+    return isRelevantFor(project) && mySdk.getSdkType().isRelevantForFile(project, file);
+  }
+
+  private @NotNull SdkType getSdkType() {
     return mySdk.mySdkType;
   }
 
@@ -46,11 +51,11 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
   }
 
   @Override
-  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler() {
+  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler(@NotNull Project project) {
       String sdkName = mySdk.mySdk.getName();
       return SdkPopupFactory
         .newBuilder()
-        .withProject(myProject)
+        .withProject(project)
         //filter the same-named SDK from the list is needed for invalid sdk case
         .withSdkFilter(sdk -> !Objects.equals(sdk.getName(), sdkName))
         .withSdkTypeFilter(type -> Objects.equals(type, mySdk.mySdkType))
@@ -58,7 +63,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
           String homePath = sdk.getHomePath();
           String versionString = sdk.getVersionString();
           if (homePath != null && versionString != null) {
-            mySdk.copySdk(myProject, versionString, homePath);
+            mySdk.copySdk(versionString, homePath);
           } else {
             LOG.warn("Newly added SDK has invalid home or version: " + sdk + ", home=" + homePath + " version=" + versionString);
           }

@@ -2,18 +2,16 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface UnknownSdkFix {
-  @NotNull
-  Project getProject();
+  boolean isRelevantFor(@NotNull Project project);
 
-  @NotNull
-  SdkType getSdkType();
+  boolean isRelevantFor(@NotNull Project project, @NotNull VirtualFile file);
 
   @Nls @NotNull
   String getNotificationText();
@@ -37,5 +35,5 @@ public interface UnknownSdkFix {
   String getConfigureActionText();
 
   @NotNull
-  EditorNotificationPanel.ActionHandler getConfigureActionHandler();
+  EditorNotificationPanel.ActionHandler getConfigureActionHandler(@NotNull Project project);
 }

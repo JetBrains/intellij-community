@@ -7,17 +7,15 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
-  private @NotNull final Project myProject;
   private @NotNull final UnknownSdkDownloadableSdkFix myFix;
 
   UnknownInvalidSdkFixDownload(@NotNull UnknownInvalidSdk sdk,
-                               @NotNull Project project,
                                @NotNull UnknownSdkDownloadableSdkFix fix) {
     mySdk = sdk;
-    myProject = project;
     myFix = fix;
   }
 
@@ -37,26 +35,23 @@ class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
   }
 
   @Override
-  public void applySuggestionAsync() {
-    newSdkDownloadTask(myProject).runAsync(myProject);
+  public void applySuggestionAsync(@Nullable Project project) {
+    newSdkDownloadTask().runAsync(project);
   }
 
   @Override
   public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    newSdkDownloadTask(myProject).runBlocking(indicator);
+    newSdkDownloadTask().runBlocking(indicator);
   }
 
   @NotNull
-  UnknownSdkDownloadTask newSdkDownloadTask(@NotNull Project project) {
+  UnknownSdkDownloadTask newSdkDownloadTask() {
     return new UnknownSdkDownloadTask(
       mySdk,
       myFix,
       __ -> mySdk.mySdk,
-      __ -> {
-      },
-      sdk -> {
-        UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
-      }
+      __ -> { },
+      __ -> { }
     );
   }
 

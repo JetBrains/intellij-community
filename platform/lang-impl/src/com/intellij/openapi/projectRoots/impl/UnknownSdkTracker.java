@@ -133,10 +133,6 @@ public class UnknownSdkTracker {
     }
   };
 
-  public void updateUnknownSdksNow() {
-    myUpdateQueue.run(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
-  }
-
   public void updateUnknownSdks() {
     myUpdateQueue.queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
   }
@@ -239,15 +235,7 @@ public class UnknownSdkTracker {
                  var downloadFix = downloadFixes.get(unknownSdk);
                  var localSdkFix = localFixes.get(unknownSdk);
 
-                 UnknownSdkFixAction theFixAction;
-                 if (downloadFix != null) theFixAction = new UnknownMissingSdkFixDownload(myProject, unknownSdk, downloadFix);
-                 else if (localSdkFix != null)  theFixAction = new UnknownMissingSdkFixLocal(name, unknownSdk, localSdkFix);
-                 else theFixAction = null;
-
-                 fixProposals.add(new UnknownMissingSdkFix(myProject,
-                                                           name,
-                                                           unknownSdk.getSdkType(),
-                                                           theFixAction));
+                 fixProposals.add(UnknownMissingSdk.createMissingSdkFix(myProject, unknownSdk, localSdkFix, downloadFix));
                }
 
                return List.copyOf(fixProposals);
