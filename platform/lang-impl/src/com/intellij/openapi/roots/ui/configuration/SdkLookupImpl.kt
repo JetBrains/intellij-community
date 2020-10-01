@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -20,6 +21,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -100,14 +103,37 @@ private val LOG = logger<SdkLookupImpl>()
 
 internal class SdkLookupImpl : SdkLookup {
   override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
-  override fun lookup(lookup: SdkLookupParameters): Unit = SdkLookupContextEx(lookup).lookup()
+
+  override fun lookup(lookup: SdkLookupParameters) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    SdkLookupContextEx(lookup).lookup()
+  }
+
+  override fun lookupBlocking(lookup: SdkLookupParameters) {
+    object : SdkLookupContextEx(lookup) {
+      override fun awaitPendingDownload(downloadLatch: CountDownLatch, rootProgressIndicator: ProgressIndicatorBase) {
+        //busy waiting for SDK download to complete
+        try {
+          while (true) {
+            rootProgressIndicator.checkCanceled()
+            if (downloadLatch.await(500, TimeUnit.MILLISECONDS)) break
+          }
+        } catch (e: InterruptedException) {
+          rootProgressIndicator.checkCanceled()
+          throw ProcessCanceledException()
+        }
+      }
+
+      override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, task: Progressive) {
+        //it is already running under progress, no need to open yet another one
+        task.run(rootProgressIndicator)
+      }
+    }.lookup()
+  }
 }
 
-private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
-
+private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
   fun lookup() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-
     val rootProgressIndicator = ProgressIndicatorBase()
     attachIndicatorIfNeeded(rootProgressIndicator)
 
@@ -132,20 +158,25 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
       .filter { candidate -> sdkType == null || candidate.sdkType == sdkType }
       .filter { checkSdkVersion(it) }
       .forEach {
-        if (waitForDownloadingSdk(it, rootProgressIndicator)) return
+        if (testSdkAndWaitForDownloadIfNeeded(it, rootProgressIndicator)) return
+        if (testExistingSdk(it)) return
       }
 
     continueSdkLookupWithSuggestions(rootProgressIndicator)
   }
 
-  private fun waitForDownloadingSdk(sdk: Sdk, rootProgressIndicator: ProgressIndicatorBase) : Boolean {
+  open fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicatorBase) : Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    val latch = CountDownLatch(1)
     val disposable = Disposer.newDisposable()
     val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
       Disposer.dispose(disposable)
 
       val finalSdk = when {
-        onSucceeded && checkSdkHomeAndVersion(sdk) ->  sdk
+        onSucceeded && checkSdkHomeAndVersion(sdk) -> sdk
         onSucceeded -> {
+          //TODO: un such a case it will not attempt to continue resolution
           LOG.warn("Just downloaded SDK: $sdk has failed the checkSdkHomeAndVersion test")
           null
         }
@@ -153,24 +184,35 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
       }
 
       onSdkResolved(finalSdk)
+      latch.countDown()
     }
 
-    val isDownloading = SdkDownloadTracker
-      .getInstance()
-      .tryRegisterDownloadingListener(
-        sdk,
-        disposable,
-        rootProgressIndicator,
-        onDownloadCompleted)
-
-    if (isDownloading) {
-      //it will be notified later when the download is completed
-      onSdkNameResolved(sdk)
-      return true
+    val isDownloading = invokeAndWaitIfNeeded {
+      SdkDownloadTracker
+        .getInstance()
+        .tryRegisterDownloadingListener(
+          sdk,
+          disposable,
+          rootProgressIndicator,
+          onDownloadCompleted)
     }
 
-    Disposer.dispose(disposable)
+    if (!isDownloading) {
+      Disposer.dispose(disposable)
+      return false
+    }
 
+    //it will be notified later when the download is completed
+    onSdkNameResolved(sdk)
+
+    //wait for download to complete
+    awaitPendingDownload(latch, rootProgressIndicator)
+    return true
+  }
+
+  open fun awaitPendingDownload(downloadLatch: CountDownLatch, rootProgressIndicator: ProgressIndicatorBase) = Unit
+
+  private fun testExistingSdk(sdk: Sdk): Boolean {
     //it could be the case with an ordinary SDK, it may not pass the test below
     if (checkSdkHomeAndVersion(sdk)) {
       onSdkResolved(sdk)
@@ -202,7 +244,7 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
       override fun toString() = "SdkLookup{${sdkType.presentableName}, ${versionPredicate} }"
     }
 
-    runWithProgress(rootProgressIndicator) { indicator ->
+    runSdkResolutionUnderProgress(rootProgressIndicator) { indicator ->
       try {
         val resolvers = UnknownSdkResolver.EP_NAME.iterable
           .mapNotNull { it.createResolver(project, indicator) }
@@ -220,7 +262,7 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
           possibleFix.applySuggestionAsync(project)
         }
 
-        return@runWithProgress onSdkNameResolved(null)
+        onSdkNameResolved(null)
       } catch (e: ProcessCanceledException) {
         onSdkResolved(null)
         throw e
@@ -261,12 +303,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                         .firstOrNull()
   }
 
-  private fun runWithProgress(rootProgressIndicator: ProgressIndicatorBase,
-                              action: (ProgressIndicator) -> Unit) {
-    val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
-    val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
-      override fun run(indicator: ProgressIndicator) {
+  private fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase,
+                                            action: (ProgressIndicator) -> Unit) {
+    val task = Progressive { indicator ->
         object : ProgressIndicatorListenerAdapter() {
           override fun cancelled() {
             rootProgressIndicator.cancel()
@@ -283,6 +322,13 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
           rootProgressIndicator.removeStateDelegate(relayToVisibleIndicator)
         }
       }
-    })
+
+    runSdkResolutionUnderProgress(rootProgressIndicator, task)
+  }
+
+  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, task: Progressive) {
+    val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
+    val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND), Progressive by task {})
   }
 }

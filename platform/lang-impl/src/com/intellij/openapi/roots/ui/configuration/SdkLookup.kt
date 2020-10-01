@@ -20,7 +20,9 @@ import org.jetbrains.annotations.Nls
  */
 interface SdkLookup {
   fun createBuilder(): SdkLookupBuilder
+
   fun lookup(lookup: SdkLookupParameters)
+  fun lookupBlocking(lookup: SdkLookupParameters)
 
   companion object {
     @JvmStatic
