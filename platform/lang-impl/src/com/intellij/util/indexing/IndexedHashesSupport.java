@@ -6,7 +6,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,11 +26,11 @@ public final class IndexedHashesSupport {
   }
 
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
-    byte[] hash = content.getHash();
+    byte[] hash = content.getIndexedFileHash();
     if (hash != null) return hash;
     byte[] contentHash = getBinaryContentHash(content.getContent());
     hash = calculateIndexedHash(content, contentHash, false);
-    content.setHashes(hash);
+    content.setIndexedFileHash(hash);
     return hash;
   }
 
