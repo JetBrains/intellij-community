@@ -423,8 +423,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       { "ctrl ENTER",               "EditorSplitLine", "NotebookRunCellAction", "PyExecuteCellAction"},
       { "meta CLOSE_BRACKET",       "Forward", "NextDiff"},
       { "meta OPEN_BRACKET",        "Back", "PreviousDiff"},
-      { "shift meta L",             "EvaluateExpression", "Jdbc.OpenConsole.New", "rspec.LetIntroduce"},
       { "meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
+      { "ctrl meta M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     });
   }};
   // @formatter:on
