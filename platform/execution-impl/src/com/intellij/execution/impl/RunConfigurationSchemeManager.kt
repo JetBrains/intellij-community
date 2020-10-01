@@ -114,7 +114,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   }
 
   override fun onSchemeDeleted(scheme: RunnerAndConfigurationSettingsImpl) {
-    manager.removeConfiguration(scheme)
+    manager.removeConfigurations(listOf(scheme), onSchemeManagerDeleteEvent = true)
   }
 
   override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element? {

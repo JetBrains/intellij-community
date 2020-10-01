@@ -661,7 +661,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     settings.forEach { parentNode.addContent((it as RunnerAndConfigurationSettingsImpl).writeScheme()) }
   }
 
-  internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element? {
+  internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element {
     val tasks = configuration.beforeRunTasks
     val methodElement = Element(METHOD)
     methodElement.setAttribute("v", "2")
@@ -1187,12 +1187,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) = removeConfigurations(toRemove, true)
 
-  private fun removeConfigurations(_toRemove: Collection<RunnerAndConfigurationSettings>, deleteFileIfStoredInArbitraryFile: Boolean) {
+  internal fun removeConfigurations(_toRemove: Collection<RunnerAndConfigurationSettings>,
+                                    deleteFileIfStoredInArbitraryFile: Boolean = true,
+                                    onSchemeManagerDeleteEvent: Boolean = false) {
     if (_toRemove.isEmpty()) {
       return
     }
 
-    val toRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile)
+    val toRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile, onSchemeManagerDeleteEvent)
 
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
     val removed = SmartList<RunnerAndConfigurationSettings>()
@@ -1244,13 +1246,16 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun removeTemplatesAndReturnRemaining(toRemove: Collection<RunnerAndConfigurationSettings>,
-                                                deleteFileIfStoredInArbitraryFile: Boolean): Collection<RunnerAndConfigurationSettings> {
+                                                deleteFileIfStoredInArbitraryFile: Boolean,
+                                                onSchemeManagerDeleteEvent: Boolean): Collection<RunnerAndConfigurationSettings> {
     val result = mutableListOf<RunnerAndConfigurationSettings>()
 
     for (settings in toRemove) {
       if (settings.isTemplate) {
         templateIdToConfiguration.remove(getFactoryKey(settings.factory))
-        removeSettingsFromCorrespondingManager(settings as RunnerAndConfigurationSettingsImpl, deleteFileIfStoredInArbitraryFile)
+        if (!onSchemeManagerDeleteEvent) {
+          removeSettingsFromCorrespondingManager(settings as RunnerAndConfigurationSettingsImpl, deleteFileIfStoredInArbitraryFile)
+        }
       }
       else {
         result.add(settings)
@@ -1264,8 +1269,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                      deleteFileIfStoredInArbitraryFile: Boolean) {
     when {
       settings.isStoredInDotIdeaFolder -> projectSchemeManager.removeScheme(settings)
-      settings.isStoredInArbitraryFileInProject ->
-        rcInArbitraryFileManager.removeRunConfiguration(settings, false, deleteFileIfStoredInArbitraryFile)
+      settings.isStoredInArbitraryFileInProject -> {
+        rcInArbitraryFileManager.removeRunConfiguration(settings,
+                                                        removeRunConfigOnlyIfFileNameChanged = false,
+                                                        deleteContainingFile = deleteFileIfStoredInArbitraryFile)
+      }
       else -> workspaceSchemeManager.removeScheme(settings)
     }
   }
