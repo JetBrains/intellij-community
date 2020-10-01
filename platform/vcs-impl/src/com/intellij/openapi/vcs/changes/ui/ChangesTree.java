@@ -603,8 +603,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     @Override
-    public boolean isVisible(@NotNull AnActionEvent event) {
+    public boolean isExpandAllVisible() {
       return !myGroupingSupport.isNone() || !myIsModelFlat;
+    }
+
+    @Override
+    public boolean isCollapseAllVisible() {
+      return isExpandAllVisible();
     }
   }
 
