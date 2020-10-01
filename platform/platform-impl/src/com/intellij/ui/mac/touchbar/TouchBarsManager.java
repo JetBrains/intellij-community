@@ -141,7 +141,9 @@ public final class TouchBarsManager {
       }
     }
 
-    StartupManager.getInstance(project).runAfterOpened(() -> projectData.get(BarType.DEFAULT).show());
+    StartupManager.getInstance(project).runAfterOpened(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> projectData.get(BarType.DEFAULT).show(), ModalityState.NON_MODAL);
+    });
 
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
