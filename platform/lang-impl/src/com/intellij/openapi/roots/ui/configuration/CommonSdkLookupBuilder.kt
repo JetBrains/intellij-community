@@ -69,10 +69,16 @@ internal data class CommonSdkLookupBuilder(
     copy(onDownloadableSdkSuggested = handler)
 
   override fun onSdkResolved(handler: (Sdk?) -> Unit) =
-    copy(onSdkResolved = handler)
+    copy(onSdkResolved = this.onSdkResolved + handler)
 
-  override fun onSdkNameResolved(callback: (Sdk?) -> Unit) =
-    copy(onSdkNameResolved = callback)
+  override fun onSdkNameResolved(handler: (Sdk?) -> Unit) =
+    copy(onSdkNameResolved = this.onSdkNameResolved + handler)
 
   override fun executeLookup() = lookup(this)
+
+  @JvmName("plusTUnit")
+  private operator fun <T> ( (T) -> Unit).plus(v : (T) -> Unit) : (T) -> Unit = {
+    this(it)
+    v(it)
+  }
 }
