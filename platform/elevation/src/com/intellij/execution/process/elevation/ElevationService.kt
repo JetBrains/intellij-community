@@ -6,10 +6,11 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.elevation.daemon.ElevatorDaemonRuntimeClasspath
-import com.intellij.execution.process.elevation.daemon.ElevatorServer
-import com.intellij.execution.process.elevation.rpc.*
-import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorServer
+import com.intellij.execution.process.mediator.rpc.*
+import com.intellij.execution.process.mediator.rpc.ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub
+import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -33,11 +34,11 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 private val SCOPE = CoroutineScope(EmptyCoroutineContext)
 
-private fun startElevatorDaemon(): ElevatorClient {
+private fun startProcessMediatorDaemon(): ProcessMediatorClient {
   val host = if (java.lang.Boolean.getBoolean("java.net.preferIPv6Addresses")) "::1" else "127.0.0.1"
   val port = 50051
 
-  val daemonCommandLine = createElevatorDaemonCommandLine(host, port.toString())
+  val daemonCommandLine = createProcessMediatorDaemonCommandLine(host, port.toString())
   val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
     addProcessListener(object : ProcessAdapter() {
       override fun processTerminated(event: ProcessEvent) {
@@ -52,23 +53,23 @@ private fun startElevatorDaemon(): ElevatorClient {
   daemonProcessHandler.startNotify()
 
   val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build()
-  return ElevatorClient(SCOPE, channel)
+  return ProcessMediatorClient(SCOPE, channel)
 }
 
-private fun startLocalElevatorClientForTesting(): ElevatorClient {
+private fun startLocalProcessMediatorClientForTesting(): ProcessMediatorClient {
   val channel = InProcessChannelBuilder.forName("testing").directExecutor().build()
-  return ElevatorClient(SCOPE, channel)
+  return ProcessMediatorClient(SCOPE, channel)
 }
 
-private fun createElevatorDaemonCommandLine(host: String, port: String): GeneralCommandLine {
-  val elevatorClass = ElevatorDaemonRuntimeClasspath.getMainClass().name
-  val classpathClasses = ElevatorDaemonRuntimeClasspath.getClasspathClasses()
+private fun createProcessMediatorDaemonCommandLine(host: String, port: String): GeneralCommandLine {
+  val processMediatorClass = ProcessMediatorDaemonRuntimeClasspath.getMainClass().name
+  val classpathClasses = ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses()
   val classpath = classpathClasses.mapNotNullTo(LinkedHashSet()) { it.getResourcePath() }.joinToString(File.pathSeparator)
   val javaVmExecutablePath = SystemProperties.getJavaHome() + File.separator + "bin" + File.separator + "java"
 
   return GeneralCommandLine(javaVmExecutablePath)
     .withParameters("-cp", classpath)
-    .withParameters(elevatorClass)
+    .withParameters(processMediatorClass)
     .withParameters(host, port)
 }
 
@@ -78,24 +79,24 @@ private fun Class<*>.getResourcePath(): String? {
 
 private val CLEANER = Cleaner.create()
 
-private class ElevatedProcess private constructor(private val handle: ElevatedProcessHandle) : Process() {
+private class MediatedProcess private constructor(private val handle: MediatedProcessHandle) : Process() {
   companion object {
-    fun create(elevatorClient: ElevatorClient,
-               processBuilder: ProcessBuilder): ElevatedProcess {
-      return create(elevatorClient,
+    fun create(processMediatorClient: ProcessMediatorClient,
+               processBuilder: ProcessBuilder): MediatedProcess {
+      return create(processMediatorClient,
                     processBuilder.command(),
                     processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
                     processBuilder.environment())
     }
 
-    fun create(elevatorClient: ElevatorClient,
+    fun create(processMediatorClient: ProcessMediatorClient,
                command: List<String>,
                workingDir: File,
-               environVars: Map<String, String>): ElevatedProcess {
-      val handle = ElevatedProcessHandle(elevatorClient, command, workingDir, environVars)
-      return ElevatedProcess(handle).also { process ->
+               environVars: Map<String, String>): MediatedProcess {
+      val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars)
+      return MediatedProcess(handle).also { process ->
         val cleanable = CLEANER.register(process, handle::close)
-        elevatorClient.registerCleanup(cleanable::clean)
+        processMediatorClient.registerCleanup(cleanable::clean)
       }
     }
   }
@@ -106,7 +107,7 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
 
   private val termination: Deferred<Int> = handle.async {
     handle.rpc {
-      elevatorClient.awaitTermination(pid.await())
+      processMediatorClient.awaitTermination(pid.await())
     }
   }
 
@@ -134,7 +135,7 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
         }.onCompletion {
           inputStream.close()
         }.flowOn(dispatcher)
-        elevatorClient.writeStream(pid.await(), fd, chunkFlow)
+        processMediatorClient.writeStream(pid.await(), fd, chunkFlow)
       }
     }.invokeOnCompletion {
       dispatcher.close()
@@ -149,7 +150,7 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
       handle.rpc {
         @Suppress("BlockingMethodInNonBlockingContext")
         outputStream.use { outputStream ->
-          elevatorClient.readStream(pid.await(), fd).collect { chunk ->
+          processMediatorClient.readStream(pid.await(), fd).collect { chunk ->
             withContext(dispatcher) {
               outputStream.write(chunk.toByteArray())
               outputStream.flush()
@@ -187,38 +188,38 @@ private class ElevatedProcess private constructor(private val handle: ElevatedPr
   fun destroy(force: Boolean) {
     handle.launch {
       handle.rpc {
-        elevatorClient.destroyProcess(pid.await(), force)
+        processMediatorClient.destroyProcess(pid.await(), force)
       }
     }
   }
 }
 
 /**
- * All remote calls are performed using the provided [ElevatorClient],
+ * All remote calls are performed using the provided [ProcessMediatorClient],
  * and the whole process lifecycle is contained within its coroutine scope.
  */
-private class ElevatedProcessHandle(
-  val elevatorClient: ElevatorClient,
+private class MediatedProcessHandle(
+  val processMediatorClient: ProcessMediatorClient,
   command: List<String>,
   workingDir: File,
   environVars: Map<String, String>
-) : CoroutineScope by elevatorClient.childSupervisorScope(),
+) : CoroutineScope by processMediatorClient.childSupervisorScope(),
     AutoCloseable {
 
   val pid: Deferred<Long> = async {
-    elevatorClient.createProcess(command, workingDir, environVars)
+    processMediatorClient.createProcess(command, workingDir, environVars)
   }
 
   private val cleanupJob = launch(start = LAZY) {
     // must be called exactly once;
     // once invoked, the pid is no more valid, and the process must be assumed reaped
-    elevatorClient.release(pid.await())
+    processMediatorClient.release(pid.await())
   }
 
   /** Controls all operations except CreateProcess() and Release(). */
   private val rpcAwaitingJob = SupervisorJob(coroutineContext[Job])
 
-  suspend fun <R> rpc(block: suspend ElevatedProcessHandle.() -> R): R {
+  suspend fun <R> rpc(block: suspend MediatedProcessHandle.() -> R): R {
     // This might require a bit of explanation.
     //
     // We want to ensure the Release() rpc is not started until any other RPC finishes.
@@ -229,7 +230,7 @@ private class ElevatedProcessHandle(
     // the inner withContext().
     //
     // In fact, the 'rpcAwaitingJob' never gets cancelled explicitly at all,
-    // only through the parent scope of ElevatedProcessHandle, or finishes using the complete() call in release().
+    // only through the parent scope of MediatedProcessHandle, or finishes using the complete() call in release().
     // It is only used for this single purpose - to ensure strict ordering relation between any RPC call and
     // the final Release() call.
     //
@@ -262,12 +263,12 @@ private class ElevatedProcessHandle(
   }
 }
 
-private class ElevatorClient(
+private class ProcessMediatorClient(
   coroutineScope: CoroutineScope,
   private val channel: ManagedChannel
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
     Closeable {
-  private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
+  private val stub = ProcessMediatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
 
   private val cleanupHooks: MutableList<() -> Unit> = Collections.synchronizedList(ArrayList())
 
@@ -367,29 +368,29 @@ fun main() {
   //org.apache.log4j.BasicConfigurator.configure()
   val commandLine = GeneralCommandLine("/bin/cat")
 
-  val elevatorServer = ElevatorServer.createLocalElevatorServerForTesting()
-  elevatorServer.start()
+  val processMediatorServer = ProcessMediatorServer.createLocalProcessMediatorServerForTesting()
+  processMediatorServer.start()
 
-  startLocalElevatorClientForTesting().use { elevatorClient ->
-    val elevatedProcess = ElevatedProcess.create(elevatorClient,
-                                                 commandLine.toProcessBuilder())
-    println("pid: ${elevatedProcess.pid()}")
-    OutputStreamWriter(elevatedProcess.outputStream).use {
+  startLocalProcessMediatorClientForTesting().use { processMediatorClient ->
+    val process = MediatedProcess.create(processMediatorClient,
+                                         commandLine.toProcessBuilder())
+    println("pid: ${process.pid()}")
+    OutputStreamWriter(process.outputStream).use {
       it.write("Hello ")
       it.flush()
       Thread.sleep(1000)
       it.write("World\n")
       it.flush()
     }
-    elevatedProcess.destroy()
-    val output = BufferedReader(InputStreamReader(elevatedProcess.inputStream))
+    process.destroy()
+    val output = BufferedReader(InputStreamReader(process.inputStream))
       .lines().collect(Collectors.joining("\n"));
     println("output: ${output}")
-    println("waitFor: ${elevatedProcess.waitFor()}")
-    println("exitValue: ${elevatedProcess.exitValue()}")
+    println("waitFor: ${process.waitFor()}")
+    println("exitValue: ${process.exitValue()}")
   }
 
 
-  elevatorServer.stop()
-  elevatorServer.blockUntilShutdown()
+  processMediatorServer.stop()
+  processMediatorServer.blockUntilShutdown()
 }
