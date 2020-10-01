@@ -163,12 +163,12 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun `check file path`() {
-    assertFilePath(null, "jar:///main/a.jar!/my/class.class")
     assertFilePath("/main/a.jar", "jar:///main/a.jar!/")
     assertFilePath("/main/a.jar", "jar:///main/a.jar!")
     assertFilePath("/main/a.jar", "jar:///main/a.jar")
     assertFilePath("/main/a.jar", "file:///main/a.jar")
-    assertFilePath(null, "")
+    assertFilePath("/main/a.jar!/my/class.class", "jar:///main/a.jar!/my/class.class")
+    assertFilePath("", "")
   }
 
   @Test

@@ -104,7 +104,7 @@ class ImlReplaceBySourceTest {
     val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
     @Suppress("USELESS_IS_CHECK")
     val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootEntity>>().single { it.entity is JavaSourceRootEntity }
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url(), sourceRootChange.entity.url.url())
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)
     Assert.assertEquals(true, javaSourceRootChange.entity.generated)
   }
 
