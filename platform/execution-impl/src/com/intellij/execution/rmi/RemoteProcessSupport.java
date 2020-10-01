@@ -169,7 +169,15 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     else if (info == null || info.handler == null) {
       throw new ExecutionException("Unable to acquire remote proxy for: " + getName(target));
     }
+    publishPort(info.port);
+    if (info.servicePort != -1) {
+      publishPort(info.servicePort);
+    }
     return acquire(info);
+  }
+
+  protected void publishPort(int port) throws ExecutionException {
+
   }
 
   @NotNull
