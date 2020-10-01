@@ -1,19 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.BundleBase;
+import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.*;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
  */
 public class IdeUICustomization {
   public static IdeUICustomization getInstance() {
-    return ServiceManager.getService(IdeUICustomization.class);
+    return ApplicationManager.getApplication().getService(IdeUICustomization.class);
   }
 
   /**
@@ -27,7 +26,7 @@ public class IdeUICustomization {
   }
 
   /**
-   * Returns a message which mentions 'project' concept. 
+   * Returns a message which mentions 'project' concept.
    */
   @NotNull
   public @Nls String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
@@ -94,5 +93,22 @@ public class IdeUICustomization {
   @NotNull
   public String getVcsToolWindowName() {
     return UIBundle.message("tool.window.name.version.control");
+  }
+}
+
+
+/**
+ * This message bundle contains strings which somehow mention 'project' concept. Other IDEs may use a different term for that (e.g. Rider
+ * use 'solution'). Don't use this class directly, use {@link IdeUICustomization#projectMessage} instead.
+ */
+final class ProjectConceptBundle {
+  @NonNls public static final String BUNDLE = "messages.ProjectConceptBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
+
+  private ProjectConceptBundle() {
+  }
+
+  static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return BundleBase.messageOrDefault(INSTANCE.getResourceBundle(ProjectConceptBundle.class.getClassLoader()), key, null, params);
   }
 }

@@ -1,16 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,14 +23,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-public abstract class DynamicBundle extends AbstractBundle {
+public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
   private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
   private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
 
-  protected DynamicBundle(@NotNull String pathToBundle) {
+  public DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
 
@@ -40,7 +43,8 @@ public abstract class DynamicBundle extends AbstractBundle {
     if (!DefaultBundleService.isDefaultBundle()) {
       LanguageBundleEP langBundle = findLanguageBundle();
       if (langBundle != null) {
-        ResourceBundle pluginBundle = super.findBundle(pathToBundle, langBundle.getLoaderForClass(), control);
+        PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
+        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader(), control);
         if (pluginBundle != null) {
           try {
             if (SET_PARENT != null) {
@@ -60,8 +64,14 @@ public abstract class DynamicBundle extends AbstractBundle {
   // todo: one language per application
   public static @Nullable LanguageBundleEP findLanguageBundle() {
     try {
-      Application application = ApplicationManager.getApplication();
-      if (application == null || !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) return null;
+      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+        return null;
+      }
+
+      Application app = ApplicationManager.getApplication();
+      if (app == null || !app.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
+        return null;
+      }
       return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
     }
     catch (ProcessCanceledException e) {
@@ -75,44 +85,49 @@ public abstract class DynamicBundle extends AbstractBundle {
 
   public static final DynamicBundle INSTANCE = new DynamicBundle("") { };
 
-  @SuppressWarnings("deprecation")
-  public static final class LanguageBundleEP extends AbstractExtensionPointBean {
+  @ApiStatus.Internal
+  public static final class LanguageBundleEP implements PluginAware {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = new ExtensionPointName<>("com.intellij.languageBundle");
 
     @Attribute("lang")
     public String lang = Locale.ENGLISH.getLanguage();
+    public PluginDescriptor pluginDescriptor;
+
+    @Override
+    public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+      this.pluginDescriptor = pluginDescriptor;
+    }
   }
 
-  /** @deprecated used only dy GUI form builder */
+  /** @deprecated used only by GUI form builder */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName) {
     Class<?> callerClass = ReflectionUtil.findCallerClass(2);
     return getBundle(baseName, callerClass == null ? DynamicBundle.class : callerClass);
   }
 
-  /** @deprecated used only dy GUI form builder */
+  /** @deprecated used only by GUI form builder */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
     DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) { });
     ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
-    if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
-      return new ResourceBundle() {
-        @Override
-        protected Object handleGetObject(@NotNull String key) {
-          Object get = rb.getObject(key);
-          assert get instanceof String : "Language bundles should contain only strings";
-          return BundleBase.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
-        }
-
-        @Override
-        public @NotNull Enumeration<String> getKeys() {
-          return rb.getKeys();
-        }
-      };
-    }
-    else {
+    if (!BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return rb;
     }
+
+    return new ResourceBundle() {
+      @Override
+      protected Object handleGetObject(@NotNull String key) {
+        Object get = rb.getObject(key);
+        assert get instanceof String : "Language bundles should contain only strings";
+        return BundleBase.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
+      }
+
+      @Override
+      public @NotNull Enumeration<String> getKeys() {
+        return rb.getKeys();
+      }
+    };
   }
 
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
