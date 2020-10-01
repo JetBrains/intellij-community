@@ -213,12 +213,11 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
     }
   }
 
-  private fun tryLocalFix(resolvers: List<UnknownSdkLookup>,
-                          unknownSdk: UnknownSdk,
-                          indicator: ProgressIndicator): Boolean = indicator.withPushPop {
+  private fun resolveLocalFix(resolvers: List<UnknownSdkLookup>,
+                              unknownSdk: UnknownSdk,
+                              indicator: ProgressIndicator) = indicator.withPushPop {
     indicator.text = ProjectBundle.message("progress.text.looking.for.local.sdks")
-
-    val localFix = resolvers
+    resolvers
                      .asSequence()
                      .onEach { indicator.checkCanceled() }
                      .mapNotNull { it.proposeLocalFix(unknownSdk, indicator) }
@@ -226,26 +225,38 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                      .filter { sdkHomeFilter?.invoke(it.existingSdkHome) != false }
                      .onEach { indicator.checkCanceled() }
                      .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
-                     .firstOrNull() ?: return false
+                     .firstOrNull()
+  }
 
+  private fun tryLocalFix(resolvers: List<UnknownSdkLookup>,
+                          unknownSdk: UnknownSdk,
+                          indicator: ProgressIndicator): Boolean = indicator.withPushPop {
+    indicator.text = ProjectBundle.message("progress.text.looking.for.local.sdks")
+
+    val localFix = resolveLocalFix(resolvers, unknownSdk, indicator) ?: return false
     indicator.checkCanceled()
     UnknownSdkTracker.configureLocalSdk(unknownSdk, localFix, onSdkResolvedConsumer)
     return true
   }
 
-  private fun tryDownloadableFix(resolvers: List<UnknownSdkLookup>,
+  private fun resolveDownloadFix(resolvers: List<UnknownSdkLookup>,
                                  unknownSdk: UnknownSdk,
-                                 indicator: ProgressIndicator): Boolean = indicator.withPushPop {
+                                 indicator: ProgressIndicator) = indicator.withPushPop {
     indicator.text = ProjectBundle.message("progress.text.looking.for.downloadable.sdks")
-    val downloadFix = resolvers
+    resolvers
                         .asSequence()
                         .onEach { indicator.checkCanceled() }
                         .mapNotNull { it.proposeDownload(unknownSdk, indicator) }
                         .filter { versionFilter?.invoke(it.versionString) != false }
                         .onEach { indicator.checkCanceled() }
                         .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
-                        .firstOrNull() ?: return false
+                        .firstOrNull()
+  }
 
+  private fun tryDownloadableFix(resolvers: List<UnknownSdkLookup>,
+                                 unknownSdk: UnknownSdk,
+                                 indicator: ProgressIndicator): Boolean {
+    val downloadFix = resolveDownloadFix(resolvers, unknownSdk, indicator) ?: return false
     indicator.checkCanceled()
     UnknownSdkTracker.downloadFix(project, unknownSdk, downloadFix, onSdkNameResolvedConsumer, onSdkResolvedConsumer)
     return true
