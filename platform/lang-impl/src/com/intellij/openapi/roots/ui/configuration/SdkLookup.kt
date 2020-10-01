@@ -78,9 +78,15 @@ interface SdkLookupBuilder {
   @Contract(pure = true)
   fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision): SdkLookupBuilder
 
+  /**
+   * Called on each detected SDK local candidate, that matches filters
+   */
   @Contract(pure = true)
   fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision): SdkLookupBuilder
 
+  /**
+   * Called on each detected SDK download candidate, that matches filters
+   */
   @Contract(pure = true)
   fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision): SdkLookupBuilder
 

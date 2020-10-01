@@ -222,10 +222,10 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                      .asSequence()
                      .onEach { indicator.checkCanceled() }
                      .mapNotNull { it.proposeLocalFix(unknownSdk, indicator) }
-                     .onEach { indicator.checkCanceled() }
-                     .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
                      .filter { versionFilter?.invoke(it.versionString) != false }
                      .filter { sdkHomeFilter?.invoke(it.existingSdkHome) != false }
+                     .onEach { indicator.checkCanceled() }
+                     .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
                      .firstOrNull() ?: return false
 
     indicator.checkCanceled()
@@ -241,9 +241,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
                         .asSequence()
                         .onEach { indicator.checkCanceled() }
                         .mapNotNull { it.proposeDownload(unknownSdk, indicator) }
+                        .filter { versionFilter?.invoke(it.versionString) != false }
                         .onEach { indicator.checkCanceled() }
                         .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
-                        .filter { versionFilter?.invoke(it.versionString) != false }
                         .firstOrNull() ?: return false
 
     indicator.checkCanceled()
