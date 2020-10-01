@@ -301,7 +301,10 @@
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.Drop"/>
+      <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="Vcs.ShowDiffWithLocal.Before"/>
     </group>
   </actions>
 
