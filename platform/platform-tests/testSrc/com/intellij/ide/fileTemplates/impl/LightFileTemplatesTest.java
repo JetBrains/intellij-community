@@ -266,20 +266,18 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertNotNull(t);
   }
 
-    public void testMultiFileSettings() {
-      FileTemplate template = myTemplateManager.addTemplate("foo", "txt");
-      CustomFileTemplate child = new CustomFileTemplate("child", "txt");
-      child.setReformatCode(false);
-      template.setChildren(new FileTemplate[]{child});
-      FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
-      Element state = settings.getState();
-      assertNotNull(state);
-      Element element = state.getChildren().get(0).getChildren().get(0);
-      assertEquals("<template name=\"foo.txt\" reformat=\"true\" live-template-enabled=\"false\">\n" +
-                   "  <template name=\"child.txt\" reformat=\"false\" live-template-enabled=\"false\" />\n" +
-                   "</template>", JDOMUtil.writeElement(element));
-      myTemplateManager.removeTemplate(template);
-      myTemplateManager.removeTemplate(child);
+  public void testMultiFileSettings() {
+    FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
+    CustomFileTemplate child = new CustomFileTemplate("child", "txt");
+    child.setFileName("child");
+    template.setChildren(new FileTemplate[]{child});
+    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+    Element state = settings.getState();
+    assertNotNull(state);
+    Element element = state.getChildren().get(0).getChildren().get(0);
+    assertEquals("<template name=\"testTemplate.txt\" reformat=\"true\" live-template-enabled=\"false\" enabled=\"true\">\n" +
+                 "  <template name=\"child.txt\" file-name=\"child\" reformat=\"true\" live-template-enabled=\"false\" />\n" +
+                 "</template>", JDOMUtil.writeElement(element));
   }
 
   private FileTemplateManagerImpl myTemplateManager;

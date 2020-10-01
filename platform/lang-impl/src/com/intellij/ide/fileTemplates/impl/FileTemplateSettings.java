@@ -63,6 +63,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
 
   private static boolean shouldSave(FileTemplateBase template) {
     boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE ||
+                         !template.getFileName().isEmpty() ||
                          // check isLiveTemplateEnabledChanged() first to avoid expensive loading all templates on exit
                          template.isLiveTemplateEnabledChanged() && template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
     if (template instanceof BundledFileTemplate) {
