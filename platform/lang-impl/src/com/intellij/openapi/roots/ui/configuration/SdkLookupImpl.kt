@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
@@ -218,7 +215,9 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
 
   private fun tryLocalFix(resolvers: List<UnknownSdkLookup>,
                           unknownSdk: UnknownSdk,
-                          indicator: ProgressIndicator): Boolean {
+                          indicator: ProgressIndicator): Boolean = indicator.withPushPop {
+    indicator.text = ProjectBundle.message("progress.text.looking.for.local.sdks")
+
     val localFix = resolvers
                      .asSequence()
                      .onEach { indicator.checkCanceled() }
@@ -236,7 +235,8 @@ private class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext
 
   private fun tryDownloadableFix(resolvers: List<UnknownSdkLookup>,
                                  unknownSdk: UnknownSdk,
-                                 indicator: ProgressIndicator): Boolean {
+                                 indicator: ProgressIndicator): Boolean = indicator.withPushPop {
+    indicator.text = ProjectBundle.message("progress.text.looking.for.downloadable.sdks")
     val downloadFix = resolvers
                         .asSequence()
                         .onEach { indicator.checkCanceled() }
