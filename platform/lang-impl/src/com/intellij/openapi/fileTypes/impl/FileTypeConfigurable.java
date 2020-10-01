@@ -29,6 +29,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
@@ -61,6 +62,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @SuppressWarnings("rawtypes")
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
   private FileType myFileTypeToPreselect;
+  private IgnoredFilesAndFoldersPanel myIgnoreFilesPanel;
 
   @Override
   public String getDisplayName() {
@@ -69,9 +71,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public JComponent createComponent() {
+    JBTabbedPane tabbedPane = new JBTabbedPane();
     myFileTypePanel = new FileTypePanel();
-    myFileTypePanel.myIgnorePanel.setBorder(
-      IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.ignore.group"), false, TITLE_INSETS).setShowLine(false));
     myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
     myFileTypePanel.myRightPanel.setPreferredSize(
       new Dimension(JBUIScale.scale(300), myFileTypePanel.myRightPanel.getHeight())
@@ -79,7 +80,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
-    myFileTypePanel.myIgnoreFilesField.setColumns(30);
     myFileTypePanel.myOpenWithLightEditPanel.setBorder(
       IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.light.edit.group"), false, TITLE_INSETS).setShowLine(false));
     myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
@@ -124,7 +124,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         );
       }
     });
-    return myFileTypePanel.myWholePanel;
+    tabbedPane.add(FileTypesBundle.message("filetype.recognized.group"), myFileTypePanel.myWholePanel);
+
+    myIgnoreFilesPanel = new IgnoredFilesAndFoldersPanel();
+    tabbedPane.add(FileTypesBundle.message("filetype.ignore.group"), myIgnoreFilesPanel);
+    return tabbedPane;
   }
 
   private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {
@@ -159,8 +163,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-        fileTypeManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+      if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
+        fileTypeManager.setIgnoredFilesList(myIgnoreFilesPanel.getValues());
       }
       fileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
@@ -191,7 +195,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     updateFileTypeList();
     updateExtensionList();
 
-    myFileTypePanel.myIgnoreFilesField.setText(fileTypeManager.getIgnoredFilesList());
+    myIgnoreFilesPanel.setValues(fileTypeManager.getIgnoredFilesList());
     if (myFileTypeToPreselect != null) {
       myRecognizedFileType.selectFileType(myFileTypeToPreselect);
     }
@@ -202,7 +206,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @Override
   public boolean isModified() {
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-    if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+    if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
       return true;
     }
     return !myTempPatternsTable.equals(fileTypeManager.getExtensionMap()) ||
@@ -429,7 +433,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .disableUpDownActions();
 
       panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.recognized.group"), false, TITLE_INSETS).setShowLine(false));
 
       new MySpeedSearch(myFileTypesList);
     }
