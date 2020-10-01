@@ -9,16 +9,17 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
-      '-XX:+UseConcMarkSweepGC', '-XX:SoftRefLRUPolicyMSPerMB=50',
-      '-ea',
+      '-XX:+UseConcMarkSweepGC',
+      '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
-      '-Dsun.io.useCanonPrefixCache=false',
-      '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
+      '-ea',
+      '-Dsun.io.useCanonPrefixCache=false',
+      '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-Djdk.attach.allowAttachSelf=true',
-      '-Dkotlinx.coroutines.debug=off',
       '-Djdk.module.illegalAccess.silent=true',
+      '-Dkotlinx.coroutines.debug=off',
     ]
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
@@ -26,8 +27,8 @@ class VmOptionsGenerator {
   static List<String> computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     List<String> commonVmOptions
     if (isEAP) {
-      //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
-      commonVmOptions = COMMON_VM_OPTIONS + ["-XX:MaxJavaStackTraceDepth=10000"]
+      // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`
+      commonVmOptions = ["-XX:MaxJavaStackTraceDepth=10000"] + COMMON_VM_OPTIONS
     }
     else {
       commonVmOptions = COMMON_VM_OPTIONS
@@ -37,7 +38,7 @@ class VmOptionsGenerator {
 
   private static List<String> vmMemoryOptions(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
-      // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
+      // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
       case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
     }

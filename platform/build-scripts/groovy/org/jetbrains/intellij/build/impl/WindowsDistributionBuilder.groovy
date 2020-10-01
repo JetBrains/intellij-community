@@ -89,7 +89,9 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateScripts(String winDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
+    String baseName = buildContext.productProperties.baseFileName
+    String scriptName = "${baseName}.bat"
+    String vmOptionsFileName = "${baseName}%BITS%.exe"
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
@@ -97,7 +99,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
     }
 
-    def batName = "${buildContext.productProperties.baseFileName}.bat"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
 
@@ -110,11 +111,12 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
-        filter(token: "script_name", value: batName)
+        filter(token: "script_name", value: scriptName)
+        filter(token: "base_name", value: baseName)
       }
     }
 
-    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/$batName")
+    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/$scriptName")
 
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
@@ -131,7 +133,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     architectures.each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-      new File(winDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
+      new File(winDistPath, "bin/$fileName").text = vmOptions.join('\n') + '\n'
     }
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
@@ -139,10 +141,9 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void buildWinLauncher(JvmArchitecture arch, String winDistPath) {
     buildContext.messages.block("Build Windows executable ${arch.name()}") {
-      String exeFileName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}.exe"
+      def executableBaseName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}"
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
-      def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
       String vmOptions = (buildContext.additionalJvmArguments +
                           " -Dide.native.launcher=true" +
                           " -Didea.vendor.name=${buildContext.applicationInfo.shortCompanyName}" +
@@ -160,8 +161,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
         IDS_APP_TITLE=$productName Launcher
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
-        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
-        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
+        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
+        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
         IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
@@ -171,7 +172,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
-      def outputPath = "$winDistPath/bin/$exeFileName"
+      def outputPath = "${winDistPath}/bin/${executableBaseName}.exe"
       def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons")]
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")

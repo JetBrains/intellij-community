@@ -176,11 +176,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    def ideaVmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                           ['-XX:+UseCompressedOops', '-Dfile.encoding=UTF-8'] +
-                           buildContext.productProperties.additionalIdeJvmArguments.split(' ').toList() +
-                           ["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"]
-    new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.join("\n")
+    def vmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
+    //todo[r.sh] additional VM options should go into the launcher (probably via Info.plist)
+    vmOptions += buildContext.productProperties.additionalIdeJvmArguments.split(' ').toList()
+    vmOptions += ["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"]
+    new File("$target/bin/${executable}.vmoptions").text = vmOptions.join('\n') + '\n'
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 

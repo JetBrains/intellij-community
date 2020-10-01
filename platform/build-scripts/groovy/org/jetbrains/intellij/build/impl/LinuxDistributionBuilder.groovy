@@ -74,9 +74,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private void generateScripts(String unixDistPath) {
-    String name = "${buildContext.productProperties.baseFileName}.sh"
     String fullName = buildContext.applicationInfo.productName
-    String vmOptionsFileName = buildContext.productProperties.baseFileName
+    String baseName = buildContext.productProperties.baseFileName
+    String scriptName = "${baseName}.sh"
+    String vmOptionsFileName = baseName
 
     String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
@@ -97,12 +98,12 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
-        filter(token: "script_name", value: name)
+        filter(token: "script_name", value: scriptName)
         filter(token: "x86_jre_url", value: linkToX86Jre)
       }
     }
 
-    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/$name")
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/${scriptName}")
 
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
@@ -118,10 +119,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                      ['-Dawt.useSystemAAFontSettings=lcd',
-                       '-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine',
-                       '-Dsun.tools.attach.tmp.only=true']
-      new File(unixDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
+                      ['-Dsun.tools.attach.tmp.only=true'] //todo
+      new File(unixDistPath, "bin/$fileName").text = vmOptions.join('\n') + '\n'
     }
   }
 
