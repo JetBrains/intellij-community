@@ -172,7 +172,13 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun getScriptSecurity(scriptType: String?, scriptPURL: ParsedURL?, docPURL: ParsedURL?) = NoLoadScriptSecurity(scriptType)
 
-  override fun getExternalResourceSecurity(resourceURL: ParsedURL?, docURL: ParsedURL?) = NoLoadExternalResourceSecurity()
+  override fun getExternalResourceSecurity(resourceURL: ParsedURL?, docURL: ParsedURL?): ExternalResourceSecurity {
+    return ExternalResourceSecurity {
+      val se = SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
+      se.fillInStackTrace()
+      throw se
+    }
+  }
 
   override fun showAlert(message: String?) {}
 

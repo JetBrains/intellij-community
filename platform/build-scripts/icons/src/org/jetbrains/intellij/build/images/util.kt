@@ -7,29 +7,32 @@ import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.io.DigestUtil
 import java.awt.Dimension
-import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.File
+import java.io.IOException
 import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.imageio.ImageIO
 
-internal val File.children: List<File> get() = if (isDirectory) listFiles()?.toList() ?: emptyList() else emptyList()
+internal val File.children: List<File>
+  get() = if (isDirectory) listFiles()?.toList() ?: emptyList() else emptyList()
 
 internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
-  if (!isImage(file)) return false
-  return !iconsOnly || isIcon(file)
+  return if (iconsOnly) isIcon(file) else isImage(file)
 }
 
-private val androidIcons by lazy { Paths.get(PathManager.getCommunityHomePath(), "android/artwork/resources") }
+private val androidIcons by lazy {
+  Paths.get(PathManager.getCommunityHomePath(), "android/artwork/resources")
+}
 
 internal fun isIcon(file: Path): Boolean {
   if (!isImage(file)) {
     return false
   }
-  val size = imageSize(file) ?: return false
 
+  val size = imageSize(file) ?: return false
   if (file.startsWith(androidIcons)) {
     return true
   }
@@ -46,16 +49,22 @@ internal fun imageSize(file: Path): Dimension? {
     println("WARNING: can't load $file")
     return null
   }
-  val width = image.getWidth(null)
-  val height = image.getHeight(null)
+
+  val width = image.width
+  val height = image.height
   return Dimension(width, height)
 }
 
-private fun loadImage(file: Path): Image? {
+private fun loadImage(file: Path): BufferedImage? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
     Files.newBufferedReader(file).use {
-      return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
+      try {
+        return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
+      }
+      catch (e: Exception) {
+        throw IOException("Cannot decode $file", e)
+      }
     }
   }
 
