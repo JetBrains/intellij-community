@@ -57,7 +57,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
         val colonIdx = term.indexOf(':')
         if (colonIdx < 0) {
-          result.add(Term.QueryPart(term))
+          result.add(Term.QueryPart(term.replace("#", "")))
         }
         else {
           try {
