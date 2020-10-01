@@ -27,7 +27,6 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.NanoXmlUtil;
-import gnu.trove.THashMap;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,8 +47,8 @@ public final class XsltSupport {
   public static final TextAttributesKey XSLT_DIRECTIVE =
     TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
-  private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<>(10);
-  private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<>(10);
+  private static final Map<String, String> XPATH_ATTR_MAP = new HashMap<>(10);
+  private static final Map<String, Set<String>> XPATH_AVT_MAP = new HashMap<>(10);
 
   static {
     XPATH_ATTR_MAP.put("select", "");

@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import gnu.trove.THashMap;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
@@ -35,18 +34,17 @@ import java.util.Map;
 
 // TODO: include/import semantics are not 100% correct currently
 public final class DeclarationChecker extends ElementProcessor<XmlTag> implements PsiElementProcessor<PsiElement> {
-
   private final static UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void> CACHE =
-          new UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void>("CACHE") {
-            @Override
-            protected CachedValue<DeclarationChecker> compute(final XmlFile file, final Void p) {
-              return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
-                final DeclarationChecker holder = new DeclarationChecker(file);
-                holder.check(file);
-                return CachedValueProvider.Result.create(holder, file);
-              }, false);
-            }
-          };
+    new UserDataCache<>("CACHE") {
+      @Override
+      protected CachedValue<DeclarationChecker> compute(final XmlFile file, final Void p) {
+        return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+          final DeclarationChecker holder = new DeclarationChecker(file);
+          holder.check(file);
+          return CachedValueProvider.Result.create(holder, file);
+        }, false);
+      }
+    };
 
   private final Map<XmlTag, XmlTag> myDuplications = new HashMap<>();
   private final Map<XmlTag, XmlTag> myShadows = new HashMap<>();
@@ -142,9 +140,9 @@ public final class DeclarationChecker extends ElementProcessor<XmlTag> implement
   }
 
   final class State {
-    private final Map<String, XmlTag> myTemplateDeclarations = new THashMap<>();
-    private final Map<String, XmlTag> myTopLevelVariables = new THashMap<>();
-    private final Map<String, XmlTag> myLocalVariables = new THashMap<>();
+    private final Map<String, XmlTag> myTemplateDeclarations = new HashMap<>();
+    private final Map<String, XmlTag> myTopLevelVariables = new HashMap<>();
+    private final Map<String, XmlTag> myLocalVariables = new HashMap<>();
 
     private Map<String, XmlTag> myVariableDeclarations = myTopLevelVariables;
 
@@ -162,7 +160,7 @@ public final class DeclarationChecker extends ElementProcessor<XmlTag> implement
     }
 
     public void processVariable(final String name, XmlTag tag) {
-      ResolveUtil.treeWalkUp(new ElementProcessor<XmlTag>(tag) {
+      ResolveUtil.treeWalkUp(new ElementProcessor<>(tag) {
         boolean myContinue = true;
 
         @Override
@@ -176,7 +174,8 @@ public final class DeclarationChecker extends ElementProcessor<XmlTag> implement
             assert myContinue;
             if (XsltSupport.getXsltLanguageLevel(tag.getContainingFile()) == XsltChecker.LanguageLevel.V2) {
               myShadows.put(myRoot, tag);
-            } else {
+            }
+            else {
               myDuplications.put(myRoot, tag);
             }
           }
