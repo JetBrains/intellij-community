@@ -1104,6 +1104,8 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.IconDbMaintainer" preload="notHeadless"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.accessibility.AccessibilityUsageTrackerCollector$CollectStatisticsTask"/>
+
+    <editorFactoryListener implementation="com.intellij.codeInsight.actions.ReaderModeEditorFactoryListener"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
