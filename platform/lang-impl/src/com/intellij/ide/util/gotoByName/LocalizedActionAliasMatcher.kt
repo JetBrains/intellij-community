@@ -10,8 +10,8 @@ internal class LocalizedActionAliasMatcher : GotoActionAliasMatcher {
     if (!Experiments.getInstance().isFeatureEnabled("i18n.match.actions")) {
       return false
     }
-    return GotoActionItemProvider.buildMatcher(name).matches(DefaultBundleService.getInstance().compute {
-      action.templatePresentation.textWithPossibleMnemonic.get().text
-    })
+
+    return DefaultBundleService.getInstance().compute { action.templatePresentation.textWithPossibleMnemonic.get().text }
+             ?.let { GotoActionItemProvider.buildMatcher(name).matches(it) } ?: return false
   }
 }

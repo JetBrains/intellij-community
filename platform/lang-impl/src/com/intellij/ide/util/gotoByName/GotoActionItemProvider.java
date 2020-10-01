@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,6 +32,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.DefaultBundleService;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -353,14 +355,26 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @Nullable
   private static Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
-    String name = getActionText(element);
-    if (name == null) return null;
+    Integer degree = calculateDegree(matcher, getActionText(element));
+    if (degree == null) return null;
 
-    int degree = matcher.matchingDegree(name);
+    if (Experiments.getInstance().isFeatureEnabled("i18n.match.actions")) {
+      if (degree == 0) {
+        degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
+        if (degree == null) return null;
+      }
+    }
+
     if (pattern.trim().contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN;
     if (element instanceof OptionDescription && degree > 0) degree -= SETTINGS_PENALTY;
 
     return Math.max(degree, 0);
+  }
+
+  @Nullable
+  private static Integer calculateDegree(MinusculeMatcher matcher, @Nullable String text) {
+    if (text == null) return null;
+    return matcher.matchingDegree(text);
   }
 
   private static MinusculeMatcher buildWeightMatcher(String pattern) {
@@ -380,10 +394,28 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   @Nullable
+  private static AnAction getAction(Object value) {
+    if (value instanceof AnAction) {
+      return (AnAction)value;
+    }
+    else if (value instanceof ActionWrapper) {
+      return ((ActionWrapper)value).getAction();
+    }
+    return null;
+  }
+
+  @Nullable
   @Nls
   private static String getAnActionText(AnAction value) {
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     return presentation.getText();
+  }
+
+  private static @Nullable String getAnActionOriginalText(@Nullable AnAction value) {
+    if (value == null) return null;
+    Presentation presentation = value.getTemplatePresentation().clone();
+    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
+    return presentation.getTextWithPossibleMnemonic().get().getText();
   }
 }
