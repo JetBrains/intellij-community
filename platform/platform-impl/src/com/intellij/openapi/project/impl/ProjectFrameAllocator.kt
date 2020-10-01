@@ -13,11 +13,10 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -74,51 +73,54 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun <T : Any> run(task: () -> T?): T? {
     var result: T? = null
-    val progressTitle = getProgressTitle()
-    ApplicationManager.getApplication().invokeAndWait {
+    val frame = invokeAndWaitIfNeeded {
       if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
       }
 
-      val frame = createFrameIfNeeded()
-      val progressTask = object : Task.Modal(null, progressTitle, true) {
-        override fun run(indicator: ProgressIndicator) {
-          if (frameHelper == null) {
-            ApplicationManager.getApplication().invokeLater {
-              if (cancelled) {
-                return@invokeLater
-              }
+      createFrameIfNeeded()
+    }
 
-              runActivity("project frame initialization") {
-                initNewFrame(frame)
-              }
+    val progressTask = object : Runnable {
+      override fun run() {
+        if (frameHelper == null) {
+          ApplicationManager.getApplication().invokeLater {
+            if (cancelled) {
+              return@invokeLater
+            }
+
+            runActivity("project frame initialization") {
+              initNewFrame(frame)
             }
           }
+        }
 
+        try {
           result = task()
         }
-
-        override fun onThrowable(error: Throwable) {
-          if (error is StartupAbortedException || error is PluginException) {
-            StartupAbortedException.logAndExit(error)
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Exception) {
+          if (e is StartupAbortedException || e is PluginException) {
+            StartupAbortedException.logAndExit(e)
           }
           else {
-            logger<ProjectFrameAllocator>().error(error)
-            projectNotLoaded(error as? CannotConvertException)
+            logger<ProjectFrameAllocator>().error(e)
+            projectNotLoaded(e as? CannotConvertException)
           }
         }
       }
-
-      // VfsUtil.markDirtyAndRefresh wants write-safe context
-      // but no API to start runProcessWithProgressSynchronously in a write-safe context for now
-      if (!(ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)) {
-        result = null
-      }
     }
-    return result
+
+    if (ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(progressTask, getProgressTitle(), false, true, null, frame.rootPane, null)) {
+      return result
+    }
+    // cancelled
+    return null
   }
 
-  @NlsContexts.DialogTitle
+  @NlsContexts.ProgressTitle
   private fun getProgressTitle(): String {
     val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
