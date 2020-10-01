@@ -58,6 +58,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
@@ -948,7 +949,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
-                                                                       @NotNull Consumer<? super ProgressIndicator> action) {
+                                                                       @NotNull java.util.function.Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
@@ -956,19 +957,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
-                                            @NotNull Consumer<? super ProgressIndicator> action) {
+                                            @NotNull java.util.function.Consumer<? super ProgressIndicator> action) {
     if (!USE_SEPARATE_WRITE_THREAD) {
       // Use Potemkin progress in legacy mode; in the new model such execution will always move to a separate thread.
       return runWriteActionWithClass(action.getClass(), ()->{
         PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-        indicator.runInSwingThread(() -> action.consume(indicator));
+        indicator.runInSwingThread(() -> action.accept(indicator));
         return !indicator.isCanceled();
       });
     }
 
     final ProgressWindow progress = createProgressWindow(title, cancelText != null, true, project, parentComponent, cancelText);
 
-    ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.consume(progress)))
+    ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.accept(progress)))
       .sync()
       .onThread(ProgressRunner.ThreadToUse.WRITE)
       .withProgress(progress)
