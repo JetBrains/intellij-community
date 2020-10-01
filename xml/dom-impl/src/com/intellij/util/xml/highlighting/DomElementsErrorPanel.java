@@ -110,8 +110,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-
-    myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, getWidth(), getHeight()));
+    myErrorStripeRenderer.getStatus().getIcon().paintIcon(this, g, 0, 0);
   }
 
   @Override

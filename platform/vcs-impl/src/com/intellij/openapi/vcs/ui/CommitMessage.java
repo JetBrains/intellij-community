@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
-import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -333,12 +332,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
         }
       }
       return false;
-    }
-
-    @Override
-    @NotNull
-    protected UIController createUIController(@NotNull Editor editor) {
-      return new SimplifiedUIController();
     }
   }
 }

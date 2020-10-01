@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
+import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,7 +39,6 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.function.Supplier;
 
@@ -158,9 +158,8 @@ public class FontEditorPreview implements PreviewPanel{
 
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
-    public void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r) {
-      Icon icon = AllIcons.General.InspectionsOK;
-      icon.paintIcon(c, g, r.x, r.y);
+    public @NotNull AnalyzerStatus getStatus() {
+      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", () -> AnalyzerStatus.getEmptyController());
     }
   }
 
