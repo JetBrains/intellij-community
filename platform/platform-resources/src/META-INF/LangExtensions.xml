@@ -266,7 +266,7 @@
                          order="after editor.preferences.import"
                          provider="com.intellij.codeInsight.actions.ReaderModeConfigurableProvider"/>
 
-    <experimentalFeature id="editor.reader.mode" percentOfUsers="0">
+    <experimentalFeature id="editor.reader.mode" percentOfUsers="100">
       <description>The Reader Mode is intended for comfortable code browsing rather than modification. It turns off warnings, show more inlay hints, enhance font presentation.
       </description>
     </experimentalFeature>
