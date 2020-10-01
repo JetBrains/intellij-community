@@ -385,7 +385,7 @@ public final class IdempotenceChecker {
     }
   }
 
-  public static class ResultWithLog<T> {
+  public static final class ResultWithLog<T> {
     private final T result;
     private final List<String> log;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
@@ -45,8 +45,7 @@ import java.util.function.Supplier;
  * @param <R> type of result to be computed by a given task
  * @param <P> type of progress indicator (to be) associated with a given task
  */
-public class ProgressRunner<R, P extends ProgressIndicator> {
-
+public final class ProgressRunner<R, P extends ProgressIndicator> {
   public enum ThreadToUse {
     /**
      * Write Thread with implicit read access and the ability to execute write actions. Can be EDT.
