@@ -68,7 +68,10 @@ message WriteStreamRequest {
 message CommandLine {
   repeated string command = 1;
   string working_dir = 2;
-  repeated EnvironVar environ_vars = 3;
+  string in_file = 3;
+  string out_file = 4;
+  string err_file = 5;
+  repeated EnvironVar environ_vars = 6;
 
   message EnvironVar {
     string name = 1;

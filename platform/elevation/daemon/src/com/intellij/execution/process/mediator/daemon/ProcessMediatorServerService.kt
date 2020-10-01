@@ -22,7 +22,10 @@ internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMedia
     val pid = try {
       processManager.createProcess(commandLine.commandList,
                                    File(commandLine.workingDir),
-                                   commandLine.environVarsList.associate { it.name to it.value })
+                                   commandLine.environVarsList.associate { it.name to it.value },
+                                   commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                   commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
 
     }
     catch (e: IOException) {

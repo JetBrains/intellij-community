@@ -45,25 +45,61 @@ public interface CommandLineOrBuilder extends
       getWorkingDirBytes();
 
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>string in_file = 3;</code>
+   * @return The inFile.
+   */
+  java.lang.String getInFile();
+  /**
+   * <code>string in_file = 3;</code>
+   * @return The bytes for inFile.
+   */
+  com.google.protobuf.ByteString
+      getInFileBytes();
+
+  /**
+   * <code>string out_file = 4;</code>
+   * @return The outFile.
+   */
+  java.lang.String getOutFile();
+  /**
+   * <code>string out_file = 4;</code>
+   * @return The bytes for outFile.
+   */
+  com.google.protobuf.ByteString
+      getOutFileBytes();
+
+  /**
+   * <code>string err_file = 5;</code>
+   * @return The errFile.
+   */
+  java.lang.String getErrFile();
+  /**
+   * <code>string err_file = 5;</code>
+   * @return The bytes for errFile.
+   */
+  com.google.protobuf.ByteString
+      getErrFileBytes();
+
+  /**
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> 
       getEnvironVarsList();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar getEnvironVars(int index);
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   int getEnvironVarsCount();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   java.util.List<? extends com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder> 
       getEnvironVarsOrBuilderList();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
    */
   com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
       int index);

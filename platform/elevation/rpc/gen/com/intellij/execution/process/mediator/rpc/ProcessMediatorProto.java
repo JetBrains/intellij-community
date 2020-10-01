@@ -100,29 +100,31 @@ public final class ProcessMediatorProto {
       "\001(\0132).intellij.process.mediator.rpc.File" +
       "HandleH\000\0229\n\005chunk\030\002 \001(\0132(.intellij.proce" +
       "ss.mediator.rpc.DataChunkH\000B\024\n\022FileHandl" +
-      "eOrBuffer\"\253\001\n\013CommandLine\022\017\n\007command\030\001 \003" +
-      "(\t\022\023\n\013working_dir\030\002 \001(\t\022K\n\014environ_vars\030" +
-      "\003 \003(\01325.intellij.process.mediator.rpc.Co" +
-      "mmandLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004na" +
-      "me\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\207\005\n\017ProcessMedia" +
-      "tor\022w\n\rCreateProcess\0223.intellij.process." +
-      "mediator.rpc.CreateProcessRequest\0321.inte" +
+      "eOrBuffer\"\340\001\n\013CommandLine\022\017\n\007command\030\001 \003" +
+      "(\t\022\023\n\013working_dir\030\002 \001(\t\022\017\n\007in_file\030\003 \001(\t" +
+      "\022\020\n\010out_file\030\004 \001(\t\022\020\n\010err_file\030\005 \001(\t\022K\n\014" +
+      "environ_vars\030\006 \003(\01325.intellij.process.me" +
+      "diator.rpc.CommandLine.EnvironVar\032)\n\nEnv" +
+      "ironVar\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\207\005\n" +
+      "\017ProcessMediator\022w\n\rCreateProcess\0223.inte" +
       "llij.process.mediator.rpc.CreateProcessR" +
-      "eply\022^\n\016DestroyProcess\0224.intellij.proces" +
-      "s.mediator.rpc.DestroyProcessRequest\032\026.g" +
-      "oogle.protobuf.Empty\022\200\001\n\020AwaitTerminatio" +
-      "n\0226.intellij.process.mediator.rpc.AwaitT" +
-      "erminationRequest\0324.intellij.process.med" +
-      "iator.rpc.AwaitTerminationReply\022Z\n\013Write" +
-      "Stream\0221.intellij.process.mediator.rpc.W" +
-      "riteStreamRequest\032\026.google.protobuf.Empt" +
-      "y(\001\022j\n\nReadStream\0220.intellij.process.med" +
-      "iator.rpc.ReadStreamRequest\032(.intellij.p" +
-      "rocess.mediator.rpc.DataChunk0\001\022P\n\007Relea" +
-      "se\022-.intellij.process.mediator.rpc.Relea" +
-      "seRequest\032\026.google.protobuf.EmptyBE\n+com" +
-      ".intellij.execution.process.mediator.rpc" +
-      "B\024ProcessMediatorProtoP\001b\006proto3"
+      "equest\0321.intellij.process.mediator.rpc.C" +
+      "reateProcessReply\022^\n\016DestroyProcess\0224.in" +
+      "tellij.process.mediator.rpc.DestroyProce" +
+      "ssRequest\032\026.google.protobuf.Empty\022\200\001\n\020Aw" +
+      "aitTermination\0226.intellij.process.mediat" +
+      "or.rpc.AwaitTerminationRequest\0324.intelli" +
+      "j.process.mediator.rpc.AwaitTerminationR" +
+      "eply\022Z\n\013WriteStream\0221.intellij.process.m" +
+      "ediator.rpc.WriteStreamRequest\032\026.google." +
+      "protobuf.Empty(\001\022j\n\nReadStream\0220.intelli" +
+      "j.process.mediator.rpc.ReadStreamRequest" +
+      "\032(.intellij.process.mediator.rpc.DataChu" +
+      "nk0\001\022P\n\007Release\022-.intellij.process.media" +
+      "tor.rpc.ReleaseRequest\032\026.google.protobuf" +
+      ".EmptyBE\n+com.intellij.execution.process" +
+      ".mediator.rpcB\024ProcessMediatorProtoP\001b\006p" +
+      "roto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -194,7 +196,7 @@ public final class ProcessMediatorProto {
     internal_static_intellij_process_mediator_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_CommandLine_descriptor,
-        new java.lang.String[] { "Command", "WorkingDir", "EnvironVars", });
+        new java.lang.String[] { "Command", "WorkingDir", "InFile", "OutFile", "ErrFile", "EnvironVars", });
     internal_static_intellij_process_mediator_rpc_CommandLine_EnvironVar_descriptor =
       internal_static_intellij_process_mediator_rpc_CommandLine_descriptor.getNestedTypes().get(0);
     internal_static_intellij_process_mediator_rpc_CommandLine_EnvironVar_fieldAccessorTable = new

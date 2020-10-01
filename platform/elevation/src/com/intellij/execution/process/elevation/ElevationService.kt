@@ -86,14 +86,21 @@ private class MediatedProcess private constructor(private val handle: MediatedPr
       return create(processMediatorClient,
                     processBuilder.command(),
                     processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-                    processBuilder.environment())
+                    processBuilder.environment(),
+                    processBuilder.redirectInput().file(),
+                    processBuilder.redirectOutput().file(),
+                    processBuilder.redirectError().file())
     }
 
     fun create(processMediatorClient: ProcessMediatorClient,
                command: List<String>,
                workingDir: File,
-               environVars: Map<String, String>): MediatedProcess {
-      val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars)
+               environVars: Map<String, String>,
+               inFile: File?,
+               outFile: File?,
+               errFile: File?,
+    ): MediatedProcess {
+      val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile)
       return MediatedProcess(handle).also { process ->
         val cleanable = CLEANER.register(process, handle::close)
         processMediatorClient.registerCleanup(cleanable::clean)
@@ -101,7 +108,7 @@ private class MediatedProcess private constructor(private val handle: MediatedPr
     }
   }
 
-  private val stdin: OutputStream = createPipedOutputStream(0)
+  private val stdin: OutputStream = if (handle.inFile != null) OutputStream.nullOutputStream() else createPipedOutputStream(0)
   private val stdout: InputStream = createPipedInputStream(1)
   private val stderr: InputStream = createPipedInputStream(2)
 
@@ -202,12 +209,15 @@ private class MediatedProcessHandle(
   val processMediatorClient: ProcessMediatorClient,
   command: List<String>,
   workingDir: File,
-  environVars: Map<String, String>
+  environVars: Map<String, String>,
+  val inFile: File?,
+  outFile: File?,
+  errFile: File?,
 ) : CoroutineScope by processMediatorClient.childSupervisorScope(),
     AutoCloseable {
 
   val pid: Deferred<Long> = async {
-    processMediatorClient.createProcess(command, workingDir, environVars)
+    processMediatorClient.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
   }
 
   private val cleanupJob = launch(start = LAZY) {
@@ -272,7 +282,8 @@ private class ProcessMediatorClient(
 
   private val cleanupHooks: MutableList<() -> Unit> = Collections.synchronizedList(ArrayList())
 
-  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
+  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
+                            inFile: File?, outFile: File?, errFile: File?): Long {
     val environVarList = environVars.map { (name, value) ->
       CommandLine.EnvironVar.newBuilder()
         .setName(name)
@@ -283,6 +294,11 @@ private class ProcessMediatorClient(
       .addAllCommand(command)
       .setWorkingDir(workingDir.absolutePath)
       .addAllEnvironVars(environVarList)
+      .apply {
+        inFile?.let { setInFile(it.absolutePath) }
+        outFile?.let { setOutFile(it.absolutePath) }
+        errFile?.let { setErrFile(it.absolutePath) }
+      }
       .build()
     val request = CreateProcessRequest.newBuilder().setCommandLine(commandLine).build()
     val response = stub.createProcess(request)
@@ -372,8 +388,12 @@ fun main() {
   processMediatorServer.start()
 
   startLocalProcessMediatorClientForTesting().use { processMediatorClient ->
-    val process = MediatedProcess.create(processMediatorClient,
-                                         commandLine.toProcessBuilder())
+    val processBuilder = commandLine.toProcessBuilder()
+      .redirectInput(File("community/platform/elevation/src/com/intellij/execution/process/elevation/util.kt"))
+      .redirectOutput(File("community/platform/elevation/src/com/intellij/execution/process/elevation/util.kt.out"))
+      .redirectError(File("community/platform/elevation/src/com/intellij/execution/process/elevation/util.kt.err"))
+
+    val process = MediatedProcess.create(processMediatorClient, processBuilder)
     println("pid: ${process.pid()}")
     OutputStreamWriter(process.outputStream).use {
       it.write("Hello ")
