@@ -87,7 +87,7 @@ class ModifiableRootModelBridgeImpl(
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
     val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
-    val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.getUrl() }.toList()
+    val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
 
     contentEntries.map {
       ModifiableContentEntryBridge(
@@ -145,7 +145,7 @@ class ModifiableRootModelBridgeImpl(
     entry.clearSourceFolders()
     diff.removeEntity(entity)
 
-    if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.getUrl() }) {
+    if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.url }) {
       error("removeContentEntry: removed content entry url '$contentEntryUrl' still exists after removing")
     }
   }

@@ -93,7 +93,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     }
     val componentTag = JDomSerializationUtil.createComponentElement(componentName)
     XmlSerializer.serializeInto(facetManagerState, componentTag)
-    writer.saveComponent(imlFileUrl.getUrl(), componentName, componentTag)
+    writer.saveComponent(imlFileUrl.url, componentName, componentTag)
   }
 
   private fun saveFacet(facetEntity: FacetEntity, facetStates: MutableMap<String, FacetState>, rootFacets: MutableList<FacetState>) {

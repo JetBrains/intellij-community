@@ -67,7 +67,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
                              serializerToDirectoryFactory.keys + moduleSerializers.keys
     allFileSerializers.forEach {
-      fileSerializersByUrl.put(it.fileUrl.getUrl(), it)
+      fileSerializersByUrl.put(it.fileUrl.url, it)
     }
   }
 
@@ -145,10 +145,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (newSerializer in newFileSerializers) {
-      fileSerializersByUrl.put(newSerializer.fileUrl.getUrl(), newSerializer)
+      fileSerializersByUrl.put(newSerializer.fileUrl.url, newSerializer)
     }
     for (obsoleteSerializer in obsoleteSerializers) {
-      fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.getUrl(), obsoleteSerializer)
+      fileSerializersByUrl.remove(obsoleteSerializer.fileUrl.url, obsoleteSerializer)
     }
 
     val affectedFileLoaders = (change.changedFileUrls + addedFileUrls).toCollection(HashSet()).flatMap { fileSerializersByUrl.getValues(it) }
@@ -240,10 +240,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun getActualFileUrl(source: JpsFileEntitySource) = when (source) {
-    is JpsFileEntitySource.ExactFile -> source.file.getUrl()
+    is JpsFileEntitySource.ExactFile -> source.file.url
     is JpsFileEntitySource.FileInDirectory -> {
       val fileName = fileIdToFileName.get(source.fileNameId)
-      if (fileName != null) source.directory.getUrl() + "/" + fileName else null
+      if (fileName != null) source.directory.url + "/" + fileName else null
     }
   }
 
@@ -321,7 +321,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val newSerializers = createSerializersForDirectoryEntities(factory, added)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.first] = factory
-            fileSerializersByUrl.put(it.first.fileUrl.getUrl(), it.first)
+            fileSerializersByUrl.put(it.first.fileUrl.url, it.first)
           }
           serializersToRun.addAll(newSerializers)
         }
@@ -338,7 +338,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           @Suppress("ReplacePutWithAssignment")
           fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
           if (oldFileName != null) {
-            processObsoleteSource("${actualFileSource.directory.getUrl()}/$oldFileName", true)
+            processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true)
           }
           processNewlyAddedDirectoryEntities(entities)
         }
@@ -389,7 +389,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   private fun calculateFileNameForEntity(source: JpsFileEntitySource.FileInDirectory,
                                          originalSource: EntitySource,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
-    val directoryFactory = directorySerializerFactoriesByUrl[source.directory.getUrl()]
+    val directoryFactory = directorySerializerFactoriesByUrl[source.directory.url]
     if (directoryFactory != null) {
       return getDefaultFileNameForEntity(directoryFactory, entities)
     }
@@ -437,7 +437,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                                                           entities: List<WorkspaceEntity>)
     : List<Pair<JpsFileEntitiesSerializer<*>, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>> {
     val nameGenerator = UniqueNameGenerator(serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList(), Function {
-      PathUtil.getFileName(it.fileUrl.getUrl())
+      PathUtil.getFileName(it.fileUrl.url)
     })
     return entities
       .filter { @Suppress("UNCHECKED_CAST") factory.entityFilter(it as E) }

@@ -58,7 +58,7 @@ class SimplePropertiesInStorageTest {
     assertEquals("foo", modified.stringProperty)
     assertEquals(listOf("first"), modified.stringListProperty)
     assertTrue(modified.booleanProperty)
-    assertEquals("file:///xxx", modified.fileProperty.getUrl())
+    assertEquals("file:///xxx", modified.fileProperty.url)
   }
 
   @Test

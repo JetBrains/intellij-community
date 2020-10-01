@@ -62,11 +62,11 @@ class CompilerModuleExtensionBridge(
   override fun isExcludeOutput(): Boolean = javaSettings?.excludeOutput ?: true
   override fun isCompilerOutputPathInherited(): Boolean = javaSettings?.inheritedCompilerOutput ?: true
 
-  override fun getCompilerOutputUrl(): String? = getCompilerOutput()?.getUrl()
+  override fun getCompilerOutputUrl(): String? = getCompilerOutput()?.url
   override fun getCompilerOutputPath(): VirtualFile? = getCompilerOutput()?.virtualFile
   override fun getCompilerOutputPointer(): VirtualFilePointer? = getCompilerOutput() as? VirtualFilePointer
 
-  override fun getCompilerOutputUrlForTests(): String? = getCompilerOutputForTests()?.getUrl()
+  override fun getCompilerOutputUrlForTests(): String? = getCompilerOutputForTests()?.url
   override fun getCompilerOutputPathForTests(): VirtualFile? = getCompilerOutputForTests()?.virtualFile
   override fun getCompilerOutputForTestsPointer(): VirtualFilePointer? = getCompilerOutputForTests() as? VirtualFilePointer
 

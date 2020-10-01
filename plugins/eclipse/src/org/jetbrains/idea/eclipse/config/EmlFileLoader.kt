@@ -201,7 +201,7 @@ internal class EmlFileLoader(
       { it.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR)!! }
     )
     for (sourceRoot in entity.sourceRoots) {
-      val url = sourceRoot.url.getUrl()
+      val url = sourceRoot.url.url
       val isForTests = url in testSourceFolders
       if (isForTests != sourceRoot.tests) {
         builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
@@ -226,7 +226,7 @@ internal class EmlFileLoader(
 
     val excludedUrls = contentEntryTag.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)
       .mapNotNull { it.getAttributeValue(IdeaXml.URL_ATTR) }
-      .filter { FileUtil.isAncestor(Paths.get(URI.create(entity.url.getUrl())).toFile(), JpsPathUtil.urlToFile(it), false) }
+      .filter { FileUtil.isAncestor(Paths.get(URI.create(entity.url.url)).toFile(), JpsPathUtil.urlToFile(it), false) }
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(ModifiableContentRootEntity::class.java, entity) {

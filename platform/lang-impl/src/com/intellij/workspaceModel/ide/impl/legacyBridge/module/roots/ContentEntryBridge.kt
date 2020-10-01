@@ -26,7 +26,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
 
   override fun getFile(): VirtualFile? = (entity.url as VirtualFilePointer).file
 
-  override fun getUrl(): String = entity.url.getUrl()
+  override fun getUrl(): String = entity.url.url
 
   override fun getSourceFolders(): Array<SourceFolder> = sourceFolders.toTypedArray()
   override fun getExcludeFolders(): Array<ExcludeFolder> = excludeFolders.toTypedArray()

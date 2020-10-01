@@ -2,24 +2,14 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
 import com.intellij.ide.highlighter.ArchiveFileType
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
-import com.intellij.util.ArrayUtilRt
-import com.intellij.util.Function
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.storage.vfu.VirtualFileUrl
 import java.util.*
@@ -31,7 +21,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
      jarDirectories.forEach { myList.addIfAbsent(it.directoryUrl as VirtualFilePointer) }
    }
 
-  fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.getUrl() == url }
+  fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.url == url }
   fun findByUrl(url: String): VirtualFilePointer? = myList.find { it.url == url }
   fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(myList)
   fun getUrls(): Array<String> = myList.map { it.url }.toTypedArray()

@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
@@ -105,7 +104,7 @@ class ImlReplaceBySourceTest {
     val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
     @Suppress("USELESS_IS_CHECK")
     val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootEntity>>().single { it.entity is JavaSourceRootEntity }
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).getUrl(), sourceRootChange.entity.url.getUrl())
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url(), sourceRootChange.entity.url.url())
     Assert.assertEquals(true, javaSourceRootChange.entity.generated)
   }
 

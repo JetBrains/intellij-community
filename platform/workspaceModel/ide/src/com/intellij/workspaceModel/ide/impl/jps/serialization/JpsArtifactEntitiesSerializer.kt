@@ -77,7 +77,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                             reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager) {
-    val artifactListElement = reader.loadComponent(fileUrl.getUrl(), ARTIFACT_MANAGER_COMPONENT_NAME)
+    val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
     val source = internalEntitySource
@@ -160,7 +160,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         componentTag.addContent(saveArtifact(artifact))
       }
     }
-    writer.saveComponent(fileUrl.getUrl(), ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
+    writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
   }
 
   private fun saveArtifact(artifact: ArtifactEntity): Element {
@@ -168,7 +168,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     artifactState.name = artifact.name
     artifactState.artifactType = artifact.artifactType
     artifactState.isBuildOnMake = artifact.includeInProjectBuild
-    artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl.getUrl())
+    artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl.url)
     val customProperties = artifact.customProperties.filter { it.entitySource == artifact.entitySource }
     artifactState.propertiesList = customProperties.mapTo(ArrayList()) {
       ArtifactPropertiesState().apply {
@@ -185,7 +185,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
     fun setId(typeId: String) = tag.setAttribute("id", typeId)
     fun setAttribute(name: String, value: String) = tag.setAttribute(name, value)
-    fun setPathAttribute(name: String, value: VirtualFileUrl) = tag.setAttribute(name, JpsPathUtil.urlToPath(value.getUrl()))
+    fun setPathAttribute(name: String, value: VirtualFileUrl) = tag.setAttribute(name, JpsPathUtil.urlToPath(value.url))
 
     fun saveElementChildren(composite: CompositePackagingElementEntity) {
       composite.children.forEach {

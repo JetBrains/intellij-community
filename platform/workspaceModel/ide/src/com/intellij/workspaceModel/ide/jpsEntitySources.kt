@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 sealed class JpsProjectConfigLocation {
   val baseDirectoryUrlString: String
-    get() = baseDirectoryUrl.getUrl()
+    get() = baseDirectoryUrl.url
 
   abstract val baseDirectoryUrl: VirtualFileUrl
   abstract fun exists(): Boolean
@@ -25,13 +25,13 @@ sealed class JpsProjectConfigLocation {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
 
-    override fun exists() = JpsPathUtil.urlToFile(projectDir.getUrl()).exists()
+    override fun exists() = JpsPathUtil.urlToFile(projectDir.url).exists()
   }
   data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = iprFileParent
 
-    override fun exists() = JpsPathUtil.urlToFile(iprFile.getUrl()).exists()
+    override fun exists() = JpsPathUtil.urlToFile(iprFile.url).exists()
   }
 }
 

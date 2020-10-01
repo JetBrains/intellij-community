@@ -19,7 +19,7 @@ class JpsExternalStorageMappingImpl(override val externalStorageRoot: VirtualFil
                                     private val projectLocation: JpsProjectConfigLocation) : JpsExternalStorageMapping {
   override fun getExternalSource(internalSource: JpsFileEntitySource) = when (internalSource) {
     is JpsFileEntitySource.FileInDirectory -> {
-      val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.getUrl())
+      val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.url)
       val directoryName = PathUtil.getFileName(directoryPath)
       val parentPath = PathUtil.getParentPath(directoryPath)
       if (PathUtil.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {

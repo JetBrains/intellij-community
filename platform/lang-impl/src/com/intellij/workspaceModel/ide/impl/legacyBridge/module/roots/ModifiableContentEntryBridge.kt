@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootE
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import org.jetbrains.jps.model.JpsElement
@@ -70,7 +69,7 @@ internal class ModifiableContentEntryBridge(
     SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
-      it.url == sourceFolderUrl.getUrl() && it.rootType == type
+      it.url == sourceFolderUrl.url && it.rootType == type
     } ?: error("Source folder for '$sourceFolderUrl' and type '$type' was not found after adding")
   }
 
@@ -89,7 +88,7 @@ internal class ModifiableContentEntryBridge(
       }
       else -> { _ -> true }
     }
-    return sourceFolders.filter { it.url == sourceFolderUrl.getUrl() && it.rootType == type }.find { propertiesFilter.invoke(it) }
+    return sourceFolders.filter { it.url == sourceFolderUrl.url && it.rootType == type }.find { propertiesFilter.invoke(it) }
   }
 
   override fun removeSourceFolder(sourceFolder: SourceFolder) {
@@ -119,7 +118,7 @@ internal class ModifiableContentEntryBridge(
     }
 
     return currentContentEntry.value.excludeFolders.firstOrNull {
-      it.url == excludeUrl.getUrl()
+      it.url == excludeUrl.url
     } ?: error("Exclude folder $excludeUrl must be present after adding it to content entry $contentEntryUrl")
   }
 
@@ -208,7 +207,7 @@ internal class ModifiableContentEntryBridge(
     addSourceFolder(virtualFileManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
-  override fun getUrl(): String = contentEntryUrl.getUrl()
+  override fun getUrl(): String = contentEntryUrl.url
   override fun getSourceFolders(): Array<SourceFolder> = currentContentEntry.value.sourceFolders
   override fun getSourceFolders(rootType: JpsModuleSourceRootType<*>): List<SourceFolder> =
     currentContentEntry.value.getSourceFolders(rootType)

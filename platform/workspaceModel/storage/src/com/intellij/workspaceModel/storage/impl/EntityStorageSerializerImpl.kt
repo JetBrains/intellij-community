@@ -51,7 +51,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.addDefaultSerializer(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
       override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
         // TODO Write IDs only
-        output.writeString(obj.getUrl())
+        output.writeString(obj.url)
       }
 
       override fun read(kryo: Kryo, input: Input, type: Class<VirtualFileUrl>): VirtualFileUrl =

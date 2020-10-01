@@ -25,7 +25,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
                              imlFileUrl: VirtualFileUrl,
                              errorReporter: ErrorReporter,
                              virtualFileManager: VirtualFileUrlManager) {
-    val componentTag = reader.loadComponent(imlFileUrl.getUrl(), "EclipseModuleManager") ?: return
+    val componentTag = reader.loadComponent(imlFileUrl.url, "EclipseModuleManager") ?: return
     val entity = builder.addEclipseProjectPropertiesEntity(moduleEntity, moduleEntity.entitySource)
     builder.modifyEntity(ModifiableEclipseProjectPropertiesEntity::class.java, entity) {
       componentTag.getChildren(LIBELEMENT).forEach {
@@ -62,7 +62,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
 
     val componentTag = JDomSerializationUtil.createComponentElement("EclipseModuleManager")
     eclipseProperties.eclipseUrls.forEach {
-      componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.getUrl()))
+      componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
     }
     eclipseProperties.variablePaths.forEach { name, path ->
       val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
@@ -86,6 +86,6 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)
-    writer.saveComponent(imlFileUrl.getUrl(), "EclipseModuleManager", componentTag)
+    writer.saveComponent(imlFileUrl.url, "EclipseModuleManager", componentTag)
   }
 }

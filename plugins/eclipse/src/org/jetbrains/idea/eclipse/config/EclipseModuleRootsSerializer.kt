@@ -79,7 +79,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val entitySource = moduleEntity.entitySource as EclipseProjectFile
     val contentRootEntity = builder.addContentRootEntity(storageRootUrl, emptyList(), emptyList(), moduleEntity)
 
-    val classpathTag = reader.loadComponent(entitySource.classpathFile.getUrl(), "", null)
+    val classpathTag = reader.loadComponent(entitySource.classpathFile.url, "", null)
     if (classpathTag != null) {
       val relativePathResolver = ModuleRelativePathResolver(internalModuleListSerializer, reader, virtualFileManager)
       moduleEntity = loadClasspathTags(classpathTag, builder, contentRootEntity, storageRootUrl, reader, relativePathResolver, errorReporter, imlFileUrl,
@@ -93,7 +93,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val emlUrl = getEmlFileUrl(imlFileUrl)
     val emlTag = reader.loadComponent(emlUrl, "", null)
     if (emlTag != null) {
-      reader.getExpandMacroMap(imlFileUrl.getUrl()).substitute(emlTag, SystemInfo.isFileSystemCaseSensitive)
+      reader.getExpandMacroMap(imlFileUrl.url).substitute(emlTag, SystemInfo.isFileSystemCaseSensitive)
       EmlFileLoader(moduleEntity, builder, reader.getExpandMacroMap(emlUrl), virtualFileManager).loadEml(emlTag, contentRootEntity)
     }
     else {
@@ -109,7 +109,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     }
   }
 
-  private fun getEmlFileUrl(imlFileUrl: VirtualFileUrl) = imlFileUrl.getUrl().removeSuffix(".iml") + EclipseXml.IDEA_SETTINGS_POSTFIX
+  private fun getEmlFileUrl(imlFileUrl: VirtualFileUrl) = imlFileUrl.url.removeSuffix(".iml") + EclipseXml.IDEA_SETTINGS_POSTFIX
 
   private fun loadClasspathTags(classpathTag: Element,
                                 builder: WorkspaceEntityStorageBuilder,
@@ -136,9 +136,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       }
     }
 
-    val storageRootPath = JpsPathUtil.urlToPath(storageRootUrl.getUrl())
+    val storageRootPath = JpsPathUtil.urlToPath(storageRootUrl.url)
     val libraryNames = HashSet<String>()
-    val expandMacroMap = reader.getExpandMacroMap(imlFileUrl.getUrl())
+    val expandMacroMap = reader.getExpandMacroMap(imlFileUrl.url)
 
     val sourceRoots = mutableListOf<VirtualFileUrl>()
     val dependencies = ArrayList<ModuleDependencyItem>()
@@ -173,7 +173,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             else {
               srcUrl = convertToRootUrl(linkedPath, virtualUrlManager)
               editEclipseProperties {
-                it.setVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, path, srcUrl.getUrl())
+                it.setVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, path, srcUrl.url)
               }
               val newContentRoot = moduleEntity.contentRoots.firstOrNull { it.url == srcUrl }
                                    ?: builder.addContentRootEntity(srcUrl, emptyList(), emptyList(), moduleEntity)
@@ -185,7 +185,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
             editEclipseProperties {
               it.expectedModuleSourcePlace = dependencies.size - 1
-              it.srcPlace[srcUrl.getUrl()] = index
+              it.srcPlace[srcUrl.url] = index
             }
           }
         }
@@ -195,7 +195,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           if (linked != null) {
             outputUrl = virtualUrlManager.fromUrl(pathToUrl(linked))
             editEclipseProperties {
-              it.setVariable(EclipseModuleManagerImpl.LINK_PREFIX, path, outputUrl.getUrl())
+              it.setVariable(EclipseModuleManagerImpl.LINK_PREFIX, path, outputUrl.url)
             }
           }
           else {
@@ -210,7 +210,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           if (linked != null) {
             url = convertToRootUrl(linked, virtualUrlManager)
             editEclipseProperties {
-              it.setVariable(EclipseModuleManagerImpl.LINK_PREFIX, path, url.getUrl())
+              it.setVariable(EclipseModuleManagerImpl.LINK_PREFIX, path, url.url)
             }
           }
           else {
@@ -226,7 +226,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             if (linkedSrc != null) {
               srcUrl = convertToRootUrl(linkedSrc, virtualUrlManager)
               editEclipseProperties {
-                it.setVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, path, srcUrl.getUrl())
+                it.setVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, path, srcUrl.url)
               }
             }
             else {
@@ -255,7 +255,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           val libName = generateUniqueLibraryName(path, libraryNames)
           val url = convertVariablePathToUrl(expandMacroMap, path, 0, virtualUrlManager)
           editEclipseProperties {
-            it.setVariable("", path, url.getUrl())
+            it.setVariable("", path, url.url)
           }
           val srcPath = entryTag.getAttributeValue(EclipseXml.SOURCEPATH_ATTR)
           val srcUrl: VirtualFileUrl?
@@ -396,13 +396,13 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     @Suppress("UNCHECKED_CAST")
     val contentRoots = entities[ContentRootEntity::class.java] as List<ContentRootEntity>? ?: emptyList()
     val entitySource = contentRoots.asSequence().map { it.entitySource }.filterIsInstance<EclipseProjectFile>().firstOrNull() ?: return
-    val classpathFile = VirtualFileManager.getInstance().findFileByUrl(entitySource.classpathFile.getUrl())
+    val classpathFile = VirtualFileManager.getInstance().findFileByUrl(entitySource.classpathFile.url)
     val oldClasspath = classpathFile?.inputStream?.use { JDOMUtil.load(it) }
     val pathShortener = ModulePathShortener(storage, virtualFileManager)
     if (oldClasspath != null || !entities[SourceRootEntity::class.java].isNullOrEmpty() || module.dependencies.size > 2) {
       val newClasspath = saveClasspathTags(module, entities, entitySource, oldClasspath, pathShortener)
       if (oldClasspath == null || !JDOMUtil.areElementsEqual(newClasspath, oldClasspath)) {
-        saveXmlFile(Paths.get(URI.create(entitySource.classpathFile.getUrl())), newClasspath)
+        saveXmlFile(Paths.get(URI.create(entitySource.classpathFile.url)), newClasspath)
       }
     }
 
@@ -454,12 +454,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           for (sourceRoot in sourceRoots.sortedWith(comparator)) {
             var relativePath = convertToEclipsePath(sourceRoot.url, module, entitySource, pathShortener)
             if (sourceRoot.contentRoot.url != module.mainContentRoot?.url) {
-              val linkedPath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, sourceRoot.url.getUrl())
+              val linkedPath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, sourceRoot.url.url)
               if (linkedPath != null) {
                 relativePath = linkedPath
               }
             }
-            val index = eclipseProperties?.srcPlace?.get(sourceRoot.url.getUrl()) ?: -1
+            val index = eclipseProperties?.srcPlace?.get(sourceRoot.url.url) ?: -1
             addClasspathEntry(EclipseXml.SRC_KIND, relativePath, if (shouldPlaceSeparately) index else -1)
           }
         }
@@ -479,7 +479,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val libraryClassesRoots = libraryRoots.filter { it.type.name == OrderRootType.CLASSES.name() }
             val firstRoot = libraryClassesRoots.firstOrNull()?.url
             if (firstRoot != null) {
-              val firstUrl = firstRoot.getUrl()
+              val firstUrl = firstRoot.url
               if (libraryName.contains(IdeaXml.JUNIT) && firstUrl == EclipseClasspathReader.getJunitClsUrl(libraryName.contains("4"))) {
                 val classpathEntry = addClasspathEntry(EclipseXml.CON_KIND,
                                                EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length))
@@ -514,7 +514,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                   srcRelativePath = null
                 }
                 else {
-                  val firstSrcUrl = firstSrcRoot.getUrl()
+                  val firstSrcUrl = firstSrcRoot.url
                   srcRelativePath = convertToEclipsePath(firstSrcRoot, module, entitySource, pathShortener)
                   if (eclipseVariablePath != null) {
                     eclipseSrcVariablePath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.SRC_PREFIX, firstSrcUrl)
@@ -580,7 +580,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
 
     val compilerOutput = module.javaSettings?.compilerOutput
     val outputPath = if (compilerOutput != null) {
-      val linkedPath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.LINK_PREFIX, compilerOutput.getUrl())
+      val linkedPath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.LINK_PREFIX, compilerOutput.url)
       linkedPath ?: convertToEclipsePath(compilerOutput, module, entitySource, pathShortener)
     }
     else {

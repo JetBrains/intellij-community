@@ -20,14 +20,14 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
                                  private val virtualFileManager: VirtualFileUrlManager) {
   private val moduleFileUrls by lazy {
     (moduleListSerializer?.loadFileList(reader, virtualFileManager) ?: emptyList()).associateBy(
-      { getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.getUrl())) },
+      { getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.url)) },
       { it.first }
     )
   }
 
   fun resolve(moduleName: String, relativePath: String?): String? {
     val moduleFile = moduleFileUrls[moduleName] ?: return null
-    val component = reader.loadComponent(moduleFile.getUrl(), "DeprecatedModuleOptionManager", null)
+    val component = reader.loadComponent(moduleFile.url, "DeprecatedModuleOptionManager", null)
     val baseDir = component?.getChildren("option")
       ?.firstOrNull { it.getAttributeValue("key") == JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE }
       ?.getAttributeValue("value")

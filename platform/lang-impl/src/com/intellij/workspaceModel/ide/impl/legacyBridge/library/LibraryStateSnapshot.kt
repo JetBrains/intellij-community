@@ -73,7 +73,7 @@ internal class LibraryStateSnapshot(
   fun getUrls(rootType: OrderRootType): Array<String> {
     return roots[rootType.toLibraryRootType()]
              ?.run { urls + jarDirectories.map { it.directoryUrl } }
-             ?.map { it.getUrl() }?.toTypedArray() ?: ArrayUtil.EMPTY_STRING_ARRAY
+             ?.map { it.url }?.toTypedArray() ?: ArrayUtil.EMPTY_STRING_ARRAY
   }
 
   val excludedRootUrls: Array<String>

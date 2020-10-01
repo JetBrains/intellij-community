@@ -99,7 +99,7 @@ class ModuleBridgesTest {
 
       assertArrayEquals(
         ModuleRootManager.getInstance(module).contentRootUrls,
-        arrayOf(contentRootUrl.getUrl())
+        arrayOf(contentRootUrl.url)
       )
 
       moduleManager.modifiableModel.let {
@@ -119,10 +119,10 @@ class ModuleBridgesTest {
         val rootModel = m.rootManager.modifiableModel
 
         val temp = temporaryDirectoryRule.newPath()
-        rootModel.addContentEntry(temp.toVirtualFileUrl(virtualFileManager).getUrl())
+        rootModel.addContentEntry(temp.toVirtualFileUrl(virtualFileManager).url)
         rootModel.commit()
 
-        assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).getUrl()), m.rootManager.contentRootUrls)
+        assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).url), m.rootManager.contentRootUrls)
       } finally {
         modulesModifiableModel.dispose()
       }
@@ -336,13 +336,13 @@ class ModuleBridgesTest {
       assertNotNull(module)
 
       assertArrayEquals(
-        arrayOf(virtualFileUrl.getUrl()),
+        arrayOf(virtualFileUrl.url),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      assertEquals(virtualFileUrl.getUrl(), sourceRootUrl)
+      assertEquals(virtualFileUrl.url, sourceRootUrl)
     }
 
   @Test
@@ -433,7 +433,7 @@ class ModuleBridgesTest {
       assertTrue(libraryOrderEntry.isModuleLevel)
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
-      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).getUrl())
+      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
     }
   }
 
@@ -466,7 +466,7 @@ class ModuleBridgesTest {
       assertNotNull(library)
 
       assertEquals(JpsLibraryTableSerializer.PROJECT_LEVEL, library!!.table.tableLevel)
-      assertSameElements(library.getUrls(OrderRootType.CLASSES), jarUrl.getUrl())
+      assertSameElements(library.getUrls(OrderRootType.CLASSES), jarUrl.url)
     }
   }
 
@@ -504,15 +504,15 @@ class ModuleBridgesTest {
 
       val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
-        .sortedBy { it.sourceRoot.url.getUrl() }
+        .sortedBy { it.sourceRoot.url.url }
       assertEquals(2, customRoots.size)
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
-      assertEquals("$url/root1", customRoots[0].sourceRoot.url.getUrl())
+      assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
 
       assertEquals("<sourceFolder />", customRoots[1].propertiesXmlTag)
-      assertEquals("$url/root2", customRoots[1].sourceRoot.url.getUrl())
+      assertEquals("$url/root2", customRoots[1].sourceRoot.url.url)
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[1].sourceRoot.rootType)
     }
   }

@@ -26,7 +26,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       val utilModule = modules[1]
       assertEquals("util", utilModule.name)
       val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
-      assertEquals("$projectDirUrl/util/src2", utilModuleSrc.url.getUrl())
+      assertEquals("$projectDirUrl/util/src2", utilModuleSrc.url.url)
       assertEquals("""<component LANGUAGE_LEVEL="JDK_1_7">
   <annotation-paths>
     <root url="$projectDirUrl/lib/anno2" />
@@ -45,7 +45,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       val junitLibrary = libraries[2]
       assertEquals("junit2", junitLibrary.name)
       val root = assertOneElement(junitLibrary.roots.toList())
-      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.getUrl())
+      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
     }
   }
 
@@ -58,7 +58,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     val junitLibrary = libraries[0]
     assertEquals("junit2", junitLibrary.name)
     val root = assertOneElement(junitLibrary.roots.toList())
-    assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.getUrl())
+    assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
   }
 
   fun `test add module`() {
@@ -68,7 +68,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       val newModule = modules[1]
       assertEquals("newModule", newModule.name)
       val root = assertOneElement(newModule.sourceRoots.toList())
-      assertEquals("$projectDirUrl/new", root.url.getUrl())
+      assertEquals("$projectDirUrl/new", root.url.url)
     }
   }
 
@@ -85,7 +85,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       val junitLibrary = libraries[1]
       assertEquals("junit", junitLibrary.name)
       val root = assertOneElement(junitLibrary.roots.toList())
-      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.getUrl())
+      assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
     }
   }
 

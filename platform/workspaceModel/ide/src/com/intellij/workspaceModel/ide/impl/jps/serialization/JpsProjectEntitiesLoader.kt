@@ -84,7 +84,7 @@ object JpsProjectEntitiesLoader {
                                                 serializeArtifacts: Boolean,
                                                 virtualFileManager: VirtualFileUrlManager,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager?): JpsProjectSerializers {
-    val projectDirUrl = configLocation.projectDir.getUrl()
+    val projectDirUrl = configLocation.projectDir.url
     val directorySerializersFactories = ArrayList<JpsDirectoryEntitiesSerializerFactory<*>>()
     val librariesDirectoryUrl = "$projectDirUrl/.idea/libraries"
     directorySerializersFactories += JpsLibrariesDirectorySerializerFactory(librariesDirectoryUrl)
@@ -133,7 +133,7 @@ object JpsProjectEntitiesLoader {
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
-      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.getUrl(), virtualFileManager)),
+      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url, virtualFileManager)),
       configLocation = configLocation,
       reader = reader,
       virtualFileManager = virtualFileManager,

@@ -40,7 +40,7 @@ class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlMa
   }
 
   override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
-    val fileUrl = vfu.getUrl()
+    val fileUrl = vfu.url
     val index = fileUrl.lastIndexOf('/')
     return if (index >= 0) fromUrl(fileUrl.substring(0, index)) else null
   }
@@ -60,11 +60,11 @@ class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlMa
 }
 
 fun VirtualFileUrl.append(manager: VirtualFileUrlManager, relativePath: String): VirtualFileUrl {
-  return manager.fromUrl(this.getUrl() + "/" + relativePath.removePrefix("/"))
+  return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))
 }
 
 fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-  val url = getUrl()
-  val otherUrl = other.getUrl()
+  val url = url
+  val otherUrl = other.url
   return otherUrl.startsWith(url)
 }

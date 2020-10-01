@@ -9,10 +9,11 @@ import java.nio.file.Path
  * Represent an URL (in VFS format) of a file or directory.
  */
 internal class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
-  override fun getUrl(): String = manager.getUrlById(id)
+  override val url: String
+    get() = manager.getUrlById(id)
 
   override fun getPresentableUrl(): String? {
-    val calculatedUrl = this.getUrl()
+    val calculatedUrl = this.url
 
     if (calculatedUrl.isEmpty()) return null
 
@@ -30,12 +31,12 @@ internal class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFile
   }
 
   override fun getFileName(): String {
-    val fileUrl = getUrl()
+    val fileUrl = url
     val index = fileUrl.lastIndexOf('/')
     return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
   }
 
-  override fun toString(): String = this.getUrl()
+  override fun toString(): String = this.url
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

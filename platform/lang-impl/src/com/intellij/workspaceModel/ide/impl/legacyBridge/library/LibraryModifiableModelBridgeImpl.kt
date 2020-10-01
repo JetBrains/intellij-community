@@ -153,8 +153,8 @@ internal class LibraryModifiableModelBridgeImpl(
       roots = roots + listOf(LibraryRoot(virtualFileUrl, rootTypeId, inclusionOptions))
     }
 
-    if (assertChangesApplied && !currentLibrary.isJarDirectory(virtualFileUrl.getUrl(), rootType)) {
-      error("addJarDirectory: expected jarDirectory exists for url '${virtualFileUrl.getUrl()}'")
+    if (assertChangesApplied && !currentLibrary.isJarDirectory(virtualFileUrl.url, rootType)) {
+      error("addJarDirectory: expected jarDirectory exists for url '${virtualFileUrl.url}'")
     }
   }
 
@@ -222,8 +222,8 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
 
-    if (assertChangesApplied && !currentLibrary.excludedRootUrls.contains(virtualFileUrl.getUrl())) {
-      error("addExcludedRoot: expected excluded urls contain url '${virtualFileUrl.getUrl()}'")
+    if (assertChangesApplied && !currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) {
+      error("addExcludedRoot: expected excluded urls contain url '${virtualFileUrl.url}'")
     }
   }
 
@@ -241,8 +241,8 @@ internal class LibraryModifiableModelBridgeImpl(
       roots = roots + root
     }
 
-    if (assertChangesApplied && !currentLibrary.getUrls(rootType).contains(virtualFileUrl.getUrl())) {
-      error("addRoot: expected urls for root type '${rootType.name()}' contain url '${virtualFileUrl.getUrl()}'")
+    if (assertChangesApplied && !currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) {
+      error("addRoot: expected urls for root type '${rootType.name()}' contain url '${virtualFileUrl.url}'")
     }
   }
 
@@ -294,7 +294,7 @@ internal class LibraryModifiableModelBridgeImpl(
   }
 
   private fun isUnderRoots(url: VirtualFileUrl, roots: Collection<LibraryRoot>): Boolean {
-    return VfsUtilCore.isUnder(url.getUrl(), roots.map { it.url.getUrl() })
+    return VfsUtilCore.isUnder(url.url, roots.map { it.url.url })
   }
 
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
@@ -302,15 +302,15 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
-    if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.getUrl())) return false
+    if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
     update {
       roots = roots.filterNot { it.url == virtualFileUrl && it.type.name == rootType.name() }
       excludedRoots = excludedRoots.filter { isUnderRoots(it, roots) }
     }
 
-    if (assertChangesApplied && currentLibrary.getUrls(rootType).contains(virtualFileUrl.getUrl())) {
-      error("removeRoot: removed url '${virtualFileUrl.getUrl()}' type '${rootType.name()}' still exists after removing")
+    if (assertChangesApplied && currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) {
+      error("removeRoot: removed url '${virtualFileUrl.url}' type '${rootType.name()}' still exists after removing")
     }
 
     return true
@@ -321,14 +321,14 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
-    if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.getUrl())) return false
+    if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) return false
 
     update {
       excludedRoots = excludedRoots.filter { it != virtualFileUrl }
     }
 
-    if (assertChangesApplied && currentLibrary.excludedRootUrls.contains(virtualFileUrl.getUrl())) {
-      error("removeRoot: removed excluded url '${virtualFileUrl.getUrl()}' still exists after removing")
+    if (assertChangesApplied && currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) {
+      error("removeRoot: removed excluded url '${virtualFileUrl.url}' still exists after removing")
     }
 
     return true

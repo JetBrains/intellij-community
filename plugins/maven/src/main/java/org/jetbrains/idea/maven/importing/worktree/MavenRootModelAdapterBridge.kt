@@ -108,7 +108,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   override fun hasRegisteredSourceSubfolder(f: File): Boolean {
     val url: String = toUrl(f.path).url
-    return builder.entities(SourceRootEntity::class.java).filter { VfsUtilCore.isEqualOrAncestor(url, it.url.getUrl()) }.any()
+    return builder.entities(SourceRootEntity::class.java).filter { VfsUtilCore.isEqualOrAncestor(url, it.url.url) }.any()
   }
 
   private fun toUrl(path: String): Url {
@@ -129,7 +129,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   override fun isAlreadyExcluded(f: File): Boolean {
     val url = toUrl(f.path).url
     return moduleEntity.contentRoots.filter { cre ->
-      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.getUrl() })
+      VfsUtilCore.isUnder(url, cre.excludedUrls.map { it.url })
     }.any()
   }
 
@@ -143,7 +143,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   }
 
   private fun getContentRootFor(url: Url): ContentRootEntity? {
-    return moduleEntity.contentRoots.firstOrNull { VfsUtilCore.isEqualOrAncestor(it.url.getUrl(), url.url) }
+    return moduleEntity.contentRoots.firstOrNull { VfsUtilCore.isEqualOrAncestor(it.url.url, url.url) }
   }
 
   @NotRequiredToImplement

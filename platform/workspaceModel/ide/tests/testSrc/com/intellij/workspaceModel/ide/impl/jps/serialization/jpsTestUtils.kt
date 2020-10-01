@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
@@ -64,7 +63,7 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append(virtualFileManager, "cache")
-  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.getUrl())).toPath(),
+  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
                                               TestErrorReporter, virtualFileManager)
 }
 
@@ -127,7 +126,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = moduleSerializers.getKeysByValue(fileSerializer) ?: emptyList()
     val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
-    assertEquals(urlsFromFactory.map { it.first.getUrl() }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
+    assertEquals(urlsFromFactory.map { it.first.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
   fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }.forEach { (url, serializers) ->
@@ -248,6 +247,6 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
 
 internal object TestErrorReporter : ErrorReporter {
   override fun reportError(message: String, file: VirtualFileUrl) {
-    throw AssertionFailedError("Failed to load ${file.getUrl()}: $message")
+    throw AssertionFailedError("Failed to load ${file.url}: $message")
   }
 }

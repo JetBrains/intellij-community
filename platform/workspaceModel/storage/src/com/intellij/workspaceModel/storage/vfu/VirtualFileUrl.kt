@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage.vfu
 
 interface VirtualFileUrl {
-  fun getUrl(): String
+  val url: String
   fun getPresentableUrl(): String?
   fun getFileName(): String
 }
