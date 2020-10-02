@@ -166,7 +166,7 @@ internal class ApplicationStoreTest {
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
     val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(ExportableItem(FileSpec("a.xml", false), ""), ExportableItem(FileSpec("foo", true), "")), exportedData, storageManager)
+    exportSettings(setOf(ExportableItem(FileSpec("a.xml", false), ""), ExportableItem(FileSpec("foo", true), "")), exportedData, mapOf(), storageManager)
 
     val relativePaths = getPaths(exportedData.toInputStream())
     assertThat(relativePaths).containsOnly("a.xml", "foo", "foo/bar.icls", "IntelliJ IDEA Global Settings")
