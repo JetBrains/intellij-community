@@ -668,17 +668,21 @@ public class ChangeListWorker {
     if (myChangeListsEnabled == enabled) return;
 
     LOG.debug("[setChangeListsEnabled] - " + enabled);
-    if (!enabled) {
-      removeAllChangeLists();
+    if (enabled) {
+      myChangeListsEnabled = true;
+      enableChangeLists();
     }
-    myChangeListsEnabled = enabled;
+    else {
+      disableChangeLists();
+      myChangeListsEnabled = false;
+    }
 
     myDelayedNotificator.allChangeListsMappingsChanged();
     myDelayedNotificator.changeListAvailabilityChanged();
     LOG.debug("after [setChangeListsEnabled] - " + enabled);
   }
 
-  private void removeAllChangeLists() {
+  private void disableChangeLists() {
     ListData fallbackList = getDataByName(LocalChangeList.getDefaultName());
     if (fallbackList == null) {
       fallbackList = putNewListData(new ListData(null, LocalChangeList.getDefaultName()));
@@ -709,6 +713,14 @@ public class ChangeListWorker {
       if (!movedChanges.isEmpty()) myDelayedNotificator.changesMoved(movedChanges, oldList, newList);
       myDelayedNotificator.changeListRemoved(oldList);
     }
+  }
+
+  private void enableChangeLists() {
+    LOG.assertTrue(myLists.size() == 1);
+    boolean readOnlyChanged = setReadOnly(myDefault.name, false);
+
+    LocalChangeListImpl newList = toChangeList(myDefault);
+    if (readOnlyChanged) myDelayedNotificator.changeListChanged(newList);
   }
 
   public boolean areChangeListsEnabled() {
