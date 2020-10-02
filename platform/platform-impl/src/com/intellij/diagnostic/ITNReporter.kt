@@ -9,6 +9,7 @@ import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.DataManager
 import com.intellij.idea.IdeaLogger
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -106,8 +107,9 @@ private fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callbac
     IdeErrorsDialog.appendSubmissionInformation(reportInfo, text)
     text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
     val content = XmlStringUtil.wrapInHtml(text)
-    ReportMessages.GROUP
-      .createNotification(ReportMessages.getErrorReport(), content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+    val title = DiagnosticBundle.message("error.report.submitted")
+    NotificationGroupManager.getInstance().getNotificationGroup("Error Report")
+      .createNotification(title, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
       .setImportant(false)
       .notify(project)
   }
@@ -138,8 +140,9 @@ private fun onError(project: Project?,
       }
     }
     else {
-      val message = DiagnosticBundle.message("error.report.posting.failed", e.message)
-      val result = MessageDialogBuilder.yesNo(ReportMessages.getErrorReport(), message).ask(project)
+      val message = DiagnosticBundle.message("error.report.failed.message", e.message)
+      val title = DiagnosticBundle.message("error.report.failed.title")
+      val result = MessageDialogBuilder.yesNo(title, message).ask(project)
       if (!result || !submit(project, errorBean, parentComponent, callback)) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
