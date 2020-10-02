@@ -143,18 +143,37 @@ public final class ClipboardSynchronizer implements Disposable {
 
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       Clipboard clipboard = getClipboard();
-      if (clipboard !=null) {
-        try {
-          clipboard.setContents(content, owner);
+      if (clipboard != null) {
+        IllegalStateException lastException = null;
+        for (int i = 0; i < getRetries(); i++) {
+          try {
+            clipboard.setContents(content, owner);
+            return;
+          }
+          catch (IllegalStateException e) {
+            lastException = e;
+          }
         }
-        catch (IllegalStateException e) {
-          LOG.debug(e);
-          NOTIFICATION_GROUP.createNotification(UIBundle.message("clipboard.is.unavailable"), MessageType.WARNING).notify(null);
-        }
+        LOG.debug(lastException);
+        NOTIFICATION_GROUP.createNotification(UIBundle.message("clipboard.is.unavailable"), MessageType.WARNING).notify(null);
       }
     }
 
     public void resetContent() {
+    }
+
+    private static int getRetries() {
+      if (SystemInfo.isWindows) {
+        // Clipboard#setContents throws IllegalStateException if the clipboard is currently unavailable.
+        // On Windows, it uses Win32 OpenClipboard which may fail according to its documentation:
+        //   "OpenClipboard fails if another window has the clipboard open."
+        // Other applications implement retry logic when calling OpenClipboard. Let's do the same.
+        //
+        // According to my simple local stress testing, Clipboard#setContents hasn't failed more than 2 times in a row.
+        // Probably, it needs to be adjusted in future.
+        return 5;
+      }
+      return 1;
     }
   }
 
