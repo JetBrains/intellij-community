@@ -63,7 +63,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
-    var myCopyOnSelection: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
