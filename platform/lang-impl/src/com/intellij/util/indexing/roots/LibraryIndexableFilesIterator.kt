@@ -12,15 +12,10 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
 class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterator {
-  override fun getDebugName() = library.name.takeUnless { it.isNullOrEmpty() }?.let { "Library '$it'" } ?: library.toString()
+  override fun getDebugName() = "Library ${library.presentableName}"
 
-  override fun getIndexingProgressText(): String? {
-    val libraryName = library.name
-    if (!libraryName.isNullOrEmpty()) {
-      return IndexingBundle.message("indexable.files.provider.indexing.library.name", libraryName)
-    }
-    return IndexingBundle.message("indexable.files.provider.indexing.additional.dependencies")
-  }
+  override fun getIndexingProgressText(): String? =
+    IndexingBundle.message("indexable.files.provider.indexing.library.name", library.presentableName)
 
   override fun getRootsScanningProgressText(): String {
     val libraryName = library.name
