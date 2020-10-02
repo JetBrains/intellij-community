@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -90,6 +91,7 @@ internal class LibraryBridgeImpl(
     get() = entityId
   override fun getTable(): LibraryTable? = if (libraryTable is ModuleLibraryTableBridge) null else libraryTable
   override fun getRootProvider(): RootProvider = this
+  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
 
   override fun toString(): String {
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"

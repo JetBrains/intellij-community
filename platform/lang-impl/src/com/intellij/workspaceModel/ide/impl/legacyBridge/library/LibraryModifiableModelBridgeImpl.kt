@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -53,6 +54,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind
   override fun getUrls(rootType: OrderRootType): Array<String> = currentLibrary.getUrls(rootType)
   override fun getName(): String? = currentLibrary.name
+  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
   override fun getProperties(): LibraryProperties<*>? = currentLibrary.properties
   override fun getExcludedRootUrls(): Array<String> = currentLibrary.excludedRootUrls
   override fun isJarDirectory(url: String): Boolean = currentLibrary.isJarDirectory(url)
