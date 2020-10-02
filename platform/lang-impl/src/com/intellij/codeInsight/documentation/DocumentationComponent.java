@@ -840,7 +840,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredWidth() {
     int minWidth = JBUIScale.scale(300);
-    int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
+    int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : JBUIScale.scale(MAX_DEFAULT.width);
 
     int width = definitionPreferredWidth();
     if (width < 0) { // no definition found
