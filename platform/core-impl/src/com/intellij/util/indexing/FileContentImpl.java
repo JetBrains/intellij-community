@@ -35,14 +35,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, long documentStamp) {
-    this(file, contentAsText, null, documentStamp, false);
-  }
-
-  private FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
-    this(file, null, content, -1, true);
-  }
-
   protected FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
@@ -132,7 +124,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   }
 
   public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file, byte @NotNull[] content) {
-    return new FileContentImpl(file, content);
+    return new FileContentImpl(file, null, content, -1, true);
   }
 
   public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file) throws IOException {
@@ -145,6 +137,12 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
       content.setProject(project);
     }
     return content;
+  }
+
+  public static @NotNull FileContentImpl createByText(@NotNull final VirtualFile file,
+                                                      @NotNull final CharSequence contentAsText,
+                                                      long documentStamp) {
+    return new FileContentImpl(file, contentAsText, null, documentStamp, false);
   }
 
   @NotNull

@@ -992,7 +992,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             newFc = previousContent;
           }
           else {
-            newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
+            newFc = FileContentImpl.createByText(vFile, contentText, currentDocStamp);
             document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
           }
 
@@ -1040,8 +1040,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (psiFile != null) {
       Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
         try {
-          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile, null)
-                                                                : new FileContentImpl(virtualFile, psiFile.getViewProvider().getContents(), 0);
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile)
+                                                                : FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents(), 0);
           initFileContent(fc, project, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);

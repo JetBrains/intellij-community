@@ -92,7 +92,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
 
   @NotNull
   private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
-    FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), viewProvider.getContents(), 0);
+    FileContentImpl fc = FileContentImpl.createByText(viewProvider.getVirtualFile(), viewProvider.getContents(), 0);
     fc.setProject(viewProvider.getManager().getProject());
     PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
