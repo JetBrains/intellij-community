@@ -136,7 +136,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   }
 
   public static FileContentImpl createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
-    FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray());
+    FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray(false));
     if (project != null) {
       content.setProject(project);
     }
