@@ -77,7 +77,8 @@ object UpdateChecker {
     UpdateRequestParameters.addParameter("uid", PermanentInstallationID.get())
     UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ExternalUpdateManager.ACTUAL != null) {
-      UpdateRequestParameters.addParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
+      val name = if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) "Toolbox" else ExternalUpdateManager.ACTUAL.toolName
+      UpdateRequestParameters.addParameter("manager", name)
     }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       UpdateRequestParameters.addParameter("eap", "")
