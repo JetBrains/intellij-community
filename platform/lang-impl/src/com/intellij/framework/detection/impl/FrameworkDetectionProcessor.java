@@ -104,7 +104,7 @@ public class FrameworkDetectionProcessor {
             if (myDetectorsByFileType.containsKey(fileType)) {
               myProgressIndicator.setText2(file.getPresentableUrl());
               try {
-                final FileContent fileContent = new FileContentImpl(file, file.contentsToByteArray(false));
+                final FileContent fileContent = FileContentImpl.createByFile(file, myContext.getProject());
                 for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
                   if (detector.myFilePattern.accepts(fileContent)) {
                     detector.mySuitableFiles.add(file);

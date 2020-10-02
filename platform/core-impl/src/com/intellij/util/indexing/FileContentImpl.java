@@ -39,7 +39,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     this(file, contentAsText, null, documentStamp, false);
   }
 
-  public FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
+  private FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     this(file, null, content, -1, true);
   }
 
@@ -131,12 +131,16 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     }
   }
 
-  public static FileContent createByFile(@NotNull VirtualFile file) throws IOException {
+  public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file, byte @NotNull[] content) {
+    return new FileContentImpl(file, content);
+  }
+
+  public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file) throws IOException {
     return createByFile(file, null);
   }
 
-  public static FileContentImpl createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
-    FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray(false));
+  public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
+    FileContentImpl content = createByContent(file, file.contentsToByteArray(false));
     if (project != null) {
       content.setProject(project);
     }

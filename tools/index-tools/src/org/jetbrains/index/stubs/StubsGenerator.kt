@@ -182,7 +182,7 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
         applyLanguageLevel(languageLevel)
 
         // create new FileContentImpl, because it caches stub in user data
-        val content = FileContentImpl(fileContent.file, fileContent.content)
+        val content = FileContentImpl.createByContent(fileContent.file, fileContent.content)
 
         val stub = super.buildStubForFile(content, serializationManager)
 

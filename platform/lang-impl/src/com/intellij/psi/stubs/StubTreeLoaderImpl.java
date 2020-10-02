@@ -47,7 +47,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       byte[] content = vFile.contentsToByteArray();
       return vFile.computeWithPreloadedContentHint(content, () -> {
-        FileContentImpl content1 = new FileContentImpl(vFile, content);
+        FileContentImpl content1 = FileContentImpl.createByContent(vFile, content);
         if (project != null) {
           content1.setProject(project);
         }
