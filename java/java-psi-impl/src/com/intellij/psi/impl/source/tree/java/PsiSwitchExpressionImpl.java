@@ -92,16 +92,11 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
     // to the least upper bound (4.10.4) of the types of the result expressions.
     PsiType leastUpperBound = PsiType.NULL;
     for (PsiType type : resultTypes) {
-      if (TypeConversionUtil.isNullType(type)) return PsiType.getJavaLangObject(getManager(), getResolveScope());
       if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
         type = ((PsiPrimitiveType)type).getBoxedType(this);
       }
-      if (TypeConversionUtil.isNullType(leastUpperBound)) {
-        leastUpperBound = type;
-      }
-      else {
-        leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
-      }
+      
+      leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
     }
     return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }
