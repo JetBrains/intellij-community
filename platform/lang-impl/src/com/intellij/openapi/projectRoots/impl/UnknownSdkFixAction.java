@@ -20,6 +20,15 @@ public interface UnknownSdkFixAction {
   }
 
   /**
+   * A suggestion can be using another already registered {@link Sdk} as prototype,
+   * The callee may use this to avoid creating duplicates
+   */
+  @Nullable
+  default Sdk getRegisteredSdkPrototype() {
+    return null;
+  }
+
+  /**
    * Starts the fix action and forgets about it running.
    * The implementation is responsible to implement necessary
    * progress dialogs, invoke later calls and so on

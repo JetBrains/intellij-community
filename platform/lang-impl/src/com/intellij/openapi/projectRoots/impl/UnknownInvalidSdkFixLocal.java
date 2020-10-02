@@ -33,6 +33,11 @@ class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements 
   }
 
   @Override
+  public @Nullable Sdk getRegisteredSdkPrototype() {
+    return myFix.getRegisteredSdkPrototype();
+  }
+
+  @Override
   public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.mySdkType.getPresentableName();
     return ProjectBundle.message("label.text.use.for.invalid.sdk",

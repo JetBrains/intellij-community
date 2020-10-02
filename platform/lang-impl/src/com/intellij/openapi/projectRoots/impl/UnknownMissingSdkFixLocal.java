@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFixLocal.class);
@@ -43,6 +44,11 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
   @Override
   public @NotNull @Nls String getActionTooltipText() {
     return SdkListPresenter.presentDetectedSdkPath(myFix.getExistingSdkHome(), 90, 40);
+  }
+
+  @Override
+  public @Nullable Sdk getRegisteredSdkPrototype() {
+    return myFix.getRegisteredSdkPrototype();
   }
 
   @Override
