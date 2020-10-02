@@ -1433,6 +1433,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
 
+    if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
+      // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
+      // If we pass the currentFC to an indexer that calls "FileContentImpl.getContentAsText",
+      // the raw bytes will be converted to text and assigned to null.
+      // Then, to compute the hash, the reverse conversion will be necessary.
+      // To avoid this extra conversion, let's initialize the hash eagerly.
+      IndexedHashesSupport.getOrInitIndexedHash((FileContentImpl)currentFC);
+    }
+
     markFileIndexed(file);
     try {
       Computable<Boolean> storageUpdate;

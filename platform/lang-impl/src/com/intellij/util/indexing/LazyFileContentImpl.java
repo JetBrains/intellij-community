@@ -31,9 +31,6 @@ final class LazyFileContentImpl extends FileContentImpl {
     if (!myContentComputed) {
       myContent = myContentComputable.get();
       myContentComputed = true;
-      if (FileBasedIndex.ourSnapshotMappingsEnabled) {
-        IndexedHashesSupport.getOrInitIndexedHash(this);
-      }
     }
   }
 }
