@@ -8,8 +8,10 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated Please use com.intellij.codeInsight.editorActions.TypedHandlerDelegate instead
  * @author yole
  */
+@Deprecated
 public final class EditorTypedHandlerBean {
   // these must be public for scrambling compatibility
   @Attribute("implementationClass")
