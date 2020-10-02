@@ -1,12 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing.xml
 
+import org.jetbrains.idea.maven.utils.MavenArtifactScope
+
 class MavenBuildFileBuilder(val artifactId: String) {
   private var modelVersion: String = "4.0.0"
   private var groupId: String = "org.example"
   private var version: String = "1.0-SNAPSHOT"
   private var packaging: String? = null
   private val modules = ArrayList<Module>()
+  private val dependencies = ArrayList<Dependency>()
+  private val plugins = ArrayList<Plugin>()
 
   fun withPomPackaging(): MavenBuildFileBuilder {
     packaging = "pom"
@@ -15,6 +19,18 @@ class MavenBuildFileBuilder(val artifactId: String) {
 
   fun withModule(name: String): MavenBuildFileBuilder {
     modules.add(Module(name))
+    return this
+  }
+
+  fun withDependency(groupId: String, artifactId: String, version: String, scope: MavenArtifactScope? = null): MavenBuildFileBuilder {
+    dependencies.add(Dependency(groupId, artifactId, version, scope))
+    return this
+  }
+
+  fun withPlugin(groupId: String, artifactId: String, buildAction: PluginBuilder.() -> Unit): MavenBuildFileBuilder {
+    val pluginBuilder = PluginBuilder(groupId, artifactId)
+    pluginBuilder.buildAction()
+    plugins.add(pluginBuilder.build())
     return this
   }
 
@@ -27,6 +43,8 @@ class MavenBuildFileBuilder(val artifactId: String) {
         value("modelVersion", modelVersion)
         generateProjectInfo()
         generateModules()
+        generateDependencies()
+        generatePlugins()
       }
     }
     return builder.generate()
@@ -52,5 +70,74 @@ class MavenBuildFileBuilder(val artifactId: String) {
     value("module", module.name)
   }
 
+  private fun XmlBuilder.generateDependencies() {
+    if (dependencies.isEmpty()) return
+    block("dependencies") {
+      for (dependency in dependencies) {
+        generateDependency(dependency)
+      }
+    }
+  }
+
+  private fun XmlBuilder.generateDependency(dependency: Dependency) {
+    block("dependency") {
+      value("groupId", dependency.groupId)
+      value("artifactId", dependency.artifactId)
+      value("version", dependency.version)
+      dependency.scope?.let { value("scope", it.name) }
+    }
+  }
+
+  private fun XmlBuilder.generatePlugins() {
+    if (plugins.isEmpty()) return
+    block("build") {
+      block("plugins") {
+        for (plugin in plugins) {
+          generatePlugin(plugin)
+        }
+      }
+    }
+  }
+
+  private fun XmlBuilder.generatePlugin(plugin: Plugin) {
+    block("plugin") {
+      value("groupId", plugin.groupId)
+      value("artifactId", plugin.artifactId)
+      plugin.version?.let { value("version", it) }
+      if (plugin.attributes.isEmpty()) return@block
+      block("configuration") {
+        for (attribute in plugin.attributes) {
+          value(attribute.name, attribute.value)
+        }
+      }
+    }
+  }
+
   data class Module(val name: String)
+
+  data class Dependency(val groupId: String, val artifactId: String, val version: String, val scope: MavenArtifactScope?)
+
+  data class Plugin(val groupId: String,
+                    val artifactId: String,
+                    val version: String?,
+                    val attributes: List<Attribute> = emptyList())
+
+  data class Attribute(val name: String, val value: String)
+
+  class PluginBuilder(val groupId: String, val artifactId: String) {
+    private var version: String? = null
+    private val attributes = mutableListOf<Attribute>()
+
+    fun version(version: String): PluginBuilder {
+      this.version = version
+      return this
+    }
+
+    fun attribute(name: String, value: String): PluginBuilder {
+      attributes.add(Attribute(name, value))
+      return this
+    }
+
+    fun build() = Plugin(groupId, artifactId, version, attributes)
+  }
 }
