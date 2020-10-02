@@ -1,11 +1,9 @@
 <html>
 <body>
-Reports methods declared <b>final</b> and <b>static</b>.
-When a <b>static</b> method is overridden in a subclass it can still be
-accessed via the super class, making a <b>final</b> declaration not very necessary.
-Declaring a <b>static</b> method <b>final</b>
-does prevent subclasses from defining a <b>static</b> method with the same
-signature.
+Reports static methods that are marked <code>final</code>.<br>
+Such code may indicate an error or incorrect assumption about the effect of the <code>final</code> keyword.
+Static methods are not subject to runtime polymorphism, so the only purpose of the <code>final</code> keyword with static methods
+is to ensure the method will not be hidden in a subclass.
 <!-- tooltip end -->
 <p>
 
