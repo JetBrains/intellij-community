@@ -497,9 +497,9 @@ object DynamicPlugins {
       TipDialog.hideForProject(null)
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
-      forbidGettingServicesToken = app.forbidGettingServices("Plugin ${pluginDescriptor.pluginId} being unloaded.")
-
       IdeEventQueue.getInstance().flushQueue()
+      // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
+      forbidGettingServicesToken = app.forbidGettingServices("Plugin ${pluginDescriptor.pluginId} being unloaded.")
 
       app.runWriteAction {
         try {
