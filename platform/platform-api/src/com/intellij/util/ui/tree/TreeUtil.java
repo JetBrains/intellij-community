@@ -1638,12 +1638,9 @@ public final class TreeUtil {
         bounds.width = width;
       }
       else {
-        bounds.width = Math.min(bounds.width, width / 2);
-        bounds.x -= JBUIScale.scale(20); // TODO: calculate a control width
-        if (bounds.x < 0) {
-          bounds.width += bounds.x;
-          bounds.x = 0;
-        }
+        int control = JBUIScale.scale(20); // calculate a control width
+        bounds.x = Math.max(0, bounds.x - control);
+        bounds.width = bounds.x > 0 ? Math.min(bounds.width + control, centered ? width : width / 2) : width;
       }
       int height = parent.getHeight();
       if (height > bounds.height && height < tree.getHeight()) {
