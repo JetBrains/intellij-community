@@ -7,8 +7,10 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -75,13 +77,29 @@ public class JavaTestLocator implements SMTestLocator {
                                     @NotNull Project project,
                                     @NotNull GlobalSearchScope scope) {
     List<Location> locations = getLocation(protocol, path, project, scope);
-    if (locations.size() > 1 && metainfo != null) {
-
+    if (metainfo != null) {
       for (Location location : locations) {
         PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
           if (StringUtil.equalsIgnoreWhitespaces(metainfo, ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
             return Collections.singletonList(location);
+          }
+        }
+        else if (element instanceof PsiClass) {
+          String[] lineColumn = metainfo.split(":");
+          if (lineColumn.length == 2) {
+            try {
+              int line = Integer.parseInt(lineColumn[0]);
+              int col = Integer.parseInt(lineColumn[1]);
+              return Collections.singletonList(new PsiLocation<>(project, element) {
+                @Override
+                public OpenFileDescriptor getOpenFileDescriptor() {
+                  VirtualFile file = getVirtualFile();
+                  return file != null ? new OpenFileDescriptor(project, file, line, col) : null;
+                }
+              });
+            }
+            catch (NumberFormatException ignored) { }
           }
         }
       }
