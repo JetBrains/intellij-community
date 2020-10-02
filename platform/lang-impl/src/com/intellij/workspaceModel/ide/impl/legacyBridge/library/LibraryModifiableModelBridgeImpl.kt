@@ -341,6 +341,10 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun isDisposed(): Boolean = disposed
 
+  override fun toString(): String {
+    return "Library '$name', roots: ${currentLibrary.libraryEntity.roots}"
+  }
+
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = currentLibrary.getInvalidRootUrls(type)
   override fun getExcludedRoots(): Array<VirtualFile> = currentLibrary.excludedRoots
   override fun getModule(): Module? = currentLibrary.module

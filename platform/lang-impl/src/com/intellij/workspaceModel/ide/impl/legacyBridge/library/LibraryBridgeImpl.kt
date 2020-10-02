@@ -91,6 +91,10 @@ internal class LibraryBridgeImpl(
   override fun getTable(): LibraryTable? = if (libraryTable is ModuleLibraryTableBridge) null else libraryTable
   override fun getRootProvider(): RootProvider = this
 
+  override fun toString(): String {
+    return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
+  }
+
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
     return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
   }
