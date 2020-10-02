@@ -425,6 +425,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       { "meta OPEN_BRACKET",        "Back", "PreviousDiff"},
       { "meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
       { "ctrl meta M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
+      { "meta alt DOWN",            "Console.TableResult.NextPage", "JupyterSelectCellBelowAction", "NextOccurence"},
+      { "meta alt UP",              "Console.TableResult.PreviousPage", "JupyterSelectCellAboveAction", "PreviousOccurence"},
     });
   }};
   // @formatter:on
