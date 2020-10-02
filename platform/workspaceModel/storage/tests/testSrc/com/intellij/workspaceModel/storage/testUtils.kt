@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import junit.framework.TestCase.*
 import org.junit.Assert
@@ -134,6 +135,26 @@ object SerializationRoundTripChecker {
   }
 
   private fun <A, B> assertBiMap(expected: BidirectionalMap<A, B>, actual: BidirectionalMap<A, B>) {
+    val local = expected.copy()
+    for (key in actual.keys) {
+      val value = actual.getValue(key)
+      val expectedValue = local.remove(key)
+
+      if (expectedValue == null) {
+        Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
+      }
+
+      if (expectedValue != value) {
+        Assert.fail(
+          String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
+      }
+    }
+    if (local.isNotEmpty()) {
+      Assert.fail("No mappings found for the following keys: " + local.keys)
+    }
+  }
+
+  private fun <A, B> assertBiMap(expected: BidirectionalSetMap<A, B>, actual: BidirectionalSetMap<A, B>) {
     val local = expected.copy()
     for (key in actual.keys) {
       val value = actual.getValue(key)
