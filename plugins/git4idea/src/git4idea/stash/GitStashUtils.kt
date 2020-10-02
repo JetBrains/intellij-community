@@ -55,7 +55,7 @@ fun unstash(project: Project,
       val result = Git.getInstance().runCommand { handler }
 
       val changesInStash = hash?.run { loadChangesInStash(project, root, hash) }
-      GitUtil.refreshVfs(root, changesInStash)
+      GitUtil.refreshVfs(root, changesInStash?.flatten())
 
       if (conflictDetector.hasHappened()) {
         val conflictsResolved = conflictResolver.merge()
@@ -79,12 +79,13 @@ fun unstash(project: Project,
   }
 }
 
-private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): Collection<Change>? {
+private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): List<Collection<Change>>? {
   return try {
     val consumer = CollectConsumer<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()),
                                         GitCommitRequirements(false, NO_RENAMES, DIFF_TO_PARENTS), consumer)
-    return consumer.result.first().changes
+    val stashCommit = consumer.result.first()
+    return (0 until stashCommit.parents.size).map { stashCommit.getChanges(it) }
   }
   catch (e: Exception) {
     LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]" , e)
