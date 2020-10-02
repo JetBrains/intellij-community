@@ -300,7 +300,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
-    TargetEnvironment targetEnvironment = targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, progressIndicator);
+    TargetEnvironment targetEnvironment = targetEnvironmentFactory
+      .prepareRemoteEnvironment(targetEnvironmentRequest, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
@@ -646,7 +647,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   /**
-   * @see PythonEnvUtil#setupEncodingEnvs(java.util.Map, java.nio.charset.Charset)
+   * @see PythonEnvUtil#setupEncodingEnvs(Map, Charset)
    */
   private static void setupEncodingEnvs(@NotNull PythonExecution pythonExecution, @NotNull Charset charset) {
     pythonExecution.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name());
@@ -810,7 +811,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module, boolean addContentRoots,
                                                      boolean addSourceRoots) {
-    Collection<String> pythonPathList = new LinkedHashSet<String>();
+    Collection<String> pythonPathList = new LinkedHashSet<>();
     if (module != null) {
       Set<Module> dependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(module, dependencies);

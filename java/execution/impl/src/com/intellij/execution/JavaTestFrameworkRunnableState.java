@@ -134,8 +134,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
     }
 
-    EmptyProgressIndicator targetIndicator = new EmptyProgressIndicator();
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, targetIndicator);
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());

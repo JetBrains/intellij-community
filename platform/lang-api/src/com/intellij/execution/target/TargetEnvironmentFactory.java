@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +53,9 @@ public interface TargetEnvironmentFactory {
 
   /**
    * Prepares the actual environment.
-   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link ProgressIndicator}
+   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link TargetEnvironmentAwareRunProfileState.TargetProgressIndicator}
    */
   @NotNull
-  TargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request, @NotNull ProgressIndicator indicator);
+  TargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request,
+                                             @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator);
 }

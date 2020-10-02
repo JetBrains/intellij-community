@@ -30,7 +30,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -435,9 +434,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
       final ProcessHandler processHandler = startProcess();
-      EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
       ExecutionEnvironment environment = getEnvironment();
-      TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, environmentIndicator);
+      TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
       Function<String, String> targetFileMapper = path -> {
         return path != null && SystemInfo.isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
       };
@@ -526,23 +524,23 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator progressIndicator) {
+    public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment,
+                                               @NotNull TargetProgressIndicator targetProgressIndicator) {
       if (environment instanceof LocalTargetEnvironment) {
-        super.handleCreatedTargetEnvironment(environment, progressIndicator);
+        super.handleCreatedTargetEnvironment(environment, targetProgressIndicator);
       }
       else {
         TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
         Objects.requireNonNull(targetedCommandLineBuilder.getUserData(MavenCommandLineSetup.getSetupKey()))
-          .provideEnvironment(environment, progressIndicator);
+          .provideEnvironment(environment, targetProgressIndicator);
       }
     }
 
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
       ExecutionEnvironment environment = getEnvironment();
-      TargetEnvironment remoteEnvironment = environment.getPreparedTargetEnvironment(this, environmentIndicator);
+      TargetEnvironment remoteEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
       TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
       TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
       Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());

@@ -18,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -554,16 +555,25 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         processHandler.startNotify()
-        val progressIndicator = object : ProgressIndicatorBase() {
-          override fun setText(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+        val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+
+          override fun addStdoutText(text: String) {
+            processHandler.notifyTextAvailable(text, ProcessOutputType.STDOUT)
           }
 
-          override fun setText2(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+          override fun addStderrText(text: String) {
+            processHandler.notifyTextAvailable(text, ProcessOutputType.STDERR)
+          }
+
+          override fun addSystemText(message: String) {
+            processHandler.notifyTextAvailable(message, ProcessOutputType.SYSTEM)
+          }
+
+          override fun isCanceled(): Boolean {
+            return false
           }
         }
-        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }
       catch (t: Throwable) {
         promise.setError(t)

@@ -4,6 +4,7 @@ package com.intellij.execution.process
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.projectRoots.JdkUtil
@@ -128,8 +129,8 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     val environmentFactory = LocalTargetEnvironmentFactory()
     val request = environmentFactory.createRequest()
     val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
-    val environment = environmentFactory.prepareRemoteEnvironment(request, EmptyProgressIndicator())
-    cmd.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY)!!.provideEnvironment(environment, EmptyProgressIndicator())
+    val environment = environmentFactory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
+    cmd.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY)!!.provideEnvironment(environment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()

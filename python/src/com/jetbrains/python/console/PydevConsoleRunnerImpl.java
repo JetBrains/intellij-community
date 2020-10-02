@@ -533,7 +533,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     // TODO [Targets API] We should pass the proper progress indicator here
     TargetEnvironment targetEnvironment =
-      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, new EmptyProgressIndicator());
+      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
 
     // TODO [Targets API] [regression] We should create PTY process when `PtyCommandLine.isEnabled()`
     //  (see the legacy method `doCreateConsoleCmdLine()`)

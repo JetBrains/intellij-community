@@ -3,16 +3,11 @@ package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
@@ -55,7 +50,7 @@ class MavenCommandLineSetup(private val project: Project,
   private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = target.runtimes.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, ProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
   init {
@@ -75,7 +70,7 @@ class MavenCommandLineSetup(private val project: Project,
     return this
   }
 
-  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: ProgressIndicator) {
+  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
     environmentPromise.setResult(environment to progressIndicator)
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)

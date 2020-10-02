@@ -3,7 +3,6 @@ package com.intellij.execution.target;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +11,41 @@ import org.jetbrains.annotations.Nullable;
 public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                        @Nullable TargetEnvironmentConfiguration configuration,
-                                       @NotNull ProgressIndicator progressIndicator) throws ExecutionException;
+                                       @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException;
 
   void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
-                                      @NotNull ProgressIndicator progressIndicator)
+                                      @NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException;
+
+
+  interface TargetProgressIndicator {
+    TargetProgressIndicator EMPTY = new TargetProgressIndicator() {
+
+      @Override
+      public void addStdoutText(@NotNull String text) { }
+
+      @Override
+      public void addStderrText(@NotNull String text) { }
+
+      @Override
+      public void addSystemText(@NotNull String message) { }
+
+      @Override
+      public boolean isCanceled() {
+        return false;
+      }
+    };
+
+    void addStdoutText(@NotNull String text);
+
+    void addStderrText(@NotNull String text);
+
+    void addSystemText(@NotNull String message);
+
+    default void addSystemLine(@NotNull String message) {
+      addSystemText(message + "\n");
+    }
+
+    boolean isCanceled();
+  }
 }

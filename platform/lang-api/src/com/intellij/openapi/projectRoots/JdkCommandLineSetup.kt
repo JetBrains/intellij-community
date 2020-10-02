@@ -8,11 +8,8 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -20,18 +17,14 @@ import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.IntObjectMap
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
@@ -53,7 +46,6 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
-import javax.swing.Icon
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
@@ -65,7 +57,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, ProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
   /**
@@ -87,9 +79,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     val uploadRoot = createUploadRoot(volumeDescriptor, localRootPath)
     request.uploadVolumes += uploadRoot
     val result = DeferredTargetValue(uploadPathString)
-    dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
       val volume = environment.uploadVolumes.getValue(uploadRoot)
-      result.resolve(volume.upload(if (isDir) "." else uploadPath.fileName.toString(), progress))
+      result.resolve(volume.upload(if (isDir) "." else uploadPath.fileName.toString(), targetProgressIndicator))
     }
     return result
   }
@@ -108,8 +100,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     commandLine.putUserData(JdkUtil.COMMAND_LINE_SETUP_KEY, this)
   }
 
-  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: ProgressIndicator) {
-    environmentPromise.setResult(environment to progressIndicator)
+  fun provideEnvironment(environment: TargetEnvironment,
+                         targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+    environmentPromise.setResult(environment to targetProgressIndicator)
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.
     }

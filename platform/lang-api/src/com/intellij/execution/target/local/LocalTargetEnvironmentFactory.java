@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentFactory;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetPlatform;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.execution.target.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +26,8 @@ public class LocalTargetEnvironmentFactory implements TargetEnvironmentFactory {
 
   @NotNull
   @Override
-  public LocalTargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request, @NotNull ProgressIndicator indicator) {
+  public LocalTargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request,
+                                                         @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) {
     return new LocalTargetEnvironment(request);
   }
 }
