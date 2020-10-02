@@ -146,7 +146,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     if (value instanceof StringReference) {
       return DebuggerUtilsAsync.getStringValue((StringReference)value).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
     }
-    return CompletableFuture.completedFuture(value.toString());
+    return CompletableFuture.completedFuture(value != null ? value.toString() : "null");
   }
 
   public void setForced(boolean forced) {
