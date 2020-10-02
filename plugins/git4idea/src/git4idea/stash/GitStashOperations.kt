@@ -99,7 +99,7 @@ object GitStashOperations {
   @Throws(VcsException::class)
   fun loadStashedChanges(project: Project, stash: StashInfo): GitCommittedChangeList {
     val hash = resolveHashOfStash(project, stash.root, stash.stash)
-    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), hash, true, true, false)
+    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), hash, true, false, false)
   }
 
   @Throws(VcsException::class)
