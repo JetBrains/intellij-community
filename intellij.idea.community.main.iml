@@ -143,6 +143,5 @@
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.packagesearch" scope="RUNTIME" />
   </component>
 </module>
