@@ -467,8 +467,11 @@
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
-    <group id="RevealGroup">
-      <reference id="OpenInRightSplit" />
+    <reference id="OpenInRightSplit">
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </reference>
+
+    <group id="RevealGroup" popup="true">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
 
