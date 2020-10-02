@@ -68,39 +68,41 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
   }
 
 
-  @Test
-  fun `only explicitly called tasks are debugged by default`() {
-
-    createProjectSubFile("src/main/java/pack/AClass.java", """
-      package pack;
-      import java.io.BufferedWriter;
-      import java.io.FileWriter;
-      import java.io.File;
-      import java.lang.management.ManagementFactory;
-      import java.lang.management.RuntimeMXBean;
-      import java.util.List;
-      
-      public class AClass {
-        public static void main(String[] args) {
-          File file = new File(args[0]);
-	        BufferedWriter os = null;
-          try {
-            os = new BufferedWriter(new FileWriter(file, false));
-            RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-            List<String> arguments = runtimeMxBean.getInputArguments();
-            os.write(arguments.toString());
-          } catch (Exception e) {
-            e.printStackTrace();
-          } finally {
+  private val jvmArgsPrinter = """
+        package pack;
+        import java.io.BufferedWriter;
+        import java.io.FileWriter;
+        import java.io.File;
+        import java.lang.management.ManagementFactory;
+        import java.lang.management.RuntimeMXBean;
+        import java.util.List;
+        
+        public class AClass {
+          public static void main(String[] args) {
+            File file = new File(args[0]);
+            BufferedWriter os = null;
             try {
-              os.close();
-            } catch (Exception e1) {
-              e1.printStackTrace();
+              os = new BufferedWriter(new FileWriter(file, false));
+              RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+              List<String> arguments = runtimeMxBean.getInputArguments();
+              os.write(arguments.toString());
+            } catch (Exception e) {
+              e.printStackTrace();
+            } finally {
+              try {
+                os.close();
+              } catch (Exception e1) {
+                e1.printStackTrace();
+              }
             }
           }
         }
-      }
-    """.trimIndent())
+      """.trimIndent()
+
+  @Test
+  fun `only explicitly called tasks are debugged by default`() {
+
+    createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter)
 
     val implicitArgsFileName = "implicitTaskArgs.txt"
     val explicitArgsFileName = "explicitTaskArgs.txt"
@@ -158,6 +160,63 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     assertThat(explicitArgsFile.readText())
       .describedAs("Task 'explicitTask' should be debugged when debug all is set")
       .contains(debugString)
+  }
+
+
+
+  @Test
+  fun `only explicit tasks are debugged for a gradle subproject`() {
+
+    createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter.trimIndent())
+
+    createSettingsFile("include 'subproject'")
+    createProjectSubDir("subproject")
+
+    val argsFileName = "args.txt"
+
+    importProject(
+      GradleBuildScriptBuilderEx()
+        .withMavenCentral()
+        .applyPlugin("'java'")
+        .addPostfix("""
+          
+          task printArgs(type: JavaExec) {
+            classpath = sourceSets.main.runtimeClasspath
+            main = 'pack.AClass'
+            args '$argsFileName'
+          }
+          
+          def rootProject = project
+          
+          project("subproject") {
+            task printArgs(dependsOn: ":printArgs", type: JavaExec) {
+              classpath = rootProject.sourceSets.main.runtimeClasspath
+              main = 'pack.AClass'
+              args '$argsFileName'
+            }
+          }
+        """.trimIndent())
+        .generate()
+    )
+
+    val gradleRC = createEmptyGradleRunConfiguration("myRC")
+    val subProjectPath = "$projectPath/subproject"
+    gradleRC.settings.apply {
+      externalProjectPath = subProjectPath
+      taskNames = listOf("printArgs")
+    }
+    gradleRC.isScriptDebugEnabled = false
+
+    val rootArgsFile = File(projectPath, argsFileName)
+    val subProjectArgsFile = File(subProjectPath, argsFileName)
+
+    assertThat(rootArgsFile).doesNotExist()
+    assertThat(subProjectArgsFile).doesNotExist()
+
+    executeRunConfiguration(gradleRC)
+
+    assertThat(rootArgsFile.readText()).describedAs("root task should not be debugged").doesNotContain(debugString)
+    assertThat(subProjectArgsFile.readText()).describedAs("sub project task should be debugged").contains(debugString)
   }
 
   private fun executeRunConfiguration(gradleRC: GradleRunConfiguration) {

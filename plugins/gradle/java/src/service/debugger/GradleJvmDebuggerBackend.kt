@@ -31,19 +31,31 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   override fun initializationCode(dispatchPort: String, parameters: String) =
     //language=Gradle
     """
-    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
-    def taskNamesList = gradle.getStartParameter().getTaskNames()
-    if (taskNamesList.isEmpty()) {
-      taskNamesList = project.getDefaultTasks() 
-    }
+    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper    
     gradle.taskGraph.whenReady { taskGraph ->
+      def debugAllIsEnabled = Boolean.valueOf(System.properties["ij.gradle.debug.all"])
+      def taskPathsList = []
+      if (!debugAllIsEnabled) {
+        def currentPath = gradle.getStartParameter().getCurrentDir().path
+        def currentProject = rootProject.allprojects.find { it.projectDir.path == currentPath }
+        if (currentProject == null) {
+          currentProject = project
+        }
+        
+        def startTaskNames = gradle.getStartParameter().getTaskNames()
+        if (startTaskNames.isEmpty()) {
+          startTaskNames = currentProject.getDefaultTasks() 
+        } 
+        taskPathsList = startTaskNames.collect { currentProject.tasks.findByPath(it)?.path }.findAll { it != null }
+      }
+      
       taskGraph.allTasks.each { Task task ->
         if (task instanceof org.gradle.api.tasks.testing.Test) {
           task.maxParallelForks = 1
           task.forkEvery = 0
         }
-        def debugAllIsEnabled = Boolean.valueOf(System.properties["ij.gradle.debug.all"])
-        if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskNamesList.contains(task.name))) {
+        task.path
+        if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskPathsList.contains(task.path))) {
           task.doFirst {
             def moduleDir = task.project.projectDir.path
             def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
