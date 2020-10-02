@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -98,6 +99,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
+  private boolean myRequiresRestart = true;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -444,6 +446,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
         showPlugin(component);
       }
     }
+  }
+
+  @Override
+  public ActionCallback select(Integer key, boolean now) {
+    if (myPlugin instanceof IdeaPluginDescriptorImpl) {
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)myPlugin);
+
+      if (descriptor != null) {
+        myPluginModel.appendOrUpdateDescriptor(descriptor);
+        myRequiresRestart = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) != null;
+      }
+    }
+
+    return super.select(key, now);
   }
 
   private void showPlugin(@NotNull ListPluginComponent component) {
@@ -858,7 +874,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          e.getProject() == null && myNewState.isPerProject();
+                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null);
       e.getPresentation().setVisible(!invisible);
     }
   }

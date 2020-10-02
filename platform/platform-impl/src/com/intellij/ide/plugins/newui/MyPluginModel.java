@@ -659,17 +659,21 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myDetailPanels.add(detailPanel);
   }
 
-  public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+  void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+    int index = view.indexOf(descriptor);
+    if (index < 0) {
+      view.add(descriptor);
+    }
+    else {
+      view.set(index, descriptor);
+    }
+  }
+
+  void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor,
+                                boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     if (!PluginManagerCore.isPluginInstalled(id)) {
-      int i = view.indexOf(descriptor);
-      if (i < 0) {
-        view.add(descriptor);
-      }
-      else {
-        view.set(i, descriptor);
-      }
-
+      appendOrUpdateDescriptor(descriptor);
       setEnabled(id, PluginEnabledState.ENABLED);
     }
 
