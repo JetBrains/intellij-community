@@ -121,11 +121,11 @@ private fun onError(project: Project?,
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
-      val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-      val title = DiagnosticBundle.message("dialog.title.report.exception")
+      val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
+      val title = DiagnosticBundle.message("error.report.new.build.title")
       val icon = Messages.getWarningIcon()
       if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-      else Messages.showMessageDialog(project, message, title, icon)
+                                else Messages.showMessageDialog(project, message, title, icon)
       callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
     }
     else if (e is NoSuchEAPUserException) {
