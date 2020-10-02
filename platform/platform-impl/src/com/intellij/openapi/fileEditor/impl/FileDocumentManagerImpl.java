@@ -57,7 +57,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +65,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -608,7 +608,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
               myFileDocumentManager.propertyChanged((VFilePropertyChangeEvent)event);
             }
           }
-          ObjectUtils.reachabilityFence(strongRefsToDocuments);
+          Reference.reachabilityFence(strongRefsToDocuments);
         }
       };
     }

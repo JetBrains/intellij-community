@@ -27,13 +27,13 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.util.*;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
@@ -206,7 +206,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           moving = newParent.findFile(movedFile.getName());
           if (moving != null) {
             movedFiles.put(SmartPointerManager.createPointer(moving), moving.getNode());
-            ObjectUtils.reachabilityFence(node);
+            Reference.reachabilityFence(node);
           }
         }
 
