@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-/**
- * Class is not final since it is overridden in Upsource
- */
 public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private Charset myCharset;
   protected byte[] myContent;
