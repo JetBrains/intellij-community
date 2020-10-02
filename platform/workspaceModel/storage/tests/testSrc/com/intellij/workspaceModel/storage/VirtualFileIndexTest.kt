@@ -66,8 +66,8 @@ class VirtualFileIndexTest {
 
     val virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles(entity.id)
     assertEquals(2, virtualFiles.size)
-    assertEquals(entity.fileProperty, virtualFiles.first())
-    assertEquals(entity.secondFileProperty, virtualFiles.last())
+    assertTrue(virtualFiles.contains(entity.fileProperty))
+    assertTrue(virtualFiles.contains(entity.secondFileProperty))
   }
 
   @Test
