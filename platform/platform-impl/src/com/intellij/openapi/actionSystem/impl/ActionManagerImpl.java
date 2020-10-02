@@ -962,7 +962,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     String useTextOfPlace = element.getAttributeValue(USE_TEXT_OF_PLACE_ATTR_NAME);
     if (useTextOfPlace != null) {
-      action.copyActionTextOverride(useTextOfPlace, place);
+      action.copyActionTextOverride(useTextOfPlace, place, id);
     }
     else {
       String text = element.getAttributeValue(TEXT_ATTR_NAME, "");

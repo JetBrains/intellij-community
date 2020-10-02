@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -387,9 +388,16 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   @ApiStatus.Internal
-  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
-    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace, String id) {
+    Supplier<String> value = myActionTextOverrides.get(fromPlace);
+    if (value == null) {
+      LOG.error("Missing override-text for action " + id + " and place specified in use-text-of-place: " + fromPlace);
+      return;
+    }
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, value);
   }
+
+
 
   @ApiStatus.Internal
   public void applyTextOverride(@NotNull AnActionEvent event) {
@@ -401,6 +409,13 @@ public abstract class AnAction implements PossiblyDumbAware {
     Supplier<String> override = myActionTextOverrides.get(place);
     if (override != null) {
       presentation.setText(override);
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void copyActionTextOverrides(AnAction targetAction) {
+    for (String place : myActionTextOverrides.keySet()) {
+      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
     }
   }
 
