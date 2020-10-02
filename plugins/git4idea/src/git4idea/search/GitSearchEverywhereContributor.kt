@@ -94,10 +94,12 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
       if (!allRootsIndexed) return
 
-      val commitsFromIndex = index.dataGetter?.filter(listOf(VcsLogFilterObject.fromPattern(pattern))) ?: return
-      dataManager.miniDetailsGetter.loadCommitsData(commitsFromIndex, {
-        consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
-      }, progressIndicator)
+      index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
+        progressIndicator.checkCanceled()
+        dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
+        }, progressIndicator)
+      }
     }
   }
 
