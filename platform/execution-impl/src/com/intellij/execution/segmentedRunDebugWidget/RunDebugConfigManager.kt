@@ -9,19 +9,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 
 class RunDebugConfigManager(val project: Project) {
-  enum class State {
-    RUNNING_DEBUGGING_PROFILING,
-    RUNNING_PROFILING,
-    DEBUGGING_PROFILING,
-    RUNNING_DEBUGGING,
-    PROFILING_SEVERAL,
-    DEBUGGING_SEVERAL,
-    RUNNING_SEVERAL,
-    DEBUGGING_PAUSED,
-    PROFILING,
-    DEBUGGING,
-    RUNNING,
-    DEFAULT,
+  enum class State(val running: Boolean =  false, val debugging: Boolean= false, val profiling: Boolean = false) {
+    RUNNING_DEBUGGING_PROFILING(true, true, true),
+    RUNNING_PROFILING(true, profiling = true),
+    DEBUGGING_PROFILING(debugging = true, profiling = true),
+    RUNNING_DEBUGGING(true, true),
+    PROFILING_SEVERAL(profiling = true),
+    DEBUGGING_SEVERAL(debugging = true),
+    RUNNING_SEVERAL(true),
+    DEBUGGING_PAUSED(debugging = true),
+    PROFILING(profiling = true),
+    DEBUGGING(debugging = true),
+    RUNNING(true),
+    DEFAULT
   }
 
   companion object {
