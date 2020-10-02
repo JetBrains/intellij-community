@@ -53,12 +53,12 @@ public interface UnknownSdkFixAction {
      * {@link com.intellij.openapi.projectRoots.ProjectJdkTable}
      * @see #onResolveFailed()
      */
-    void onSdkReady(@NotNull Sdk sdk);
+    void onSdkResolved(@NotNull Sdk sdk);
 
     /**
      * One of the final events of the reoslution. It is caleld when a given SDK
      * failed to be resolved
-     * @see #onSdkNameResolved(Sdk)
+     * @see #onSdkResolved(Sdk)
      */
     void onResolveFailed();
   }

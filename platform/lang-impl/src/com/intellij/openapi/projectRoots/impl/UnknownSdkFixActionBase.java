@@ -27,9 +27,9 @@ public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction {
       }
 
       @Override
-      public void onSdkReady(@NotNull Sdk sdk) {
+      public void onSdkResolved(@NotNull Sdk sdk) {
         if (!myIsFinished.compareAndSet(false, true)) return;
-        proxy.onSdkReady(sdk);
+        proxy.onSdkResolved(sdk);
       }
 
       @Override

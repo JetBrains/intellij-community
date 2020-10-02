@@ -17,7 +17,7 @@ public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBa
     try {
       var sdk = applyLocalFix();
       multicaster.onSdkNameResolved(sdk);
-      multicaster.onSdkReady(sdk);
+      multicaster.onSdkResolved(sdk);
 
     } catch (Throwable t) {
       multicaster.onResolveFailed();

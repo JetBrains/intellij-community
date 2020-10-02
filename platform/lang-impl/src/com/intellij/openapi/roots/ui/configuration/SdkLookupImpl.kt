@@ -85,12 +85,12 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
       this@SdkLookupContext.onSdkNameResolved(sdk)
     }
 
-    override fun onSdkReady(sdk: Sdk) {
-      this@SdkLookupContext.onSdkNameResolved(sdk)
+    override fun onSdkResolved(sdk: Sdk) {
+      this@SdkLookupContext.onSdkResolved(sdk)
     }
 
     override fun onResolveFailed() {
-      this@SdkLookupContext.onSdkNameResolved(null)
+      this@SdkLookupContext.onSdkResolved(null)
     }
   }
 
@@ -136,6 +136,10 @@ internal class SdkLookupImpl : SdkLookup {
       override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, action: (ProgressIndicator) -> Unit) {
         //it is already running under progress, no need to open yet another one
         action.invoke(rootProgressIndicator)
+      }
+
+      override fun executeFix(indicator: ProgressIndicator, possibleFix: UnknownSdkFixAction) {
+        possibleFix.applySuggestionBlocking(indicator)
       }
     }.lookup()
   }
@@ -263,7 +267,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         }
 
         possibleFix.addSuggestionListener(listener)
-        possibleFix.applySuggestionAsync(project)
+        executeFix(indicator, possibleFix)
       } catch (e: ProcessCanceledException) {
         onSdkResolved(null)
         throw e
@@ -273,6 +277,10 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         onSdkResolved(null)
       }
     }
+  }
+
+  open fun executeFix(indicator: ProgressIndicator, possibleFix: UnknownSdkFixAction) {
+    possibleFix.applySuggestionAsync(project)
   }
 
   private fun resolveLocalFix(resolvers: List<UnknownSdkLookup>,

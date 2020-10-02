@@ -7,15 +7,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
-import com.intellij.openapi.roots.ui.configuration.SdkLookup
-import com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
-import com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
+import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.WaitFor
 import com.intellij.util.io.systemIndependentPath
@@ -217,6 +218,76 @@ class SdkLookupTest : LightPlatformTestCase() {
       "thread-ex",
       "download-completed",
       "sdk: temp-5",
+    )
+  }
+
+  fun `test local fix`() {
+    val auto = object: UnknownSdkResolver {
+      override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
+      override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
+        override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
+        override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
+          if (sdk.sdkName != "xqwr") return null
+          return object : UnknownSdkLocalSdkFix {
+            val home = createTempDir("our home for ${sdk.sdkName}")
+            override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
+            override fun getExistingSdkHome() = home.toString()
+            override fun getVersionString() = "1.2.3"
+            override fun getSuggestedSdkName() = sdk.sdkName!!
+          }
+        }
+      }
+    }
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
+
+    runInThreadAndPumpMessages {
+      lookup
+        .withSdkName("xqwr")
+        .lookupBlocking()
+    }
+
+    assertLog(
+      "configure: xqwr",
+      "sdk-name: xqwr",
+      "sdk: xqwr",
+    )
+  }
+
+  fun `test download fix`() {
+    val auto = object: UnknownSdkResolver {
+      override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
+      override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
+        override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? =  null
+        override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? {
+          if (sdk.sdkName != "xqwr") return null
+          return object : UnknownSdkDownloadableSdkFix {
+            override fun getDownloadDescription(): String = "download description"
+            override fun createTask(indicator: ProgressIndicator) = object: SdkDownloadTask {
+              override fun getSuggestedSdkName() = sdk.sdkName!!
+              override fun getPlannedHomeDir() = home.toString()
+              override fun getPlannedVersion() = versionString
+              override fun doDownload(indicator: ProgressIndicator) { log += "download: ${sdk.sdkName}" }
+            }
+            val home = createTempDir("our home for ${sdk.sdkName}")
+            override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
+            override fun getVersionString() = "1.2.3"
+          }
+        }
+      }
+    }
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
+
+    runInThreadAndPumpMessages {
+      lookup
+        .withSdkName("xqwr")
+        .lookupBlocking()
+    }
+
+    assertLog(
+      "sdk-name: xqwr",
+      "download: xqwr",
+      "configure: xqwr",
+      "sdk: xqwr",
     )
   }
 

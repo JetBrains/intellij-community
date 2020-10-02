@@ -33,21 +33,24 @@ internal data class UnknownSdkDownloadTask
   private val onCompleted: Consumer<in Sdk?> = EmptyConsumer.getInstance()
 ) {
 
-  fun withListener(listener : UnknownSdkFixAction.Listener) = copy(
-    onSdkNameReady = {
-      this.onSdkNameReady.consume(it)
-      it?.let { listener.onSdkNameResolved(it) }
-    },
-
-    onCompleted = {
-      this.onCompleted.consume(it)
-      if (it != null) {
-        listener.onSdkNameResolved(it)
-      } else {
-        listener.onResolveFailed()
+  fun withListener(listener : UnknownSdkFixAction.Listener): UnknownSdkDownloadTask {
+    val oldOnSdkNameReady = this.onSdkNameReady
+    val oldOnResolved = this.onCompleted
+    return copy(
+      onSdkNameReady = {
+        oldOnSdkNameReady.consume(it)
+        it?.let { listener.onSdkNameResolved(it) }
+      },
+      onCompleted = {
+        oldOnResolved.consume(it)
+        if (it != null) {
+          listener.onSdkResolved(it)
+        } else {
+          listener.onResolveFailed()
+        }
       }
-    }
-  )
+    )
+  }
 
   fun runBlocking(indicator: ProgressIndicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
