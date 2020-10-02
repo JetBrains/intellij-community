@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -215,9 +217,10 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         if (myProject != null && !myProject.isDefault() && DumbService.getInstance(myProject).isDumb()) {
-          JComponent dumbLabel = new JBLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), SwingConstants.RIGHT);
-          dumbLabel.setForeground(JBColor.darkGray);
-          dummyPanel.add(dumbLabel, BorderLayout.NORTH);
+          JBLabel dumbLabel = new JBLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), SwingConstants.LEFT);
+          dumbLabel.setIcon(AllIcons.General.Warning);
+          dumbLabel.setBorder(new JBEmptyBorder(10, 3, 0, 3));
+          dummyPanel.add(dumbLabel, BorderLayout.SOUTH);
         }
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance()
                                                                                       .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()), true));
