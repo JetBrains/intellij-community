@@ -91,6 +91,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
     return Collections.emptyList();
   }
 
+  @ApiStatus.Internal
   public boolean keyIsUniqueForIndexedFile() {
     return false;
   }
