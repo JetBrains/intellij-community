@@ -1085,6 +1085,7 @@
 
       <action id="ShowEditorHighlighterTokens" internal="true" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"/>
       <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction" text="Export Keymap to CSV..."/>
+      <action id="CompareKeymaps" internal="true" class="com.intellij.internal.CompareKeymapsAction" text="Compare Keymaps..."/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
