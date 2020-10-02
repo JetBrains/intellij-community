@@ -99,7 +99,7 @@ public class WelcomeScreenComponentFactory {
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
-    JPanel namePanel = JBUI.Panels.simplePanel(appName).addToRight(copyAbout);
+    JPanel namePanel = JBUI.Panels.simplePanel(appName).andTransparent().addToRight(copyAbout);
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
