@@ -17,7 +17,7 @@ public interface UnknownSdkFix {
   String getNotificationText();
 
   @Nls
-  @Nullable
+  @NotNull
   String getSdkTypeAndNameText();
 
   @Nullable

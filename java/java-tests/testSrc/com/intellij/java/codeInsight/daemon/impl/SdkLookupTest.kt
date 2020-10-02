@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.setSystemPropertyForTest
 import com.intellij.util.WaitFor
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.UIUtil
@@ -30,16 +31,7 @@ import kotlin.concurrent.thread
 class SdkLookupTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    Disposer.register(testRootDisposable, Disposable {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      }
-      else {
-        System.clearProperty(key)
-      }
-    })
+    setSystemPropertyForTest("intellij.progress.task.ignoreHeadless", "true")
   }
 
   val log = Collections.synchronizedList(mutableListOf<String>())

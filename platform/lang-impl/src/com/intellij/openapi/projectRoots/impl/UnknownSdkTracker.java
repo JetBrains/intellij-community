@@ -170,8 +170,7 @@ public class UnknownSdkTracker {
 
   @Nullable
   private Function<ProgressIndicator, List<UnknownSdkFix>> createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-
+    //it may run on EDT, e.g. in default task
     //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
     List<UnknownSdk> fixable = filterOnlyAllowedEntries(snapshot.getResolvableSdks());
     List<Sdk> usedSdks = filterOnlyAllowedSdkEntries(snapshot.getKnownSdks());
@@ -249,8 +248,7 @@ public class UnknownSdkTracker {
   @Nullable
   private Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
                                               @NotNull ShowStatusCallback showStatus) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-
+    //it may run on EDT, for the standard task
     var task = createProcessSdksAction(snapshot);
     if (task == null) return null;
 
