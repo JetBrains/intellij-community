@@ -10,20 +10,14 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
  * @author Konstantin Bulenkov
  */
 class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
-  override fun getMetrics(): MutableSet<MetricEvent> {
-    val managerName = when (val updateManager = ExternalUpdateManager.ACTUAL) {
+  override fun getMetrics(): Set<MetricEvent> = setOf(
+    newMetric("Update Manager", when (val updateManager = ExternalUpdateManager.ACTUAL) {
       ExternalUpdateManager.UNKNOWN -> "Other"
       null -> "IDE"
       else -> updateManager.toolName
-    }
-    return mutableSetOf(newMetric("Update Manager", managerName))
-  }
+    }))
 
-  override fun getGroupId(): String {
-    return "platform.installer"
-  }
+  override fun getGroupId(): String = "platform.installer"
 
-  override fun getVersion(): Int {
-    return 1
-  }
+  override fun getVersion(): Int = 1
 }
