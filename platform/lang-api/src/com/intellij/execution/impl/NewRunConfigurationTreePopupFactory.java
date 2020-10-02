@@ -91,7 +91,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
       return ((ConfigurationFactory)element).isEditableInDumbMode();
     }
     if (element instanceof ConfigurationType) {
-      return ConfigurationTypeUtil.INSTANCE.isEditableInDumbMode((ConfigurationType)element);
+      return ConfigurationTypeUtil.isEditableInDumbMode((ConfigurationType)element);
     }
     return false;
   }

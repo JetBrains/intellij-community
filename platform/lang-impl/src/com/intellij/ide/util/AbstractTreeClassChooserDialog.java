@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
@@ -216,7 +215,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         if (myProject != null && !myProject.isDefault() && DumbService.getInstance(myProject).isDumb()) {
-          JComponent dumbLabel = new JBLabel(CodeInsightBundle.message("completion.incomplete.during.indexing"), SwingConstants.RIGHT);
+          JComponent dumbLabel = new JBLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), SwingConstants.RIGHT);
           dumbLabel.setForeground(JBColor.darkGray);
           dummyPanel.add(dumbLabel, BorderLayout.NORTH);
         }
@@ -508,7 +507,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     @Override
     public void processNames(@NotNull Processor<? super String> nameProcessor, @NotNull FindSymbolParameters parameters) {
       if (myFastMode) {
-        myFastMode = myInheritorsProvider.searchForInheritorsOfBaseClass().forEach(new Processor<T>() {
+        myFastMode = myInheritorsProvider.searchForInheritorsOfBaseClass().forEach(new Processor<>() {
           private final long start = System.currentTimeMillis();
 
           @Override
