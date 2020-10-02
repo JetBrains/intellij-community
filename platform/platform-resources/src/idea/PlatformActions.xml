@@ -160,7 +160,9 @@
     <action id="Switcher" class="com.intellij.ide.actions.Switcher"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction"
             use-shortcut-of="$Copy"/>
-    <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction"/>
+    <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction">
+      <override-text place="EditorTabPopup"/>
+    </action>
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" />
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
 
@@ -858,6 +860,7 @@
       <reference ref="ChangeSplitOrientation"/>
       <separator/>
       <reference ref="PinActiveEditorTab"/>
+      <reference ref="EditSourceInNewWindow"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
       <reference ref="ReopenClosedTab"/>
