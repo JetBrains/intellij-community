@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
@@ -17,6 +21,16 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
+    // that exception may be already handled by regular try-catch statement
+    if (topElement instanceof PsiTryStatement) {
+      List<PsiType> caughtExceptions = Stream.of(((PsiTryStatement) topElement).getCatchBlockParameters())
+        .map(PsiParameter::getType)
+        .collect(Collectors.toList());
+      if (isExceptionHandled(exceptionType, caughtExceptions)) {
+        return false;
+      }
+    }
+
     if (!(topElement instanceof PsiCodeBlock)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       return psiMethod != null && isExceptionHandled(psiMethod, exceptionType);

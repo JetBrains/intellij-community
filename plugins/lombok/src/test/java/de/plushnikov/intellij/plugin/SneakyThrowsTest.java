@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin;
 
+import java.util.List;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -7,10 +8,12 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 
 /**
  * Based on logic from com.intellij.codeInsight.ExceptionCheckingTest
@@ -42,31 +45,64 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
     assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
   }
 
+  public void testFalseCatchAlreadyCaughtException() {
+    PsiFile file = createTestFile("@lombok.SneakyThrows\n" +
+      "    public void m() {\n" +
+      "        Test variable;\n" +
+      "        try {\n" +
+      "            throwsMyException();" +
+      "        } catch (Test.Exception e) {\n" +
+      "            Test variable2 = variable;\n" +
+      "        }\n" +
+      "    }");
+
+    PsiMethodCallExpression methodCall = findMethodCall(file);
+    assertNotNull(methodCall);
+
+    PsiTryStatement tryStatement = findFirstChild(file, PsiTryStatement.class);
+    assertNotNull(tryStatement);
+
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, tryStatement);
+    assertEquals(1, exceptions.size());
+    assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return JavaSdk.getInstance().createJdk("java 1.8", "lib/mockJDK-1.8", false);
   }
 
   private PsiMethodCallExpression createCall(@NonNls final String body) {
-    final PsiFile file = createFile("test.java", "class Test { " + body +
+    final PsiFile file = createTestFile(body);
+    PsiMethodCallExpression methodCall = findMethodCall(file);
+    assertNotNull(methodCall);
+    return methodCall;
+  }
+
+  @NotNull
+  private PsiFile createTestFile(@NonNls String body) {
+    return createFile("test.java", "class Test { " + body +
       "void throwsMyException() throws MyException {}" +
       "void throwsSomeException() throws SomeException {}" +
       "static class MyException extends Exception {}" +
       "static class SomeException extends Exception {}" +
       "static class Exception {}" +
       "}");
-    PsiMethodCallExpression methodCall = findMethodCall(file);
-    assertNotNull(methodCall);
-    return methodCall;
   }
 
-  private static PsiMethodCallExpression findMethodCall(PsiElement element) {
-    if (element instanceof PsiMethodCallExpression) {
-      return (PsiMethodCallExpression) element;
+  @Nullable
+  private static PsiMethodCallExpression findMethodCall(@NotNull PsiElement element) {
+    return findFirstChild(element, PsiMethodCallExpression.class);
+  }
+
+  @Nullable
+  private static <T extends PsiElement> T findFirstChild(@NotNull PsiElement element, Class<T> aClass) {
+    if (aClass.isInstance(element)) {
+      return (T) element;
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      final PsiMethodCallExpression call = findMethodCall(child);
+      final T call = findFirstChild(child, aClass);
       if (call != null) {
         return call;
       }
