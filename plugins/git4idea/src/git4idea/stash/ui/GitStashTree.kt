@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Processor
+import com.intellij.vcs.log.Hash
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashCache
@@ -46,7 +47,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     }
 
     project.messageBus.connect(parentDisposable).subscribe(GitStashCache.GIT_STASH_LOADED, object : GitStashCache.StashLoadedListener {
-      override fun stashLoaded(stashInfo: StashInfo) {
+      override fun stashLoaded(root: VirtualFile, hash: Hash) {
         rebuildTree()
       }
     })

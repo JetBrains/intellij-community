@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.commands.*
@@ -106,22 +107,24 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)
-  h.addParameters("list")
+  h.addParameters("list", "--pretty=format:%H:%gd:%s")
   h.charset = charset
   val output = Git.getInstance().runCommand(h)
   output.throwOnError()
 
   val result = mutableListOf<StashInfo>()
   for (line in output.output) {
-    val parts = line.split(':', limit = 3);
-    if (parts.size < 2) {
-      logger<GitUtil>().error("Can't parse stash record: ${line}")
-    }
-    else if (parts.size == 2) {
-      result.add(StashInfo(root, parts[0], null, parts[1].trim()))
-    }
-    else {
-      result.add(StashInfo(root, parts[0], parts[1].trim(), parts[2].trim()))
+    val parts = line.split(':', limit = 4);
+    when {
+      parts.size < 3 -> {
+        logger<GitUtil>().error("Can't parse stash record: ${line}")
+      }
+      parts.size == 3 -> {
+        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], null, parts[2].trim()))
+      }
+      else -> {
+        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], parts[2].trim(), parts[3].trim()))
+      }
     }
   }
   return result

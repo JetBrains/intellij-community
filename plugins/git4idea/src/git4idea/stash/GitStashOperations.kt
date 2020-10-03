@@ -16,8 +16,8 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.log.Hash
 import com.intellij.xml.util.XmlStringUtil
-import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.changes.GitCommittedChangeList
@@ -89,7 +89,7 @@ object GitStashOperations {
     val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
     val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
     dialog.loadChangesInBackground {
-      ChangelistData(loadStashedChanges(project, stash), null)
+      ChangelistData(loadStashedChanges(project, stash.root, stash.hash), null)
     }
     dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
     dialog.show()
@@ -97,19 +97,9 @@ object GitStashOperations {
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadStashedChanges(project: Project, stash: StashInfo): GitCommittedChangeList {
-    val hash = resolveHashOfStash(project, stash.root, stash.stash)
-    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), hash, true, false, false)
-  }
-
-  @Throws(VcsException::class)
-  private fun resolveHashOfStash(project: Project, root: VirtualFile, stash: String): String {
-    val h = GitLineHandler(project, root, GitCommand.REV_LIST)
-    h.setSilent(true)
-    h.addParameters("--timestamp", "--max-count=1", stash)
-    h.endOptions()
-    val output = Git.getInstance().runCommand(h).getOutputOrThrow()
-    return GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString()
+  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash): GitCommittedChangeList {
+    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, root), hash.asString(),
+                                             true, false, false)
   }
 
   @JvmStatic
@@ -117,9 +107,7 @@ object GitStashOperations {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
         //better to use quick to keep consistent state with ui
-        val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(stash.root)!!
-        val hash = Git.getInstance().resolveReference(repository, stash.stash)
-        unstash(project, mapOf(Pair(stash.root, hash)),
+        unstash(project, mapOf(Pair(stash.root, stash.hash)),
                 { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
                 UnstashConflictResolver(project, stash))
       },
