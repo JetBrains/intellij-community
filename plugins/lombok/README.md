@@ -13,12 +13,12 @@ lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateC
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.31) released on 06.09.2020**
+**Last version (0.32) released on 25.09.2020**
 
 ---
 :collision: **Unfortunately the current IntelliJ 2020.2 version has a bug and lombok plugin can't be used normally.** :collision:
 
-:hammer_and_wrench: Use previous IntelliJ version 2020.1 or update to IntelliJ IDEA 2020.2.1
+:hammer_and_wrench: Use previous IntelliJ version 2020.1 or update to IntelliJ IDEA 2020.2.1 or newer
 ---
 
 :collision: **The latest IntelliJ IDEA versions still contains a BUG :beetle: for several plugins (including plugin for Lombok) were shown as incompatible with the updated version of the IDE.** :collision:
@@ -28,11 +28,11 @@ You can find the issue with a detailed explanation here: https://youtrack.jetbra
 :hammer_and_wrench: As of now, the workaround is to re-install the plugin in the IDE settings.
 ---
 
-35th version of plugin released.
+36th version of plugin released.
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 2017.X, 2018.X, 2019.X, 2020.1 and 2020.2.1
+Tested and supports IntelliJ versions: 2017.X, 2018.X, 2019.X, 2020.1 and 2020.2.1+, 2020.3 EAP
 
 Last support for IntelliJ 2016.2 and 2016.3 by plugin version 0.31!
 
