@@ -1049,7 +1049,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         return;
       }
 
-      DocToolWindowManager toolWindowManager = DocToolWindowManager.LANGUAGE_MANAGER.forLanguage(element.getLanguage());
+      Language elementLanguage = ReadAction.compute(() -> element.getLanguage());
+      DocToolWindowManager toolWindowManager = DocToolWindowManager.LANGUAGE_MANAGER.forLanguage(elementLanguage);
       if (toolWindowManager != null) {
         if (collector.onAutoUpdate && !toolWindowManager.isAutoUpdateAvailable()) {
           callback.setDone();
