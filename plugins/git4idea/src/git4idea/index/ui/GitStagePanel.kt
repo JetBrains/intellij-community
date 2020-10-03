@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.showEmptyCommitMessageConfirmation
@@ -29,7 +30,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.getDefaultCommitShortcut
+import com.intellij.vcs.commit.CommitExecutorListener
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -78,7 +79,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     tree = MyChangesTree(project)
 
     commitPanel = MyGitCommitPanel()
-    commitPanel.createCommitAction().registerCustomShortcutSet(getDefaultCommitShortcut(), this)
+    commitPanel.commitActionsPanel.addExecutorListener(
+      object : CommitExecutorListener {
+        override fun executorCalled(executor: CommitExecutor?) = performCommit(commitPanel.isAmend)
+      },
+      this
+    )
+    commitPanel.commitActionsPanel.isCommitButtonDefault = { IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null }
+    commitPanel.commitActionsPanel.setupShortcuts(this, this)
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
@@ -134,7 +142,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   @RequiresEdt
   private fun commitStarted() {
     isCommitInProgress = true
-    commitPanel.commitButton.isEnabled = false
+    commitPanel.commitActionsPanel.isDefaultCommitActionEnabled = false
   }
 
   @RequiresEdt
@@ -155,7 +163,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       return
     }
     tree.update()
-    commitPanel.commitButton.isEnabled = state.hasStagedRoots()
+    commitPanel.commitActionsPanel.isDefaultCommitActionEnabled = state.hasStagedRoots()
   }
 
   override fun getData(dataId: String): Any? {
@@ -224,14 +232,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   }
 
   private inner class MyGitCommitPanel : GitCommitPanel(project, this) {
-    override fun isFocused(): Boolean {
-      return IdeFocusManager.getInstance(project).getFocusedDescendantFor(this@GitStagePanel) != null
-    }
-
-    override fun performCommit() {
-      performCommit(isAmend)
-    }
-
     override fun rootsToCommit() = state.stagedRoots.map { VcsRoot(GitVcs.getInstance(project), it) }
   }
 
