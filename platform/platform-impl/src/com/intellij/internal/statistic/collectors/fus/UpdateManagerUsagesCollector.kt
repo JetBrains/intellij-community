@@ -11,13 +11,14 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
  */
 class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> = setOf(
-    newMetric("Update Manager", when (val updateManager = ExternalUpdateManager.ACTUAL) {
+    newMetric("Update Manager", when (ExternalUpdateManager.ACTUAL) {
+      ExternalUpdateManager.TOOLBOX -> "Toolbox App"
+      ExternalUpdateManager.SNAP -> "Snap"
       ExternalUpdateManager.UNKNOWN -> "Other"
       null -> "IDE"
-      else -> updateManager.toolName
     }))
 
   override fun getGroupId(): String = "platform.installer"
 
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
 }
