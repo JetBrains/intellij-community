@@ -530,8 +530,12 @@ public final class Switcher extends AnAction implements DumbAware {
           }
         }
       };
-      files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(createModel(filesModel, FileInfo::getNameForRendering, mySpeedSearch, pinned), null);
+      ListModel<FileInfo> model = createModel(filesModel, FileInfo::getNameForRendering, mySpeedSearch, pinned);
+      if (Registry.is("ide.show.split.icon")) {
+        files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(model, null);
+      } else {
+        files = new JBList(model);
+      }
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(e -> {
         if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
