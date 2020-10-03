@@ -338,4 +338,20 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile1)).contains(libFile2));
     assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile2)).contains(libFile1));
   }
+
+  public void testUseScopeWithLibraryUnion() throws Exception {
+    System.setProperty("idea.use.scope.include.libraries", "true");
+    try {
+      VirtualFile sourceInterface = myFixture.createFile("src/TestInterface.java", "public interface TestInterface { }");
+      VirtualFile libraryClass = myFixture.createFile("lib/classes/Test.class");
+      VirtualFile librarySrc = myFixture.createFile("lib/src/Test.java", "public class Test implements TestInterface { }");
+      PsiTestUtil.addContentRoot(myModule, sourceInterface.getParent());
+      PsiTestUtil.addProjectLibrary(myModule, "my-lib", Collections.singletonList(libraryClass.getParent()),
+                                    Collections.singletonList(librarySrc.getParent()));
+
+      assertTrue(ResolveScopeManager.getInstance(myProject).getUseScope(getPsiManager().findFile(sourceInterface)).contains(librarySrc));
+    } finally {
+      System.clearProperty("idea.use.scope.include.libraries");
+    }
+  }
 }

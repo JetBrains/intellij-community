@@ -188,9 +188,12 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }
     boolean isTest = TestSourcesFilter.isTestSources(vDirectory, myProject);
-    return isTest
+    GlobalSearchScope moduleWithDependents =  isTest
            ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
            : GlobalSearchScope.moduleWithDependentsScope(module);
+    return Boolean.getBoolean("idea.use.scope.include.libraries")
+           ? moduleWithDependents.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope())
+           : moduleWithDependents;
   }
 
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
