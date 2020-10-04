@@ -9,13 +9,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.showEmptyCommitMessageConfirmation
@@ -31,17 +30,14 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.CommitExecutorListener
+import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import com.intellij.vcsUtil.VcsImplUtil
-import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
-import git4idea.i18n.GitBundle
-import git4idea.index.CommitListener
-import git4idea.index.GitStageTracker
-import git4idea.index.GitStageTrackerListener
+import git4idea.i18n.GitBundle.message
+import git4idea.index.*
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
@@ -81,7 +77,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     commitPanel = MyGitCommitPanel()
     commitPanel.commitActionsPanel.addExecutorListener(
       object : CommitExecutorListener {
-        override fun executorCalled(executor: CommitExecutor?) = performCommit(commitPanel.isAmend)
+        override fun executorCalled(executor: CommitExecutor?) = performCommit()
       },
       this
     )
@@ -117,7 +113,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     tracker.addListener(MyGitStageTrackerListener(), this)
     project.messageBus.connect(this).subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
     if (GitVcs.getInstance(project).changeProvider?.isRefreshInProgress == true) {
-      tree.setEmptyText(GitBundle.message("stage.loading.status"))
+      tree.setEmptyText(message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
 
@@ -126,7 +122,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     runInEdtAsync(this, { tree.rebuildTree() })
   }
 
-  private fun performCommit(amend: Boolean) {
+  private fun performCommit() {
     val rootsToCommit = state.stagedRoots
     if (rootsToCommit.isEmpty()) return
 
@@ -134,9 +130,23 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     if (commitMessage.isBlank() && !showEmptyCommitMessageConfirmation(project)) return
 
     commitStarted()
-
     FileDocumentManager.getInstance().saveAllDocuments()
-    git4idea.index.performCommit(project, rootsToCommit, commitMessage, amend, MyCommitListener(commitMessage))
+
+    val commitState = GitStageCommitState(rootsToCommit, commitMessage)
+    val commitContext = CommitContext().apply { isAmendCommitMode = commitPanel.isAmend }
+
+    with(GitStageCommitter(project, commitState, commitContext)) {
+      addResultHandler(GitStageShowNotificationCommitResultHandler(this))
+      addResultHandler(object : CommitResultHandler {
+        override fun onSuccess(commitMessage: String) = onFinish(true)
+        override fun onCancel() = onFinish(false)
+        override fun onFailure(errors: MutableList<VcsException>) = onFinish(true)
+
+        private fun onFinish(success: Boolean) = runInEdt(this@GitStagePanel) { commitFinished(success) }
+      })
+
+      runCommit(message("stage.commit.process"), false)
+    }
   }
 
   @RequiresEdt
@@ -244,7 +254,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   private inner class MyGitChangeProviderListener : GitChangeProvider.ChangeProviderListener {
     override fun progressStarted() {
       runInEdt(this@GitStagePanel) {
-        tree.setEmptyText(GitBundle.message("stage.loading.status"))
+        tree.setEmptyText(message("stage.loading.status"))
         progressStripe.startLoading()
       }
     }
@@ -257,29 +267,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     }
 
     override fun repositoryUpdated(repository: GitRepository) = Unit
-  }
-
-  private inner class MyCommitListener(private val commitMessage: String) : CommitListener {
-    private val notifier = VcsNotifier.getInstance(project)
-
-    override fun commitProcessFinished(successfulRoots: Collection<VirtualFile>, failedRoots: Map<VirtualFile, VcsException>) {
-      commitFinished(successfulRoots.isNotEmpty() && failedRoots.isEmpty())
-
-      if (successfulRoots.isNotEmpty()) {
-        notifier.notifySuccess("git.stage.commit.successful",
-                               "",
-                               GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
-                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-                               }, XmlStringUtil.escapeString(commitMessage)))
-      }
-      if (failedRoots.isNotEmpty()) {
-        notifier.notifyError("git.stage.commit.error",
-                             GitBundle.message("stage.commit.failed",
-                                               failedRoots.keys.joinToString {
-                                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-                                               }), HtmlBuilder().appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.text(it.localizedMessage) }).toString())
-      }
-    }
   }
 }
 
