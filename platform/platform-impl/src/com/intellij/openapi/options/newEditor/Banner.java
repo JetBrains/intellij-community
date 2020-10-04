@@ -56,7 +56,7 @@ final class Banner extends SimpleBanner {
     }
   }
 
-  private void showProject(boolean hasProject) {
+  void showProject(boolean hasProject) {
     myProjectIcon.setVisible(hasProject);
   }
 

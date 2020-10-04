@@ -292,6 +292,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void setTopController(@NotNull Configurable.TopComponentController topController) {
     myTopController = topController;
+    myTopController.showProject(false);
 
     for (InstallPluginInfo info : myInstallingInfos.values()) {
       info.fromBackground(this);

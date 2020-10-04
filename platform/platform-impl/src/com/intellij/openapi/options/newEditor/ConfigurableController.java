@@ -19,17 +19,20 @@ class ConfigurableController implements Configurable.TopComponentController {
   private Component myCenterComponent;
   private Component myLeftComponent;
   private boolean myProgress;
+  private boolean myHasProject;
 
   void setBanner(SimpleBanner banner) {
     if (banner == null) {
       myBanner.setLeftComponent(null);
       myBanner.setCenterComponent(null);
       myBanner.showProgress(false);
+      showProject(myBanner, true);
     }
     else {
       banner.setLeftComponent(myLeftComponent);
       banner.setCenterComponent(myCenterComponent);
       banner.showProgress(myProgress);
+      showProject(banner, myHasProject);
 
       IJSwingUtilities.updateComponentTreeUI(banner);
     }
@@ -51,6 +54,12 @@ class ConfigurableController implements Configurable.TopComponentController {
     if (myBanner != null) {
       myBanner.showProgress(start);
     }
+  }
+
+  @Override
+  public void showProject(boolean hasProject) {
+    myHasProject = hasProject;
+    showProject(myBanner, hasProject);
   }
 
   static @Nullable ConfigurableController getOrCreate(@Nullable Configurable configurable,
@@ -82,5 +91,12 @@ class ConfigurableController implements Configurable.TopComponentController {
     ConfigurableController controller = new ConfigurableController();
     controller.myCenterComponent = original.getCenterComponent(controller);
     return controller;
+  }
+
+  private static void showProject(@Nullable SimpleBanner banner,
+                                  boolean hasProject) {
+    if (banner instanceof Banner) {
+      ((Banner)banner).showProject(hasProject);
+    }
   }
 }

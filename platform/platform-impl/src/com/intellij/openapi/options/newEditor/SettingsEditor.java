@@ -57,7 +57,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter mySpotlightPainter;
   private final LoadingDecorator myLoadingDecorator;
-  private final Banner myBanner;
+  private final @NotNull Banner myBanner;
 
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
@@ -392,11 +392,6 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   void updateStatus(Configurable configurable) {
     myFilter.updateSpotlight(configurable == null);
-    if (myBanner != null) {
-      Project project = myTreeView.findConfigurableProject(configurable);
-      myBanner.setProjectText(project != null ? getProjectText(project) : null);
-      myBanner.setText(myTreeView.getPathNames(configurable));
-    }
     if (myEditor != null) {
       ConfigurationException exception = myFilter.myContext.getErrors().get(configurable);
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
@@ -414,6 +409,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   private void updateController(@Nullable Configurable configurable) {
+    Project project = myTreeView.findConfigurableProject(configurable);
+    myBanner.setProjectText(project != null ? getProjectText(project) : null);
+    myBanner.setText(myTreeView.getPathNames(configurable));
+
     if (myLastController != null) {
       myLastController.setBanner(null);
       myLastController = null;

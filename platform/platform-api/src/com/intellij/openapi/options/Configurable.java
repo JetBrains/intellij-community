@@ -248,11 +248,16 @@ public interface Configurable extends UnnamedConfigurable {
 
       @Override
       public void showProgress(boolean start) {}
+
+      @Override
+      public void showProject(boolean hasProject) {}
     };
 
     void setLeftComponent(@Nullable Component component);
 
     void showProgress(boolean start);
+
+    void showProject(boolean hasProject);
   }
 
   interface TopComponentProvider {
