@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileNotFoundException
 import java.util.concurrent.ConcurrentHashMap
 
 typealias Pid = Long
@@ -65,7 +64,7 @@ internal class ProcessMediatorProcessManager {
     val inputStream = when (fd) {
       STDOUT -> process.inputStream
       STDERR -> process.errorStream
-      else -> throw FileNotFoundException("Unknown process output FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $pid")
     }
     val buffer = ByteArray(8192)
     @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
@@ -85,7 +84,7 @@ internal class ProcessMediatorProcessManager {
     val process = getProcess(pid)
     val outputStream = when (fd) {
       STDIN -> process.outputStream
-      else -> throw FileNotFoundException("Unknown process input FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $pid")
     }
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
