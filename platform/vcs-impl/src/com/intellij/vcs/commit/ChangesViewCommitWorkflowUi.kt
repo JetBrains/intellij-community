@@ -2,22 +2,18 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.vcs.log.VcsUser
 import java.util.*
 
-interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
+interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   val isActive: Boolean
   fun deactivate(isRestoreState: Boolean)
 
   val commitProgressUi: CommitProgressUi
   fun endExecution()
-
-  var isDefaultCommitActionEnabled: Boolean
-  fun setCustomCommitActions(actions: List<AnAction>)
 
   var commitAuthor: VcsUser?
   fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable)

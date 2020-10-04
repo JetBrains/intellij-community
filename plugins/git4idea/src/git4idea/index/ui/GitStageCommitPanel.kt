@@ -3,32 +3,33 @@ package git4idea.index.ui
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsRoot
-import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.commit.CommitActionsPanel
+import com.intellij.vcs.commit.NonModalCommitPanel
 import com.intellij.vcs.commit.loadLastCommitMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import javax.swing.JComponent
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
-abstract class GitCommitPanel(private val project: Project,
-                              parent: Disposable) : BorderLayoutPanel(), EditorColorsListener, ComponentContainer, DataProvider {
+abstract class GitStageCommitPanel(project: Project, parent: Disposable) : NonModalCommitPanel(project), EditorColorsListener {
   var isAmend: Boolean = false
     internal set(value) {
       if (field != value) {
@@ -40,9 +41,6 @@ abstract class GitCommitPanel(private val project: Project,
 
   private var lastCommitMessage: String = ""
   private var lastAmendMessage: String = ""
-
-  val commitMessage = CommitMessage(project, false, false, true)
-  val commitActionsPanel = CommitActionsPanel()
 
   init {
     addToCenter(buildPanel())
@@ -67,7 +65,7 @@ abstract class GitCommitPanel(private val project: Project,
       background = getButtonPanelBackground()
 
       defaultCommitActionName = getCommitText()
-      setTargetComponent(this@GitCommitPanel)
+      setTargetComponent(this@GitStageCommitPanel)
     }
 
     val bottomPanel = JBUI.Panels.simplePanel()
@@ -75,9 +73,6 @@ abstract class GitCommitPanel(private val project: Project,
     bottomPanel.border = getButtonPanelBorder()
     bottomPanel.addToLeft(commitActionsPanel)
     bottomPanel.addToRight(amendActionToolbar.component)
-
-    commitMessage.editorField.addSettingsProvider { it.setBorder(JBUI.Borders.emptyLeft(6)) }
-    commitMessage.editorField.setPlaceholder(VcsBundle.message("commit.message.placeholder"))
 
     centerPanel.addToCenter(commitMessage).addToBottom(bottomPanel)
     return centerPanel
@@ -95,14 +90,16 @@ abstract class GitCommitPanel(private val project: Project,
     // todo
   }
 
-  override fun getComponent(): JComponent = this
+  override fun activate(): Boolean = true
+  override fun refreshData() = Unit
 
-  override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
+  override fun getDisplayedChanges(): List<Change> = emptyList()
+  override fun getIncludedChanges(): List<Change> = emptyList()
+  override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
+  override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
-  override fun getData(dataId: String) = commitMessage.getData(dataId)
-
-  override fun dispose() {
-  }
+  override fun includeIntoCommit(items: Collection<*>) = Unit
+  override fun addInclusionListener(listener: InclusionListener, parent: Disposable) = Unit
 
   @Nls
   private fun getCommitText(): String {

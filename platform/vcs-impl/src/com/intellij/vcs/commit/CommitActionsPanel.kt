@@ -29,7 +29,7 @@ private fun JBOptionButton.getBottomInset(): Int =
   ?: (components.firstOrNull() as? JComponent)?.insets?.bottom
   ?: 0
 
-class CommitActionsPanel : BorderLayoutPanel() {
+class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   private val executorEventDispatcher = EventDispatcher.create(CommitExecutorListener::class.java)
 
   private val defaultCommitAction = object : AbstractAction() {
@@ -72,23 +72,25 @@ class CommitActionsPanel : BorderLayoutPanel() {
     ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, parentDisposable)
   }
 
-  var defaultCommitActionName: String
+  // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
+  //  See CheckinProjectPanel.getCommitActionName() usages.
+  override var defaultCommitActionName: String
     get() = (defaultCommitAction.getValue(Action.NAME) as? String).orEmpty()
     set(value) {
       defaultCommitAction.putValue(Action.NAME, value)
       primaryCommitActionsToolbar.updateActionsImmediately()
     }
 
-  var isDefaultCommitActionEnabled: Boolean
+  override var isDefaultCommitActionEnabled: Boolean
     get() = defaultCommitAction.isEnabled
     set(value) {
       defaultCommitAction.isEnabled = value
       primaryCommitActionsToolbar.updateActionsImmediately()
     }
 
-  fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
+  override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
 
-  fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
+  override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)

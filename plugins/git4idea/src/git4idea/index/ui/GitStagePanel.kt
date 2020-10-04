@@ -57,7 +57,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   private val project = tracker.project
 
   private val tree: GitStageTree
-  private val commitPanel: GitCommitPanel
+  private val commitPanel: GitStageCommitPanel
   private val progressStripe: ProgressStripe
   private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
@@ -74,7 +74,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   init {
     tree = MyChangesTree(project)
 
-    commitPanel = MyGitCommitPanel()
+    commitPanel = MyGitStageCommitPanel()
     commitPanel.commitActionsPanel.addExecutorListener(
       object : CommitExecutorListener {
         override fun executorCalled(executor: CommitExecutor?) = performCommit()
@@ -241,7 +241,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     }
   }
 
-  private inner class MyGitCommitPanel : GitCommitPanel(project, this) {
+  private inner class MyGitStageCommitPanel : GitStageCommitPanel(project, this) {
     override fun rootsToCommit() = state.stagedRoots.map { VcsRoot(GitVcs.getInstance(project), it) }
   }
 

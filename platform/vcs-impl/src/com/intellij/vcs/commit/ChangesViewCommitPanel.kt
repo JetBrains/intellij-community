@@ -2,18 +2,18 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
@@ -22,8 +22,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.L
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -39,7 +37,6 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
 import java.awt.LayoutManager
@@ -70,16 +67,13 @@ private fun JBPopup.showAbove(component: JComponent) {
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
 class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
-  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
+  NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi, EditorColorsListener {
 
   private val changesView get() = changesViewHost.changesView
-  private val project get() = changesView.project
 
-  private val dataProviders = mutableListOf<DataProvider>()
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val commitActionsPanel = CommitActionsPanel()
   private val toolbarPanel = simplePanel().apply {
     isOpaque = false
     border = emptyLeft(1)
@@ -90,10 +84,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     component.isOpaque = false
   }
 
-  private val commitMessage = CommitMessage(project, false, false, true).apply {
-    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
-    editorField.setPlaceholder(message("commit.message.placeholder"))
-  }
   private val commitAuthorComponent = CommitAuthorComponent(project)
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
@@ -178,16 +168,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     needUpdateCommitOptionsUi = true
     commitActionsPanel.border = getButtonPanelBorder()
   }
-
-  override val commitMessageUi: CommitMessageUi get() = commitMessage
-
-  // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
-  //  See CheckinProjectPanel.getCommitActionName() usages.
-  override var defaultCommitActionName: String by commitActionsPanel::defaultCommitActionName
-  override var isDefaultCommitActionEnabled: Boolean by commitActionsPanel::isDefaultCommitActionEnabled
-  override fun setCustomCommitActions(actions: List<AnAction>) = commitActionsPanel.setCustomCommitActions(actions)
-  override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
-    commitActionsPanel.addExecutorListener(listener, parent)
 
   override var commitAuthor: VcsUser?
     get() = commitAuthorComponent.commitAuthor
@@ -296,16 +276,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     commitMessage.changeLists = changeLists
   }
 
-  override fun getComponent(): JComponent = this
-  override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
-
-  override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
-
-  override fun addDataProvider(provider: DataProvider) {
-    dataProviders += provider
-  }
-
   override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
@@ -329,9 +299,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     inclusionEventDispatcher.addListener(listener, parent)
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
-
-  override fun startBeforeCommitChecks() = Unit
-  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
 
   override fun endExecution() = closeEditorPreviewIfEmpty()
 
