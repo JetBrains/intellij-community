@@ -260,7 +260,6 @@ public interface Configurable extends UnnamedConfigurable {
       return true;
     }
 
-    @NotNull
-    Component getCenterComponent(@NotNull TopComponentController controller);
+    @NotNull Component getCenterComponent(@NotNull TopComponentController controller);
   }
 }

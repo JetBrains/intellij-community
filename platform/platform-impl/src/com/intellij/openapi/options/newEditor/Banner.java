@@ -2,15 +2,15 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +31,7 @@ final class Banner extends SimpleBanner {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
-    myProjectIcon.setVisible(false);
+    showProject(false);
     myLeftPanel.add(myBreadcrumbs, 0);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new ActionLink(action)));
@@ -48,16 +48,16 @@ final class Banner extends SimpleBanner {
     myBreadcrumbs.setCrumbs(crumbs);
   }
 
-  void setProject(Project project) {
-    if (project == null) {
-      myProjectIcon.setVisible(false);
+  void setProjectText(@Nullable @Nls String projectText) {
+    boolean visible = projectText != null;
+    showProject(visible);
+    if (visible) {
+      myProjectIcon.setText(projectText);
     }
-    else {
-      myProjectIcon.setVisible(true);
-      myProjectIcon.setText(project.isDefault()
-                            ? IdeUICustomization.getInstance().projectMessage("configurable.default.project.tooltip")
-                            : IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip"));
-    }
+  }
+
+  private void showProject(boolean hasProject) {
+    myProjectIcon.setVisible(hasProject);
   }
 
   @Override
