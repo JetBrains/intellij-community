@@ -37,12 +37,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
           events.any { e -> GitUntrackedFilesHolder.indexChanged(repo, e.path) }
         }.map { it.root }
         if (roots.isNotEmpty()) {
-          LOG.debug("Scheduling refresh for ${roots.joinToString { it.name }}")
+          LOG.debug("Scheduling refresh for roots ${roots.joinToString { it.name }}")
           refresh { roots.contains(it.root) }
         }
       }
     })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
+      LOG.debug("Scheduling refresh for repository ${repository.root.name}")
       refresh { it.root == repository.root }
     })
   }
@@ -58,6 +59,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   internal fun refresh(filesToRefresh: List<GitIndexVirtualFile>, async: Boolean = true, postRunnable: Runnable? = null) {
+    LOG.debug("Creating ${if (async) "async" else "sync"} refresh session for ${filesToRefresh.joinToString { it.path }}")
     val session = RefreshSession(filesToRefresh, postRunnable)
     if (async || !ApplicationManager.getApplication().isDispatchThread) {
       val refresh = AppExecutorUtil.getAppExecutorService().submit {
