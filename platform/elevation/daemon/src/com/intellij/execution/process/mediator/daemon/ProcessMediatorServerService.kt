@@ -3,15 +3,13 @@ package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.*
+import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.ExceptionStatusDescriptionAugmenterServerInterceptor
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
-import io.grpc.Status
-import io.grpc.StatusException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import java.io.File
-import java.io.IOException
 
 internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMediatorCoroutineImplBase() {
   private val processManager = ProcessMediatorProcessManager()
@@ -19,7 +17,7 @@ internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMedia
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
     val commandLine = request.commandLine
 
-    val pid = try {
+    val pid = ExceptionAsStatus.wrap {
       processManager.createProcess(commandLine.commandList,
                                    File(commandLine.workingDir),
                                    commandLine.environVarsList.associate { it.name to it.value },
@@ -28,9 +26,6 @@ internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMedia
                                    commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
 
     }
-    catch (e: IOException) {
-      throw StatusException(Status.NOT_FOUND.withCause(e))
-    }
 
     return CreateProcessReply.newBuilder()
       .setPid(pid)
@@ -38,47 +33,57 @@ internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMedia
   }
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
-    processManager.destroyProcess(request.pid, true)
+    ExceptionAsStatus.wrap {
+      processManager.destroyProcess(request.pid, true)
+    }
     return Empty.getDefaultInstance()
   }
 
   override suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply {
-    val exitCode = processManager.awaitTermination(request.pid)
+    val exitCode = ExceptionAsStatus.wrap {
+      processManager.awaitTermination(request.pid)
+    }
     return AwaitTerminationReply.newBuilder()
       .setExitCode(exitCode)
       .build()
   }
 
   override suspend fun release(request: ReleaseRequest): Empty {
-    processManager.release(request.pid)
+    ExceptionAsStatus.wrap {
+      processManager.release(request.pid)
+    }
     return Empty.getDefaultInstance()
   }
 
   override fun readStream(request: ReadStreamRequest): Flow<DataChunk> {
     val handle = request.handle
-    return processManager.readStream(handle.pid, handle.fd)
-      .map { buffer ->
-        DataChunk.newBuilder()
-          .setBuffer(buffer)
-          .build()
-      }
+    return ExceptionAsStatus.wrap {
+      processManager.readStream(handle.pid, handle.fd)
+    }.map { buffer ->
+      DataChunk.newBuilder()
+        .setBuffer(buffer)
+        .build()
+    }.catch { cause ->
+      ExceptionAsStatus.wrap { throw cause }
+    }
   }
 
   override suspend fun writeStream(requests: Flow<WriteStreamRequest>): Empty = coroutineScope {
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    val receiveChannel = requests.produceIn(this)
+    ExceptionAsStatus.wrap {
+      @Suppress("EXPERIMENTAL_API_USAGE")
+      val receiveChannel = requests.produceIn(this)
 
-    val handle = receiveChannel.receive().also { request ->
-      require(request.hasHandle()) { "the first request must specify the handle" }
-    }.handle
+      val handle = receiveChannel.receive().also { request ->
+        require(request.hasHandle()) { "the first request must specify the handle" }
+      }.handle
 
-    val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
-      require(request.hasChunk()) { "got handle in the middle of the stream" }
-      request.chunk.buffer
+      val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
+        require(request.hasChunk()) { "got handle in the middle of the stream" }
+        request.chunk.buffer
+      }
+
+      processManager.writeStream(handle.pid, handle.fd, chunkFlow)
     }
-
-    processManager.writeStream(handle.pid, handle.fd, chunkFlow)
-
     return@coroutineScope Empty.getDefaultInstance()
   }
 

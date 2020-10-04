@@ -10,6 +10,7 @@ import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRunti
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServer
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.rpc.ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub
+import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
@@ -301,7 +302,9 @@ private class ProcessMediatorClient(
       }
       .build()
     val request = CreateProcessRequest.newBuilder().setCommandLine(commandLine).build()
-    val response = stub.createProcess(request)
+    val response = ExceptionAsStatus.unwrap {
+      stub.createProcess(request)
+    }
     return response.pid
   }
 
@@ -310,14 +313,18 @@ private class ProcessMediatorClient(
       .setPid(pid)
       .setForce(force)
       .build()
-    stub.destroyProcess(request)
+    ExceptionAsStatus.unwrap {
+      stub.destroyProcess(request)
+    }
   }
 
   suspend fun awaitTermination(pid: Long): Int {
     val request = AwaitTerminationRequest.newBuilder()
       .setPid(pid)
       .build()
-    val reply = stub.awaitTermination(request)
+    val reply = ExceptionAsStatus.unwrap {
+      stub.awaitTermination(request)
+    }
     return reply.exitCode
   }
 
@@ -329,9 +336,13 @@ private class ProcessMediatorClient(
     val request = ReadStreamRequest.newBuilder()
       .setHandle(handle)
       .build()
-    val chunkFlow = stub.readStream(request)
+    val chunkFlow = ExceptionAsStatus.unwrap {
+      stub.readStream(request)
+    }
     return chunkFlow.map { chunk ->
       chunk.buffer
+    }.catch { cause ->
+      ExceptionAsStatus.unwrap { throw cause }
     }
   }
 
@@ -355,14 +366,16 @@ private class ProcessMediatorClient(
           .build()
       })
     }
-    stub.writeStream(requests)
+    ExceptionAsStatus.unwrap {
+      stub.writeStream(requests)
+    }
   }
 
   suspend fun release(pid: Long) {
     val request = ReleaseRequest.newBuilder()
       .setPid(pid)
       .build()
-    stub.release(request)
+    ExceptionAsStatus.unwrap { stub.release(request) }
   }
 
   override fun close() {
