@@ -1,18 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.psi.stubs.*
+import com.intellij.util.Base64
 
 object IndexDataPresenter {
 
   fun <K> getPresentableIndexKey(key: K): String = key.toString()
 
   fun <V> getPresentableIndexValue(value: V?): String {
-    return if (value is SerializedStubTree) {
-      getPresentableSerializedStubTree(value)
-    }
-    else {
-      value?.toString() ?: "<no value>"
+    return when (value) {
+      null -> "<no value>"
+      is SerializedStubTree -> {
+        getPresentableSerializedStubTree(value)
+      }
+      is ByteArraySequence -> {
+        Base64.encode(value.toBytes())
+      }
+      else -> value.toString()
     }
   }
 
