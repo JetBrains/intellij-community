@@ -41,6 +41,10 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
   }
+  private val offsetFromHalfTopProvider = object : InsetValueProvider {
+    override val top: Int
+      get() = textMetricsStorage.getFontMetrics(true).offsetFromTop() / 2
+  }
 
   @Contract(pure = true)
   override fun smallText(text: String): InlayPresentation {
@@ -99,22 +103,13 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
    */
   @Contract(pure = true)
   fun roundWithBackground(base: InlayPresentation): InlayPresentation {
-    return roundWithBackground(base, 0, 7, 0, 7)
-  }
-
-  /**
-   * Adds inlay background and rounding with insets.
-   * Intended to be used with [smallText]
-   */
-  @Contract(pure = true)
-  fun roundWithBackground(base: InlayPresentation, top: Int, right: Int, bottom: Int, left: Int): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
       InsetPresentation(
         base,
-        left = left,
-        right = right,
-        top = top,
-        down = bottom
+        left = 7,
+        right = 7,
+        top = 0,
+        down = 0
       ),
       8,
       8
@@ -122,6 +117,25 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
 
+  /**
+   * Adds inlay background and rounding with insets.
+   * Intended to be used with Rider's [icon] or seq of [icon] and [smallText])
+   */
+  @Contract(pure = true)
+  fun roundWithBackgroundForIcon(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
+      InsetPresentation(
+        base,
+        left = 4,
+        right = 4,
+        top = 0,
+        down = 0
+      ),
+      8,
+      8
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromHalfTopProvider)
+  }
 
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
