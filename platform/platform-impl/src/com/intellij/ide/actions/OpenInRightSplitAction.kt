@@ -6,25 +6,33 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nullable
-import javax.swing.SwingConstants
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
   
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return
+    
 
     val element = e.getData(CommonDataKeys.PSI_ELEMENT) as? Navigatable
-    openInRightSplit(project, file, element)
+    val editorWindow = openInRightSplit(project, file, element)
+    if (element == null && editorWindow != null) {
+      val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
+      if (files.size > 1) {
+        files.forEach {
+          if (file == it) return@forEach
+          val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+          fileEditorManager.openFileWithProviders(it, true, editorWindow)
+        }
+      }
+    }
   }
   
   override fun update(e: AnActionEvent) {
@@ -41,18 +49,20 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
-    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null) {
+    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
-      
-      if (splitters.openInRightSplit(file) == null) {
+
+      val editorWindow = splitters.openInRightSplit(file)
+      if (editorWindow == null) {
         element?.navigate(true)
-        return
+        return null
       }
 
       if (element != null && element !is PsiFile) {
         ApplicationManager.getApplication().invokeLater({ element.navigate(true) }, project.disposed)
       }
+      return editorWindow
     }
   }
 }
