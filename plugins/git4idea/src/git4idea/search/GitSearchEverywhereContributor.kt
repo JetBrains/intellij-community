@@ -70,9 +70,9 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }
     }
 
-    val matcher = NameUtil.buildMatcher(pattern)
+    val matcher = NameUtil.buildMatcher("*$pattern")
       .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
-      .preferringStartMatches()
+      .typoTolerant()
       .build()
 
     dataPack.refsModel.stream().forEach {
