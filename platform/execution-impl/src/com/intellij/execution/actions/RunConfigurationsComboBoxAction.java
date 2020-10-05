@@ -273,7 +273,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static class SelectTargetAction extends AnAction {
+  private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
 
@@ -307,7 +307,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static class SelectConfigAction extends DumbAwareAction {
+  private static final class SelectConfigAction extends DumbAwareAction {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
 
