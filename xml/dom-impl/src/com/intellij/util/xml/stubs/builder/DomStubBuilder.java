@@ -17,12 +17,9 @@ package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
@@ -55,18 +52,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     PsiFile psiFile = fileContent.getPsiFile();
     if (!(psiFile instanceof XmlFile)) return null;
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(fileContent.getFile());
     Project project = fileContent.getProject();
-    if (project == null) {
-      project = psiFile.getProject();
-    }
-    if (document != null) {
-      PsiFile existingPsi = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (existingPsi instanceof XmlFile) {
-        psiFile = existingPsi;
-      }
-    }
-
     XmlFile xmlFile = (XmlFile)psiFile;
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
