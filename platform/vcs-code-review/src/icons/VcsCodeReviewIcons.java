@@ -14,7 +14,6 @@ public final class VcsCodeReviewIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, VcsCodeReviewIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Close = load("/com.intellij.codeReview/close.svg", -6973326113836563865L, 2);
   /** 16x16 */ public static final @NotNull Icon Delete = load("/com.intellij.codeReview/delete.svg", -7096832826219323469L, 0);
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("/com.intellij.codeReview/deleteHovered.svg", 6938120386099586696L, 0);
   /** 16x16 */ public static final @NotNull Icon Send = load("/com.intellij.codeReview/send.svg", 4194848673382143948L, 0);
