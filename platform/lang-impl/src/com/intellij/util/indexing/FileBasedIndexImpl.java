@@ -988,7 +988,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
           FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
           final FileContentImpl newFc;
-          if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
+          if (previousContent != null && Long.valueOf(currentDocStamp).equals(previousContent.getDocumentStamp())) {
             newFc = previousContent;
           }
           else {
@@ -1318,7 +1318,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           ProgressManager.checkCanceled();
 
           if (fc == null) {
-            fc = new LazyFileContentImpl(file, () -> getBytesOrNull(content));
+            fc = FileContentImpl.createByContent(file, () -> getBytesOrNull(content));
 
             ProgressManager.checkCanceled();
 
