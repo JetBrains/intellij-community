@@ -22,8 +22,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -94,29 +97,31 @@ public final class DomApplicationComponent {
   }
 
   public synchronized int getCumulativeVersion(boolean forStubs) {
-    int result = 0;
-    for (DomFileMetaData meta : allMetas()) {
+    return allMetas().mapToInt(meta -> {
       if (forStubs) {
         if (meta.stubVersion != null) {
-          result += meta.stubVersion;
-          result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+          return meta.stubVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
         }
       }
       else {
-        result += meta.domVersion;
-        result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        return meta.domVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
       }
-    }
-    return result;
+      return 0;
+    }).sum();
   }
 
-  private Iterable<DomFileMetaData> allMetas() {
-    return ContainerUtil.concat(myRootTagName2FileDescription.values(), myAcceptingOtherRootTagNamesDescriptions);
+  private Stream<DomFileMetaData> allMetas() {
+    return Stream.concat(myRootTagName2FileDescription.values().stream(), myAcceptingOtherRootTagNamesDescriptions.stream());
+  }
+
+  @NotNull
+  public synchronized List<DomFileMetaData> getStubBuildingMetadata() {
+    return allMetas().filter(m -> m.hasStubs()).collect(Collectors.toList());
   }
 
   @Nullable
   public synchronized DomFileMetaData findMeta(DomFileDescription<?> description) {
-    return ContainerUtil.find(allMetas(), m -> m.lazyInstance == description);
+    return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
   }
 
   public synchronized Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
@@ -158,13 +163,11 @@ public final class DomApplicationComponent {
 
   @Nullable
   private synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
-    for (DomFileMetaData meta : allMetas()) {
-      DomFileDescription<?> description = meta.lazyInstance;
-      if (description != null && description.getRootElementClass() == rootElementClass) {
-        return description;
-      }
-    }
-    return null;
+    return allMetas()
+      .map(meta -> meta.getDescription())
+      .filter(description -> description != null && description.getRootElementClass() == rootElementClass)
+      .findAny()
+      .orElse(null);
   }
 
   public DomElementsAnnotator getAnnotator(Class<?> rootElementClass) {
