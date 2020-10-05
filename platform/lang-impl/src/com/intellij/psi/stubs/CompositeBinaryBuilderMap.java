@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 class CompositeBinaryBuilderMap {
   private static final Logger LOG = Logger.getInstance(CompositeBinaryBuilderMap.class);
@@ -40,7 +41,8 @@ class CompositeBinaryBuilderMap {
           cumulativeVersion.append(fileType.getName()).append("->").append(builder.getClass().getName()).append(':').append(builder.getStubVersion());
           @SuppressWarnings({"unchecked", "rawtypes"}) BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
             (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder)builder;
-          compositeBuilder.getAllSubBuilders().forEach(b -> cumulativeVersion.append(';').append(compositeBuilder.getSubBuilderVersion(b)));
+          cumulativeVersion.append(";");
+          cumulativeVersion.append(compositeBuilder.getAllSubBuilders().map(b -> compositeBuilder.getSubBuilderVersion(b)).sorted().collect(Collectors.joining(";")));
 
           int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
           LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
