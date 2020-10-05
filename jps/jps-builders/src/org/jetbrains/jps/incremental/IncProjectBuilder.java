@@ -1143,7 +1143,12 @@ public final class IncProjectBuilder {
           if (affectedSources.add(src)) {
             final Collection<String> outs = srcToOut.getOutputs(src);
             if (outs != null) {
-              affectedOutputs.addAll(outs);
+              // Temporary hack for KTIJ-197
+              // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
+              // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
+              // while for safety and keeping kotlin incremental JPS tests green
+              List<String> filteredOuts = ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfter(out, ".")));
+              affectedOutputs.addAll(filteredOuts);
             }
           }
           return true;
