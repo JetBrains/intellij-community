@@ -3,10 +3,10 @@ package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,10 +30,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
-
-public class TMHInstrumenterTest {
-  private static final String TEST_DATA_PATH = "/threadingModelHelper/assertEdtInstrumenter/";
+public class TMHInstrumenterTest extends UsefulTestCase {
+  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
 
   private static final String ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
   private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
@@ -45,40 +40,30 @@ public class TMHInstrumenterTest {
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
   private static final String CALLED_OUTSIDE_AWT_MESSAGE = "Access is allowed from event dispatch thread only.";
 
-  @Rule public TempDirectory myTempDir = new TempDirectory();
-  @Rule public TestName myTestName = new TestName();
-
-  @Test
   public void testSimple() throws Exception {
     doTest();
   }
 
-  @Test
   public void testSecondMethod() throws Exception {
     doTest();
   }
 
-  @Test
   public void testMethodHasOtherAnnotationBefore() throws Exception {
     doTest();
   }
 
-  @Test
   public void testMethodHasOtherAnnotationAfter() throws Exception {
     doTest();
   }
 
-  @Test
   public void testEmptyBody() throws Exception {
     doTest();
   }
 
-  @Test
   public void testConstructor() throws Exception {
     doTest(TMHInstrumenterTest::invokeConstructor);
   }
 
-  @Test
   public void testDoNotInstrument() throws Exception {
     TestClass testClass = prepareTest(false);
     assertFalse(testClass.isInstrumented);
@@ -124,7 +109,7 @@ public class TMHInstrumenterTest {
     for (File classFile : classFiles) {
       String className = FileUtil.getNameWithoutExtension(classFile.getName());
       byte[] classData = FileUtil.loadFileBytes(classFile);
-      if (!className.equals(getTestName())) {
+      if (!className.equals(getTestName(false))) {
         classLoader.doDefineClass(null, classData);
       }
       else {
@@ -140,19 +125,19 @@ public class TMHInstrumenterTest {
         }
       }
     }
-    assertNotNull("Class " + getTestName() + " not found!", testClass);
+    assertNotNull("Class " + getTestName(false) + " not found!", testClass);
     return testClass;
   }
 
   @NotNull
   private List<File> compileTestFiles() throws IOException {
-    File testFile = IdeaTestUtil.findSourceFile(getTestDataPath() + getTestName());
-    File classesDir = myTempDir.newDirectory("output");
+    File testFile = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + getTestName(false) + ".java", getClass());
+    File classesDir = FileUtil.createTempDirectory("tmh-test-output", null);
 
-    String dependenciesDir = getTestDataPath() + "dependencies";
-    File[] dependencies = new File(dependenciesDir).listFiles();
+    File dependenciesDir = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + "dependencies", getClass());
+    File[] dependencies = dependenciesDir.listFiles();
     if (dependencies == null || dependencies.length == 0) {
-      throw new IllegalStateException("Cannot find dependencies at " + dependenciesDir);
+      throw new IllegalStateException("Cannot find dependencies at " + dependenciesDir.getAbsolutePath());
     }
     List<String> dependencyPaths = ContainerUtil.map(dependencies, File::getAbsolutePath);
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(dependencyPaths));
@@ -200,21 +185,6 @@ public class TMHInstrumenterTest {
       fail("Failed to invoke constructor: " + e.getMessage());
     }
     return null;
-  }
-
-  @NotNull
-  private String getTestName() {
-    return PlatformTestUtil.getTestName(this.myTestName.getMethodName(), false);
-  }
-
-  @NotNull
-  private static String getTestDataPath() {
-    return getPluginTestDataPath() + TEST_DATA_PATH;
-  }
-
-  @NotNull
-  private static String getPluginTestDataPath() {
-    return System.getProperty("user.dir") + "/testData";
   }
 
   private static void printDebugInfo(byte[] classData, byte[] instrumentedClassData) {
