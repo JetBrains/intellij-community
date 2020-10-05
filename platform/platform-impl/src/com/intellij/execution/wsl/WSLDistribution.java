@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -155,7 +156,7 @@ public class WSLDistribution {
     command.add(wslPath + "/");
     String targetWslPath = getWslPath(windowsPath);
     if (targetWslPath == null) {
-      throw new ExecutionException("Unable to copy files to " + windowsPath);
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
     return executeOnWsl(handlerConsumer, ArrayUtilRt.toStringArray(command));
@@ -222,8 +223,8 @@ public class WSLDistribution {
           }
           String password = CredentialPromptDialog.askPassword(
             project,
-            "Enter Root Password",
-            "Sudo password for " + getPresentableName() + " root:",
+            IdeBundle.message("wsl.enter.root.password.dialog.title"),
+            IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
             new CredentialAttributes("WSL", "root", WSLDistribution.class),
             true
           );
