@@ -57,11 +57,11 @@ public class MavenServerCMDState extends CommandLineState {
     "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
 
-  private final Sdk myJdk;
-  private final String myVmOptions;
-  private final MavenDistribution myDistribution;
-  private final Project myProject;
-  private final Integer myDebugPort;
+  protected final Sdk myJdk;
+  protected final String myVmOptions;
+  protected final MavenDistribution myDistribution;
+  protected final Project myProject;
+  protected final Integer myDebugPort;
 
   public MavenServerCMDState(@NotNull Sdk jdk,
                              @Nullable String vmOptions,
@@ -76,7 +76,7 @@ public class MavenServerCMDState extends CommandLineState {
     myDebugPort = debugPort;
   }
 
-  SimpleJavaParameters createJavaParameters() {
+  protected SimpleJavaParameters createJavaParameters() {
     final SimpleJavaParameters params = new SimpleJavaParameters();
 
     params.setJdk(myJdk);
