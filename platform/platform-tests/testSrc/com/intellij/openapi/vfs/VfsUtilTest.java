@@ -301,7 +301,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test(timeout = 20_000)
-  public void testRefreshAndEspeciallyScanChildrenMustBeRunOutsideOfReadActionToAvoidUILags() throws Exception {
+  public void testRefreshAndEspeciallyScanChildrenMustBeRunOutsideReadActionToAvoidUILags() throws Exception {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(
       temp -> {
@@ -322,46 +322,35 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     );
   }
 
-  private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback, @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback,
+                                     @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
-    ProjectManagerImpl test = new ProjectManagerExImpl() {
-      @Override
-      public @NotNull List<String> getAllExcludedUrls() {
-        getAllExcludedCalled.set(true);
-        assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
-        return super.getAllExcludedUrls();
-      }
-    };
+    ((ProjectManagerImpl)ProjectManager.getInstance()).testOnlyGetExcludedUrlsCallback(getTestRootDisposable(), () -> {
+      getAllExcludedCalled.set(true);
+      assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
+    });
 
-    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, test);
-    assertSame(test, ProjectManager.getInstance());
+    final File temp = myTempDir.newDirectory();
+    VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    assertNotNull(vTemp);
+    vTemp.getChildren(); //to force full dir refresh?!
+    dirCreatedCallback.accept(temp.toPath());
+    File d = new File(temp, "d");
+    assertTrue(d.mkdir());
+    File d1 = new File(d, "d1");
+    assertTrue(d1.mkdir());
+    File x = new File(d1, "x.txt");
+    assertTrue(x.createNewFile());
 
-    try {
-      final File temp = myTempDir.newDirectory();
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
-      assertNotNull(vTemp);
-      vTemp.getChildren(); //to force full dir refresh?!
-      dirCreatedCallback.accept(temp.toPath());
-      File d = new File(temp, "d");
-      assertTrue(d.mkdir());
-      File d1 = new File(d, "d1");
-      assertTrue(d1.mkdir());
-      File x = new File(d1, "x.txt");
-      assertTrue(x.createNewFile());
+    assertFalse(ApplicationManager.getApplication().isDispatchThread());
+    VfsUtil.markDirty(true, false, vTemp);
+    CountDownLatch refreshed = new CountDownLatch(1);
+    LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
-      assertFalse(ApplicationManager.getApplication().isDispatchThread());
-      VfsUtil.markDirty(true, false, vTemp);
-      CountDownLatch refreshed = new CountDownLatch(1);
-      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
-
-      while (refreshed.getCount() != 0) {
-        UIUtil.pump();
-      }
-      getAllExcludedCalledChecker.accept(getAllExcludedCalled);
+    while (refreshed.getCount() != 0) {
+      UIUtil.pump();
     }
-    finally {
-      WriteAction.runAndWait(() -> Disposer.dispose(test));
-    }
+    getAllExcludedCalledChecker.accept(getAllExcludedCalled);
   }
 
   @Test

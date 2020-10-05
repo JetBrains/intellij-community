@@ -587,8 +587,19 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
   }
 
+  private Runnable myGetAllExcludedUrlsCallback;
+  @TestOnly
+  public void testOnlyGetExcludedUrlsCallback(@NotNull Disposable parentDisposable, @NotNull Runnable callback) {
+    if (myGetAllExcludedUrlsCallback != null) {
+      throw new IllegalStateException("This method is not reentrant. Expected null but got " + myGetAllExcludedUrlsCallback);
+    }
+    myGetAllExcludedUrlsCallback = callback;
+    Disposer.register(parentDisposable, () -> myGetAllExcludedUrlsCallback = null);
+  }
   @Override
   public @NotNull List<String> getAllExcludedUrls() {
+    Runnable callback = myGetAllExcludedUrlsCallback;
+    if (callback != null) callback.run();
     return myExcludeRootsCache.getExcludedUrls();
   }
 }
