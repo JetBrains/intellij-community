@@ -81,11 +81,13 @@
           <text resource-bundle="messages/JavaCompilerBundle" key="settings.build.process.heap.size"/>
         </properties>
       </component>
-      <component id="a28b8" class="javax.swing.JTextField" binding="mySharedHeapSizeField" custom-create="true">
+      <component id="a28b8" class="javax.swing.JTextField" binding="mySharedHeapSizeField">
         <constraints>
           <grid row="8" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
+        <properties>
+          <columns value="5"/>
+        </properties>
       </component>
       <component id="5b86a" class="javax.swing.JLabel" binding="myVMOptionsLabel">
         <constraints>

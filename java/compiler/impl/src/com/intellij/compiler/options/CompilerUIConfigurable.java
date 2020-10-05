@@ -323,6 +323,5 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private void createUIComponents() {
     myResourcePatternsField = new RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myResourcePatternsField.setDialogCaption("Resource patterns");
-    mySharedHeapSizeField = new JTextField(5);
   }
 }
