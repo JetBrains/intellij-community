@@ -1100,7 +1100,11 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    if (userDefinedHeapSize != null) {
+    final int localHeapSize = config.COMPILER_PROCESS_HEAP_SIZE;
+    if (localHeapSize > 0) {
+      cmdLine.addParameter("-Xmx" + localHeapSize + "m");
+    }
+    else if (userDefinedHeapSize != null) {
       cmdLine.addParameter(userDefinedHeapSize);
     }
     else {

@@ -58,9 +58,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbParallelCompilation;
   private JTextField           mySharedHeapSizeField;
   private JTextField           mySharedVMOptionsField;
+  private JTextField           myHeapSizeField;
   private JTextField           myVMOptionsField;
   private JLabel               mySharedHeapSizeLabel;
   private JLabel               mySharedVMOptionsLabel;
+  private JLabel               myHeapSizeLabel;
   private JLabel               myVMOptionsLabel;
   private JCheckBox            myCbRebuildOnDependencyChange;
   private JLabel               myResourcePatternsLabel;
@@ -81,14 +83,19 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
-    myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter updateStateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
-        mySharedHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
-                                                      s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
+        mySharedVMOptionsField.setEnabled(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedHeapSizeField.setEnabled(
+          myHeapSizeField.getDocument().getLength() == 0 &&
+          ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
+                             s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null
+        );
       }
-    });
+    };
+    myVMOptionsField.getDocument().addDocumentListener(updateStateListener);
+    myHeapSizeField.getDocument().addDocumentListener(updateStateListener);
     myConfigureAnnotations.addActionListener(e -> {
       NullableNotNullDialog.showDialogWithInstrumentationOptions(myPanel);
       myCbAssertNotNull.setSelected(!NullableNotNullManager.getInstance(myProject).getInstrumentedNotNulls().isEmpty());
@@ -130,7 +137,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.AUTO_MAKE, ContainerUtil.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
     controls.put(Setting.PARALLEL_COMPILATION, ContainerUtil.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
     controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtil.newArrayList(myCbRebuildOnDependencyChange));
-    controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(mySharedHeapSizeLabel, mySharedHeapSizeField));
+    controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField));
     controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtil.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
 
     for (Setting setting : myDisabledSettings) {
@@ -155,6 +162,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
+    int heapSize = workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE;
+    myHeapSizeField.setText(heapSize > 0 ? String.valueOf(heapSize) : "");
     final int javacPreferred = JavacConfiguration.getOptions(myProject, JavacConfiguration.class).MAXIMUM_HEAP_SIZE; // for compatibility with older projects
     mySharedHeapSizeField.setText(String.valueOf(configuration.getBuildProcessHeapSize(javacPreferred)));
     final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
@@ -212,6 +221,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
       if (!myDisabledSettings.contains(Setting.HEAP_SIZE)) {
         try {
+          String heapSizeText = myHeapSizeField.getText().trim();
+          workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE = heapSizeText.isEmpty() ? 0 : Integer.parseInt(heapSizeText);
           configuration.setBuildProcessHeapSize(Integer.parseInt(mySharedHeapSizeField.getText().trim()));
         }
         catch (NumberFormatException ignored) {
@@ -281,6 +292,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                   && ComparingUtils.isModified(myCbParallelCompilation, workspaceConfiguration.PARALLEL_COMPILATION);
     isModified |= !myDisabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)
                   && ComparingUtils.isModified(myCbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
+    isModified |= !myDisabledSettings.contains(Setting.HEAP_SIZE)
+                  && ComparingUtils.isModified(myHeapSizeField, 0, workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE);
     isModified |= !myDisabledSettings.contains(Setting.COMPILER_VM_OPTIONS)
                   && ComparingUtils.isModified(myVMOptionsField, workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS);
 
