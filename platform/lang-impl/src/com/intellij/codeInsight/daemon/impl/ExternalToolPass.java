@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -242,7 +242,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    }, ModalityState.stateForComponent(editor.getComponent()));
+    }, ModalityState.stateForComponent(editor.getComponent()), (x -> !myFile.isValid()));
   }
 
   private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
