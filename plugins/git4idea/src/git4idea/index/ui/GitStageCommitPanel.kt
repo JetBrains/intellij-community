@@ -2,7 +2,9 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -27,4 +29,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   override fun includeIntoCommit(items: Collection<*>) = Unit
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) = Unit
+
+  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
+    if (isFromToolbar) popup.showAbove(toolbar.component) else popup.showInBestPositionFor(dataContext)
 }

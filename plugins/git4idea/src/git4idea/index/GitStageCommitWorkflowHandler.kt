@@ -11,7 +11,7 @@ import kotlin.properties.Delegates.observable
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
   override val ui: NonModalCommitWorkflowUi
-) : AbstractCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>() {
+) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>() {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
@@ -20,19 +20,22 @@ class GitStageCommitWorkflowHandler(
     updateDefaultCommitActionEnabled()
   }
 
-  // TODO clear CommitContext after commit - implement with adding commit options support
   init {
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
+    workflow.addCommitListener(createCommitStateCleaner(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
 
+    setupCommitHandlersTracking()
     vcsesChanged()
   }
 
   override fun vcsesChanged() {
+    initCommitHandlers()
+
     updateDefaultCommitActionEnabled()
     ui.defaultCommitActionName = getCommitActionName()
   }

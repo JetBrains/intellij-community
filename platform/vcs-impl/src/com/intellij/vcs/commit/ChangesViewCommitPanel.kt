@@ -3,11 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
@@ -23,33 +19,15 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.EventDispatcher
-import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
-import java.awt.Point
 import javax.swing.JComponent
-import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
-
-private fun JBPopup.showAbove(component: JComponent) {
-  val northWest = RelativePoint(component, Point())
-
-  addListener(object : JBPopupListener {
-    override fun beforeShown(event: LightweightWindowEvent) {
-      val popup = event.asPopup()
-      val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
-
-      popup.setLocation(location)
-    }
-  })
-  show(northWest)
-}
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
@@ -66,8 +44,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   }
   private val commitAuthorComponent = CommitAuthorComponent(project)
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
-
-  private var needUpdateCommitOptionsUi = false
 
   private var isHideToolWindowOnDeactivate = false
 
@@ -121,11 +97,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
       addToLeft(toolbar.component)
     }
-  }
-
-  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-    needUpdateCommitOptionsUi = true
-    super.globalSchemeChange(scheme)
   }
 
   override var commitAuthor: VcsUser?
@@ -201,34 +172,11 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     path?.let { selectPath(changesView, it, false) }
   }
 
-  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
-      focusTraversalPolicy = LayoutFocusTraversalPolicy()
-      isFocusCycleRoot = true
-
-      setOptions(options)
-      border = empty(0, 10)
-
-      // to reflect LaF changes as commit options components are created once per commit
-      if (needUpdateCommitOptionsUi) {
-        needUpdateCommitOptionsUi = false
-        updateComponentTreeUI(this)
-      }
-    }
-    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
-    val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
-      .setRequestFocus(true)
-      .createPopup()
-
-    commitOptionsPopup.show(isFromToolbar, dataContext)
-  }
-
-  private fun JBPopup.show(isFromToolbar: Boolean, dataContext: DataContext) =
+  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
     when {
-      isFromToolbar && isToolbarHorizontal -> showAbove(toolbar.component)
-      isFromToolbar && !isToolbarHorizontal -> showAbove(this@ChangesViewCommitPanel)
-      else -> showInBestPositionFor(dataContext)
+      isFromToolbar && isToolbarHorizontal -> popup.showAbove(toolbar.component)
+      isFromToolbar && !isToolbarHorizontal -> popup.showAbove(this@ChangesViewCommitPanel)
+      else -> popup.showInBestPositionFor(dataContext)
     }
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {

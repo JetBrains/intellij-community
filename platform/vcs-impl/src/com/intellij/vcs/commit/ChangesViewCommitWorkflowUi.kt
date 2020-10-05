@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.vcs.log.VcsUser
@@ -25,8 +24,6 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   fun expand(item: Any)
   fun select(item: Any)
   fun selectFirst(items: Collection<Any>)
-
-  fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
 
   fun setCompletionContext(changeLists: List<LocalChangeList>)
 }

@@ -42,7 +42,7 @@ internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
 
 @get:ApiStatus.Internal
 val CheckinProjectPanel.isNonModalCommit: Boolean
-  get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
+  get() = commitWorkflowHandler is NonModalCommitWorkflowHandler<*, *>
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 

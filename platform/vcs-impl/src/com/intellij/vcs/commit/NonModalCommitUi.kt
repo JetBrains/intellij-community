@@ -3,9 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsContexts
 
-interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi
+interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi {
+  fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
+}
 
 interface CommitActionsUi {
   var defaultCommitActionName: @NlsContexts.Button String

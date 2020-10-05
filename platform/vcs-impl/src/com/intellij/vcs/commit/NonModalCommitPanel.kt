@@ -3,25 +3,36 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.LayoutManager
+import java.awt.Point
 import javax.swing.JComponent
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
@@ -37,6 +48,7 @@ abstract class NonModalCommitPanel(
     EditorColorsListener {
 
   private val dataProviders = mutableListOf<DataProvider>()
+  private var needUpdateCommitOptionsUi = false
 
   protected val centerPanel = simplePanel()
   protected var bottomPanel: JBPanel<*>.() -> Unit = { }
@@ -70,6 +82,7 @@ abstract class NonModalCommitPanel(
   override fun dispose() = Unit
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    needUpdateCommitOptionsUi = true
     commitActionsPanel.border = getButtonPanelBorder()
   }
 
@@ -97,7 +110,46 @@ abstract class NonModalCommitPanel(
   private fun getButtonPanelBackground() =
     JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
 
+  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
+    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
+      isFocusCycleRoot = true
+
+      setOptions(options)
+      border = empty(0, 10)
+
+      // to reflect LaF changes as commit options components are created once per commit
+      if (needUpdateCommitOptionsUi) {
+        needUpdateCommitOptionsUi = false
+        updateComponentTreeUI(this)
+      }
+    }
+    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
+    val commitOptionsPopup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
+      .setRequestFocus(true)
+      .createPopup()
+
+    showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
+  }
+
+  protected abstract fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext)
+
   companion object {
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
+
+    fun JBPopup.showAbove(component: JComponent) {
+      val northWest = RelativePoint(component, Point())
+
+      addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          val popup = event.asPopup()
+          val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
+
+          popup.setLocation(location)
+        }
+      })
+      show(northWest)
+    }
   }
 }
