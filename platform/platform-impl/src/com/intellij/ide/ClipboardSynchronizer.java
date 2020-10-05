@@ -24,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 /**
  * This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -331,8 +330,7 @@ public final class ClipboardSynchronizer implements Disposable {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        @SuppressWarnings("unchecked") final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-        return set;
+        return DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
       }
       catch (IllegalAccessException | IllegalArgumentException ignore) { }
       catch (InvocationTargetException e) {
