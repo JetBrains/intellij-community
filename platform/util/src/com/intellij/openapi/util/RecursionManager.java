@@ -373,7 +373,6 @@ public final class RecursionManager {
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
     // IDEA-228814
-    "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
 
     // IDEA-212671
