@@ -2,7 +2,6 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -12,8 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -152,7 +149,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         return panel.getDataImpl(dataId, this, () -> JBIterable.from(getSelectedValuesList()));
       }
     }
-    JBList<Object> list = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(item -> item instanceof PsiElement && !(item instanceof PsiDirectory));
+    JBList<Object> list = new MyList<>();
     DataManager.registerDataProvider(list, dataId -> panel.getDataImpl(dataId, list, () -> JBIterable.from(list.getSelectedValuesList())));
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
