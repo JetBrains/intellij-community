@@ -71,11 +71,6 @@ message CommandLine {
   string in_file = 3;
   string out_file = 4;
   string err_file = 5;
-  repeated EnvironVar environ_vars = 6;
-
-  message EnvironVar {
-    string name = 1;
-    string value = 2;
-  }
+  map<string, string> environ = 6;
 }
 
