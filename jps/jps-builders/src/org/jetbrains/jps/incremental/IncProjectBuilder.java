@@ -1147,7 +1147,7 @@ public final class IncProjectBuilder {
               // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
               // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
               // while for safety and keeping kotlin incremental JPS tests green
-              List<String> filteredOuts = ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfter(out, ".")));
+              List<String> filteredOuts = ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfterLast(out, ".")));
               affectedOutputs.addAll(filteredOuts);
             }
           }
