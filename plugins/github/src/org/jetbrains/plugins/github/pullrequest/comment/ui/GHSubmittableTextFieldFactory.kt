@@ -23,6 +23,7 @@ import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModel
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import icons.VcsCodeReviewIcons
@@ -42,7 +43,7 @@ import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldModel) {
+class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel) {
 
   companion object {
     private val SUBMIT_SHORTCUT_SET = CommonShortcuts.CTRL_ENTER
