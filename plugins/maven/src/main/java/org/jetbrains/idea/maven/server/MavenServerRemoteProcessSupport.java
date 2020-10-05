@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
-class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
+class MavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
   private final Sdk myJdk;
   private final String myOptions;
   private final MavenDistribution myDistribution;

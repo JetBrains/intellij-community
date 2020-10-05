@@ -23,12 +23,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class MavenServerConnector implements @NotNull Disposable {
-
-
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
@@ -43,7 +42,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final MavenDistribution myDistribution;
   private final String myVmOptions;
 
-  private MavenServerRemoteProcessSupport mySupport;
+  private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
   private MavenServer myMavenServer;
 
 
@@ -148,7 +147,15 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
+      if (factories.length > 1) {
+        throw new RuntimeException("More than one MavenRemoteProcessSupportFactory is registered: " + Arrays.toString(factories));
+      }
+      if (factories.length ==1 ){
+        mySupport = factories[0].create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      } else{
+        mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      }
       myMavenServer = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
       if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
@@ -236,7 +243,7 @@ public class MavenServerConnector implements @NotNull Disposable {
       }
       catch (RemoteException e) {
         last = e;
-        MavenServerRemoteProcessSupport processSupport = mySupport;
+        MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport processSupport = mySupport;
         if (processSupport != null) {
           processSupport.stopAll(false);
         }
