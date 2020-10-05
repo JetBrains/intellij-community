@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.Splitter
+import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -31,10 +32,11 @@ class XWatchesViewImpl2(
         else {
             // it's hacky, we change default watches component to splitter, this way allows not to change base components
             DataManager.removeDataProvider(myComponent)
-            val splitter = Splitter(true).apply {
-                dividerWidth = 1
-                divider.background = UIUtil.CONTRAST_BORDER_COLOR
-            }
+            val splitter = OnePixelSplitter(true, "debugger.immediate.window.in.watches.proportion.key", 0.5f)
+                .apply {
+                    dividerWidth = 1
+                    divider.background = UIUtil.CONTRAST_BORDER_COLOR
+                }
             super.createToolbar(arrayOf(createExtraAction(splitter, bottomLocalsComponentProvider)))
             val toolbar = myComponent.getComponent(1) as ActionToolbarImpl
             val locals = myComponent.getComponent(0) as JPanel
