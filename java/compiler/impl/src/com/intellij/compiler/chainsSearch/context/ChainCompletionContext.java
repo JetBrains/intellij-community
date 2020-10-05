@@ -55,7 +55,7 @@ public final class ChainCompletionContext {
   @NotNull
   private final Map<MethodCall, PsiMethod[]> myResolver;
   @NotNull
-  private final CompilerReferenceServiceEx myRefServiceEx;
+  private final CompilerReferenceServiceEx myRefService;
 
   private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<>() {
     @NotNull
@@ -67,7 +67,7 @@ public final class ChainCompletionContext {
         if (c != null) {
           String name = ClassUtil.getJVMClassName(c);
           if (name != null) {
-            int n = myRefServiceEx.getNameId(name);
+            int n = myRefService.getNameId(name);
             if (n != 0) {
               set.add(new CompilerRef.JavaCompilerClassRef(n));
             }
@@ -79,8 +79,9 @@ public final class ChainCompletionContext {
   };
 
   private ChainCompletionContext(@NotNull ChainSearchTarget target,
-                                @NotNull List<PsiNamedElement> contextElements,
-                                @NotNull PsiElement context) {
+                                 @NotNull List<PsiNamedElement> contextElements,
+                                 @NotNull PsiElement context,
+                                 @NotNull CompilerReferenceServiceEx compilerReferenceService) {
     myTarget = target;
     myContextElements = contextElements;
     myContext = context;
@@ -89,7 +90,7 @@ public final class ChainCompletionContext {
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
     myQualifierClassResolver = new Int2ObjectOpenHashMap<>();
     myResolver = FactoryMap.create(sign -> sign.resolve());
-    myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
+    myRefService = compilerReferenceService;
   }
 
   @NotNull
@@ -111,7 +112,7 @@ public final class ChainCompletionContext {
 
   @NotNull
   public CompilerReferenceServiceEx getRefService() {
-    return myRefServiceEx;
+    return myRefService;
   }
 
   @NotNull
@@ -167,7 +168,7 @@ public final class ChainCompletionContext {
     }
     else {
       PsiClass psiClass = null;
-      String name = myRefServiceEx.getName(nameId);
+      String name = myRefService.getName(nameId);
       PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
       if (resolvedClass != null && accessValidator().test(resolvedClass)) {
         psiClass = resolvedClass;
@@ -193,15 +194,21 @@ public final class ChainCompletionContext {
       return null;
     }
 
+    CompilerReferenceServiceEx compilerReferenceService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(containingElement.getProject());
+    if (compilerReferenceService == null) {
+      return null;
+    }
+
     if (suggestIterators) {
       target = target.toIterators();
     }
 
     Set<? extends PsiVariable> excludedVariables = getEnclosingLocalVariables(containingElement);
-    ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement, excludedVariables);
+    Project project = containingElement.getProject();
+    ContextProcessor processor = new ContextProcessor(null, project, containingElement, excludedVariables);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
     List<PsiNamedElement> contextElements = processor.getContextElements();
-    return new ChainCompletionContext(target, contextElements, containingElement);
+    return new ChainCompletionContext(target, contextElements, containingElement, compilerReferenceService);
   }
 
   @NotNull
