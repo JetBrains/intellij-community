@@ -99,7 +99,6 @@ public final class EnforcedPlainTextFileTypeManager {
           }
         }
       }
-      FileContentUtilCore.reparseFiles(files);
     });
   }
 
