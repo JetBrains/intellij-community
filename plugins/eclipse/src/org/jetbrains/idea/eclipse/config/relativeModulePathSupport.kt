@@ -2,9 +2,10 @@
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSerializer
-import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
@@ -29,30 +30,31 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
       ?.getAttributeValue("value")
     val storageRoot = getStorageRoot(moduleFile, baseDir, virtualFileManager)
     if (relativePath.isNullOrEmpty()) return storageRoot.url
-    return "${storageRoot.url}/${relativePath.removePrefix("/")}"
+    val url = "${storageRoot.url}/${relativePath.removePrefix("/")}"
+    return if (VirtualFileManager.getInstance().findFileByUrl(url) != null) url else null
   }
 }
 
 class ModulePathShortener(private val storage: WorkspaceEntityStorage) {
   private val contentRootsToModule by lazy {
-    storage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it.module.name })
+    storage.entities(ContentRootEntity::class.java).associateBy({ it.url.url }, { it.module.name })
   }
 
-  fun shortenPath(url: VirtualFileUrl): String? {
-    var current: VirtualFileUrl? = url
+  fun shortenPath(file: VirtualFile): String? {
+    var current: VirtualFile? = file
     val map = contentRootsToModule
     while (current != null) {
-      val moduleName = map[current]
+      val moduleName = map[current.url]
       if (moduleName != null) {
-        return "/$moduleName${url.url.substring(current.url.length)}"
+        return "/$moduleName${file.url.substring(current.url.length)}"
       }
       current = current.parent
     }
     return null
   }
 
-  fun isUnderContentRoots(url: VirtualFileUrl): Boolean {
+  fun isUnderContentRoots(file: VirtualFile): Boolean {
     val map = contentRootsToModule
-    return generateSequence(url, {it.parent}).any { it in map }
+    return generateSequence(file, {it.parent}).any { it.url in map }
   }
 }

@@ -107,7 +107,7 @@ internal fun convertToEclipseJavadocPath(javadocRoot: VirtualFileUrl,
           "/" + VfsUtilCore.getRelativePath(javadocFile, baseDir, '/')
         }
         else {
-          pathShortener.shortenPath(javadocRoot)
+          pathShortener.shortenPath(javadocFile)
         }
         if (relativeUrl != null) {
           var javadocPath = javadocUrl
@@ -228,7 +228,7 @@ internal fun convertToEclipsePath(fileUrl: VirtualFileUrl,
       return VfsUtilCore.getRelativePath(file, contentRoot, '/')
     }
     else {
-      val path = pathShortener.shortenPath(fileUrl)
+      val path = pathShortener.shortenPath(file)
       if (path != null) {
         return path
       }

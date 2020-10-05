@@ -187,13 +187,6 @@ class EclipseClasspathTest {
     val appRule = ApplicationRule()
 
     @JvmStatic
-    fun doTest(relativePath: String, project: Project) {
-      val path = project.basePath + relativePath
-      checkModule(path, setUpModule(path, project))
-    }
-
-
-    @JvmStatic
     fun setUpModule(path: String, project: Project): Module {
       val classpathFile = File(path, EclipseXml.DOT_CLASSPATH_EXT)
       var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$",
