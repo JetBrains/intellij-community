@@ -40,11 +40,12 @@ import javax.swing.ListCellRenderer
 
 class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
 
-  private val COMMIT_BY_HASH_WEIGHT = 50
-  private val LOCAL_BRANCH_WEIGHT = 40
-  private val REMOTE_BRANCH_WEIGHT = 30
-  private val TAG_WEIGHT = 20
-  private val COMMIT_BY_MESSAGE_WEIGHT = 10
+  // higher priority -> higher position
+  private val COMMIT_BY_HASH_PRIORITY = 0 - 10
+  private val LOCAL_BRANCH_PRIORITY = 0 - 20
+  private val REMOTE_BRANCH_PRIORITY = 0 - 30
+  private val TAG_PRIORITY = 0 - 40
+  private val COMMIT_BY_MESSAGE_PRIORITY = 0 - 50
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
@@ -64,7 +65,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
         dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
-          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH_WEIGHT))
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH_PRIORITY))
         }, progressIndicator)
       }
     }
@@ -78,11 +79,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       progressIndicator.checkCanceled()
       if (matcher.matches(it.name)) {
         val weight = when (it.type) {
-          GitRefManager.TAG -> TAG_WEIGHT
-          GitRefManager.LOCAL_BRANCH -> LOCAL_BRANCH_WEIGHT
-          GitRefManager.REMOTE_BRANCH -> REMOTE_BRANCH_WEIGHT
-          GitRefManager.HEAD -> LOCAL_BRANCH_WEIGHT
-          else -> REMOTE_BRANCH_WEIGHT
+          GitRefManager.TAG -> TAG_PRIORITY
+          GitRefManager.LOCAL_BRANCH -> LOCAL_BRANCH_PRIORITY
+          GitRefManager.REMOTE_BRANCH -> REMOTE_BRANCH_PRIORITY
+          GitRefManager.HEAD -> LOCAL_BRANCH_PRIORITY
+          else -> REMOTE_BRANCH_PRIORITY
         }
         consumer.process(FoundItemDescriptor(it, weight))
       }
@@ -97,7 +98,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
         progressIndicator.checkCanceled()
         dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
-          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_PRIORITY))
         }, progressIndicator)
       }
     }
@@ -146,7 +147,9 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   override fun getSearchProviderId() = "Vcs.Git"
   override fun getGroupName() = GitBundle.message("search.everywhere.group.name")
   override fun getFullGroupName() = GitBundle.message("search.everywhere.group.full.name")
-  override fun getSortWeight() = 1000
+
+  // higher weight -> lower position
+  override fun getSortWeight() = 500
   override fun showInFindResults() = false
   override fun isShownInSeparateTab(): Boolean = true
   override fun getDataForItem(element: Any, dataId: String): Any? = null
