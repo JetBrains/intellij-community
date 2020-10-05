@@ -1,7 +1,5 @@
 package de.plushnikov.sneakythrows;
 
-import lombok.SneakyThrows;
-
 import java.io.File;
 
 public class Issue394 {
