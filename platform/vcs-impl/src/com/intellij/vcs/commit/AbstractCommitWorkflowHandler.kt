@@ -185,7 +185,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
-  protected fun refreshChanges(callback: () -> Unit) =
+  protected open fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdate(
       {
         ui.refreshData()

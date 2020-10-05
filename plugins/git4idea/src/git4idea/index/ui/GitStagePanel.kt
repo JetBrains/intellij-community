@@ -5,19 +5,12 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsRoot
-import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.showEmptyCommitMessageConfirmation
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -29,15 +22,16 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.CommitExecutorListener
-import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle.message
-import git4idea.index.*
+import git4idea.index.GitStageCommitWorkflow
+import git4idea.index.GitStageCommitWorkflowHandler
+import git4idea.index.GitStageTracker
+import git4idea.index.GitStageTrackerListener
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
@@ -58,6 +52,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
 
   private val tree: GitStageTree
   private val commitPanel: GitStageCommitPanel
+  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
   private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
@@ -68,21 +63,16 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   private val state: GitStageTracker.State
     get() = tracker.state
 
-  private var isCommitInProgress = false
   private var hasPendingUpdates = false
 
   init {
     tree = MyChangesTree(project)
 
-    commitPanel = MyGitStageCommitPanel()
-    commitPanel.commitActionsPanel.addExecutorListener(
-      object : CommitExecutorListener {
-        override fun executorCalled(executor: CommitExecutor?) = performCommit()
-      },
-      this
-    )
+    commitPanel = GitStageCommitPanel(project)
     commitPanel.commitActionsPanel.isCommitButtonDefault = { IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null }
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
+    Disposer.register(this, commitPanel)
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
@@ -122,58 +112,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     runInEdtAsync(this, { tree.rebuildTree() })
   }
 
-  private fun performCommit() {
-    val rootsToCommit = state.stagedRoots
-    if (rootsToCommit.isEmpty()) return
-
-    val commitMessage = commitPanel.commitMessage.text
-    if (commitMessage.isBlank() && !showEmptyCommitMessageConfirmation(project)) return
-
-    commitStarted()
-    FileDocumentManager.getInstance().saveAllDocuments()
-
-    val commitState = GitStageCommitState(rootsToCommit, commitMessage)
-    val commitContext = CommitContext().apply { isAmendCommitMode = commitPanel.isAmend }
-
-    with(GitStageCommitter(project, commitState, commitContext)) {
-      addResultHandler(GitStageShowNotificationCommitResultHandler(this))
-      addResultHandler(object : CommitResultHandler {
-        override fun onSuccess(commitMessage: String) = onFinish(true)
-        override fun onCancel() = onFinish(false)
-        override fun onFailure(errors: MutableList<VcsException>) = onFinish(true)
-
-        private fun onFinish(success: Boolean) = runInEdt(this@GitStagePanel) { commitFinished(success) }
-      })
-
-      runCommit(message("stage.commit.process"), false)
-    }
-  }
-
-  @RequiresEdt
-  private fun commitStarted() {
-    isCommitInProgress = true
-    commitPanel.commitActionsPanel.isDefaultCommitActionEnabled = false
-  }
-
-  @RequiresEdt
-  private fun commitFinished(success: Boolean) {
-    isCommitInProgress = false
-    // commit button is going to be enabled after state update
-    if (success) commitPanel.isAmend = false
-    if (hasPendingUpdates) {
-      hasPendingUpdates = false
-      update()
-    }
-  }
-
   @RequiresEdt
   fun update() {
-    if (isCommitInProgress) {
+    if (commitWorkflowHandler.workflow.isExecuting) {
       hasPendingUpdates = true
       return
     }
     tree.update()
-    commitPanel.commitActionsPanel.isDefaultCommitActionEnabled = state.hasStagedRoots()
+    commitWorkflowHandler.state = state
   }
 
   override fun getData(dataId: String): Any? {
@@ -239,10 +185,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     override fun showMergeDialog(conflictedFiles: List<VirtualFile>) {
       AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
     }
-  }
-
-  private inner class MyGitStageCommitPanel : GitStageCommitPanel(project, this) {
-    override fun rootsToCommit() = state.stagedRoots.map { VcsRoot(GitVcs.getInstance(project), it) }
   }
 
   private inner class MyGitStageTrackerListener : GitStageTrackerListener {

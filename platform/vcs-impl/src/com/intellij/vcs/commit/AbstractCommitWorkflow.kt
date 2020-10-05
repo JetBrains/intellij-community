@@ -183,7 +183,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return result
   }
 
-  private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
+  protected open fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null
 
     var checks = Runnable {
@@ -316,7 +316,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 }
 
-private class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
+class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
   override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
   override fun onCancel() = runInEdt { handler.onCancel() }
   override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }
