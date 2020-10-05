@@ -18,6 +18,7 @@ public interface IndentedCommenter extends Commenter {
    */
   @Nullable
   default Boolean forceIndentedBlockComment() {
-    return forceIndentedLineComment();
+    Boolean result = forceIndentedLineComment();
+    return result != null ? !result : null;
   }
 }
