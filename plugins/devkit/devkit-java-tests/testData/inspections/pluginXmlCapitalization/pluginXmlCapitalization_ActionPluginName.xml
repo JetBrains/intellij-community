@@ -60,19 +60,31 @@
     </group>
 
 
-    <!-- separator -->
+    <!-- separator / synonym-->
     <group id="separatorGroup">
       <separator/>
       <separator key="titleCaseKey"/>
 
       <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
+
+      <action text="Synonym">
+        <synonym text="Synonym Title Case"/>
+        <synonym text="<warning descr="String 'synonym wrong case' is not properly capitalized. It should have title capitalization">synonym wrong case</warning>"/>
+
+        <synonym key="titleCaseKey"/>
+        <synonym key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
+      </action>
     </group>
   </actions>
 
 
   <!-- Custom Bundle -->
   <actions resource-bundle="AnotherBundle">
-    <action id="AnotherBundleAction"/>
+    <action id="AnotherBundleAction">
+      <synonym key="AnotherBundleAction.Synonym"/>
+      <synonym key="<warning descr="String 'synonym wrong case' is not properly capitalized. It should have title capitalization">AnotherBundleAction.Synonym.WrongCase</warning>"/>
+    </action>
+
     <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action</warning></warning> id="AnotherBundleActionWrongCasing"/>
 
 

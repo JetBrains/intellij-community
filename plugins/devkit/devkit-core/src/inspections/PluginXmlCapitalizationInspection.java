@@ -51,6 +51,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     else if (element instanceof Separator) {
       checkSeparator((Separator)element, holder);
     }
+    else if (element instanceof Synonym) {
+      checkSynonym((Synonym)element, holder);
+    }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
     }
@@ -61,6 +64,11 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
   private static void checkSeparator(Separator separator, DomElementAnnotationHolder holder) {
     checkCapitalizationWithKey(holder, separator.getKey(), Nls.Capitalization.Title);
+  }
+
+  private static void checkSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
+    if (checkCapitalization(holder,synonym.getText(), Nls.Capitalization.Title)) return;
+    checkCapitalizationWithKey(holder, synonym.getKey(), Nls.Capitalization.Title);
   }
 
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
