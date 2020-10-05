@@ -35,7 +35,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     } 
     
     val contextFile =  getVirtualFile(e)
-    e.presentation.isEnabledAndVisible = contextFile != null
+    e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
   }
 
   companion object {
