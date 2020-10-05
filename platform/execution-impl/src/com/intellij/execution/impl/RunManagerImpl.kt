@@ -216,6 +216,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     })
 
     messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        iconCache.clear()
+      }
+
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconCache.clear()
         // must be on unload and not before, since load must not be able to use unloaded plugin classes
