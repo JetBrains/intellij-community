@@ -188,9 +188,15 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     if (myContent == null) {
       if (myContentAsText != null) {
         myContent = myContentAsText.toString().getBytes(getCharset());
-      }
-      else {
+      } else {
         myContent = myContentComputable.compute();
+        FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
+        if (!unsubstitutedFileType.isBinary()) {
+          // Normalize line-separators for textual files to ensure
+          // consistency of getContent() and getContentAsText(): both must return \n.
+          // It calls getContent() internally and assigns the myContent to null.
+          myContent = getContentAsText().toString().getBytes(getCharset());
+        }
       }
     }
     return myContent;
@@ -204,14 +210,18 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
       throw new UnsupportedOperationException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
-    if (content != null) {
-      return content;
+    try {
+      if (content != null) {
+        return content;
+      }
+      if (myContentAsText == null) {
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
+      }
+      return myContentAsText;
+    } finally {
+      // Help GC. Indexes expect either getContent() or getContentAsText().
+      myContent = null;
     }
-    if (myContentAsText == null) {
-      myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
-    }
-    myContent = null; // help gc, indices are expected to use bytes or chars but not both
-    return myContentAsText;
   }
 
   @Override
