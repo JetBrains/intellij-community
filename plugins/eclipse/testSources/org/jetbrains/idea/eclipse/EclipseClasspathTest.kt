@@ -2,9 +2,7 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -18,15 +16,9 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions
-import com.intellij.testFramework.loadProjectAndCheckResults
-import com.intellij.util.io.assertMatches
-import com.intellij.util.io.directoryContentOf
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
@@ -35,12 +27,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
-import java.nio.file.Paths
 
 class EclipseClasspathTest {
   @JvmField
   @Rule
-  val tempDirectory = TemporaryDirectory()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @Rule
@@ -159,30 +150,18 @@ class EclipseClasspathTest {
     doTest()
   }
 
-  private fun doTest() {
-    doTest("test")
+  @Test
+  fun testResolvedVariables() {
+    doTest(setupPathVariables = true)
   }
 
-  fun doTest(relativePath: String) {
+  private fun doTest(relativePath: String = "test", setupPathVariables: Boolean = false) {
     val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData/round")
     val testRoot = testDataRoot.resolve(testName.methodName.removePrefix("test").decapitalize()).resolve(relativePath)
     val commonRoot = testDataRoot.resolve("common")
-    loadProjectAndCheckResults(listOf(testRoot, commonRoot), tempDirectory) { project ->
-      runWriteActionAndWait {
-        ModuleManager.getInstance(project).modules.forEach {
-          it.moduleFile!!.delete(this)
-          it.stateStore.clearCaches()
-        }
-        if (WorkspaceModel.isEnabled) {
-          JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
-        }
-      }
-      project.stateStore.save(true)
-      val baseDir = Paths.get(project.basePath!!)
-      baseDir.assertMatches(directoryContentOf(testRoot).mergeWith(directoryContentOf(commonRoot)), filePathFilter = { path ->
-        path.endsWith("/.classpath") || path.endsWith(".iml")
-      })
-    }
+    val testDataDirs = listOf(testRoot, commonRoot)
+
+    checkLoadSaveRoundTrip(testDataDirs, tempDirectory, setupPathVariables)
   }
 
   companion object {
