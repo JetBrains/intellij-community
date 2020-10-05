@@ -9,6 +9,7 @@ import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
+import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -48,13 +49,29 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   }
   private val myModifiers: MutableMap<GrModifierList, MutableList<String>> = mutableMapOf()
   private val mySignaturesCache: Map<String, MutableSet<MethodSignature>> = FactoryMap.create { name ->
-    val result = ObjectOpenCustomHashSet(METHOD_PARAMETERS_ERASURE_EQUALITY)
+    val result = ObjectOpenCustomHashSet(AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY)
     for (existingMethod in myMethods) {
       if (existingMethod.name == name) {
         result.add(existingMethod.getSignature(PsiSubstitutor.EMPTY))
       }
     }
     result
+  }
+
+  companion object {
+    @Suppress("ClassName")
+    private object AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY : Hash.Strategy<MethodSignature> {
+      override fun equals(a: MethodSignature?, b: MethodSignature?): Boolean = METHOD_PARAMETERS_ERASURE_EQUALITY.equals(a, b)
+
+      override fun hashCode(signature: MethodSignature?): Int {
+        // Modifiers should be processed with care in transformation context to avoid recursion issues.
+        // Standard hashCode() for MethodSignature contains computation of types' erasures,
+        // that sometimes queries modifiers of various PsiElements.
+        // The code which does that is buried deep in java packages, so to make everything simpler, hashCode here is weakened.
+        // It will increase number of collisions in case of different methods with equal names, but it is still consistent with equals().
+        return signature?.name?.hashCode() ?: 0
+      }
+    }
   }
 
   override fun getCodeClass(): GrTypeDefinition = myCodeClass

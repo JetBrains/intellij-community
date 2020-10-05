@@ -5,6 +5,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
@@ -57,6 +58,10 @@ private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstan
     PsiModifier.STATIC -> modifierList.isStatic()
     else -> name in visibilityModifiers && name == modifierList.getImplicitVisiblity()
   }
+}
+
+internal fun hasCodeModifierProperty(owner : PsiModifierListOwner, @GrModifierConstant @NonNls modifierName : String) : Boolean {
+  return (owner.modifierList as? GrModifierList)?.let { hasModifierProperty(it, modifierName, false) } ?: false
 }
 
 private fun hasSyntheticModifier(modifierList: GrModifierList, name: String) : Boolean {

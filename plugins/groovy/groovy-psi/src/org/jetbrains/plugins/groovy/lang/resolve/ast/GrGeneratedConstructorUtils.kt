@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
@@ -176,14 +177,14 @@ private fun acceptClass(clazz: PsiClass,
 
   if (includeBeans) {
     for (method in setters) {
-      if (!includeStatic && method.hasModifierProperty(PsiModifier.STATIC)) continue
+      if (!includeStatic && hasCodeModifierProperty(method, PsiModifier.STATIC)) continue
       collector.add(method)
     }
   }
 
   if (includeFields) {
     for (field in fields) {
-      if (annotation.hasQualifiedName(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) && field.hasModifierProperty(GrModifier.FINAL) && field.initializer != null) continue
+      if (annotation.hasQualifiedName(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) && hasCodeModifierProperty(field, GrModifier.FINAL) && field.initializer != null) continue
       addParameter(field)
     }
   }
