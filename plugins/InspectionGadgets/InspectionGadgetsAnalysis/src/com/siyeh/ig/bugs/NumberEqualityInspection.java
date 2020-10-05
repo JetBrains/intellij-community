@@ -15,11 +15,12 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,7 +29,13 @@ import com.siyeh.ig.fixes.EqualityToEqualsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
-import static com.siyeh.ig.psiutils.ComparisonUtils.isNullComparison;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
+import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class NumberEqualityInspection extends BaseInspection {
 
@@ -71,94 +78,16 @@ public class NumberEqualityInspection extends BaseInspection {
         return;
       }
       if (isUniqueConstant(rhs) || isUniqueConstant(lhs)) return;
-      if (isOneOfVariableDefinitivelyNull(expression, lhs, rhs)) return;
+      final PsiElement element = PsiTreeUtil.findFirstParent(expression, new Filter(lhs, rhs));
+      final boolean isOneOfVariablesDefinitelyNull = element != null;
+      if (isOneOfVariablesDefinitelyNull) return;
       registerError(expression.getOperationSign(), expression);
     }
 
-    private static boolean isOneOfVariableDefinitivelyNull(final PsiExpression expression,
-                                                           final PsiExpression lhs, final PsiExpression rhs) {
-      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-      final PsiConditionalExpression ternary = ObjectUtils.tryCast(parent, PsiConditionalExpression.class);
-
-      if (ternary != null) {
-        final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ternary.getCondition());
-        final PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(ternary.getThenExpression());
-        final PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
-        return isOneOfVariableDefinitivelyNull(expression, condition, thenExpression, elseExpression, lhs, rhs);
-      } else {
-        final PsiElement grandParent = parent.getParent();
-        PsiIfStatement ifStatement = ObjectUtils.tryCast(grandParent, PsiIfStatement.class);
-        PsiElement conditionalBranchContainsNumberEquality = expression.getParent();
-
-        if (ifStatement == null) {
-          if (isElementInIfStmtWithCurlyBraces(grandParent)) {
-            ifStatement = ObjectUtils.tryCast(grandParent.getParent().getParent(), PsiIfStatement.class);
-            conditionalBranchContainsNumberEquality = conditionalBranchContainsNumberEquality.getParent().getParent();
-          }
-        }
-
-        if (ifStatement != null) {
-          final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
-          final PsiStatement thenBranch = ifStatement.getThenBranch();
-          final PsiStatement elseBranch = ifStatement.getElseBranch();
-          return isOneOfVariableDefinitivelyNull(conditionalBranchContainsNumberEquality, condition, thenBranch, elseBranch, lhs, rhs);
-        }
-      }
-      return false;
-    }
-
-    private static boolean isElementInIfStmtWithCurlyBraces(PsiElement element) {
-      final PsiCodeBlock codeBlock = ObjectUtils.tryCast(element, PsiCodeBlock.class);
-      if (codeBlock == null) return false;
-
-      final PsiBlockStatement blockStatement = ObjectUtils.tryCast(codeBlock.getParent(), PsiBlockStatement.class);
-      if (blockStatement == null) return false;
-
-      final PsiIfStatement ifStatement = ObjectUtils.tryCast(blockStatement.getParent(), PsiIfStatement.class);
-      return ifStatement != null;
-    }
-
-    private static boolean isOneOfVariableDefinitivelyNull(PsiElement conditionalBranchContainsNumberEquality,
-                                                           PsiExpression condition, PsiElement thenElement, PsiElement elseElement,
-                                                           PsiExpression lhsExpr, PsiExpression rhsExpr) {
-      if (condition == null) return false;
-      boolean isNegated = false;
-      PsiBinaryExpression binOp = ObjectUtils.tryCast(condition, PsiBinaryExpression.class);
-      if (binOp == null && BoolUtils.isNegation(condition)) {
-        PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression) condition).getOperand());
-        binOp = ObjectUtils.tryCast(operand, PsiBinaryExpression.class);
-        isNegated = true;
-      }
-
-      if (binOp == null) return false;
-
-      final IElementType tokenType = binOp.getOperationTokenType();
-      final PsiVariable lhsVar = (PsiVariable)((PsiReferenceExpression)lhsExpr).resolve();
-      final PsiVariable rhsVar = (PsiVariable)((PsiReferenceExpression)rhsExpr).resolve();
-      if (lhsVar == null || rhsVar == null) return false;
-
-      final PsiExpression lOperand = binOp.getLOperand();
-      final PsiExpression rOperand = binOp.getROperand();
-      final boolean isTwoNotNullComparison = isTwoNullComparison(lOperand, rOperand, lhsVar, rhsVar, false);
-      final boolean isTwoNullComparison = isTwoNullComparison(lOperand, rOperand, lhsVar, rhsVar, true);
-      final boolean isAnd = tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.AND;
-      final boolean isOr = tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.OR;
-
-      return (conditionalBranchContainsNumberEquality == (isNegated ? thenElement : elseElement) && isAnd && isTwoNotNullComparison)
-             || (conditionalBranchContainsNumberEquality == (isNegated ? elseElement : thenElement) && isOr && isTwoNullComparison);
-    }
-
-    private static boolean isTwoNullComparison(PsiExpression lOperand, PsiExpression rOperand,
-                                               PsiVariable lhsVariable, PsiVariable rhsVariable,
-                                               boolean equal) {
-      return (isNullComparison(lOperand, lhsVariable, equal) && isNullComparison(rOperand, rhsVariable, equal)) ||
-             (isNullComparison(rOperand, lhsVariable, equal) && isNullComparison(lOperand, rhsVariable, equal));
-    }
-
     private static boolean isUniqueConstant(PsiExpression expression) {
-      PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
+      PsiReferenceExpression ref = tryCast(skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
       if (ref == null) return false;
-      PsiField target = ObjectUtils.tryCast(ref.resolve(), PsiField.class);
+      PsiField target = tryCast(ref.resolve(), PsiField.class);
       if (target == null) return false;
       if (target instanceof PsiEnumConstant) return true;
       if (!(target instanceof PsiFieldImpl)) return false;
@@ -169,6 +98,87 @@ public class NumberEqualityInspection extends BaseInspection {
 
     private static boolean hasNumberType(PsiExpression expression) {
       return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_NUMBER);
+    }
+  }
+
+  private static final class Filter implements Condition<PsiElement> {
+    private final PsiExpression lhs;
+    private final PsiExpression rhs;
+
+    private Filter(final PsiExpression lhs, final PsiExpression rhs) {
+      this.lhs = lhs;
+      this.rhs = rhs;
+    }
+
+    @Override
+    public boolean value(final PsiElement element) {
+      PsiConditionalExpression ternary = tryCast(element, PsiConditionalExpression.class);
+      if (ternary != null) {
+        final PsiExpression condition = skipParenthesizedExprDown(ternary.getCondition());
+        final PsiElement then = skipParenthesizedExprDown(ternary.getThenExpression());
+        final PsiElement elze = skipParenthesizedExprDown(ternary.getElseExpression());
+        if (isOneOfVariablesDefinitelyNull(condition, then, elze)) return true;
+      }
+
+      final PsiIfStatement ifStatement = tryCast(element, PsiIfStatement.class);
+      if (ifStatement == null) return false;
+
+      final PsiExpression condition = skipParenthesizedExprDown(ifStatement.getCondition());
+      final PsiElement then = ifStatement.getThenBranch();
+      final PsiElement elze = ifStatement.getElseBranch();
+
+      return isOneOfVariablesDefinitelyNull(condition, then, elze);
+    }
+
+    private boolean isOneOfVariablesDefinitelyNull(PsiExpression condition, PsiElement then, PsiElement elze) {
+      if (condition == null) return false;
+
+      boolean isNegated = false;
+      PsiBinaryExpression binOp = tryCast(condition, PsiBinaryExpression.class);
+      if (binOp == null && BoolUtils.isNegation(condition)) {
+        final PsiExpression operand = skipParenthesizedExprDown(((PsiPrefixExpression) condition).getOperand());
+        binOp = tryCast(operand, PsiBinaryExpression.class);
+        isNegated = true;
+      }
+      if (binOp == null) return false;
+
+      final IElementType tokenType = binOp.getOperationTokenType();
+      final PsiBinaryExpression lOperand = tryCast(skipParenthesizedExprDown(binOp.getLOperand()), PsiBinaryExpression.class);
+      final PsiBinaryExpression rOperand = tryCast(skipParenthesizedExprDown(binOp.getROperand()), PsiBinaryExpression.class);
+      if (lOperand == null || rOperand == null) return false;
+
+      final PsiExpression lValue = ExpressionUtils.getValueComparedWithNull(lOperand);
+      final PsiExpression rValue = ExpressionUtils.getValueComparedWithNull(rOperand);
+      if (lValue == null || rValue == null) return false;
+
+      final IElementType lTokenType = lOperand.getOperationTokenType();
+      final IElementType rTokenType = rOperand.getOperationTokenType();
+      boolean areBothOperandsComparedWithNull = lTokenType == EQEQ && rTokenType == EQEQ;
+      boolean areBothOperandsComparedWithNotNull = lTokenType == NE && rTokenType == NE;
+      if (areBothOperandsComparedWithNull == areBothOperandsComparedWithNotNull) return false;
+      List<IElementType> targetTokenTypes = areBothOperandsComparedWithNull ? Arrays.asList(OROR, OR) : Arrays.asList(ANDAND, AND);
+      if (!targetTokenTypes.contains(tokenType)) return false;
+      final PsiElement branchContainsNumberEquality = isNegated ^ areBothOperandsComparedWithNull ? then : elze;
+      if (!PsiTreeUtil.isAncestor(branchContainsNumberEquality, lhs, false)) return false;
+
+      final EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
+
+      final PsiReferenceExpression lReference = tryCast(skipParenthesizedExprDown(lhs), PsiReferenceExpression.class);
+      if (lReference == null) return false;
+      final PsiReferenceExpression rReference = tryCast(skipParenthesizedExprDown(rhs), PsiReferenceExpression.class);
+      if (rReference == null) return false;
+
+      final PsiVariable lVariable = tryCast(lReference.resolve(), PsiVariable.class);
+      if (lVariable == null) return false;
+      final PsiVariable rVariable = tryCast(rReference.resolve(), PsiVariable.class);
+      if (rVariable == null) return false;
+
+      final boolean isEffectivelyFinal = isEffectivelyFinal(lVariable, branchContainsNumberEquality, null) &&
+                                         isEffectivelyFinal(rVariable, branchContainsNumberEquality, null);
+      if (!isEffectivelyFinal) return false;
+
+      return (checker.expressionsMatch(lhs, lValue).isExactMatch() && checker.expressionsMatch(rhs, rValue).isExactMatch()) ||
+             (checker.expressionsMatch(lhs, rValue).isExactMatch() && checker.expressionsMatch(rhs, lValue).isExactMatch());
     }
   }
 }
