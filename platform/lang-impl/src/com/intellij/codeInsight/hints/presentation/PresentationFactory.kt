@@ -99,19 +99,29 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
    */
   @Contract(pure = true)
   fun roundWithBackground(base: InlayPresentation): InlayPresentation {
+    return roundWithBackground(base, 0, 7, 0, 7)
+  }
+
+  /**
+   * Adds inlay background and rounding with insets.
+   * Intended to be used with [smallText]
+   */
+  @Contract(pure = true)
+  fun roundWithBackground(base: InlayPresentation, top: Int, right: Int, bottom: Int, left: Int): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
       InsetPresentation(
         base,
-        left = 7,
-        right = 7,
-        top = 0,
-        down = 0
+        left = left,
+        right = right,
+        top = top,
+        down = bottom
       ),
       8,
       8
     ))
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
+
 
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
