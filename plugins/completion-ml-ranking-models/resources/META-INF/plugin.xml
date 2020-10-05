@@ -14,6 +14,7 @@
   <depends>com.intellij.completion.ml.ranking</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <preloadingActivity implementation="com.jetbrains.completion.ml.ranker.cb.jvm.PreloadNaiveCatBoostModel" />
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentScalaMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJavaMLRankingProvider"/>
