@@ -69,6 +69,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     if (myLocator != null) {
       myTestsRootProxy.setLocator(myLocator);
     }
+    myEventPublisher.onRootPresentationAdded(myTestsRootProxy, rootName, comment, rootLocation);
   }
 
   protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
