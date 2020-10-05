@@ -2,16 +2,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
@@ -20,7 +21,6 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -57,9 +57,17 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
     }
     PsiClass parentClass = myParentClassPointer.getElement();
     if (parentClass == null) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(subclassFile)) return;
 
-    PsiElement e = implementOrExtend(parentClass, subclass);
-    if (myOnTheFly && external && e instanceof Navigatable) ((Navigatable)e).navigate(true);
+    WriteAction.run(() -> {
+      PsiElement e = implementOrExtend(parentClass, subclass);
+      if (myOnTheFly && external && e instanceof Navigatable) ((Navigatable)e).navigate(true);
+    });
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
