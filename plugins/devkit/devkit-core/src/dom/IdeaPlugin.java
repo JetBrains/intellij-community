@@ -96,6 +96,7 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Stubbed
   GenericDomValue<String> getResourceBundle();
 
 

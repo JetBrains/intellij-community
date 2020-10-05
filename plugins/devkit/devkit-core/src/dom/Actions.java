@@ -2,10 +2,12 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 public interface Actions extends ActionContainer {
 
+  @Stubbed
   @NotNull
   GenericAttributeValue<String> getResourceBundle();
 }

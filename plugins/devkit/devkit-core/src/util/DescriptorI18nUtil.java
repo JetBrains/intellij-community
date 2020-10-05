@@ -35,14 +35,14 @@ public class DescriptorI18nUtil {
       actions = DomUtil.getParentOfType(domElement, Actions.class, true);
       if (actions == null) return null;
 
-      bundleXmlElement = actions.getResourceBundle().getXmlAttributeValue();
+      bundleXmlElement = DomUtil.hasXml(actions.getResourceBundle()) ? actions.getResourceBundle().getXmlAttributeValue() : null;
     }
 
     if (bundleXmlElement == null) {
       final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
       if (ideaPlugin == null) return null;
 
-      bundleXmlElement = ideaPlugin.getResourceBundle().getXmlElement();
+      bundleXmlElement = DomUtil.hasXml(ideaPlugin.getResourceBundle()) ? ideaPlugin.getResourceBundle().getXmlElement() : null;
     }
 
     if (bundleXmlElement == null) {

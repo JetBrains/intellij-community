@@ -54,6 +54,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Attribute:optional:true\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
+                  "    Element:resource-bundle:MyResourceBundle\n" +
                   "    Element:idea-version\n" +
                   "      Attribute:since-build:sinceBuildValue\n" +
                   "      Attribute:until-build:untilBuildValue\n" +
@@ -74,6 +75,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Attribute:defaultExtensionNs:defaultExtensionNs\n" +
                   "      Attribute:xmlns:extensionXmlNs\n" +
                   "    Element:actions\n" +
+                  "      Attribute:resource-bundle:ActionsResourceBundle\n" +
                   "      Element:action\n" +
                   "        Attribute:id:actionId\n" +
                   "        Attribute:text:actionText\n" +
