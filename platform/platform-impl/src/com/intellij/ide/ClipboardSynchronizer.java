@@ -56,6 +56,9 @@ public final class ClipboardSynchronizer implements Disposable {
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isXWindow) {
       myClipboardHandler = new XWinClipboardHandler();
     }
+    else if (SystemInfo.isWindows) {
+      myClipboardHandler = new WindowsClipboardHandler();
+    }
     else {
       myClipboardHandler = new ClipboardHandler();
     }
@@ -162,17 +165,7 @@ public final class ClipboardSynchronizer implements Disposable {
     public void resetContent() {
     }
 
-    private static int getRetries() {
-      if (SystemInfo.isWindows) {
-        // Clipboard#setContents throws IllegalStateException if the clipboard is currently unavailable.
-        // On Windows, it uses Win32 OpenClipboard which may fail according to its documentation:
-        //   "OpenClipboard fails if another window has the clipboard open."
-        // Other applications implement retry logic when calling OpenClipboard. Let's do the same.
-        //
-        // According to my simple local stress testing, Clipboard#setContents hasn't failed more than 2 times in a row.
-        // Probably, it needs to be adjusted in future.
-        return 5;
-      }
+    protected int getRetries() {
       return 1;
     }
   }
@@ -338,7 +331,7 @@ public final class ClipboardSynchronizer implements Disposable {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+        @SuppressWarnings("unchecked") final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
         return set;
       }
       catch (IllegalAccessException | IllegalArgumentException ignore) { }
@@ -403,5 +396,19 @@ public final class ClipboardSynchronizer implements Disposable {
       }
     }
     return false;
+  }
+
+  private static class WindowsClipboardHandler extends ClipboardHandler {
+    @Override
+    protected int getRetries() {
+      // Clipboard#setContents throws IllegalStateException if the clipboard is currently unavailable.
+      // On Windows, it uses Win32 OpenClipboard which may fail according to its documentation:
+      //   "OpenClipboard fails if another window has the clipboard open."
+      // Other applications implement retry logic when calling OpenClipboard. Let's do the same.
+      //
+      // According to my simple local stress testing, Clipboard#setContents hasn't failed more than 2 times in a row.
+      // Probably, it needs to be adjusted in future.
+      return 5;
+    }
   }
 }
