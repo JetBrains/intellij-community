@@ -29,6 +29,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -432,7 +433,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .setRemoveActionUpdater(e -> canBeModified(getSelectedFileType()))
         .disableUpDownActions();
 
-      panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+      panel.add(toolbarDecorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myFileTypesList);
+      panel.add(scrollPane, BorderLayout.CENTER);
 
       new MySpeedSearch(myFileTypesList);
     }
@@ -556,8 +559,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .setEditAction(__ -> editPattern())
         .setRemoveAction(__ -> removePattern())
         .disableUpDownActions();
-      panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
+      panel.add(decorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myList);
+      panel.add(scrollPane, BorderLayout.CENTER);
       panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
@@ -627,7 +631,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .setRemoveAction(__ -> removeHashBang())
         .disableUpDownActions();
 
-      panel.add(decorator.createPanel(), BorderLayout.CENTER);
+      panel.add(decorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myList);
+      panel.add(scrollPane, BorderLayout.CENTER);
       panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 

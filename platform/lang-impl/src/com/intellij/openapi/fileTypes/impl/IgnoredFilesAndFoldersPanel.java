@@ -12,6 +12,7 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.valueEditors.TextFieldValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
@@ -52,7 +53,8 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     JPanel listPanel = new JPanel(new BorderLayout());
     myEditField.setVisible(false);
     listPanel.add(myEditField, BorderLayout.NORTH);
-    listPanel.add(myPatternList, BorderLayout.CENTER);
+    JBScrollPane scrollPane = new JBScrollPane(myPatternList);
+    listPanel.add(scrollPane, BorderLayout.CENTER);
     add(listPanel, BorderLayout.CENTER);
     JLabel label = new JLabel(FileTypesBundle.message("filetype.ignore.text"));
     label.setFont(JBUI.Fonts.smallFont());
@@ -101,6 +103,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
       int toSelect = myModel.indexOf(selection);
       if (toSelect >= 0) {
         myPatternList.setSelectedIndex(toSelect);
+        myPatternList.ensureIndexIsVisible(toSelect);
       }
     }
   }
