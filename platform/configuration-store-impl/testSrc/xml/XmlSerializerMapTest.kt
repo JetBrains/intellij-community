@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.junit.Test
 import java.util.*
 
@@ -290,5 +291,23 @@ internal class XmlSerializerMapTest {
     </exts>""")
     val result = element.deserialize(KnownExtensions::class.java)
     assertThat(result.myExtensions).isNotNull()
+  }
+
+  @Test
+  fun fastUtilObjectIntMap() {
+    @Tag("bean")
+    class Bean {
+      @XMap
+      var map = Object2IntOpenHashMap<String>()
+    }
+
+    val bean = Bean()
+    bean.map.put("a", 1)
+    testSerializer("""
+    <bean>
+      <map>
+        <entry key="a" value="1" />
+      </map>
+    </bean>""", bean)
   }
 }

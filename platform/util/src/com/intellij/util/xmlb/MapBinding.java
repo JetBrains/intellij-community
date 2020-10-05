@@ -62,10 +62,25 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     Type[] typeArguments = type.getActualTypeArguments();
 
     keyClass = ClassUtil.typeToClass(typeArguments[0]);
-    valueClass = ClassUtil.typeToClass(typeArguments[1]);
+    Type valueType;
+    if (typeArguments.length == 1) {
+      String typeName = type.getRawType().getTypeName();
+      if (typeName.equals("it.unimi.dsi.fastutil.objects.Object2IntMap") || typeName.equals("it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap")) {
+        valueClass = Integer.class;
+      }
+      else {
+        throw new UnsupportedOperationException("Value class is unknown for " + type.getTypeName());
+      }
+
+      valueType = Integer.class;
+    }
+    else {
+      valueType = typeArguments[1];
+      valueClass = ClassUtil.typeToClass(valueType);
+    }
 
     keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
-    valueBinding = serializer.getBinding(valueClass, typeArguments[1]);
+    valueBinding = serializer.getBinding(valueClass, valueType);
   }
 
   @Override
