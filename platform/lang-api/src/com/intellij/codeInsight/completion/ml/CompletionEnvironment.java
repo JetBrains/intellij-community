@@ -6,6 +6,9 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Stores information about current code completion session.
+ */
 public interface CompletionEnvironment extends UserDataHolder {
   @NotNull
   Lookup getLookup();

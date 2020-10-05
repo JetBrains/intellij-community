@@ -12,6 +12,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Computes element-specific factors that could be useful while reordering completion items. Newly added providers don't affect ordering
+ * like {@link com.intellij.codeInsight.completion.CompletionWeigher} until ranking model that leverages new factors is trained.
+ *
+ * @see MLFeatureValue
+ * @see ContextFeatureProvider
+ * @see com.intellij.codeInsight.completion.CompletionWeigher
+ */
 @ApiStatus.Internal
 public interface ElementFeatureProvider {
   LanguageExtension<ElementFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.elementFeatures");
@@ -23,6 +31,14 @@ public interface ElementFeatureProvider {
 
   @NonNls String getName();
 
+  /**
+   * Invokes inside read action once per every item inside lookup.
+   *
+   * @param element         {@link LookupElement} to compute features for
+   * @param location        describes where and how code completion is triggered
+   * @param contextFeatures features computed in {@link ContextFeatureProvider}
+   * @return container with all features calculated
+   */
   Map<@NonNls String, MLFeatureValue> calculateFeatures(@NotNull LookupElement element,
                                                         @NotNull CompletionLocation location,
                                                         @NotNull ContextFeatures contextFeatures);
