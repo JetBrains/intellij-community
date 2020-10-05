@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.HighlightingTest
@@ -12,7 +11,6 @@ import org.junit.Test
 @CompileStatic
 class AutoFinalSupportTest extends GroovyLatestTest implements HighlightingTest {
     private void doTest(String text) {
-        fixture.enableInspections(GrFinalVariableAccessInspection)
         @Language("Groovy") String newText = text
         if (text.contains("AutoFinal")) {
             newText = "import groovy.transform.AutoFinal\n" + newText
@@ -20,7 +18,7 @@ class AutoFinalSupportTest extends GroovyLatestTest implements HighlightingTest 
         if (text.contains("CompileStatic")) {
             newText = "import groovy.transform.CompileStatic\n" + newText
         }
-        highlightingTest(newText, GroovyConstructorNamedArgumentsInspection)
+        highlightingTest(newText, GrFinalVariableAccessInspection)
     }
 
     @Test
