@@ -116,6 +116,7 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
+    //noinspection deprecation
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
@@ -229,7 +230,7 @@ public class WSLDistribution {
             true
           );
           if (password != null) {
-            try (PrintWriter pw = new PrintWriter(input)) {
+            try (PrintWriter pw = new PrintWriter(input, false, commandLine.getCharset())) {
               pw.println(password);
             }
           }
@@ -349,6 +350,7 @@ public class WSLDistribution {
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
+    //noinspection deprecation
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
     }
