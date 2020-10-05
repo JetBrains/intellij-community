@@ -54,14 +54,15 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return false;
       }
-      else if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
+      IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
+      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
         if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
           int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
           List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
           for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
             for (ID<?, ?> id : ids) {
               if (myFileBasedIndex.needsFileContentLoading(id)) {
-                processor.processUpToDateFile(file, inputId, id);
+                processor.processUpToDateFile(indexedFile, inputId, id);
               }
             }
           }
@@ -71,13 +72,11 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
 
       AtomicBoolean shouldIndexFile = new AtomicBoolean(false);
       FileBasedIndexImpl.getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
-        IndexedFile fileContent = new IndexedFileImpl(file, myProject);
-
         boolean isDirectory = file.isDirectory();
         int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
-          if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, fileContent)) == FileIndexingState.OUT_DATED) {
+          if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndexFile.set(true);
           }
@@ -88,25 +87,25 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
               final ID<?, ?> indexId = affectedIndexCandidates.get(i);
               try {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
-                  FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(fileContent, indexId);
+                  FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   boolean indexInfrastructureExtensionInvalidated = false;
                   if (fileIndexingState == FileIndexingState.UP_TO_DATE) {
                     if (myShouldProcessUpToDateFiles) {
                       for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                        if (!p.processUpToDateFile(file, inputId, indexId)) {
+                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
                           indexInfrastructureExtensionInvalidated = true;
                         }
                       }
                     }
                   }
                   if (indexInfrastructureExtensionInvalidated) {
-                    fileIndexingState = myFileBasedIndex.shouldIndexFile(fileContent, indexId);
+                    fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myDoTraceForFilesToBeIndexed) {
                       LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
-                    if (!tryIndexWithoutContentViaInfrastructureExtension(fileContent, inputId, indexId)) {
+                    if (!tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId)) {
                       shouldIndexFile.set(true);
                       break;
                     }
@@ -131,8 +130,8 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
           if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
             continue;
           }
-          if (myFileBasedIndex.shouldIndexFile(fileContent, indexId).updateRequired()) {
-            myFileBasedIndex.updateSingleIndex(indexId, file, inputId, new IndexedFileWrapper(fileContent));
+          if (myFileBasedIndex.shouldIndexFile(indexedFile, indexId).updateRequired()) {
+            myFileBasedIndex.updateSingleIndex(indexId, file, inputId, new IndexedFileWrapper(indexedFile));
           }
         }
         IndexingStamp.flushCache(inputId);

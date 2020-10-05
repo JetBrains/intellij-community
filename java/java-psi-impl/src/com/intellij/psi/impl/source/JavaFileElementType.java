@@ -8,6 +8,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.model.ModelBranch;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -17,12 +18,15 @@ import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
   public static final int STUB_VERSION = 50;
+
+  private static volatile int TEST_STUB_VERSION_MODIFIER = 0;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -35,7 +39,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public int getStubVersion() {
-    return STUB_VERSION;
+    return STUB_VERSION + (ApplicationManager.getApplication().isUnitTestMode() ? TEST_STUB_VERSION_MODIFIER : 0);
   }
 
   @Override
@@ -102,4 +106,9 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) { }
+
+  @ApiStatus.Internal
+  public static void setTestStubVersionModifier(int modifier) {
+    TEST_STUB_VERSION_MODIFIER = modifier;
+  }
 }
