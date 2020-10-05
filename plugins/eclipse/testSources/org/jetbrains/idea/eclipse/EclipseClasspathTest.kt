@@ -19,6 +19,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.io.div
+import org.jetbrains.idea.eclipse.EclipseClasspathTest.Companion.doTest
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
@@ -155,10 +157,26 @@ class EclipseClasspathTest {
     doTest(setupPathVariables = true)
   }
 
-  private fun doTest(relativePath: String = "test", setupPathVariables: Boolean = false) {
-    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData/round")
-    val testRoot = testDataRoot.resolve(testName.methodName.removePrefix("test").decapitalize()).resolve(relativePath)
-    val commonRoot = testDataRoot.resolve("common")
+  @Test
+  fun testResolvedVars() {
+    doTest("test", true, "linked")
+  }
+
+  @Test
+  fun testResolvedVarsInOutput() {
+    doTest("test", true, "linked")
+  }
+
+  @Test
+  fun testResolvedVarsInLibImlCheck1() {
+    doTest("test", true, "linked")
+  }
+
+
+  private fun doTest(relativePath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round") {
+    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+    val testRoot = testDataRoot / testDataParentDir / testName.methodName.removePrefix("test").decapitalize() / relativePath
+    val commonRoot = testDataRoot / "common" / "testModuleWithClasspathStorage"
     val testDataDirs = listOf(testRoot, commonRoot)
 
     checkLoadSaveRoundTrip(testDataDirs, tempDirectory, setupPathVariables)
