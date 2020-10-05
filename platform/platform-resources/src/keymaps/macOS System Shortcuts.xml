@@ -4,6 +4,10 @@
     <keyboard-shortcut first-keystroke="meta F9"/>
   </action>
 
+  <action id="Vcs.QuickListPopupAction">
+    <keyboard-shortcut first-keystroke="ctrl C"/>
+  </action>
+
   <action id="EditorDelete">
     <keyboard-shortcut first-keystroke="DELETE"/>
     <keyboard-shortcut first-keystroke="ctrl D"/>
@@ -27,18 +31,6 @@
 
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="meta alt shift E"/>
-  </action>
-
-  <action id="Vcs.QuickListPopupAction">
-    <keyboard-shortcut first-keystroke="ctrl G"/>
-  </action>
-
-  <action id="SelectNextOccurrence">
-    <keyboard-shortcut first-keystroke="ctrl alt G"/>
-  </action>
-
-  <action id="UnselectPreviousOccurrence">
-    <keyboard-shortcut first-keystroke="ctrl alt shift G"/>
   </action>
 
   <action id="EditorBackSpace">
@@ -387,7 +379,7 @@
   </action>
 
   <action id="StepOut">
-    <keyboard-shortcut first-keystroke="meta shift QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
     <keyboard-shortcut first-keystroke="shift F8"/>
   </action>
 
@@ -406,7 +398,7 @@
   </action>
 
   <action id="ToggleLineBreakpoint">
-    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
+    <keyboard-shortcut first-keystroke="ctrl QUOTE"/>
     <keyboard-shortcut first-keystroke="meta F8"/>
   </action>
 
