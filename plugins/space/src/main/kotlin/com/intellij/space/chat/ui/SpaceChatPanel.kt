@@ -22,6 +22,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitAll
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.async
+import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -100,9 +101,12 @@ internal suspend fun M2ChannelVm.awaitFullLoad(lifetime: Lifetime) {
   ready.awaitTrue(lifetime)
   val messages = mvms.prop
   while (messages.value.hasPrev) {
+    // TODO: remove this temporary fix when it will be fixed in platform
+    delay(1)
     loadPrev()
   }
   while (messages.value.hasNext) {
+    delay(1)
     loadNext()
   }
 }
