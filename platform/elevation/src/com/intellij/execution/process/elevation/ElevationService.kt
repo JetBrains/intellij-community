@@ -285,16 +285,10 @@ private class ProcessMediatorClient(
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
-    val environVarList = environVars.map { (name, value) ->
-      CommandLine.EnvironVar.newBuilder()
-        .setName(name)
-        .setValue(value)
-        .build()
-    }
     val commandLine = CommandLine.newBuilder()
       .addAllCommand(command)
       .setWorkingDir(workingDir.absolutePath)
-      .addAllEnvironVars(environVarList)
+      .putAllEnviron(environVars)
       .apply {
         inFile?.let { setInFile(it.absolutePath) }
         outFile?.let { setOutFile(it.absolutePath) }

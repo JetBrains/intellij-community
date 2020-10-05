@@ -81,26 +81,36 @@ public interface CommandLineOrBuilder extends
       getErrFileBytes();
 
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 6;</code>
    */
-  java.util.List<com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar> 
-      getEnvironVarsList();
+  int getEnvironCount();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 6;</code>
    */
-  com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVar getEnvironVars(int index);
+  boolean containsEnviron(
+      java.lang.String key);
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
+   * Use {@link #getEnvironMap()} instead.
    */
-  int getEnvironVarsCount();
+  @java.lang.Deprecated
+  java.util.Map<java.lang.String, java.lang.String>
+  getEnviron();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 6;</code>
    */
-  java.util.List<? extends com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder> 
-      getEnvironVarsOrBuilderList();
+  java.util.Map<java.lang.String, java.lang.String>
+  getEnvironMap();
   /**
-   * <code>repeated .intellij.process.mediator.rpc.CommandLine.EnvironVar environ_vars = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 6;</code>
    */
-  com.intellij.execution.process.mediator.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
-      int index);
+
+  java.lang.String getEnvironOrDefault(
+      java.lang.String key,
+      java.lang.String defaultValue);
+  /**
+   * <code>map&lt;string, string&gt; environ = 6;</code>
+   */
+
+  java.lang.String getEnvironOrThrow(
+      java.lang.String key);
 }
