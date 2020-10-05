@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.space.chat.ui.createSpaceChatPanel
+import com.intellij.space.chat.ui.SpaceChatPanel
 import com.intellij.space.messages.SpaceBundle
 import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent
@@ -23,7 +23,7 @@ private class SpaceChatEditor(private val project: Project, private val spaceCha
   }
 
   val component by lazy {
-    createSpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord)
+    SpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord)
   }
 
   override fun getComponent(): JComponent = component
