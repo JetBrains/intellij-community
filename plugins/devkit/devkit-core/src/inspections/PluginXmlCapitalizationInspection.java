@@ -63,11 +63,12 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   }
 
   private static void checkSeparator(Separator separator, DomElementAnnotationHolder holder) {
+    if (checkCapitalization(holder, separator.getText(), Nls.Capitalization.Title)) return;
     checkCapitalizationWithKey(holder, separator.getKey(), Nls.Capitalization.Title);
   }
 
   private static void checkSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
-    if (checkCapitalization(holder,synonym.getText(), Nls.Capitalization.Title)) return;
+    if (checkCapitalization(holder, synonym.getText(), Nls.Capitalization.Title)) return;
     checkCapitalizationWithKey(holder, synonym.getKey(), Nls.Capitalization.Title);
   }
 

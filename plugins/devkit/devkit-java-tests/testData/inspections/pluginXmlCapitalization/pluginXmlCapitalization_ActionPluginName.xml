@@ -63,8 +63,10 @@
     <!-- separator / synonym-->
     <group id="separatorGroup">
       <separator/>
+      <separator text="Separator Title Case"/>
+      <separator text="<warning descr="String 'separator wrong case' is not properly capitalized. It should have title capitalization">separator wrong case</warning>"/>
+      
       <separator key="titleCaseKey"/>
-
       <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
 
       <action text="Synonym">
