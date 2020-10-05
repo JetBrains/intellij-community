@@ -45,14 +45,43 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
     assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
   }
 
-  public void testFalseCatchAlreadyCaughtException() {
+  public void testLambdaSneakyThrowsWrongCatch() {
+    PsiFile file = createTestFile("@lombok.SneakyThrows" +
+      "    public void m1() {\n" +
+      "        Runnable runnable = () -> {\n" +
+      "            throwsMyException();" +
+      "        };\n" +
+      "    }\n");
+    PsiMethodCallExpression methodCall = findMethodCall(file);
+    assertNotNull(methodCall);
+
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
+    assertEquals(1, exceptions.size());
+    assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
+  }
+
+  public void testAnonymousClassCorrectCatch() {
+    PsiFile file = createTestFile("@lombok.SneakyThrows" +
+      "    public void m1() {\n" +
+      "        Runnable runnable = new Runnable() {\n" +
+      "           public void run() { throwsMyException(); }" +
+      "        };\n" +
+      "    }\n");
+    PsiMethodCallExpression methodCall = findMethodCall(file);
+    assertNotNull(methodCall);
+
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
+    assertEquals(1, exceptions.size());
+    assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
+  }
+
+  public void testTryCatchThatCatchAnotherException() {
     PsiFile file = createTestFile("@lombok.SneakyThrows\n" +
       "    public void m() {\n" +
-      "        Test variable;\n" +
       "        try {\n" +
       "            throwsMyException();" +
-      "        } catch (Test.Exception e) {\n" +
-      "            Test variable2 = variable;\n" +
+      "            throwsSomeException();" +
+      "        } catch (Test.SomeException e) {\n" +
       "        }\n" +
       "    }");
 
@@ -63,6 +92,50 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
     assertNotNull(tryStatement);
 
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, tryStatement);
+    assertSize(0, exceptions);
+  }
+
+  public void testTryCatchThatCatchAnotherExceptionWithNullTopElement() {
+    PsiMethodCallExpression methodCall = createCall("@lombok.SneakyThrows\n" +
+      "    public void m() {\n" +
+      "        try {\n" +
+      "            throwsMyException();" +
+      "            throwsSomeException();" +
+      "        } catch (Test.SomeException e) {\n" +
+      "        }\n" +
+      "    }");
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
+    assertSize(0, exceptions);
+  }
+
+  public void testTryCatchThatCatchAnotherExceptionHierarchy() {
+    PsiFile file = createTestFile("@lombok.SneakyThrows\n" +
+      "    public void m() {\n" +
+      "        try {\n" +
+      "            try {" +
+      "                throwsMyException();\n" +
+      "                throwsSomeException();" +
+      "                throwsAnotherException();" +
+      "            } catch (Test.SomeException e) {}\n" +
+      "        } catch (Test.AnotherException e) {}\n" +
+      "    }");
+
+    PsiMethodCallExpression methodCall = findMethodCall(file);
+    assertNotNull(methodCall);
+
+    PsiTryStatement tryStatement = findFirstChild(file, PsiTryStatement.class);
+    assertNotNull(tryStatement);
+
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
+    assertSize(0, exceptions);
+  }
+
+  /**
+   * to avoid catching all exceptions by default by accident
+   */
+  public void testRegularThrows() {
+    PsiMethodCallExpression methodCall = createCall("void foo() {  throwsMyException(); }");
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
     assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
   }
@@ -82,11 +155,13 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
   @NotNull
   private PsiFile createTestFile(@NonNls String body) {
     return createFile("test.java", "class Test { " + body +
+      "void throwsAnotherException() throws AnotherException {}" +
       "void throwsMyException() throws MyException {}" +
       "void throwsSomeException() throws SomeException {}" +
       "static class MyException extends Exception {}" +
       "static class SomeException extends Exception {}" +
-      "static class Exception {}" +
+      "static class AnotherException extends Exception {}" +
+      "static class Exception{}" +
       "}");
   }
 

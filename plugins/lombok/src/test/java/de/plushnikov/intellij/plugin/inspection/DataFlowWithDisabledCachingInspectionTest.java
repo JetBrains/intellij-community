@@ -5,7 +5,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.util.RecursionManager;
 
 
-public class DataFlowInspectionWithDisabledCachingTest extends LombokInspectionTest {
+public class DataFlowWithDisabledCachingInspectionTest extends LombokInspectionTest {
 
   @Override
   protected String getTestDataPath() {

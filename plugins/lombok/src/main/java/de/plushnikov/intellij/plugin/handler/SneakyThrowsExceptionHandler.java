@@ -21,21 +21,30 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
-    // that exception may be already handled by regular try-catch statement
-    if (topElement instanceof PsiTryStatement) {
-      List<PsiType> caughtExceptions = Stream.of(((PsiTryStatement) topElement).getCatchBlockParameters())
-        .map(PsiParameter::getType)
-        .collect(Collectors.toList());
-      if (isExceptionHandled(exceptionType, caughtExceptions)) {
-        return false;
-      }
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiTryStatement.class, PsiMethod.class);
+    if (parent instanceof PsiLambdaExpression) {
+      // lambda it's another scope, @SneakyThrows annotation can't neglect exceptions in lambda only on method, constructor
+      return false;
+    } else if (parent instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement) parent)) {
+      // that exception MAY be already handled by regular try-catch statement
+      return false;
     }
 
-    if (!(topElement instanceof PsiCodeBlock)) {
+    if (topElement instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement) topElement)) {
+      // that exception MAY be already handled by regular try-catch statement (don't forget about nested try-catch)
+      return false;
+    } else if (!(topElement instanceof PsiCodeBlock)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       return psiMethod != null && isExceptionHandled(psiMethod, exceptionType);
     }
     return false;
+  }
+
+  private boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
+    List<PsiType> caughtExceptions = Stream.of(topElement.getCatchBlockParameters())
+      .map(PsiParameter::getType)
+      .collect(Collectors.toList());
+    return isExceptionHandled(exceptionType, caughtExceptions);
   }
 
   private boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
