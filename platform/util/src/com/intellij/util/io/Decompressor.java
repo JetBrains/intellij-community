@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
@@ -317,23 +318,9 @@ public abstract class Decompressor {
               InputStream inputStream = openEntryStream(entry);
               try {
                 Files.createDirectories(outputFile.getParent());
-
-                try {
-                  Files.deleteIfExists(outputFile);
+                try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
+                  StreamUtil.copy(inputStream, outputStream);
                 }
-                catch (AccessDeniedException e) {
-                  if (SystemInfoRt.isWindows) {
-                    DosFileAttributeView view = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
-                    if (view != null) {
-                      view.setReadOnly(false);
-                    }
-                  }
-                  else {
-                    throw e;
-                  }
-                }
-
-                Files.copy(inputStream, outputFile);
                 if (!entry.isWritable || entry.isExecutable) {
                   if (SystemInfoRt.isWindows) {
                     if (!entry.isWritable) {
