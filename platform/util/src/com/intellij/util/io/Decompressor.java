@@ -317,7 +317,23 @@ public abstract class Decompressor {
               InputStream inputStream = openEntryStream(entry);
               try {
                 Files.createDirectories(outputFile.getParent());
-                Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
+
+                try {
+                  Files.deleteIfExists(outputFile);
+                }
+                catch (AccessDeniedException e) {
+                  if (SystemInfoRt.isWindows) {
+                    DosFileAttributeView view = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
+                    if (view != null) {
+                      view.setReadOnly(false);
+                    }
+                  }
+                  else {
+                    throw e;
+                  }
+                }
+
+                Files.copy(inputStream, outputFile);
                 if (!entry.isWritable || entry.isExecutable) {
                   if (SystemInfoRt.isWindows) {
                     if (!entry.isWritable) {
