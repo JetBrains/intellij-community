@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -16,32 +16,39 @@ import java.util.*;
 /**
  * @author peter
  */
-public final class DomFileIndex extends ScalarIndexExtension<String>{
-  public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private final DataIndexer<String,Void, FileContent> myDataIndexer;
+public final class DomFileIndex extends ScalarIndexExtension<String> {
+  public static final ID<String, Void> NAME = ID.create("DomFileIndex");
 
-  public DomFileIndex() {
-    myDataIndexer = new DataIndexer<String, Void, FileContent>() {
+  @Override
+  @NotNull
+  public ID<String, Void> getName() {
+    return NAME;
+  }
+
+  @Override
+  @NotNull
+  public DataIndexer<String, Void, FileContent> getIndexer() {
+    return new DataIndexer<>() {
       @Override
       @NotNull
-      public Map<String, Void> map(@NotNull final FileContent inputData) {
+      public Map<String, Void> map(@NotNull FileContent inputData) {
         Set<String> namespaces = new HashSet<>();
-        final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
+        XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         ContainerUtil.addIfNotNull(namespaces, header.getPublicId());
         ContainerUtil.addIfNotNull(namespaces, header.getSystemId());
         ContainerUtil.addIfNotNull(namespaces, header.getRootTagNamespace());
-        final String tagName = header.getRootTagLocalName();
+        String tagName = header.getRootTagLocalName();
         if (StringUtil.isNotEmpty(tagName)) {
           Map<String, Void> result = new HashMap<>();
-          final DomApplicationComponent component = DomApplicationComponent.getInstance();
-          for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
-            final String[] strings = description.getAllPossibleRootTagNamespaces();
+          DomApplicationComponent component = DomApplicationComponent.getInstance();
+          for (DomFileDescription<?> description : component.getFileDescriptions(tagName)) {
+            String[] strings = description.getAllPossibleRootTagNamespaces();
             if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
               result.put(description.getRootElementClass().getName(), null);
             }
           }
-          for (final DomFileDescription description : component.getAcceptingOtherRootTagNameDescriptions()) {
-            final String[] strings = description.getAllPossibleRootTagNamespaces();
+          for (DomFileDescription<?> description : component.getAcceptingOtherRootTagNameDescriptions()) {
+            String[] strings = description.getAllPossibleRootTagNamespaces();
             if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
               result.put(description.getRootElementClass().getName(), null);
             }
@@ -53,18 +60,6 @@ public final class DomFileIndex extends ScalarIndexExtension<String>{
     };
   }
 
-  @Override
-  @NotNull
-  public ID<String, Void> getName() {
-    return NAME;
-  }
-
-  @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
-    return myDataIndexer;
-  }
-
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
@@ -74,7 +69,7 @@ public final class DomFileIndex extends ScalarIndexExtension<String>{
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
   @Override
