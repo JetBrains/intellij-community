@@ -12,7 +12,7 @@ class UnnecessaryUnicodeEscape {
   String str1 = "<warning descr="Unicode escape sequence '\u0061' can be replaced with 'a'">\u0061</warning>";
   String str2 = "\\u0061"; // Backslash followed by the characters "u0061"
   String str3 = "\\<warning descr="Unicode escape sequence '\u0061' can be replaced with 'a'">\u0061</warning>"; // Backslash followed by escape sequence
-  String str4 = <error descr="Illegal escape character in string literal">"\u004"</error>; // Too short to be a Unicode escape sequence
+  String str4 = <error descr="Illegal line end in string literal">"\u004"; // Too short to be a Unicode escape sequence</error><EOLError descr="';' expected"></EOLError>
   String str5 = <error descr="Illegal escape character in string literal">"\u004g"</error>; // Invalid hex character
 
   // <warning descr="Unicode escape sequence '\u0009' can be replaced with a tab character">\u0009</warning>

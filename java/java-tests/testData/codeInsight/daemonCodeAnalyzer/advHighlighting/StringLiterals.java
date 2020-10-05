@@ -28,7 +28,7 @@ public class a {
   };
 
   String s1 =  <error descr="Illegal escape character in string literal">"\xd"</error>;
-  String s11=  <error descr="Illegal escape character in string literal">"\udX"</error>;
+  String s11=  <error descr="Illegal line end in string literal">"\udX";</error><EOLError descr="';' expected"></EOLError>
   String s12=  <error descr="Illegal escape character in string literal">"c:\TEMP\test.jar"</error>;
   String s3 = "";
   String s4 = "\u0000";
@@ -40,6 +40,16 @@ public class a {
 
   String perverts = "\uuuuuuuuuuuu1234";
   char perv2 = '\uu3264';
+
+  String backSlash1 = <error descr="Illegal line end in string literal">"\u005c";</error><EOLError descr="';' expected"></EOLError>
+  String backSlash2 = "\u005c\";
+  String backSlash3 = "\\u005c";
+  String backSlash4 = "\u005c\u005c";
+  String backSlash5 = "\u005c134";
+  String backSlash6 = <error descr="Illegal line end in string literal">"\134\u005c";</error><EOLError descr="';' expected"></EOLError>
+  String backSlash7 = "\u005c\134";
+  String backSlash8 = "\u005c\u0022";
+  char backSlash9 = '\u005c\u0027';
 
   void foo(String a) {
      foo(<error descr="Illegal line end in string literal">"aaa</error>

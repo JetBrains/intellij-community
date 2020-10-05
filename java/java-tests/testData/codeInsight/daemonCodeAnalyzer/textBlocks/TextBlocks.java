@@ -15,4 +15,7 @@ class C {
   String valid2 = """
     \
     """;
+
+  String backSlash1 = """
+    \u005c\""";
 }

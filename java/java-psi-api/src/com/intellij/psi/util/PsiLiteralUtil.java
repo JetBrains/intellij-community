@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 public final class PsiLiteralUtil {
   @NonNls public static final String HEX_PREFIX = "0x";
   @NonNls public static final String BIN_PREFIX = "0b";
@@ -475,7 +477,7 @@ public final class PsiLiteralUtil {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (line.length() > 0) {
-        sb.append(trimTrailingWhitespace(line.substring(prefix)));
+        sb.append(trimTrailingWhitespaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
         sb.append('\n');
@@ -485,11 +487,62 @@ public final class PsiLiteralUtil {
   }
 
   @NotNull
-  private static String trimTrailingWhitespace(@NotNull String line) {
-    int index = line.length() - 1;
-    while (index >= 0 && Character.isWhitespace(line.charAt(index))) index--;
-    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
-    return line.substring(0, index + 1);
+  private static String trimTrailingWhitespaces(@NotNull String line) {
+    int index = line.length();
+    while (true) {
+      int wsIndex = parseWhitespaceBackwards(line, index - 1);
+      if (wsIndex == -1) break;
+      index = wsIndex;
+    }
+    return line.substring(0, index);
+  }
+
+  /**
+   * Parse whitespace (possibly escaped) starting from its last character.
+   *
+   * @return -1 if sequence is not a whitespace or whitespace is escaped
+   */
+  private static int parseWhitespaceBackwards(@NotNull String s, int index) {
+    if (index < 0) return -1;
+    if (Character.isWhitespace(s.charAt(index))) return index;
+    index = parseUnicodeEscapeBackwards(s, index, Character::isWhitespace);
+    if (index < 0) return -1;
+    int nBackSlashes = 1;
+    index--;
+    if (index >= 0 && s.charAt(index) == '\\') {
+      nBackSlashes++;
+      nBackSlashes += countBackSlashes(s, index - 1);
+    }
+    return nBackSlashes % 2 == 0 ? -1 : index + 1;
+  }
+
+  private static int countBackSlashes(@NotNull String s, int index) {
+    int nBackSlashes = 0;
+    while (index >= 0) {
+      int start = s.charAt(index) == '\\' ? index : parseUnicodeEscapeBackwards(s, index, c -> c == '\\');
+      if (start == -1) break;
+      nBackSlashes++;
+      index = start - 1;
+    }
+    return nBackSlashes;
+  }
+
+  private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<Character> charPredicate) {
+    // \u1234 needs at least 6 positions
+    if (index - 5 < 0) return -1;
+    try {
+      int code = Integer.parseInt(s.substring(index - 3, index + 1), 16);
+      if (!charPredicate.test((char) code)) return -1;
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
+    if (s.charAt(index - 4) != 'u') return -1;
+    index -= 5;
+    // 'u' can appear multiple times
+    while (index >= 0 && s.charAt(index) == 'u') index--;
+    if (index < 0 || s.charAt(index) != '\\') return -1;
+    return index;
   }
 
   /**
