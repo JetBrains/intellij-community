@@ -20,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -107,9 +109,17 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
+    return getPertinentApplicabilityLevel(null);
+  }
+
+  /**
+   * @param map reuse substitutor from conflict resolver cache when available
+   */
+  @ApplicabilityLevelConstant
+  public int getPertinentApplicabilityLevel(@Nullable Map<MethodCandidateInfo, PsiSubstitutor> map) {
     int result = myPertinentApplicabilityLevel;
     if (result == 0) {
-      myPertinentApplicabilityLevel = result = getPertinentApplicabilityLevelInner();
+      myPertinentApplicabilityLevel = result = getPertinentApplicabilityLevelInner(() -> map != null ? map.get(this) : getSubstitutor(false));
     }
     return result;
   }
@@ -118,7 +128,7 @@ public class MethodCandidateInfo extends CandidateInfo{
    * 15.12.2.2 Identify Matching Arity Methods Applicable by Strict Invocation
    */
   @ApplicabilityLevelConstant
-  private int getPertinentApplicabilityLevelInner() {
+  private int getPertinentApplicabilityLevelInner(Supplier<PsiSubstitutor> substitutorSupplier) {
     if (myArgumentList == null || !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return getApplicabilityLevel();
     }
@@ -127,7 +137,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
     if (isToInferApplicability()) {
       //ensure applicability check is performed
-      getSubstitutor(false);
+      substitutorSupplier.get();
 
       //already performed checks, so if inference failed, error message should be saved
       if (myApplicabilityError || isPotentiallyCompatible() != ThreeState.YES) {
@@ -136,7 +146,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
     }
 
-    final PsiSubstitutor substitutor = getSubstitutor(false);
+    final PsiSubstitutor substitutor = substitutorSupplier.get();
     final Computable<Integer> computable = () -> computeWithKnownTargetType(() -> {
       //arg types are calculated here without additional constraints:
       //non-pertinent to applicability arguments of arguments would be skipped
