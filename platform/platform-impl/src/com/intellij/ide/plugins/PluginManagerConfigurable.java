@@ -1665,7 +1665,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void cancel() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    reset();
   }
 
   @Override
@@ -1685,7 +1685,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void reset() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    myPluginModel.clear(myCardPanel);
   }
 
   @NotNull

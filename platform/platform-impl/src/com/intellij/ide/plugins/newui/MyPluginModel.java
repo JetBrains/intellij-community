@@ -198,7 +198,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return changesAppliedWithoutRestart;
   }
 
-  public void removePluginsOnCancel(@Nullable JComponent parentComponent) {
+  public void clear(@Nullable JComponent parentComponent) {
+    myDiff.clear();
+
     myPluginsToRemoveOnCancel.forEach(pluginDescriptor -> PluginInstaller.uninstallDynamicPlugin(parentComponent, pluginDescriptor, false));
     myPluginsToRemoveOnCancel.clear();
   }
