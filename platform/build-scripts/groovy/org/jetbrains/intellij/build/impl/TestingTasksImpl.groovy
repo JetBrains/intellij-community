@@ -219,7 +219,7 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
             'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
-            'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
+            'branch'                           : System.getProperty('teamcity.build.branch') ?: 'master',
             'project'                          : System.getProperty('intellij.test.discovery.project') ?: 'intellij',
             'checkout-root-prefix'             : System.getProperty("intellij.build.test.discovery.checkout.root.prefix"),
           ])
