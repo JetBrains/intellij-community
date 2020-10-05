@@ -261,7 +261,10 @@ fun Path.isDirectory(): Boolean = Files.isDirectory(this)
 
 fun Path.isFile(): Boolean = Files.isRegularFile(this)
 
-fun Path.move(target: Path): Path = Files.move(this, target, StandardCopyOption.REPLACE_EXISTING)
+fun Path.move(target: Path): Path {
+  target.parent?.createDirectories()
+  return Files.move(this, target, StandardCopyOption.REPLACE_EXISTING)
+}
 
 fun Path.copy(target: Path): Path {
   target.parent?.createDirectories()
