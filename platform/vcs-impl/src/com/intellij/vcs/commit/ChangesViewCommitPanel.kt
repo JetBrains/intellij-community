@@ -2,12 +2,8 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -28,27 +24,18 @@ import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
-import java.awt.LayoutManager
 import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
-import javax.swing.border.Border
-import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates.observable
-
-private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
 private fun JBPopup.showAbove(component: JComponent) {
   val northWest = RelativePoint(component, Point())
@@ -67,23 +54,16 @@ private fun JBPopup.showAbove(component: JComponent) {
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
 class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
-  NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi, EditorColorsListener {
+  NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi {
 
   private val changesView get() = changesViewHost.changesView
 
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
-  private val centerPanel = simplePanel()
   private val toolbarPanel = simplePanel().apply {
     isOpaque = false
     border = emptyLeft(1)
   }
-  private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
-  private val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, false).apply {
-    setTargetComponent(this@ChangesViewCommitPanel)
-    component.isOpaque = false
-  }
-
   private val commitAuthorComponent = CommitAuthorComponent(project)
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
@@ -100,7 +80,14 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   init {
     Disposer.register(this, commitMessage)
 
+    bottomPanel = {
+      add(progressPanel.apply { border = empty(6) })
+      add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
+      add(commitActionsPanel)
+    }
     buildLayout()
+    addToolbar(isToolbarHorizontal)
+
     for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
@@ -117,28 +104,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       !progressPanel.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
     }
-  }
-
-  private fun buildLayout() {
-    commitActionsPanel.apply {
-      border = getButtonPanelBorder()
-      background = getButtonPanelBackground()
-
-      setTargetComponent(this@ChangesViewCommitPanel)
-    }
-    centerPanel
-      .addToCenter(commitMessage)
-      .addToBottom(panel(VerticalLayout(0)).apply {
-        background = getButtonPanelBackground()
-
-        add(progressPanel.apply { border = empty(6) })
-        add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-        add(commitActionsPanel)
-      })
-    addToCenter(centerPanel)
-    addToolbar(isToolbarHorizontal)
-
-    withPreferredHeight(85)
   }
 
   private fun addToolbar(isHorizontal: Boolean) {
@@ -158,15 +123,9 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     }
   }
 
-  private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
-
-  private fun getButtonPanelBackground() =
-    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
-
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     needUpdateCommitOptionsUi = true
-    commitActionsPanel.border = getButtonPanelBorder()
+    super.globalSchemeChange(scheme)
   }
 
   override var commitAuthor: VcsUser?
@@ -316,9 +275,5 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       isShowCheckboxes = false
       setInclusionListener(null)
     }
-  }
-
-  companion object {
-    internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
   }
 }

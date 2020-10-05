@@ -29,7 +29,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.vcs.commit.ChangesViewCommitPanel
+import com.intellij.vcs.commit.NonModalCommitPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
 import javax.swing.JList
@@ -49,7 +49,7 @@ class ShowMessageHistoryAction : DumbAwareAction() {
     val project = e.project
     val commitMessage = getCommitMessage(e)
 
-    if (e.place == ChangesViewCommitPanel.COMMIT_TOOLBAR_PLACE) {
+    if (e.place == NonModalCommitPanel.COMMIT_TOOLBAR_PLACE) {
       e.presentation.icon = AllIcons.Vcs.HistoryInline
       e.presentation.hoveredIcon = AllIcons.Vcs.HistoryInlineHovered
     }

@@ -16,12 +16,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI.Borders.emptyLeft
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -85,8 +87,12 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
 
     PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
-    val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
-    progressStripe = ProgressStripe(scrolledTree, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+    val toolbarPanel = simplePanel(commitPanel.toolbar.component).apply {
+      border = emptyLeft(1)
+      background = tree.background
+    }
+    val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(toolbarPanel)
+    progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
     treeMessageSplitter.firstComponent = progressStripe
     treeMessageSplitter.secondComponent = commitPanel
