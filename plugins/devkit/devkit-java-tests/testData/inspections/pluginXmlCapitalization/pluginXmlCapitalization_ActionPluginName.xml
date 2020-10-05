@@ -73,12 +73,21 @@
   <!-- Custom Bundle -->
   <actions resource-bundle="AnotherBundle">
     <action id="AnotherBundleAction"/>
-
     <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action</warning></warning> id="AnotherBundleActionWrongCasing"/>
+
+
+    <action id="AnotherBundleOverrideAction">
+      <override-text place="AnotherBundleCustomPlace"/>
+      <<warning descr="String 'another bundle override action wrong case text' is not properly capitalized. It should have title capitalization">override-text</warning> place="AnotherBundleCustomPlaceWrongCase"/>
+    </action>
+
 
     <group id="separatorGroupWithCustomBundle">
       <separator key="another.titleCaseKey"/>
-      <separator key="another.sentenceCaseKey"/>
+      <separator key="<warning descr="String 'My key is lowercase' is not properly capitalized. It should have title capitalization">another.sentenceCaseKey</warning>"/>
+
+      <override-text place="AnotherBundleCustomPlace"/>
+      <<warning descr="String 'another bundle custom place wrong case text' is not properly capitalized. It should have title capitalization">override-text</warning> place="AnotherBundleCustomPlaceWrongCase"/>
     </group>
   </actions>
 </idea-plugin>

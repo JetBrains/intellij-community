@@ -60,7 +60,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   }
 
   private static void checkSeparator(Separator separator, DomElementAnnotationHolder holder) {
-    checkPropertyCapitalization(holder, separator.getKey(), Nls.Capitalization.Title, separator.getKey().getStringValue(), false);
+    checkCapitalizationWithKey(holder, separator.getKey(), Nls.Capitalization.Title);
   }
 
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
