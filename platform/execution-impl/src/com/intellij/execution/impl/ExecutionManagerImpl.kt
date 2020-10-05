@@ -32,7 +32,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -557,16 +556,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         processHandler.startNotify()
         val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
 
-          override fun addStdoutText(text: String) {
-            processHandler.notifyTextAvailable(text, ProcessOutputType.STDOUT)
-          }
-
-          override fun addStderrText(text: String) {
-            processHandler.notifyTextAvailable(text, ProcessOutputType.STDERR)
-          }
-
-          override fun addSystemText(message: String) {
-            processHandler.notifyTextAvailable(message, ProcessOutputType.SYSTEM)
+          override fun addText(text: String, key: Key<*>) {
+            processHandler.notifyTextAvailable(text, key)
           }
 
           override fun isCanceled(): Boolean {

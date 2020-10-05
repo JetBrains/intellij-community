@@ -3,6 +3,8 @@ package com.intellij.execution.target;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,15 +22,8 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
 
   interface TargetProgressIndicator {
     TargetProgressIndicator EMPTY = new TargetProgressIndicator() {
-
       @Override
-      public void addStdoutText(@NotNull String text) { }
-
-      @Override
-      public void addStderrText(@NotNull String text) { }
-
-      @Override
-      public void addSystemText(@NotNull String message) { }
+      public void addText(@NotNull String text, @NotNull Key<?> key) { }
 
       @Override
       public boolean isCanceled() {
@@ -36,14 +31,10 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
       }
     };
 
-    void addStdoutText(@NotNull String text);
-
-    void addStderrText(@NotNull String text);
-
-    void addSystemText(@NotNull String message);
+    void addText(@NotNull String text, @NotNull Key<?> key);
 
     default void addSystemLine(@NotNull String message) {
-      addSystemText(message + "\n");
+      addText(message + "\n", ProcessOutputType.SYSTEM);
     }
 
     boolean isCanceled();
