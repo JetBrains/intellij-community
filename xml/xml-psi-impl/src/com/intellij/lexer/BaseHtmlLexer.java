@@ -181,7 +181,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   protected List<HtmlEmbeddedContentSupport> getEmbeddedContentSupportList() {
     List<HtmlEmbeddedContentSupport> supports = new ArrayList<>();
     try {
-      HtmlEmbeddedContentSupport.Companion.getEP_NAME$intellij_xml_psi_impl().extensions()
+      HtmlEmbeddedContentSupport.Companion.getContentSupports()
         .filter(support -> support.isEnabled(this))
         .forEach(supports::add);
     }
