@@ -68,7 +68,7 @@ internal class SpaceChatPanel(
       launch(lifetime, Ui) {
         val chatItems = messagesViewModel.messages.map { messageViewModel ->
           async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-            messageViewModel.message.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink(server))
+            messageViewModel.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink(server))
           }
         }.awaitAll()
         itemsListModel.messageListUpdated(chatItems)
