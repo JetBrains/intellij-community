@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -348,9 +349,14 @@ public final class VfsImplUtil {
 
   /**
    * <p>Checks whether the {@code event} (in {@link LocalFileSystem}) affects some archives and if so,
-   * generates appropriate additional JarFileSystem-events and corresponding after-event-actions.</p>
-   *
-   * <p>For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" one.</p>
+   * generates appropriate additional {@link JarFileSystem}-events and corresponding after-event-actions.</p>
+   * <p>For example, {@link VFileDeleteEvent}/{@link VFileMoveEvent}/{@link VFilePropertyChangeEvent VFilePropertyChangeEvent(PROP_NAME)}('file://tmp/x.jar')
+   * should generate {@link VFileDeleteEvent}('jar:///tmp/x.jar!/').</p>
+   * And vice versa, when refresh found change inside jar archive, generate {@link LocalFileSystem}-level events
+   * for the corresponding .jar file change.
+   * <p>For example, {@link VFileDeleteEvent}/{@link VFileMoveEvent}/{@link VFilePropertyChangeEvent VFilePropertyChangeEvent(PROP_NAME)}('jar:///x.jar!/')
+   * should generate {@link VFileDeleteEvent}('file://x.jar').</p>
+   * (The latter might happen when someone explicitly called {@code fileInsideJar.refresh()} without refreshing jar file in local file system).
    */
   @NotNull
   public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
@@ -375,6 +381,12 @@ public final class VfsImplUtil {
     if (file == null) {
       return Collections.emptyList();
     }
+    VirtualFileSystem entryFileSystem = file.getFileSystem();
+    VirtualFile local = null;
+    if (entryFileSystem instanceof ArchiveFileSystem) {
+      local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
+      path = local == null ? PathUtil.getLocalPath(path) : local.getPath();
+    }
     Collection<String> jarPaths = ourDominatorsMap.get(path);
     if (jarPaths == null) {
       jarPaths = Collections.singletonList(path);
@@ -385,24 +397,30 @@ public final class VfsImplUtil {
       if (handlerPair == null) {
         continue;
       }
-      ArchiveFileSystem fileSystem = handlerPair.first;
-      NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
-      if (root != null) {
-        VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
-        Runnable runnable = () -> {
-          Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
-          if (pair != null) {
-            pair.second.dispose();
-            forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
-              Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-              if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
-                ourDominatorsMap.remove(containingDirectoryPath);
-              }
-            });
-          }
-        };
-        events.add(jarDeleteEvent);
-        outApplyActions.add(runnable);
+      if (entryFileSystem instanceof LocalFileSystem) {
+        ArchiveFileSystem fileSystem = handlerPair.first;
+        NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
+        if (root != null) {
+          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
+          Runnable runnable = () -> {
+            Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
+            if (pair != null) {
+              pair.second.dispose();
+              forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
+                Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+                if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
+                  ourDominatorsMap.remove(containingDirectoryPath);
+                }
+              });
+            }
+          };
+          events.add(jarDeleteEvent);
+          outApplyActions.add(runnable);
+        }
+      }
+      else if (local != null) {
+        VFileDeleteEvent localJarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh());
+        events.add(localJarDeleteEvent);
       }
     }
     return events;

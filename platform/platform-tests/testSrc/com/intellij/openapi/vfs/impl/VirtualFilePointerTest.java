@@ -492,7 +492,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     LOG.debug("i = " + i);
   }
 
-  @Bombed(month = Calendar.OCTOBER, day = 12, user = "Alexey Kudravtsev", description = "Test for IDEA-251779")
   @Test
   public void updateJarFilePointerWhenJarFileIsRestored() throws IOException {
     File jarParent = new File(tempDir.getRoot(), "jarParent");
@@ -500,7 +499,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
     FileUtil.copy(originalJar, jar);
     String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
-    getVirtualFile(jar);
+    assertNotNull(getVirtualFile(jar));
     VirtualFile jarFile1 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
     assertNotNull(jarFile1);
     FileUtil.delete(jar);
@@ -514,7 +513,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNull(jarPointer.getFile());
 
     FileUtil.copy(originalJar, jar);
-    getVirtualFile(jar);
+    assertNotNull(getVirtualFile(jar));
     VirtualFile jarFile2 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
     assertNotNull(jarFile2);
     assertTrue(jarPointer.isValid());

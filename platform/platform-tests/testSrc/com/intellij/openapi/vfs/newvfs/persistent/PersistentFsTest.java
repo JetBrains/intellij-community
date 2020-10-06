@@ -744,6 +744,33 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
   }
 
+  @Test
+  public void testChangeInsideJarFileMustCauseLocalJarFileChangeEvent() throws IOException {
+    File generationDir = tempDirectory.newDirectory("gen");
+    File testDir = tempDirectory.newDirectory("test");
+
+    File jarFile = zipWithEntry("test.jar", generationDir, testDir, "Some.java", "class Some {}");
+    VirtualFile vFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(jarFile.getPath()));
+    VirtualFile jarVFile = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
+    FileUtil.delete(jarFile);
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> e) {
+        events.addAll(e);
+      }
+    });
+
+    jarVFile.refresh(false, false);
+    assertEquals(2, events.size());
+    for (VFileEvent event : events) {
+      assertTrue(event.toString(), event instanceof VFileDeleteEvent);
+    }
+    events.sort(Comparator.comparing((VFileEvent e) ->e.getFile().getUrl()));
+    assertEquals(vFile.getUrl(), events.get(0).getFile().getUrl());
+    assertEquals(jarVFile.getUrl(), events.get(1).getFile().getUrl());
+  }
+
   //<editor-fold desc="Helpers.">
   private static VirtualFile find(File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
