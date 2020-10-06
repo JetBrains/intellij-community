@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
@@ -83,7 +87,11 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   @NonNls
-  public abstract String getTailText();
+  public String getTypeText() {
+    final LanguageFileType type = getFileType();
+    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", type.getLanguage().getDisplayName())
+                          : SSRBundle.message("predefined.configuration.type.text.user.defined", type.getLanguage().getDisplayName());
+  }
 
   @NotNull
   public String getCategory() {
@@ -244,4 +252,12 @@ public abstract class Configuration implements JDOMExternalizable {
   public int hashCode() {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
+
+  @NotNull
+  public Icon getIcon() {
+    final LanguageFileType type = getFileType();
+    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Any_type : type.getIcon();
+  }
+
+  public abstract LanguageFileType getFileType();
 }
