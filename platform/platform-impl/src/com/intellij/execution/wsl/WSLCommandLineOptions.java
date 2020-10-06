@@ -49,6 +49,11 @@ public class WSLCommandLineOptions {
     return myRemoteWorkingDirectory;
   }
 
+  /**
+   * @param remoteWorkingDirectory Linux directory (e.g. {@code /home/user/stuff}) to be used as a working directory
+   *                              when starting a process.
+   * @return this instance
+   */
   public @NotNull WSLCommandLineOptions setRemoteWorkingDirectory(@Nullable String remoteWorkingDirectory) {
     myRemoteWorkingDirectory = remoteWorkingDirectory;
     return this;

@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -223,7 +225,9 @@ public class WSLDistribution {
                                                            @Nullable Project project,
                                                            @NotNull WSLCommandLineOptions options) {
     logCommandLineBefore(commandLine, options);
-    List<String> linuxCommand = buildLinuxCommand(commandLine, options);
+    Path wslExe = findWslExe(options);
+    Function<String, String> quote = wslExe == null ? CommandLineUtil::posixQuote : Functions.id();
+    List<String> linuxCommand = buildLinuxCommand(commandLine, quote);
 
     if (options.isSudo()) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
@@ -257,19 +261,15 @@ public class WSLDistribution {
     }
 
     if (StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
-      prependCommand(linuxCommand, "cd", options.getRemoteWorkingDirectory(), "&&");
+      prependCommand(linuxCommand, "cd", quote.fun(options.getRemoteWorkingDirectory()), "&&");
     }
 
     commandLine.getEnvironment().forEach((key, val) -> {
-      if (StringUtil.containsChar(val, '*') && !StringUtil.isQuotedString(val)) {
-        val = "'" + val + "'";
-      }
-      prependCommand(linuxCommand, "export", key + "=" + val, "&&");
+      prependCommand(linuxCommand, "export", key + "=" + quote.fun(val), "&&");
     });
     commandLine.getEnvironment().clear();
 
     commandLine.getParametersList().clearAll();
-    Path wslExe = findWslExe(options);
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
@@ -315,16 +315,13 @@ public class WSLDistribution {
     return null;
   }
 
-  private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine,
-                                                         @NotNull WSLCommandLineOptions options) {
+  private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, @NotNull Function<String, String> quote) {
     List<String> command = ContainerUtil.prepend(commandLine.getParametersList().getList(), commandLine.getExePath());
     // avoiding double wrapping into bash -c; may cause problems with escaping
     if (command.size() == 3 && "bash".equals(command.get(0)) && "-c".equals(command.get(1))) {
       command = ParametersListUtil.parse(command.get(2), true);
     }
-    if (!options.isLaunchWithWslExe()) {
-      command = ContainerUtil.map(command, CommandLineUtil::posixQuote);
-    }
+    command = ContainerUtil.map(command, quote);
     return new ArrayList<>(command);
   }
 
