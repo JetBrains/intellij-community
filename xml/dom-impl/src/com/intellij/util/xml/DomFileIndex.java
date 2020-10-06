@@ -11,6 +11,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author peter
- */
+@ApiStatus.Internal
 public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
   /**
    * @deprecated should not be used since has no effect.
