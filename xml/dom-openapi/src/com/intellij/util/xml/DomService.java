@@ -51,6 +51,14 @@ public abstract class DomService {
   public abstract Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
                                                                @NotNull GlobalSearchScope scope);
 
+  // used externally
+  @NotNull
+  public Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+                                                               Project project,
+                                                               @NotNull GlobalSearchScope scope) {
+    return getDomFileCandidates(rootElementClass, scope);
+  }
+
   /**
    * @param rootElementClass class of root (file-level) element in DOM model
    * @param project          current project
