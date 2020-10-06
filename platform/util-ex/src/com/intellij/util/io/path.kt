@@ -87,7 +87,7 @@ fun Path.delete(recursively: Boolean = true) {
   if (recursively) {
     doDelete(this)
   }
-  else {
+  else
     Files.delete(this)
   }
 }
