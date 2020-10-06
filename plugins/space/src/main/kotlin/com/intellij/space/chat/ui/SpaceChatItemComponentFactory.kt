@@ -1,9 +1,7 @@
 package com.intellij.space.chat.ui
 
 import circlet.client.api.*
-import circlet.code.api.CodeDiscussionAddedFeedEvent
-import circlet.code.api.CodeDiscussionRecord
-import circlet.code.api.CodeDiscussionSnippet
+import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.format
@@ -40,6 +38,7 @@ import libraries.coroutines.extra.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.date.DateFormat
 import javax.swing.*
@@ -68,6 +67,7 @@ internal class SpaceChatItemComponentFactory(
             messagePanel.withThread(lifetime, server, thread)
           }
         }
+        is ReviewRevisionsChangedEvent -> details.createComponent()
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
@@ -75,6 +75,19 @@ internal class SpaceChatItemComponentFactory(
       createMessageTitle(server, item),
       component
     )
+  }
+
+  private fun ReviewRevisionsChangedEvent.createComponent(): JComponent {
+    val commitsCount = commits.size
+    @Nls val text = when (changeType) {
+      ReviewRevisionsChangedType.Created -> SpaceBundle.message("chat.code.review.created.message", commitsCount)
+      ReviewRevisionsChangedType.Added -> SpaceBundle.message("chat.commits.added.message", commitsCount)
+      ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
+    }
+
+    return HtmlEditorPane().apply {
+      setBody(text)
+    }
   }
 
   private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent {

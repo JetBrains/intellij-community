@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Graphics
 import java.awt.Shape
 import javax.swing.JEditorPane
@@ -80,7 +81,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
   }
 
-  fun setBody(body: String) {
+  fun setBody(@Nls body: String) {
     if (body.isEmpty()) {
       text = ""
     }
