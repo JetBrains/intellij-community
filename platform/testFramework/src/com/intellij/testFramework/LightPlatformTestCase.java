@@ -73,7 +73,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkPointersUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFilePointersTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
 
-  private LegacyBridgeTestFrameworkPointersUtil myLegacyBridgeTestFrameworkPointersUtil;
+  private LegacyBridgeTestFilePointersTracker myLegacyBridgeTestFilePointersTracker;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
@@ -249,8 +249,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-      myLegacyBridgeTestFrameworkPointersUtil = new LegacyBridgeTestFrameworkPointersUtil(getProject());
-      myLegacyBridgeTestFrameworkPointersUtil.startTrackPointersCreatedInTest();
+      myLegacyBridgeTestFilePointersTracker = new LegacyBridgeTestFilePointersTracker(getProject());
+      myLegacyBridgeTestFilePointersTracker.startTrackPointersCreatedInTest();
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     });
   }
@@ -409,7 +409,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
       },
-      () -> myLegacyBridgeTestFrameworkPointersUtil.disposePointersCreatedInTest(),
+      () -> myLegacyBridgeTestFilePointersTracker.disposePointersCreatedInTest(),
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();

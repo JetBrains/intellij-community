@@ -614,7 +614,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
                                                 internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.getPresentableUrl()), moduleGroup),
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.url), moduleGroup),
                                       fileUrl, source, virtualFileManager,
                                       internalModuleListSerializer,
                                       externalModuleListSerializer,

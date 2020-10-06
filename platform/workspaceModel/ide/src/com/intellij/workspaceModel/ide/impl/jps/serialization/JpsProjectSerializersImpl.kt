@@ -57,7 +57,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val enabledModuleListSerializers = moduleListSerializers.filter { enableExternalStorage || !it.isExternalStorage }
     val moduleFiles = enabledModuleListSerializers.flatMap { it.loadFileList(reader, virtualFileManager) }
     for ((moduleFile, moduleGroup) in moduleFiles) {
-      val internalSource = createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(moduleFile)!!, moduleFile.getFileName())
+      val internalSource = createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(moduleFile)!!, moduleFile.fileName)
       for (moduleListSerializer in enabledModuleListSerializers) {
         val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile, moduleGroup)
         moduleSerializers[moduleSerializer] = moduleListSerializer
@@ -136,7 +136,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         obsoleteSerializersForFactory.forEach { moduleSerializers.remove(it, serializerFactory) }
         val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
           serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
-                                                                         it.first.getFileName()), it.first, it.second)
+                                                                         it.first.fileName), it.first, it.second)
         }
         newFileSerializersForFactory.associateWithTo(moduleSerializers) { serializerFactory }
         obsoleteSerializers.addAll(obsoleteSerializersForFactory)

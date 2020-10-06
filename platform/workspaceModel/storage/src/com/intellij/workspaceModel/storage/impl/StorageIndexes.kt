@@ -165,7 +165,7 @@ internal class MutableStorageIndexes(
       persistentIdIndex.index(pid, persistentId)
     }
 
-    entitySource.getVirtualFileUrl()?.let { virtualFileIndex.index(pid, "entitySource", listOf(it)) }
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", listOf(it)) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {

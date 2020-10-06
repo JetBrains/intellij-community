@@ -166,7 +166,7 @@ class ModuleBridgesTest {
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
 
-      val moduleFilePath = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.getPresentableUrl()
+      val moduleFilePath = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.presentableUrl
       assertNotNull(moduleFilePath)
       assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))

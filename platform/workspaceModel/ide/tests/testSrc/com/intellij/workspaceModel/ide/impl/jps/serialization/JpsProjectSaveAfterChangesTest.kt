@@ -6,8 +6,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.append
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -27,7 +27,7 @@ class JpsProjectSaveAfterChangesTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl(projectModel.project)
+    virtualFileManager = IdeVirtualFileUrlManagerImpl(projectModel.project)
   }
 
   @Test
@@ -36,7 +36,7 @@ class JpsProjectSaveAfterChangesTest {
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
-        url = configLocation.baseDirectoryUrl.append(virtualFileManager, "util/src2")
+        url = configLocation.baseDirectoryUrl.append("util/src2", virtualFileManager)
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
         rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
@@ -91,9 +91,9 @@ class JpsProjectSaveAfterChangesTest {
       builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
         type = "JAVA_MODULE"
       }
-      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append(virtualFileManager, "new"), emptyList(),
+      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new", virtualFileManager), emptyList(),
                                                            emptyList(), module)
-      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append(virtualFileManager, "new"),
+      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new", virtualFileManager),
                                                          false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)

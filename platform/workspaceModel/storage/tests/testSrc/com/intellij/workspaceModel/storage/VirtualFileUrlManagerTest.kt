@@ -191,7 +191,7 @@ class VirtualFileUrlManagerTest {
   }
 
   private fun assertFilePath(expectedResult: String?, url: String) {
-    assertEquals(expectedResult, virtualFileManager.fromUrl(url).getPresentableUrl())
+    assertEquals(expectedResult, virtualFileManager.fromUrl(url).presentableUrl)
   }
 
   private fun roundTrip(url: String) {

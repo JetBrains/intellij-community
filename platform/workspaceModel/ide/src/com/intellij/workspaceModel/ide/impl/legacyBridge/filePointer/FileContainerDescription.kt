@@ -15,24 +15,24 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 
 class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {
-  private val myList: ConcurrentList<VirtualFilePointer> = ContainerUtil.createConcurrentList()
+  private val virtualFilePointersList: ConcurrentList<VirtualFilePointer> = ContainerUtil.createConcurrentList()
    init {
-     urls.forEach { myList.addIfAbsent(it as VirtualFilePointer) }
-     jarDirectories.forEach { myList.addIfAbsent(it.directoryUrl as VirtualFilePointer) }
+     urls.forEach { virtualFilePointersList.addIfAbsent(it as VirtualFilePointer) }
+     jarDirectories.forEach { virtualFilePointersList.addIfAbsent(it.directoryUrl as VirtualFilePointer) }
    }
 
   fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.url == url }
-  fun findByUrl(url: String): VirtualFilePointer? = myList.find { it.url == url }
-  fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(myList)
-  fun getUrls(): Array<String> = myList.map { it.url }.toTypedArray()
+  fun findByUrl(url: String): VirtualFilePointer? = virtualFilePointersList.find { it.url == url }
+  fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(virtualFilePointersList)
+  fun getUrls(): Array<String> = virtualFilePointersList.map { it.url }.toTypedArray()
   fun getFiles(): Array<VirtualFile> = cacheFiles()
 
   private fun cacheFiles(): Array<VirtualFile> {
-    val cachedFiles: MutableList<VirtualFile> = ArrayList(myList.size)
-    val cachedDirectories: MutableList<VirtualFile> = ArrayList(myList.size / 3)
+    val cachedFiles: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size)
+    val cachedDirectories: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size / 3)
     var allFilesAreDirs = true
-    for (v in myList) {
-      val file = v.file
+    for (pointer in virtualFilePointersList) {
+      val file = pointer.file
       if (file != null) {
         cachedFiles.add(file)
         if (file.isDirectory) {

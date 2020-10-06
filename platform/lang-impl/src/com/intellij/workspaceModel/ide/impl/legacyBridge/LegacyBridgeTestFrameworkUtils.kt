@@ -5,8 +5,8 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
@@ -26,21 +26,21 @@ object LegacyBridgeTestFrameworkUtils {
   }
 }
 
-class LegacyBridgeTestFrameworkPointersUtil(project: Project) {
+class LegacyBridgeTestFilePointersTracker(project: Project) {
   private val enabled = LegacyBridgeProjectLifecycleListener.enabled(project)
-  private val virtualFileUrlManager: VirtualFileUrlManagerImpl?
+  private val ideVirtualFileUrlManager: IdeVirtualFileUrlManagerImpl?
 
   init {
-    virtualFileUrlManager = if (enabled) VirtualFileUrlManager.getInstance(project) as VirtualFileUrlManagerImpl else null
+    ideVirtualFileUrlManager = if (enabled) VirtualFileUrlManager.getInstance(project) as IdeVirtualFileUrlManagerImpl else null
   }
 
   @ApiStatus.Internal
   fun startTrackPointersCreatedInTest() {
-    if (enabled) virtualFileUrlManager?.startTrackPointersCreatedInTest()
+    if (enabled) ideVirtualFileUrlManager?.startTrackPointersCreatedInTest()
   }
 
   @ApiStatus.Internal
   fun disposePointersCreatedInTest() {
-    if (enabled) virtualFileUrlManager?.disposePointersCreatedInTest()
+    if (enabled) ideVirtualFileUrlManager?.disposePointersCreatedInTest()
   }
 }

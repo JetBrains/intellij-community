@@ -62,7 +62,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                   customDir: String?,
                                   virtualFileManager: VirtualFileUrlManager): EntitySource? {
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
-    val classpathUrl = storageRootUrl.append(virtualFileManager, EclipseXml.CLASSPATH_FILE)
+    val classpathUrl = storageRootUrl.append(EclipseXml.CLASSPATH_FILE, virtualFileManager)
     return EclipseProjectFile(classpathUrl, internalEntitySource)
   }
 
@@ -86,7 +86,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                        virtualFileManager)
     }
     else {
-      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append(virtualFileManager, "bin"), null,
+      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin", virtualFileManager), null,
                                           moduleEntity, entitySource)
     }
 
@@ -121,10 +121,10 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                 imlFileUrl: VirtualFileUrl,
                                 virtualUrlManager: VirtualFileUrlManager): ModuleEntity {
     fun reportError(message: String) {
-      errorReporter.reportError(message, storageRootUrl.append(virtualUrlManager, EclipseXml.CLASSPATH_FILE))
+      errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE, virtualUrlManager))
     }
     fun getUrlByRelativePath(path: String): VirtualFileUrl {
-      return if (path.isEmpty()) storageRootUrl else storageRootUrl.append(virtualUrlManager, FileUtil.toSystemIndependentName(path))
+      return if (path.isEmpty()) storageRootUrl else storageRootUrl.append(FileUtil.toSystemIndependentName(path), virtualUrlManager)
     }
 
     val moduleEntity = contentRootEntity.module

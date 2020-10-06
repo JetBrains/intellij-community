@@ -57,7 +57,8 @@ interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceE
  * * sealed abstract class where all implementations satisfy these requirements.
  */
 interface EntitySource {
-  fun getVirtualFileUrl(): VirtualFileUrl? = null
+  val virtualFileUrl: VirtualFileUrl?
+    get() = null
 }
 
 /**

@@ -23,10 +23,10 @@ class JpsExternalStorageMappingImpl(override val externalStorageRoot: VirtualFil
       val directoryName = PathUtil.getFileName(directoryPath)
       val parentPath = PathUtil.getParentPath(directoryPath)
       if (PathUtil.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {
-        JpsFileEntitySource.ExactFile(externalStorageRoot.append(virtualFileManager, "project/$directoryName.xml"), projectLocation)
+        JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/$directoryName.xml", virtualFileManager), projectLocation)
       }
       else {
-        JpsFileEntitySource.FileInDirectory(externalStorageRoot.append(virtualFileManager, "modules"), projectLocation)
+        JpsFileEntitySource.FileInDirectory(externalStorageRoot.append("modules", virtualFileManager), projectLocation)
       }
     }
     else -> throw IllegalArgumentException("Unsupported internal entity source $internalSource")

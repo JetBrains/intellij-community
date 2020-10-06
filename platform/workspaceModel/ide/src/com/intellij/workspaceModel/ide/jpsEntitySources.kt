@@ -45,7 +45,8 @@ sealed class JpsFileEntitySource : EntitySource {
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
    */
   data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
-    override fun getVirtualFileUrl(): VirtualFileUrl? = file
+    override val virtualFileUrl: VirtualFileUrl?
+      get() = file
   }
 
   /**
@@ -63,7 +64,8 @@ sealed class JpsFileEntitySource : EntitySource {
       private val nextId = AtomicInteger()
     }
 
-    override fun getVirtualFileUrl(): VirtualFileUrl? = directory
+    override val virtualFileUrl: VirtualFileUrl?
+      get() = directory
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -98,7 +100,8 @@ data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
                                    val storedExternally: Boolean) : EntitySource, JpsFileDependentEntitySource {
   override val originalSource: JpsFileEntitySource
     get() = internalFile
-  override fun getVirtualFileUrl(): VirtualFileUrl? = internalFile.getVirtualFileUrl()
+  override val virtualFileUrl: VirtualFileUrl?
+    get() = internalFile.virtualFileUrl
 }
 
 fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)

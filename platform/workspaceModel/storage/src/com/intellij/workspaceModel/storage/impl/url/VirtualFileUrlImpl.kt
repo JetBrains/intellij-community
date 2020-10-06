@@ -14,23 +14,25 @@ internal class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFile
   override val url: String
     get() = manager.getUrlById(id)
 
-  override fun getPresentableUrl(): String {
-    val calculatedUrl = this.url
-    if (calculatedUrl.startsWith("file://")) {
-      return calculatedUrl.substring("file://".length)
+  override val presentableUrl: String
+    get() {
+      val calculatedUrl = this.url
+      if (calculatedUrl.startsWith("file://")) {
+        return calculatedUrl.substring("file://".length)
+      }
+      else if (calculatedUrl.startsWith("jar://")) {
+        val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
+        return removedSuffix.substring("jar://".length)
+      }
+      return calculatedUrl
     }
-    else if (calculatedUrl.startsWith("jar://")) {
-      val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
-      return removedSuffix.substring("jar://".length)
-    }
-    return calculatedUrl
-  }
 
-  override fun getFileName(): String {
-    val fileUrl = url
-    val index = fileUrl.lastIndexOf('/')
-    return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
-  }
+  override val fileName: String
+    get() {
+      val fileUrl = url
+      val index = fileUrl.lastIndexOf('/')
+      return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
+    }
 
   override fun toString(): String = this.url
 

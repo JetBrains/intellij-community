@@ -3,6 +3,6 @@ package com.intellij.workspaceModel.storage.url
 
 interface VirtualFileUrl {
   val url: String
-  fun getPresentableUrl(): String
-  fun getFileName(): String
+  val fileName: String
+  val presentableUrl: String
 }

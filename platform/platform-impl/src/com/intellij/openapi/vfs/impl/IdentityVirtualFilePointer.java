@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -30,12 +29,8 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   private final VirtualFile myFile;
   private final String myUrl;
 
-  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, VirtualFilePointerListener listener) {
-    this(file, url, CollectionFactory.createSmallMemoryFootprintMap(), null, listener);
-  }
-
   IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, Map<String, IdentityVirtualFilePointer> urlToIdentity,
-                             VirtualFilePointerManagerImpl virtualFilePointerManager,
+                             @NotNull VirtualFilePointerManagerImpl virtualFilePointerManager,
                              VirtualFilePointerListener listener) {
     super(listener);
     myVirtualFilePointerManager = virtualFilePointerManager;
@@ -74,13 +69,9 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
 
   @Override
   public void dispose() {
-    if (myVirtualFilePointerManager != null) {
-      synchronized (myVirtualFilePointerManager) {
-        incrementUsageCount(-1);
-        myUrlToIdentity.remove(myUrl);
-      }
-    } else {
+    synchronized (myVirtualFilePointerManager) {
       incrementUsageCount(-1);
+      myUrlToIdentity.remove(myUrl);
     }
   }
 

@@ -209,7 +209,7 @@ internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virt
   if (OSAgnosticPathUtil.isAbsolute(customDir)) {
     return virtualFileManager.fromPath(customDir)
   }
-  return moduleRoot.append(virtualFileManager, customDir)
+  return moduleRoot.append(customDir, virtualFileManager)
 }
 
 internal fun convertToEclipsePath(fileUrl: VirtualFileUrl,

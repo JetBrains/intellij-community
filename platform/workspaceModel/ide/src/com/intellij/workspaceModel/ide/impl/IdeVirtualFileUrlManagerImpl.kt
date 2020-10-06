@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.ide
+package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -12,14 +11,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 
-/**
- * This method was extracted from [VirtualFileUrlManager] because of dependency management. Storage
- * should have as many dependencies as possible and there is no dependency to intellij.platform.core module.
- * That's why this method was declared here, where service was registered.
- */
-fun VirtualFileUrlManager.Companion.getInstance(project: Project) = project.service<VirtualFileUrlManager>()
-
-class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlManager {
+class IdeVirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlManager {
   private var testDisposable: Disposable? = null
   private var projectDisposable = Disposer.newDisposable(project, "VirtualFileUrlManager")
   private val filePointerManager = VirtualFilePointerManager.getInstance()
@@ -57,14 +49,4 @@ class VirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlMa
       testDisposable = null
     }
   }
-}
-
-fun VirtualFileUrl.append(manager: VirtualFileUrlManager, relativePath: String): VirtualFileUrl {
-  return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))
-}
-
-fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-  val url = url
-  val otherUrl = other.url
-  return otherUrl.startsWith(url)
 }

@@ -533,7 +533,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
     val entitySource = (moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource
     val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.getPresentableUrl()
+      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.presentableUrl
       // TODO Is this fallback fake path ok?
       else -> outOfTreeModulesPath
     }

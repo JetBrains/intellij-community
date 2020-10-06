@@ -94,7 +94,7 @@ object JpsProjectEntitiesLoader {
     val externalStorageRoot = externalStorageMapping.externalStorageRoot
     val internalLibrariesDirUrl = virtualFileManager.fromUrl(librariesDirectoryUrl)
     val externalStorageEnabled = isExternalStorageEnabled(reader, projectDirUrl)
-    val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append(virtualFileManager, "project/libraries.xml"),
+    val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml", virtualFileManager),
                                                                      configLocation)
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, virtualFileManager)
     return JpsProjectSerializers.createSerializers(
@@ -160,7 +160,7 @@ object JpsProjectEntitiesLoader {
   fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation,
                                              virtualFileUrlManager: VirtualFileUrlManager) = when (configLocation) {
     is JpsProjectConfigLocation.DirectoryBased ->
-      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(virtualFileUrlManager, ".idea/libraries"), configLocation)
+      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".idea/libraries", virtualFileUrlManager), configLocation)
     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
   }
 }

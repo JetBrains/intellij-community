@@ -62,7 +62,7 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-  val cacheDirUrl = configLocation.baseDirectoryUrl.append(virtualFileManager, "cache")
+  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache", virtualFileManager)
   return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
                                               TestErrorReporter, virtualFileManager)
 }
