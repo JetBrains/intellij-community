@@ -362,10 +362,10 @@ public class MethodCandidateInfo extends CandidateInfo{
         RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
 
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
-        if (!stackStamp.mayCacheNow() ||
-            isOverloadCheck() ||
+        if (isOverloadCheck() ||
             !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-            myArgumentList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(myArgumentList.getParent())
+            myArgumentList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(myArgumentList.getParent()) ||
+            !stackStamp.mayCacheNow()
         ) {
           return inferredSubstitutor;
         }
