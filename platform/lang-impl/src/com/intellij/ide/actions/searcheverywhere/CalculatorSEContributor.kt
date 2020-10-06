@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
+import java.lang.Long.parseLong
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
@@ -164,9 +165,17 @@ class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationRe
           x = parseExpression()
           eat(')')
         }
+        else if (eat('0')) {
+          x = when {
+            eat('x') || eat('X') -> parseHex()
+            eat('b') || eat('B') -> parseBinary()
+            else -> parseDecimalOrOctal()
+          }
+        }
         else {
           val startPos = pos
-          if (ch in '0'..'9' || ch == '.') { // numbers
+          if (ch in '1'..'9' || ch == '.') { // numbers
+            nextChar()
             while (ch in '0'..'9' || ch == '.') {
               nextChar()
             }
@@ -194,6 +203,38 @@ class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationRe
           x = x.pow(parseFactor()) // exponentiation
         }
         return x
+      }
+
+      private fun parseHex(): Double {
+        val startPos = pos
+        while (ch in '0'..'9' || ch in 'a'..'f' || ch in 'A'..'F') {
+          nextChar()
+        }
+        return parseLong(str.substring(startPos, pos), 16).toDouble()
+      }
+
+      private fun parseBinary(): Double {
+        val startPos = pos
+        while (ch == '0' || ch == '1') {
+          nextChar()
+        }
+        return parseLong(str.substring(startPos, pos), 2).toDouble()
+      }
+
+      private fun parseDecimalOrOctal(): Double {
+        val startPos = pos
+        if (eat('.')) {
+          while (ch in '0'..'9' || ch == '.') {
+            nextChar()
+          }
+          return str.substring(startPos, pos).toDouble()
+        }
+        else {
+          while (ch in '0'..'7') {
+            nextChar()
+          }
+          return parseLong(str.substring(startPos, pos), 8).toDouble()
+        }
       }
 
       fun parse(): Double {
