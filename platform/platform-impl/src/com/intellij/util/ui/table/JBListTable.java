@@ -242,7 +242,7 @@ public abstract class JBListTable {
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning()) {
+      if (!myAnimationTimer.isRunning() && !Disposer.isDisposed(this)) {
         myAnimationTimer.start();
       }
     }
