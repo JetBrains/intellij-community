@@ -19,6 +19,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -34,6 +35,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
@@ -41,9 +44,9 @@ import com.intellij.util.xml.stubs.FileStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Gregory.Shrago
@@ -154,8 +157,23 @@ public class DomServiceImpl extends DomService {
   @Override
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
                                                       Project project,
-                                                      final GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, rootElementClass.getName(), scope);
+                                                      GlobalSearchScope scope) {
+    DomFileDescription<?> description = DomApplicationComponent
+      .getInstance()
+      .findFileDescription(rootElementClass);
+    if (description == null) return Collections.emptySet();
+
+    String[] namespaces = description.getAllPossibleRootTagNamespaces();
+    if (namespaces.length == 0) {
+      namespaces = new String[]{null};
+    }
+    String rootTagName = description.getRootTagName();
+
+    Set<VirtualFile> files = new HashSet<>();
+    for (String namespace : namespaces) {
+      files.addAll(DomFileIndex.findFiles(rootTagName, namespace, scope));
+    }
+    return files;
   }
 
   @Override

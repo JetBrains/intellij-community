@@ -2,68 +2,68 @@
 package com.intellij.util.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.impl.DomApplicationComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * @author peter
  */
-public final class DomFileIndex extends ScalarIndexExtension<String> {
-  public static final ID<String, Void> NAME = ID.create("DomFileIndex");
+public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
+  /**
+   * @deprecated should not be used since has no effect.
+   */
+  @Deprecated
+  public static final ID<String, Void> NAME = ID.create("DomFileIndex_old");
+  private static final ID<DomIndexKey, Void> INDEX_ID = ID.create("DomFileIndex");
+  private static final String NULL_NAMESPACE = "-NULL-";
 
   @Override
   @NotNull
-  public ID<String, Void> getName() {
-    return NAME;
+  public ID<DomIndexKey, Void> getName() {
+    return INDEX_ID;
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> findFiles(@NotNull String rootTagName,
+                                                  @Nullable String namespace,
+                                                  @NotNull GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(INDEX_ID, new DomIndexKey(rootTagName, ObjectUtils.notNull(namespace, NULL_NAMESPACE)), scope);
   }
 
   @Override
   @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public DataIndexer<DomIndexKey, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
       @NotNull
-      public Map<String, Void> map(@NotNull FileContent inputData) {
-        Set<String> namespaces = new HashSet<>();
+      public Map<DomIndexKey, Void> map(@NotNull FileContent inputData) {
         XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        ContainerUtil.addIfNotNull(namespaces, header.getPublicId());
-        ContainerUtil.addIfNotNull(namespaces, header.getSystemId());
-        ContainerUtil.addIfNotNull(namespaces, header.getRootTagNamespace());
-        String tagName = header.getRootTagLocalName();
-        if (StringUtil.isNotEmpty(tagName)) {
-          Map<String, Void> result = new HashMap<>();
-          DomApplicationComponent component = DomApplicationComponent.getInstance();
-          for (DomFileDescription<?> description : component.getFileDescriptions(tagName)) {
-            String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getRootElementClass().getName(), null);
-            }
-          }
-          for (DomFileDescription<?> description : component.getAcceptingOtherRootTagNameDescriptions()) {
-            String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getRootElementClass().getName(), null);
-            }
-          }
-          return result;
-        }
-        return Collections.emptyMap();
+        String rootTagName = header.getRootTagLocalName();
+        if (rootTagName == null) return Collections.emptyMap();
+        var namespaces = Arrays.asList(header.getPublicId(), header.getSystemId(), header.getRootTagNamespace(), NULL_NAMESPACE);
+        return ContainerUtil.map2MapNotNull(namespaces, s -> s == null ? null : Pair.create(new DomIndexKey(rootTagName, s), null));
       }
     };
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return EnumeratorStringDescriptor.INSTANCE;
+  public KeyDescriptor<DomIndexKey> getKeyDescriptor() {
+    return new DomIndexKeyDescriptor();
   }
 
   @NotNull
@@ -79,6 +79,55 @@ public final class DomFileIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return DomApplicationComponent.getInstance().getCumulativeVersion(false);
+    return 0;
   }
+
+  public static class DomIndexKey {
+    @NotNull
+    private final String myRootTagName;
+    @NotNull
+    private final String myNamespace;
+
+    private DomIndexKey(@NotNull String rootTagName, @NotNull String namespace) {
+      myRootTagName = rootTagName;
+      myNamespace = namespace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DomIndexKey key = (DomIndexKey)o;
+      return myRootTagName.equals(key.myRootTagName) && myNamespace.equals(key.myNamespace);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myRootTagName, myNamespace);
+    }
+  }
+
+  private static class DomIndexKeyDescriptor implements KeyDescriptor<DomIndexKey> {
+    @Override
+    public boolean isEqual(DomIndexKey val1, DomIndexKey val2) {
+      return val1.equals(val2);
+    }
+
+    @Override
+    public DomIndexKey read(@NotNull DataInput in) throws IOException {
+      return new DomIndexKey(EnumeratorStringDescriptor.INSTANCE.read(in), EnumeratorStringDescriptor.INSTANCE.read(in));
+    }
+
+    @Override
+    public int getHashCode(DomIndexKey value) {
+      return value.hashCode();
+    }
+
+    @Override
+    public void save(@NotNull DataOutput out, DomIndexKey value) throws IOException {
+      EnumeratorStringDescriptor.INSTANCE.save(out, value.myRootTagName);
+      EnumeratorStringDescriptor.INSTANCE.save(out, value.myNamespace);
+    }
+  }
+
 }

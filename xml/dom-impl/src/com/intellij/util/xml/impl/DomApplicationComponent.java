@@ -11,6 +11,7 @@ import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -21,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,6 +40,7 @@ public final class DomApplicationComponent {
       return desc == null ? null : desc.createAnnotator();
     }
   );
+  private final Map<Class<?>, DomFileDescription<?>> myClass2Description = ConcurrentFactoryMap.createMap(this::_findFileDescription);
 
   private final Map<Class<?>, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
                                                                                                 ContainerUtil::createConcurrentSoftValueMap);
@@ -78,8 +77,10 @@ public final class DomApplicationComponent {
 
   private synchronized void extensionsChanged() {
     myRootTagName2FileDescription.clear();
+
     myAcceptingOtherRootTagNamesDescriptions.clear();
     myClass2Annotator.clear();
+    myClass2Description.clear();
 
     myCachedImplementationClasses.clearCache();
     myTypeChooserManager.clearCache();
@@ -162,7 +163,12 @@ public final class DomApplicationComponent {
   }
 
   @Nullable
-  private synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+  public synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+    return myClass2Description.get(rootElementClass);
+  }
+
+  @Nullable
+  private synchronized DomFileDescription<?> _findFileDescription(Class<?> rootElementClass) {
     return allMetas()
       .map(meta -> meta.getDescription())
       .filter(description -> description != null && description.getRootElementClass() == rootElementClass)
