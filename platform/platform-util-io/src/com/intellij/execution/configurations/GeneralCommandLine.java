@@ -397,17 +397,11 @@ public class GeneralCommandLine implements UserDataHolder {
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
-    String exePath = myExePath;
-    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH");
-      String shellPath = EnvironmentUtil.getValue("PATH");
-      if (!Objects.equals(systemPath, shellPath)) {
-        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
-        if (exeFile != null) {
-          LOG.debug(exePath + " => " + exeFile);
-          exePath = exeFile.getPath();
-        }
-      }
+    String exePath = myParentEnvironmentType == ParentEnvironmentType.CONSOLE
+                     ? PathEnvironmentVariableUtil.clarifyExePathOnMac(myExePath)
+                     : myExePath;
+    if (exePath != myExePath) {
+      LOG.debug(myExePath + " => " + exePath);
     }
 
     List<String> commands = prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
