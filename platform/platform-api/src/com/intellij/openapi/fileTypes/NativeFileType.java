@@ -50,11 +50,6 @@ public final class NativeFileType implements INativeFileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return null;
   }

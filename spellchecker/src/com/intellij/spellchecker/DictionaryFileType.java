@@ -47,11 +47,6 @@ public class DictionaryFileType implements FileType {
     return false;
   }
 
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
   @Nullable
   @Override
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {

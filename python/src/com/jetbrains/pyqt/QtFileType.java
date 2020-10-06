@@ -62,11 +62,6 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
     String qtTool = findQtTool(ModuleUtilCore.findModuleForFile(file, project), getToolName());
     if (qtTool == null) {

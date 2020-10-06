@@ -57,7 +57,9 @@ public interface FileType extends Scheme {
    * Returns {@code true} if the specified file type is read-only. Read-only file types are not shown in the "File Types" settings dialog,
    * and users cannot change the extensions associated with the file type.
    */
-  boolean isReadOnly();
+  default boolean isReadOnly() {
+    return false;
+  }
 
   /**
    * Returns the character set for the specified file.

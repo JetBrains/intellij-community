@@ -53,11 +53,6 @@ public abstract class LanguageFileType implements FileType {
     return false;
   }
 
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
   /**
    * If true, this language file type will never be returned as the associated file type for the language.
    * (Used when a file type is reusing the language of another file type, e.g. XML).

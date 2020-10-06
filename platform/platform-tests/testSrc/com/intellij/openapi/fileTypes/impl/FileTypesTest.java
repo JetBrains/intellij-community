@@ -1110,11 +1110,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       return false;
     }
 
-    @Override
-    public boolean isReadOnly() {
-      return false;
-    }
-
     @Nullable
     @Override
     public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
@@ -1250,11 +1245,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       return false;
     }
 
-    @Override
-    public boolean isReadOnly() {
-      return false;
-    }
-
     @Nullable
     @Override
     public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
@@ -1294,11 +1284,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     @Override
     public boolean isBinary() {
-      return false;
-    }
-
-    @Override
-    public boolean isReadOnly() {
       return false;
     }
 

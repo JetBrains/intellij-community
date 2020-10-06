@@ -51,11 +51,6 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public String getCharset(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
