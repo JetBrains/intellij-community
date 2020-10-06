@@ -22,7 +22,7 @@ import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import kotlin.math.*
 
-class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
+class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
   class Factory : SearchEverywhereContributorFactory<EvaluationResult> {
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {
@@ -37,14 +37,16 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
 
-  override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in EvaluationResult>) {
+  override fun fetchWeightedElements(pattern: String,
+                                     progressIndicator: ProgressIndicator,
+                                     consumer: Processor<in FoundItemDescriptor<EvaluationResult>>) {
     val result = try {
       evaluate(pattern)
     }
     catch (_: Throwable) {
       return
     }
-    consumer.process(EvaluationResult(result))
+    consumer.process(FoundItemDescriptor(EvaluationResult(result), 0x8000))
   }
 
   override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
