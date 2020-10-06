@@ -66,8 +66,18 @@ Literal ::= Number | Date | BOOLEAN
 private Number ::= <<remap 'BARE_KEY_OR_NUMBER' 'NUMBER'>> | NUMBER
 private Date ::= <<remap 'BARE_KEY_OR_DATE' 'DATE_TIME'>> | DATE_TIME
 
+private Value_first ::= BARE_KEY_OR_NUMBER | NUMBER | BARE_KEY_OR_DATE | DATE_TIME
+                      | BOOLEAN
+                      | BASIC_STRING | LITERAL_STRING
+                      | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
+                      | '[' | '{'
+
 Array ::= '[' ArrayElement* ']' { pin = 1 }
-private ArrayElement ::= Value (','|&']') { pin = 1 }
+private ArrayElement ::= !']' Value (','|&']') {
+  pin = 1
+  recoverWhile = ArrayElement_recover
+}
+private ArrayElement_recover ::= !(']' | Value_first) { consumeTokenMethod = "consumeTokenFast" }
 
 Table ::= TableHeader NewLineKeyValue*
 TableHeader ::= '[' ShortKey ('.' ShortKey)* ']' {

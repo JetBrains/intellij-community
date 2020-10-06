@@ -70,6 +70,93 @@ TOML File
     TomlLiteral
       PsiElement(BASIC_STRING)('""')
   PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key31')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, '[' or '{' expected, got 'invalid'
+        <empty list>
+      PsiElement(BARE_KEY)('invalid')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key32')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, '[' or '{' expected, got 'invalid'
+        <empty list>
+      PsiElement(BARE_KEY)('invalid')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('"valid"')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key33')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('"valid"')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'invalid' unexpected
+        PsiElement(BARE_KEY)('invalid')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('"valid"')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key34')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, '[' or '{' expected, got 'invalid'
+        <empty list>
+      PsiElement(BARE_KEY)('invalid')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlArray
+        PsiElement([)('[')
+        TomlLiteral
+          PsiElement(BASIC_STRING)('"valid"')
+        PsiElement(])(']')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key35')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, '[' or '{' expected, got 'invalid'
+        <empty list>
+      PsiElement(BARE_KEY)('invalid')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(NUMBER)('42')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n\n')
   TomlTable
     TomlTableHeader
       PsiElement([)('[')
