@@ -39,6 +39,8 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
+
 /**
  * @author peter
  */
@@ -199,6 +201,8 @@ public abstract class CompletionPhase implements Disposable {
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
+          if (isForeignClientOnServer()) return;
+
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
             indicator.scheduleRestart();
           }
