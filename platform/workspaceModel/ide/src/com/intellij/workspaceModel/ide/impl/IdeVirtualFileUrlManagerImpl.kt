@@ -28,7 +28,7 @@ class IdeVirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUr
 
   override fun fromPath(path: String): VirtualFileUrl {
     val systemIndependentName = FileUtil.toSystemIndependentName(path)
-    return fromUrl("${if (systemIndependentName.endsWith(".jar")) "jar://" else "file://"}$systemIndependentName")
+    return fromUrl("file://$systemIndependentName")
   }
 
   override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {

@@ -16,7 +16,7 @@ import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -31,7 +31,6 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
-import java.net.URI
 import java.nio.file.Paths
 import java.util.*
 import kotlin.Comparator
@@ -93,7 +92,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                builder: WorkspaceEntityStorageBuilder,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
-    if (skipLoadingIfFileDoesNotExist && !Paths.get(URI.create(fileUrl.url)).exists()) return null
+    if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) return null
 
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)

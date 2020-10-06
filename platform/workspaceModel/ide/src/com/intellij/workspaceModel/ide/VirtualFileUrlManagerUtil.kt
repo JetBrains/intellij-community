@@ -3,8 +3,12 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * This method was extracted from [VirtualFileUrlManager] because of dependency management. Storage
@@ -17,8 +21,6 @@ fun VirtualFileUrl.append(relativePath: String, manager: VirtualFileUrlManager):
   return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))
 }
 
-fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-  val url = url
-  val otherUrl = other.url
-  return otherUrl.startsWith(url)
-}
+fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url, url)
+
+fun VirtualFileUrl.toPath(): Path = Paths.get(JpsPathUtil.urlToPath(url))

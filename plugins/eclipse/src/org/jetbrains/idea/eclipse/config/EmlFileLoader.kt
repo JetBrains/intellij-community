@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -17,8 +18,6 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.IllegalArgumentException
-import java.net.URI
-import java.nio.file.Paths
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]
@@ -226,7 +225,7 @@ internal class EmlFileLoader(
 
     val excludedUrls = contentEntryTag.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)
       .mapNotNull { it.getAttributeValue(IdeaXml.URL_ATTR) }
-      .filter { FileUtil.isAncestor(Paths.get(URI.create(entity.url.url)).toFile(), JpsPathUtil.urlToFile(it), false) }
+      .filter { FileUtil.isAncestor(entity.url.toPath().toFile(), JpsPathUtil.urlToFile(it), false) }
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(ModifiableContentRootEntity::class.java, entity) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -25,7 +26,6 @@ import org.jetbrains.idea.eclipse.EclipseXml
 import org.jetbrains.idea.eclipse.conversion.EJavadocUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.net.URI
 import java.nio.file.Paths
 
 private val LOG = logger<EclipseModuleRootsSerializer>()
@@ -188,11 +188,11 @@ internal fun convertRelativePathToUrl(path: String,
 private fun findFileUnderContentRoot(path: String,
                                      contentRootEntity: ContentRootEntity,
                                      virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl? {
-  val root = Paths.get(URI.create(contentRootEntity.url.url)).toFile()
+  val root = contentRootEntity.url.toPath().toFile()
   val mainRoot = if (root.exists()) root
   else {
     val fileUrl = contentRootEntity.module.mainContentRoot?.url
-    if (fileUrl != null) Paths.get(URI.create(fileUrl.url)).toFile() else null
+    if (fileUrl != null) fileUrl.toPath().toFile() else null
   }
   val file = File(mainRoot, path)
   return if (file.exists()) convertToRootUrl(file.absolutePath, virtualUrlManager) else null

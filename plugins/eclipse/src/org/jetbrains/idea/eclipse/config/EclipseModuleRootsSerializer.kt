@@ -19,6 +19,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -39,7 +40,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -402,7 +402,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     if (oldClasspath != null || !entities[SourceRootEntity::class.java].isNullOrEmpty() || module.dependencies.size > 2) {
       val newClasspath = saveClasspathTags(module, entities, entitySource, oldClasspath, pathShortener)
       if (oldClasspath == null || !JDOMUtil.areElementsEqual(newClasspath, oldClasspath)) {
-        saveXmlFile(Paths.get(URI.create(entitySource.classpathFile.url)), newClasspath)
+        saveXmlFile(entitySource.classpathFile.toPath(), newClasspath)
       }
     }
 
