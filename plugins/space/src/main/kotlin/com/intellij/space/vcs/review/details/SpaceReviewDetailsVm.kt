@@ -7,16 +7,16 @@ import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
 import circlet.code.api.*
 import circlet.code.codeReview
-import circlet.platform.api.BatchInfo
-import circlet.platform.api.Ref
-import circlet.platform.api.TID
+import circlet.platform.api.*
 import circlet.platform.client.*
 import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.Lifetimed
+import libraries.coroutines.extra.usingSource
 import runtime.reactive.*
 
 private const val MAX_CHANGES_TO_LOAD = 1024
@@ -81,11 +81,16 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
 
   val selectedCommitIndices: MutableProperty<List<Int>> = Property.createMutable(emptyList())
 
-  protected suspend fun loadChanges(revisions: List<RevisionInReview>): List<ChangeInReview> =
-    client.codeReview.getReviewChanges(BatchInfo("0", MAX_CHANGES_TO_LOAD),
-                                       projectKey.identifier,
-                                       reviewId,
-                                       revisions).data
+  protected suspend fun loadChanges(lt: LifetimeSource, revisions: List<RevisionInReview>): List<ChangeInReview> {
+    val reviewChanges: InitializedChannel<DiscussionEvent, DiscussionChannelInitialState<Batch<ChangeInReview>>> = client.codeReview.getReviewChanges(
+      lt,
+      BatchInfo("0", MAX_CHANGES_TO_LOAD),
+      projectKey.identifier,
+      reviewId,
+      revisions)
+    // TODO: check api changes
+    return reviewChanges.initial.payload.data
+  }
 }
 
 internal class MergeRequestDetailsVm(
@@ -107,11 +112,12 @@ internal class MergeRequestDetailsVm(
 
   val changes = mapInit(commits, selectedCommitIndices, null) { allCommits, selectedCommitIndices ->
     allCommits ?: return@mapInit null
-
-    val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { allCommits[it] } else allCommits
-    selectedCommits
-      .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-      .let { loadChanges(it) }
+    lifetime.usingSource { lt ->
+      val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { allCommits[it] } else allCommits
+      selectedCommits
+        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
+        .let { loadChanges(lt, it) }
+    }
   }
 }
 
@@ -138,14 +144,17 @@ internal class CommitSetReviewDetailsVm(
     commits ?: return@mapInit null
 
     val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { commits[it] } else commits
-    selectedCommits
-      .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-      .groupBy { it.repository }
-      .map {
-        val repoName = it.key
-        val revisionsInRepo = it.value
-        repoName to loadChanges(revisionsInRepo)
-      }.toMap()
+
+    lifetime.usingSource { lt ->
+      selectedCommits
+        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
+        .groupBy { it.repository }
+        .map {
+          val repoName = it.key
+          val revisionsInRepo = it.value
+          repoName to loadChanges(lt, revisionsInRepo)
+        }.toMap()
+    }
   }
 }
 
