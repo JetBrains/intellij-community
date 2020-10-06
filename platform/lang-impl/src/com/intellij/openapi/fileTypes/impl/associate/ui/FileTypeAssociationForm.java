@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate.ui;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
@@ -132,6 +133,8 @@ public class FileTypeAssociationForm {
 
   private static boolean isSupported(@NotNull FileType fileType) {
     return !(fileType instanceof NativeFileType) &&
+           !(fileType instanceof UserBinaryFileType) &&
+           !(fileType instanceof ArchiveFileType) &&
            (!(fileType instanceof OSFileIdeAssociation) ||
             !((OSFileIdeAssociation)fileType).getFileIdeAssociationMode().equals(OSFileIdeAssociation.Mode.Unsupported));
   }
