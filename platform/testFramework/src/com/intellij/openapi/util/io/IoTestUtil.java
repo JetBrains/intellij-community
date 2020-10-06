@@ -87,7 +87,7 @@ public final class IoTestUtil {
     return createSymLink(target, link, Boolean.valueOf(shouldExist));
   }
 
-  /** A drop-in replacement for `Files#createSymbolicLink` needed until `Patches.JDK_BUG_ID_JDK_8218418` is resolved */
+  /** A drop-in replacement for `Files#createSymbolicLink` needed until migrating to Java 13+ */
   public static @NotNull Path createSymbolicLink(@NotNull Path link, @NotNull Path target) throws IOException {
     try {
       return createSymLink(target.toString(), link.toString(), null).toPath();
