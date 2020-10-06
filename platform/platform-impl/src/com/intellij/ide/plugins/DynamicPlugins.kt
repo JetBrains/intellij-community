@@ -157,7 +157,8 @@ object DynamicPlugins {
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
     optionalDependencyPluginId: PluginId? = null,
     context: List<IdeaPluginDescriptorImpl> = emptyList(),
-    checkImplementationDetailDependencies: Boolean = true
+    checkImplementationDetailDependencies: Boolean = true,
+    checkRequiredDependencies: Boolean = true
   ): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
@@ -165,13 +166,15 @@ object DynamicPlugins {
     if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
     }
-    descriptor.pluginDependencies?.let { pluginDependencies ->
-      for (pluginDependency in pluginDependencies) {
-        if (!pluginDependency.isOptional &&
-            !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
-            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
-            context.none { it.pluginId == pluginDependency.id }) {
-          return "Required dependency ${pluginDependency.id} of plugin ${descriptor.pluginId} is not currently loaded"
+    if (checkRequiredDependencies) {
+      descriptor.pluginDependencies?.let { pluginDependencies ->
+        for (pluginDependency in pluginDependencies) {
+          if (!pluginDependency.isOptional &&
+              !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
+              PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
+              context.none { it.pluginId == pluginDependency.id }) {
+            return "Required dependency ${pluginDependency.id} of plugin ${descriptor.pluginId} is not currently loaded"
+          }
         }
       }
     }
@@ -307,7 +310,7 @@ object DynamicPlugins {
 
         processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
           dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails,
-                                                           checkImplementationDetailDependencies = false)
+                                                           checkImplementationDetailDependencies = false, checkRequiredDependencies = false)
           if (dependencyMessage != null) {
             dependencyMessage = "Plugin ${fullDescriptor.pluginId} which is an implementation-detail dependency of ${descriptor.pluginId} requires restart: $dependencyMessage"
           }
