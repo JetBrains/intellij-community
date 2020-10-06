@@ -15,12 +15,15 @@
  */
 package com.intellij.psi.xml;
 
-import com.intellij.lang.*;
+import com.intellij.html.embedding.HtmlRawTextElementType;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.CustomParsingType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +57,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType HTML_TAG = new XmlTagElementType("HTML_TAG");
   IFileElementType HTML_FILE = new HtmlFileElementType();
   IElementType HTML_EMBEDDED_CONTENT = new EmbeddedHtmlContentElementType();
+  IElementType HTML_RAW_TEXT = HtmlRawTextElementType.INSTANCE;
 
   IElementType XML_TEXT = new XmlTextElementType();
 

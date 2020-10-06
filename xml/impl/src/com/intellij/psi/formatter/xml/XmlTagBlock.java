@@ -181,6 +181,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
       else {
         return createXmlTextBlocks(result, child, wrap, alignment);
       }
+    } else if (type == XmlElementType.HTML_RAW_TEXT) {
+      return createXmlTextBlocks(result, child, wrap, alignment);
     }
     else if (type == XmlElementType.XML_COMMENT) {
       if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;

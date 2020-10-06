@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html;
 
+import com.intellij.html.embedding.HtmlCustomEmbeddedContentTokenType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -63,6 +64,9 @@ public class HTMLParserDefinition implements ParserDefinition {
     if (node.getElementType() instanceof XmlStubBasedElementType) {
       //noinspection rawtypes
       return ((XmlStubBasedElementType)node.getElementType()).createPsi(node);
+    }
+    if (node.getElementType() instanceof HtmlCustomEmbeddedContentTokenType) {
+      return ((HtmlCustomEmbeddedContentTokenType)node.getElementType()).createPsi(node);
     }
     if (node.getElementType() == XmlElementType.HTML_EMBEDDED_CONTENT) {
       return new HtmlEmbeddedContentImpl(node);

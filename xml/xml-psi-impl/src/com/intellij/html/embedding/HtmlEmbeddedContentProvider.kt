@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html.embedding
 
-import com.intellij.lexer.DummyLexer
+import com.intellij.lexer.HtmlRawTextLexer
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
@@ -17,9 +17,15 @@ interface HtmlEmbeddedContentProvider {
 
   companion object {
     @JvmField
-    val PLAIN_TEXT_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
+    val RAW_TEXT_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
       override fun getElementType(): IElementType? = XmlTokenType.XML_DATA_CHARACTERS
-      override fun createHighlightingLexer(): Lexer? = DummyLexer(XmlTokenType.XML_DATA_CHARACTERS)
+      override fun createHighlightingLexer(): Lexer? = HtmlRawTextLexer()
+    }
+
+    @JvmField
+    val RAW_TEXT_FORMATTABLE_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
+      override fun getElementType(): IElementType? = HtmlRawTextElementType
+      override fun createHighlightingLexer(): Lexer? = HtmlRawTextLexer()
     }
   }
 }

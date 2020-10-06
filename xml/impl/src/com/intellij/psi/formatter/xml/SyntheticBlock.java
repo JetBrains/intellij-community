@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiWhiteSpace;
@@ -229,7 +232,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
 
   protected boolean isTextFragment(final ASTNode node) {
     final ASTNode parent = node.getTreeParent();
-    return parent != null && parent.getElementType() == XmlElementType.XML_TEXT
+    return parent != null && isTextNode(parent.getElementType())
            || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
            
       ;
@@ -270,13 +273,13 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return myChildIndent;
   }
 
-  private static boolean isInlineTag(@NotNull ASTNode astNode) {
+  private boolean isInlineTag(@NotNull ASTNode astNode) {
     return astNode.getElementType() == XmlElementType.XML_TAG && isTextOnlyTag(astNode) &&
            isTextNotEndingWithLineBreaks(astNode.getTreePrev()) && isTextNotStartingWithLineBreaks(astNode.getTreeNext());
   }
   
-  private static boolean isTextNotEndingWithLineBreaks(@Nullable ASTNode astNode) {
-    if (astNode != null && astNode.getElementType() == XmlElementType.XML_TEXT) {
+  private boolean isTextNotEndingWithLineBreaks(@Nullable ASTNode astNode) {
+    if (astNode != null && isTextNode(astNode.getElementType())) {
       ASTNode lastChild = astNode.getLastChildNode();
       if (lastChild != null) {
         return !(lastChild.getPsi() instanceof PsiWhiteSpace) || !CharArrayUtil.containLineBreaks(lastChild.getChars());
@@ -285,8 +288,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return false;
   }
   
-  private static boolean isTextNotStartingWithLineBreaks(@Nullable ASTNode astNode) {
-    if (astNode != null && astNode.getElementType() == XmlElementType.XML_TEXT) {
+  private boolean isTextNotStartingWithLineBreaks(@Nullable ASTNode astNode) {
+    if (astNode != null && isTextNode(astNode.getElementType())) {
       ASTNode firstChild = astNode.getFirstChildNode();
       if (firstChild != null) {
         return !(firstChild.getPsi() instanceof PsiWhiteSpace) || !CharArrayUtil.containLineBreaks(firstChild.getChars());
@@ -295,14 +298,14 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return false;
   }
   
-  private static boolean isTextOnlyTag(@NotNull ASTNode tagNode) {
+  private boolean isTextOnlyTag(@NotNull ASTNode tagNode) {
     ASTNode child = tagNode.getFirstChildNode();
     boolean checkContent = false;
     while (child != null) {
       IElementType childType = child.getElementType();
       if (checkContent) {
         if (childType == XmlTokenType.XML_END_TAG_START) return true;
-        else if (childType != XmlElementType.XML_TEXT) return false;
+        else if (!isTextNode(childType)) return false;
       }
       else {
         if (childType == XmlTokenType.XML_TAG_END) {

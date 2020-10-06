@@ -18,8 +18,10 @@ HtmlFile:test.html
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('TITLE')
           XmlToken:XML_TAG_END('>')
-          XmlText
-            XmlToken:XML_DATA_CHARACTERS('AppletViewer Tags')
+          HtmlRawText
+            XmlToken:XML_DATA_CHARACTERS('AppletViewer')
+            PsiWhiteSpace(' ')
+            XmlToken:XML_DATA_CHARACTERS('Tags')
           XmlToken:XML_END_TAG_START('</')
           XmlToken:XML_NAME('TITLE')
           XmlToken:XML_TAG_END('>')

@@ -16,25 +16,30 @@ import java.util.*
 class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
   override fun createEmbeddedContentProviders(lexer: BaseHtmlLexer): List<HtmlEmbeddedContentProvider> =
-    listOf(HtmlDefaultTagEmbeddedContentProvider(lexer))
+    listOf(HtmlRawTextTagContentProvider(lexer), HtmlScriptStyleEmbeddedContentProvider(lexer))
 
 }
 
-private class HtmlDefaultTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
+class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
+  override fun isInterestedInTag(tagName: CharSequence): Boolean =
+    namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
+    || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME)
+
+  override fun isInterestedInAttribute(attributeName: CharSequence): Boolean = false
+  override fun createEmbedmentInfo(): HtmlEmbedmentInfo? = HtmlEmbeddedContentProvider.RAW_TEXT_FORMATTABLE_EMBEDMENT
+}
+
+class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
 
   private val infoCache = HashMap<Pair<String, String?>, HtmlEmbedmentInfo?>()
 
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
     namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME)
     || namesEqual(tagName, HtmlUtil.STYLE_TAG_NAME)
-    || namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
-    || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME)
 
   override fun isInterestedInAttribute(attributeName: CharSequence): Boolean =
     (namesEqual(attributeName, HtmlUtil.TYPE_ATTRIBUTE_NAME)
      || (namesEqual(attributeName, HtmlUtil.LANGUAGE_ATTRIBUTE_NAME) && namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME)))
-    && !namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME)
-    && !namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
 
   override fun createEmbedmentInfo(): HtmlEmbedmentInfo? {
     val attributeValue = attributeValue?.trim()?.toString()
@@ -45,7 +50,7 @@ private class HtmlDefaultTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : Html
         }
         namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME) -> scriptEmbedmentInfo(attributeValue)
         else -> null
-      } ?: HtmlEmbeddedContentProvider.PLAIN_TEXT_EMBEDMENT
+      } ?: HtmlEmbeddedContentProvider.RAW_TEXT_EMBEDMENT
     }
   }
 

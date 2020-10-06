@@ -96,11 +96,16 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return WrapType.CHOP_DOWN_IF_LONG;
   }
 
+  protected boolean isTextNode(IElementType elementType) {
+    return elementType == XmlElementType.XML_TEXT
+           || elementType == XmlElementType.HTML_RAW_TEXT;
+  }
+
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) return getAlignment();
+    if (isTextNode(myNode.getElementType())) return getAlignment();
     final IElementType elementType = child.getElementType();
     if (isAttributeElementType(elementType) && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
-    if (elementType == XmlElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
+    if (isTextNode(elementType) && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
     return null;
   }
 
@@ -109,7 +114,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
+    if (isTextNode(myNode.getElementType())) return textWrap;
     final IElementType elementType = child.getElementType();
     if (isAttributeElementType(elementType)) return attrWrap;
     if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
@@ -123,9 +128,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == XmlElementType.XML_TEXT || elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+    if (isTextNode(elementType) || elementType == XmlTokenType.XML_DATA_CHARACTERS) {
       ASTNode previous = FormatterUtil.getPreviousNonWhitespaceSibling(child);
-      if (previous == null || previous.getElementType() != XmlElementType.XML_TEXT) {
+      if (previous == null || !isTextNode(previous.getElementType())) {
         return myXmlFormattingPolicy.allowWrapBeforeText() ? textWrap : null;
       }
       return textWrap;
@@ -479,7 +484,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private static boolean isTextOnlyNode(@NotNull ASTNode node) {
-    if (node.getPsi() instanceof XmlText) return true;
+    if (node.getPsi() instanceof XmlText
+        || node.getElementType() == XmlElementType.HTML_RAW_TEXT) return true;
     ASTNode firstChild = node.getFirstChildNode();
     ASTNode lastChild = node.getLastChildNode();
     if (firstChild != null && firstChild == lastChild && firstChild.getPsi() instanceof XmlText) {

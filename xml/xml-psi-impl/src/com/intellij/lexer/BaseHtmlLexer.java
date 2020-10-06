@@ -55,6 +55,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myEmbeddedContentProviders = supports.stream()
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
+      .filter(this::acceptEmbeddedContentProvider)
       .collect(Collectors.toUnmodifiableList());
     myTagEmbedmentStartTokens = createTagEmbedmentStartTokenSet();
     myAttributeEmbedmentTokens = createAttributeEmbedmentTokenSet();
@@ -190,6 +191,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
     supports.add(new HtmlDefaultEmbeddedContentSupport());
     return supports;
+  }
+
+  protected boolean acceptEmbeddedContentProvider(HtmlEmbeddedContentProvider provider) {
+    return true;
   }
 
   private static class HtmlLexerPosition implements LexerPosition {
