@@ -66,6 +66,8 @@ def process_args(argv):
             args.append('--wait')
         elif arg == '-p' or arg == '--project':
             args.append(arg)
+        elif arg == '-e' or arg == '--edit':
+            args.append(arg)
         elif skip_next:
             args.append(arg)
             skip_next = False

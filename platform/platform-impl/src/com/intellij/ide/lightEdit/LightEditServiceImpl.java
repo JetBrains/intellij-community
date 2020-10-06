@@ -57,20 +57,15 @@ public final class LightEditServiceImpl implements LightEditService,
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
   private boolean myEditorWindowClosing = false;
-  private LightEditFilePatterns myFilePatterns = new LightEditFilePatterns();
 
   @Override
   public @NotNull LightEditConfiguration getState() {
-    myConfiguration.supportedFilePatterns = myFilePatterns.getPatterns();
     return myConfiguration;
   }
 
   @Override
   public void loadState(@NotNull LightEditConfiguration state) {
     XmlSerializerUtil.copyBean(state, myConfiguration);
-    if (myConfiguration.supportedFilePatterns != null) {
-      myFilePatterns.setPatterns(myConfiguration.supportedFilePatterns);
-    }
   }
 
   public LightEditServiceImpl() {
@@ -123,16 +118,13 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @Nullable
-  public Project openFile(@NotNull VirtualFile file, boolean force) {
-    if (force || canOpen(file)) {
-      Project project = myLightEditProjectManager.getOrCreateProject();
-      doWhenActionManagerInitialized(() -> {
-        doOpenFile(file);
-      });
-      return project;
-    }
-    return null;
+  @NotNull
+  public Project openFile(@NotNull VirtualFile file) {
+    Project project = myLightEditProjectManager.getOrCreateProject();
+    doWhenActionManagerInitialized(() -> {
+      doOpenFile(file);
+    });
+    return project;
   }
 
   private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {
@@ -146,11 +138,6 @@ public final class LightEditServiceImpl implements LightEditService,
     else {
       invokeOnEdt(callback);
     }
-  }
-
-  @Override
-  public boolean canOpen(@NotNull VirtualFile file) {
-    return LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file);
   }
 
   private static void invokeOnEdt(@NotNull Runnable callback) {
@@ -506,13 +493,4 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
-  @Override
-  public @NotNull LightEditFilePatterns getSupportedFilePatterns() {
-    return myFilePatterns;
-  }
-
-  @Override
-  public void setSupportedFilePatterns(@NotNull LightEditFilePatterns filePatterns) {
-    myFilePatterns = filePatterns;
-  }
 }

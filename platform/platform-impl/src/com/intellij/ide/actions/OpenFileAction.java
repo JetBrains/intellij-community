@@ -46,7 +46,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction;
-import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.WelcomeScreenOpenAction;
 
 public class OpenFileAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
@@ -138,9 +137,6 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     if (project != null && !project.isDefault()) {
       openFile(file, project);
     }
-    else if (LightEdit.openFile(file)) {
-      LightEditFeatureUsagesUtil.logFileOpen(WelcomeScreenOpenAction);
-    }
     else {
       PlatformProjectOpenProcessor.createTempProjectAndOpenFile(filePath, OpenProjectTask.withProjectToClose(project));
     }
@@ -192,9 +188,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static void openFile(@NotNull VirtualFile file, @NotNull Project project) {
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     if (LightEdit.owns(project)) {
-      if (LightEditService.getInstance().openFile(file, true) != null) {
-        LightEditFeatureUsagesUtil.logFileOpen(LightEditOpenAction);
-      }
+      LightEditService.getInstance().openFile(file);
+      LightEditFeatureUsagesUtil.logFileOpen(LightEditOpenAction);
     }
     else {
       PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);

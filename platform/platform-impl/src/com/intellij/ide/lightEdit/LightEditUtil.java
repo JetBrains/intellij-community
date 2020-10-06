@@ -15,7 +15,6 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -48,7 +47,7 @@ public final class LightEditUtil {
 
   private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
 
-  private static boolean ourForceOpenInExistingProjectFlag;
+  private static boolean ourForceOpenInLightEditMode;
 
   private LightEditUtil() {
   }
@@ -57,16 +56,13 @@ public final class LightEditUtil {
   public static Project openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      Project project = LightEditService.getInstance().openFile(virtualFile, false);
-      if (project != null) {
-        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        return project;
-      }
+      Project project = LightEditService.getInstance().openFile(virtualFile);
+      LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+      return project;
     }
     else {
       return handleNonExisting(path);
     }
-    return null;
   }
 
   private static @Nullable Project handleNonExisting(@NotNull Path path) {
@@ -95,9 +91,8 @@ public final class LightEditUtil {
     return null;
   }
 
-  public static boolean isOpenInExistingProject() {
-    return ourForceOpenInExistingProjectFlag &&
-           ProjectManager.getInstance().getOpenProjects().length > 0;
+  public static boolean isForceOpenInLightEditMode() {
+    return ourForceOpenInLightEditMode;
   }
 
   @Nullable
@@ -188,8 +183,8 @@ public final class LightEditUtil {
     return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
   }
 
-  public static void setForceOpenInExistingProject(boolean openInExistingProject) {
-    ourForceOpenInExistingProjectFlag = openInExistingProject;
+  public static void setForceOpenInLightEditMode(boolean openInExistingProject) {
+    ourForceOpenInLightEditMode = openInExistingProject;
   }
 
   @Nullable

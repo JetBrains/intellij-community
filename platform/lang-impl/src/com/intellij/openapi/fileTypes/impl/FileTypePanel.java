@@ -10,9 +10,6 @@ class FileTypePanel {
   JPanel myRecognizedFileTypesPanel;
   JPanel myPatternsPanel;
   JPanel myHashBangPanel;
-  JPanel myOpenWithLightEditPanel;
-  JTextField myLightEditPatternsField;
-  JBLabel myLightEditHintLabel;
   JButton myAssociateButton;
   JPanel myAssociatePanel;
   JPanel myRightPanel;
