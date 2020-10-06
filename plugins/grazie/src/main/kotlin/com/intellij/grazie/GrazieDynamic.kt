@@ -13,6 +13,7 @@ import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
+import org.languagetool.rules.patterns.PasswordAuthenticator
 import java.io.InputStream
 import java.net.Authenticator
 import java.net.URL
@@ -51,8 +52,8 @@ internal object GrazieDynamic : DynamicPluginListener {
   override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
-      if (Authenticator.getDefault()?.javaClass?.classLoader == GraziePlugin.classLoader) Authenticator.setDefault(null)
     }
+    if (Authenticator.getDefault() is PasswordAuthenticator) Authenticator.setDefault(null)
   }
 
   fun addDynClassLoader(classLoader: ClassLoader) = myDynClassLoaders.add(classLoader)
