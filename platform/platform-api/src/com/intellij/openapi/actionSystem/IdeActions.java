@@ -336,6 +336,7 @@ public interface IdeActions {
   String ACTION_RUN_ANYTHING = "RunAnything";
   @NonNls String ACTION_OPEN_IN_RIGHT_SPLIT = "OpenInRightSplit";
   @NonNls String ACTION_OPEN_IN_NEW_WINDOW = "OpenElementInNewWindow";
+  @NonNls String ACTION_EDIT_SOURCE_IN_NEW_WINDOW = "EditSourceInNewWindow";
 
   String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
   String ACTION_SWITCHER = "Switcher";

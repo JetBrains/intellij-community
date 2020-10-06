@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -397,10 +398,15 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
   @NotNull
   @Override
-  protected String getInitialHint() {
-    return IdeBundle.message("searcheverywhere.history.shortcuts.hint",
-                             KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
-                             KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
+  protected String[] getInitialHints() {
+    return new String[]{
+      IdeBundle.message("searcheverywhere.open.in.split.shortcuts.hint",
+                        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT)),
+      IdeBundle.message("searcheverywhere.open.in.new.window.shortcuts.hint",
+                        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_EDIT_SOURCE_IN_NEW_WINDOW)),
+      IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                        KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE))};
   }
 
   @Override

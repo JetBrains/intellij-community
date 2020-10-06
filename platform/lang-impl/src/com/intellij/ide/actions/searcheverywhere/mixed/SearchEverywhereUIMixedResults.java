@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -423,10 +424,15 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
 
   @NotNull
   @Override
-  protected String getInitialHint() {
-    return IdeBundle.message("searcheverywhere.history.shortcuts.hint",
-                             KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
-                             KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
+  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+    return new String[]{
+      IdeBundle.message("searcheverywhere.open.in.split.shortcuts.hint",
+                        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT)),
+      IdeBundle.message("searcheverywhere.open.in.new.window.shortcuts.hint",
+                        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_EDIT_SOURCE_IN_NEW_WINDOW)),
+      IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                        KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE))};
   }
 
   @Override

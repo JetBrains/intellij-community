@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.lookup.impl;
+package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,13 +7,11 @@ import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -30,6 +28,8 @@ public class Advertiser {
   private final AtomicInteger myCurrentItem = new AtomicInteger(0);
   private final JLabel myTextPanel = createLabel();
   private final JLabel myNextLabel;
+  
+  private Color myForeground = JBUI.CurrentTheme.Advertiser.foreground();
 
   public Advertiser() {
     myNextLabel = new JLabel(CodeInsightBundle.message("label.next.tip"));
@@ -62,16 +62,16 @@ public class Advertiser {
     else {
       myTextPanel.setText("");
       myTextPanel.setIcon(null);
-      myTextPanel.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+      myTextPanel.setForeground(myForeground);
     }
     myComponent.revalidate();
     myComponent.repaint();
   }
 
-  private static JLabel createLabel() {
+  private JLabel createLabel() {
     JLabel label = new JLabel();
     label.setFont(adFont());
-    label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+    label.setForeground(myForeground);
     return label;
   }
 
@@ -97,6 +97,21 @@ public class Advertiser {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myTexts.add(new Item(text, icon));
     updateAdvertisements();
+  }
+
+  public void setBorder(@Nullable Border border) {
+    myComponent.setBorder(border);
+  }
+
+  public void setForeground(@Nullable Color foreground) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    
+    if (foreground != null) {
+      myForeground = foreground;
+    }
+    if (!myTexts.isEmpty()) {
+      updateAdvertisements();
+    }
   }
 
   public void setBackground(@Nullable Color background) {
@@ -167,7 +182,7 @@ public class Advertiser {
     }
   }
 
-  private static final class Item {
+  private class Item {
     private final @PopupAdvertisement String text;
     private final                     Icon   icon;
 
@@ -179,7 +194,11 @@ public class Advertiser {
     private void setForLabel(JLabel label) {
       label.setText(toString());
       label.setIcon(icon);
-      label.setForeground(icon != null ? UIManager.getColor("Label.foreground") : JBUI.CurrentTheme.Advertiser.foreground());
+      label.setForeground(getForegroundColor());
+    }
+
+    private Color getForegroundColor() {
+      return icon != null ? UIManager.getColor("Label.foreground") : myForeground;
     }
 
     @Override

@@ -588,7 +588,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
 
   public void setAdText(@NlsContexts.PopupAdvertisement @NotNull final String s) {
-    myHintLabel.setText(s);
+    myHintLabel.clearAdvertisements();
+    myHintLabel.addAdvertisement(s, null);
   }
 
   @NotNull
@@ -798,12 +799,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return res;
   }
 
+
   @NotNull
   @Override
-  protected String getInitialHint() {
-    return IdeBundle.message("run.anything.hint.initial.text",
-                             KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
-                             KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
+  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+    return new String[]{IdeBundle.message("run.anything.hint.initial.text",
+                                          KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
+                                          KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE))};
   }
 
   @Override
