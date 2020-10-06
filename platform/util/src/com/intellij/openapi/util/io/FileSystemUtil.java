@@ -22,19 +22,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @version 11.1
- */
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+
   @ApiStatus.Internal
-  public static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
+  public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
@@ -280,7 +276,6 @@ public final class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
-    @SuppressWarnings("HardCodedStringLiteral")
     JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
@@ -468,7 +463,7 @@ public final class FileSystemUtil {
   }
 
   /**
-   * determines case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names
+   * Detects case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names.
    */
   @NotNull
   public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
@@ -482,27 +477,29 @@ public final class FileSystemUtil {
     }
 
     String name = anyChild.getName();
-    String newName = toggleCase(name);
-    if (newName.equals(name)) {
+    String altName = toggleCase(name);
+    if (altName.equals(name)) {
       // we have a bad case of "123" file
-      name = findCaseableSiblingName(parent);
+      name = findCaseSensitiveSiblingName(parent);
       if (name == null) {
         // we can't find any file with toggleable case.
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
-      newName = toggleCase(name);
+      altName = toggleCase(name);
     }
-    String newPath = parent + "/" + newName;
-    FileAttributes newAttributes = getAttributes(newPath);
+
+    String altPath = parent + "/" + altName;
+    FileAttributes newAttributes = getAttributes(altPath);
     if (newAttributes == null) {
       // couldn't file this file by other-cased name, so deduce FS is sensitive
       return FileAttributes.CaseSensitivity.SENSITIVE;
     }
+
     try {
       // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
-      File newCanonicalFile = new File(newPath).getCanonicalFile();
-      String newCanonicalName = newCanonicalFile.getName();
-      if (newCanonicalName.equals(name) || newCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
+      File altCanonicalFile = new File(altPath).getCanonicalFile();
+      String altCanonicalName = altCanonicalFile.getName();
+      if (altCanonicalName.equals(name) || altCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
         // nah, these two are really the same file
         return FileAttributes.CaseSensitivity.INSENSITIVE;
       }
@@ -510,32 +507,31 @@ public final class FileSystemUtil {
     catch (IOException e) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
+
     // it's the different file indeed, what a bad luck
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
-  @NotNull
   private static String toggleCase(@NotNull String name) {
-    String newName = name.toUpperCase();
-    if (newName.equals(name)) newName = name.toLowerCase();
-    return newName;
+    String altName = name.toUpperCase(Locale.getDefault());
+    if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
+    return altName;
   }
 
-  public static boolean isCaseToggleable(@NotNull String name) {
+  public static boolean isCaseSensitive(@NotNull String name) {
     return !toggleCase(name).equals(name);
   }
 
-  private static String findCaseableSiblingName(@NotNull File dir) {
+  private static String findCaseSensitiveSiblingName(@NotNull File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
-        if (!name.toLowerCase().equals(name.toUpperCase())) {
+        if (!name.toLowerCase(Locale.getDefault()).equals(name.toUpperCase(Locale.getDefault()))) {
           return name;
         }
       }
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
     return null;
   }
 }

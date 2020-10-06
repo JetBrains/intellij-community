@@ -25,7 +25,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.junit.Assert.*;
 
 public class SymlinkHandlingTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Before
   public void setUp() {
@@ -34,16 +34,16 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @After
   public void tearDown() {
-    VirtualFile root = refreshAndFind(myTempDir.getRoot());
+    VirtualFile root = refreshAndFind(tempDir.getRoot());
     // purge VFS to avoid persisting these specific file names through to the next launch
     VfsTestUtil.deleteFile(root);
   }
 
   @Test
   public void testMissingLink() {
-    File missingFile = new File(myTempDir.getRoot(), "missing_file");
+    File missingFile = new File(tempDir.getRoot(), "missing_file");
     assertTrue(missingFile.getPath(), !missingFile.exists() || missingFile.delete());
-    File missingLinkFile = createSymLink(missingFile.getPath(), myTempDir.getRoot() + "/missing_link", false);
+    File missingLinkFile = createSymLink(missingFile.getPath(), tempDir.getRoot() + "/missing_link", false);
     VirtualFile missingLinkVFile = refreshAndFind(missingLinkFile);
     assertNotNull(missingLinkVFile);
     assertBrokenLink(missingLinkVFile);
@@ -52,7 +52,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testSelfLink() {
-    String target = new File(myTempDir.getRoot(), "self_link").getPath();
+    String target = new File(tempDir.getRoot(), "self_link").getPath();
     File selfLinkFile = createSymLink(target, target, false);
     VirtualFile selfLinkVFile = refreshAndFind(selfLinkFile);
     assertNotNull(selfLinkVFile);
@@ -62,18 +62,18 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDotLink() {
-    File dotLinkFile = createSymLink(".", myTempDir.getRoot() + "/dot_link");
+    File dotLinkFile = createSymLink(".", tempDir.getRoot() + "/dot_link");
     VirtualFile dotLinkVFile = refreshAndFind(dotLinkFile);
     assertNotNull(dotLinkVFile);
     assertTrue(dotLinkVFile.is(VFileProperty.SYMLINK));
     assertTrue(dotLinkVFile.isDirectory());
-    assertPathsEqual(myTempDir.getRoot().getPath(), dotLinkVFile.getCanonicalPath());
+    assertPathsEqual(tempDir.getRoot().getPath(), dotLinkVFile.getCanonicalPath());
     assertVisitedPaths(dotLinkVFile.getPath());
   }
 
   @Test
   public void testCircularLink() {
-    File upDir = myTempDir.newDirectory("sub");
+    File upDir = tempDir.newDirectory("sub");
     File upLinkFile = createSymLink(upDir.getPath(), upDir.getPath() + "/up_link");
     VirtualFile upLinkVFile = refreshAndFind(upLinkFile);
     assertNotNull(upLinkVFile);
@@ -94,8 +94,8 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMutualRecursiveLinks() {
-    File circularDir1 = myTempDir.newDirectory("dir1");
-    File circularDir2 = myTempDir.newDirectory("dir2");
+    File circularDir1 = tempDir.newDirectory("dir1");
+    File circularDir2 = tempDir.newDirectory("dir2");
     File circularLink1 = createSymLink(circularDir2.getPath(), circularDir1 + "/link1");
     File circularLink2 = createSymLink(circularDir1.getPath(), circularDir2 + "/link2");
     VirtualFile circularLink1VFile = refreshAndFind(circularLink1);
@@ -108,18 +108,18 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDuplicateLinks() {
-    File targetDir = myTempDir.newDirectory("target");
-    File link1 = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/link1");
-    File link2 = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/link2");
+    File targetDir = tempDir.newDirectory("target");
+    File link1 = createSymLink(targetDir.getPath(), tempDir.getRoot() + "/link1");
+    File link2 = createSymLink(targetDir.getPath(), tempDir.getRoot() + "/link2");
     assertVisitedPaths(targetDir.getPath(), link1.getPath(), link2.getPath());
   }
 
   @Test
   public void testSidewaysRecursiveLink() {
-    File a = myTempDir.newDirectory("a");
+    File a = tempDir.newDirectory("a");
     File b = createTestDir(a, "b");
     File link1 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../" + a.getName(), b.getPath() + "/link1");
-    File project = myTempDir.newDirectory("project");
+    File project = tempDir.newDirectory("project");
     File c = createTestDir(project, "c");
     File d = createTestDir(c, "d");
     File link2 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../../" + a.getName(), d.getPath() + "/link2");
@@ -130,10 +130,10 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testVisitAllNonRecursiveLinks() {
-    File target = myTempDir.newDirectory("target");
+    File target = tempDir.newDirectory("target");
     File child = createTestDir(target, "child");
-    File link1 = createSymLink(target.getPath(), myTempDir.getRoot() + "/link1");
-    File link2 = createSymLink(target.getPath(), myTempDir.getRoot() + "/link2");
+    File link1 = createSymLink(target.getPath(), tempDir.getRoot() + "/link1");
+    File link2 = createSymLink(target.getPath(), tempDir.getRoot() + "/link2");
     assertVisitedPaths(target.getPath(), child.getPath(),
                        link1.getPath(), link1.getPath() + "/child",
                        link2.getPath(), link2.getPath() + "/child");
@@ -141,30 +141,30 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testTargetIsWritable() {
-    File targetFile = myTempDir.newFile("target.txt");
-    File linkFile = createSymLink(targetFile.getPath(), myTempDir.getRoot() + "/link");
+    File targetFile = tempDir.newFile("target.txt");
+    File linkFile = createSymLink(targetFile.getPath(), tempDir.getRoot() + "/link");
     VirtualFile linkVFile = refreshAndFind(linkFile);
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() &&
                                                             linkVFile.is(VFileProperty.SYMLINK));
 
     setWritableAndCheck(targetFile, true);
-    refresh(myTempDir.getRoot());
+    refresh(tempDir.getRoot());
     assertTrue(linkVFile.getPath(), linkVFile.isWritable());
     setWritableAndCheck(targetFile, false);
-    refresh(myTempDir.getRoot());
+    refresh(tempDir.getRoot());
     assertFalse(linkVFile.getPath(), linkVFile.isWritable());
 
-    File targetDir = myTempDir.newDirectory("target");
-    File linkDir = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/linkDir");
+    File targetDir = tempDir.newDirectory("target");
+    File linkDir = createSymLink(targetDir.getPath(), tempDir.getRoot() + "/linkDir");
     VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK));
 
     if (!SystemInfo.isWindows) {
       setWritableAndCheck(targetDir, true);
-      refresh(myTempDir.getRoot());
+      refresh(tempDir.getRoot());
       assertTrue(linkVDir.getPath(), linkVDir.isWritable());
       setWritableAndCheck(targetDir, false);
-      refresh(myTempDir.getRoot());
+      refresh(tempDir.getRoot());
       assertFalse(linkVDir.getPath(), linkVDir.isWritable());
     }
     else {
@@ -179,8 +179,8 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testLinkDeleteIsSafe() throws Exception {
-    File targetFile = myTempDir.newFile("target");
-    File linkFile = createSymLink(targetFile.getPath(), myTempDir.getRoot() + "/link");
+    File targetFile = tempDir.newFile("target");
+    File linkFile = createSymLink(targetFile.getPath(), tempDir.getRoot() + "/link");
     VirtualFile linkVFile = refreshAndFind(linkFile);
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile,
                linkVFile != null && !linkVFile.isDirectory() && linkVFile.is(VFileProperty.SYMLINK));
@@ -190,10 +190,10 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertFalse(linkFile.exists());
     assertTrue(targetFile.exists());
 
-    File targetDir = myTempDir.newDirectory("targetDir");
+    File targetDir = tempDir.newDirectory("targetDir");
     File childFile = new File(targetDir, "child.txt");
     assertTrue(childFile.getPath(), childFile.exists() || childFile.createNewFile());
-    File linkDir = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/linkDir");
+    File linkDir = createSymLink(targetDir.getPath(), tempDir.getRoot() + "/linkDir");
     VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir,
                linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK) && linkVDir.getChildren().length == 1);
@@ -207,11 +207,11 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testTransGenderRefresh() throws Exception {
-    File targetFile = myTempDir.newFile("target");
-    File targetDir = myTempDir.newDirectory("targetDir");
+    File targetFile = tempDir.newFile("target");
+    File targetDir = tempDir.newDirectory("targetDir");
 
     // file link
-    File link = createSymLink(targetFile.getPath(), myTempDir.getRoot() + "/link");
+    File link = createSymLink(targetFile.getPath(), tempDir.getRoot() + "/link");
     VirtualFile vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                vFile1 != null && !vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
@@ -224,20 +224,23 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     // dir => dir link
     assertTrue(link.getPath(), link.delete());
-    link = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/link");
+    link = createSymLink(targetDir.getPath(), tempDir.getRoot() + "/link");
+    refresh(tempDir.getRoot());
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                !vFile2.isValid() && vFile1 != null && vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
 
     // dir link => file
     assertTrue(link.getPath(), link.delete() && link.createNewFile() && link.isFile());
+    refresh(tempDir.getRoot());
     vFile2 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                !vFile1.isValid() && vFile2 != null && !vFile2.isDirectory() && !vFile2.is(VFileProperty.SYMLINK));
 
     // file => file link
     assertTrue(link.getPath(), link.delete());
-    link = createSymLink(targetFile.getPath(), myTempDir.getRoot() + "/link");
+    link = createSymLink(targetFile.getPath(), tempDir.getRoot() + "/link");
+    refresh(tempDir.getRoot());
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
@@ -245,11 +248,11 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDirLinkSwitch() throws Exception {
-    Path target1Child = myTempDir.newFile("target1/child1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
-    Path target2Child = myTempDir.newFile("target2/child1.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
-    myTempDir.newFile("target2/child2.txt");
+    Path target1Child = tempDir.newFile("target1/child1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path target2Child = tempDir.newFile("target2/child1.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
+    tempDir.newFile("target2/child2.txt");
     Path target1 = target1Child.getParent(), target2 = target2Child.getParent();
-    Path link = myTempDir.getRoot().toPath().resolve("link");
+    Path link = tempDir.getRoot().toPath().resolve("link");
     createSymbolicLink(link, target1);
     VirtualFile vLink = refreshAndFind(link.toFile());
     assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
@@ -260,7 +263,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     Files.delete(link);
     createSymbolicLink(link, target2);
-    refresh(myTempDir.getRoot());
+    refresh(tempDir.getRoot());
     assertTrue("vLink=" + vLink, vLink.isValid());
     assertEquals(2, vLink.getChildren().length);
     assertEquals(Files.readString(target2Child), VfsUtilCore.loadText(vLink.findChild("child1.txt")));
@@ -269,9 +272,9 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileLinkSwitch() throws Exception {
-    Path target1 = myTempDir.newFile("target1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
-    Path target2 = myTempDir.newFile("target2.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
-    Path link = myTempDir.getRoot().toPath().resolve("link");
+    Path target1 = tempDir.newFile("target1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path target2 = tempDir.newFile("target2.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path link = tempDir.getRoot().toPath().resolve("link");
     createSymbolicLink(link, target1);
     VirtualFile vLink = refreshAndFind(link.toFile());
     assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && !vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
@@ -281,7 +284,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     Files.delete(link);
     createSymbolicLink(link, target2);
-    refresh(myTempDir.getRoot());
+    refresh(tempDir.getRoot());
     assertTrue("vLink=" + vLink, vLink.isValid());
     assertEquals(Files.readString(target2), VfsUtilCore.loadText(vLink));
     assertPathsEqual(target2.toString(), vLink.getCanonicalPath());
@@ -289,9 +292,9 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testTraversePathBehindLink() {
-    File topDir = myTempDir.newDirectory("top");
+    File topDir = tempDir.newDirectory("top");
     File subDir1 = createTestDir(topDir, "sub1");
-    File link = createSymLink(subDir1.getPath(), myTempDir.getRoot() + "/link");
+    File link = createSymLink(subDir1.getPath(), tempDir.getRoot() + "/link");
     VirtualFile vLink = refreshAndFind(link);
     assertNotNull(link.getPath(), vLink);
 
@@ -307,65 +310,9 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertEquals(vSubChild, vSubChildRel);
   }
 
-
-  @Nullable
-  private VirtualFile refreshAndFind(File ioFile) {
-    return refreshAndFind(myTempDir.getRoot(), ioFile);
-  }
-
-  @Nullable
-  static VirtualFile refreshAndFind(@NotNull File root, @NotNull File ioFile) {
-    refresh(root);
-    return LocalFileSystem.getInstance().findFileByPath(ioFile.getPath());
-  }
-
-  private static void refresh(@NotNull File root) {
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-    assertNotNull(root.getPath(), tempDir);
-
-    tempDir.getChildren();
-    tempDir.refresh(false, true);
-    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor<Void>() { });
-  }
-
-  private static void assertBrokenLink(@NotNull VirtualFile link) {
-    assertTrue(link.is(VFileProperty.SYMLINK));
-    assertEquals(0, link.getLength());
-    assertNull(link.getCanonicalPath(), link.getCanonicalPath());
-  }
-
-  private void assertVisitedPaths(String... expected) {
-    assertVisitedPaths(myTempDir.getRoot(), expected);
-  }
-
-  private void assertVisitedPaths(File from, String... expected) {
-    VirtualFile vDir = refreshAndFind(from);
-    assertNotNull(vDir);
-
-    Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
-
-    Set<String> actualSet = new HashSet<>();
-    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!actualSet.add(file.getPath())) {
-          throw new AssertionError(file + " already visited");
-        }
-        return true;
-      }
-    });
-
-    List<String> exp = new ArrayList<>(expectedSet);
-    Collections.sort(exp);
-    List<String> act = new ArrayList<>(actualSet);
-    Collections.sort(act);
-
-    assertEquals(StringUtil.join(exp, "\n"), StringUtil.join(act, "\n"));
-  }
-
   @Test
   public void testCircularSymlinksMustBeDetected() {
-    File top = myTempDir.newDirectory("top");
+    File top = tempDir.newDirectory("top");
     File sub1 = createTestDir(top, "sub1");
     File link = createSymLink(top.getPath(), sub1.getPath() + "/link");
     VirtualFile vLink = refreshAndFind(link);
@@ -390,7 +337,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCircularSymlinksMustBeDetectedEvenForAsideLinks() {
-    File top = myTempDir.newDirectory("top");
+    File top = tempDir.newDirectory("top");
     File sub1 = createTestDir(top, "s1");
     File ss1 = createTestDir(sub1, "ss1");
     File link1 = createSymLink(sub1.getPath(), ss1.getPath() + "/l1");
@@ -419,4 +366,54 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertTrue(f.getPath(), f.is(VFileProperty.SYMLINK));
     assertTrue(f.getPath(), f.isRecursiveOrCircularSymlink());
   }
+
+  //<editor-fold desc="Helpers.">
+  private @Nullable static VirtualFile refreshAndFind(File ioFile) {
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+  }
+
+  private static void refresh(File root) {
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+    assertNotNull(root.getPath(), tempDir);
+
+    tempDir.getChildren();
+    tempDir.refresh(false, true);
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor<Void>() { });
+  }
+
+  private static void assertBrokenLink(@NotNull VirtualFile link) {
+    assertTrue(link.is(VFileProperty.SYMLINK));
+    assertEquals(0, link.getLength());
+    assertNull(link.getCanonicalPath(), link.getCanonicalPath());
+  }
+
+  private void assertVisitedPaths(String... expected) {
+    assertVisitedPaths(tempDir.getRoot(), expected);
+  }
+
+  private static void assertVisitedPaths(File from, String... expected) {
+    VirtualFile vDir = refreshAndFind(from);
+    assertNotNull(vDir);
+
+    Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
+
+    Set<String> actualSet = new HashSet<>();
+    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor<Void>() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!actualSet.add(file.getPath())) {
+          throw new AssertionError(file + " already visited");
+        }
+        return true;
+      }
+    });
+
+    List<String> exp = new ArrayList<>(expectedSet);
+    Collections.sort(exp);
+    List<String> act = new ArrayList<>(actualSet);
+    Collections.sort(act);
+
+    assertEquals(StringUtil.join(exp, "\n"), StringUtil.join(act, "\n"));
+  }
+  //</editor-fold>
 }

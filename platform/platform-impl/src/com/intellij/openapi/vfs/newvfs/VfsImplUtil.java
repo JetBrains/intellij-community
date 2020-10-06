@@ -301,7 +301,7 @@ public final class VfsImplUtil {
    * Otherwise, return null.
    */
   public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseToggleable(childName)) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseSensitive(childName)) {
       FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
       if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
         if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
