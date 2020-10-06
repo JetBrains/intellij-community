@@ -293,7 +293,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
         return true;
-      }, "Inspect code is not available until indices are ready");
+      }, LangBundle.message("popup.content.inspect.code.not.available.until.indices.are.ready"));
       if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }
@@ -881,7 +881,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
-      CleanupInspectionUtil.getInstance().applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null, false, searchScope instanceof GlobalSearchScope);
+      CleanupInspectionUtil.getInstance().applyFixesNoSort(getProject(), LangBundle.message("code.cleanup"), descriptors, null, false, searchScope instanceof GlobalSearchScope);
       if (postRunnable != null) {
         postRunnable.run();
       }

@@ -111,7 +111,7 @@ public class LongLineInspection extends LocalInspectionTool {
                 TextRange exceedingRange = new TextRange(highlightingStartOffset, highlightingEndOffset);
                 holder.registerProblem(element,
                                        exceedingRange,
-                                       String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin));
+                                       LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin));
               }
             }
           }

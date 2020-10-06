@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -35,6 +36,7 @@ public class InspectionModuleNode extends InspectionTreeNode {
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
+  @NlsSafe
   public String getName() {
     return myModule.getName();
   }

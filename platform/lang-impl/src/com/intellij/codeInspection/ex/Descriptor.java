@@ -10,14 +10,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class Descriptor {
   private static final Logger LOG = Logger.getInstance(Descriptor.class);
 
   @NotNull
-  private final String myText;
+  private final @Nls(capitalization = Sentence) String myText;
   private final String[] myGroup;
   private final String myShortName;
   private final InspectionToolWrapper myToolWrapper;
@@ -71,7 +74,7 @@ public class Descriptor {
   }
 
   @NotNull
-  public String getText() {
+  public @Nls(capitalization = Sentence) String getText() {
     return myText;
   }
 

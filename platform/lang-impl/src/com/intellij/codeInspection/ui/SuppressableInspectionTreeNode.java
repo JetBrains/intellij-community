@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @NotNull
   private final InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
-  private volatile String myPresentableName;
+  private volatile @Nls String myPresentableName;
   private volatile Boolean myValid;
   private volatile NodeState myPreviousState;
 
@@ -155,6 +156,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy()))));
   }
 
+  @Nls
   protected abstract String calculatePresentableName();
 
   protected abstract boolean calculateIsValid();

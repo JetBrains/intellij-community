@@ -65,6 +65,7 @@ public final class ProblemDescriptorUtil {
   }
 
   @NotNull
+  @InspectionMessage
   public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
     String message = descriptor.getDescriptionTemplate();
 

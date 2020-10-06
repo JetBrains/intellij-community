@@ -7,6 +7,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,7 +92,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   @NotNull final String descriptionTemplate,
+                                                   @NotNull final @InspectionMessage String descriptionTemplate,
                                                    @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
