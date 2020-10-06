@@ -37,6 +37,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -1226,7 +1227,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       group = outside;
     }
 
-    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, this) {
+    class AutoPopupToolbar extends PopupToolbar implements DataProvider {
+      AutoPopupToolbar(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal, @NotNull JComponent parent) {
+        super(place, actionGroup, horizontal, parent);
+      }
+
       @Override
       protected void onOtherActionPerformed() {
         hidePopup();
@@ -1236,7 +1241,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       protected @NotNull DataContext getDataContext() {
         return ActionToolbarImpl.this.getDataContext();
       }
-    };
+
+      @Override
+      public @Nullable Object getData(@NotNull @NonNls String dataId) {
+        return getDataContext().getData(dataId);
+      }
+    }
+
+    PopupToolbar popupToolbar = new AutoPopupToolbar(myPlace, group, true, this);
     popupToolbar.setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
     popupToolbar.updateActionsImmediately();
 
