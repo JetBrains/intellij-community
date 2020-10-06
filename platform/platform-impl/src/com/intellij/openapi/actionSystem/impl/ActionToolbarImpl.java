@@ -839,7 +839,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (bounds.isEmpty()) return JBUI.emptySize();
     int forcedHeight = 0;
     if (getWidth() > 0 && getLayoutPolicy() == ActionToolbar.WRAP_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL) {
-      final ArrayList<Rectangle> limitedBounds = new ArrayList<>();
+      final List<Rectangle> limitedBounds = new ArrayList<>();
       calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), limitedBounds);
       Rectangle union = null;
       for (Rectangle bound : limitedBounds) {
@@ -1227,8 +1227,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       group = outside;
     }
 
-    class AutoPopupToolbar extends PopupToolbar implements DataProvider {
-      AutoPopupToolbar(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal, @NotNull JComponent parent) {
+    final class AutoPopupToolbar extends PopupToolbar implements DataProvider {
+      private AutoPopupToolbar(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal, @NotNull JComponent parent) {
         super(place, actionGroup, horizontal, parent);
       }
 
@@ -1306,7 +1306,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return;
     }
 
-    ComponentAdapter componentAdapter = new ComponentAdapter() {
+    ComponentListener componentAdapter = new ComponentAdapter() {
       @Override
       public void componentResized(final ComponentEvent e) {
         hidePopup();
@@ -1423,9 +1423,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public @NotNull List<AnAction> getActions() {
-    ArrayList<AnAction> result = new ArrayList<>();
+    List<AnAction> result = new ArrayList<>();
 
-    ArrayList<AnAction> secondary = new ArrayList<>();
+    List<AnAction> secondary = new ArrayList<>();
     AnAction[] kids = myActionGroup.getChildren(null);
     for (AnAction each : kids) {
       if (myActionGroup.isPrimary(each)) {
