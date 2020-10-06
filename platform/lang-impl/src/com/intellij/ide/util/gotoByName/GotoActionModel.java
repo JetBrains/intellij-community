@@ -60,6 +60,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.lang.LangBundle.message;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
@@ -80,17 +81,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
-  private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
-    if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) LOG.error("Configurable names must not be loaded on EDT");
-
-    Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new THashMap<>();
-    for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
-      if (configurable instanceof SearchableConfigurable) {
-        map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+  private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
+    VolatileNotNullLazyValue.createValue(() -> {
+      if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error("Configurable names must not be loaded on EDT");
       }
-    }
-    return map;
-  });
+
+      Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new THashMap<>();
+      for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+        if (configurable instanceof SearchableConfigurable) {
+          map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+        }
+      }
+      return map;
+    });
 
   private final ModalityState myModality;
 
@@ -359,11 +363,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
+  @Nls
   @NotNull
   public String getGroupName(@NotNull OptionDescription description) {
-    if (description instanceof RegistryTextOptionDescriptor) return "Registry";
+    if (description instanceof RegistryTextOptionDescriptor) return message("group.registry");
     String groupName = description.getGroupName();
-    String settings = SystemInfo.isMac ? "Preferences" : "Settings";
+    String settings = SystemInfo.isMac ? message("group.preferences") : message("group.settings");
     if (groupName == null || groupName.equals(description.getHit())) return settings;
     return settings + " > " + groupName;
   }
@@ -377,7 +382,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
-    AnAction[] actions = group.getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, SimpleDataContext.getProjectContext(myProject)));
+    AnAction[] actions = group
+      .getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, SimpleDataContext.getProjectContext(myProject)));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {
@@ -423,7 +429,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable
   @Override
   public String getElementName(@NotNull Object mv) {
-    return ((MatchedValue) mv).getValueText();
+    return ((MatchedValue)mv).getValueText();
   }
 
   protected MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
@@ -447,7 +453,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
     GroupMapping groupMapping = myActionGroups.get(anAction);
     if (groupMapping != null) {
-      for (String groupName: groupMapping.getAllGroupNames()) {
+      for (String groupName : groupMapping.getAllGroupNames()) {
         if (matcher.matches(groupName + " " + text)) {
           return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
         }
@@ -767,7 +773,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       SimpleColoredComponent nameComponent = new SimpleColoredComponent();
 
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
-      JPanel panel = new JPanel(new BorderLayout()){
+      JPanel panel = new JPanel(new BorderLayout()) {
         @Override
         public AccessibleContext getAccessibleContext() {
           return nameComponent.getAccessibleContext();
@@ -842,7 +848,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
         if (UISettings.getInstance().getShowInplaceCommentsInternal() && actionId != null) {
-          nameComponent.append(" "+ actionId + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          nameComponent.append(" " + actionId + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         if (StringUtil.isNotEmpty(shortcutText)) {
           nameComponent.append(" " + shortcutText,
@@ -851,7 +857,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
-          Color descriptorBg = StartupUiUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+          Color descriptorBg =
+            StartupUiUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);
         }
@@ -892,7 +899,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @ActionText
-    private static String cutName(@ActionText String name, @NlsSafe String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+    private static String cutName(@ActionText String name,
+                                  @NlsSafe String shortcutText,
+                                  JList list,
+                                  JPanel panel,
+                                  SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
@@ -912,7 +923,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return name;
       }
 
-      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * name.length());
+      int cutSymbolIndex = (int)((((double)freeSpace - fm.stringWidth("...")) / strWidth) * name.length());
       cutSymbolIndex = Integer.max(1, cutSymbolIndex);
       name = name.substring(0, cutSymbolIndex);
       while (fm.stringWidth(name + "...") > freeSpace && name.length() > 1) {
@@ -927,13 +938,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
       Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
       int freeSpace = list.getWidth()
-        - (list.getInsets().right + list.getInsets().left)
-        - (panel.getInsets().right + panel.getInsets().left)
-        - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
-        - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
-        - (nameComponent.getInsets().right + nameComponent.getInsets().left)
-        - (nameComponent.getIpad().right + nameComponent.getIpad().left)
-        - nameComponent.getIconTextGap();
+                      - (list.getInsets().right + list.getInsets().left)
+                      - (panel.getInsets().right + panel.getInsets().left)
+                      - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
+                      - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
+                      - (nameComponent.getInsets().right + nameComponent.getInsets().left)
+                      - (nameComponent.getIpad().right + nameComponent.getIpad().left)
+                      - nameComponent.getIconTextGap();
 
       if (StringUtil.isNotEmpty(shortcutText)) {
         FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
