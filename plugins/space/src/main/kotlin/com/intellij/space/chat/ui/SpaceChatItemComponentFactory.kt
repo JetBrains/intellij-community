@@ -31,6 +31,7 @@ import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
+import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
@@ -41,6 +42,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.date.DateFormat
+import java.awt.*
 import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
@@ -85,9 +87,11 @@ internal class SpaceChatItemComponentFactory(
       ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
     }
 
-    return HtmlEditorPane().apply {
+    val content = HtmlEditorPane().apply {
       setBody(text)
     }
+
+    return EventMessagePanel(content)
   }
 
   private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent {
@@ -224,6 +228,36 @@ internal class SpaceChatItemComponentFactory(
 
   private fun createSimpleMessagePanel(message: SpaceChatItem, server: String) = HtmlEditorPane().apply {
     setBody(MentionConverter.html(message.text, server))
+  }
+
+  private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
+    private val lineColor = Color(22, 125, 255, 51)
+
+    private val lineWidth
+      get() = JBUI.scale(6)
+    private val lineCenterX
+      get() = lineWidth / 2
+    private val yRoundOffset
+      get() = lineWidth / 2
+
+    init {
+      addToCenter(content)
+      isOpaque = false
+      border = JBUI.Borders.empty(yRoundOffset, 15, yRoundOffset, 0)
+    }
+
+    override fun paint(g: Graphics?) {
+      super.paint(g)
+
+      with(g as Graphics2D) {
+        setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+        color = lineColor
+        stroke = BasicStroke(lineWidth.toFloat() / 2 + 1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+
+        drawLine(lineCenterX, yRoundOffset, lineCenterX, height - yRoundOffset)
+      }
+    }
   }
 
   private class Item(avatar: Icon, title: JComponent, content: JComponent? = null) : JPanel() {
