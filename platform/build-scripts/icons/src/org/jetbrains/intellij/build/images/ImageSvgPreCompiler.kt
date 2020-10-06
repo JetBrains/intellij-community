@@ -8,6 +8,7 @@ import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.DigestUtil
+import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.mvstore.MVMap
@@ -114,7 +115,7 @@ internal class ImageSvgPreCompiler {
       }
 
       val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
-      dirs.stream().forEach { dir ->
+      dirs.parallelStream().forEach { dir ->
         processDir(dir, dir, 1, rootRobotData, getMapByScale)
       }
     }
@@ -175,7 +176,12 @@ internal class ImageSvgPreCompiler {
     for (commonName in keys) {
       val variants = idToVariants1.getValue(commonName)
       variants.sort()
-      processImage(variants, getMapByScale, dimension)
+      try {
+        processImage(variants, getMapByScale, dimension)
+      }
+      catch (e: TranscoderException) {
+        throw RuntimeException("Cannot process $commonName (variants=$variants)", e)
+      }
     }
   }
 
