@@ -59,33 +59,42 @@ internal class SpaceChatItemComponentFactory(
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
-          createDiff(project, discussion, item.thread!!, server)
-            ?.withThread(lifetime, server, item.thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
+          createDiff(project, discussion, item.thread!!)
+            ?.withThread(lifetime, item.thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
         }
         is M2TextItemContent -> {
-          val messagePanel = createSimpleMessagePanel(item, server)
+          val messagePanel = createSimpleMessagePanel(item)
           val thread = item.thread
           if (thread == null) {
             messagePanel
           }
           else {
-            messagePanel.withThread(lifetime, server, thread)
+            messagePanel.withThread(lifetime, thread)
           }
         }
         is ReviewRevisionsChangedEvent -> {
           val review = details.review?.resolve()
           if (review == null) {
-            EventMessagePanel(createSimpleMessagePanel(item, server))
+            EventMessagePanel(createSimpleMessagePanel(item))
           }
           else {
             details.createComponent(review)
           }
         }
+        is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessagePanel(item))
+        is ReviewerChangedEvent -> {
+          val user = details.uid.resolve().link()
+          val text = when (details.changeType) {
+            ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
+            ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
+          }
+          EventMessagePanel(createSimpleMessagePanel(text))
+        }
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
-      createMessageTitle(server, item),
+      createMessageTitle(item),
       component
     )
   }
@@ -98,7 +107,7 @@ internal class SpaceChatItemComponentFactory(
       ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
     }
 
-    val message = createSimpleMessagePanel(text, server)
+    val message = createSimpleMessagePanel(text)
 
     val content = JPanel(VerticalLayout(JBUI.scale(5))).apply {
       isOpaque = false
@@ -136,9 +145,9 @@ internal class SpaceChatItemComponentFactory(
     return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
   }
 
-  private fun createMessageTitle(server: String, message: SpaceChatItem): JComponent {
+  private fun createMessageTitle(message: SpaceChatItem): JComponent {
     val authorPanel = HtmlEditorPane().apply {
-      setBody(createMessageAuthorChunk(message.author, server).bold().toString())
+      setBody(createMessageAuthorChunk(message.author).bold().toString())
     }
     val timePanel = HtmlEditorPane().apply {
       foreground = UIUtil.getContextHelpForeground()
@@ -159,11 +168,11 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private fun createMessageAuthorChunk(author: CPrincipal, server: String): HtmlChunk =
+  private fun createMessageAuthorChunk(author: CPrincipal): HtmlChunk =
     when (val details = author.details) {
       is CUserPrincipalDetails -> {
         val user = details.user.resolve()
-        HtmlChunk.link(Navigator.m.member(user.username).absoluteHref(server), user.name.fullName()) // NON-NLS
+        user.link()
       }
       is CExternalServicePrincipalDetails -> {
         val service = details.service.resolve()
@@ -175,7 +184,11 @@ internal class SpaceChatItemComponentFactory(
       }
     }
 
-  private fun JComponent.withThread(lifetime: Lifetime, server: String, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
+  @Nls
+  private fun TD_MemberProfile.link(): HtmlChunk =
+    HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
+
+  private fun JComponent.withThread(lifetime: Lifetime, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
     return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
       panel.isOpaque = false
 
@@ -204,8 +217,7 @@ internal class SpaceChatItemComponentFactory(
   private fun createDiff(
     project: Project,
     discussion: CodeDiscussionRecord,
-    thread: M2ChannelVm,
-    server: String
+    thread: M2ChannelVm
   ): JComponent? {
     val fileNameComponent = JBUI.Panels.simplePanel(createFileNameComponent(discussion.anchor.filename!!)).apply {
       isOpaque = false
@@ -237,7 +249,7 @@ internal class SpaceChatItemComponentFactory(
       if (panel.componentCount == 2) {
         panel.remove(1)
       }
-      panel.add(createSimpleMessagePanel(comment.convertToChatItem(comment.getLink(server)), server))
+      panel.add(createSimpleMessagePanel(comment.convertToChatItem(comment.getLink(server))))
     }
     return panel
   }
@@ -258,9 +270,9 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private fun createSimpleMessagePanel(message: SpaceChatItem, server: String) = createSimpleMessagePanel(message.text, server)
+  private fun createSimpleMessagePanel(message: SpaceChatItem) = createSimpleMessagePanel(message.text)
 
-  private fun createSimpleMessagePanel(@Nls text: String, server: String) = HtmlEditorPane().apply {
+  private fun createSimpleMessagePanel(@Nls text: String) = HtmlEditorPane().apply {
     setBody(MentionConverter.html(text, server)) // NON-NLS
   }
 
