@@ -15,6 +15,9 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
@@ -1070,6 +1073,76 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Disposable disposable = registerFileType(bean);
 
     assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), MyHaskellFileType.class);
+
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
+  }
+
+  private static class MyImageFileType implements FileType {
+    private MyImageFileType() {
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "myimage";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String getDefaultExtension() {
+      return "hs";
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Override
+    public boolean isBinary() {
+      return false;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+      return null;
+    }
+  }
+
+  public void testPluginWhichOverridesBundledFileTypeMustWin() {
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType image = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
+    PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(image.getClass().getName());
+    assertTrue(pluginDescriptor.isBundled());
+    System.out.println("pluginDescriptor = " + pluginDescriptor);
+
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = new MyImageFileType().getName();
+    String ext = fileTypeManager.getAssociatedExtensions(image)[0];
+    bean.extensions = ext;
+    bean.implementationClass = MyImageFileType.class.getName();
+
+    bean.setPluginDescriptor(new DefaultPluginDescriptor(PluginId.getId("myTestPlugin"), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID).getPluginClassLoader()));
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(getTestRootDisposable(), disposable);
+    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean, disposable));
+
+    assertInstanceOf(fileTypeManager.findFileTypeByName(bean.name), MyImageFileType.class);
+    assertInstanceOf(fileTypeManager.getFileTypeByExtension(ext), MyImageFileType.class);
 
     ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
   }

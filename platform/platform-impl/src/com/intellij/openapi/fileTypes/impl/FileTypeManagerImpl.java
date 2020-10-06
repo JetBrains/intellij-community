@@ -1136,9 +1136,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (removedMappings.contains(matcher)) {
         continue;
       }
-      FileType oldType = myPatternsTable.addAssociation(matcher, fileType);
-      if (oldType != null && !oldType.equals(fileType) && !(oldType instanceof AbstractFileType)) {
-        myConflictingMappingTracker.addConflict(null, matcher, oldType.getName(), fileType.getName());
+      FileType oldFileType = myPatternsTable.findAssociatedFileType(matcher);
+      FileType newFileType = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
+      if (!newFileType.equals(oldFileType)) {
+        myPatternsTable.addAssociation(matcher, newFileType);
       }
 
       myInitialAssociations.addAssociation(matcher, fileType);
