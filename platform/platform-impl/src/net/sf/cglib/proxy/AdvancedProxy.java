@@ -39,7 +39,7 @@ public final class AdvancedProxy {
   }
 
 
-  private static final Map<ProxyDescription, Factory> ourFactories = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<ProxyDescription, Factory> ourFactories = ContainerUtil.createConcurrentSoftKeySoftValueMap();
   private static final CallbackFilter NO_OBJECT_METHODS_FILTER = new CallbackFilter() {
     @Override
     public int accept(Method method) {
