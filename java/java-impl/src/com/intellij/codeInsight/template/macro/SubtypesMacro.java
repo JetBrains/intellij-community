@@ -20,16 +20,16 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class SubtypesMacro extends Macro {
+  private static final Logger LOG = Logger.getInstance(SubtypesMacro.class);
   @Override
   public String getName() {
     return "subtypes";
@@ -62,17 +62,32 @@ public class SubtypesMacro extends Macro {
     if (params.length == 0) return LookupElement.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {
-      final PsiType type = ((PsiTypeResult)paramResult).getType();
-      final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
-      final PsiElement element = file.findElementAt(context.getStartOffset());
-
-      final Set<LookupElement> set = new LinkedHashSet<>();
-      JavaTemplateUtil.addTypeLookupItem(set, type);
-      CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
-                                      psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));
-      return set.toArray(LookupElement.EMPTY_ARRAY);
+      return suggestSubTypes(context, ((PsiTypeResult)paramResult).getType());
+    }
+    if (paramResult instanceof TextResult) {
+      PsiElement contextPsi = context.getPsiElementAtStartOffset();
+      if (contextPsi != null) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+        try {
+          return suggestSubTypes(context, factory.createTypeFromText(((TextResult)paramResult).getText(), contextPsi));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.debug(e);
+        }
+      }
     }
     return LookupElement.EMPTY_ARRAY;
+  }
+
+  private static LookupElement[] suggestSubTypes(ExpressionContext context, PsiType type) {
+    final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
+    final PsiElement element = file.findElementAt(context.getStartOffset());
+
+    final Set<LookupElement> set = new LinkedHashSet<>();
+    JavaTemplateUtil.addTypeLookupItem(set, type);
+    CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
+                                    psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

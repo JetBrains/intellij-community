@@ -545,4 +545,29 @@ class A {
     }
 }'''
   }
+
+  void "test subtypes macro works with text argument"() {
+    myFixture.configureByText "a.java", """
+
+class Foo {
+  {
+    <caret>
+  }
+}
+
+class Bar1 extends Foo {}
+class Bar2 extends Foo {}
+"""
+    Template template = templateManager.createTemplate("xxx", "user", '$T$ var = new $ST$();')
+    template.addVariable('T', new EmptyNode(), true)
+    template.addVariable('ST', 'subtypes(T)', '', true)
+
+    startTemplate(template)
+
+    myFixture.type('Foo')
+    state.nextTab()
+
+    assert myFixture.editor.document.text.contains('Foo var = new Foo();')
+    assertSameElements(myFixture.lookupElementStrings, 'Foo', 'Bar1', 'Bar2')
+  }
 }
