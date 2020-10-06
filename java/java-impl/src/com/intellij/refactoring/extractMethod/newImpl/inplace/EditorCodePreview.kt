@@ -33,68 +33,50 @@ class EditorCodePreview(val editor: Editor): Disposable {
   }
 
   override fun dispose() {
-    if (updateOnDocumentChange) editor.document.removeDocumentListener(documentListener)
   }
-
-  var updateOnDocumentChange: Boolean = false
-    set(value) {
-      if (field && ! value) {
-        editor.document.removeDocumentListener(documentListener)
-      }
-      if (value && ! field) {
-        editor.document.addDocumentListener(documentListener)
-      }
-      field = value
-    }
 
   init {
     tracker.subscribe { updatePopupPositions() }
     Disposer.register(this, tracker)
     editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
+    editor.document.addDocumentListener(documentListener, this)
   }
 
   fun updatePopupPositions() {
     var visibleArea = editor.scrollingModel.visibleArea
-    var positions = popups.map { popup ->
-      val linesArea = findLinesArea(editor, popup.lines)
-      when {
-        linesArea.y < visibleArea.y -> {
-          visibleArea = Rectangle(visibleArea.x, visibleArea.y + linesArea.height, visibleArea.width, visibleArea.height - linesArea.height)
-          PopupPosition.Top
-        }
-        linesArea.y + linesArea.height > visibleArea.y + visibleArea.height -> {
-          visibleArea = Rectangle(visibleArea.x, visibleArea.y, visibleArea.width, visibleArea.height - linesArea.height)
-          PopupPosition.Bottom
-        }
-        else -> {
-          PopupPosition.Hidden
-        }
+    var positions = popups.reversed()
+      .map { popup ->
+        val linesArea = findLinesArea(editor, popup.lines)
+        val position = visibleArea.relativePositionOf(linesArea)
+        visibleArea = visibleArea.subtracted(linesArea, position)
+        position
       }
-    }
+      .reversed()
+    if (visibleArea.height < 0) positions = popups.map { RelativePosition.Inside }
+    val popupsAndPositions = popups.zip(positions)
 
-    if (visibleArea.height < 0) positions = popups.map { PopupPosition.Hidden }
-
-    popups.zip(positions)
-      .filter { (_, position) -> position == PopupPosition.Hidden }
+    popupsAndPositions
+      .filter { (_, position) -> position == RelativePosition.Inside }
       .forEach { (popup, _) ->
         popup.hide()
       }
+
     var position = Point(-3, -3)
-    popups.zip(positions)
-      .filter { (_, position) -> position == PopupPosition.Top }
+    popupsAndPositions.filter { (_, position) -> position == RelativePosition.Top }
       .forEach { (popup, _) ->
         popup.window.location = RelativePoint(editor.component, position).screenPoint
         position.translate(0, popup.window.height)
       }
     position = Point(-3, editor.scrollingModel.visibleArea.height)
-    popups.zip(positions).reversed()
-      .filter { (_, position) -> position == PopupPosition.Bottom }
+    popupsAndPositions
+      .filter { (_, position) -> position == RelativePosition.Bottom }
+      .reversed()
       .forEach { (popup, _) ->
         position.translate(0, -popup.window.height)
         popup.window.location = RelativePoint(editor.component, position).screenPoint
       }
-    popups.zip(positions)
-      .filterNot { (_, position) -> position == PopupPosition.Hidden }
+    popupsAndPositions
+      .filterNot { (_, position) -> position == RelativePosition.Inside }
       .forEach { (popup, _) ->
         popup.show()
         popup.window.size = Dimension(editor.component.width, popup.window.preferredSize.height)
@@ -102,8 +84,24 @@ class EditorCodePreview(val editor: Editor): Disposable {
       }
   }
 
-  enum class PopupPosition {
-    Top, Bottom, Hidden
+  private fun Rectangle.subtracted(area: Rectangle, position: RelativePosition): Rectangle {
+    return when (position) {
+      RelativePosition.Top -> Rectangle(x, y + area.height, width, height - area.height)
+      RelativePosition.Bottom -> Rectangle(x, y, width, height - area.height)
+      else -> this
+    }
+  }
+
+  private fun Rectangle.relativePositionOf(area: Rectangle): RelativePosition {
+    return when {
+      area.y < y -> RelativePosition.Top
+      area.y + area.height > y + height -> RelativePosition.Bottom
+      else -> RelativePosition.Inside
+    }
+  }
+
+  private enum class RelativePosition {
+    Top, Bottom, Inside
   }
 
   private fun findLinesArea(editor: Editor, lines: IntRange): Rectangle {

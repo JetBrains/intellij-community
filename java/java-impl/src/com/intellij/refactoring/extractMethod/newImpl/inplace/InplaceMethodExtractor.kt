@@ -86,7 +86,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     setElementToRename(method)
 
     preview = EditorCodePreview(editor)
-    preview.updateOnDocumentChange = true
 
     val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
     val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
