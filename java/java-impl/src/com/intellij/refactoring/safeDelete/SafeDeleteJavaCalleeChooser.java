@@ -118,6 +118,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
           .stream()
           .filter(m -> !(m instanceof PsiMember) || containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
           .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
+          .filter(m -> m.isPhysical())
           .filter(m -> usedOnlyIn(m, psiMember))
           .collect(Collectors.toList());
       }
