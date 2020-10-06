@@ -15,7 +15,7 @@ class VmOptionsGenerator {
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
       '-ea',
-      '-Dsun.io.useCanonPrefixCache=false',
+      '-Dsun.io.useCanonCaches=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-Djdk.attach.allowAttachSelf=true',
       '-Djdk.module.illegalAccess.silent=true',

@@ -1,5 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.TestAll;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -92,9 +93,13 @@ public class _FirstInSuiteTest extends TestCase {
   }
 
   // agents where this test is failing should be disabled and configured properly
+  @ReviseWhenPortedToJDK("13")
   public void testSymlinkAbility() {
     assertTrue(
       String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
       IoTestUtil.isSymLinkCreationSupported);
+    assertEquals(
+      "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",
+      "false", System.getProperty("sun.io.useCanonCaches", SystemInfo.isJavaVersionAtLeast(13) ? "false" : ""));
   }
 }
