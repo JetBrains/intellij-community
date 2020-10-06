@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -318,10 +319,10 @@ public class WSLDistribution {
                                                          @NotNull WSLCommandLineOptions options) {
     List<String> command = ContainerUtil.prepend(commandLine.getParametersList().getList(), commandLine.getExePath());
     // avoiding double wrapping into bash -c; may cause problems with escaping
-    if (command.size() == 3 && "bash".equals(commandLine.getExePath()) && "-c".equals(command.get(0))) {
-      command = Collections.singletonList(command.get(1));
+    if (command.size() == 3 && "bash".equals(command.get(0)) && "-c".equals(command.get(1))) {
+      command = ParametersListUtil.parse(command.get(2), true);
     }
-    else if (!options.isLaunchWithWslExe()) {
+    if (!options.isLaunchWithWslExe()) {
       command = ContainerUtil.map(command, CommandLineUtil::posixQuote);
     }
     return new ArrayList<>(command);

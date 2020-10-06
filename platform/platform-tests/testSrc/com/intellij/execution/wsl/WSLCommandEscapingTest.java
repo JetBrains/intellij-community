@@ -7,7 +7,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +45,15 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
     assertWslCommandOutput("\\\\\\\"\n", "echo", "\\\\\\\"");
     assertWslCommandOutput("_ \"  ' ) \\\n", "echo", "_", "\"", "", "'", ")", "\\");
     assertWslCommandOutput("' ''' '' '\n", "echo", "'", "'''", "''", "'");
-    assertWslCommandOutput("test\n", "bash", "-c", "echo test");
   }
 
   @SuppressWarnings("SameParameterValue")
   private void assertWslCommandOutput(@NotNull String expectedOut, @NotNull String command, String... parameters) {
     assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(false), command, parameters);
     assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(true), command, parameters);
+    String bashParameters = StringUtil.join(ArrayUtil.mergeArrays(new String[]{command}, parameters), " ");
+    assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(false), "bash", "-c", bashParameters);
+    assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(true), "bash", "-c", bashParameters);
   }
 
   private void assertWslCommandOutput(@NotNull String expectedOut, @NotNull WSLCommandLineOptions options, String command, String... parameters) {
@@ -63,9 +67,9 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
       ProcessOutput output = process.runProcess(10_000);
 
       assertFalse(output.isTimeout());
+      assertEquals("", output.getStderr());
       assertEquals(0, output.getExitCode());
       assertEquals(expectedOut, output.getStdout());
-      assertEquals("", output.getStderr());
     }
     catch (ExecutionException e) {
       fail(e.getMessage());
