@@ -60,6 +60,8 @@ public final class HtmlUtil {
   @NlsSafe public static final String SCRIPT_TAG_NAME = "script";
   @NlsSafe public static final String STYLE_TAG_NAME = "style";
   @NlsSafe public static final String TEMPLATE_TAG_NAME = "template";
+  @NlsSafe public static final String TEXTAREA_TAG_NAME = "textarea";
+  @NlsSafe public static final String TITLE_TAG_NAME = "title";
 
   @NlsSafe public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
   @NlsSafe public static final String SRC_ATTRIBUTE_NAME = "src";
