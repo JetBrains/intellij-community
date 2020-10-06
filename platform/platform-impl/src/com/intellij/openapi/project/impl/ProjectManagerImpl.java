@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -202,6 +203,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
+    myDefaultProject.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
   }
 
   @Override

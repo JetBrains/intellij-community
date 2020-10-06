@@ -51,6 +51,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -544,8 +545,8 @@ object DynamicPlugins {
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()
-          if (projectManager != null && projectManager.isDefaultProjectInitialized) {
-            Disposer.dispose(projectManager.defaultProject)
+          if (projectManager != null) {
+            (projectManager as ProjectManagerImpl).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
           }
 
           if (options.disable) {
