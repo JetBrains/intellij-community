@@ -341,13 +341,13 @@ object DynamicPlugins {
       return true
     }
 
-    val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) } ?: return true
+    val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) }
     if (dependency.id == dependencyPluginId) {
       if (!processor(descriptor, subDescriptor)) {
         return false
       }
     }
-    subDescriptor.pluginDependencies?.forEach { subDependency ->
+    subDescriptor?.pluginDependencies?.forEach { subDependency ->
       if (!processOptionalDependencyDescriptor(dependencyPluginId, descriptor, subDependency, processor)) return false
     }
     return true
