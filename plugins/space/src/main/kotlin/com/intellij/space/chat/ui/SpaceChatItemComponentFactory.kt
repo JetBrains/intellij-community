@@ -6,8 +6,10 @@ import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.format
 import circlet.platform.client.resolve
+import circlet.platform.client.resolveAll
 import circlet.principals.asUser
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
@@ -23,6 +25,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
@@ -69,7 +72,15 @@ internal class SpaceChatItemComponentFactory(
             messagePanel.withThread(lifetime, server, thread)
           }
         }
-        is ReviewRevisionsChangedEvent -> details.createComponent()
+        is ReviewRevisionsChangedEvent -> {
+          val review = details.review?.resolve()
+          if (review == null) {
+            EventMessagePanel(createSimpleMessagePanel(item, server))
+          }
+          else {
+            details.createComponent(review)
+          }
+        }
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
@@ -79,7 +90,7 @@ internal class SpaceChatItemComponentFactory(
     )
   }
 
-  private fun ReviewRevisionsChangedEvent.createComponent(): JComponent {
+  private fun ReviewRevisionsChangedEvent.createComponent(review: CodeReviewRecord): JComponent {
     val commitsCount = commits.size
     @Nls val text = when (changeType) {
       ReviewRevisionsChangedType.Created -> SpaceBundle.message("chat.code.review.created.message", commitsCount)
@@ -87,8 +98,29 @@ internal class SpaceChatItemComponentFactory(
       ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
     }
 
-    val content = HtmlEditorPane().apply {
-      setBody(text)
+    val message = createSimpleMessagePanel(text, server)
+
+    val content = JPanel(VerticalLayout(JBUI.scale(5))).apply {
+      isOpaque = false
+      add(message)
+      commits.resolveAll().forEach { commit ->
+        val location = when (changeType) {
+          ReviewRevisionsChangedType.Removed -> {
+            Navigator.p.project(review.project).revision(commit.repositoryName, commit.revision)
+          }
+          else -> {
+            Navigator.p.project(review.project)
+              .reviewFiles(review.number, revisions = listOf(commit.revision))
+          }
+        }.absoluteHref(server)
+        add(LinkLabel<Any?>(
+          commit.message?.let { getCommitMessageSubject(it) } ?: SpaceBundle.message("chat.untitled.commit.label"), // NON-NLS
+          AllIcons.Vcs.CommitNode,
+          LinkListener { _, _ ->
+            BrowserUtil.browse(location)
+          }
+        ))
+      }
     }
 
     return EventMessagePanel(content)
@@ -226,8 +258,10 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private fun createSimpleMessagePanel(message: SpaceChatItem, server: String) = HtmlEditorPane().apply {
-    setBody(MentionConverter.html(message.text, server))
+  private fun createSimpleMessagePanel(message: SpaceChatItem, server: String) = createSimpleMessagePanel(message.text, server)
+
+  private fun createSimpleMessagePanel(@Nls text: String, server: String) = HtmlEditorPane().apply {
+    setBody(MentionConverter.html(text, server)) // NON-NLS
   }
 
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
