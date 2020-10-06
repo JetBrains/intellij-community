@@ -663,6 +663,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-java-exp"),
+    jetbrainsLibrary("completion-ranking-java-exp2"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-python"),
     jetbrainsLibrary("completion-ranking-python-exp"),
