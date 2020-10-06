@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +73,11 @@ public abstract class NewRunConfigurationTreePopupFactory {
       protected void update(@NotNull PresentationData presentation) {
         presentation.addText(iconAndText.second, attributes);
         presentation.setIcon(iconAndText.first);
+      }
+
+      @Override
+      public @NlsSafe String toString() {
+        return iconAndText.second;
       }
 
       @Override
