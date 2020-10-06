@@ -208,21 +208,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         }
       }
 
-      if (orderOfItems.size > 1) {
-        // Save the order in which sourceRoots appear in the module
-        val orderingEntity = contentRootEntity.getSourceRootOrder()
-        if (orderingEntity == null) {
-          builder.addEntity(ModifiableSourceRootOrderEntity::class.java, contentRootEntity.entitySource) {
-            this.contentRootEntity = contentRootEntity
-            this.orderOfSourceRoots = orderOfItems
-          }
-        }
-        else {
-          builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
-            orderOfSourceRoots = orderOfItems
-          }
-        }
-      }
+      storeSourceRootsOrder(orderOfItems, contentRootEntity, builder)
     }
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
@@ -399,16 +385,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
-      // SourceRoot.url -> SourceRoot
-      val sourceRoots = contentEntry.sourceRoots.associateByTo(HashMap()) { it.url }
-      // Save the source roots where the order is known
-      contentEntry.getSourceRootOrder()?.orderOfSourceRoots?.forEach {
-        sourceRoots.remove(it)?.let { sourceRoot ->
-          contentRootTag.addContent(saveSourceRoot(sourceRoot))
-        }
+      contentEntry.sourceRoots.sortedWith(contentEntry.getSourceRootsComparator()).forEach {
+        contentRootTag.addContent(saveSourceRoot(it))
       }
-      // Save the roots with unknown ordering
-      sourceRoots.values.sortedBy { it.url.url }.forEach { contentRootTag.addContent(saveSourceRoot(it)) }
 
       contentEntry.excludedUrls.forEach {
         contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url))
@@ -692,4 +671,29 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
                                module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
+}
+
+fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
+                          contentRootEntity: ContentRootEntity,
+                          builder: WorkspaceEntityStorageBuilder) {
+  if (orderOfItems.size > 1) {
+    // Save the order in which sourceRoots appear in the module
+    val orderingEntity = contentRootEntity.getSourceRootOrder()
+    if (orderingEntity == null) {
+      builder.addEntity(ModifiableSourceRootOrderEntity::class.java, contentRootEntity.entitySource) {
+        this.contentRootEntity = contentRootEntity
+        this.orderOfSourceRoots = orderOfItems
+      }
+    }
+    else {
+      builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
+        orderOfSourceRoots = orderOfItems
+      }
+    }
+  }
+}
+
+fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
+  val order = (getSourceRootOrder()?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
+  return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }

@@ -135,7 +135,7 @@ internal fun convertToEclipseJavadocPath(javadocRoot: VirtualFileUrl,
 
 internal fun convertToRootUrl(path: String, virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   val url = pathToUrl(path)
-  val localFile = VirtualFileManager.getInstance().findFileByUrl(path)
+  val localFile = VirtualFileManager.getInstance().findFileByUrl(url)
   if (localFile != null) {
     val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile)
     if (jarFile != null) {

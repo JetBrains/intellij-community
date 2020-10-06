@@ -2,6 +2,7 @@
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
@@ -31,7 +32,8 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
     val storageRoot = getStorageRoot(moduleFile, baseDir, virtualFileManager)
     if (relativePath.isNullOrEmpty()) return storageRoot.url
     val url = "${storageRoot.url}/${relativePath.removePrefix("/")}"
-    return if (VirtualFileManager.getInstance().findFileByUrl(url) != null) url else null
+    val file = VirtualFileManager.getInstance().findFileByUrl(url) ?: return null
+    return JarFileSystem.getInstance().getJarRootForLocalFile(file)?.url ?: file.url
   }
 }
 
