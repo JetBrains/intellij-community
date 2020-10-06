@@ -29,7 +29,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Standard base class for run configuration implementations.
@@ -236,12 +235,12 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   }
 
   @Override
-  public @NotNull Set<String> getSelectedOptions() {
+  public @NotNull List<Option> getSelectedOptions() {
     return myOptions.getSelectedOptions();
   }
 
   @Override
-  public void setSelectedOptions(@NotNull Set<String> fragmentIds) {
+  public void setSelectedOptions(@NotNull List<Option> fragmentIds) {
     myOptions.setSelectedOptions(fragmentIds);
   }
 

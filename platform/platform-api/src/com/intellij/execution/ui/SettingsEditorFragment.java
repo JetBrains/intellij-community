@@ -37,6 +37,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable @Nls String myActionHint;
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
+  private boolean myCanBeHidden;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -145,6 +146,17 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public void setRemovable(boolean removable) {
     myRemovable = removable;
+  }
+
+  /**
+   * Can be hidden by user even if {@link #isInitiallyVisible(Object)} returns true
+   */
+  public boolean isCanBeHidden() {
+    return myCanBeHidden;
+  }
+
+  public void setCanBeHidden(boolean canBeHidden) {
+    myCanBeHidden = canBeHidden;
   }
 
   public void setSelected(boolean selected) {

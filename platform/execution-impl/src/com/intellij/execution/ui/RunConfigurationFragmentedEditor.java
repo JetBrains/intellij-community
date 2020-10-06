@@ -28,10 +28,16 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   private final static Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final Settings myRunConfiguration;
   private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
+  private boolean myDefaultSettings;
 
   protected RunConfigurationFragmentedEditor(Settings runConfiguration, RunConfigurationExtensionsManager extensionsManager) {
     myRunConfiguration = runConfiguration;
     myExtensionsManager = extensionsManager;
+  }
+
+  @Override
+  protected boolean isDefaultSettings() {
+    return myDefaultSettings;
   }
 
   public Settings getRunConfiguration() {
@@ -113,6 +119,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   protected abstract List<SettingsEditorFragment<Settings, ?>> createRunFragments();
 
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+    myDefaultSettings = s.isTemplate();
     for (RunConfigurationEditorFragment<?,?> fragment : getRunFragments()) {
       fragment.resetEditorFrom(s);
     }
