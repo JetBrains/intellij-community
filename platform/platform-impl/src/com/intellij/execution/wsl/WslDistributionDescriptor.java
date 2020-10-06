@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -123,7 +124,7 @@ final class WslDistributionDescriptor {
     }
     ProcessOutput pwdOutput;
     try {
-      pwdOutput = distribution.executeOnWsl(-1, "pwd");
+      pwdOutput = distribution.executeOnWsl(-1, null, Collections.singletonList("pwd"), new WSLCommandLineOptions().setExecuteCommandInShell(false));
     }
     catch (ExecutionException e) {
       LOG.warn("Error reading pwd output for " + getId(), e);

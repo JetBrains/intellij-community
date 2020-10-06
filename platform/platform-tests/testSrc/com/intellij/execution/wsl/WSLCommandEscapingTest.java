@@ -22,7 +22,9 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myWSL = ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
+    myWSL = ContainerUtil.getFirstItem(ContainerUtil.filter(WSLUtil.getAvailableDistributions(), (d) -> {
+      return d.getMsId().equals("Ubuntu-20.04");
+    }));
   }
 
   private void assumeWSLAvailable() {
@@ -37,21 +39,28 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
     assertWslCommandOutput("\"test\"\n", "echo", "\"test\"");
     assertWslCommandOutput("'test'\n", "echo", "'test'");
     assertWslCommandOutput("(asd)\n", "echo", "(asd)");
-    assertWslCommandOutput("&& exit && exit\n", "echo", "&& exit", "&&", "exit");
+    assertWslCommandOutput("&& exit && exit\n", new WSLCommandLineOptions().setLaunchWithWslExe(false), "echo", "&& exit", "&&", "exit");
     assertWslCommandOutput(".*\n", "echo", ".*");
     assertWslCommandOutput("*\n", "echo", "*");
     assertWslCommandOutput("\\\\\\\"\n", "echo", "\\\\\\\"");
     assertWslCommandOutput("_ \"  ' ) \\\n", "echo", "_", "\"", "", "'", ")", "\\");
     assertWslCommandOutput("' ''' '' '\n", "echo", "'", "'''", "''", "'");
+    assertWslCommandOutput("test\n", "bash", "-c", "echo test");
   }
 
-  private void assertWslCommandOutput(@NotNull String expectedOut, String command, String... parameters) {
+  @SuppressWarnings("SameParameterValue")
+  private void assertWslCommandOutput(@NotNull String expectedOut, @NotNull String command, String... parameters) {
+    assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(false), command, parameters);
+    assertWslCommandOutput(expectedOut, new WSLCommandLineOptions().setLaunchWithWslExe(true), command, parameters);
+  }
+
+  private void assertWslCommandOutput(@NotNull String expectedOut, @NotNull WSLCommandLineOptions options, String command, String... parameters) {
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(command);
     commandLine.addParameters(parameters);
 
     try {
-      final GeneralCommandLine cmd = myWSL.patchCommandLine(commandLine, null, null, false);
+      final GeneralCommandLine cmd = myWSL.patchCommandLine(commandLine, null, options);
       final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
       ProcessOutput output = process.runProcess(10_000);
 
