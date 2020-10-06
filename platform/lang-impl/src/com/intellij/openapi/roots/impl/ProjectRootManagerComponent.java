@@ -45,6 +45,10 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -396,6 +400,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         return;
       }
 
+      if (WorkspaceModel.isEnabled() && !isValidRootsChangedForWorkspaceModel(pointers)) return;
       if (!isInsideWriteAction() && !myPointerChangesDetected) {
         myPointerChangesDetected = true;
         //this is the first pointer changing validity
@@ -416,6 +421,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         return;
       }
 
+      if (WorkspaceModel.isEnabled() && !isValidRootsChangedForWorkspaceModel(pointers)) return;
       if (isInsideWriteAction()) {
         myRootsChanged.rootsChanged(changeType);
       }
@@ -426,6 +432,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     private boolean isInsideWriteAction() {
       return myInsideWriteAction == 0;
+    }
+
+    private boolean isValidRootsChangedForWorkspaceModel(VirtualFilePointer @NotNull [] pointers) {
+      WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+      VirtualFileUrlIndex virtualFileUrlIndex = entityStorage.getVirtualFileUrlIndex();
+      for (VirtualFilePointer pointer : pointers) {
+        if (virtualFileUrlIndex.findEntitiesByUrl((VirtualFileUrl)pointer).iterator().hasNext()) return true;
+      }
+      return false;
     }
   };
 
