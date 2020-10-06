@@ -1183,6 +1183,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     } else {
       myVariableTypes.put(dfaVar, type);
     }
+    if (type instanceof DfEphemeralReferenceType) {
+      markEphemeral();
+    }
     myCachedHash = null;
   }
 

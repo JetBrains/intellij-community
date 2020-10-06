@@ -33,6 +33,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @Override
   public DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
+    if (other instanceof DfEphemeralReferenceType) return BOTTOM;
     if (other instanceof DfGenericObjectType) {
       DfReferenceType type = ((DfReferenceType)other).dropMutability();
       if (type.isSuperType(this)) return this;
@@ -96,7 +97,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
-    if (other instanceof DfGenericObjectType) {
+    if (other instanceof DfGenericObjectType || other instanceof DfEphemeralReferenceType) {
       return other.join(this);
     }
     if (isSuperType(other)) return this;
