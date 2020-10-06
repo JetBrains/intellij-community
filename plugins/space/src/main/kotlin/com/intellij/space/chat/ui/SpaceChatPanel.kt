@@ -84,13 +84,12 @@ internal class SpaceChatPanel(
   }
 
   private fun createContentPanel(model: SpaceChatItemListModel, chatVM: M2ChannelVm): JPanel {
-    val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server)
+    val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
+    val avatarProvider = SpaceAvatarProvider(lifetime, this, avatarSize)
+    val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
     val timeline = TimelineComponent(model, itemComponentFactory).apply {
       border = JBUI.Borders.empty(16, 0)
     }
-
-    val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
-    itemComponentFactory.avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
 
     val submittableModel = object : SubmittableTextFieldModelBase("") {
       override fun submit() {

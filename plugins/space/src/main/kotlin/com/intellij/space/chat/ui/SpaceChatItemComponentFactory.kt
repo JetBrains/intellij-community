@@ -47,11 +47,9 @@ import javax.swing.*
 internal class SpaceChatItemComponentFactory(
   private val project: Project,
   private val lifetime: Lifetime,
-  private val server: String
+  private val server: String,
+  private val avatarProvider: SpaceAvatarProvider
 ) : TimelineItemComponentFactory<SpaceChatItem> {
-  // TODO: avatarProvider shouldn't require component in constructor?
-  lateinit var avatarProvider: SpaceAvatarProvider
-
   override fun createComponent(item: SpaceChatItem): JComponent {
     val component =
       when (val details = item.details) {
@@ -131,11 +129,13 @@ internal class SpaceChatItemComponentFactory(
   private fun JComponent.withThread(lifetime: Lifetime, server: String, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
     return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
       panel.isOpaque = false
-      val itemsListModel = SpaceChatItemListModel()
-      val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server)
-      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory)
+
       val threadAvatarSize = JBValue.UIInteger("space.chat.thread.avatar.size", 20)
-      itemComponentFactory.avatarProvider = SpaceAvatarProvider(lifetime, threadTimeline, threadAvatarSize)
+      val avatarProvider = SpaceAvatarProvider(lifetime, panel, threadAvatarSize)
+
+      val itemsListModel = SpaceChatItemListModel()
+      val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
+      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory)
 
       // TODO: don't subscribe on thread changes in factory
       thread.mvms.forEach(lifetime) { messageList ->
