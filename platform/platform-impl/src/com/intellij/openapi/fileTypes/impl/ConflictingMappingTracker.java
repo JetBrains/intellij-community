@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,49 +36,59 @@ class ConflictingMappingTracker {
    * @return file type assigned to matcher and the notification text explaining what's going on
    */
   @NotNull
-  FileType warnAndResolveConflict(@NotNull FileNameMatcher matcher,
-                                  @Nullable FileType oldFileType,
-                                  @NotNull FileType newFileType) {
+  ResolveConflictResult warnAndResolveConflict(@NotNull FileNameMatcher matcher,
+                                               @Nullable FileType oldFileType,
+                                               @NotNull FileType newFileType) {
     if (oldFileType != null && !oldFileType.equals(newFileType) && !(oldFileType instanceof AbstractFileType)) {
-      Pair.NonNull<FileType, String> result = resolveConflict(matcher, oldFileType, newFileType);
-      FileType resolved = result.getFirst();
-      if (!oldFileType.equals(resolved)) {
-        addConflict(null, matcher, oldFileType, resolved, result.getSecond());
+      ResolveConflictResult result = resolveConflict(matcher, oldFileType, newFileType);
+      if (!oldFileType.equals(result.resolved)) {
+        addConflict(null, matcher, oldFileType, result.resolved, result.notification);
       }
-      return resolved;
+      return result;
     }
-    return ObjectUtils.notNull(oldFileType, newFileType);
+    return new ResolveConflictResult(ObjectUtils.notNull(oldFileType, newFileType), "", false);
   }
 
+  static class ResolveConflictResult {
+    final @NotNull FileType resolved;
+    final @NotNull @Nls String notification;
+    final boolean approved;
+
+    private ResolveConflictResult(@NotNull FileType resolved, @NotNull @Nls String notification, boolean approved) {
+      this.resolved = resolved;
+      this.notification = notification;
+      this.approved = approved;
+    }
+  }
   @NotNull
-  private static Pair.NonNull<FileType, String> resolveConflict(@NotNull FileNameMatcher matcher,
-                                                                @NotNull FileType oldFileType,
-                                                                @NotNull FileType newFileType) {
+  private static ResolveConflictResult resolveConflict(@NotNull FileNameMatcher matcher,
+                                                       @NotNull FileType oldFileType,
+                                                       @NotNull FileType newFileType) {
     PluginDescriptor oldPlugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(oldFileType.getClass().getName());
     PluginDescriptor newPlugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(newFileType.getClass().getName());
     if (newPlugin != null && !newPlugin.equals(oldPlugin) && !newPlugin.isBundled() && (oldPlugin == null || oldPlugin.isBundled())) {
       // new plugin overrides core or bundled plugin
       String message =
       FileTypesBundle.message("notification.content.file.pattern.was.reassigned.by.plugin", newPlugin.getName(), matcher.getPresentableString(), newFileType.getDisplayName());
-      return Pair.createNonNull(newFileType, message);
+      return new ResolveConflictResult(newFileType, message, true);
     }
     if (oldPlugin != null && !oldPlugin.equals(newPlugin) && !oldPlugin.isBundled() && (newPlugin == null || newPlugin.isBundled())) {
       // old plugin overrides core or bundled plugin
       String message =
         FileTypesBundle.message("notification.content.file.pattern.was.reassigned.by.plugin", oldPlugin.getName(), matcher.getPresentableString(), oldFileType.getDisplayName());
-      return Pair.createNonNull(oldFileType, message);
+      return new ResolveConflictResult(oldFileType, message, true);
     }
     if (oldPlugin != null && !oldPlugin.isBundled() && newPlugin != null && !newPlugin.isBundled()) {
       // one plugin tries to override the other
       String message =
         FileTypesBundle.message("notification.content.file.pattern.from.plugin.was.reassigned.by.another.plugin", matcher.getPresentableString(), oldPlugin.getName(), newFileType.getDisplayName(), newPlugin.getName());
-      return Pair.createNonNull(newFileType, message);
+      return new ResolveConflictResult(newFileType, message, false);
     }
     // ? wild guess
     String message =
       FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), newFileType.getDisplayName());
 
-    return Pair.createNonNull(newFileType, message);
+    return new ResolveConflictResult(newFileType, message, false);
   }
 
   enum ConflictPolicy {
@@ -102,7 +113,8 @@ class ConflictingMappingTracker {
   private void addConflict(@Nullable Project project,
                            @NotNull FileNameMatcher matcher,
                            @NotNull FileType oldFileType,
-                           @NotNull FileType newFileType, @NotNull String message) {
+                           @NotNull FileType newFileType,
+                           @NotNull @Nls String message) {
     if (oldFileType.equals(newFileType)) {
       throw new IllegalArgumentException("expected different file types but got "+newFileType);
     }

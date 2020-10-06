@@ -337,7 +337,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (bean.implementationClass == null) continue;
 
       if (myPendingFileTypes.containsKey(bean.name)) {
-        LOG.error(new PluginException("Trying to override already registered file type " + bean.name, bean.getPluginId()));
+        LOG.error(new PluginException("Trying to override already registered file type '" + bean.name+"'", bean.getPluginId()));
         continue;
       }
 
@@ -1137,9 +1137,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         continue;
       }
       FileType oldFileType = myPatternsTable.findAssociatedFileType(matcher);
-      FileType newFileType = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
+      ConflictingMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
+      FileType newFileType = result.resolved;
       if (!newFileType.equals(oldFileType)) {
         myPatternsTable.addAssociation(matcher, newFileType);
+        if (result.approved && oldFileType != null) {
+          myRemovedMappingTracker.add(matcher, oldFileType.getName(), true);
+        }
       }
 
       myInitialAssociations.addAssociation(matcher, fileType);
