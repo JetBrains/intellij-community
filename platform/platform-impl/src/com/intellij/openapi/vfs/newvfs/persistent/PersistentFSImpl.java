@@ -1412,7 +1412,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             break;
           case VirtualFile.PROP_SYMLINK_TARGET:
             executeSetTarget(file, (String)newValue);
-            markForContentReloadRecursively(getFileId(file));
             break;
           case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY:
             executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.WriteAction;
@@ -12,13 +12,12 @@ import com.intellij.testFramework.rules.TempDirectory;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
@@ -245,86 +244,47 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDirLinkSwitchWithDifferentContentLength() throws Exception {
-    doTestDirLinkSwitch("text", "longer text");
-  }
+  public void testDirLinkSwitch() throws Exception {
+    Path target1Child = myTempDir.newFile("target1/child1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path target2Child = myTempDir.newFile("target2/child1.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
+    myTempDir.newFile("target2/child2.txt");
+    Path target1 = target1Child.getParent(), target2 = target2Child.getParent();
+    Path link = myTempDir.getRoot().toPath().resolve("link");
+    createSymbolicLink(link, target1);
+    VirtualFile vLink = refreshAndFind(link.toFile());
+    assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
+    vLink.setCharset(StandardCharsets.UTF_8);
+    assertEquals(1, vLink.getChildren().length);
+    assertPathsEqual(target1.toString(), vLink.getCanonicalPath());
+    assertEquals(Files.readString(target1Child), VfsUtilCore.loadText(vLink.findChild("child1.txt")));
 
-  @Test
-  public void testDirLinkSwitchWithSameContentLength() throws Exception {
-    doTestDirLinkSwitch("text 1", "text 2");
-  }
-
-  private void doTestDirLinkSwitch(String text1, String text2) throws Exception {
-    File targetDir1 = myTempDir.newDirectory("target1");
-    File targetDir2 = myTempDir.newDirectory("target2");
-
-    File target1Child = new File(targetDir1, "child1.txt");
-    assertTrue(target1Child.createNewFile());
-    File target2Child = new File(targetDir2, "child1.txt");
-    assertTrue(target2Child.createNewFile());
-    assertTrue(new File(targetDir2, "child2.txt").createNewFile());
-    FileUtil.writeToFile(target1Child, text1);
-    FileUtil.writeToFile(target2Child, text2);
-
-    File link = createSymLink(targetDir1.getPath(), myTempDir.getRoot() + "/link");
-    VirtualFile vLink1 = refreshAndFind(link);
-    assertTrue("link=" + link + ", vLink=" + vLink1,
-               vLink1 != null && vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
-    assertEquals(1, vLink1.getChildren().length);
-    assertPathsEqual(targetDir1.getPath(), vLink1.getCanonicalPath());
-    assertEquals(FileUtil.loadFile(target1Child), VfsUtilCore.loadText(vLink1.findChild("child1.txt")));
-
-    assertTrue(link.toString(), link.delete());
-    createSymLink(targetDir2.getPath(), myTempDir.getRoot() + "/" + link.getName());
-
+    Files.delete(link);
+    createSymbolicLink(link, target2);
     refresh(myTempDir.getRoot());
-    assertTrue(vLink1.isValid());
-    VirtualFile vLink2 = LocalFileSystem.getInstance().findFileByIoFile(link);
-    assertEquals(vLink1, vLink2);
-    assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
-    assertEquals(2, vLink2.getChildren().length);
-    assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
-    assertEquals(FileUtil.loadFile(target2Child), VfsUtilCore.loadText(vLink1.findChild("child1.txt")));
-    assertEquals(FileUtil.loadFile(target2Child), VfsUtilCore.loadText(vLink2.findChild("child1.txt")));
+    assertTrue("vLink=" + vLink, vLink.isValid());
+    assertEquals(2, vLink.getChildren().length);
+    assertEquals(Files.readString(target2Child), VfsUtilCore.loadText(vLink.findChild("child1.txt")));
+    assertPathsEqual(target2.toString(), vLink.getCanonicalPath());
   }
 
   @Test
-  public void testFileLinkSwitchWithDifferentContentLength() throws Exception {
-    doTestLinkSwitch("text", "longer text");
-  }
+  public void testFileLinkSwitch() throws Exception {
+    Path target1 = myTempDir.newFile("target1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path target2 = myTempDir.newFile("target2.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
+    Path link = myTempDir.getRoot().toPath().resolve("link");
+    createSymbolicLink(link, target1);
+    VirtualFile vLink = refreshAndFind(link.toFile());
+    assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && !vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
+    vLink.setCharset(StandardCharsets.UTF_8);
+    assertEquals(Files.readString(target1), VfsUtilCore.loadText(vLink));
+    assertPathsEqual(target1.toString(), vLink.getCanonicalPath());
 
-  @Test
-  public void testFileLinkSwitchWithSameContentLength() throws Exception {
-    doTestLinkSwitch("text 1", "text 2");
-  }
-
-  private void doTestLinkSwitch(String text1, String text2) throws IOException {
-    File target1 = myTempDir.newFile("target1.txt");
-    FileUtil.writeToFile(target1, text1);
-    File target2 = myTempDir.newFile("target2.txt");
-    FileUtil.writeToFile(target2, text2);
-
-    File link = createSymLink(target1.getPath(), myTempDir.getRoot() + "/link");
-    VirtualFile vLink1 = refreshAndFind(link);
-    assertTrue("link=" + link + ", vLink=" + vLink1,
-               vLink1 != null && !vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
-    assertEquals(FileUtil.loadFile(target1), VfsUtilCore.loadText(vLink1));
-    assertPathsEqual(target1.getPath(), vLink1.getCanonicalPath());
-
-    assertTrue(link.toString(), link.delete());
-    createSymLink(target2.getPath(), myTempDir.getRoot() + "/" + link.getName());
-
+    Files.delete(link);
+    createSymbolicLink(link, target2);
     refresh(myTempDir.getRoot());
-    assertTrue(vLink1.isValid());
-    VirtualFile vLink2 = LocalFileSystem.getInstance().findFileByIoFile(link);
-    VfsUtilCore.loadText(vLink2);
-    assertEquals(vLink1, vLink2);
-    assertTrue("link=" + link + ", vLink=" + vLink2,
-               !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
-    assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink1));
-    assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
-    assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
+    assertTrue("vLink=" + vLink, vLink.isValid());
+    assertEquals(Files.readString(target2), VfsUtilCore.loadText(vLink));
+    assertPathsEqual(target2.toString(), vLink.getCanonicalPath());
   }
 
   @Test
