@@ -239,7 +239,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       effectiveSettings.withVmOption(jvmOpt);
     }
     if (isDebugAllTasks(effectiveSettings)) {
-      effectiveSettings.withVmOption("-Dij.gradle.debug.all=true");
+      effectiveSettings.withVmOption("-Didea.gradle.debug.all=true");
     }
   }
 
