@@ -35,7 +35,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myAttachToSubprocess = true;
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
-    public boolean myDropIntoDebuggerOnFailedTests = true;
+    public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
     public String myPyQtBackend = "Auto";
     public String myAttachProcessFilter = "python";
