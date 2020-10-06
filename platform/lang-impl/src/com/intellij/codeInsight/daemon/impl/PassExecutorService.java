@@ -500,7 +500,7 @@ final class PassExecutorService implements Disposable {
         log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
       }
       callbackOnApplied.run();
-    }, updateProgress.getModalityState());
+    }, updateProgress.getModalityState(), pass.getExpiredCondition());
   }
 
   private void clearStaleEntries() {
