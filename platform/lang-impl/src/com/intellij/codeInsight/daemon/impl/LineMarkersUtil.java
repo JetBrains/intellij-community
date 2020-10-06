@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +154,8 @@ final class LineMarkersUtil {
     }
   }
 
-  private static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
+  @ApiStatus.Internal
+  public static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
 

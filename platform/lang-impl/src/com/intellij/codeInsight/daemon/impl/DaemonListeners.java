@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -35,10 +36,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.ErrorStripeEvent;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -609,11 +607,32 @@ public final class DaemonListeners implements Disposable {
   private void removeHighlightersOnPluginUnload(@NotNull PluginDescriptor pluginDescriptor) {
     for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
       if (fileEditor instanceof TextEditor) {
+        boolean clearAll = false;
+        VirtualFile file = fileEditor.getFile();
+        if (file != null) {
+          ClassLoader classLoader = file.getFileType().getClass().getClassLoader();
+          if (classLoader instanceof PluginAwareClassLoader &&
+              ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId())) {
+            clearAll = true;
+          }
+        }
+
         Editor editor = ((TextEditor)fileEditor).getEditor();
-        removeHighlightersOnPluginUnload(editor.getMarkupModel(), pluginDescriptor);
+        if (clearAll) {
+          editor.getMarkupModel().removeAllHighlighters();
+        }
+        else {
+          removeHighlightersOnPluginUnload(editor.getMarkupModel(), pluginDescriptor);
+        }
+
         MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
         if (documentMarkupModel != null) {
-          removeHighlightersOnPluginUnload(documentMarkupModel, pluginDescriptor);
+          if (clearAll) {
+            documentMarkupModel.removeAllHighlighters();
+          }
+          else {
+            removeHighlightersOnPluginUnload(documentMarkupModel, pluginDescriptor);
+          }
         }
       }
     }
@@ -631,23 +650,35 @@ public final class DaemonListeners implements Disposable {
         return;
       }
 
-      CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
-      if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
+      if (isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
         model.removeHighlighter(highlighter);
       }
-      else {
-        Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-        if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
-          for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
-            IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
-            if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
-                intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() == pluginClassLoader) {
-              model.removeHighlighter(highlighter);
-              break;
-            }
-          }
+    }
+  }
+
+  private static boolean isHighlighterFromPlugin(RangeHighlighter highlighter, ClassLoader pluginClassLoader) {
+    CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
+    if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
+      return true;
+    }
+
+    Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
+    if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
+        IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
+        if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
+            intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
+                                                          pluginClassLoader) {
+          return true;
         }
       }
     }
+
+    LineMarkerInfo info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    if (info.getClass().getClassLoader() == pluginClassLoader) {
+      return true;
+    }
+
+    return false;
   }
 }
