@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -55,7 +56,7 @@ public final class RerunTestsNotification {
 
       ConsoleView consoleView = UIUtil.findComponentOfType(executionConsole.getComponent(), ConsoleViewImpl.class);
       if (consoleView != null) {
-        GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
+        GotItMessage message = GotItMessage.createMessage(ExecutionBundle.message("popup.content.rerun.tests.with", shortcutText), "");
         Disposable disposable = Disposer.newDisposable();
         Disposer.register(executionConsole, disposable);
         message.setDisposable(disposable);
@@ -63,7 +64,7 @@ public final class RerunTestsNotification {
         message.setShowCallout(false);
         JComponent consoleComponent = consoleView.getComponent();
         message.show(
-          new PositionTracker<Balloon>(consoleComponent) {
+          new PositionTracker<>(consoleComponent) {
             @Override
             public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
               RelativePoint point = RelativePoint.getSouthEastOf(consoleComponent);
