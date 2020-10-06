@@ -7,14 +7,11 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitter
-import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcsUtil.VcsFileUtil
-import git4idea.checkin.GitCheckinEnvironment.runWithMessageFile
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
+import git4idea.GitUtil.getRepositoryForFile
+import git4idea.checkin.GitCommitOptions
+import git4idea.checkin.GitRepositoryCommitter
 import git4idea.index.vfs.GitIndexFileSystemRefresher
-import java.io.File
 
 internal class GitStageCommitState(val roots: Collection<VirtualFile>, val commitMessage: String)
 
@@ -52,19 +49,10 @@ internal class GitStageCommitter(project: Project, private val commitState: GitS
   }
 
   @Throws(VcsException::class)
-  private fun commitRoot(root: VirtualFile) =
-    runWithMessageFile(project, root, commitMessage) { messageFile ->
-      val commitCommand = createCommitCommand(root, messageFile, commitContext.isAmendCommitMode)
-      Git.getInstance().runCommand(commitCommand).getOutputOrThrow()
-    }
+  private fun commitRoot(root: VirtualFile) {
+    val repository = getRepositoryForFile(project, root)
+    val committer = GitRepositoryCommitter(repository, GitCommitOptions(commitContext))
 
-  private fun createCommitCommand(root: VirtualFile, messageFile: File, isAmend: Boolean): GitLineHandler =
-    GitLineHandler(project, root, GitCommand.COMMIT).apply {
-      setStdoutSuppressed(false)
-
-      addParameters("-F")
-      addAbsoluteFile(messageFile)
-      if (isAmend) addParameters("--amend")
-      endOptions()
-    }
+    committer.commitStaged(commitMessage)
+  }
 }
