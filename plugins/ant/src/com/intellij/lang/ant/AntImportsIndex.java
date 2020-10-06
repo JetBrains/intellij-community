@@ -10,8 +10,8 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 
@@ -21,31 +21,7 @@ import static com.intellij.util.xml.NanoXmlBuilder.stop;
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");
   private static final int VERSION = 5;
-  public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
-
-  private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = inputData -> {
-    final Map<Integer, Void> map = new HashMap<>();
-
-    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
-      private boolean isFirstElement = true;
-      @Override
-      public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
-        if (isFirstElement) {
-          if (!"project".equalsIgnoreCase(elemName)) {
-            stop();
-          }
-          isFirstElement = false;
-        }
-        else {
-          if ("import".equalsIgnoreCase(elemName) || "include".equalsIgnoreCase(elemName)) {
-            map.put(ANT_FILES_WITH_IMPORTS_KEY, null);
-            stop();
-          }
-        }
-      }
-    });
-    return map;
-  };
+  public static final Integer ANT_FILES_WITH_IMPORTS_KEY = Integer.valueOf(0);
 
   @Override
   public int getVersion() {
@@ -61,7 +37,30 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   @Override
   @NotNull
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
-    return DATA_INDEXER;
+    return inputData -> {
+      AtomicBoolean importFound = new AtomicBoolean();
+
+      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
+        private boolean isFirstElement = true;
+        @Override
+        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+          if (isFirstElement) {
+            if (!"project".equalsIgnoreCase(elemName)) {
+              stop();
+            }
+            isFirstElement = false;
+          }
+          else {
+            if ("import".equalsIgnoreCase(elemName) || "include".equalsIgnoreCase(elemName)) {
+              importFound.set(true);
+              stop();
+            }
+          }
+        }
+      });
+
+      return importFound.get() ? Collections.singletonMap(ANT_FILES_WITH_IMPORTS_KEY, null) : Collections.emptyMap();
+    };
   }
 
   @NotNull
