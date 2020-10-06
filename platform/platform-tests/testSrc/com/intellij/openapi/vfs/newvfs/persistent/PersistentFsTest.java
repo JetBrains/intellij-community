@@ -190,7 +190,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testBrokenJarRoots() throws IOException {
     File jarFile = tempDirectory.newFile("empty.jar");
     VirtualFile local = find(jarFile);
-    String rootUrl = "jar://" + local.getPath() + "!/", entryUrl = rootUrl + JarFile.MANIFEST_NAME;
+    String rootUrl = "jar://" + local.getPath() + "!/";
+    String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
 
     int[] logCount = {0};
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
@@ -495,7 +496,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildren() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
-    Path source = tempDirectory.getRootPath().resolve("d"), target = tempDirectory.getRootPath().resolve("target");
+    Path source = tempDirectory.getRootPath().resolve("d");
+    Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -520,7 +522,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildrenExceptExcluded() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
-    Path source = tempDirectory.getRootPath().resolve("d"), target = tempDirectory.getRootPath().resolve("target");
+    Path source = tempDirectory.getRootPath().resolve("d");
+    Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -529,7 +532,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Project project = ProjectManager.getInstance().loadAndOpenProject(tempDirectory.getRoot().getPath());
     Disposer.register(getTestRootDisposable(), () -> ProjectManager.getInstance().closeAndDispose(project));
 
-    String imlPath = tempDirectory.getRootPath().resolve("temp.iml").toString(), url = VfsUtilCore.pathToUrl(target.resolve("d1").toString());
+    String imlPath = tempDirectory.getRootPath().resolve("temp.iml").toString();
+    String url = VfsUtilCore.pathToUrl(target.resolve("d1").toString());
     WriteAction.runAndWait(() -> {
       Module module = ModuleManager.getInstance(project).newModule(imlPath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
       ModuleRootModificationUtil.updateModel(module, model -> {
@@ -672,8 +676,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
 
     try {
-      File generationDir = tempDirectory.newDirectory("gen"), testDir = tempDirectory.newDirectory("test");
-      String jarName = "test.jar", entryName = "Some.java";
+      File generationDir = tempDirectory.newDirectory("gen");
+      File testDir = tempDirectory.newDirectory("test");
+      String jarName = "test.jar";
+      String entryName = "Some.java";
       String[] contents = {"class Some {}", "class Some { void m() {} }", "class Some { void mmm() {} }"};
 
       File zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, contents[0]);
@@ -715,8 +721,11 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
 
     try {
-      File generationDir = tempDirectory.newDirectory("gen"), testDir = tempDirectory.newDirectory("test");
-      String jarName = "test.jar", entryName = "Some.java", content = "class Some {}";
+      File generationDir = tempDirectory.newDirectory("gen");
+      File testDir = tempDirectory.newDirectory("test");
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+      String content = "class Some {}";
 
       File zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, content);
       String url = "jar-wrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;

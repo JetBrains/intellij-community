@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.idea.Bombed;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
