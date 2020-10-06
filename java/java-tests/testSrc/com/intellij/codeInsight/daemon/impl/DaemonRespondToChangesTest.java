@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.application.UtilKt;
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
@@ -25,6 +24,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionB
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -1250,7 +1250,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     GeneralSettings settings = GeneralSettings.getInstance();
     boolean frameSave = settings.isSaveOnFrameDeactivation();
     settings.setSaveOnFrameDeactivation(true);
-    UtilKt.runInAllowSaveMode(() -> {
+    StoreUtilKt.runInAllowSaveMode(true, () -> {
       try {
         StoreUtil.saveDocumentsAndProjectsAndApp(false);
 
@@ -1862,7 +1862,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testModificationInWorkspaceXmlDoesNotCauseRehighlight() {
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
-    UtilKt.runInAllowSaveMode(() -> {
+    StoreUtilKt.runInAllowSaveMode(true, () -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
       PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));

@@ -22,16 +22,15 @@ import javax.swing.table.TableModel;
 /**
  * @author Konstantin Bulenkov
  */
-public class ExperimentsDialog extends DialogWrapper {
-  protected ExperimentsDialog(@Nullable Project project) {
+public final class ExperimentsDialog extends DialogWrapper {
+  ExperimentsDialog(@Nullable Project project) {
     super(project);
     init();
     setTitle(IdeBundle.message("dialog.title.experimental.features"));
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
     JBTable table = new JBTable(createModel(features));
     table.getEmptyText().setText(IdeBundle.message("empty.text.no.features.available"));

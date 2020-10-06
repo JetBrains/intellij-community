@@ -3263,7 +3263,6 @@ public final class UIUtil {
     return getListSelectionForeground(true);
   }
 
-
   // Tree
 
   public static @NotNull Font getTreeFont() {

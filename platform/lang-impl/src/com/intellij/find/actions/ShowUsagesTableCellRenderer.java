@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.actions;
 
@@ -60,7 +60,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     Color fileBgColor = getBackgroundColor(isSelected, usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
-    Color selectionFg = UIUtil.getListSelectionForeground();
+    Color selectionFg = UIUtil.getListSelectionForeground(true);
     Color rowBackground = isSelected ? selectionBg : fileBgColor == null ? list.getBackground() : fileBgColor;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();
 

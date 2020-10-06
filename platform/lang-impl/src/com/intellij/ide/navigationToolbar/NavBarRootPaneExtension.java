@@ -211,10 +211,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.translate(r.x, r.y);
-
-        Rectangle rectangle = new Rectangle(0, 0, r.width + insets.left + insets.right, r.height + insets.top + insets.bottom);
-        NavBarUIManager.getUI().doPaintNavBarPanel(g2d, rectangle, isMainToolbarVisible(), isUndocked());
-
         g2d.dispose();
       }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getListSelectionForeground
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
@@ -50,7 +51,7 @@ class RightTextCellRenderer<T>(
 
     label.text = text
     label.background = bg
-    label.foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+    label.foreground = if (isSelected) getListSelectionForeground(true) else UIUtil.getInactiveTextColor()
 
     spacer.background = bg
 

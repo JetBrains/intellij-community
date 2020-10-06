@@ -30,7 +30,7 @@ import java.util.concurrent.CountedCompleter;
  * reaches the top, in which case it invokes {@link java.util.concurrent.ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
  * The exceptions from the sub tasks bubble up to the top and saved in {@link #throwable}.
  */
-class ApplierCompleter<T> extends CountedCompleter<Void> {
+final class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;

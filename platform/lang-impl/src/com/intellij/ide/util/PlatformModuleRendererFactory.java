@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -49,7 +49,7 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
       setHorizontalTextPosition(SwingConstants.LEFT);
       setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
-      setForeground(isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
+      setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
       return component;
     }
   }

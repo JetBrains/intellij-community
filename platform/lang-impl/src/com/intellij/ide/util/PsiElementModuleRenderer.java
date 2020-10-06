@@ -71,7 +71,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setHorizontalTextPosition(SwingConstants.LEFT);
     setHorizontalAlignment(SwingConstants.RIGHT); // align icon to the right
     setBackground(selected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
-    setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
+    setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
   }
 
   private void showProjectLocation(@Nullable VirtualFile vFile, @NotNull Module module, @NotNull ProjectFileIndex fileIndex) {

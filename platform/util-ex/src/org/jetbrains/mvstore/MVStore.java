@@ -961,7 +961,7 @@ public final class MVStore implements AutoCloseable {
                     validChunksById.put(chunk.id, chunk);
                 }
                 quickRecovery = findLastChunkWithCompleteValidChunkSet(lastChunkCandidates, validChunksByLocation,
-                        validChunksById, false);
+                                                                       validChunksById, false);
             }
 
             if (!quickRecovery) {

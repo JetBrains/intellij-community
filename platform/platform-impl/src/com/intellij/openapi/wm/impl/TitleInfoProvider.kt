@@ -7,31 +7,30 @@ import com.intellij.openapi.project.Project
 
 interface TitleInfoProvider {
   companion object {
-    var EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName.create("com.intellij.titleInfoProvider")
+    private val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
 
     @JvmStatic
     fun getProviders(project: Project, listener: (provider: TitleInfoProvider) -> Unit): List<TitleInfoProvider> {
       val list = EP.getExtensionList(project)
-      list.forEach{it.addUpdateListener(listener)}
-
+      for (it in list) {
+        it.addUpdateListener(listener)
+      }
       return list
     }
 
     @JvmStatic
-    fun getProviders(project: Project): List<TitleInfoProvider> {
-      return EP.getExtensionList(project)
-    }
+    fun getProviders(project: Project): List<TitleInfoProvider> = EP.getExtensionList(project)
   }
 
-  fun addUpdateListener(value: (provider: TitleInfoProvider) -> Unit) {
-    addUpdateListener(null, value)
-  }
-
-  fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit)
   val isActive: Boolean
   val value: String
 
   val borderlessSuffix: String
   val borderlessPrefix: String
 
+  fun addUpdateListener(value: (provider: TitleInfoProvider) -> Unit) {
+    addUpdateListener(null, value)
+  }
+
+  fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit)
 }

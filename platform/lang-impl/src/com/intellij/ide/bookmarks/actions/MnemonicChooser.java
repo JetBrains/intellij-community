@@ -87,7 +87,7 @@ public class MnemonicChooser extends JPanel {
       addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
-          setForeground(UIUtil.getListSelectionForeground());
+          setForeground(UIUtil.getListSelectionForeground(true));
           setBackground(UIUtil.getListSelectionBackground(true));
         }
 
