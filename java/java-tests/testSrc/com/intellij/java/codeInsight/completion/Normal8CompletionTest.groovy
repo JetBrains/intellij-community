@@ -298,7 +298,7 @@ class Test88 {
   @NeedsIndex.ForStandardLibrary
   void testLambdaInAmbiguousCall() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+    myFixture.assertPreferredCompletionItems(0, 'toString', 'getClass')
   }
 
   @NeedsIndex.ForStandardLibrary

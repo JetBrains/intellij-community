@@ -23,6 +23,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,12 @@ public final class JavaCompletionSorting {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes, position));
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
+    }
+
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression) &&
+        !ExpressionUtils.isVoidContext((PsiReferenceExpression)parent)) {
+      sorter = sorter.weighBefore("middleMatching", new PreferNonVoid());
     }
 
     List<LookupElementWeigher> afterPriority = new ArrayList<>();
@@ -498,6 +505,19 @@ public final class JavaCompletionSorting {
       return object instanceof PsiMethod &&
              !FunctionalExpressionCompletionProvider.isFunExprItem(element) &&
              isTooGeneric(element, (PsiMethod)object) ? 1 : 0;
+    }
+  }
+
+  private static class PreferNonVoid extends LookupElementWeigher {
+    PreferNonVoid() {
+      super("nonVoid");
+    }
+
+    @NotNull
+    @Override
+    public Integer weigh(@NotNull LookupElement element) {
+      TypedLookupItem item = element.as(TypedLookupItem.class);
+      return item != null && element.getObject() instanceof PsiMethod && PsiType.VOID.equals(item.getType()) ? 1 : 0;
     }
   }
 
