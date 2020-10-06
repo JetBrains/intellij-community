@@ -22,7 +22,7 @@ import java.util.List;
 public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   private final static Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
 
-@Override
+  @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @Nls @NotNull String presentationText,
                                                    @NotNull List<? extends ProblemDescriptor> descriptions,
