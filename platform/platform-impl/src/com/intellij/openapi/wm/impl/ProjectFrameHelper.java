@@ -266,8 +266,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myTitleInfoExtensions);
   }
 
-  public static @Nullable
-  String getSuperUserSuffix() {
+  public static @Nullable String getSuperUserSuffix() {
     return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
   }
 
@@ -410,6 +409,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     MouseGestureManager.getInstance().remove(this);
 
     if (myBalloonLayout != null) {
+      //noinspection SSBasedInspection
       ((BalloonLayoutImpl)myBalloonLayout).dispose();
       myBalloonLayout = null;
     }
@@ -469,26 +469,27 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
       return Promises.resolvedPromise();
     }
-    return myFrameDecorator.toggleFullScreen(state);
+    else {
+      return myFrameDecorator.toggleFullScreen(state);
+    }
   }
 
-  private boolean temporaryFixForIdea156004(final boolean state) {
-    if (!SystemInfo.isMac) {
-      return false;
-    }
-
-    try {
-      Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
-      modalBlockerField.setAccessible(true);
-      Window modalBlocker = (Window)modalBlockerField.get(myFrame);
-      if (modalBlocker != null) {
-        ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
-        return true;
+  private boolean temporaryFixForIdea156004(boolean state) {
+    if (SystemInfo.isMac) {
+      try {
+        Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
+        modalBlockerField.setAccessible(true);
+        Window modalBlocker = (Window)modalBlockerField.get(myFrame);
+        if (modalBlocker != null) {
+          ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
+          return true;
+        }
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        LOG.error(e);
       }
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
-      LOG.error(e);
-    }
+
     return false;
   }
 }
