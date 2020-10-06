@@ -10,7 +10,14 @@ public interface VirtualFilePointerListener {
   default void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
   }
 
-  default void beforeValidityChangedForPointersWithOldName(@NotNull VirtualFilePointer @NotNull [] pointer) {
+  /**
+   * This method will be fired for the VirtualFilePointer's which URL's will be changed. It was introduced
+   * for the new project model to get an opportunity for handling changing URL's. The validity of such
+   * pointers still remains valid, but URL's change e.g during folder rename.
+   *
+   * @param pointers - list of pointers which URL's will change
+   */
+  default void beforeUrlChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
   }
 
   default void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
