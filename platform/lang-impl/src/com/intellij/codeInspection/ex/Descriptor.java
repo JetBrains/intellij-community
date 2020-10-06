@@ -23,7 +23,7 @@ public class Descriptor {
   private final @Nls(capitalization = Sentence) String myText;
   private final String[] myGroup;
   private final String myShortName;
-  private final InspectionToolWrapper myToolWrapper;
+  private final InspectionToolWrapper<?, ?> myToolWrapper;
   private final HighlightDisplayLevel myLevel;
   @Nullable
   private final NamedScope myScope;
@@ -37,7 +37,7 @@ public class Descriptor {
   public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileModifiableModel inspectionProfile, @NotNull Project project) {
     myState = state;
     myInspectionProfile = inspectionProfile;
-    InspectionToolWrapper tool = state.getTool();
+    InspectionToolWrapper<?, ?> tool = state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.getGeneralGroupName()} : groupPath;
@@ -94,13 +94,13 @@ public class Descriptor {
 
   public void loadConfig() {
     if (myConfig == null) {
-      InspectionToolWrapper toolWrapper = getToolWrapper();
+      InspectionToolWrapper<?, ?> toolWrapper = getToolWrapper();
       myConfig = createConfigElement(toolWrapper);
     }
   }
 
   @NotNull
-  public InspectionToolWrapper getToolWrapper() {
+  public InspectionToolWrapper<?, ?> getToolWrapper() {
     return myToolWrapper;
   }
 
@@ -116,7 +116,7 @@ public class Descriptor {
   }
 
   @NotNull
-  public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
+  public static Element createConfigElement(InspectionToolWrapper<?, ?> toolWrapper) {
     Element element = new Element("options");
     try {
       toolWrapper.getTool().writeSettings(element);
