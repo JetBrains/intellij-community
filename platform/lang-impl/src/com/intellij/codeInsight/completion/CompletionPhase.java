@@ -201,6 +201,7 @@ public abstract class CompletionPhase implements Disposable {
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
+          //cwm - we don't want restart host's indicator by guests typing
           if (isForeignClientOnServer()) return;
 
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
