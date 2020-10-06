@@ -4,30 +4,35 @@ package com.intellij.ide.ui.search;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class OptionDescription implements Comparable<OptionDescription> {
-  private final String myOption;
-  private final String myHit;
-  private final String myPath;
-  private final String myConfigurableId;
-  private final String myGroupName;
+  private final @Nls String myOption;
+  private final @NlsSafe String myHit;
+  private final @NlsSafe String myPath;
+  private final @NonNls String myConfigurableId;
+  private final @Nls String myGroupName;
 
-  public OptionDescription(String hit) {
+  public OptionDescription(@NlsSafe String hit) {
     this(null, hit, null);
   }
 
-  public OptionDescription(String option, String hit, String path) {
+  public OptionDescription(@Nls String option, @NlsSafe String hit, @NlsSafe String path) {
     this(option, null, hit, path);
   }
 
-  public OptionDescription(String option, String configurableId, String hit, String path) {
+  public OptionDescription(@Nls String option, @NonNls String configurableId, @NlsSafe String hit, @NlsSafe String path) {
     this(option, configurableId, hit, path, null);
   }
 
-  public OptionDescription(String option, String configurableId, String hit, String path, String groupName) {
+  public OptionDescription(@Nls String option,
+                           @NonNls String configurableId,
+                           @NlsSafe String hit,
+                           @NlsSafe String path,
+                           @Nls String groupName) {
     myOption = option;
     myHit = hit;
     myPath = path;
@@ -40,7 +45,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
     return myOption;
   }
 
-  @Nls
+  @NlsSafe
   @Nullable
   public String getHit() {
     return myHit;
@@ -51,10 +56,12 @@ public class OptionDescription implements Comparable<OptionDescription> {
     return myPath;
   }
 
+  @NonNls
   public String getConfigurableId() {
     return myConfigurableId;
   }
 
+  @Nls
   public String getGroupName() {
     return myGroupName;
   }
