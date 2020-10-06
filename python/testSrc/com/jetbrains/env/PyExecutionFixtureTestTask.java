@@ -4,6 +4,7 @@ package com.jetbrains.env;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -152,8 +153,10 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     PlatformPythonModuleType.ensureModuleRegistered();
 
     if (StringUtil.isNotEmpty(myRelativeTestDataPath)) {
-      ApplicationManager.getApplication().invokeAndWait(() ->
-        myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath());
+      // Without performing the copy deliberately in the EDT, this code may stuck in a livelock for unclear reason.
+      ApplicationManager.getApplication().invokeAndWait(
+        () -> myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath(),
+        ModalityState.any());
     }
 
     final VirtualFile projectRoot = myFixture.getTempDirFixture().getFile(".");
