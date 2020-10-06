@@ -3,11 +3,8 @@ package com.intellij.execution.process.mediator.util
 
 import kotlinx.coroutines.*
 
-internal fun CoroutineScope.childSupervisorScope(): CoroutineScope {
-  val job = coroutineContext[Job]!!
-  val childJob = SupervisorJob(job)
-  return this + childJob
-}
+internal fun CoroutineScope.childSupervisorScope(): CoroutineScope = this + childSupervisorJob()
+internal fun CoroutineScope.childSupervisorJob(): CompletableJob = SupervisorJob(coroutineContext[Job]!!)
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 internal fun <T> Deferred<T>.blockingGet(): T =

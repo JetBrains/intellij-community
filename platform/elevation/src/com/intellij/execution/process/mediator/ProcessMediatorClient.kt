@@ -5,17 +5,15 @@ import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
+import com.intellij.execution.process.mediator.util.childSupervisorJob
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.Closeable
 import java.io.File
-import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
 
 internal class ProcessMediatorClient(
   coroutineScope: CoroutineScope,
@@ -24,7 +22,7 @@ internal class ProcessMediatorClient(
     Closeable {
   private val stub = ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
 
-  private val cleanupHooks: MutableList<() -> Unit> = Collections.synchronizedList(ArrayList())
+  private val cleanupJob = childSupervisorJob()
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
@@ -117,7 +115,11 @@ internal class ProcessMediatorClient(
 
   override fun close() {
     try {
-      cleanupHooks.forEach { it() }
+      runBlocking {
+        cleanupJob.complete()  // don't accept new cleanup tasks anymore
+        cleanupJob.children.forEach { it.start() }
+        cleanupJob.join()  // wait all the cleanup tasks to finish
+      }
     }
     finally {
       cancel()
@@ -125,7 +127,9 @@ internal class ProcessMediatorClient(
     }
   }
 
-  fun registerCleanup(cleanupHook: () -> Unit) {
-    cleanupHooks += cleanupHook
+  fun registerCleanup(cleanupHook: suspend () -> Unit) {
+    launch(cleanupJob, start = CoroutineStart.LAZY) {
+      cleanupHook()
+    }.also { if (it.isCancelled) it.ensureActive() }
   }
 }
