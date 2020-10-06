@@ -10,6 +10,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -37,6 +38,12 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
     myScriptName = scriptName;
     myTargetName = targetName;
     setScriptName(myScriptName);
+  }
+
+  @Override
+  public void before() throws Exception {
+    super.before();
+    PyDebuggerOptionsProvider.getInstance(getProject()).setDropIntoDebuggerOnFailedTest(true);
   }
 
   protected void waitForPauseOnTestFailure(String exceptionClass, String errorMessage) throws InterruptedException {
@@ -110,7 +117,7 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
       myErrorMessage = errorMessage;
     }
 
-    public static  @Nullable PythonExceptionData fromString(@NotNull String s) {
+    public static @Nullable PythonExceptionData fromString(@NotNull String s) {
       // Matches patterns like "(<class 'AssertionError'>, AssertionError('False is not true'), <traceback object at 0x108d49230>)".
       Pattern pattern = Pattern.compile("^\\(<(?:class|type) '(.+)'>, \\w*\\(?u?'(.+)',?\\)?.+");
       Matcher matcher = pattern.matcher(s);
