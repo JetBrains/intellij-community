@@ -3,7 +3,8 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.mediator.MediatedProcess
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorServer
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
+import com.intellij.execution.process.mediator.daemon.createInProcessServerForTesting
 import com.intellij.execution.process.mediator.startLocalProcessMediatorClientForTesting
 import kotlinx.coroutines.CoroutineScope
 import java.io.BufferedReader
@@ -19,7 +20,7 @@ fun main() {
   //org.apache.log4j.BasicConfigurator.configure()
   val commandLine = GeneralCommandLine("/bin/cat")
 
-  val processMediatorServer = ProcessMediatorServer.createLocalProcessMediatorServerForTesting()
+  val processMediatorServer = ProcessMediatorDaemon(createInProcessServerForTesting())
   processMediatorServer.start()
 
   startLocalProcessMediatorClientForTesting(SCOPE).use { processMediatorClient ->

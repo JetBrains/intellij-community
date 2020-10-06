@@ -4,20 +4,18 @@ package com.intellij.execution.process.mediator.daemon
 import io.grpc.Server
 import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
+import org.jetbrains.annotations.TestOnly
 import java.net.InetSocketAddress
 import kotlin.system.exitProcess
 
-class ProcessMediatorServer private constructor(private val server: Server) {
-  constructor(host: String, port: Int) : this(createServer(host, port)) {
-    println("Created server on $host:$port")
-  }
-
+class ProcessMediatorDaemon(private val server: Server) {
   fun start() {
     server.start()
+    println("Started server on port ${server.port}")
     Runtime.getRuntime().addShutdownHook(
       Thread {
         println("*** shutting down gRPC server since JVM is shutting down")
-        this@ProcessMediatorServer.stop()
+        this@ProcessMediatorDaemon.stop()
         println("*** server shut down")
       }
     )
@@ -30,21 +28,18 @@ class ProcessMediatorServer private constructor(private val server: Server) {
   fun blockUntilShutdown() {
     server.awaitTermination()
   }
+}
 
-  companion object {
-    fun createLocalProcessMediatorServerForTesting(): ProcessMediatorServer {
-      val server = InProcessServerBuilder.forName("testing")
-        .directExecutor()
-        .addService(ProcessMediatorServerService.createServiceDefinition())
-        .build()
-      return ProcessMediatorServer(server)
-    }
-  }
+@TestOnly
+fun createInProcessServerForTesting(bindName: String = "testing"): Server {
+  return InProcessServerBuilder.forName(bindName)
+    .directExecutor()
+    .addService(ProcessMediatorServerService.createServiceDefinition())
+    .build()
 }
 
 private fun createServer(host: String, port: Int): Server {
-  return NettyServerBuilder
-    .forAddress(InetSocketAddress(host, port))
+  return NettyServerBuilder.forAddress(InetSocketAddress(host, port))
     .addService(ProcessMediatorServerService.createServiceDefinition())
     .build()
 }
@@ -63,7 +58,7 @@ fun main(args: Array<String>) {
   val host = args[0]
   val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
 
-  val server = ProcessMediatorServer(host, port)
+  val server = ProcessMediatorDaemon(createServer(host, port))
   server.start()
   server.blockUntilShutdown()
 }
