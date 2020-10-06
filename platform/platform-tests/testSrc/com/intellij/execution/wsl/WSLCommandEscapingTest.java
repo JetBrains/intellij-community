@@ -22,9 +22,7 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myWSL = ContainerUtil.getFirstItem(ContainerUtil.filter(WSLUtil.getAvailableDistributions(), (d) -> {
-      return d.getMsId().equals("Ubuntu-20.04");
-    }));
+    myWSL = ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
   }
 
   private void assumeWSLAvailable() {
