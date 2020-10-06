@@ -72,7 +72,7 @@ class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationRe
       resultComponent.icon = AllIcons.Debugger.EvaluateExpression
       val foreground = if (isSelected) list.selectionForeground else list.foreground
       val attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground)
-      resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", item.value), attributes)
+      resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", item.value.toString()), attributes)
 
       shortcutComponent.clear()
       val shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
