@@ -80,10 +80,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
-  private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
     if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) LOG.error("Configurable names must not be loaded on EDT");
 
-    Map<String, String> map = new THashMap<>();
+    Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new THashMap<>();
     for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
       if (configurable instanceof SearchableConfigurable) {
         map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
@@ -369,7 +369,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  Map<String, String> getConfigurablesNames() {
+  Map<@NonNls String, @NlsContexts.ConfigurableName String> getConfigurablesNames() {
     return myConfigurablesNames.getValue();
   }
 
