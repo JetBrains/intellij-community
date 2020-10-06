@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 
@@ -21,12 +22,13 @@ class EditorCodePreview(val editor: Editor): Disposable {
     val newPopup = CodeFragmentPopup(editor, lines, onClick)
     Disposer.register(this, newPopup)
     popups = (popups + newPopup).sortedBy { it.lines.first }
-    popups.forEach(CodeFragmentPopup::updateCodePreview)
+    updatePopupPositions()
   }
 
   val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       popups.forEach(CodeFragmentPopup::updateCodePreview)
+      updatePopupPositions()
     }
   }
 
@@ -95,6 +97,8 @@ class EditorCodePreview(val editor: Editor): Disposable {
       .filterNot { (_, position) -> position == PopupPosition.Hidden }
       .forEach { (popup, _) ->
         popup.show()
+        popup.window.size = Dimension(editor.component.width, popup.window.preferredSize.height)
+        popup.window.validate()
       }
   }
 
