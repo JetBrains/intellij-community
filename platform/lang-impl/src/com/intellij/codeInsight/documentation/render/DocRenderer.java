@@ -176,7 +176,7 @@ class DocRenderer implements EditorCustomElementRenderer {
     group.add(new DocRenderItem.ChangeFontSize());
 
     for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
-      provider.additionalActions(myItem).forEach(group::add);
+      provider.additionalActions(myItem.editor, myItem.getComment(), myItem.textToRender).forEach(group::add);
     }
 
     return group;
