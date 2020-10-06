@@ -304,11 +304,11 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @return template presentation
    */
-  @NotNull
-  public final Presentation getTemplatePresentation() {
+  public final @NotNull Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
-    if (presentation == null){
-      myTemplatePresentation = presentation = createTemplatePresentation();
+    if (presentation == null) {
+      presentation = createTemplatePresentation();
+      myTemplatePresentation = presentation;
     }
     return presentation;
   }
