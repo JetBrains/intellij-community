@@ -10,18 +10,22 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleState;
 import javax.swing.*;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -35,36 +39,49 @@ public class WelcomeScreenActionsUtil {
         collectAllActions(group, (ActionGroup)action);
       }
       else {
+        // add actions group popup as is
         group.add(action);
       }
     }
   }
 
-  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
-    final JButton myButton;
+  static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+    final JBOptionButton myButton;
 
-    ToolbarTextButtonWrapper(@NotNull AnAction action) {
-      super(action.getTemplatePresentation(), action);
-      myButton = new JButton(getTemplateText());
-      myButton.setOpaque(false);
-      myButton.addActionListener(createActionListenerForComponent(myButton, action));
+    ToolbarTextButtonWrapper(@NotNull List<AnAction> actions) {
+      super(actions.get(0).getTemplatePresentation(), actions.get(0));
+      myButton = new JBOptionButton(null, null);
+      myButton.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            performAnActionForComponent(getDelegate(), myButton);
+        }
+      });
+      if (actions.size() > 1) {
+        myButton.setOptions(ContainerUtil.subList(actions, 1));
+      }
+      myButton.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     }
 
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      myButton.putClientProperty(JBOptionButton.PLACE, place);
       return myButton;
     }
 
     @Override
     public void updateButton(@NotNull AnActionEvent e) {
       getDelegate().update(e);
-      myButton.setText(e.getPresentation().getText());
-      myButton.setVisible(e.getPresentation().isVisible());
-      myButton.setEnabled(e.getPresentation().isEnabled());
+      myButton.getAction().putValue(Action.NAME, e.getPresentation().getText());
+      UIUtil.setEnabled(myButton, e.getPresentation().isEnabled(), true);
     }
 
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
-      return new ToolbarTextButtonWrapper(action);
+      return new ToolbarTextButtonWrapper(Collections.singletonList(action));
+    }
+
+    public static ToolbarTextButtonWrapper wrapAsOptionButton(@NotNull List<AnAction> actions) {
+      return new ToolbarTextButtonWrapper(actions);
     }
   }
 
@@ -74,13 +91,10 @@ public class WelcomeScreenActionsUtil {
     return event.getPresentation().isVisible();
   }
 
-  @NotNull
-  static ActionListener createActionListenerForComponent(@NotNull JComponent component, @NotNull AnAction action) {
-    return l -> {
-      ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, component);
-      DataContext dataContext = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
-      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
-    };
+  static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
+    ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, component);
+    DataContext context = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
+    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context));
   }
 
   static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
@@ -109,7 +123,7 @@ public class WelcomeScreenActionsUtil {
           updateIconBackground(false);
         }
       });
-      myIconButton.addActionListener(createActionListenerForComponent(myIconButton, action));
+      myIconButton.addActionListener(l -> performAnActionForComponent(action, myIconButton));
       Wrapper iconWrapper = new Wrapper(myIconButton);
       iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
 

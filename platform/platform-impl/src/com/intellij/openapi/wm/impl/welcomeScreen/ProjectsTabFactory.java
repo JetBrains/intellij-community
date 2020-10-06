@@ -147,7 +147,7 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
                               action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                               PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
-          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
+          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), action -> createButtonWrapper(action)));
         ActionGroup moreActionGroup = mainAndMore.getSecond();
 
         Presentation moreActionPresentation = moreActionGroup.getTemplatePresentation();
@@ -170,6 +170,16 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
         toolbar.setOpaque(false);
         toolbar.setReservePlaceAutoPopupIcon(false);
         return toolbar;
+      }
+
+      @NotNull
+      private ToolbarTextButtonWrapper createButtonWrapper(@NotNull AnAction action) {
+        if (action instanceof ActionGroup) {
+          List<AnAction> actions =
+            ContainerUtil.map(((ActionGroup)action).getChildren(null), a -> ActionGroupPanelWrapper.wrapGroups(a, parentDisposable));
+          return ToolbarTextButtonWrapper.wrapAsOptionButton(actions);
+        }
+        return ToolbarTextButtonWrapper.wrapAsTextButton(action);
       }
 
       private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
