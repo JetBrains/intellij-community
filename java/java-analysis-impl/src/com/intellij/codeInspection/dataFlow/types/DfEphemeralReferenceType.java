@@ -17,9 +17,9 @@ import java.util.Set;
  * @see DfaMemoryState#isEphemeral() 
  */
 public class DfEphemeralReferenceType implements DfReferenceType {
-  private final TypeConstraint myTypeConstraint;
+  private final @NotNull TypeConstraint myTypeConstraint;
 
-  DfEphemeralReferenceType(TypeConstraint constraint) {
+  DfEphemeralReferenceType(@NotNull TypeConstraint constraint) {
     myTypeConstraint = constraint;
   }
 
@@ -83,6 +83,16 @@ public class DfEphemeralReferenceType implements DfReferenceType {
              new DfEphemeralReferenceType(constraint);
     }
     return DfTypes.BOTTOM;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof DfEphemeralReferenceType && myTypeConstraint.equals(((DfEphemeralReferenceType)o).myTypeConstraint);
+  }
+
+  @Override
+  public int hashCode() {
+    return myTypeConstraint.hashCode();
   }
 
   @Override
