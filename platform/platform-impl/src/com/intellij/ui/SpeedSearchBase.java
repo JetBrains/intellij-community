@@ -615,8 +615,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     //select here!
 
-
-
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
     if (project != null) {
@@ -732,5 +730,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void add(Object o) {
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
     }
+  }
+
+  @Override
+  public boolean isObjectFilteredOut(Object o) {
+    return false;
   }
 }

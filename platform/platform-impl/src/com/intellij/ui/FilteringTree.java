@@ -58,6 +58,11 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     @Override
     public void findAndSelectElement(@NotNull String searchQuery) { }
+
+    @Override
+    public boolean isObjectFilteredOut(Object o) {
+      return false;
+    }
   };
   private final Project myProject;
   private final T myRoot;

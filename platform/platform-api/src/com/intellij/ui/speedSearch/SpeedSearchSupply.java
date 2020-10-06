@@ -81,4 +81,6 @@ public abstract class SpeedSearchSupply {
    * @param searchQuery text that the selected element should match
    */
   public abstract void findAndSelectElement(@NotNull String searchQuery);
+
+  public abstract boolean isObjectFilteredOut(Object o);
 }

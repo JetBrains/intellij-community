@@ -189,6 +189,11 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   @Override
+  public boolean isObjectFilteredOut(Object o) {
+    return false;
+  }
+
+  @Override
   public void keyTyped(KeyEvent e) {
     processKeyEvent(e);
   }
