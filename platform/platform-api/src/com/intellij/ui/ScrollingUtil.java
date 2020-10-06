@@ -724,13 +724,13 @@ public final class ScrollingUtil {
     }
 
     private void doMoveUp(@JdkConstants.InputEventMask int modifiers) {
-      if (myComponent instanceof JList) moveUp((JList<?>)myComponent, modifiers);
+      if (myComponent instanceof JList) moveUp((JList<?>)myComponent, modifiers, isCycleScrolling());
       else if (myComponent instanceof JTable) moveUp((JTable)myComponent, modifiers, isCycleScrolling());
       else throw new IllegalArgumentException("MoveUp is not implemented for " + myComponent.getClass());
     }
 
     private void doMoveDown(@JdkConstants.InputEventMask int modifiers) {
-      if (myComponent instanceof JList) moveDown((JList<?>)myComponent, modifiers);
+      if (myComponent instanceof JList) moveDown((JList<?>)myComponent, modifiers, isCycleScrolling());
       else if (myComponent instanceof JTable) moveDown((JTable)myComponent, modifiers, isCycleScrolling());
       else throw new IllegalArgumentException("MoveDown is not implemented for " + myComponent.getClass());
     }
