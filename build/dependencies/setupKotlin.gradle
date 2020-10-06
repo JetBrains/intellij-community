@@ -32,14 +32,14 @@ task unzipKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
 
 task setKotlincExecutablePermissions(dependsOn: unzipKotlinPlugin) {
   doLast {
-    file("${project.buildDir}/kotlin/Kotlin/kotlinc/bin").eachFileMatch(
-      { it.startsWith('kotlin') && !it.endsWith(".bat") },
-      {
-        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      file("${project.buildDir}/kotlin/Kotlin/kotlinc/bin").eachFileMatch(
+        { it.startsWith('kotlin') && !it.endsWith(".bat") },
+        {
           Files.setPosixFilePermissions(it.toPath(), Stream.of(PosixFilePermission.values()).collect(Collectors.toSet()))
         }
-      }
-    )
+      )
+    }
   }
 }
 
