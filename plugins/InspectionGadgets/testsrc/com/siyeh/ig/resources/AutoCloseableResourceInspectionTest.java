@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
+ * @noinspection resource
  */
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
@@ -255,11 +256,11 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "class X implements AutoCloseable {\n" +
            "  @Override\n" +
            "  public void close() {}\n" +
-           "  static native X getX();\n" +
+           "  static native X makeX();\n" +
            "}\n" +
            "class Other {\n" +
            "  private static void example() {\n" +
-           "    final X x = X.<warning descr=\"'X' used without 'try'-with-resources statement\">getX</warning>();\n" +
+           "    final X x = X.<warning descr=\"'X' used without 'try'-with-resources statement\">makeX</warning>();\n" +
            "    x.close();\n" +
            "  }\n" +
            "}");
@@ -401,6 +402,132 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "this.x = x;" +
       "}\n" +
       "  native void doStuff();\n" +
+      "}");
+  }
+
+  public void testIgnoredStreamPassedAsArgumentToNonIgnored() {
+    doTest(
+      "import java.io.ByteArrayOutputStream;\n" +
+      "import java.io.IOException;\n" +
+      "import java.io.ObjectOutputStream;\n" +
+      "\n" +
+      "class Test{\n" +
+      "  void test() throws IOException {\n" +
+      "    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();\n" +
+      "    ObjectOutputStream oos;\n" +
+      "    oos = new ObjectOutputStream(outputStream);\n" +
+      "  }\n" +
+      "}");
+  }
+
+  public void testConstructorClosesResource() {
+    doTest(
+      "import java.io.ByteArrayOutputStream;\n" +
+      "import java.io.IOException;\n" +
+      "import java.io.ObjectOutputStream;\n" +
+      "\n" +
+      "class Test{\n" +
+      "  Test(AutoCloseable ac){}\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = new AC();\n" +
+      "    new Test(ac);\n" +
+      "  }\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testResourceClosed() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = ACHolder.makeAc();\n" +
+      "    useAc(new ACHolder(ac));\n" +
+      "  }\n" +
+      "  void useAc(ACHolder holder) {}\n" +
+      "}\n" +
+      "class ACHolder {\n" +
+      "  private final AC ac;\n" +
+      "  public static AC makeAc() { return null;}\n" +
+      "  ACHolder(AC ac) {this.ac = ac;" +
+      "}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testGetMethodNotConsideredAsResource() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    getAc();\n" +
+      "  }\n" +
+      "  AC getAc() {return null;}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testBuilderMustNotBeTriggered() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = makeAc();\n" +
+      "    ac" +
+      ".use();" +
+      "\n" +
+      "  }\n" +
+      "  AC makeAc() {return null;}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  AC use() {return this; }\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testFieldInitializationAsEscape() {
+    doTest(
+      "class AC implements AutoCloseable {\n" +
+      "  AC ac = new AC();\n" +
+      "  @Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testTryAsReference() {
+    doTest(
+      "class AC implements AutoCloseable {\n" +
+      "  void test(boolean condition) {\n" +
+      "    AC ac = condition ? new AC() : null;\n" +
+      "    if (ac == null) return;\n" +
+      "    try (AC ac1 = ac) {\n" +
+      "      ac1.test(false);\n" +
+      "    " +
+      "}\n" +
+      "  }\n" +
+      "  @Override" +
+      " public void close(){" +
+      "}\n" +
       "}");
   }
 

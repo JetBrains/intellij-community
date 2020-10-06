@@ -24,5 +24,10 @@ as a method call argument.
 If enabled the inspection assumes the resource is closed in the called method.
 Method calls inside a <b>finally</b> block with <i>close</i> in the name and an AutoCloseable argument will not be ignored.
 <p>
+Use the third checkbox below to ignore method references to constructors of resource classes.
+<p>
+Use the fourth checkbox below to ignore methods that return resource and has a name that starts from 'get'.
+  This may be useful because most of the getters do not transmit the ownership of resource and use sites are not responsible for closing resource.
+<p>
 </body>
 </html>

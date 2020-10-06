@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.stream.Stream;
 
 public abstract class ResourceInspection extends BaseInspection {
 
@@ -111,6 +110,15 @@ public abstract class ResourceInspection extends BaseInspection {
 
   @Contract(pure = true)
   protected abstract boolean isResourceCreation(PsiExpression expression);
+
+  /**
+   *  When passed to constructor of resource like object this parameter may take over ownership, so no need to track resource created by
+   *  this constructor
+   */
+  @Contract(pure = true)
+  protected boolean canTakeOwnership(@NotNull PsiExpression expression) {
+    return isResourceCreation(expression);
+  }
 
   protected boolean isResourceFactoryClosed(PsiExpression expression) {
     return false;
@@ -307,6 +315,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   boolean isResourceEscaping(@Nullable PsiVariable boundVariable, @NotNull PsiExpression resourceCreationExpression) {
+    if (boundVariable instanceof PsiField) return true;
     if (isSystemErrOrOutUse(resourceCreationExpression)) {
       return true;
     }
@@ -355,7 +364,7 @@ public abstract class ResourceInspection extends BaseInspection {
   private boolean resourcePotentiallyCreatedFromOther(@NotNull PsiExpression resourceCreationExpression) {
     if (resourceCreationExpression instanceof PsiCallExpression) {
       PsiExpressionList argumentList = ((PsiCallExpression)resourceCreationExpression).getArgumentList();
-      if (argumentList != null && ContainerUtil.or(argumentList.getExpressions(), this::isResourceCreation)) {
+      if (argumentList != null && ContainerUtil.or(argumentList.getExpressions(), this::canTakeOwnership)) {
         // resource was created from other, potentially leaking resource
         return true;
       }
@@ -549,7 +558,8 @@ public abstract class ResourceInspection extends BaseInspection {
 
     @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
-      if (!anyMethodMayClose && !isResourceCreation(callExpression)) {
+      super.visitCallExpression(callExpression);
+      if (!anyMethodMayClose) {
         return;
       }
       final PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -570,6 +580,14 @@ public abstract class ResourceInspection extends BaseInspection {
           escaped = true;
           break;
         }
+      }
+    }
+
+    @Override
+    public void visitResourceVariable(PsiResourceVariable variable) {
+      super.visitResourceVariable(variable);
+      if (ExpressionUtils.isReferenceTo(variable.getInitializer(), boundVariable)) {
+        escaped = true;
       }
     }
 
