@@ -107,7 +107,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }.installOn(myTable);
     final TableSpeedSearch speedSearch = new TableSpeedSearch(myTable);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
-    PopupHandler.installUnknownPopupHandler(myTable, createPopupGroup(), ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(myTable, createPopupGroup());
     ScrollingUtil.installActions(myTable);
 
     myTable.registerKeyboardAction(new ActionListener() {

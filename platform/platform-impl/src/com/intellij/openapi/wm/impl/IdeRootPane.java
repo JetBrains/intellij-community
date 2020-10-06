@@ -95,7 +95,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
       if (FrameInfoHelper.isFloatingMenuBarSupported()) {
         menuBar = menu;
-        getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
+        getLayeredPane().add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1));
       }
 
       addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN, __ -> updateScreenState(frameHelper));
@@ -236,14 +236,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private static @NotNull JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    ActionToolbar toolBar = actionManager.createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
+    ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
+      .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(new ViewToolbarAction());
     menuGroup.add(new CustomizeUIAction());
-    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup, actionManager);
+    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup);
 
     return toolBar.getComponent();
   }

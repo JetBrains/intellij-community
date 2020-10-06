@@ -62,7 +62,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class DynamicToolWindowWrapper {
+public final class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
@@ -217,11 +217,7 @@ public class DynamicToolWindowWrapper {
       return "";
     });
 
-    PopupHandler.installUnknownPopupHandler(
-      myTreeTable,
-      new DefaultActionGroup(new RemoveDynamicAction()),
-      ActionManager.getInstance()
-    );
+    PopupHandler.installUnknownPopupHandler(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()));
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 

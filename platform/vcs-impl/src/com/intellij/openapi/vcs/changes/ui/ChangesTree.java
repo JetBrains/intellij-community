@@ -289,7 +289,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void installPopupHandler(ActionGroup group) {
-    PopupHandler.installUnknownPopupHandler(this, group, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(this, group, ActionPlaces.UNKNOWN);
   }
 
   public JComponent getPreferredFocusedComponent() {
