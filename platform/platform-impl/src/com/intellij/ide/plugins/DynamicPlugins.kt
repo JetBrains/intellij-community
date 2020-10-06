@@ -280,7 +280,7 @@ object DynamicPlugins {
       if (isPluginOrModuleLoaded(dependency.id)) {
         val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, baseDescriptor ?: descriptor, null, context)
         if (message != null) {
-          return message
+          return "$message in optional dependency on ${dependency.id}"
         }
       }
     }
@@ -291,6 +291,9 @@ object DynamicPlugins {
       processOptionalDependenciesOnPlugin(descriptor.pluginId) { mainDescriptor, subDescriptor ->
         if (subDescriptor != null) {
           dependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, mainDescriptor.pluginId, context)
+          if (dependencyMessage != null) {
+            dependencyMessage = "Plugin ${mainDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} requires restart: $dependencyMessage"
+          }
         }
         dependencyMessage == null
       }
@@ -305,6 +308,9 @@ object DynamicPlugins {
         processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
           dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails,
                                                            checkImplementationDetailDependencies = false)
+          if (dependencyMessage != null) {
+            dependencyMessage = "Plugin ${fullDescriptor.pluginId} which is an implementation-detail dependency of ${descriptor.pluginId} requires restart: $dependencyMessage"
+          }
           dependencyMessage == null
         }
       }

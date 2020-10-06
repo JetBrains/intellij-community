@@ -499,7 +499,7 @@ class DynamicPluginsTest {
 
     val quuxDependencyDescriptor = PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
     val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, "quux.xml")
-    val mainDescriptor = PluginBuilder().depends(barBuilder.id, "bar.xml")
+    val mainDescriptor = PluginBuilder().randomId("main").depends(barBuilder.id, "bar.xml")
 
     val barDisposable = loadPluginWithText(barBuilder)
     try {
@@ -511,7 +511,8 @@ class DynamicPluginsTest {
         directory.resolve("plugin.xml").write(mainDescriptor.text())
         val descriptor = loadDescriptorInTest(directory.parent)
         descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
-        assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo("Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension")
+        assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
+          "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")
       }
       finally {
         Disposer.dispose(quuxDisposable)
