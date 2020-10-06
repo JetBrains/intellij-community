@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,10 +49,13 @@ public abstract class ResourceInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean anyMethodMayClose = true;
 
+  public boolean ignoreResourcesWithClose = true;
+
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     defaultWriteSettings(node, "anyMethodMayClose");
     writeBooleanOption(node, "anyMethodMayClose", true);
+    writeBooleanOption(node, "ignoreResourcesWithClose", true);
   }
 
   @NotNull
@@ -552,6 +557,35 @@ public abstract class ResourceInspection extends BaseInspection {
       final PsiReferenceExpression lReferenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement lTarget = lReferenceExpression.resolve();
       if (lTarget instanceof PsiField) {
+        escaped = true;
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      // Case: variable.close()
+      if (!ignoreResourcesWithClose) {
+        return;
+      }
+      if (!ExpressionUtils.isReferenceTo(expression, boundVariable)) return;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
+      if (call == null) return;
+      String callName = call.getMethodExpression().getReferenceName();
+      if ("close".equals(callName)) {
+        escaped = true;
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ignoreResourcesWithClose) {
+        return;
+      }
+      String name = expression.getMethodExpression().getReferenceName();
+      if (name == null) return;
+      if (StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) {
         escaped = true;
       }
     }
