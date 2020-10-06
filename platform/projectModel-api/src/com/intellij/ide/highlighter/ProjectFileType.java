@@ -47,11 +47,6 @@ public final class ProjectFileType implements InternalFileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return true;
-  }
-
-  @Override
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return StandardCharsets.UTF_8.name();
   }
