@@ -509,7 +509,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
       return new HtmlBuilder().append(configurationException.getTitle()).append(": ")
-        .wrapWith("b").wrapWith("body").addText(configurationException.getMessage()).wrapWith("html").toString();
+        .wrapWith("b").wrapWith("body").addRaw(configurationException.getMessage()).wrapWith("html").toString();
     }
 
     private void createUIComponents() {
