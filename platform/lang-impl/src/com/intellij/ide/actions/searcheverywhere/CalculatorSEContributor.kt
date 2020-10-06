@@ -33,7 +33,7 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
   class EvaluationResult(val value: Double)
 
   override fun getSearchProviderId(): String = javaClass.name
-  override fun getGroupName(): String = ""
+  override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
 
