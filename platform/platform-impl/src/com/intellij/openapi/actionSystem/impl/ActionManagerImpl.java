@@ -174,18 +174,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DynamicActionConfigurationCustomizer.EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
-    DynamicActionConfigurationCustomizer.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<DynamicActionConfigurationCustomizer>() {
-        @Override
-        public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.registerActions(ActionManagerImpl.this);
-        }
+    DynamicActionConfigurationCustomizer.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+        extension.registerActions(ActionManagerImpl.this);
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.unregisterActions(ActionManagerImpl.this);
-        }
-      }, this);
+      @Override
+      public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+        extension.unregisterActions(ActionManagerImpl.this);
+      }
+    }, this);
     EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
   }
 
@@ -432,7 +431,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {
@@ -874,11 +873,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element,
-                                    final PluginId pluginId,
-                                    @Nullable ResourceBundle bundle) {
-    final AnAction action = processReferenceElement(element, pluginId);
-    if (action == null) return;
+  private void processReferenceNode(@NotNull Element element, @Nullable PluginId pluginId, @Nullable ResourceBundle bundle) {
+    AnAction action = processReferenceElement(element, pluginId);
+    if (action == null) {
+      return;
+    }
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
@@ -938,7 +937,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
-      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
+      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group", null);
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
@@ -1098,24 +1097,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @Nullable
-  private AnAction processReferenceElement(Element element, PluginId pluginId) {
+  private @Nullable AnAction processReferenceElement(Element element, PluginId pluginId) {
     if (!REFERENCE_ELEMENT_NAME.equals(element.getName())) {
-      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"", null);
       return null;
     }
-    String ref = getReferenceActionId(element);
 
+    String ref = getReferenceActionId(element);
     if (ref == null || ref.isEmpty()) {
-      reportActionError(pluginId, "ID of reference element should be defined");
+      reportActionError(pluginId, "ID of reference element should be defined", null);
       return null;
     }
 
     AnAction action = getActionImpl(ref, true);
-
     if (action == null) {
       if (!myNotRegisteredInternalActionIds.contains(ref)) {
-        reportActionError(pluginId, "action specified by reference isn't registered (ID=" + ref + ")");
+        reportActionError(pluginId, "action specified by reference isn't registered (ID=" + ref + ")", null);
       }
       return null;
     }
@@ -1124,7 +1121,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getReferenceActionId(@NotNull Element element) {
     String ref = element.getAttributeValue(REF_ATTR_NAME);
-
     if (ref == null) {
       // support old style references by id
       ref = element.getAttributeValue(ID_ATTR_NAME);
@@ -1164,6 +1160,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (elements == null) {
       return null;
     }
+
     for (Element element : elements) {
       if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
           !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
