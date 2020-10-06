@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.PathManager;
@@ -23,7 +24,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class SplashSlideLoader {
+final class SplashSlideLoader {
     private static final Path cacheHome = Paths.get(PathManager.getSystemPath(), "splashSlides");
 
     @Nullable

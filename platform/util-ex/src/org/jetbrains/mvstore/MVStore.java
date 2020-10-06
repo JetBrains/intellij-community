@@ -3258,17 +3258,20 @@ public final class MVStore implements AutoCloseable {
     //    return m == null ? -1 : m;
     //}
 
+    public void triggerAutoSave() {
+        triggerAutoSave(false);
+    }
     /**
      * Commit and save all changes, if there are any, and compact the store if
      * needed. Some part of work is executed asynchronously.
      */
-    public void triggerAutoSave() {
+    public void triggerAutoSave(boolean force) {
         try {
             if (!isOpenOrStopping() || isReadOnly()) {
                 return;
             }
 
-            if (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay)) {
+            if (!force && (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay))) {
                 return;
             }
 

@@ -300,11 +300,12 @@ public final class IconLoader {
   }
 
   @SuppressWarnings("DuplicatedCode")
-  private static @Nullable Icon findIcon(@NotNull String originalPath,
-                                         @Nullable Class<?> clazz,
-                                         @NotNull ClassLoader classLoader,
-                                         @Nullable HandleNotFound handleNotFound,
-                                         boolean deferUrlResolve) {
+  @ApiStatus.Internal
+  public static @Nullable Icon findIcon(@NotNull String originalPath,
+                                        @Nullable Class<?> clazz,
+                                        @NotNull ClassLoader classLoader,
+                                        @Nullable HandleNotFound handleNotFound,
+                                        boolean deferUrlResolve) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = pathTransform.get().patchPath(originalPath, classLoader);
     String path = patchedPath == null ? originalPath : patchedPath.first;
@@ -1073,13 +1074,15 @@ public final class IconLoader {
         flags |= ImageLoader.USE_DARK;
       }
 
-      if (ownerClass != null && overriddenPath != null) {
-        return ImageLoader.loadFromUrl(overriddenPath, ownerClass, flags, filters, scaleContext);
-      }
-      else {
+      String path = overriddenPath;
+      if (path == null || (ownerClass == null && (classLoader == null || path.charAt(0) != '/'))) {
         URL url = getURL();
-        return url == null ? null : ImageLoader.loadFromUrl(url.toString(), null, flags, filters, scaleContext);
+        if (url == null) {
+          return null;
+        }
+        path = url.toString();
       }
+      return ImageLoader.load(path, filters, ownerClass, classLoader, flags, scaleContext, !path.endsWith(".svg"));
     }
 
     /**

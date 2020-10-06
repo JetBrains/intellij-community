@@ -82,6 +82,8 @@ import javax.swing.event.HyperlinkListener
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
+private val LOG = logger<ToolWindowManagerImpl>()
+
 @State(
   name = "ToolWindowManager",
   defaultStateAsResource = true,
@@ -117,7 +119,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   companion object {
-    private val LOG = logger<ToolWindowManagerImpl>()
     @JvmStatic
     @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
@@ -450,7 +451,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val sideTool = bean.secondary || bean.side
     return RegisterToolWindowTask(
       id = bean.id,
-      icon = findIconFromBean(bean, factory),
+      icon = findIconFromBean(bean, factory, pluginDescriptor),
       anchor = getToolWindowAnchor(factory, bean),
       sideTool = sideTool,
       canCloseContent = bean.canCloseContents,
@@ -480,7 +481,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun initToolWindows(list: List<RegisterToolWindowTask>, toolWindowsPane: ToolWindowsPane) {
     runActivity("toolwindow creating") {
-
       val entries = ArrayList<String>(list.size)
       for (task in list) {
         try {
@@ -529,7 +529,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val sideTool = bean.secondary || bean.side
     val entry = doRegisterToolWindow(RegisterToolWindowTask(
       id = bean.id,
-      icon = findIconFromBean(bean, factory),
+      icon = findIconFromBean(bean, factory, pluginDescriptor),
       anchor = anchor,
       sideTool = sideTool,
       canCloseContent = bean.canCloseContents,
@@ -2084,15 +2084,12 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Icon? {
-  IconLoader.findIcon(bean.icon ?: return null, factory.javaClass)?.let {
-    return it
-  }
-
+private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
   try {
-    return IconLoader.getIcon(bean.icon)
+    return IconLoader.findIcon(bean.icon ?: return null, factory.javaClass, pluginDescriptor.pluginClassLoader, null, true)
   }
-  catch (ignored: Exception) {
+  catch (e: Exception) {
+    LOG.error(e)
     return EmptyIcon.ICON_13
   }
 }

@@ -14,7 +14,10 @@ internal class StartUpMeasurementService : RestService() {
   override fun getServiceName() = "startUpMeasurement"
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
-    return if (request.origin == "https://ij-perf.jetbrains.com") OriginCheckResult.ALLOW else super.isOriginAllowed(request)
+    return when (request.origin) {
+      "https://ij-perf.jetbrains.com", "https://ij-perf.labs.jb.gg" -> OriginCheckResult.ALLOW
+      else -> super.isOriginAllowed(request)
+    }
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {

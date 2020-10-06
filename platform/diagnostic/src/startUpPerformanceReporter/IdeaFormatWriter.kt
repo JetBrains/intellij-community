@@ -20,7 +20,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>, private val threadNameManager: ThreadNameManager) {
+internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
+                                         private val threadNameManager: ThreadNameManager,
+                                         private val version: String) {
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
   protected val stringWriter = ExposingCharArrayWriter()
 
@@ -31,7 +33,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", StartUpPerformanceReporter.VERSION)
+        writer.writeStringField("version", version)
         writeAppInfo(writer)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writer.writeStringField("os", SystemInfo.getOsNameAndVersion())

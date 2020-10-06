@@ -58,6 +58,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -86,6 +87,8 @@ import java.util.function.Supplier;
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
+  private static final ExtensionPointName<DynamicActionConfigurationCustomizer> DYNAMIC_EP_NAME =
+    new ExtensionPointName<>("com.intellij.dynamicActionConfigurationCustomizer");
   private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
     new ExtensionPointName<>("com.intellij.editorActionHandler");
 
@@ -173,8 +176,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
-    DynamicActionConfigurationCustomizer.EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
-    DynamicActionConfigurationCustomizer.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
+    DYNAMIC_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
         extension.registerActions(ActionManagerImpl.this);
@@ -193,8 +196,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
-  @Nullable
-  static AnAction convertStub(@NotNull ActionStub stub) {
+  static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
     AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
       return null;
@@ -202,7 +204,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     stub.initAction(anAction);
     updateIconFromStub(stub, anAction);
-
     return anAction;
   }
 
@@ -238,17 +239,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return (T)obj;
   }
 
-  private static void updateIconFromStub(@NotNull ActionStubBase stub, AnAction anAction) {
+  private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
     String iconPath = stub.getIconPath();
-    if (iconPath == null) {
-      return;
+    if (iconPath != null) {
+      setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
     }
-
-    setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
   }
 
-  @Nullable
-  private static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
+  private static @Nullable ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
     IdeaPluginDescriptor plugin = stub.getPlugin();
     ActionGroup group = instantiate(stub.getActionClass(), plugin, ActionGroup.class);
     if (group == null) {
@@ -280,52 +278,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
-  private static void setIcon(@Nullable String iconPath,
-                              @NotNull String className,
-                              @NotNull PluginDescriptor pluginDescriptor,
-                              @NotNull Presentation presentation) {
-    if (iconPath == null) {
-      return;
-    }
-
-    try {
-      Class<?> actionClass = Class.forName(className, true, pluginDescriptor.getPluginClassLoader());
-      setIconFromClass(actionClass, pluginDescriptor, iconPath, presentation);
-    }
-    catch (ClassNotFoundException | NoClassDefFoundError e) {
-      LOG.error(e);
-      reportActionError(pluginDescriptor.getPluginId(), "class with name \"" + className + "\" not found");
-    }
-  }
-
-  private static void setIconFromClass(@NotNull Class<?> actionClass,
+  private static void setIconFromClass(@Nullable Class<?> actionClass,
                                        @NotNull PluginDescriptor pluginDescriptor,
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
-    //noinspection deprecation
-    presentation.setIcon(new IconLoader.LazyIcon() {
-      @NotNull
-      @Override
-      protected Icon compute() {
-        // try to find icon in idea class path
-        Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
-        if (icon == null) {
-          icon = IconLoader.findIcon(iconPath, pluginDescriptor.getPluginClassLoader());
-        }
-
-        if (icon == null) {
-          reportActionError(pluginDescriptor.getPluginId(), "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
-          return AllIcons.Nodes.Unknown;
-        }
-
-        return icon;
-      }
-
-      @Override
-      public String toString() {
-        return "LazyIcon@ActionManagerImpl (path: " + iconPath + ", action class: " + actionClass + ")";
-      }
-    });
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+    Icon icon = IconLoader.findIcon(iconPath, actionClass, pluginDescriptor.getPluginClassLoader(), null, true);
+    if (icon == null) {
+      reportActionError(pluginDescriptor.getPluginId(), "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+      icon = AllIcons.Nodes.Unknown;
+    }
+    IconLoadMeasurer.actionIcon.end(start);
+    presentation.setIcon(icon);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -806,8 +770,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (group instanceof ActionGroupStub) {
         ((ActionGroupStub)group).setIconPath(iconPath);
       }
-      else {
-        setIcon(iconPath, className, plugin, presentation);
+      else if (iconPath != null) {
+        setIconFromClass(null, plugin, iconPath, presentation);
       }
 
       // popup
