@@ -65,7 +65,7 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(bufferInitialSize));
     DataOutputStream stream = new DataOutputStream(out);
     externalizer.save(stream, data);
-    return out.toByteArraySequence();
+    return out.size() == 0 ? null : out.toByteArraySequence();
   }
 
   public static <Data> Data deserializeFromByteSeq(@NotNull ByteArraySequence bytes,
