@@ -10,7 +10,9 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -697,9 +699,21 @@ public abstract class VcsVFSListener implements Disposable {
 
         if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
 
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
-                                               VcsBundle.message("progress.title.version.control.processing.changed.files"), true, myProject);
+        processEventsInBackground(events);
+      }
+
+      /**
+       * Not using modal progress here, because it could lead to some focus related assertion (e.g. "showing dialogs from popup" in com.intellij.ui.popup.tree.TreePopupImpl)
+       * Assume, that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
+       */
+      private void processEventsInBackground(List<VFileEvent> events) {
+        new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.checkCanceled();
+            myProcessor.process(events);
+          }
+        }.queue();
       }
     }
 }
