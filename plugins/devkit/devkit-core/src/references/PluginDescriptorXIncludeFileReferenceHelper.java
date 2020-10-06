@@ -53,7 +53,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
 
       Collection<VirtualFile> pluginXmlFilesInProductionScope =
-        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
+        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
                                                       PluginRelatedLocatorsUtils.getCandidatesScope(project));
 
       ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);

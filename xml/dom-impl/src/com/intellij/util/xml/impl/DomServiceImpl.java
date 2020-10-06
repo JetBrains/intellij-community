@@ -19,7 +19,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -35,8 +34,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
@@ -45,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Gregory.Shrago
@@ -54,7 +49,7 @@ import java.util.stream.Stream;
 public class DomServiceImpl extends DomService {
 
   @NotNull
-  private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
+  private static XmlFileHeader calcXmlFileHeader(@NotNull XmlFile file) {
 
     if (file instanceof PsiFileEx && ((PsiFileEx)file).isContentsLoaded() && file.getNode().isParsed()) {
       return computeHeaderByPsi(file);
@@ -120,7 +115,7 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public ModelMerger createModelMerger() {
+  public @NotNull ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
 
@@ -146,7 +141,7 @@ public class DomServiceImpl extends DomService {
 
   @Override
   @NotNull
-  public XmlFileHeader getXmlFileHeader(XmlFile file) {
+  public XmlFileHeader getXmlFileHeader(@NotNull XmlFile file) {
     if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) {
       return calcXmlFileHeader(file);
     }
@@ -155,9 +150,8 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
-                                                      Project project,
-                                                      GlobalSearchScope scope) {
+  public @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+                                                               @NotNull GlobalSearchScope scope) {
     DomFileDescription<?> description = DomApplicationComponent
       .getInstance()
       .findFileDescription(rootElementClass);
@@ -177,8 +171,10 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
-    final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
+  public <T extends DomElement> @NotNull List<DomFileElement<T>> getFileElements(@NotNull Class<T> clazz, @NotNull Project project, @Nullable GlobalSearchScope scope) {
+    final Collection<VirtualFile> list = getDomFileCandidates(clazz, scope != null ? scope : GlobalSearchScope.allScope(project));
+    if (list.isEmpty()) return Collections.emptyList();
+
     final ArrayList<DomFileElement<T>> result = new ArrayList<>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -189,13 +185,12 @@ public class DomServiceImpl extends DomService {
         }
       }
     }
-
     return result;
   }
 
 
   @Override
-  public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
+  public @NotNull StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }
 }

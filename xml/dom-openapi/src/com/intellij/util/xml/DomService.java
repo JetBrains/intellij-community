@@ -43,14 +43,13 @@ public abstract class DomService {
 
   /**
    * @param rootElementClass class of root (file-level) element in DOM model
-   * @param project          current project
    * @param scope            search scope
    * @return files containing given root element
    * @see #getFileElements(Class, Project, GlobalSearchScope)
    */
-  public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
-                                                               Project project,
-                                                               GlobalSearchScope scope);
+  @NotNull
+  public abstract Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+                                                               @NotNull GlobalSearchScope scope);
 
   /**
    * @param rootElementClass class of root (file-level) element in DOM model
@@ -58,10 +57,12 @@ public abstract class DomService {
    * @param scope            search scope
    * @return DOM file elements containing given root element
    */
-  public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> rootElementClass,
-                                                                                 Project project,
+  @NotNull
+  public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(@NotNull Class<T> rootElementClass,
+                                                                                 @NotNull Project project,
                                                                                  @Nullable GlobalSearchScope scope);
 
+  @NotNull
   public abstract ModelMerger createModelMerger();
 
   public abstract <T extends DomElement> DomAnchor<T> createAnchor(T domElement);
@@ -73,11 +74,12 @@ public abstract class DomService {
   public abstract EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
 
   @NotNull
-  public abstract XmlFileHeader getXmlFileHeader(XmlFile file);
+  public abstract XmlFileHeader getXmlFileHeader(@NotNull XmlFile file);
 
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP
   }
 
-  public abstract StructureViewBuilder createSimpleStructureViewBuilder(XmlFile file, Function<DomElement, StructureViewMode> modeProvider);
+  @NotNull
+  public abstract StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider);
 }

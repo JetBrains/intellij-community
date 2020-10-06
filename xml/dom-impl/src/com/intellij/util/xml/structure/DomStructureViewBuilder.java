@@ -24,10 +24,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
+  @NotNull
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
+  @NotNull
   private final XmlFile myFile;
 
-  public DomStructureViewBuilder(final XmlFile file, final Function<DomElement,DomService.StructureViewMode> descriptor) {
+  public DomStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement,DomService.StructureViewMode> descriptor) {
     myFile = file;
     myDescriptor = descriptor;
   }
