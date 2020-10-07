@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.python;
+package com.jetbrains.env.debug;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
@@ -9,7 +9,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
