@@ -94,6 +94,9 @@ fun guessCurrentProject(component: JComponent?): Project {
          ?: ProjectManager.getInstance().defaultProject
 }
 
+fun currentOrDefaultProject(project: Project?): Project =
+  project ?: ProjectManager.getInstance().defaultProject
+
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).modifiableModel
   val result = model.task()
