@@ -81,6 +81,8 @@
   <extensions defaultExtensionNs="Pythonid">
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
                                       id="requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+                                      id="environmentYml"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

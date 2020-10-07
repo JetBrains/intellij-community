@@ -10,11 +10,11 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.findInRootDirectory;
 
 public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   private CondaEnvSdkFlavor() {
@@ -49,16 +47,7 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     try {
       final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
       for (String environment : environments) {
-        results.addAll(ReadAction.compute(() -> {
-          final VirtualFile root = StandardFileSystems.local().findFileByPath(environment);
-          final Collection<String> found = findInRootDirectory(root);
-          if (PyCondaSdkCustomizer.Companion.getInstance().getDetectEnvironmentsOutsideEnvsFolder()) {
-            return found;
-          }
-          else {
-            return StreamEx.of(found).filter(s -> getCondaEnvRoot(s) != null).toList();
-          }
-        }));
+        results.addAll(ReadAction.compute(() -> findInRootDirectory(StandardFileSystems.local().findFileByPath(environment))));
       }
     }
     catch (ExecutionException e) {
@@ -95,6 +84,16 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public Icon getIcon() {
     return PythonIcons.Python.Anaconda;
+  }
+
+  public static @NotNull Collection<String> findInRootDirectory(@Nullable VirtualFile rootDir) {
+    final Collection<String> found = VirtualEnvSdkFlavor.findInRootDirectory(rootDir);
+    if (PyCondaSdkCustomizer.Companion.getInstance().getDetectEnvironmentsOutsideEnvsFolder()) {
+      return found;
+    }
+    else {
+      return ContainerUtil.filter(found, s -> getCondaEnvRoot(s) != null);
+    }
   }
 
   @Nullable

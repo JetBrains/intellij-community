@@ -103,7 +103,7 @@ class PyAddNewCondaEnvPanel(
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
-    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.title"), false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.sentence"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         return PyCondaPackageManagerImpl.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)

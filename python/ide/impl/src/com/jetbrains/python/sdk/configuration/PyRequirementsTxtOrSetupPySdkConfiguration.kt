@@ -103,6 +103,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       PyPackageManagerImpl.getInstance(baseSdk).createVirtualEnv(location, false)
     }
     catch (e: ExecutionException) {
+      LOGGER.warn("Exception during creating virtual environment", e)
       showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
       return null
     }
@@ -130,6 +131,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         PyPackageManagerImpl.getInstance(sdk).install(emptyList(), getCommandForPipInstall(requirementsTxtOrSetupPyFile))
       }
       catch (e: ExecutionException) {
+        LOGGER.warn("Exception during installing packages", e)
         showSdkExecutionException(sdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
       }
     }
