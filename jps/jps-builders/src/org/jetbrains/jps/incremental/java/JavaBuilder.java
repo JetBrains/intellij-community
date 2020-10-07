@@ -85,6 +85,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
+  private static final Key<Set<String>> SHOWN_NOTIFICATIONS = GlobalContextKey.create("_shown_notifications_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
   private static final Key<ModulePathSplitter> MODULE_PATH_SPLITTER = GlobalContextKey.create("_module_path_splitter_");
@@ -156,6 +157,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     MODULE_PATH_SPLITTER.set(context, new ModulePathSplitter(new ExplodedModuleNameFinder(context)));
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
+    SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
@@ -776,8 +778,10 @@ public final class JavaBuilder extends ModuleLevelBuilder {
                                                                         @NotNull JavaCompilingTool compilingTool) {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
-    vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
-
+    if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
+      vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
+      notifyMessage(context, BuildMessage.Kind.WARNING, "build.message.incremental.annotation.processing.disabled.0", true, JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY);
+    }
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
@@ -865,17 +869,17 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static void notifyOptionPossibleConflicts(CompileContext context, String option, ModuleChunk chunk) {
-    context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.JPS_INFO,
-                                               JpsBuildBundle.message("build.message.user.specified.option.0.for.1.may.conflict.with.calculated.option",
-                                                                      option, chunk.getPresentableShortName())
-    ));
+    notifyMessage(context, BuildMessage.Kind.JPS_INFO, "build.message.user.specified.option.0.for.1.may.conflict.with.calculated.option", false, option, chunk.getPresentableShortName());
   }
 
   private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
-    context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.JPS_INFO,
-                                               JpsBuildBundle.message("build.message.user.specified.option.0.is.ignored.for.1", option,
-                                                                      chunk.getPresentableShortName())
-    ));
+    notifyMessage(context, BuildMessage.Kind.JPS_INFO, "build.message.user.specified.option.0.is.ignored.for.1", false, option, chunk.getPresentableShortName());
+  }
+
+  private static void notifyMessage(CompileContext context, final BuildMessage.Kind kind, final String messageKey, boolean notifyOnce, Object... params) {
+    if (!notifyOnce || SHOWN_NOTIFICATIONS.get(context).add(messageKey)) {
+      context.processMessage(new CompilerMessage(getBuilderName(), kind, JpsBuildBundle.message(messageKey, params)));
+    }
   }
 
   public static void addCompilationOptions(List<? super String> options,

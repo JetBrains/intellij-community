@@ -33,6 +33,10 @@ public class APIWrappers {
     return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors), DynamicWrapper.class, delegate);
   }
 
+  public interface WrapperDelegateAccessor<T> {
+    T getWrapperDelegate();
+  }
+
   abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
 
     private final T myDelegate;
@@ -87,10 +91,6 @@ public class APIWrappers {
       }
       return message;
     }
-  }
-
-  interface WrapperDelegateAccessor<T> {
-    T getWrapperDelegate();
   }
 
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
