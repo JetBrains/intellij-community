@@ -181,3 +181,21 @@ val ULiteralExpression.injectedReferences: Iterable<PsiReference>
     val innerReferences = element.children.asSequence().flatMap { e -> e.references.asSequence() }
     return (references + innerReferences).asIterable()
   }
+
+@JvmOverloads
+fun deepLiteralSearch(expression: UExpression, maxDepth: Int = 5): Sequence<ULiteralExpression> {
+  val visited = HashSet<UExpression>()
+  fun deepLiteralSearchInner(expression: UExpression, maxDepth: Int): Sequence<ULiteralExpression> {
+    if (maxDepth <= 0 || !visited.add(expression)) return emptySequence();
+    return when (expression) {
+      is ULiteralExpression -> sequenceOf(expression)
+      is UPolyadicExpression -> expression.operands.asSequence().flatMap { deepLiteralSearchInner(it, maxDepth - 1) }
+      is UReferenceExpression -> expression.resolve()
+        .toUElementOfType<UVariable>()
+        ?.uastInitializer
+        ?.let { deepLiteralSearchInner(it, maxDepth - 1) }.orEmpty()
+      else -> emptySequence()
+    }
+  }
+  return deepLiteralSearchInner(expression, maxDepth)
+}
