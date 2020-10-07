@@ -55,6 +55,8 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   }
 
   public void testPassingRemoteWorkingDir() throws IOException {
+    assumeWSLAvailable();
+
     assertPwdOutputInDirectory("test");
     assertPwdOutputInDirectory("a b");
     assertPwdOutputInDirectory("a ");
@@ -64,6 +66,8 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   }
 
   public void testPassingEnvironment() {
+    assumeWSLAvailable();
+
     assertEnvOutput(ContainerUtil.newLinkedHashMap(Pair.create("A", "B")));
     assertEnvOutput(ContainerUtil.newLinkedHashMap(Pair.create("Test", "with space")));
     assertEnvOutput(ContainerUtil.newLinkedHashMap(Pair.create("__aba", " with space"),
