@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -290,7 +290,7 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
-    PsiElement replacement = createElement(element, text);
+    PsiElement replacement = createElementFromText(text, element);
     return replace(element, replacement);
   }
 
@@ -423,29 +423,29 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
-    PsiElement replacement = createElement(element, text);
+    PsiElement replacement = createElementFromText(text, element);
     return replaceAndRestoreComments(element, replacement);
   }
 
-  private static @NotNull PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    if (element instanceof PsiExpression) {
-      return factory.createExpressionFromText(text, element);
+  private static @NotNull PsiElement createElementFromText(@NotNull String text, @NotNull PsiElement context) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    if (context instanceof PsiExpression) {
+      return factory.createExpressionFromText(text, context);
     }
-    else if (element instanceof PsiStatement) {
-      return factory.createStatementFromText(text, element);
+    else if (context instanceof PsiStatement) {
+      return factory.createStatementFromText(text, context);
     }
-    else if (element instanceof PsiTypeElement) {
-      return factory.createTypeElementFromText(text, element);
+    else if (context instanceof PsiTypeElement) {
+      return factory.createTypeElementFromText(text, context);
     }
-    else if (element instanceof PsiIdentifier) {
+    else if (context instanceof PsiIdentifier) {
       return factory.createIdentifier(text);
     }
-    else if (element instanceof PsiComment) {
-      return factory.createCommentFromText(text, element);
+    else if (context instanceof PsiComment) {
+      return factory.createCommentFromText(text, context);
     }
     else {
-      throw new IllegalArgumentException("Unsupported element type: " + element);
+      throw new IllegalArgumentException("Unsupported element type: " + context);
     }
   }
 
