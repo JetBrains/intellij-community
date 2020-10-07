@@ -4,7 +4,7 @@ package git4idea.config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GitNotInstalledException extends RuntimeException {
+public class GitNotInstalledException extends GitVersionIdentificationException {
   public GitNotInstalledException(@NotNull String message, @Nullable Throwable cause) {
     super(message, cause);
   }
