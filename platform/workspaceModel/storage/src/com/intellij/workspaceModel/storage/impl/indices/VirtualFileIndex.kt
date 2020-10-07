@@ -47,20 +47,30 @@ open class VirtualFileIndex internal constructor(
 
     private var freezed = true
 
-    internal fun index(id: EntityId, propertyName: String? = null, virtualFileUrls: List<VirtualFileUrl>? = null) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: List<VirtualFileUrl>? = null) {
       startWrite()
-      if (propertyName == null) {
-        val removedVfuInfos = entityId2VirtualFileUrlInfo.remove(id) ?: return
-        removedVfuInfos.forEach {
-          val vfuInfos = vfu2VirtualFileUrlInfo[it.vfu] ?: error("The record for $id <=> ${it.vfu} should be available in both maps")
-          vfuInfos.remove(it)
-          if (vfuInfos.isEmpty()) vfu2VirtualFileUrlInfo.remove(it.vfu)
-        }
-        return
-      }
-      removeFromIndexes(id, propertyName)
+      removeByPropertyFromIndexes(id, propertyName)
       if (virtualFileUrls == null) return
-      virtualFileUrls.forEach { indexVirtualFileUrl(id, propertyName, it) }
+      for ((index, virtualFileUrl) in virtualFileUrls.withIndex()) {
+        indexVirtualFileUrl(id, propertyName, virtualFileUrl, index)
+      }
+    }
+
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl? = null) {
+      startWrite()
+      removeByPropertyFromIndexes(id, propertyName)
+      if (virtualFileUrl == null) return
+      indexVirtualFileUrl(id, propertyName, virtualFileUrl)
+    }
+
+    internal fun removeRecordsByEntityId(id: EntityId) {
+      startWrite()
+      val removedVfuInfos = entityId2VirtualFileUrlInfo.remove(id) ?: return
+      removedVfuInfos.forEach {
+        val vfuInfos = vfu2VirtualFileUrlInfo[it.vfu] ?: error("The record for $id <=> ${it.vfu} should be available in both maps")
+        vfuInfos.remove(it)
+        if (vfuInfos.isEmpty()) vfu2VirtualFileUrlInfo.remove(it.vfu)
+      }
     }
 
     @TestOnly
@@ -89,8 +99,8 @@ open class VirtualFileIndex internal constructor(
       return VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
     }
 
-    private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl) {
-      val entityProperty = VirtualFileUrlInfo(virtualFileUrl, id, propertyName)
+    private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl, index: Int? = null) {
+      val entityProperty = VirtualFileUrlInfo(virtualFileUrl, id, propertyName, index)
       val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, HashSet())
       firstVfuInfos.add(entityProperty)
       entityId2VirtualFileUrlInfo[id] = firstVfuInfos
@@ -100,7 +110,7 @@ open class VirtualFileIndex internal constructor(
       vfu2VirtualFileUrlInfo[virtualFileUrl] = secondVfuInfos
     }
 
-    private fun removeFromIndexes(id: EntityId, propertyName: String) {
+    private fun removeByPropertyFromIndexes(id: EntityId, propertyName: String) {
       val vfuInfos = entityId2VirtualFileUrlInfo[id] ?: return
       val filteredVfuInfos = vfuInfos.filter { it.propertyName == propertyName }
       vfuInfos.removeAll(filteredVfuInfos)
@@ -126,7 +136,7 @@ open class VirtualFileIndex internal constructor(
     }
   }
 
-  internal data class VirtualFileUrlInfo(val vfu: VirtualFileUrl, val entityId: EntityId, val propertyName: String)
+  internal data class VirtualFileUrlInfo(val vfu: VirtualFileUrl, val entityId: EntityId, val propertyName: String, val index: Int?)
 }
 
 //---------------------------------------------------------------------
@@ -143,7 +153,7 @@ class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEnti
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, listOf(value))
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }
 
@@ -161,7 +171,7 @@ class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out Works
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value?.let { listOf(value) })
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }
 

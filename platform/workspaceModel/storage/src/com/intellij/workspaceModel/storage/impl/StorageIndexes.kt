@@ -193,9 +193,9 @@ internal class MutableStorageIndexes(
   }
 
   fun removeFromIndices(entityId: EntityId) {
-    virtualFileIndex.index(entityId)
     entitySourceIndex.index(entityId)
     persistentIdIndex.index(entityId)
+    virtualFileIndex.removeRecordsByEntityId(entityId)
     externalMappings.values.forEach { it.remove(entityId) }
   }
 
