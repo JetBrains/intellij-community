@@ -3,21 +3,22 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.referrers
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -26,11 +27,15 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
                                        private val internalSource: JpsFileEntitySource,
                                        private val componentName: String,
                                        private val externalStorage: Boolean) {
-  internal fun loadFacetEntities(builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
-    val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName) ?: return
+  /**
+   * This function should return void (Unit)
+   * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
+   */
+  internal fun loadFacetEntities(builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader): Boolean {
+    val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName) ?: return true
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
-    loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
+    val res = loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
     if (orderOfFacets.size > 1) {
       val entity = moduleEntity.facetsOrderEntity
       if (entity != null) {
@@ -45,19 +50,29 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         }
       }
     }
+    return res
   }
 
   private fun loadFacetEntities(facetStates: List<FacetState>, builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity,
-                                underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>) {
+                                underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>): Boolean {
+    var res = true
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
       val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
       val externalSystemId = facetState.externalSystemId
       val source = if (externalSystemId == null) internalSource else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
+
+      // Check for existing facet
+      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.persistentId())
+      if (builder.resolve(newFacetId) != null) {
+        res = false
+      }
+
       val facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet,
                                                source)
-      loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
+      res = res && loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
     }
+    return res
   }
 
   internal fun saveFacetEntities(facets: List<FacetEntity>, writer: JpsFileContentWriter) {
