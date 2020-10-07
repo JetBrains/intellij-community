@@ -143,7 +143,7 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
       @NotNull
       private ActionToolbar createActionsToolbar() {
         Couple<DefaultActionGroup> mainAndMore =
-          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE),
                               action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                               PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(

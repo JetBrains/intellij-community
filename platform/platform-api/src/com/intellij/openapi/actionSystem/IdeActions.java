@@ -284,6 +284,8 @@ public interface IdeActions {
   @NonNls String MODULE_SETTINGS = "ModuleSettings";
 
   @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";
+  @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE = "WelcomeScreen.QuickStart.EmptyState";
+  @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE = "WelcomeScreen.QuickStart.ProjectsState";
   @NonNls String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   @NonNls String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
   @NonNls String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";

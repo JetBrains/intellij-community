@@ -884,7 +884,15 @@
       <reference ref="UnsplitAll"/>
     </group>
 
+    <group id="WelcomeScreen.QuickStart.EmptyState">
+    </group>
+
+    <group id="WelcomeScreen.QuickStart.ProjectsState">
+    </group>
+
     <group id="WelcomeScreen.QuickStart">
+      <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart.ProjectsState"/>
     </group>
 
     <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>

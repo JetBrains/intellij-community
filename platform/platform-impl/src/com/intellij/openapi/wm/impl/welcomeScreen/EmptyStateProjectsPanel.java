@@ -41,7 +41,7 @@ public class EmptyStateProjectsPanel extends JPanel {
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.open.comment")));
 
     Couple<DefaultActionGroup> mainAndMore =
-      splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+      splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                           PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
@@ -63,8 +63,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   private static ActionLink createActionLink(@NotNull AnAction action) {
-    @SuppressWarnings("DialogTitleCapitalization") ActionLink actionLink =
-      new ActionLink(action.getTemplateText(), null, action, null, ActionPlaces.WELCOME_SCREEN);
+    ActionLink actionLink = new ActionLink(action.getTemplateText(), null, action, null, ActionPlaces.WELCOME_SCREEN);
     actionLink.setFocusable(true);
     return actionLink;
   }
