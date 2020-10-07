@@ -22,7 +22,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     !ApplicationManager.getApplication().isUnitTestMode
 
   override fun configureEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
-    Registry.get("unknown.sdk").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
+    Registry.get("unknown.sdk.auto").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
   }
 
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
