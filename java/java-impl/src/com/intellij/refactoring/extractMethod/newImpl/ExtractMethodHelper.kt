@@ -220,13 +220,12 @@ object ExtractMethodHelper {
 
     val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
     val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
-    fun suggestGetterName(name: String): String? {
+    fun suggestGetterName(name: String): String {
       field.name = name
       return GenerateMembersUtil.suggestGetterName(field)
     }
 
-    val getters: List<String> = initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
-      .mapNotNull { propertyName -> suggestGetterName(propertyName) }
-    return getters
+    return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
+      .map { propertyName -> suggestGetterName(propertyName) }
   }
 }
