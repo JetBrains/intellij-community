@@ -94,6 +94,8 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
+    <applicationService serviceImplementation="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl"
+                        serviceInterface="com.jetbrains.python.testing.VFSTestFrameworkListener"/>
 
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
@@ -645,6 +647,6 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.jetbrains.python.testing.VFSTestFrameworkListener$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener activeInTestMode="false" class="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 </idea-plugin>

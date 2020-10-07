@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.jetbrains.env.PyEnvTestToolsKt.replaceServicesWithMocks;
 
 /**
  * <p>
@@ -171,6 +172,7 @@ public abstract class PyEnvTestCase {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
     List<String> roots = getPythonRoots();
+    replaceServicesWithMocks();
 
     /*
      * <p>
