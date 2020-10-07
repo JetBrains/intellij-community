@@ -386,7 +386,12 @@ abstract class JdkListDownloaderBase {
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
   fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> {
-    val list = downloadJdksListWithCache(feedUrl, progress)
+    //we intentionally disable cache here for all user UI requests, as of IDEA-252237
+    val url = feedUrl ?: this.feedUrl
+    val list = downloadJdksListNoCache(url, progress)
+
+    //setting value to the cache, just in case
+    jdksListCache.setValue(url, list)
 
     if (ApplicationManager.getApplication().isInternal) {
       return list
@@ -483,10 +488,14 @@ private class CachedValueWithTTL<T : Any>(
       }
 
       ProgressManager.checkCanceled()
-      this.value = value
-      computed = now()
-      cachedUrl = url
-      return value
+      return setValue(url, value)
     }
+  }
+
+  fun setValue(url: String, value: T): T = lock.write {
+    this.value = value
+    computed = now()
+    cachedUrl = url
+    return value
   }
 }
