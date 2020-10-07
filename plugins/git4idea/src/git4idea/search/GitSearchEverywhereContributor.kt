@@ -49,9 +49,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   private val TAG_PRIORITY = 0 - 40
   private val COMMIT_BY_MESSAGE_PRIORITY = 0 - 50
 
-  override fun fetchWeightedElements(pattern: String,
-                                     progressIndicator: ProgressIndicator,
-                                     consumer: Processor<in FoundItemDescriptor<Any>>) {
+  override fun fetchWeightedElements(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any>>
+  ) {
 
     val logManager = VcsProjectLog.getInstance(project).logManager ?: return
     val dataManager = logManager.dataManager
@@ -112,8 +114,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     do {
       indicator.checkCanceled()
       dataPack = dataManager.dataPack
-    }
-    while (!dataPack.isFull && Thread.sleep(1000) == Unit)
+    } while (!dataPack.isFull && Thread.sleep(1000) == Unit)
     return dataPack
   }
 
@@ -131,9 +132,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       add(rightLabel, BorderLayout.EAST)
     }
 
-    override fun getListCellRendererComponent(list: JList<out Any>?,
-                                              value: Any?, index: Int,
-                                              isSelected: Boolean, cellHasFocus: Boolean): Component {
+    override fun getListCellRendererComponent(
+      list: JList<out Any>?,
+      value: Any?, index: Int,
+      isSelected: Boolean, cellHasFocus: Boolean
+    ): Component {
       panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
       leftLabel.apply {
         text = when (value) {
