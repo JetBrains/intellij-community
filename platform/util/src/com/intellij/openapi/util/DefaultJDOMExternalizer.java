@@ -36,30 +36,7 @@ public final class DefaultJDOMExternalizer {
     write(data, parentNode, null);
   }
 
-  private static final ClassValue<Map<String, Field>> fieldCache = new ClassValue<Map<String, Field>>() {
-    @Override
-    protected Map<String, Field> computeValue(Class<?> type) {
-      Map<String, Field> result = new LinkedHashMap<>();
-      for (Field field : type.getFields()) {
-        String name = field.getName();
-        if (name.indexOf('$') >= 0 || result.containsKey(name)) {
-          continue;
-        }
-        int modifiers = field.getModifiers();
-        if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers) ||
-            Modifier.isTransient(modifiers) || field.getAnnotation(Transient.class) != null) {
-          continue;
-        }
-
-        field.setAccessible(true); // class might be non-public
-        if (field.getDeclaringClass().getAnnotation(Transient.class) != null) {
-          continue;
-        }
-        result.put(name, field);
-      }
-      return result;
-    }
-  };
+  private static final ClassValue<Map<String, Field>> fieldCache = new DefaultJDOMExternalizerMapClassValue();
 
   public static void writeExternal(@NotNull Object data,
                                    @NotNull Element parentNode,
@@ -181,7 +158,9 @@ public final class DefaultJDOMExternalizer {
   }
 
   public static void readExternal(@NotNull Object data, Element parentNode) throws InvalidDataException {
-    if (parentNode == null) return;
+    if (parentNode == null) {
+      return;
+    }
 
     Map<String, Field> fields = fieldCache.get(data.getClass());
 
@@ -341,5 +320,32 @@ public final class DefaultJDOMExternalizer {
       throw new InvalidDataException("Wrong color value: " + value, e);
     }
     return color;
+  }
+
+  // must be static class: https://youtrack.jetbrains.com/issue/IDEA-252232#focus=Comments-27-4431506.0-0
+  private static final class DefaultJDOMExternalizerMapClassValue extends ClassValue<Map<String, Field>> {
+    @Override
+    protected Map<String, Field> computeValue(Class<?> type) {
+      Map<String, Field> result = new LinkedHashMap<>();
+      for (Field field : type.getFields()) {
+        String name = field.getName();
+        if (name.indexOf('$') >= 0 || result.containsKey(name)) {
+          continue;
+        }
+
+        int modifiers = field.getModifiers();
+        if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers) ||
+            Modifier.isTransient(modifiers) || field.isAnnotationPresent(Transient.class)) {
+          continue;
+        }
+
+        field.setAccessible(true); // class might be non-public
+        if (field.getDeclaringClass().isAnnotationPresent(Transient.class)) {
+          continue;
+        }
+        result.put(name, field);
+      }
+      return result;
+    }
   }
 }
