@@ -642,12 +642,12 @@ public final class DaemonListeners implements Disposable {
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
       if (!(highlighter instanceof RangeHighlighterEx && ((RangeHighlighterEx)highlighter).isPersistent())) {
         model.removeHighlighter(highlighter);
-        return;
+        continue;
       }
 
       ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
       if (!(pluginClassLoader instanceof PluginAwareClassLoader)) {
-        return;
+        continue;
       }
 
       if (isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
