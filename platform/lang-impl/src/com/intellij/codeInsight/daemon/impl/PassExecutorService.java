@@ -201,7 +201,7 @@ final class PassExecutorService implements Disposable {
                                  @NotNull Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted,
                                  @NotNull AtomicInteger threadsToStartCountdown) {
     assert threadsToStartCountdown.get() == toBeSubmitted.values().stream().mapToInt(m->m.size()).sum();
-    Int2ObjectOpenHashMap<Pair<ScheduledPass, Integer>> id2Visits = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<Pair<ScheduledPass, Integer>> id2Visits = new Int2ObjectOpenHashMap<>();
     for (ScheduledPass freePass : freePasses) {
       HighlightingPass pass = freePass.myPass;
       if (pass instanceof TextEditorHighlightingPass) {
@@ -209,8 +209,7 @@ final class PassExecutorService implements Disposable {
         checkConsistency(freePass, id2Visits);
       }
     }
-    for (Iterator<Int2ObjectMap.Entry<Pair<ScheduledPass, Integer>>> iterator = id2Visits.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
-      Int2ObjectMap.Entry<Pair<ScheduledPass, Integer>> entry = iterator.next();
+    for (Int2ObjectMap.Entry<Pair<ScheduledPass, Integer>> entry : id2Visits.int2ObjectEntrySet()) {
       int count = entry.getValue().second;
       assert count == 0 : entry.getIntKey();
     }

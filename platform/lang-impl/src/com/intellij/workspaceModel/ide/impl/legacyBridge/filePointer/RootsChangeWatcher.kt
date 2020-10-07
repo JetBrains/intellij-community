@@ -35,6 +35,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
@@ -52,9 +53,9 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
   private val rootsValidityChangedListener
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
-  private val roots = Object2IntOpenHashMap<String>()
-  private val jarDirectories = Object2IntOpenHashMap<String>()
-  private val recursiveJarDirectories = Object2IntOpenHashMap<String>()
+  private val roots: Object2IntMap<String> = Object2IntOpenHashMap()
+  private val jarDirectories: Object2IntMap<String> = Object2IntOpenHashMap()
+  private val recursiveJarDirectories: Object2IntMap<String> = Object2IntOpenHashMap()
 
   private val moduleManager = ModuleManager.getInstance(project)
   internal val rootFilePointers = LegacyModelRootsFilePointers(project)
@@ -202,7 +203,7 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
     }
   }
 
-  private fun updateCollection(collection: Object2IntOpenHashMap<String>, fileUrl: VirtualFileUrl, removeAction: Boolean) {
+  private fun updateCollection(collection: Object2IntMap<String>, fileUrl: VirtualFileUrl, removeAction: Boolean) {
     synchronized(collection) {
       collection.compute(fileUrl.url) { _, usagesCount ->
         if (removeAction) {
@@ -214,7 +215,7 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
     }
   }
 
-  private fun updateCollection(collection: Object2IntOpenHashMap<String>, oldUrl: String, newUrl: String) {
+  private fun updateCollection(collection: Object2IntMap<String>, oldUrl: String, newUrl: String) {
     synchronized(collection) {
       if (!collection.containsKey(oldUrl)) return
       val valueByOldUrl = collection.removeInt(oldUrl)

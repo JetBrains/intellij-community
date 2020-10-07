@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +155,7 @@ public final class ShortcutDataProvider {
     return StringUtil.join(pressed, "+");
   }
 
-  private static final Int2ObjectOpenHashMap<String> ourKeyCodes = new Int2ObjectOpenHashMap<>();
+  private static final Int2ObjectMap<String> ourKeyCodes = new Int2ObjectOpenHashMap<>();
 
   static {
     ourKeyCodes.put(VK_ENTER, "Enter");

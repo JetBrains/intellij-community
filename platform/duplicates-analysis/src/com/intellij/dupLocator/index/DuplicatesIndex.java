@@ -124,7 +124,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, IntList> {
         PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
 
         if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
-          final Int2ObjectOpenHashMap<IntList> result = new Int2ObjectOpenHashMap<>();
+          final Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
           LighterAST ast = fileContent.getLighterAST();
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
@@ -207,7 +207,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, IntList> {
   private static final TracingData myTracingData = null;
 
   private static final class MyFragmentsCollector implements FragmentsCollector {
-    private final Int2ObjectOpenHashMap<IntList> myMap = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<IntList> myMap = new Int2ObjectOpenHashMap<>();
     private final DuplicatesProfile myProfile;
     private final DuplocatorState myDuplocatorState;
 
@@ -230,7 +230,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, IntList> {
       list.add(0);
     }
 
-    public Int2ObjectOpenHashMap<IntList> getMap() {
+    public Int2ObjectMap<IntList> getMap() {
       return myMap;
     }
   }

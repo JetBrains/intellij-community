@@ -538,8 +538,8 @@ public final class MVStore implements AutoCloseable {
             return Int2ObjectMaps.emptyMap();
         }
 
-        Int2ObjectOpenHashMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
-        Int2ObjectOpenHashMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
 
         int maxMapId = lastMapId.get();
         Cursor<AsciiString, MapMetadata> cursor = mapNameToMetadata.cursor(null);

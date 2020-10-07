@@ -33,8 +33,7 @@ public final class SimpleStringPersistentEnumerator {
 
   @NotNull
   private final Path myFile;
-  @NotNull
-  private final Object2ShortOpenHashMap<String> myState;
+  private final @NotNull Object2ShortMap<String> myState;
 
   public SimpleStringPersistentEnumerator(@NotNull Path file) {
     myFile = file;
@@ -56,8 +55,7 @@ public final class SimpleStringPersistentEnumerator {
 
   @Nullable
   public synchronized String valueOf(short idx) {
-    for (ObjectIterator<Object2ShortMap.Entry<String>> iterator = myState.object2ShortEntrySet().fastIterator(); iterator.hasNext(); ) {
-      Object2ShortMap.Entry<String> entry = iterator.next();
+    for (Object2ShortMap.Entry<String> entry : myState.object2ShortEntrySet()) {
       if (entry.getShortValue() == idx) {
         return entry.getKey();
       }
@@ -78,9 +76,9 @@ public final class SimpleStringPersistentEnumerator {
       .map(e -> e.getKey() + "->" + e.getShortValue()).collect(Collectors.joining("\n"));
   }
 
-  private static @NotNull Object2ShortOpenHashMap<String> readStorageFromDisk(@NotNull Path file) {
+  private static @NotNull Object2ShortMap<String> readStorageFromDisk(@NotNull Path file) {
     try {
-      Object2ShortOpenHashMap<String> nameToIdRegistry = new Object2ShortOpenHashMap<>();
+      Object2ShortMap<String> nameToIdRegistry = new Object2ShortOpenHashMap<>();
       List<String> lines = Files.readAllLines(file, Charset.defaultCharset());
       for (int i = 0; i < lines.size(); i++) {
         String name = lines.get(i);

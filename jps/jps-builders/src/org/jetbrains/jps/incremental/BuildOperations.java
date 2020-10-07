@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.FileCollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,7 @@ public final class BuildOperations {
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>(); // cache the mapping locally
-        private final Object2IntOpenHashMap<T> idsCache = new Object2IntOpenHashMap<>();
+        private final Object2IntMap<T> idsCache = new Object2IntOpenHashMap<>();
 
         @Override
         public boolean apply(T target, File file, R sourceRoot) throws IOException {

@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,23 +40,23 @@ import java.awt.*;
  */
 public final class GridBag extends GridBagConstraints {
   private int myDefaultAnchor = anchor;
-  @NotNull private final Int2IntOpenHashMap myDefaultColumnAnchors = new Int2IntOpenHashMap();
+  @NotNull private final Int2IntMap myDefaultColumnAnchors = new Int2IntOpenHashMap();
 
   private int myDefaultFill = fill;
-  @NotNull private final Int2IntOpenHashMap myDefaultColumnFills = new Int2IntOpenHashMap();
+  @NotNull private final Int2IntMap myDefaultColumnFills = new Int2IntOpenHashMap();
 
   private double myDefaultWeightX = weightx;
-  @NotNull private final Int2DoubleOpenHashMap myDefaultColumnWeightsX = new Int2DoubleOpenHashMap();
+  @NotNull private final Int2DoubleMap myDefaultColumnWeightsX = new Int2DoubleOpenHashMap();
   private double myDefaultWeightY = weighty;
-  @NotNull private final Int2DoubleOpenHashMap myDefaultColumnWeightsY = new Int2DoubleOpenHashMap();
+  @NotNull private final Int2DoubleMap myDefaultColumnWeightsY = new Int2DoubleOpenHashMap();
 
   private int myDefaultPaddingX = ipadx;
-  @NotNull private final Int2IntOpenHashMap myDefaultColumnPaddingsX = new Int2IntOpenHashMap();
+  @NotNull private final Int2IntMap myDefaultColumnPaddingsX = new Int2IntOpenHashMap();
   private int myDefaultPaddingY = ipady;
-  @NotNull private final Int2IntOpenHashMap myDefaultColumnPaddingsY = new Int2IntOpenHashMap();
+  @NotNull private final Int2IntMap myDefaultColumnPaddingsY = new Int2IntOpenHashMap();
 
   @Nullable private Insets myDefaultInsets = insets;
-  @NotNull private final Int2ObjectOpenHashMap<Insets> myDefaultColumnInsets = new Int2ObjectOpenHashMap<>();
+  @NotNull private final Int2ObjectMap<Insets> myDefaultColumnInsets = new Int2ObjectOpenHashMap<>();
 
   public GridBag() {
     gridx = gridy = -1;

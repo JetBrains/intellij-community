@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.ui.IconDeferrer
+import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
@@ -20,8 +21,8 @@ import kotlin.concurrent.write
 internal class TimedIconCache {
   private val idToIcon = HashMap<String, Icon>()
   private val idToInvalid = HashMap<String, Boolean>()
-  private val iconCheckTimes = Object2LongOpenHashMap<String>()
-  private val iconCalcTime = Object2LongOpenHashMap<String>()
+  private val iconCheckTimes: Object2LongMap<String> = Object2LongOpenHashMap()
+  private val iconCalcTime: Object2LongMap<String> = Object2LongOpenHashMap()
 
   private val lock = ReentrantReadWriteLock()
 

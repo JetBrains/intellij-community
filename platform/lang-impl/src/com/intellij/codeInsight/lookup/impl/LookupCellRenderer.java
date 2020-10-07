@@ -35,6 +35,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -78,7 +79,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private final SimpleColoredComponent myTailComponent;
   private final SimpleColoredComponent myTypeLabel;
   private final LookupPanel myPanel;
-  private final Int2BooleanOpenHashMap mySelected = new Int2BooleanOpenHashMap();
+  private final Int2BooleanMap mySelected = new Int2BooleanOpenHashMap();
 
   private static final String ELLIPSIS = "\u2026";
   private int myMaxWidth = -1;

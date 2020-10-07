@@ -31,6 +31,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nls;
@@ -84,7 +85,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private IElementType myCachedTokenType;
 
-  private final Int2ObjectOpenHashMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
   private final MarkerPool myPool = new MarkerPool(this);
   private final MarkerOptionalData myOptionalData = new MarkerOptionalData();
   private final MarkerProduction myProduction = new MarkerProduction(myPool, myOptionalData);

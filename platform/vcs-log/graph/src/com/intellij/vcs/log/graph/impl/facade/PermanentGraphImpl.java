@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -206,7 +207,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   }
 
   private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
-    @NotNull private final Int2ObjectOpenHashMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
+    @NotNull private final Int2ObjectMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
 
     @NotNull
     @Override
@@ -216,7 +217,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
       return nodeId;
     }
 
-    @NotNull Int2ObjectOpenHashMap<CommitId> getNotLoadedCommits() {
+    @NotNull Int2ObjectMap<CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
     }
   }

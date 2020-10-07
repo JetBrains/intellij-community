@@ -20,9 +20,9 @@ import java.util.List;
 
 public final class ResponseProcessor<R extends AbstractResponse> {
   private static final Logger LOG = Logger.getInstance(ResponseProcessor.class);
-  private final Int2ObjectOpenHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<AbstractResponseToRequestHandler<?>> myHandlers = new Int2ObjectOpenHashMap<>();
   private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<>();
-  private final Int2ObjectOpenHashMap<TimeoutHandler> myTimeoutHandlers = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<TimeoutHandler> myTimeoutHandlers = new Int2ObjectOpenHashMap<>();
   private boolean myStopped;
   private final Object myLock = new Object();
   private Thread myThread;
@@ -126,7 +126,7 @@ public final class ResponseProcessor<R extends AbstractResponse> {
     final List<TimeoutHandler> timedOut = new ArrayList<>();
     synchronized (myLock) {
       long time = System.currentTimeMillis();
-      ObjectIterator<Int2ObjectMap.Entry<TimeoutHandler>> iterator = myTimeoutHandlers.int2ObjectEntrySet().fastIterator();
+      ObjectIterator<Int2ObjectMap.Entry<TimeoutHandler>> iterator = myTimeoutHandlers.int2ObjectEntrySet().iterator();
       while (iterator.hasNext()) {
         Int2ObjectMap.Entry<TimeoutHandler> entry = iterator.next();
         TimeoutHandler b = entry.getValue();

@@ -249,11 +249,11 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
   abstract static class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<IntList> {
     final Int2ObjectRBTreeMap<TextRange> reportedRanges = new Int2ObjectRBTreeMap<>();
-    final Int2ObjectOpenHashMap<VirtualFile> reportedFiles = new Int2ObjectOpenHashMap<>();
-    final Int2ObjectOpenHashMap<PsiElement> reportedPsi = new Int2ObjectOpenHashMap<>();
-    final Int2IntOpenHashMap reportedOffsetInOtherFiles = new Int2IntOpenHashMap();
-    final Int2IntOpenHashMap fragmentSize = new Int2IntOpenHashMap();
-    final Int2LongOpenHashMap fragmentHash = new Int2LongOpenHashMap();
+    final Int2ObjectMap<VirtualFile> reportedFiles = new Int2ObjectOpenHashMap<>();
+    final Int2ObjectMap<PsiElement> reportedPsi = new Int2ObjectOpenHashMap<>();
+    final Int2IntMap reportedOffsetInOtherFiles = new Int2IntOpenHashMap();
+    final Int2IntMap fragmentSize = new Int2IntOpenHashMap();
+    final Int2LongMap fragmentHash = new Int2LongOpenHashMap();
     final VirtualFile virtualFile;
     final Project project;
     final FileIndex myFileIndex;

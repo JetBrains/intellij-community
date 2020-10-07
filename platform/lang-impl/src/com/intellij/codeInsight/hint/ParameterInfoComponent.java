@@ -607,7 +607,7 @@ public class ParameterInfoComponent extends JPanel {
     @Contract(pure = true)
     private String buildLabelText(@NotNull final String text, @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
-      final Int2IntOpenHashMap faultMap = new Int2IntOpenHashMap();
+      final Int2IntMap faultMap = new Int2IntOpenHashMap();
 
       for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : flagsMap.entrySet()) {
         final TextRange highlightRange = entry.getKey();

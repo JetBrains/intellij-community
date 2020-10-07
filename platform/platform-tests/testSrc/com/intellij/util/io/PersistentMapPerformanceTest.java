@@ -11,7 +11,6 @@ import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -164,7 +163,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     FileUtil.createParentDirs(file);
 
     int size = 10000000;
-    Int2IntOpenHashMap checkMap = new Int2IntOpenHashMap(size);
+    Int2IntMap checkMap = new Int2IntOpenHashMap(size);
     Random r = new Random(1);
     while (size != checkMap.size()) {
       if (checkMap.size() == 0) {
@@ -189,8 +188,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       };
 
       final PersistentHashMap<Integer, Integer> mapFinal = map;
-      for (ObjectIterator<Int2IntMap.Entry> iterator = checkMap.int2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
-        Int2IntMap.Entry entry = iterator.next();
+      for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
         try {
           mapFinal.put(entry.getIntKey(), entry.getIntValue());
         }
@@ -210,9 +208,8 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         }
       };
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
-      for (ObjectIterator<Int2IntMap.Entry> iterator = checkMap.int2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
+      for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
         try {
-          Int2IntMap.Entry entry = iterator.next();
           assertEquals(entry.getIntValue(), (int)mapFinal2.get(entry.getIntKey()));
         }
         catch (IOException e) {

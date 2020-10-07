@@ -25,6 +25,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -297,7 +298,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       return specialFilter == StripTrailingSpacesFilter.NOT_ALLOWED;
     }
 
-    Int2IntOpenHashMap caretPositions = null;
+    Int2IntMap caretPositions = null;
     if (caretOffsets != null) {
       caretPositions = new Int2IntOpenHashMap(caretOffsets.length);
       for (int caretOffset : caretOffsets) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
@@ -221,8 +222,8 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       {'P', 8233},
     };
 
-    private static final NotNullLazyValue<Int2IntOpenHashMap> ESC_TO_CODE = NotNullLazyValue.createValue(() -> {
-      Int2IntOpenHashMap map = new Int2IntOpenHashMap(ONE_LETTER_CONVERSIONS.length);
+    private static final NotNullLazyValue<Int2IntMap> ESC_TO_CODE = NotNullLazyValue.createValue(() -> {
+      Int2IntMap map = new Int2IntOpenHashMap(ONE_LETTER_CONVERSIONS.length);
       for (int[] conversion : ONE_LETTER_CONVERSIONS) {
         map.put(conversion[0], conversion[1]);
       }

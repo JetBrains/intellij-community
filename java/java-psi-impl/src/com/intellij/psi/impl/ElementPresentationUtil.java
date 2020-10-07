@@ -16,6 +16,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.swing.*;
@@ -130,7 +131,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     return CLASS_KIND_CLASS;
   }
 
-  private static final Int2ObjectOpenHashMap<Icon> BASE_ICON = new Int2ObjectOpenHashMap<>(20);
+  private static final Int2ObjectMap<Icon> BASE_ICON = new Int2ObjectOpenHashMap<>(20);
   static {
     BASE_ICON.put(CLASS_KIND_CLASS, IconManager.getInstance().tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);

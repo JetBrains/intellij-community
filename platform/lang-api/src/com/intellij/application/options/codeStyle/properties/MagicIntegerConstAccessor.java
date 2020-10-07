@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
-  private final Int2ObjectOpenHashMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
   private final Map<String, IntList> myValueToKeysMap = CollectionFactory.createSmallMemoryFootprintMap();
 
   public MagicIntegerConstAccessor(@NotNull Object object,

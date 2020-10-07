@@ -7,6 +7,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.List;
@@ -20,7 +21,7 @@ interface ConfigurationByRecordProvider {
 
 final class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
   private final Project myProject;
-  private final Int2ObjectOpenHashMap<RunnerAndConfigurationSettings> myConfigurationsMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<RunnerAndConfigurationSettings> myConfigurationsMap = new Int2ObjectOpenHashMap<>();
 
   RunConfigurationByRecordProvider(Project project) {
     myProject = project;
