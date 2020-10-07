@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
@@ -27,10 +26,10 @@ import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.createSdkByGenerateTask
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
-import java.io.File
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
@@ -100,7 +99,7 @@ class PyAddNewCondaEnvPanel(
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validateAnacondaPath(), validateEnvironmentDirectoryLocation(pathField))
+    listOfNotNull(CondaEnvSdkFlavor.validateCondaPath(condaPathField.text), validateEnvironmentDirectoryLocation(pathField))
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
@@ -134,18 +133,6 @@ class PyAddNewCondaEnvPanel(
     val baseDir = defaultBaseDir ?: "${SystemProperties.getUserHome()}/.conda/envs"
     val dirName = PathUtil.getFileName(projectBasePath ?: "untitled")
     pathField.text = FileUtil.toSystemDependentName("$baseDir/$dirName")
-  }
-
-  private fun validateAnacondaPath(): ValidationInfo? {
-    val text = condaPathField.text
-    val file = File(text)
-    val message = when {
-      StringUtil.isEmptyOrSpaces(text) -> PyBundle.message("python.add.sdk.conda.executable.path.is.empty")
-      !file.exists() -> PyBundle.message("python.add.sdk.conda.executable.not.found")
-      !file.isFile || !file.canExecute() -> PyBundle.message("python.add.sdk.conda.executable.path.is.not.executable")
-      else -> return null
-    }
-    return ValidationInfo(message)
   }
 
   private val defaultBaseDir: String?

@@ -5,15 +5,19 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
@@ -91,5 +95,29 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public Icon getIcon() {
     return PythonIcons.Python.Anaconda;
+  }
+
+  @Nullable
+  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
+    final String message;
+
+    if (StringUtil.isEmptyOrSpaces(condaExecutable)) {
+      message = PyBundle.message("python.add.sdk.conda.executable.path.is.empty");
+    }
+    else {
+      final var file = new File(condaExecutable);
+
+      if (!file.exists()) {
+        message = PyBundle.message("python.add.sdk.conda.executable.not.found");
+      }
+      else if (!file.isFile() || !file.canExecute()) {
+        message = PyBundle.message("python.add.sdk.conda.executable.path.is.not.executable");
+      }
+      else {
+        message = null;
+      }
+    }
+
+    return message == null ? null : new ValidationInfo(message);
   }
 }
