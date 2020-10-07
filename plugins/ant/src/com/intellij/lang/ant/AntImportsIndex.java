@@ -2,6 +2,7 @@
 package com.intellij.lang.ant;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -72,7 +73,12 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.isInLocalFileSystem();
+      }
+    };
   }
 
   @Override
