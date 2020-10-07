@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -385,7 +384,7 @@ public final class VfsImplUtil {
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
-      path = local == null ? PathUtil.getLocalPath(path) : local.getPath();
+      path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
     }
     Collection<String> jarPaths = ourDominatorsMap.get(path);
     if (jarPaths == null) {
