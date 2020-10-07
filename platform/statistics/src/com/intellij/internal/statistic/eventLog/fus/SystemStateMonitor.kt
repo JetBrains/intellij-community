@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
@@ -14,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 3)
+  private val OS_GROUP = EventLogGroup("system.os", 4)
   private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
@@ -40,8 +41,15 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     /** writing current os timezone as os.timezone event_id **/
     val currentZoneOffset = OffsetDateTime.now().offset
     val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
-    osEvents.add(newMetric("os.timezone" , currentZoneOffsetFeatureUsageData))
+    osEvents.add(newMetric("os.timezone", currentZoneOffsetFeatureUsageData))
+    val machineId = MachineIdManager.getMachineId() ?: "unknown"
+    osEvents.add(newMetric("machine.id", FeatureUsageData().addData("value", anonymizeMachineId(machineId))))
     return FUStateUsagesLogger.logStateEventsAsync(OS_GROUP, osEvents)
+  }
+
+  private fun anonymizeMachineId(machineId: String): String {
+    val username = System.getProperty("user.name")
+    return EventLogConfiguration.hashSha256(username.toByteArray(), machineId)
   }
 
   private fun newDataWithOsVersion(): FeatureUsageData {
