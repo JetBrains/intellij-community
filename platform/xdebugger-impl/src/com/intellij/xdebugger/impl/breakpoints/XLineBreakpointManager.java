@@ -44,6 +44,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +153,7 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    IntOpenHashSet lines = new IntOpenHashSet();
+    IntSet lines = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();

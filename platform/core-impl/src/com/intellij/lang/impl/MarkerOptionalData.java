@@ -19,6 +19,7 @@ import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.openapi.util.NlsContexts;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ final class MarkerOptionalData extends BitSet {
   private final Int2ObjectOpenHashMap<@Nls String> myDoneErrors = new Int2ObjectOpenHashMap<>();
   private final Int2ObjectOpenHashMap<WhitespacesAndCommentsBinder> myLeftBinders = new Int2ObjectOpenHashMap<>();
   private final Int2ObjectOpenHashMap<WhitespacesAndCommentsBinder> myRightBinders = new Int2ObjectOpenHashMap<>();
-  private final IntOpenHashSet myCollapsed = new IntOpenHashSet();
+  private final IntSet myCollapsed = new IntOpenHashSet();
 
   void clean(int markerId) {
     if (get(markerId)) {

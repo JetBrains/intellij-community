@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ public final class ParametersListUtil {
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
-    IntOpenHashSet possibleQuoteChars = new IntOpenHashSet();
+    IntSet possibleQuoteChars = new IntOpenHashSet();
     possibleQuoteChars.add('"');
     if (supportSingleQuotes) {
       possibleQuoteChars.add('\'');

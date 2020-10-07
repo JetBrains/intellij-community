@@ -2375,7 +2375,7 @@ public final class MVStore implements AutoCloseable {
                 Queue<Chunk> old = findOldChunks(writeLimit, targetFillRate);
                 int oldSize = old.size();
                 if (oldSize != 0) {
-                    IntOpenHashSet idSet = new IntOpenHashSet(oldSize);
+                    IntSet idSet = new IntOpenHashSet(oldSize);
                     for (Chunk c : old) {
                         idSet.add(c.id);
                     }

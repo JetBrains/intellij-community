@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -108,7 +109,7 @@ public final class MoveParenthesisFix implements IntentionAction, HighPriorityAc
     PsiExpression[] parentArgs = parent.getExpressions();
     int pos = ArrayUtil.indexOf(parentArgs, callExpression);
     if (pos == -1) return false;
-    IntOpenHashSet shifts = new IntOpenHashSet();
+    IntSet shifts = new IntOpenHashSet();
     for (CandidateInfo candidate : candidates) {
       PsiMethod candidateMethod = ObjectUtils.tryCast(candidate.getElement(), PsiMethod.class);
       if (candidateMethod == null || candidateMethod.isVarArgs()) return false;

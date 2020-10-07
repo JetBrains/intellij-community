@@ -12,6 +12,7 @@ import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,8 +182,8 @@ final class LinearBekGraphBuilder {
 
     private boolean myMergeWithOldCommit = false;
     @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
-    @NotNull private final IntOpenHashSet myBlockBody = new IntOpenHashSet();
-    @NotNull private final IntOpenHashSet myTails = new IntOpenHashSet();
+    @NotNull private final IntSet myBlockBody = new IntOpenHashSet();
+    @NotNull private final IntSet myTails = new IntOpenHashSet();
 
     private MergeFragment(int parent, int leftChild, int rightChild) {
       myParent = parent;
@@ -216,7 +217,7 @@ final class LinearBekGraphBuilder {
     }
 
     @NotNull
-    public IntOpenHashSet getTails() {
+    public IntSet getTails() {
       return myTails;
     }
 

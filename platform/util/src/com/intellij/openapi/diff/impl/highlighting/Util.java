@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.util.StringTokenizer;
 public final class Util {
   private static final Logger LOG = Logger.getInstance(Util.class);
   private static final String DELIMITERS = " \n\r\t(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
-  public static final IntOpenHashSet DELIMITERS_SET;
+  public static final IntSet DELIMITERS_SET;
 
   static {
     char[] delimiters = DELIMITERS.toCharArray();

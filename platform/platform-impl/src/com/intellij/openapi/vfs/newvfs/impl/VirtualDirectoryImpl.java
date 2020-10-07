@@ -407,7 +407,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           }
           return cmp;
         });
-        IntOpenHashSet prevChildren = new IntOpenHashSet(myData.myChildrenIds);
+        IntSet prevChildren = new IntOpenHashSet(myData.myChildrenIds);
         VfsData vfsData = getVfsData();
         for (int i = 0; i < children.size(); i++) {
           ChildInfo child = children.get(i);
