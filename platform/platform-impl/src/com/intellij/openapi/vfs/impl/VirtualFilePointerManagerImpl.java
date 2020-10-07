@@ -517,7 +517,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
           if (parent != null) {
             addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
-            addRelevantPointers(eventFile, parent, newNameId, pointersWithChangingUrls, toUpdateNodes, true, fs, false, event);
+            addRelevantPointers(eventFile, parent, newNameId, pointersWithChangingUrls, new ArrayList<>(), true, fs, false, event);
           }
         }
         else if (event instanceof VFilePropertyChangeEvent) {
