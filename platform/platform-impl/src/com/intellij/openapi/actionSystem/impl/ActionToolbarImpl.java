@@ -68,8 +68,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   public static void updateAllToolbarsImmediately() {
+    updateAllToolbarsImmediately(false);
+  }
+
+  public static void updateAllToolbarsImmediately(boolean includeInvisible) {
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
-      toolbar.updateActionsImmediately();
+      toolbar.updateActionsImmediately(includeInvisible);
       for (Component c : toolbar.getComponents()) {
         if (c instanceof ActionButton) {
           ((ActionButton)c).updateToolTipText();
@@ -180,7 +184,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
-    myUpdater.updateActions(updateActionsNow, false);
+    myUpdater.updateActions(updateActionsNow, false, false);
 
     // If the panel doesn't handle mouse event then it will be passed to its parent.
     // It means that if the panel is in sliding mode then the focus goes to the editor
@@ -1084,8 +1088,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void updateActionsImmediately() {
+    updateActionsImmediately(false);
+  }
+
+  public void updateActionsImmediately(boolean includeInvisible) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myUpdater.updateActions(true, false);
+    myUpdater.updateActions(true, false, includeInvisible);
   }
 
   private boolean myAlreadyUpdated;
@@ -1172,7 +1180,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();
         if (toolbar != null) {
-          toolbar.myUpdater.updateActions(false, false);
+          toolbar.myUpdater.updateActions(false, false, false);
         }
       }
     };
@@ -1280,7 +1288,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       .setCancelCallback(() -> {
         final boolean toClose = actionManager.isActionPopupStackEmpty();
         if (toClose) {
-          myUpdater.updateActions(false, true);
+          myUpdater.updateActions(false, true, false);
         }
         return toClose;
       })
@@ -1350,7 +1358,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     // cancel() already called Disposer.dispose()
     myPopup = null;
-    myUpdater.updateActions(false, false);
+    myUpdater.updateActions(false, false, false);
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
@@ -1457,7 +1465,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }
 
-    myUpdater.updateActions(false, true);
+    myUpdater.updateActions(false, true, false);
   }
 
   @TestOnly

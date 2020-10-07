@@ -65,12 +65,12 @@ public abstract class ToolbarUpdater implements Activatable {
     KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
-  public void updateActions(boolean now, boolean forced) {
-    updateActions(now, false, forced);
+  public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
+    updateActions(now, false, forced, includeInvisible);
   }
 
-  private void updateActions(boolean now, boolean transparentOnly, boolean forced) {
-    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
+  private void updateActions(boolean now, boolean transparentOnly, boolean forced, boolean includeInvisible) {
+    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced, includeInvisible);
     Application app = ApplicationManager.getApplication();
     if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
       updateRunnable.run();
@@ -137,11 +137,13 @@ public abstract class ToolbarUpdater implements Activatable {
 
     @NotNull
     private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    private final boolean myIncludeInvisible;
     private final int myHash;
 
-    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced) {
+    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced, boolean includeInvisible) {
       myTransparentOnly = transparentOnly;
       myForced = forced;
+      myIncludeInvisible = includeInvisible;
       myHash = updater.hashCode();
 
       myUpdaterRef = new WeakReference<>(updater);
@@ -150,7 +152,7 @@ public abstract class ToolbarUpdater implements Activatable {
     @Override
     public void run() {
       ToolbarUpdater updater = myUpdaterRef.get();
-      if (updater == null || (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode())) {
+      if (updater == null || (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode() && !myIncludeInvisible)) {
         return;
       }
 

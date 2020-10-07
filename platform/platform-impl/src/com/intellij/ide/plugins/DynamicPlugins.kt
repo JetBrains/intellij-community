@@ -554,7 +554,7 @@ object DynamicPlugins {
           TypeFactory.defaultInstance().clearCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
           PresentationFactory.clearPresentationCaches()
-          ActionToolbarImpl.updateAllToolbarsImmediately()
+          ActionToolbarImpl.updateAllToolbarsImmediately(true)
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
           DecodeDefaultsUtil.clearResourceCache()
