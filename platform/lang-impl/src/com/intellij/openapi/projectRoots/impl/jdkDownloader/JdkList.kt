@@ -178,7 +178,7 @@ enum class JdkPackageType(@NonNls val type: String) {
 
   @Suppress("SpellCheckingInspection", "unused")
   TAR_GZ("targz") {
-    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile).withSymlinks()
+    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile)
   };
 
   abstract fun openDecompressor(archiveFile: Path): Decompressor
