@@ -157,8 +157,7 @@ object DynamicPlugins {
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
     optionalDependencyPluginId: PluginId? = null,
     context: List<IdeaPluginDescriptorImpl> = emptyList(),
-    checkImplementationDetailDependencies: Boolean = true,
-    checkRequiredDependencies: Boolean = true
+    checkImplementationDetailDependencies: Boolean = true
   ): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
@@ -166,17 +165,8 @@ object DynamicPlugins {
     if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
     }
-    if (checkRequiredDependencies) {
-      descriptor.pluginDependencies?.let { pluginDependencies ->
-        for (pluginDependency in pluginDependencies) {
-          if (!pluginDependency.isOptional &&
-              !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
-              PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
-              context.none { it.pluginId == pluginDependency.id }) {
-            return "Required dependency ${pluginDependency.id} of plugin ${descriptor.pluginId} is not currently loaded"
-          }
-        }
-      }
+    findMissingRequiredDependency(descriptor, context)?.let { pluginDependency ->
+      return "Required dependency ${pluginDependency} of plugin ${descriptor.pluginId} is not currently loaded"
     }
 
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
@@ -309,10 +299,14 @@ object DynamicPlugins {
         }
 
         processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
-          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails,
-                                                           checkImplementationDetailDependencies = false, checkRequiredDependencies = false)
-          if (dependencyMessage != null) {
-            dependencyMessage = "Plugin ${fullDescriptor.pluginId} which is an implementation-detail dependency of ${descriptor.pluginId} requires restart: $dependencyMessage"
+          // Don't check a plugin that is an implementation-detail dependency on the current plugin if it has other disabled dependencies
+          // and won't be loaded anyway
+          if (findMissingRequiredDependency(fullDescriptor, contextWithImplementationDetails) == null) {
+            dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = contextWithImplementationDetails,
+                                                             checkImplementationDetailDependencies = false)
+            if (dependencyMessage != null) {
+              dependencyMessage = "implementation-detail plugin ${fullDescriptor.pluginId} which depends on ${descriptor.pluginId} requires restart: $dependencyMessage"
+            }
           }
           dependencyMessage == null
         }
@@ -320,6 +314,22 @@ object DynamicPlugins {
     }
 
     return dependencyMessage
+  }
+
+  private fun findMissingRequiredDependency(descriptor: IdeaPluginDescriptorImpl,
+                                            context: List<IdeaPluginDescriptorImpl>): PluginId? {
+    descriptor.pluginDependencies?.let { pluginDependencies ->
+      for (pluginDependency in pluginDependencies) {
+        if (!pluginDependency.isOptional &&
+            !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
+            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
+            context.none { it.pluginId == pluginDependency.id }
+        ) {
+          return pluginDependency.id
+        }
+      }
+    }
+    return null
   }
 
   private fun processOptionalDependenciesOnPlugin(dependencyPluginId: PluginId,
