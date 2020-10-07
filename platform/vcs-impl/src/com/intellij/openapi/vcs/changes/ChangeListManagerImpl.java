@@ -650,15 +650,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       myComposite.notifyVcsStarted(scope.getVcs());
     }
 
-    private void notifyDoneProcessingChanges() {
+    private void notifyDoneProcessingChanges(@NotNull VcsDirtyScope scope) {
       if (!myWasEverythingDirty) {
-        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator);
+        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator, scope);
       }
     }
 
     void notifyEnd() {
       if (myWasEverythingDirty) {
-        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator);
+        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator, null);
       }
     }
 
@@ -697,7 +697,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
     finally {
       if (!myUpdater.isStopped()) {
-        dataHolder.notifyDoneProcessingChanges();
+        dataHolder.notifyDoneProcessingChanges(scope);
       }
     }
   }
