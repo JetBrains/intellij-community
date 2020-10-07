@@ -476,7 +476,9 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateUpstreamField() {
-    upstreamField.isEnabled = GitRebaseOption.ROOT !in selectedOptions
+    val enabled = GitRebaseOption.ROOT !in selectedOptions
+    upstreamField.isEnabled = enabled
+    upstreamField.isEditable = enabled
   }
 
   private fun updateUi() {
