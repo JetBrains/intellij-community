@@ -1027,6 +1027,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return pane == null ? null : pane.myTree;
     }) {
       @Override
+      public boolean isExpandAllVisible() {
+        return Registry.is("ide.project.view.expand.all.action.visible");
+      }
+
+      @Override
       protected void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
         super.collapseAll(tree, false, keepSelectionLevel);
       }
