@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import org.jetbrains.annotations.SystemIndependent
 
 internal class PyTemporarilyIgnoredFileProvider : IgnoredFileProvider {
@@ -39,5 +39,7 @@ internal class PyTemporarilyIgnoredFileProvider : IgnoredFileProvider {
 
   override fun getIgnoredFiles(project: Project): Set<IgnoredFileDescriptor> = emptySet()
 
-  override fun getIgnoredGroupDescription(): String = PyBundle.message("sdk.create.venv.ignored.files")
+  override fun getIgnoredGroupDescription(): String {
+    return PyCharmCommunityCustomizationBundle.message("temporarily.ignored.file.provider.description")
+  }
 }

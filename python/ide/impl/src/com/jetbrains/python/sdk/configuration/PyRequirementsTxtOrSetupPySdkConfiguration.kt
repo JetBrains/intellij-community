@@ -24,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -44,7 +45,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module)
 
   override fun getIntentionName(module: Module): @IntentionName String {
-    return PyBundle.message("sdk.create.venv.suggestion", getRequirementsTxtOrSetupPy(module)?.name)
+    return PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", getRequirementsTxtOrSetupPy(module)?.name)
   }
 
   override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module)
@@ -162,10 +163,10 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
         val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
-        val message = PyBundle.message("sdk.create.venv.permission", requirementsTxtOrSetupPy.name)
+        val message = PyCharmCommunityCustomizationBundle.message("sdk.create.venv.permission", requirementsTxtOrSetupPy.name)
 
         add(
           JBUI.Panels.simplePanel(JBLabel(message)).withBorder(border),
