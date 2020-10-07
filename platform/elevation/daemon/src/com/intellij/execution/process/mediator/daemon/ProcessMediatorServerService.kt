@@ -11,7 +11,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import java.io.File
 
-internal class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMediatorCoroutineImplBase() {
+class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMediatorCoroutineImplBase() {
   private val processManager = ProcessMediatorProcessManager()
 
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {

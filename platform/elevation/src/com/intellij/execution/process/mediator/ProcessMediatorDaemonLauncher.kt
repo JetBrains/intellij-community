@@ -11,15 +11,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import io.grpc.ManagedChannelBuilder
-import io.grpc.inprocess.InProcessChannelBuilder
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.util.*
 
-internal fun startLocalProcessMediatorClientForTesting(coroutineScope: CoroutineScope): ProcessMediatorClient {
-  val channel = InProcessChannelBuilder.forName("testing").directExecutor().build()
-  return ProcessMediatorClient(coroutineScope, channel)
-}
 
 internal fun startProcessMediatorDaemon(coroutineScope: CoroutineScope): ProcessMediatorClient {
   val host = if (java.lang.Boolean.getBoolean("java.net.preferIPv6Addresses")) "::1" else "127.0.0.1"

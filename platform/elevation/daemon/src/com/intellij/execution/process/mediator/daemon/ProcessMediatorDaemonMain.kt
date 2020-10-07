@@ -2,9 +2,7 @@
 package com.intellij.execution.process.mediator.daemon
 
 import io.grpc.Server
-import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-import org.jetbrains.annotations.TestOnly
 import java.net.InetSocketAddress
 import kotlin.system.exitProcess
 
@@ -28,14 +26,6 @@ class ProcessMediatorDaemon(private val server: Server) {
   fun blockUntilShutdown() {
     server.awaitTermination()
   }
-}
-
-@TestOnly
-fun createInProcessServerForTesting(bindName: String = "testing"): Server {
-  return InProcessServerBuilder.forName(bindName)
-    .directExecutor()
-    .addService(ProcessMediatorServerService.createServiceDefinition())
-    .build()
 }
 
 private fun createServer(host: String, port: Int): Server {
