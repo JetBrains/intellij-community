@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
@@ -53,6 +54,7 @@ public class FileTypeAssociationForm {
 
   private void createUIComponents() {
     myItems = createItems();
+    presetItems();
     DefaultListModel<JCheckBox> model = new DefaultListModel<>();
     CheckBoxList<MyFileTypeItem> checkBoxList = new CheckBoxList<>(model) {
       @Override
@@ -123,6 +125,17 @@ public class FileTypeAssociationForm {
     }
     Collections.sort(items);
     return new ArrayList<>(items);
+  }
+
+  private void presetItems() {
+    OSFileAssociationPreferences preferences = OSFileAssociationPreferences.getInstance();
+    myItems.forEach(
+      item -> {
+        boolean selected = preferences.contains(item.myFileType);
+        item.setSelected(selected);
+        onItemStateChange(item, selected);
+      }
+    );
   }
 
   private static boolean splitExtensions(@NotNull FileType fileType, int extCount) {
