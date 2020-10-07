@@ -787,7 +787,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Assert consistency
     this.assertConsistencyInStrictMode()
-    //this.assertConsistencyInStrictModeForAddDiff("Check after add Diff", initialStorage, diff, this)
     this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this, initialChangeLogSize)
   }
 
