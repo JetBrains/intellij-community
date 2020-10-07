@@ -14,8 +14,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
-import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
@@ -40,9 +38,9 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
-  override var serializerDataFormatVersion: String = "v2"
+  override var serializerDataFormatVersion: String = "v3"
 
-  private fun createKryo(): Kryo {
+  internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
     kryo.isRegistrationRequired = registrationRequired
