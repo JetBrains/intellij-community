@@ -27,12 +27,13 @@ import org.jetbrains.annotations.NotNull;
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCorrectClose() {
+    // No highlighting because str was closed and we have ignoreResourcesWithClose option set
     //noinspection EmptyTryBlock
     doTest("import java.io.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
            "        FileInputStream str;" +
-           "        str = new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"bar\");" +
+           "        str = new FileInputStream(\"bar\");" +
            "        try {" +
            "        } finally {" +
            "            str.close();" +
@@ -251,6 +252,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
   public void testCallThenClose() {
+    // No highlighting because str was closed and we have ignoreResourcesWithClose option set
     doTest("import java.io.*;\n" +
            "\n" +
            "class X implements AutoCloseable {\n" +
@@ -260,7 +262,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "}\n" +
            "class Other {\n" +
            "  private static void example() {\n" +
-           "    final X x = X.<warning descr=\"'X' used without 'try'-with-resources statement\">makeX</warning>();\n" +
+           "    final X x = X.makeX();\n" +
            "    x.close();\n" +
            "  }\n" +
            "}");
@@ -371,11 +373,12 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
   public void testResourceObjectMethodReturnsAnotherResource() {
+    // Expect error in case when it happens inside the resource itself
     doTest(
       "class X implements AutoCloseable {\n" +
       "  @Override public void close() {}\n" +
       "  private static void example() {\n" +
-      "    createPossiblyDependantResource();\n" +
+      "    <warning descr=\"'X' used without 'try'-with-resources statement\">createPossiblyDependantResource</warning>();\n" +
       "  " +
       "}\n" +
       "  private static X createPossiblyDependantResource() { return null; }\n" +
@@ -490,8 +493,8 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "void test(){\n" +
       "    AC ac = makeAc();\n" +
       "    ac" +
-      ".use();" +
-      "\n" +
+      ".use();\n" +
+      "    ac.close();\n" +
       "  }\n" +
       "  AC makeAc() {return null;}\n" +
       "}\n" +
@@ -530,6 +533,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "}\n" +
       "}");
   }
+
   public void testClose() {
     doTest(
       "class AC implements AutoCloseable {\n" +
@@ -548,6 +552,30 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "  @Override" +
       " public void close(){" +
       "}\n" +
+      "}");
+  }
+
+  public void test232779() {
+    doTest(
+      "class AutoCloseableSample {\n" +
+      "  public OAuth2AccessToken authenticateOAuth(String code) {\n" +
+      "    OAuth20Service service = <warning descr=\"'OAuth20Service' used without 'try'-with-resources statement\">makeOAuth2Service</warning>();\n" +
+      "    try {\n" +
+      "      return service.getAccessToken(code);\n" +
+      "    }\n" +
+      "    catch (RuntimeException e) {\n" +
+      "      return null;\n" +
+      "    }\n" +
+      "  }\n" +
+      "\n" +
+      "  native OAuth20Service makeOAuth2Service();\n" +
+      "\n" +
+      "  private static class OAuth2AccessToken {}\n" +
+      "\n" +
+      "  private static class OAuth20Service implements AutoCloseable {\n" +
+      "    native public OAuth2AccessToken getAccessToken(String code);\n" +
+      "    @Override public void close() {}\n" +
+      "  }\n" +
       "}");
   }
 

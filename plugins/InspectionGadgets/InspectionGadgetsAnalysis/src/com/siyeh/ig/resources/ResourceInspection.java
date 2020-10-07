@@ -376,14 +376,7 @@ public abstract class ResourceInspection extends BaseInspection {
       if (resourceCreationExpression instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)resourceCreationExpression;
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-        if (qualifier == null) {
-          PsiClass currentClass = PsiTreeUtil.getNonStrictParentOfType(call, PsiClass.class);
-          PsiMethod method = call.resolveMethod();
-          if (currentClass != null && method != null && method.getContainingClass() == currentClass) {
-            return true;
-          }
-        }
-        else if (isResourceCreation(qualifier)) {
+        if (qualifier != null && isResourceCreation(qualifier)) {
           return true;
         }
       }

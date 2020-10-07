@@ -59,7 +59,9 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
                   "java.io.CharArrayWriter",
                   "java.io.CharArrayReader",
                   "java.io.StringWriter",
-                  "java.io.StringReader");
+                  "java.io.StringReader",
+                  "java.util.Formatter",
+                  "java.util.Scanner");
   protected final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
@@ -75,6 +77,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       .add("com.google.common.base.Preconditions", "checkNotNull")
       .add("org.hibernate.Session", "close")
       .add("java.io.PrintWriter", "printf")
+      .add("java.io.PrintStream", "printf")
       .finishDefault();
   }
 
