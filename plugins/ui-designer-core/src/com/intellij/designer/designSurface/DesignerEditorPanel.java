@@ -48,6 +48,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -576,7 +577,7 @@ public abstract class DesignerEditorPanel extends JPanel
     if (myRootComponent != null && myExpandedState == null && mySelectionState == null) {
       myExpandedState = new int[myExpandedComponents == null ? 0 : myExpandedComponents.size()][];
       for (int i = 0; i < myExpandedState.length; i++) {
-        IntArrayList path = new IntArrayList();
+        IntList path = new IntArrayList();
         componentToPath((RadComponent)myExpandedComponents.get(i), path);
         myExpandedState[i] = path.toIntArray();
       }
@@ -608,7 +609,7 @@ public abstract class DesignerEditorPanel extends JPanel
     int[][] selectionState = new int[selection.size()][];
 
     for (int i = 0; i < selectionState.length; i++) {
-      IntArrayList path = new IntArrayList();
+      IntList path = new IntArrayList();
       componentToPath(selection.get(i), path);
       selectionState[i] = path.toIntArray();
     }
@@ -616,7 +617,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return selectionState;
   }
 
-  private static void componentToPath(RadComponent component, IntArrayList path) {
+  private static void componentToPath(RadComponent component, IntList path) {
     RadComponent parent = component.getParent();
 
     if (parent != null) {

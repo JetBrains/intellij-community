@@ -16,6 +16,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,8 @@ public class PlainTextUsagesTest extends JavaPsiTestCase {
                       int[] ends) {
     PsiSearchHelper helper = PsiSearchHelper.getInstance(myProject);
     final List<PsiFile> filesList = new ArrayList<>();
-    final IntArrayList startsList = new IntArrayList();
-    final IntArrayList endsList = new IntArrayList();
+    final IntList startsList = new IntArrayList();
+    final IntList endsList = new IntArrayList();
     helper.processUsagesInNonJavaFiles(originalElement,
                                        qNameToSearch,
                                        (file, startOffset, endOffset) -> {

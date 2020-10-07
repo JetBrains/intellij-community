@@ -3009,7 +3009,7 @@ public final class MVStore implements AutoCloseable {
             // find out which chunks to remove,
             // and which is the newest chunk to keep
             // (the chunk list can have gaps)
-            IntArrayList remove = new IntArrayList();
+            IntList remove = new IntArrayList();
             Chunk keep = null;
             serializationLock.lock();
             try {

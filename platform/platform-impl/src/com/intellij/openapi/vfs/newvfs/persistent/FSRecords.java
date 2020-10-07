@@ -681,7 +681,7 @@ public final class FSRecords {
   static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        IntArrayList result = new IntArrayList();
+        IntList result = new IntArrayList();
 
         try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
@@ -1109,7 +1109,7 @@ public final class FSRecords {
   @Nullable
   static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
-      @Nullable private IntArrayList path;
+      @Nullable private IntList path;
       private VirtualFileSystemEntry foundParent;
 
       @Override
@@ -1846,8 +1846,8 @@ public final class FSRecords {
       return fileLength / RECORD_SIZE;
     });
 
-    IntArrayList usedAttributeRecordIds = new IntArrayList();
-    IntArrayList validAttributeIds = new IntArrayList();
+    IntList usedAttributeRecordIds = new IntArrayList();
+    IntList validAttributeIds = new IntArrayList();
     for (int id = 2; id < recordCount; id++) {
       int flags = getFlags(id);
       LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
@@ -1866,8 +1866,8 @@ public final class FSRecords {
     LOG.info("Sanity check took " + t + " ms");
   }
 
-  private static void checkRecordSanity(final int id, final int recordCount, final IntArrayList usedAttributeRecordIds,
-                                        final IntArrayList validAttributeIds) {
+  private static void checkRecordSanity(final int id, final int recordCount, final IntList usedAttributeRecordIds,
+                                        final IntList validAttributeIds) {
     int parentId = getParent(id);
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && getParent(parentId) > 0) {
@@ -1896,7 +1896,7 @@ public final class FSRecords {
     }
   }
 
-  private static void checkAttributesStorageSanity(int id, IntArrayList usedAttributeRecordIds, IntArrayList validAttributeIds) {
+  private static void checkAttributesStorageSanity(int id, IntList usedAttributeRecordIds, IntList validAttributeIds) {
     int attributeRecordId = getAttributeRecordId(id);
 
     assert attributeRecordId >= 0;
@@ -1910,7 +1910,7 @@ public final class FSRecords {
     }
   }
 
-  private static void checkAttributesSanity(int attributeRecordId, IntArrayList usedAttributeRecordIds, IntArrayList validAttributeIds) throws IOException {
+  private static void checkAttributesSanity(int attributeRecordId, IntList usedAttributeRecordIds, IntList validAttributeIds) throws IOException {
     assert !usedAttributeRecordIds.contains(attributeRecordId);
     usedAttributeRecordIds.add(attributeRecordId);
 

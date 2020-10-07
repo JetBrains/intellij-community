@@ -2,11 +2,12 @@
 package com.intellij.codeEditor.printing;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 public final class LineWrapper {
-  public static IntArrayList calcBreakOffsets(char[] text, int startOffset, int endOffset, boolean lineStart, double x, double clipX,
-                                                                         WidthProvider widthProvider) {
-    IntArrayList breakOffsets = new IntArrayList();
+  public static IntList calcBreakOffsets(char[] text, int startOffset, int endOffset, boolean lineStart, double x, double clipX,
+                                         WidthProvider widthProvider) {
+    IntList breakOffsets = new IntArrayList();
     int nextOffset = startOffset;
     while (true) {
       int prevOffset = nextOffset;

@@ -9,6 +9,7 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.SerializationFilter
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
 import org.jdom.Element
 
 internal class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
@@ -42,7 +43,7 @@ internal class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanCla
   fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?, excludedPropertyNames: Collection<String>? = null): Element? {
     var element = _element
     // order of bindings must be used, not order of properties
-    var bindingIndices: IntArrayList? = null
+    var bindingIndices: IntList? = null
     for (property in o.__getProperties()) {
       val propertyName = property.name!!
 

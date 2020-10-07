@@ -2,6 +2,7 @@
 package com.intellij.util.diff;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
@@ -40,8 +41,8 @@ final class Reindexer {
   private int[] discard(int[] needed, int[] toDiscard, int arrayIndex) {
     myOriginalLengths[arrayIndex] = toDiscard.length;
     int[] sorted1 = createSorted(needed);
-    IntArrayList discarded = new IntArrayList(toDiscard.length);
-    IntArrayList oldIndices = new IntArrayList(toDiscard.length);
+    IntList discarded = new IntArrayList(toDiscard.length);
+    IntList oldIndices = new IntArrayList(toDiscard.length);
     for (int i = 0; i < toDiscard.length; i++) {
       int index = toDiscard[i];
       if (Arrays.binarySearch(sorted1, index) >= 0) {

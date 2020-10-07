@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +186,7 @@ public final class URLUtil {
     StringBuilder decoded = new StringBuilder();
     decoded.append(s, from, i);
 
-    IntArrayList bytes = null;
+    IntList bytes = null;
     while (i < end) {
       char c = s.charAt(i);
       if (c == '%') {

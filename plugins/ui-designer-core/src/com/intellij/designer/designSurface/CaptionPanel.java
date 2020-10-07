@@ -12,6 +12,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +215,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
 
     boolean update = !myRootChildren.isEmpty();
 
-    IntArrayList oldSelection = null;
+    IntList oldSelection = null;
     if (myCaption != null) {
       oldSelection = new IntArrayList();
       for (RadComponent component : myArea.getSelection()) {

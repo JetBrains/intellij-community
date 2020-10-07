@@ -26,7 +26,7 @@ public final class DFSTBuilder<Node> {
 
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
-  private final IntArrayList mySCCs = new IntArrayList(); // strongly connected component sizes
+  private final IntList mySCCs = new IntArrayList(); // strongly connected component sizes
   private final Object2IntMap<Node> myNodeToTNumber = new Object2IntOpenHashMap<>(); // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
@@ -174,11 +174,10 @@ public final class DFSTBuilder<Node> {
       }
 
       // have to place SCCs in topological order too
-      int[] ints = mySCCs.elements();
       for (int i = 0, j = mySCCs.size() - 1; i < j; i++, j--) {
-        int tmp = ints[i];
-        ints[i] = ints[j];
-        ints[j] = tmp;
+        int tmp = mySCCs.getInt(i);
+        mySCCs.set(i, mySCCs.getInt(j));
+        mySCCs.set(j, tmp);
       }
     }
 

@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -69,7 +70,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     final CharSequence chars = file.getViewProvider().getContents();
     boolean multiLine = queryParameters.isMultiLine();
     List<CommentRange> commentRanges = findCommentTokenRanges(file, chars, queryParameters.getRange(), multiLine);
-    IntArrayList occurrences = new IntArrayList(1);
+    IntList occurrences = new IntArrayList(1);
     IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns()
                                                       : new IndexPattern[] {queryParameters.getPattern()};
 
@@ -202,7 +203,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                PsiFile file,
                                                TextRange range,
                                                Processor<? super IndexPatternOccurrence> consumer,
-                                               IntArrayList matches,
+                                               IntList matches,
                                                boolean multiLine
                                                ) {
     CommentRange commentRange = commentRanges.get(commentNum);

@@ -25,6 +25,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.MergingCharSequence;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private final class LightMapper {
     final Mapper mapper;
     final StringBuilder text = new StringBuilder();
-    final IntArrayList lengths = new IntArrayList();
+    final IntList lengths = new IntArrayList();
     final List<IElementType> tokenTypes = new ArrayList<>();
     final Int2IntOpenHashMap index2Global = new Int2IntOpenHashMap();
     private final String mySeparator;

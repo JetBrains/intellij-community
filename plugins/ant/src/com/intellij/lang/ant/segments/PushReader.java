@@ -2,6 +2,7 @@
 package com.intellij.lang.ant.segments;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.io.Reader;
 
 public final class PushReader {
   private final Reader mySource;
-  private final IntArrayList myReadAhead = new IntArrayList();
+  private final IntList myReadAhead = new IntArrayList();
   @NonNls
   private static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
 

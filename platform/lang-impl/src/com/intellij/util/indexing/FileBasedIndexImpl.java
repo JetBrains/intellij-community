@@ -63,6 +63,7 @@ import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -802,7 +803,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         long start = System.currentTimeMillis();
 
-        IntArrayList fileSet = new IntArrayList();
+        IntList fileSet = new IntArrayList();
         iterateIndexableFiles(fileOrDir -> {
           if (fileOrDir instanceof VirtualFileWithId) {
             fileSet.add(((VirtualFileWithId)fileOrDir).getId());

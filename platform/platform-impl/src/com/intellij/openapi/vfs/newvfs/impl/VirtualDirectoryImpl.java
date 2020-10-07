@@ -27,6 +27,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -549,7 +550,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     synchronized (myData) {
       int[] oldIds = myData.myChildrenIds;
-      IntArrayList mergedIds = new IntArrayList(oldIds.length + added.size());
+      IntList mergedIds = new IntArrayList(oldIds.length + added.size());
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);

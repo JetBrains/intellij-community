@@ -9,6 +9,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.MergingCharSequence;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public final class LineSet {
 
   @NotNull
   private static LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
-    IntArrayList starts = new IntArrayList();
+    IntList starts = new IntArrayList();
     ByteArrayList flags = new ByteArrayList();
 
     LineTokenizer lineTokenizer = new LineTokenizer(text);
@@ -204,7 +205,7 @@ public final class LineSet {
   }
 
   @NotNull
-  final LineSet setModified(@NotNull IntArrayList indices) {
+  final LineSet setModified(@NotNull IntList indices) {
     if (indices.isEmpty()) {
       return this;
     }

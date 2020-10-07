@@ -19,6 +19,7 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    IntArrayList toIgnoreList = new IntArrayList();
+    IntList toIgnoreList = new IntArrayList();
     if (!doFolding()) {
       toIgnoreList.add(Pass.UPDATE_FOLDING);
     }

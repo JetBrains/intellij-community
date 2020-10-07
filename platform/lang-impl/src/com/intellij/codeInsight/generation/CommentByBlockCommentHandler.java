@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -517,8 +518,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
 
     String normalizedPrefix = commentPrefix.trim();
     String normalizedSuffix = commentSuffix.trim();
-    IntArrayList nestedCommentPrefixes = new IntArrayList();
-    IntArrayList nestedCommentSuffixes = new IntArrayList();
+    IntList nestedCommentPrefixes = new IntArrayList();
+    IntList nestedCommentSuffixes = new IntArrayList();
     String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
     CharSequence chars = myDocument.getCharsSequence();
@@ -621,8 +622,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
 
   static void commentNestedComments(@NotNull Document document, TextRange range, Commenter commenter) {
     final int offset = range.getStartOffset();
-    final IntArrayList toReplaceWithComments = new IntArrayList();
-    final IntArrayList prefixes = new IntArrayList();
+    final IntList toReplaceWithComments = new IntArrayList();
+    final IntList prefixes = new IntArrayList();
 
     final String text = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();

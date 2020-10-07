@@ -80,6 +80,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1846,7 +1847,7 @@ public final class BuildManager implements Disposable {
      * @param path assuming system-independent path with forward slashes
      */
     InternedPath(String path) {
-      final IntArrayList list = new IntArrayList();
+      final IntList list = new IntArrayList();
       final StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
       while(tokenizer.hasMoreTokens()) {
         final String element = tokenizer.nextToken();

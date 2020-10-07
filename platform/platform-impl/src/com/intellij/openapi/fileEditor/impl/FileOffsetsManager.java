@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -122,8 +123,8 @@ public final class FileOffsetsManager {
     char prev = ' ';
     int crlfCount = 0;
 
-    final IntArrayList originalLineOffsets = new IntArrayList();
-    final IntArrayList convertedLineOffsets = new IntArrayList();
+    final IntList originalLineOffsets = new IntArrayList();
+    final IntList convertedLineOffsets = new IntArrayList();
     // first line
     originalLineOffsets.add(0);
     convertedLineOffsets.add(0);

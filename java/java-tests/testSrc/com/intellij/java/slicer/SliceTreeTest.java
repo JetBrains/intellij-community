@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.slicer.*;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +77,7 @@ public class SliceTreeTest extends SliceTestCase {
     List<SliceNode> nodes = new ArrayList<>();
     expandNodesTo(root, nodes);
 
-    IntArrayList hasDups = new IntArrayList();
+    IntList hasDups = new IntArrayList();
     for (SliceNode node : nodes) {
       if (node.getDuplicate() != null) {
         PsiElement element = node.getValue().getElement();

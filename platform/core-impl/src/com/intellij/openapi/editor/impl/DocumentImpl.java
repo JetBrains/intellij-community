@@ -27,6 +27,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.beans.PropertyChangeListener;
@@ -755,7 +756,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   void clearLineModificationFlagsExcept(int @NotNull [] caretLines) {
-    IntArrayList modifiedLines = new IntArrayList(caretLines.length);
+    IntList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
     for (int line : caretLines) {
       if (line >= 0 && line < lineSet.getLineCount() && lineSet.isModified(line)) {

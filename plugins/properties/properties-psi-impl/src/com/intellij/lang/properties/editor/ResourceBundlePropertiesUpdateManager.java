@@ -19,6 +19,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.graph.*;
 import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,7 +214,7 @@ public final class ResourceBundlePropertiesUpdateManager {
 
   private static class PropertiesOrder {
     List<String> myKeys;
-    Map<String, IntArrayList> myKeyIndices;
+    Map<String, IntList> myKeyIndices;
 
     PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
@@ -235,7 +236,7 @@ public final class ResourceBundlePropertiesUpdateManager {
     public List<String> getNext(@NotNull String key) {
       List<String> nextProperties = null;
       if (myKeyIndices.containsKey(key)) {
-        final IntArrayList indices = myKeyIndices.get(key);
+        final IntList indices = myKeyIndices.get(key);
         for (int i = 0; i < indices.size(); i++) {
           final int searchIdx = indices.getInt(i) + 1;
           if (searchIdx < myKeys.size()) {

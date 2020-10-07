@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -432,7 +433,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private void mergeAcceptedNodes(@NotNull N node, Set<? extends U> accepted) {
       int k = 0;
       N cur = getChildSafe(node, 0);
-      IntArrayList newIds = new IntArrayList();
+      IntList newIds = new IntArrayList();
       for (U child : accepted) {
         U curUsrObject = getUserObject(cur);
         boolean isCur = cur != null && myUseIdentityHashing ? curUsrObject == child : (curUsrObject != null && curUsrObject.equals(child));
@@ -449,7 +450,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         nodesWereInserted(node, newIds.toIntArray());
       }
       if (node.getChildCount() > k) {
-        IntArrayList leftIds = new IntArrayList();
+        IntList leftIds = new IntArrayList();
         List<N> leftNodes = new ArrayList<>();
         for (int i = node.getChildCount() - 1; i >= k; --i) {
           leftNodes.add(getChild(node, i));
@@ -470,7 +471,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     private void removeNotAccepted(@NotNull N node, Set<U> accepted) {
-      IntArrayList removedIds = new IntArrayList();
+      IntList removedIds = new IntArrayList();
       List<N> removedNodes = new ArrayList<>();
       for (int i = node.getChildCount() - 1; i >= 0; --i) {
         N child = getChild(node, i);

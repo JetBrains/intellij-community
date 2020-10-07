@@ -8,6 +8,7 @@ import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
 
 import java.io.IOException;
@@ -77,7 +78,7 @@ public final class TracingData {
 
   public static void main(String[] args) throws IOException {
     PersistentHashMap<Integer, Integer> lKeys = createOrOpenMap();
-    IntArrayList mapping = new IntArrayList();
+    IntList mapping = new IntArrayList();
     lKeys.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(mapping));
     System.out.println(mapping.size());
     Int2IntOpenHashMap map = new Int2IntOpenHashMap(mapping.size());

@@ -21,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
@@ -252,7 +253,7 @@ public abstract class JBListTable {
     }
 
     private void doAnimationStep(long updateTime) {
-      IntArrayList completeRows = new IntArrayList(myRowAnimationStates.size());
+      IntList completeRows = new IntArrayList(myRowAnimationStates.size());
       for (ObjectIterator<Int2ObjectMap.Entry<RowAnimationState>> iterator = myRowAnimationStates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
         Int2ObjectMap.Entry<RowAnimationState> entry = iterator.next();
         if (entry.getValue().doAnimationStep(updateTime)) {

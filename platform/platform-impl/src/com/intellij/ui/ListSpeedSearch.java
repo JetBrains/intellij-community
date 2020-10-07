@@ -79,7 +79,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
 
   @NotNull
   private IntList findAllFilteredElements(@NotNull String s) {
-    IntArrayList indices = new IntArrayList();
+    IntList indices = new IntArrayList();
     String _s = s.trim();
 
     Object[] elements = getAllListElements(myComponent);

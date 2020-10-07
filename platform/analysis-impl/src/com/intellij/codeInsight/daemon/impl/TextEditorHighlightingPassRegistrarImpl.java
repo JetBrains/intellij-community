@@ -144,7 +144,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
     List<TextEditorHighlightingPass> result = new ArrayList<>(myRegisteredPassFactories.size());
-    IntArrayList passesRefusedToCreate = new IntArrayList();
+    IntList passesRefusedToCreate = new IntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
     for (IntIterator iterator = myRegisteredPassFactories.keySet().iterator(); iterator.hasNext(); ) {
       int passId = iterator.nextInt();

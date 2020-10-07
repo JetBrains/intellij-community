@@ -188,7 +188,7 @@ public final class DiscoveredTestDataHolder {
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
     Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-      IntArrayList methodIds = new IntArrayList(e.getValue().size());
+      IntList methodIds = new IntArrayList(e.getValue().size());
       result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
       for (String methodName : e.getValue()) {
         methodIds.add(myMethodEnumerator.enumerate(methodName));
