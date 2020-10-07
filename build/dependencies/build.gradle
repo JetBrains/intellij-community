@@ -41,7 +41,6 @@ catch (UnknownHostException e) {
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'
-apply from: 'setupThirdPartyPlugins.gradle'
 apply from: 'setupJetSign.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
@@ -53,7 +52,7 @@ apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupSpacePlugin.gradle'
 apply from: 'setupZkm.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins',
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
 

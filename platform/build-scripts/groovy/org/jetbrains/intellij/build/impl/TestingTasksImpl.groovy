@@ -529,7 +529,7 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 'setupBundledMaven')
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupBundledMaven')
     }
   }
 
