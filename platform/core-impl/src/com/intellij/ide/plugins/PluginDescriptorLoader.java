@@ -476,7 +476,7 @@ public final class PluginDescriptorLoader {
   }
 
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (!descriptor.isExtensionsCleared()) return descriptor;
+    if (descriptor.isEnabled() && !descriptor.isExtensionsCleared()) return descriptor;
 
     PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
     return PluginManager
