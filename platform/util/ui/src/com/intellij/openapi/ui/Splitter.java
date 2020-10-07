@@ -267,9 +267,9 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public void reshape(int x, int y, int w, int h) {
-    if (isValid() && myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
-        && !isNull(myFirstComponent) && myFirstComponent.isVisible()
-        && !isNull(mySecondComponent) && mySecondComponent.isVisible()
+    if (w > 0 && h > 0 && myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
+        && !isNull(myFirstComponent) && myFirstComponent.isVisible() && !myFirstComponent.getBounds().isEmpty()
+        && !isNull(mySecondComponent) && mySecondComponent.isVisible() && !mySecondComponent.getBounds().isEmpty()
         && ((myVerticalSplit && h > 2 * getDividerWidth()) || (!myVerticalSplit && w > 2 * getDividerWidth()))
       && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
       int total = myVerticalSplit ? h : w;
