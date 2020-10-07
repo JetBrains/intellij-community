@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
-import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.findDebugValueByName;
+import static com.jetbrains.env.debug.PyBaseDebuggerTask.findDebugValueByName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

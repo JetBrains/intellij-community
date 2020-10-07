@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
@@ -7,6 +7,10 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.env.PyAbstractTestProcessRunner;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.SMRootTestsCounter;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
 import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import com.jetbrains.python.testing.tox.PyToxTestTools;

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.python.debug;
+package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.jetbrains.env.PyEnvTestCase;
@@ -12,16 +12,14 @@ import org.junit.Test;
 
 import java.util.Set;
 
-import static com.jetbrains.env.python.debug.PyUnitTestDebuggingTask.PythonExceptionData;
-
 public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
   @Test
   public void testPythonExceptionDataClass() {
-    PythonExceptionData pythonExceptionModel = PythonExceptionData.fromString(
+    PyUnitTestDebuggingTask.PythonExceptionData pythonExceptionModel = PyUnitTestDebuggingTask.PythonExceptionData.fromString(
       "(<class 'foo'>, AssertionError('bar is not baz'), <traceback object at 0x123456789>)");
     Assert.assertEquals("foo", pythonExceptionModel.getExceptionClass());
     Assert.assertEquals("bar is not baz", pythonExceptionModel.getErrorMessage());
-    Assert.assertNull(PythonExceptionData.fromString("foobar"));
+    Assert.assertNull(PyUnitTestDebuggingTask.PythonExceptionData.fromString("foobar"));
   }
 
   @Test

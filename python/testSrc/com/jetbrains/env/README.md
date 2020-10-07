@@ -1,4 +1,11 @@
-How to run Python Env Tests:
+# Python environment tests (they are using real interpreters)
+See https://confluence.jetbrains.com/display/PYINT/PyCharm+tests+on+TeamCity
+
+## Layout
+* ``debug`` tests for debugger
+* ``python`` all other tests
+
+## How to run Python Env Tests:
 
 1. Setup environments:
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.python.debug;
+package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.addExceptionBreakpoint;
 import static org.junit.Assert.*;
 
 public class PythonDebuggerTest extends PyEnvTestCase {
@@ -225,12 +224,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
     properties.setIgnoreLibraries(ignoreLibraries);
-    addExceptionBreakpoint(fixture, properties);
+    PyBaseDebuggerTask.addExceptionBreakpoint(fixture, properties);
     properties = new PyExceptionBreakpointProperties("builtins.ZeroDivisionError"); //for python 3
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
     properties.setIgnoreLibraries(ignoreLibraries);
-    addExceptionBreakpoint(fixture, properties);
+    PyBaseDebuggerTask.addExceptionBreakpoint(fixture, properties);
   }
 
   private static void createDefaultExceptionBreakpoint(IdeaProjectTestFixture fixture) {

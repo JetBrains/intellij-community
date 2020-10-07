@@ -10,7 +10,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.debug.PyDebuggerTask;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;

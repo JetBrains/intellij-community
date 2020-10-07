@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
-import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.convertToList;
+import static com.jetbrains.env.debug.PyBaseDebuggerTask.convertToList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
