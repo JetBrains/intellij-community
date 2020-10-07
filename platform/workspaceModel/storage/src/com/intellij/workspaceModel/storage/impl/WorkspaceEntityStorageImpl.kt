@@ -121,6 +121,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
         LOG.error("""
           addEntity: persistent id already exists. Replacing entity with the new one.
           Persistent id: $persistentId
+          
+          Existing entity data: $existingEntity
+          New entity data: $pEntityData
         """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
       }
     }
