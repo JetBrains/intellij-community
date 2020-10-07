@@ -34,6 +34,10 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
+  /**
+   * Marker flag for viewers embedded into FileEditor tab.
+   * Ex: such viewers might encounter conflicting shortcuts.
+   */
   Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
 
   //
