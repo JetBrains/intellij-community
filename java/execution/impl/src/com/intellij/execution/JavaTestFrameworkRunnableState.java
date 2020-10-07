@@ -394,7 +394,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
