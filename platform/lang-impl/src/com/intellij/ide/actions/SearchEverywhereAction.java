@@ -89,7 +89,10 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
       }
     }
 
-    showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, e, true, true);
+    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
+                              ? SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID
+                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    showInSearchEverywherePopup(searchProviderID, e, true, true);
   }
 }
 

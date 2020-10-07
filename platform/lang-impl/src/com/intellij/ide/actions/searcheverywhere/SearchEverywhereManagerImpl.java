@@ -46,6 +46,8 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
+  public static final String PROJECT_CONTRIBUTORS_GROUP_ID = "SearchEverywhere.Project";
+  public static final String IDE_CONTRIBUTORS_GROUP_ID = "SearchEverywhere.IDE";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   private final Map<String, String> myTabsShortcutsMap;
@@ -72,7 +74,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   @Override
-  public void show(@NotNull String contributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
+  public void show(@NotNull String tabID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
     if (isShown()) {
       throw new IllegalStateException("Method should cannot be called when popup is shown");
     }
@@ -83,14 +85,14 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, contextComponent);
     mySearchEverywhereUI = createView(myProject, contributors);
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
-    mySearchEverywhereUI.switchToContributor(contributorID);
+    mySearchEverywhereUI.switchToTab(tabID);
 
-    myHistoryIterator = myHistoryList.getIterator(contributorID);
+    myHistoryIterator = myHistoryList.getIterator(tabID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
     boolean suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false);
     //or could be suppressed just for All tab in registry
     suppressHistory = suppressHistory ||
-                      (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID) &&
+                      (ALL_CONTRIBUTORS_GROUP_ID.equals(tabID) &&
                        Registry.is("search.everywhere.disable.history.for.all"));
 
     if (searchText == null && !suppressHistory) {
@@ -225,16 +227,16 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   @NotNull
   @Override
-  public String getSelectedContributorID() {
+  public String getSelectedTabID() {
     checkIsShown();
-    return mySearchEverywhereUI.getSelectedContributorID();
+    return mySearchEverywhereUI.getSelectedTabID();
   }
 
   @Override
-  public void setSelectedContributor(@NotNull String contributorID) {
+  public void setSelectedTabID(@NotNull String contributorID) {
     checkIsShown();
-    if (!contributorID.equals(getSelectedContributorID())) {
-      mySearchEverywhereUI.switchToContributor(contributorID);
+    if (!contributorID.equals(getSelectedTabID())) {
+      mySearchEverywhereUI.switchToTab(contributorID);
     }
   }
 
@@ -320,9 +322,9 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     updateHistoryIterator();
     String searchText = mySearchEverywhereUI.getSearchField().getText();
     if (!searchText.isEmpty()) {
-      myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedContributorID());
+      myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedTabID());
     }
-    myPrevSelections.put(mySearchEverywhereUI.getSelectedContributorID(), mySearchEverywhereUI.getSelectionIdentity());
+    myPrevSelections.put(mySearchEverywhereUI.getSelectedTabID(), mySearchEverywhereUI.getSelectionIdentity());
   }
 
   @Nullable
@@ -352,7 +354,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       return;
     }
 
-    String selectedContributorID = mySearchEverywhereUI.getSelectedContributorID();
+    String selectedContributorID = mySearchEverywhereUI.getSelectedTabID();
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     }

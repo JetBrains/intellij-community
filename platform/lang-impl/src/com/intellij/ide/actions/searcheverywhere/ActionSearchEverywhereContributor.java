@@ -85,6 +85,11 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   }
 
   @Override
+  public boolean isSearchingInProject() {
+    return false;
+  }
+
+  @Override
   public void fetchWeightedElements(@NotNull String pattern,
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {

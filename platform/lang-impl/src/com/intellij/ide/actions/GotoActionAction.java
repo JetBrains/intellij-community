@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,10 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e, false, true);
+    String tabID = Registry.is("search.everywhere.group.contributors.by.type")
+                   ? SearchEverywhereManagerImpl.IDE_CONTRIBUTORS_GROUP_ID
+                   : ActionSearchEverywhereContributor.class.getSimpleName();
+    showInSearchEverywherePopup(tabID, e, false, true);
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element, String enteredText, @Nullable Project project, @Nullable Component component) {

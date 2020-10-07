@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -66,6 +67,11 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       model.setFilterItems(myFilter.getSelectedElements());
     }
     return model;
+  }
+
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("f", IdeBundle.message("search.everywhere.filter.files.description"), this);
   }
 
   @NotNull

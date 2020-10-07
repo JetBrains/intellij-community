@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -115,10 +116,12 @@ public class EditorConfigActionUtil {
 
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
-    String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
+                              ? SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID
+                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     if (seManager.isShown()) {
-      if (!searchProviderID.equals(seManager.getSelectedContributorID())) {
-        seManager.setSelectedContributor(searchProviderID);
+      if (!searchProviderID.equals(seManager.getSelectedTabID())) {
+        seManager.setSelectedTabID(searchProviderID);
       }
     }
     seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);

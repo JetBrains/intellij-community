@@ -7,14 +7,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
-import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -34,8 +33,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
@@ -83,6 +80,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
+
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
@@ -97,26 +96,17 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   private static final SimpleTextAttributes SMALL_LABEL_ATTRS = new SimpleTextAttributes(
     SimpleTextAttributes.STYLE_SMALLER, JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
 
-  private final List<? extends SearchEverywhereContributor<?>> myShownContributors;
-
   private SearchListModel myListModel;
-
-  private SETab mySelectedTab;
-  private final List<SETab> myTabs = new ArrayList<>();
-  private final Function<String, String> myShortcutSupplier;
-
-  private boolean myEverywhereAutoSet = true;
-  private String myNotFoundString;
-
+  private final SearchEverywhereHeader myHeader;
   private JBPopup myHint;
+
+  private String myNotFoundString;
 
   private final SESearcher mySearcher;
   private final ThrottlingListenerWrapper myBufferedListener;
   private ProgressIndicator mySearchProgressIndicator;
 
   private final SEListSelectionTracker mySelectionTracker;
-  private final PersistentSearchEverywhereContributorFilter<String> myContributorsFilter;
-  private ActionToolbar myToolbar;
 
   public SearchEverywhereUI(@Nullable Project project,
                             @NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
@@ -131,15 +121,12 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
     mySearcher = new MultiThreadSearcher(myBufferedListener, run ->
       ApplicationManager.getApplication().invokeLater(run), equalityProviders);
-    myShownContributors = contributors;
-    myShortcutSupplier = shortcutSupplier;
-    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
-    myContributorsFilter = isAllTabNeeded()
-                           ? new PersistentSearchEverywhereContributorFilter<>(
-                                ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
-                                SearchEverywhereConfiguration.getInstance(project),
-                                namesMap::get, c -> null)
-                           : null;
+    Runnable scopeChangedCallback = () -> {
+      updateSearchFieldAdvertisement();
+      scheduleRebuildList();
+    };
+    myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
+                                          shortcutSupplier, new ShowInFindToolWindowAction(), this);
 
     init();
 
@@ -185,77 +172,29 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
   @Override
   public void toggleEverywhereFilter() {
-    myEverywhereAutoSet = false;
-    if (mySelectedTab.everywhereAction == null) return;
-    if (!mySelectedTab.everywhereAction.canToggleEverywhere()) return;
-    mySelectedTab.everywhereAction.setEverywhere(
-      !mySelectedTab.everywhereAction.isEverywhere());
-    myToolbar.updateActionsImmediately();
-  }
-
-  private boolean isAllTabNeeded() {
-    return myShownContributors.size() > 1;
-  }
-
-  private void setEverywhereAuto(boolean everywhere) {
-    myEverywhereAutoSet = true;
-    if (mySelectedTab.everywhereAction == null) return;
-    if (!mySelectedTab.everywhereAction.canToggleEverywhere()) return;
-    mySelectedTab.everywhereAction.setEverywhere(everywhere);
-    myToolbar.updateActionsImmediately();
-  }
-
-  private boolean isEverywhere() {
-    if (mySelectedTab.everywhereAction == null) return true;
-    return mySelectedTab.everywhereAction.isEverywhere();
-  }
-
-  private boolean canToggleEverywhere() {
-    if (mySelectedTab.everywhereAction == null) return false;
-    return mySelectedTab.everywhereAction.canToggleEverywhere();
+    myHeader.toggleEverywhere();
   }
 
   @Override
-  public void switchToContributor(@NotNull String contributorID) {
-    SETab selectedTab = myTabs.stream()
-      .filter(tab -> tab.getID().equals(contributorID))
+  public void switchToTab(@NotNull String tabID) {
+    SETab selectedTab = myHeader.getTabs().stream()
+      .filter(tab -> tab.getID().equals(tabID))
       .findAny()
-      .orElseThrow(() -> new IllegalArgumentException(String.format("Contributor %s is not supported", contributorID)));
+      .orElseThrow(() -> new IllegalArgumentException(String.format("There is no such tab - %s", tabID)));
     switchToTab(selectedTab);
   }
 
-  private void switchToNextTab() {
-    int currentIndex = myTabs.indexOf(mySelectedTab);
-    SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
-    switchToTab(nextTab);
-  }
-
-  private void switchToPrevTab() {
-    int currentIndex = myTabs.indexOf(mySelectedTab);
-    SETab prevTab = currentIndex == 0 ? myTabs.get(myTabs.size() - 1) : myTabs.get(currentIndex - 1);
-    switchToTab(prevTab);
-  }
-
   private void switchToTab(SETab tab) {
-    boolean prevTabIsAll = mySelectedTab != null && isAllTabSelected();
-    mySelectedTab = tab;
-    boolean nextTabIsAll = isAllTabSelected();
-
-    if (myEverywhereAutoSet && isEverywhere() && canToggleEverywhere()) {
-      setEverywhereAuto(false);
-    }
+    boolean prevTabIsSingleContributor = myHeader.getSelectedTab().isSingleContributor();
+    myHeader.switchToTab(tab);
+    boolean nextTabIsSingleContributor = myHeader.getSelectedTab().isSingleContributor();
 
     updateSearchFieldAdvertisement();
 
-    if (prevTabIsAll != nextTabIsAll) {
+    if (prevTabIsSingleContributor != nextTabIsSingleContributor) {
       //reset cell renderer to show/hide group titles in "All" tab
       myResultsList.setCellRenderer(myResultsList.getCellRenderer());
     }
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
-    }
-    repaint();
-    scheduleRebuildList();
   }
 
   private final JLabel myAdvertisementLabel = new JBLabel();
@@ -263,19 +202,24 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     myAdvertisementLabel.setForeground(JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground());
     myAdvertisementLabel.setFont(RelativeFont.SMALL.derive(getFont()));
   }
+
   private void updateSearchFieldAdvertisement() {
     if (mySearchField == null) return;
 
-    Boolean commandsSupported = mySelectedTab.getContributor()
-      .map(contributor -> !contributor.getSupportedCommands().isEmpty())
-      .orElse(true);
+    List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
+    boolean commandsSupported = contributors.stream()
+      .anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
 
     String advertisementText;
     if (commandsSupported) {
       advertisementText = IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
     }
     else {
-      advertisementText = mySelectedTab.getContributor().map(c -> c.getAdvertisement()).orElse(null);
+      List<String> advertisements = contributors.stream()
+        .map(c -> c.getAdvertisement())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      advertisementText = advertisements.isEmpty() ? "" : advertisements.get(new Random().nextInt(advertisements.size()));
     }
 
     mySearchField.remove(myAdvertisementLabel);
@@ -286,8 +230,8 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   }
 
   @Override
-  public String getSelectedContributorID() {
-    return mySelectedTab.getID();
+  public String getSelectedTabID() {
+    return myHeader.getSelectedTab().getID();
   }
 
   @Override
@@ -367,33 +311,10 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
   }
 
-  private boolean isAllTabSelected() {
-    return SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
-  }
-
   @Override
   @NotNull
   protected JPanel createSettingsPanel() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new ActionGroup() {
-      @Override
-      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        if (e == null || mySelectedTab == null) return EMPTY_ARRAY;
-        return mySelectedTab.actions.toArray(EMPTY_ARRAY);
-      }
-    });
-
-    if (myProject != null) {
-      actionGroup.addAction(new ShowInFindToolWindowAction());
-    }
-
-    myToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
-    myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
-    JComponent toolbarComponent = myToolbar.getComponent();
-    toolbarComponent.setOpaque(false);
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
-    return (JPanel)toolbarComponent;
+    return myHeader.getToolbarPanel();
   }
 
   @NotNull
@@ -453,121 +374,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   @Override
   @NotNull
   protected JPanel createTopLeftPanel() {
-    JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    contributorsPanel.setOpaque(false);
-
-    if (isAllTabNeeded()) {
-      SETab allTab = new SETab(null);
-      contributorsPanel.add(allTab);
-      myTabs.add(allTab);
-    }
-
-    myShownContributors.stream()
-      .filter(SearchEverywhereContributor::isShownInSeparateTab)
-      .forEach(contributor -> {
-        SETab tab = new SETab(contributor);
-        contributorsPanel.add(tab);
-        myTabs.add(tab);
-      });
-
-    return contributorsPanel;
-  }
-
-  private class SETab extends JLabel {
-    final SearchEverywhereContributor<?> contributor;
-    final List<AnAction> actions;
-    final SearchEverywhereToggleAction everywhereAction;
-
-    SETab(@Nullable SearchEverywhereContributor<?> contributor) {
-      super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
-      this.contributor = contributor;
-      updateTooltip();
-      Runnable onChanged = () -> {
-        myToolbar.updateActionsImmediately();
-        scheduleRebuildList();
-      };
-      if (contributor == null) {
-        String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
-        actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
-          final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
-          @Override
-          public boolean isEverywhere() {
-            return seManager.isEverywhere();
-          }
-
-          @Override
-          public void setEverywhere(boolean state) {
-            seManager.setEverywhere(state);
-            myTabs.stream()
-              .filter(tab -> tab != SETab.this && tab.everywhereAction != null)
-              .forEach(tab -> tab.everywhereAction.setEverywhere(state));
-            onChanged.run();
-          }
-        }, new FiltersAction(myContributorsFilter, onChanged));
-      }
-      else {
-        actions = new ArrayList<>(contributor.getActions(onChanged));
-      }
-      everywhereAction = (SearchEverywhereToggleAction)ContainerUtil.find(actions, o -> o instanceof SearchEverywhereToggleAction);
-      Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
-      setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          switchToTab(SETab.this);
-          String reportableID = getContributor()
-            .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
-            .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-          FeatureUsageData data = SearchEverywhereUsageTriggerCollector
-            .createData(reportableID)
-            .addInputEvent(e);
-          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
-        }
-      });
-    }
-
-    private void updateTooltip() {
-      @NlsSafe String shortcut = myShortcutSupplier.apply(getID());
-      if (shortcut != null) {
-        setToolTipText(shortcut);
-      }
-    }
-
-    public String getID() {
-      return getContributor()
-        .map(SearchEverywhereContributor::getSearchProviderId)
-        .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-    }
-
-    public Optional<SearchEverywhereContributor<?>> getContributor() {
-      return Optional.ofNullable(contributor);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = JBUIScale.scale(29);
-      return size;
-    }
-
-    @Override
-    public boolean isOpaque() {
-      return mySelectedTab == this;
-    }
-
-    @Override
-    public Color getBackground() {
-      return mySelectedTab == this
-             ? JBUI.CurrentTheme.BigPopup.selectedTabColor()
-             : super.getBackground();
-    }
-
-    @Override
-    public Color getForeground() {
-      return mySelectedTab == this
-             ? JBUI.CurrentTheme.BigPopup.selectedTabTextColor()
-             : super.getForeground();
-    }
+    return myHeader.getTabsPanel();
   }
 
   private static final long REBUILD_LIST_DELAY = 100;
@@ -585,41 +392,34 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
     String rawPattern = getSearchPattern();
     updateViewType(rawPattern.isEmpty() ? ViewType.SHORT : ViewType.FULL);
-    String namePattern = mySelectedTab.getContributor()
-      .map(contributor -> contributor.filterControlSymbols(rawPattern))
-      .orElse(rawPattern);
+    String namePattern = myHeader.getSelectedTab().isSingleContributor()
+                         ? myHeader.getSelectedTab().getContributors().get(0).filterControlSymbols(rawPattern)
+                         : rawPattern;
 
     MinusculeMatcher matcher =
       NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
-    Optional<SearchEverywhereContributor<?>> selectedContributor = mySelectedTab.getContributor();
-    if (selectedContributor.isPresent()) {
-      contributorsMap.put(selectedContributor.get(), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT);
-    }
-    else {
-      contributorsMap.putAll(getAllTabContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
-    }
 
-    List<SearchEverywhereContributor<?>> contributors;
+    List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
+    int limit = contributors.size() > 1 ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
+    contributors.forEach(c -> contributorsMap.put(c, limit));
+
     if (myProject != null) {
       contributors = DumbService.getInstance(myProject).filterByDumbAwareness(contributorsMap.keySet());
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     mySelectedTab.getText(),
+                                                     myHeader.getSelectedTab().getText(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     mySelectedTab.getText(),
+                                                     myHeader.getSelectedTab().getText(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
       }
-    }
-    else {
-      contributors = new ArrayList<>(contributorsMap.keySet());
     }
 
     myListModel.expireResults();
@@ -632,8 +432,8 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       if (!commands.isEmpty()) {
         if (rawPattern.contains(" ")) {
           contributorsMap.keySet().retainAll(commands.stream()
-                                   .map(SearchEverywhereCommandInfo::getContributor)
-                                   .collect(Collectors.toSet()));
+                                               .map(SearchEverywhereCommandInfo::getContributor)
+                                               .collect(Collectors.toSet()));
         }
         else {
           myListModel.clear();
@@ -681,11 +481,11 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     ScrollingUtil.redirectExpandSelection(myResultsList, mySearchField);
 
     Consumer<AnActionEvent> nextTabAction = e -> {
-      switchToNextTab();
+      myHeader.switchToNextTab();
       triggerTabSwitched(e);
     };
     Consumer<AnActionEvent> prevTabAction = e -> {
-      switchToPrevTab();
+      myHeader.switchToPrevTab();
       triggerTabSwitched(e);
     };
 
@@ -696,10 +496,10 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     registerAction(IdeActions.ACTION_PREVIOUS_TAB, prevTabAction);
     registerAction(IdeActions.ACTION_SWITCHER, e -> {
       if (e.getInputEvent().isShiftDown()) {
-        switchToPrevTab();
+        myHeader.switchToPrevTab();
       }
       else {
-        switchToNextTab();
+        myHeader.switchToNextTab();
       }
       triggerTabSwitched(e);
     });
@@ -729,9 +529,9 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
         String newSearchString = getSearchPattern();
         if (myNotFoundString != null) {
           boolean newPatternContainsPrevious = myNotFoundString.length() > 1 && newSearchString.contains(myNotFoundString);
-          if (myEverywhereAutoSet && isEverywhere() && canToggleEverywhere() && !newPatternContainsPrevious) {
+          if (myHeader.canSetEverywhere() && myHeader.isEverywhere() && !newPatternContainsPrevious) {
             myNotFoundString = null;
-            setEverywhereAuto(false);
+            myHeader.autoSetEverywhere(false);
             return;
           }
         }
@@ -750,8 +550,8 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     });
 
     MessageBusConnection busConnection = myProject != null
-                                                ? myProject.getMessageBus().connect(this)
-                                                : ApplicationManager.getApplication().getMessageBus().connect(this);
+                                         ? myProject.getMessageBus().connect(this)
+                                         : ApplicationManager.getApplication().getMessageBus().connect(this);
 
     busConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -760,14 +560,6 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
           updateSearchFieldAdvertisement();
           scheduleRebuildList();
         });
-      }
-    });
-    busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
-          myEverywhereAutoSet = false;
-        }
       }
     });
     busConnection.subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw, () -> myResultsList.repaint()));
@@ -845,9 +637,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   }
 
   private void triggerTabSwitched(AnActionEvent e) {
-    String id = mySelectedTab.getContributor()
-      .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
-      .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+    String id = myHeader.getSelectedTab().getReportableID();
 
     FeatureUsageData data = SearchEverywhereUsageTriggerCollector
       .createData(id)
@@ -942,14 +732,11 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
 
-      String selectedTabContributorID = mySelectedTab.getContributor()
-        .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
-        .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-
-      String reportableContributorID = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor);
+      String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
+      String reportableContributorID = getReportableContributorID(contributor);
       FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID, selectedTabContributorID, i);
       if (value instanceof PsiElement) {
-        data.addLanguage(((PsiElement) value).getLanguage());
+        data.addLanguage(((PsiElement)value).getLanguage());
       }
       featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, data);
 
@@ -968,9 +755,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     featureTriggered(SearchEverywhereUsageTriggerCollector.MORE_ITEM_SELECTED, null);
     Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> found = myListModel.getFoundElementsMap();
     int limit = myListModel.getItemsForContributor(contributor)
-                + (mySelectedTab.getContributor().isPresent()
-                   ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
-                   : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
+                + (myHeader.getSelectedTab().isSingleContributor() ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
     mySearchProgressIndicator = mySearcher.findMoreItems(found, getSearchPattern(), contributor, limit);
   }
 
@@ -987,16 +772,6 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
     stopSearching();
     searchFinishedHandler.run();
-  }
-
-  @NotNull
-  private List<SearchEverywhereContributor<?>> getAllTabContributors() {
-    return ContainerUtil.filter(myShownContributors, contributor -> myContributorsFilter.isSelected(contributor.getSearchProviderId()));
-  }
-
-  @NotNull
-  private Collection<SearchEverywhereContributor<?>> getContributorsForCurrentTab() {
-    return isAllTabSelected() ? getAllTabContributors() : Collections.singleton(mySelectedTab.getContributor().get());
   }
 
   @Override
@@ -1045,7 +820,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       }
       AppUIUtil.targetToDevice(component, list);
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-      if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
+      if (!myHeader.getSelectedTab().isSingleContributor() && myListModel.isGroupFirstItem(index)) {
         component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
       }
 
@@ -1053,7 +828,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
   }
 
-  private final ListCellRenderer<Object> myCommandRenderer = new ColoredListCellRenderer<Object>() {
+  private final ListCellRenderer<Object> myCommandRenderer = new ColoredListCellRenderer<>() {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -1068,7 +843,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
   };
 
-  private final ListCellRenderer<Object> myMoreRenderer = new ColoredListCellRenderer<Object>() {
+  private final ListCellRenderer<Object> myMoreRenderer = new ColoredListCellRenderer<>() {
 
     @Override
     protected int getMinHeight() {
@@ -1395,7 +1170,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     public void actionPerformed(@NotNull AnActionEvent e) {
       stopSearching();
 
-      Collection<SearchEverywhereContributor<?>> contributors = getContributorsForCurrentTab();
+      Collection<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
       contributors = ContainerUtil.filter(contributors, SearchEverywhereContributor::showInFindResults);
 
       if (contributors.isEmpty()) {
@@ -1525,8 +1300,9 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
         return;
       }
 
-      SearchEverywhereContributor<?> contributor = mySelectedTab == null ? null : mySelectedTab.contributor;
-      e.getPresentation().setEnabled(contributor == null || contributor.showInFindResults());
+      SETab selectedTab = myHeader != null ? myHeader.getSelectedTab() : null;
+      boolean enabled = selectedTab == null || selectedTab.getContributors().stream().anyMatch(c -> c.showInFindResults());
+      e.getPresentation().setEnabled(enabled);
       e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
     }
   }
@@ -1563,7 +1339,8 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
         String typedCommand = pattern.substring(commandPrefix.length());
         SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
-          List<SearchEverywhereCommandInfo> completions = getCommandsForCompletion(getContributorsForCurrentTab(), typedCommand);
+          List<SearchEverywhereCommandInfo> completions =
+            getCommandsForCompletion(myHeader.getSelectedTab().getContributors(), typedCommand);
           return completions.isEmpty() ? null : completions.get(0);
         });
 
@@ -1576,10 +1353,11 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   private String getNotFoundText() {
-    return mySelectedTab.getContributor()
-      .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere",
-                                  c.getFullGroupName().toLowerCase(Locale.ROOT)))
-      .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
+    SETab selectedTab = myHeader.getSelectedTab();
+    if (!selectedTab.isSingleContributor()) return IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere");
+
+    String groupName = selectedTab.getContributors().get(0).getFullGroupName();
+    return IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", groupName.toLowerCase(Locale.ROOT));
   }
 
   private void featureTriggered(@NotNull String featureID, @Nullable FeatureUsageData data) {
@@ -1608,7 +1386,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
       if (wasEmpty && !myListModel.listElements.isEmpty()) {
         Object prevSelection = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject))
-          .getPrevSelection(getSelectedContributorID());
+          .getPrevSelection(getSelectedTabID());
         if (prevSelection instanceof Integer) {
           for (SearchEverywhereFoundElementInfo info : myListModel.listElements) {
             if (Objects.hashCode(info.element) == ((Integer)prevSelection).intValue()) {
@@ -1627,10 +1405,12 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      String pattern = getSearchPattern();
+      pattern = pattern.replaceAll("^" + SearchTopHitProvider.getTopHitAccelerator() + "\\S+\\s*", "");
       if (myResultsList.isEmpty() || myListModel.isResultsExpired()) {
-        if (myEverywhereAutoSet && !isEverywhere() && canToggleEverywhere() && !getSearchPattern().isEmpty()) {
-          setEverywhereAuto(true);
-          myNotFoundString = getSearchPattern();
+        if (myHeader.canSetEverywhere() && !myHeader.isEverywhere() && !pattern.isEmpty()) {
+          myHeader.autoSetEverywhere(true);
+          myNotFoundString = pattern;
           return;
         }
 
@@ -1640,7 +1420,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
         }
       }
 
-      myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
+      myResultsList.setEmptyText(pattern.isEmpty() ? "" : getNotFoundText());
       hasMoreContributors.forEach(myListModel::setHasMore);
 
       mySelectionTracker.resetSelectionIfNeeded();
@@ -1654,7 +1434,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
   }
 
-  private final SearchEverywhereContributor<Object> myStubCommandContributor = new SearchEverywhereContributor<Object>() {
+  private final SearchEverywhereContributor<Object> myStubCommandContributor = new SearchEverywhereContributor<>() {
     @NotNull
     @Override
     public String getSearchProviderId() {

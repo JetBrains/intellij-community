@@ -80,6 +80,11 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
   }
 
   @Override
+  public boolean isSearchingInProject() {
+    return false;
+  }
+
+  @Override
   public boolean processSelectedItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper selected, int modifiers, @NotNull String searchText) {
     RunnerAndConfigurationSettings settings = ObjectUtils.tryCast(selected.getValue(), RunnerAndConfigurationSettings.class);
     if (settings != null) {

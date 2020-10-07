@@ -20,9 +20,9 @@ public abstract class SearchEverywhereUIBase extends BigPopupUI {
 
   public abstract void toggleEverywhereFilter();
 
-  public abstract void switchToContributor(@NotNull String contributorID);
+  public abstract void switchToTab(@NotNull String tabID);
 
-  public abstract String getSelectedContributorID();
+  public abstract String getSelectedTabID();
 
   @Nullable
   public abstract Object getSelectionIdentity();
