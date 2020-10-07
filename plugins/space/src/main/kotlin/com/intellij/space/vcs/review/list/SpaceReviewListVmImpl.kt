@@ -35,11 +35,10 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
     quickFiltersMap.value[DEFAULT_QUICK_FILTER] ?: error("Unable to find quick filter settings")
   )
 
-  // TODO: remove hack
-  private val refresh = Property.createMutable(0)
+  private val refresh = Property.createMutable(Unit)
 
   override fun refresh() {
-    refresh.value = refresh.value.inc()
+      refresh.value = refresh.forceNotify()
   }
 
   override val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
