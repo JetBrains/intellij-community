@@ -550,7 +550,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   public void onStripeButtonAdded(@NotNull StripeButton button) {
-    if (button.toolWindow.isAvailable() && button.toolWindow.getIcon() != null) {
+    if (button.toolWindow.isAvailable() && button.toolWindow.getIcon() != null && Registry.is("ide.new.stripes.ui")) {
       newStripe.addButton(button, (o1, o2) -> 0);
     }
   }
