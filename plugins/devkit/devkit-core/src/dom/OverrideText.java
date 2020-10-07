@@ -39,7 +39,6 @@ public interface OverrideText extends DomElement {
     @Override
     public Collection<String> getVariants(ConvertContext context) {
       return ContainerUtil.concat(getPlaceNames(context, "com.intellij.openapi.actionSystem.ActionPlaces"),
-                                  getPlaceNames(context, "com.intellij.diff.util.DiffPlaces"),
                                   getPlaceNames(context, "com.intellij.vcs.log.ui.VcsLogActionPlaces"));
     }
 
