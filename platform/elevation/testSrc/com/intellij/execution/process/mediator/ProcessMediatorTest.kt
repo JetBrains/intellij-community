@@ -6,6 +6,7 @@ import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
 import kotlinx.coroutines.CoroutineScope
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -38,8 +39,8 @@ internal class ProcessMediatorTest {
   internal fun `create simple process returning zero exit code`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
-    val exitValue = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    assertEquals(0, exitValue)
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
     assertEquals(0, process.exitValue())
   }
 
@@ -47,8 +48,8 @@ internal class ProcessMediatorTest {
   internal fun `create simple process returning non-zero exit code`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.False::class)
       .startMediatedProcess()
-    val exitValue = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    assertEquals(42, exitValue)
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
     assertEquals(42, process.exitValue())
   }
 
