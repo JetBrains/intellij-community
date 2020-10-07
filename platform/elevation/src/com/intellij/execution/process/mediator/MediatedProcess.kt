@@ -5,10 +5,10 @@ import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.consumeAsFlow
 import java.io.*
 import java.lang.ref.Cleaner
 import java.util.concurrent.Executors
@@ -45,7 +45,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
     }
   }
 
-  private val stdin: OutputStream = if (handle.inFile != null) OutputStream.nullOutputStream() else createPipedOutputStream(0)
+  private val stdin: OutputStream = if (handle.inFile != null) OutputStream.nullOutputStream() else createOutputStream(0)
   private val stdout: InputStream = createPipedInputStream(1)
   private val stderr: InputStream = createPipedInputStream(2)
 
@@ -61,30 +61,15 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   override fun getInputStream(): InputStream = stdout
   override fun getErrorStream(): InputStream = stderr
 
-  private fun createPipedOutputStream(fd: Int): PipedOutputStream {
-    val inputStream = PipedInputStream()
-    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    handle.launch(dispatcher) {
+  private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
-        val buffer = ByteArray(8192)
-
-        @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
-        val chunkFlow = flow<ByteString> {
-          while (true) {
-            val n = inputStream.read(buffer)
-            if (n < 0) break
-            val chunk = ByteString.copyFrom(buffer, 0, n)
-            emit(chunk)
-          }
-        }.onCompletion {
-          inputStream.close()
-        }.flowOn(dispatcher)
-        processMediatorClient.writeStream(pid.await(), fd, chunkFlow)
+        processMediatorClient.writeStream(pid.await(), fd, channel.consumeAsFlow())
       }
-    }.invokeOnCompletion {
-      dispatcher.close()
     }
-    return PipedOutputStream(inputStream)
+    val stream = ChannelOutputStream(channel)
+    return BufferedOutputStream(stream)
   }
 
   private fun createPipedInputStream(fd: Int): PipedInputStream {
