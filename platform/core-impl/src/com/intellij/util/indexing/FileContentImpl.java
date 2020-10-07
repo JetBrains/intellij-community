@@ -71,14 +71,16 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return psi;
   }
 
+  private static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
+
   @Override
   @NotNull
   public LighterAST getLighterAST() {
-    LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
+    LighterAST lighterAST = getUserData(LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFile().getNode();
       lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
-      putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
+      putUserData(LIGHTER_AST_NODE_KEY, lighterAST);
     }
     return lighterAST;
   }

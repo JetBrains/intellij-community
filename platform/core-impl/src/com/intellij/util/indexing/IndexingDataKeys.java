@@ -18,6 +18,5 @@ public final class IndexingDataKeys {
   public static final Key<Project> PROJECT = new Key<>("Context project");
   public static final Key<PsiFile> PSI_FILE = new Key<>("PSI for stubs");
   public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
-  public static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
   public static final Key<Boolean> REBUILD_REQUESTED = Key.create("index.rebuild.requested");
 }
