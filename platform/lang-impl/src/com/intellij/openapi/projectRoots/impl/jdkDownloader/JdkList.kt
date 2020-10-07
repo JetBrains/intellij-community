@@ -154,6 +154,9 @@ data class JdkItem(
   val presentableVersionString
     get() = JavaVersion.tryParse(jdkVersion)?.toFeatureMinorUpdateString() ?: jdkVersion
 
+  val presentableMajorVersionString
+    get() = JavaVersion.tryParse(jdkVersion)?.toFeatureString() ?: jdkMajorVersion.toString()
+
   val versionPresentationText: String
     get() = jdkVersion
 
