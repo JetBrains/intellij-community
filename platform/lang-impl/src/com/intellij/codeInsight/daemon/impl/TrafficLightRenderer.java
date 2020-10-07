@@ -163,10 +163,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passes = Collections.emptyList();
     public int[] errorCount = ArrayUtilRt.EMPTY_INT_ARRAY;
-    // Used in Rider
     @Nls
     public String reasonWhyDisabled;
-    // Used in Rider
     @Nls
     public String reasonWhySuspended;
 

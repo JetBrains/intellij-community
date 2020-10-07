@@ -19,6 +19,7 @@ import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.ByteArrayCharSequence;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FLAGS_MASK;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
@@ -69,7 +68,9 @@ public final class VfsData {
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
-  private IntOpenHashSet myDyingIds = new IntOpenHashSet();
+
+  /** guarded by {@link #myDeadMarker} */
+  private IntSet myDyingIds = new IntOpenHashSet();
 
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
@@ -260,7 +261,7 @@ public final class VfsData {
     }
 
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
-      assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
     }
 
@@ -268,7 +269,7 @@ public final class VfsData {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
-      assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;
       while (true) {
         int oldInt = myIntArray.get(offset);
@@ -282,7 +283,7 @@ public final class VfsData {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
       }
-      assert (combinedMask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
                                                     Integer.toHexString(combinedMask)+")";
       int offset = getOffset(id) * 2 + 1;
@@ -296,14 +297,14 @@ public final class VfsData {
     }
 
     long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * 2 + 1) & ~ALL_FLAGS_MASK;
+      return myIntArray.get(getOffset(id) * 2 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int id, long stamp) {
       int offset = getOffset(id) * 2 + 1;
       while (true) {
         int oldInt = myIntArray.get(offset);
-        int updated = (oldInt & ALL_FLAGS_MASK) | ((int)stamp & ~ALL_FLAGS_MASK);
+        int updated = (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK);
         if (myIntArray.compareAndSet(offset, oldInt, updated)) {
           return;
         }
@@ -321,7 +322,8 @@ public final class VfsData {
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   static final class DirectoryData {
-    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+    private static final AtomicFieldUpdater<DirectoryData, KeyFMap>
+      MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
     /**
