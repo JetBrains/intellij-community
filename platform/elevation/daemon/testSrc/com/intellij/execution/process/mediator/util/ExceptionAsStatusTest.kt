@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.FileNotFoundException
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class ExceptionAsStatusTest {
   @Test
@@ -36,9 +37,10 @@ internal class ExceptionAsStatusTest {
   }
 
   @Test
-  fun `unwraps known exceptions`() {
+  fun `unwraps wrapped exceptions`() {
     checkWrapAndUnwrap(IOException("IOE: ioe..."))
     checkWrapAndUnwrap(FileNotFoundException("FNFE: not found..."))
+    checkWrapAndUnwrap(CancellationException("CE: cancel"))
   }
 
   private inline fun <reified T : Throwable> checkWrapAndUnwrap(throwable: T) {

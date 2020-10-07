@@ -8,6 +8,7 @@ import io.grpc.StatusRuntimeException
 import java.io.EOFException
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.util.concurrent.CancellationException
 import kotlin.reflect.KClass
 
 @Suppress("DataClassPrivateConstructor")
@@ -60,6 +61,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
       ExceptionDescriptor.withInitCause(::ArrayIndexOutOfBoundsException)  asStatus OUT_OF_RANGE,
 
       ExceptionDescriptor.withThrowable(::IllegalStateException)           asStatus FAILED_PRECONDITION,
+      ExceptionDescriptor.withInitCause(::CancellationException)           asStatus CANCELLED,
 
       ExceptionDescriptor.withThrowable(::IllegalArgumentException)        asStatus INVALID_ARGUMENT,
       ExceptionDescriptor.withInitCause(::IllegalThreadStateException)     asStatus INVALID_ARGUMENT,
@@ -117,7 +119,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
         val code = status.code
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (code) {
-          OK, CANCELLED, UNKNOWN, INTERNAL, UNAUTHENTICATED -> throw e
+          OK, UNKNOWN, INTERNAL, UNAUTHENTICATED -> throw e
         }
         val description = status.description
 
