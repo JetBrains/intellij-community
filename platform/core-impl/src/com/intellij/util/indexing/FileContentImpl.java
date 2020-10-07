@@ -49,22 +49,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
-  @NotNull
-  private PsiFile getFileFromText() {
-    PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
-
-    if (psi == null) {
-      psi = getUserData(CACHED_PSI);
-    }
-
-    if (psi == null) {
-      psi = createFileFromText(getContentAsText());
-      psi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
-      putUserData(CACHED_PSI, psi);
-    }
-    return psi;
-  }
-
   private static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
 
   @Override
@@ -228,7 +212,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   @Override
   @NotNull
   public PsiFile getPsiFile() {
-    PsiFile psi = null;
     if (!myPhysicalContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
 
@@ -237,15 +220,23 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         if (psiDocumentManager.isUncommited(document)) {
           PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
           if (existingPsi != null) {
-            psi = existingPsi;
+            return existingPsi;
           }
         }
       }
     }
-    if (psi == null) {
-      psi = getFileFromText();
+    PsiFile explicitPsi = getUserData(IndexingDataKeys.PSI_FILE);
+    if (explicitPsi != null) {
+      return explicitPsi;
     }
-    return psi;
+    PsiFile cachedPsi = getUserData(CACHED_PSI);
+    if (cachedPsi != null) {
+      return cachedPsi;
+    }
+    PsiFile createdPsi = createFileFromText(getContentAsText());
+    createdPsi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
+    putUserData(CACHED_PSI, createdPsi);
+    return createdPsi;
   }
 
   @ApiStatus.Internal
