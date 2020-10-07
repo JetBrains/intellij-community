@@ -6,7 +6,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-class CommonNavBarUI extends AbstractNavBarUI {
+public class CommonNavBarUI extends AbstractNavBarUI {
   @Override
   public void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible) {
   }
