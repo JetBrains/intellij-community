@@ -579,6 +579,21 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "}");
   }
 
+  public void testOnlyLastBuilderCallInConsidered() {
+    doTest(
+      "class AutoCloseableSample {\n" +
+      "  void test() {\n" +
+      "    final AC res = new AC().withX(10).withX(12);\n" +
+      "    res.close();\n" +
+      "  }\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  native AC withX(int x);\n" +
+      "  @Override public void close(){" +
+      "}\n" +
+      "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
