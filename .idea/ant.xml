@@ -6,9 +6,6 @@
         <property name="work.idea.home" value="$APPLICATION_HOME_DIR$" />
       </properties>
     </buildFile>
-    <buildFile url="file://$PROJECT_DIR$/../adt/idea/android/build.xml">
-      <executeOn event="beforeCompilation" target="preBuild" />
-    </buildFile>
     <buildFile url="file://$PROJECT_DIR$/../vendor/google3/blaze/build.xml" />
   </component>
   <component name="GantSettings">

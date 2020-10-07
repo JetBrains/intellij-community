@@ -15,7 +15,6 @@
  */
 package com.android.tools.idea
 
-import com.android.testutils.TestUtils
 import com.google.common.truth.Truth.assertThat
 import org.apache.commons.imaging.ImageFormats
 import org.apache.commons.imaging.Imaging
@@ -39,7 +38,7 @@ class AndroidStudioBrandingTest {
   fun splashScreen() {
     fun toBMP(f: InputStream) = Imaging.writeImageToBytes(Imaging.getBufferedImage(f), ImageFormats.BMP, HashMap())
 
-    val splash = toBMP(File(TestUtils.getWorkspaceRoot(), "tools/idea/native/WinLauncher/WinLauncher/splash.bmp").inputStream())
+    val splash = toBMP(File("../native/WinLauncher/WinLauncher/splash.bmp").inputStream())
     // Note: the splash image doesn't actually have to be in .bmp format, as long as it can be decoded by the commons-imaging library.
     // But the resulting bytes from converting it to bitmap need to match the canonical bitmap size exactly.
     val appInfoRoot = SAXBuilder()
@@ -53,7 +52,7 @@ class AndroidStudioBrandingTest {
 
   @Test
   fun icons() {
-    val canonicalIcon = File(TestUtils.getWorkspaceRoot(), "tools/idea/native/WinLauncher/WinLauncher/WinLauncher.ico")
+    val canonicalIcon = File("../native/WinLauncher/WinLauncher/WinLauncher.ico")
 
     // Note: the paths below must match Studio's WindowsDistributionCustomizer from AndroidStudioProperties.groovy.
     assertIconsMatch(canonicalIcon, this.javaClass.classLoader.getResourceAsStream("artwork/androidstudio.ico")!!)

@@ -36,7 +36,7 @@ function get_absolute_path() {
 ASWB=
 ASWB_PROPERTY=
 UITESTS=false
-STUDIO_SDK=false
+STUDIO_SDK=true
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-aswb" ]]; then
       ASWB=true

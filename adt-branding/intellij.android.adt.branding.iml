@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="commons-imaging" level="project" />
-    <orderEntry type="module" module-name="android.sdktools.testutils" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="truth" level="project" />
   </component>
 </module>
