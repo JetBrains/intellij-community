@@ -63,6 +63,6 @@ public class DuplicatePropertyInspectionTest extends JavaInspectionTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData";
   }
 }

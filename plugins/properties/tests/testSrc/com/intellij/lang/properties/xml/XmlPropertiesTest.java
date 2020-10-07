@@ -106,6 +106,6 @@ public class XmlPropertiesTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/xml/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/xml/";
   }
 }

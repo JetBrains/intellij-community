@@ -30,7 +30,7 @@ public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData";
   }
 
   private void doTest() {

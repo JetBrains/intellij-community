@@ -25,7 +25,7 @@ public class PropertiesFoldingTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/folding/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/folding/";
   }
 
   private void doTest() {

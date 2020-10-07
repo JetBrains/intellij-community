@@ -31,7 +31,7 @@ public class PropertiesJoinLinesTest extends LightPlatformCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/joinLines/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/joinLines/";
   }
 
   public void testProperties() { doTest(); }

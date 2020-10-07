@@ -21,7 +21,7 @@ public class PropertiesParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/psi";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/psi";
   }
 
   public void testProp1() { doTest(true); }

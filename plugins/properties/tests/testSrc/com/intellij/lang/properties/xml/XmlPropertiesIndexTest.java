@@ -21,10 +21,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContentImpl;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,6 +69,6 @@ public class XmlPropertiesIndexTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/xml/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/xml/";
   }
 }

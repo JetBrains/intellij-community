@@ -27,7 +27,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/projectView";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/projectView";
   }
 
   public void testBundle() {

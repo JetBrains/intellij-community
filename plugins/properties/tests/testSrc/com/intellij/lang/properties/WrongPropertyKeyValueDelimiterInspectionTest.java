@@ -28,7 +28,7 @@ public class WrongPropertyKeyValueDelimiterInspectionTest extends LightJavaCodeI
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/wrongPropertyKeyDelimiter";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/wrongPropertyKeyDelimiter";
   }
 
   @Override

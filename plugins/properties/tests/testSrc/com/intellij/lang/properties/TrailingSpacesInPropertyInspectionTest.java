@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class TrailingSpacesInPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData";
   }
 
   public void testSimple() {

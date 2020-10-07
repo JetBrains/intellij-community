@@ -79,6 +79,6 @@ public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/alphaUnsorted/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/alphaUnsorted/";
   }
 }
