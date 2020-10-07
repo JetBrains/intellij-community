@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
@@ -77,6 +79,15 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     final String replacementExpression =
       ExpressionUtils.hasStringType(arguments[0]) ? buildReplacementExpression(arguments, 0, commentTracker)
                                                   : buildReplacementExpression(arguments, 1, commentTracker);
+    final Project project = element.getProject();
+    PsiExpression newCall = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacementExpression, element);
+    if (newCall instanceof PsiPolyadicExpression) {
+      PsiElement insertedElement = ExpressionUtils.replacePolyadicWithParent(methodCallExpression, newCall, commentTracker);
+      if (insertedElement != null) {
+        CodeStyleManager.getInstance(project).reformat(insertedElement);
+        return;
+      }
+    }
     PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression, commentTracker);
   }
 

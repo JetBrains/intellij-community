@@ -95,6 +95,16 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  public void testPsiStructure() {
+    doTest("class PsiStructure{{" +
+           "  String s = \"TEST_DATA_PATH\" + /*_Replace 'String.format()' with concatenation*/String.format(\"templates/MyTemplate.%s.html\", 1);" +
+           "}}",
+
+           "class PsiStructure{{" +
+           "  String s = \"TEST_DATA_PATH\" + \"templates/MyTemplate.\" + 1 + \".html\";" +
+           "}}");
+  }
+
   public void testConditional() {
     doTest("class Info {\n" +
            "\n" +
