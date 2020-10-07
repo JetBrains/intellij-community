@@ -952,7 +952,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
 
-  private static final Key<WeakReference<FileContentImpl>> ourFileContentKey = Key.create("unsaved.document.index.content");
+  private static final Key<WeakReference<Pair<FileContentImpl, Long>>> ourFileContentKey = Key.create("unsaved.document.index.content");
 
   // returns false if doc was not indexed because it is already up to date
   // return true if document was indexed
@@ -985,15 +985,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
           // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
-          WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
-          FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
+          WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
+          Pair<FileContentImpl, Long> previousContentAndStamp = com.intellij.reference.SoftReference.dereference(previousContentAndStampRef);
           final FileContentImpl newFc;
-          if (previousContent != null && Long.valueOf(currentDocStamp).equals(previousContent.getDocumentStamp())) {
-            newFc = previousContent;
+          if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
+            newFc = previousContentAndStamp.getFirst();
           }
           else {
-            newFc = FileContentImpl.createByText(vFile, contentText, currentDocStamp);
-            document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
+            newFc = FileContentImpl.createByText(vFile, contentText);
+            document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
           }
 
           initFileContent(newFc, project, dominantContentFile);
@@ -1041,7 +1041,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
         try {
           FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile)
-                                                                : FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents(), 0);
+                                                                : FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents());
           initFileContent(fc, project, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);

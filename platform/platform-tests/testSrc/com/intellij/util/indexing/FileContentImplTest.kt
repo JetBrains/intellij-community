@@ -50,7 +50,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     val text = "a\r\nb"
     val textBytes = text.toByteArray()
     val virtualFile = createInputFile(textBytes)
-    val content = FileContentImpl.createByText(virtualFile, text, 0)
+    val content = FileContentImpl.createByText(virtualFile, text)
     assertEquals(text, content.contentAsText)
     assertArrayEquals(textBytes, content.content)
   }

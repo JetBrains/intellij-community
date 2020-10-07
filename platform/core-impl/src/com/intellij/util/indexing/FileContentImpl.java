@@ -32,7 +32,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText;
-  private final @Nullable Long myDocumentStamp;
   private byte[] myIndexedFileHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
@@ -41,12 +40,10 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
                           @NotNull FileType fileType,
                           @Nullable CharSequence contentAsText,
                           @NotNull NotNullComputable<byte[]> contentComputable,
-                          @Nullable Long documentStamp,
                           boolean physicalContent) {
     super(file, fileType, null);
     myContentAsText = contentAsText;
     myContentComputable = contentComputable;
-    myDocumentStamp = documentStamp;
     myPhysicalContent = physicalContent;
   }
 
@@ -124,13 +121,13 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file, byte @NotNull [] content) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
-    return new FileContentImpl(file, fileType, null, () -> content, null, true);
+    return new FileContentImpl(file, fileType, null, () -> content, true);
   }
 
   public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file,
                                                          @NotNull NotNullComputable<byte[]> contentComputable) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
-    return new FileContentImpl(file, fileType, null, contentComputable, null, true);
+    return new FileContentImpl(file, fileType, null, contentComputable, true);
   }
 
   public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file) throws IOException {
@@ -145,9 +142,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  public static @NotNull FileContentImpl createByText(@NotNull final VirtualFile file,
-                                                      @NotNull final CharSequence contentAsText,
-                                                      long documentStamp) {
+  public static @NotNull FileContentImpl createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     return new FileContentImpl(file,
                                fileType,
@@ -155,7 +150,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
                                () -> {
                                  throw new IllegalStateException("Content must be converted from 'contentAsText'");
                                },
-                               documentStamp,
                                false);
   }
 
@@ -172,11 +166,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
       myCharset = charset = myFile.getCharset();
     }
     return charset;
-  }
-
-  @Nullable("Null for physical file contents, non-null for document-based contents")
-  public Long getDocumentStamp() {
-    return myDocumentStamp;
   }
 
   public boolean isPhysicalContent() {
