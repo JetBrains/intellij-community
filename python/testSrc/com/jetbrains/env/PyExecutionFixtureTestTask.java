@@ -154,9 +154,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     if (StringUtil.isNotEmpty(myRelativeTestDataPath)) {
       // Without performing the copy deliberately in the EDT, this code may stuck in a livelock for unclear reason.
-      ApplicationManager.getApplication().invokeAndWait(
-        () -> myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath(),
-        ModalityState.any());
+      EdtTestUtil.runInEdtAndWait(() -> myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath());
     }
 
     final VirtualFile projectRoot = myFixture.getTempDirFixture().getFile(".");
