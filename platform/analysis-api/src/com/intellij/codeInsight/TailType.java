@@ -92,7 +92,7 @@ public abstract class TailType {
    */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   /**
-   * insert a space unless there's one at the caret position already, followed by a word
+   * insert a space unless there's one at the caret position already, followed by a word or '@'
    */
   public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
 
@@ -100,8 +100,11 @@ public abstract class TailType {
     public boolean isApplicable(@NotNull InsertionContext context) {
       CharSequence text = context.getDocument().getCharsSequence();
       int tail = context.getTailOffset();
-      if (text.length() > tail + 1 && text.charAt(tail) == ' ' && Character.isLetter(text.charAt(tail + 1))) {
-        return false;
+      if (text.length() > tail + 1 && text.charAt(tail) == ' ') {
+        char ch = text.charAt(tail + 1);
+        if (ch == '@' || Character.isLetter(ch)) {
+          return false;
+        }
       }
       return super.isApplicable(context);
     }

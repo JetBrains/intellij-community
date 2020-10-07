@@ -2245,4 +2245,11 @@ class Abc {
     myFixture.type('\n')
     myFixture.checkResult("import java.util.*; class X { Map<String, Object> getMap() { return (Map<String, Object>) <caret>}}")
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test no extra space after modifier"() {
+    myFixture.configureByText("a.java", "import java.util.*; class X { prot<caret> @NotNull String foo() {}}")
+    myFixture.completeBasic()
+    myFixture.checkResult("import java.util.*; class X { protected<caret> @NotNull String foo() {}}")
+  }
 }
