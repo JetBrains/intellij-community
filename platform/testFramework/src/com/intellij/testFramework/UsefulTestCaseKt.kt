@@ -4,6 +4,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 
 
 private fun setSystemProperty(key: String, value: String?) : String? {
@@ -23,3 +24,18 @@ fun UsefulTestCase.setSystemPropertyForTest(key: String, value: String?) {
   })
 }
 
+private fun UsefulTestCase.bindRegistryKeyReset(key: String) {
+  Disposer.register(testRootDisposable, Disposable {
+    Registry.get(key).resetToDefault()
+  })
+}
+
+fun UsefulTestCase.setRegistryPropertyForTest(key: String, value: String) {
+  Registry.get(key).setValue(value)
+  bindRegistryKeyReset(key)
+}
+
+fun UsefulTestCase.setRegistryPropertyForTest(key: String, value: Boolean) {
+  Registry.get(key).setValue(value)
+  bindRegistryKeyReset(key)
+}
