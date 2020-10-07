@@ -249,9 +249,11 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
       } else if (!myNotValues.containsAll(otherNotValues)) {
         notValues = new THashSet<>(myNotValues);
         notValues.addAll(otherNotValues);
-        DfEphemeralReferenceType ephemeralValue = checkEphemeral(constraint, notValues);
-        if (ephemeralValue != null) {
-          return ephemeralValue;
+        if (nullability == DfaNullability.NOT_NULL) {
+          DfEphemeralReferenceType ephemeralValue = checkEphemeral(constraint, notValues);
+          if (ephemeralValue != null) {
+            return ephemeralValue;
+          }
         }
       }
     }
