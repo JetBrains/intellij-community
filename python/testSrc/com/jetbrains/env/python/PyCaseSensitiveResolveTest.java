@@ -28,7 +28,7 @@ public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
 
       @Override
       public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
-        createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
+        createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myFixture.copyDirectoryToProject("", "");
           myFixture.configureByFile("test.py");
