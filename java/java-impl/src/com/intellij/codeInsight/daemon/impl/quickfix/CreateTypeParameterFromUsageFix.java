@@ -168,6 +168,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodCallExpression ||
           parent instanceof PsiJavaCodeReferenceElement ||
+          parent instanceof PsiReferenceList ||
           parent instanceof PsiNewExpression ||
           parent instanceof PsiAnnotation ||
           (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiClassObjectAccessExpression) ||
