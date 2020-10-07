@@ -258,12 +258,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return psi;
   }
 
-  @Override
-  public Project getProject() {
-    Project project = super.getProject();
-    return project != null ? project : getUserData(IndexingDataKeys.PROJECT);
-  }
-
   @ApiStatus.Internal
   @NotNull
   public static FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
