@@ -422,9 +422,9 @@ public final class StubIndexImpl extends StubIndexEx {
       return true;
     }
 
-    if (idFilter == null) {
-      idFilter = fileBasedIndexEx.projectIndexableFiles(scope.getProject());
-    }
+    //if (idFilter == null) {
+    //  idFilter = fileBasedIndexEx.projectIndexableFiles(scope.getProject());
+    //}
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
