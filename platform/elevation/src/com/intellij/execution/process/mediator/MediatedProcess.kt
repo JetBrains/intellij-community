@@ -7,11 +7,11 @@ import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import java.io.*
 import java.lang.ref.Cleaner
-import java.util.concurrent.Executors
 
 private val CLEANER = Cleaner.create()
 
@@ -46,8 +46,8 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   }
 
   private val stdin: OutputStream = if (handle.inFile != null) OutputStream.nullOutputStream() else createOutputStream(0)
-  private val stdout: InputStream = createPipedInputStream(1)
-  private val stderr: InputStream = createPipedInputStream(2)
+  private val stdout: InputStream = createInputStream(1)
+  private val stderr: InputStream = createInputStream(2)
 
   private val termination: Deferred<Int> = handle.async {
     handle.rpc {
@@ -72,25 +72,15 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
     return BufferedOutputStream(stream)
   }
 
-  private fun createPipedInputStream(fd: Int): PipedInputStream {
-    val outputStream = PipedOutputStream()
-    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    handle.launch(dispatcher) {
+  private fun createInputStream(fd: Int): InputStream {
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    val channel = handle.produce(capacity = Channel.BUFFERED) {
       handle.rpc {
-        @Suppress("BlockingMethodInNonBlockingContext")
-        outputStream.use { outputStream ->
-          processMediatorClient.readStream(pid.await(), fd).collect { chunk ->
-            withContext(dispatcher) {
-              outputStream.write(chunk.toByteArray())
-              outputStream.flush()
-            }
-          }
-        }
+        processMediatorClient.readStream(pid.await(), fd).collect(channel::send)
       }
-    }.invokeOnCompletion {
-      dispatcher.close()
     }
-    return PipedInputStream(outputStream)
+    val stream = ChannelInputStream(channel)
+    return BufferedInputStream(stream)
   }
 
   override fun waitFor(): Int = termination.blockingGet()
