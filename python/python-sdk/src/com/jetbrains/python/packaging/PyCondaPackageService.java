@@ -35,7 +35,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   private static final String CONDA_ENVS_DIR = "envs";
 
-  @Nullable @SystemDependent public String PREFERRED_CONDA_PATH = null;
+  @Nullable @SystemDependent private String PREFERRED_CONDA_PATH = null;
 
   @Override
   public PyCondaPackageService getState() {
@@ -52,8 +52,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public String getCondaPython() {
-    final String conda = StringUtil.defaultIfEmpty(PREFERRED_CONDA_PATH, getSystemCondaExecutable());
+  private static String getCondaPython() {
+    final String conda = getCondaExecutable(null);
     if (conda != null) {
       final String python = getCondaBasePython(conda);
       if (python != null) return python;
@@ -88,6 +88,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
+  @SystemDependent
   public static String getCondaExecutable(@Nullable String sdkPath) {
     if (sdkPath != null) {
       String condaPath = findCondaExecutableRelativeToEnv(sdkPath);
@@ -99,6 +100,10 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     }
 
     return getSystemCondaExecutable();
+  }
+
+  public static void onCondaEnvCreated(@NotNull @SystemDependent String condaExecutable) {
+    getInstance().PREFERRED_CONDA_PATH = condaExecutable;
   }
 
   @Nullable
@@ -187,7 +192,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public Multimap<String, String> listAllPackagesAndVersions() {
+  public static Multimap<String, String> listAllPackagesAndVersions() {
     try {
       final String output = runCondaPackagingHelper("listall");
       final Multimap<String, String> nameToVersions =
@@ -206,19 +211,19 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  public List<String> listPackageVersions(@NotNull String packageName) throws ExecutionException {
+  public static List<String> listPackageVersions(@NotNull String packageName) throws ExecutionException {
     final String output = runCondaPackagingHelper("versions", packageName);
     return StringUtil.split(output, "\n");
   }
 
-  @Nullable
-  public List<String> listChannels() throws ExecutionException {
+  @NotNull
+  public static List<String> listChannels() throws ExecutionException {
     final String output = runCondaPackagingHelper("channels");
     return StringUtil.split(output, "\n");
   }
 
   @NotNull
-  private String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
+  private static String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
     final List<String> commandArgs = new ArrayList<>();
     commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
     commandArgs.addAll(Arrays.asList(args));

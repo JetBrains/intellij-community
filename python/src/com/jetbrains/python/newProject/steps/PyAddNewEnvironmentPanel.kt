@@ -92,7 +92,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
   }
 
   private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
-    val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
+    val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath)
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
 
     val envPanelsFromProviders = PySdkProvider.EP_NAME.extensions()

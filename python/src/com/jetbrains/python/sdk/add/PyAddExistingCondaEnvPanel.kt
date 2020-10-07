@@ -52,7 +52,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val sdkComboBox = PySdkPathChoosingComboBox()
   private val condaPathField = TextFieldWithBrowseButton().apply {
-    val path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH ?: PyCondaPackageService.getSystemCondaExecutable()
+    val path = PyCondaPackageService.getCondaExecutable(null)
     if (path != null) {
       text = path
     }
@@ -102,7 +102,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     val sdk = sdkComboBox.selectedSdk
-    PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPathField.text
+    PyCondaPackageService.onCondaEnvCreated(condaPathField.text)
     return when (sdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
         if (!makeSharedField.isSelected) {

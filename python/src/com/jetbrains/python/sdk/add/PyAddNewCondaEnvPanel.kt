@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -39,18 +38,19 @@ import javax.swing.event.DocumentEvent
 /**
  * @author vlan
  */
-class PyAddNewCondaEnvPanel(private val project: Project?,
-                            private val module: Module?,
-                            private val existingSdks: List<Sdk>,
-                            newProjectPath: String?,
-                            context: UserDataHolder) : PyAddNewEnvPanel() {
+class PyAddNewCondaEnvPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  newProjectPath: String?
+) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val languageLevelsField: JComboBox<String>
   private val condaPathField = TextFieldWithBrowseButton().apply {
-    val path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH ?: PyCondaPackageService.getSystemCondaExecutable()
+    val path = PyCondaPackageService.getCondaExecutable(null)
     path?.let {
       text = it
     }
@@ -116,7 +116,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
-    PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPath
+    PyCondaPackageService.onCondaEnvCreated(condaPath)
     return sdk
   }
 

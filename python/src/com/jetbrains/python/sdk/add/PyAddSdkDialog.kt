@@ -242,7 +242,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
     val newCondaEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null, context)
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null)
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
