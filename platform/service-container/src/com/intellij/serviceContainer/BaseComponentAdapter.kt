@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -139,8 +138,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     if (componentManager.isDisposed) {
       throwAlreadyDisposedError(componentManager, indicator)
     }
-    // assertion only for non-platform plugins
-    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+    if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
         if (indicator == null) {

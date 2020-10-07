@@ -484,7 +484,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     // assertion only for non-platform plugins
     val classLoader = serviceClass.classLoader
-    if (classLoader is PluginAwareClassLoader && classLoader.pluginId != PluginManagerCore.CORE_ID) {
+    if (classLoader is PluginAwareClassLoader && !isGettingServiceAllowedDuringPluginUnloading(classLoader.pluginDescriptor)) {
       componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException("Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this")
         if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
@@ -1035,4 +1035,8 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   else {
     throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
+}
+
+internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
+  return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }
