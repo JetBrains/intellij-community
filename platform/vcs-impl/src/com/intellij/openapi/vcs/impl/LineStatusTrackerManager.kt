@@ -78,7 +78,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  private var partialChangeListsEnabled : Boolean = false
+  private var partialChangeListsEnabled: Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
   private var clmFreezeCounter: Int = 0
 
@@ -721,7 +721,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
-      if (changeList != null && !changeList.isDefault) {
+      val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
+      if (inAnotherChangelist) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
@@ -1276,7 +1277,8 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
         status != FileStatus.NOT_CHANGED) return false
 
     val change = ChangeListManager.getInstance(project).getChange(file)
-    return change != null && change.javaClass == Change::class.java &&
+    return change == null ||
+           change.javaClass == Change::class.java &&
            (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
            change.afterRevision is CurrentContentRevision
   }
