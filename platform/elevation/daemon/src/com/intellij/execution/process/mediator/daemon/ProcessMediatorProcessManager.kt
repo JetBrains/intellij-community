@@ -5,7 +5,9 @@ import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDERR
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDIN
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -89,6 +91,7 @@ internal class ProcessMediatorProcessManager {
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
+        process.onExit().whenComplete { _, _ -> cancel(CancellationException("Process exited")) }
         chunkFlow.collect { chunk ->
           val buffer = chunk.toByteArray()
           outputStream.write(buffer)
