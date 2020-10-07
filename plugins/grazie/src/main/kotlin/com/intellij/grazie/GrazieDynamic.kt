@@ -46,6 +46,7 @@ internal object GrazieDynamic : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
+      Authenticator.setDefault(null)
     }
   }
 
@@ -53,7 +54,6 @@ internal object GrazieDynamic : DynamicPluginListener {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
     }
-    if (Authenticator.getDefault() is PasswordAuthenticator) Authenticator.setDefault(null)
   }
 
   fun addDynClassLoader(classLoader: ClassLoader) = myDynClassLoaders.add(classLoader)
