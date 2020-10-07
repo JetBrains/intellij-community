@@ -50,12 +50,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
   @NotNull
-  @Override
-  public PsiFile getPsiFile() {
-    return getPsiFileForPsiDependentIndex();
-  }
-
-  @NotNull
   private PsiFile getFileFromText() {
     PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
@@ -231,13 +225,9 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     myIndexedFileHash = fileContentHash;
   }
 
-  /**
-   * @deprecated use {@link FileContent#getPsiFile()}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Override
   @NotNull
-  public PsiFile getPsiFileForPsiDependentIndex() {
+  public PsiFile getPsiFile() {
     PsiFile psi = null;
     if (!myPhysicalContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
