@@ -12,7 +12,7 @@ internal fun <T> Deferred<T>.blockingGet(): T =
     getCompleted()
   }
   else {
-    runBlocking {
+    runBlocking(Dispatchers.Unconfined) {
       await()
     }
   }
