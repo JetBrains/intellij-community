@@ -54,7 +54,7 @@ public abstract class PyRootTypeProvider {
   public abstract MultiMap<ContentEntry, VirtualFilePointer> getRoots();
 
   /**
-   * Returns the icon of the action for marking a directory with this root type in "Project Structure".
+   * Returns the icon for the corresponding root directories in "Project Structure".
    */
   public abstract Icon getIcon();
 
@@ -87,25 +87,25 @@ public abstract class PyRootTypeProvider {
    */
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
-  public String getFolderGroupTitle() {
+  public String getRootsGroupTitle() {
     //noinspection DialogTitleCapitalization
     return getDescription();
   }
 
   /**
-   * @deprecated Use {@link #getFolderGroupColor()}
+   * @deprecated Use {@link #getRootsGroupColor()}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   public Color getColor() {
-    throw new AbstractMethodError(getClass().getSimpleName() + " should override getFolderGroupColor()");
+    throw new AbstractMethodError(getClass().getSimpleName() + " should override getRootsGroupColor()");
   }
 
   /**
    * Returns the color of the list of paths to the corresponding directories in "Project Structure".
    */
   @NotNull
-  public Color getFolderGroupColor() {
+  public Color getRootsGroupColor() {
     return getColor();
   }
 
