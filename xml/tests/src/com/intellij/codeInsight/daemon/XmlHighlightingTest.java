@@ -12,10 +12,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.DTDFileType;
-import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.highlighter.XHtmlFileType;
-import com.intellij.ide.highlighter.XmlHighlighterFactory;
+import com.intellij.ide.highlighter.*;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
@@ -46,6 +43,7 @@ import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -66,6 +64,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.intellij.model.psi.PsiSymbolReference.getReferenceText;
 
@@ -1233,6 +1233,20 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       PsiElement psiElement = rootTag.getReferences()[0].resolve();
       assertTrue(((Navigatable)psiElement).canNavigate());
     });
+  }
+
+  public void testBigPrologHighlightingPerformance() {
+    MadTestingUtil.enableAllInspections(myProject);
+    configureByText(XmlFileType.INSTANCE,
+                    "<!DOCTYPE rules [\n" +
+                    IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
+                    "]>\n" +
+                    "<rules/>");
+    PlatformTestUtil
+      .startPerformanceTest("highlighting", 4_000, () -> doHighlighting())
+      .setup(() -> getPsiManager().dropPsiCaches())
+      .usesAllCPUCores()
+      .assertTiming();
   }
 
   public void testDocBookHighlighting2() throws Exception {
