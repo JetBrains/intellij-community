@@ -134,7 +134,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   override fun getAnnotation(fqn: String): PsiAnnotation? = getAnnotation(codeClass, fqn)
 
   override fun isInheritor(baseClass: PsiClass): Boolean {
-    if (manager.areElementsEquivalent(codeClass, baseClass)) return false
+    if (manager.areElementsEquivalent(codeClass, baseClass)) return true
     if (codeClass.isInterface && !baseClass.isInterface) return false
 
     for (superType in superTypes) {
