@@ -11,7 +11,6 @@ import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -34,6 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.TestCaseLoader.*;
 
@@ -45,7 +45,7 @@ public class TestAll implements Test {
 
   private static final String MAX_FAILURE_TEST_COUNT_FLAG = "idea.max.failure.test.count";
 
-  private static final int MAX_FAILURE_TEST_COUNT = Integer.parseInt(ObjectUtils.chooseNotNull(
+  private static final int MAX_FAILURE_TEST_COUNT = Integer.parseInt(Objects.requireNonNullElse(
     System.getProperty(MAX_FAILURE_TEST_COUNT_FLAG),
     "150"
   ));
