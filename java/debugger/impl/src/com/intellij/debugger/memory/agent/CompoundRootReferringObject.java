@@ -5,8 +5,10 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -17,13 +19,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class GCRootReferringObject implements ReferringObject {
-  private final MemoryAgentReferenceKind myKind;
+public class CompoundRootReferringObject implements ReferringObject {
+  private final MemoryAgentReferenceKind[] myKinds;
 
-  public GCRootReferringObject(@NotNull MemoryAgentReferenceKind kind) {
-    this.myKind = kind;
+  public CompoundRootReferringObject(MemoryAgentReferenceKind @NotNull[] kinds) {
+    myKinds = ContainerUtil.set(kinds).toArray(new MemoryAgentReferenceKind[0]);
   }
 
   @NotNull
@@ -32,7 +36,7 @@ public class GCRootReferringObject implements ReferringObject {
     return new ValueDescriptorImpl(project, null) {
       @Override
       public String getName() {
-        return "Ref";
+        return "";
       }
 
       @Override
@@ -53,7 +57,7 @@ public class GCRootReferringObject implements ReferringObject {
     return node -> new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
       @Override
       public void applyPresentation(@Nullable Icon icon, @NotNull final XValuePresentation valuePresenter, boolean hasChildren) {
-        node.setPresentation(icon, new XValuePresentation() {
+        node.setPresentation(AllIcons.Nodes.Record, new XValuePresentation() {
           @NotNull
           @Override
           public String getSeparator() {
@@ -68,10 +72,7 @@ public class GCRootReferringObject implements ReferringObject {
 
           @Override
           public void renderValue(@NotNull XValueTextRenderer renderer) {
-            String additionalInfo = getAdditionalInfo();
-            renderer.renderValue(String.format("%s reference %s", myKind.toString().replace('_', ' '),
-                                               additionalInfo == null ? "" : additionalInfo));
-
+            renderer.renderValue(Arrays.stream(myKinds).map(kind -> kind.toString() + " reference").collect(Collectors.joining(", ")));
           }
         }, hasChildren);
       }
@@ -83,11 +84,6 @@ public class GCRootReferringObject implements ReferringObject {
   }
 
   @NotNull
-  public MemoryAgentReferenceKind getKind() {
-    return myKind;
-  }
-
-  @NotNull
   @Override
   public String getNodeName(int order) {
     return "Root";
@@ -95,12 +91,7 @@ public class GCRootReferringObject implements ReferringObject {
 
   @Nullable
   @Override
-  public  ObjectReference getReference() {
-    return null;
-  }
-
-  @Nullable
-  protected String getAdditionalInfo() {
+  public ObjectReference getReference() {
     return null;
   }
 }

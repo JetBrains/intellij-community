@@ -5,6 +5,8 @@ import com.intellij.debugger.engine.ReferringObject
 import com.intellij.debugger.memory.agent.*
 import com.intellij.openapi.util.Pair
 import com.sun.jdi.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 object StringParser : ResultParser<String> {
   override fun parse(value: Value): String {
@@ -85,15 +87,11 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
 
       val distinctIndices = mutableSetOf<Int>()
-      val referenceInfos =  mutableListOf<ReferringObject>()
+      val referenceInfos =  LinkedList<ReferringObject>()
+      val rootReferenceKinds = mutableListOf<MemoryAgentReferenceKind>()
       for ((i, index) in indices.withIndex()) {
         if (index == -1) {
-          referenceInfos.add(
-            MemoryAgentReferringObjectCreator.createRootReferringObject(
-              MemoryAgentReferenceKind.valueOf(kinds[i]),
-              infos.getValue(i)
-            )
-          )
+          rootReferenceKinds.add(MemoryAgentReferenceKind.valueOf(kinds[i]))
         } else if (!distinctIndices.contains(index)) {
           distinctIndices.add(index)
           referenceInfos.add(
@@ -107,6 +105,9 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
         }
       }
 
+      if (rootReferenceKinds.isNotEmpty()) {
+        referenceInfos.add(0, CompoundRootReferringObject(rootReferenceKinds.toTypedArray()))
+      }
       result.add(referenceInfos)
     }
 
@@ -142,13 +143,25 @@ object ShallowAndRetainedSizeParser : ResultParser<Pair<List<Long>, List<Long>>>
   }
 }
 
-object SizeAndHeldObjectsParser : ResultParser<Pair<Long, List<ObjectReference>>> {
-  override fun parse(value: Value): Pair<Long, List<ObjectReference>> {
+object SizeAndHeldObjectsParser : ResultParser<Pair<Array<Long>, Array<ObjectReference>>> {
+  override fun parse(value: Value): Pair<Array<Long>, Array<ObjectReference>> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
     if (value.length() < 2) throw UnexpectedValueFormatException("long and array of objects expected")
     return Pair(
-      LongArrayParser.parse(value.getValue(0))[0],
-      ObjectReferencesParser.parse(value.getValue(1))
+      LongArrayParser.parse(value.getValue(0)).toTypedArray(),
+      ObjectReferencesParser.parse(value.getValue(1)).toTypedArray()
+    )
+  }
+}
+
+object ErrorCodeParser : ResultParser<Pair<MemoryAgentActionResult.ErrorCode, Value>> {
+  override fun parse(value: Value): Pair<MemoryAgentActionResult.ErrorCode, Value> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    return Pair(
+      MemoryAgentActionResult.ErrorCode.valueOf(
+        IntArrayParser.parse(value.getValue(0))[0]
+      ),
+      value.getValue(1)
     )
   }
 }
@@ -173,12 +186,16 @@ object MemoryAgentReferringObjectCreator {
     value: Value?): GCRootReferringObject {
     return if (value == null) GCRootReferringObject(kind) else
       when (kind) {
-        MemoryAgentReferenceKind.STACK_LOCAL,
+        MemoryAgentReferenceKind.STACK_LOCAL -> {
+          if (value !is ArrayReference) return GCRootReferringObject(kind)
+          val methodName = StringArrayParser.parse(value.getValue(1))[0] ?: return GCRootReferringObject(kind)
+          val longs = LongArrayParser.parse(value.getValue(0))
+          StackLocalReferringObject(kind, methodName, longs[0], longs[1])
+        }
         MemoryAgentReferenceKind.JNI_LOCAL -> {
           if (value !is ArrayReference) return GCRootReferringObject(kind)
           val longs = LongArrayParser.parse(value.getValue(0))
-          val methodName = value.getValue(1)?.let { StringArrayParser.parse(it)[0] }
-          StackLocalReferringObject(kind, methodName, longs[0], longs[1])
+          JNILocalReferringObject(kind, longs[0], longs[1])
         }
         else -> GCRootReferringObject(kind)
       }

@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -19,27 +20,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class GCRootReferringObject implements ReferringObject {
-  private final MemoryAgentReferenceKind myKind;
-
-  public GCRootReferringObject(@NotNull MemoryAgentReferenceKind kind) {
-    this.myKind = kind;
-  }
-
+public class CalculationTimeoutReferringObject implements ReferringObject {
   @NotNull
   @Override
   public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ValueDescriptorImpl(project, null) {
+      @NotNull
       @Override
       public String getName() {
-        return "Ref";
+        return "";
       }
 
+      @Nullable
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
         return null;
       }
 
+      @Nullable
       @Override
       public PsiExpression getDescriptorEvaluation(DebuggerContext context) {
         return null;
@@ -57,7 +55,7 @@ public class GCRootReferringObject implements ReferringObject {
           @NotNull
           @Override
           public String getSeparator() {
-            return ": ";
+            return "";
           }
 
           @Nullable
@@ -68,10 +66,7 @@ public class GCRootReferringObject implements ReferringObject {
 
           @Override
           public void renderValue(@NotNull XValueTextRenderer renderer) {
-            String additionalInfo = getAdditionalInfo();
-            renderer.renderValue(String.format("%s reference %s", myKind.toString().replace('_', ' '),
-                                               additionalInfo == null ? "" : additionalInfo));
-
+            renderer.renderValue(JavaDebuggerBundle.message("debugger.memory.agent.timeout.error"));
           }
         }, hasChildren);
       }
@@ -82,25 +77,15 @@ public class GCRootReferringObject implements ReferringObject {
     };
   }
 
-  @NotNull
-  public MemoryAgentReferenceKind getKind() {
-    return myKind;
-  }
-
-  @NotNull
-  @Override
-  public String getNodeName(int order) {
-    return "Root";
-  }
-
   @Nullable
   @Override
-  public  ObjectReference getReference() {
+  public String getNodeName(int order) {
     return null;
   }
 
   @Nullable
-  protected String getAdditionalInfo() {
+  @Override
+  public ObjectReference getReference() {
     return null;
   }
 }

@@ -55,7 +55,7 @@ public class RetainedSizeDialog extends DialogWrapper {
   private final BorderLayoutPanel myPanel;
   private final NodeHighlighter myHighlighter;
   private final String myRootName;
-  private final JBLabel myRetainedSizeLabel;
+  private JBLabel myRetainedSizeLabel;
 
   public RetainedSizeDialog(@NotNull Project project,
                             XDebuggerEditorsProvider editorsProvider,
@@ -78,20 +78,9 @@ public class RetainedSizeDialog extends DialogWrapper {
     myHeldObjects = new HashSet<>();
     myRootName = name;
 
-    JBPanel topPanel = new JBPanel<>();
-    topPanel.setLayout(new VerticalFlowLayout());
-    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
-    topPanel.add(myRetainedSizeLabel);
-    topPanel.add(
-      new JBLabel(
-        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
-        AllIcons.General.Information,
-        SwingConstants.LEFT
-      )
-    );
     myPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
-      .addToTop(topPanel);
+      .addToTop(createTopPanel());
 
     if (session != null) {
       session.addSessionListener(new XDebugSessionListener() {
@@ -112,7 +101,11 @@ public class RetainedSizeDialog extends DialogWrapper {
     init();
   }
 
-  public void setHeldObjectsAndRetainedSize(@NotNull Collection<? extends ObjectReference> heldObjects, long retainedSize) {
+  public void setCalculationTimeout() {
+    myRetainedSizeLabel.setText(JavaDebuggerBundle.message("debugger.memory.agent.timeout.error"));
+  }
+
+  public void setHeldObjectsAndSizes(@NotNull Collection<? extends ObjectReference> heldObjects, long shallowSize, long retainedSize) {
     myHeldObjects.clear();
     myHeldObjects.addAll(heldObjects);
     highlightLoadedChildren();
@@ -120,6 +113,7 @@ public class RetainedSizeDialog extends DialogWrapper {
       JavaDebuggerBundle.message(
         "action.calculate.retained.size.text",
         myRootName,
+        StringUtil.formatFileSize(shallowSize),
         StringUtil.formatFileSize(retainedSize)
       )
     );
@@ -175,6 +169,22 @@ public class RetainedSizeDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
+  private JBPanel createTopPanel() {
+    JBPanel panel = new JBPanel<>();
+    panel.setLayout(new VerticalFlowLayout());
+    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
+    panel.add(myRetainedSizeLabel);
+    panel.add(
+      new JBLabel(
+        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
+        AllIcons.General.Information,
+        SwingConstants.LEFT
+      )
+    );
+    return panel;
+  }
+
   private class NodeHighlighter implements XDebuggerTreeListener {
     private boolean mySkipNotification;
     private final Map<Icon, Icon> myCachedIcons;
@@ -188,10 +198,9 @@ public class RetainedSizeDialog extends DialogWrapper {
     public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
       if (!mySkipNotification && node instanceof XValueNodeImpl) {
         XValueNodeImpl nodeImpl = (XValueNodeImpl)node;
-        if (myHeldObjects.contains(getObjectReference(nodeImpl))) {
+        if (nodeImpl != nodeImpl.getTree().getRoot() && myHeldObjects.contains(getObjectReference(nodeImpl))) {
           XValuePresentation presentation = nodeImpl.getValuePresentation();
-          Icon icon = nodeImpl.getIcon();
-          if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
+          if (presentation != null && nodeImpl.getIcon() != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
             highlightNode(nodeImpl);
           }
         }
