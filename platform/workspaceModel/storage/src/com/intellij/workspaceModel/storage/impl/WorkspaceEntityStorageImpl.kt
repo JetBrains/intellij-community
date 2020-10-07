@@ -405,9 +405,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties)) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith)
-                                     ?: rbsFailedAndReport("PersistentId expected for $matchedEntityData", sourceFilter, initialStore,
-                                                           replaceWith, this, initialChangeLogSize)
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected for $matchedEntityData")
             clonedEntity.id = localNode.id
             val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
@@ -598,18 +596,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                  left: WorkspaceEntityStorage,
                                  right: WorkspaceEntityStorage,
                                  resulting: WorkspaceEntityStorageBuilder,
-                                 initialChangeLogSize: Int): Nothing {
+                                 initialChangeLogSize: Int) {
     reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting, initialChangeLogSize)
-    rbsFailed(message)
   }
 
   private fun addDiffAndReport(message: String,
                                left: WorkspaceEntityStorage,
                                right: WorkspaceEntityStorage,
                                resulting: WorkspaceEntityStorageBuilder,
-                               initialChangeLogSize: Int): Nothing {
+                               initialChangeLogSize: Int) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting, initialChangeLogSize)
-    adFailed(message)
   }
 
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
@@ -714,7 +710,21 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPersistentId = change.entityData.persistentId(this)
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-            if (existingIds != null && existingIds.isNotEmpty()) addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
+            if (existingIds != null && existingIds.isNotEmpty()) {
+              // This persistent id exists already.
+              // This is a bad at the moment, but theoretically it's possible to add entity and rename it.
+              //   In this situation this should be fine. But at the moment we don't support it.
+              val existingEntity = this.entityDataByIdOrDie(existingIds.single()).createEntity(this)
+              removeEntityAndAssertConsistency(existingEntity, false)
+              addDiffAndReport(
+                """
+                  addDiff: persistent id already exists. Replacing entity with the new one.
+                  Persistent id: $newPersistentId
+                  
+                  Existing entity data: $existingEntity
+                  New entity data: ${change.entityData}
+                  """.trimIndent(), initialStorage, diff, this, initialChangeLogSize)
+            }
           }
 
           val updatedChildren = change.children.mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
@@ -753,7 +763,19 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
             if (existingIds != null && existingIds.isNotEmpty() && existingIds.single() != newData.createPid()) {
-              addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
+              // This persistent id exists already.
+              // This is a bad at the moment, but theoretically it's possible to add entity and rename it.
+              //   In this situation this should be fine. But at the moment we don't support it.
+              val existingEntity = this.entityDataByIdOrDie(existingIds.single()).createEntity(this)
+              removeEntityAndAssertConsistency(existingEntity, false)
+              addDiffAndReport(
+                """
+                  addDiff: persistent id already exists. Removing old entity
+                  Persistent id: $newPersistentId
+                  
+                  Existing entity data: $existingEntity
+                  New entity data: ${change.newData}
+                  """.trimIndent(), initialStorage, diff, this, initialChangeLogSize)
             }
           }
 
