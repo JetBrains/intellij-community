@@ -5,7 +5,10 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.NonNls
 import java.util.stream.Stream
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
+import javax.swing.event.TreeSelectionEvent
+import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
 class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, false) {
@@ -58,13 +63,20 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     }, parentDisposable)
     addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
-        val node = event.path.lastPathComponent as? ChangesBrowserNode<*> ?: return
-        val stashInfo = node.userObject as? StashInfo ?: return
-        stashCache.loadStashData(stashInfo)
+        loadStash(event.path)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) = Unit
     })
+    addTreeSelectionListener { event: TreeSelectionEvent ->
+      loadStash(event.path)
+    }
+  }
+
+  private fun loadStash(treePath: TreePath) {
+    val node = treePath.lastPathComponent as? ChangesBrowserNode<*> ?: return
+    val stashInfo = node.userObject as? StashInfo ?: return
+    stashCache.loadStashData(stashInfo)
   }
 
   override fun rebuildTree() {
