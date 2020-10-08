@@ -98,6 +98,27 @@ internal class ProcessMediatorTest {
   }
 
   @Test
+  internal fun `write to externally closed stream`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.StreamInterruptor::class)
+      .startMediatedProcess()
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertFalse(hasExited)
+
+    try {
+      OutputStreamWriter(process.outputStream).use {
+        it.write("test\n")
+        it.flush()
+      }
+      fail()
+    }
+    catch (expected: IOException) {}
+    finally {
+      destroyProcess(process)
+    }
+  }
+
+  @Test
   internal fun `read from closed stream`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
