@@ -33,14 +33,12 @@ import java.util.stream.Stream;
 public enum LanguageLevel {
 
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
   PYTHON24(24, false, true, false, false),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
   PYTHON25(25, false, true, false, false),
   /**
    * @apiNote This level is not supported since 2019.1.
@@ -48,28 +46,24 @@ public enum LanguageLevel {
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    * Use it only to distinguish Python 2 and Python 3.
    * Consider using {@link LanguageLevel#isPython2()}.
    * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
    * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
    */
-  @Deprecated
   PYTHON30(300, true, false, false, true),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
   PYTHON31(301, true, false, true, true),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
   PYTHON32(302, true, false, true, true),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
   PYTHON33(303, true, false, true, true),
   /**
    * @apiNote This level is not supported since 2019.1.
