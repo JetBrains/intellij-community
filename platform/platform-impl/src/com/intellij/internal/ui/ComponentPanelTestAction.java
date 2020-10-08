@@ -15,10 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -106,6 +108,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
       "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
+    private static final String GOT_IT_HEADER = "IDE features trainer";
+    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
@@ -135,7 +140,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("ComboBox", createComboBoxTab());
 
       pane.addChangeListener(e -> {
-        if (pane.getSelectedIndex() == 2) {
+        if (pane.getSelectedIndex() == 4) {
           myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
         } else {
           myAlarm.cancelRequest(progressTimerRequest);
@@ -255,13 +260,25 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
+      // Abracadaba button
       gc.gridy++;
       JButton button = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
+      topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      topPanel.add(UI.PanelFactory.panel(button).
-        withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
+      try {
+        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+          withIcon(AllIcons.General.BalloonInformation).
+          withHeader(GOT_IT_HEADER).
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          withShortcut("Ctrl+Alt+D");
 
+        gotItTooltip.showFor(button, e -> new PointPosition(
+          new RelativePoint(e.getComponent(), new Point(e.getComponent().getWidth() / 2, e.getComponent().getHeight())),
+                                                            Balloon.Position.below));
+      } catch (MalformedURLException ex) {}
+
+      // Combobox with comment
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).resizeX(false).
         withComment("Combobox comment").createPanel(), gc);
