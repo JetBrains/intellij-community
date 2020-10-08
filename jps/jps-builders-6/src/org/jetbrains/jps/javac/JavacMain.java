@@ -292,18 +292,6 @@ public final class JavacMain {
         processors = (ServiceLoader<Processor>)JavaFileManager.class.getMethod("getServiceLoader", JavaFileManager.Location.class, Class.class).invoke(
           fileManager, StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
         );
-      }
-      else {
-        final ClassLoader processorClassLoader = fileManager.getClassLoader(
-          // If processorpath is not explicitly set, use the classpath.
-          fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
-        );
-        if (processorClassLoader != null) {
-          processors = ServiceLoader.load(Processor.class, processorClassLoader);
-        }
-      }
-
-      if (processors != null) {
         if (processorNames != null) {
           processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, new Function<String, BooleanFunction<? super Processor>>() {
             @Override
@@ -317,6 +305,27 @@ public final class JavacMain {
             }
           }));
         }
+      }
+      else {
+        final ClassLoader processorClassLoader = fileManager.getClassLoader(
+          // If processorpath is not explicitly set, use the classpath.
+          fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
+        );
+        if (processorClassLoader != null) {
+          if (processorNames != null) {
+            final List<Processor> loaded = new ArrayList<Processor>();
+            for (String procName : processorNames) {
+              loaded.add((Processor)processorClassLoader.loadClass(procName).getDeclaredConstructor().newInstance());
+            }
+            processors = loaded;
+          }
+          else {
+            processors = ServiceLoader.load(Processor.class, processorClassLoader);
+          }
+        }
+      }
+
+      if (processors != null) {
         return Iterators.map(processors, new Function<Processor, Processor>() {
           @Override
           public Processor fun(Processor processor) {
@@ -324,6 +333,9 @@ public final class JavacMain {
           }
         });
       }
+    }
+    catch (RuntimeException e) {
+      throw e;
     }
     catch (Throwable e) {
       throw new RuntimeException(e);
