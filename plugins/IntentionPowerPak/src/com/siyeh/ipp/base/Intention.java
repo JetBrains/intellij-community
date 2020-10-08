@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiParenthesizedExpression;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +55,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   protected abstract PsiElementPredicate getElementPredicate();
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression, CommentTracker tracker) {
-    final Project project = expression.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
     PsiExpression expressionToReplace = expression;
     final String expString;
     if (BoolUtils.isNegated(expression)) {
@@ -71,17 +70,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
       expString = "!(" + newExpression + ')';
     }
     assert expressionToReplace != null;
-    PsiExpression newCall = factory.createExpressionFromText(expString, expression);
-    if (newCall instanceof PsiPolyadicExpression) {
-      PsiElement insertedElement = ExpressionUtils.replacePolyadicWithParent(expressionToReplace, newCall);
-      if (insertedElement != null) {
-        CodeStyleManager.getInstance(project).reformat(insertedElement);
-        return;
-      }
-    }
-
-    PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
-    CodeStyleManager.getInstance(project).reformat(insertedElement);
+    PsiReplacementUtil.replaceExpression(expressionToReplace, expString, tracker);
   }
 
 

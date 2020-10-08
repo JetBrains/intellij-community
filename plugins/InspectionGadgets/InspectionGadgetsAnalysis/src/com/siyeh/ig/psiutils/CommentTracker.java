@@ -9,7 +9,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -270,6 +273,28 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+      // flatten nested polyadic expressions
+      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
+      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
+      IElementType parentTokenType = parentPolyadic.getOperationTokenType();
+      IElementType childTokenType = childPolyadic.getOperationTokenType();
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&
+          !PsiPrecedenceUtil.areParenthesesNeeded(childPolyadic, parentPolyadic, false)) {
+        PsiElement[] children = parentPolyadic.getChildren();
+        int idx = ArrayUtil.indexOf(children, element);
+        if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
+          StringBuilder text = new StringBuilder();
+          for (int i = 0; i < children.length; i++) {
+            PsiElement child = children[i];
+            text.append(text((i == idx) ? replacement : child));
+          }
+          replacement = JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
+          element = parent;
+        }
+      }
+    }
     markUnchanged(replacement);
     grabComments(element);
     return element.replace(replacement);
