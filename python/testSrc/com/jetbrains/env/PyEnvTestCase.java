@@ -105,6 +105,7 @@ public abstract class PyEnvTestCase {
         .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
         .contains(myRequiredTags);
     }
+    replaceServicesWithMocks(myDisposable);
   }
 
 
@@ -172,7 +173,6 @@ public abstract class PyEnvTestCase {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
     List<String> roots = getPythonRoots();
-    replaceServicesWithMocks();
 
     /*
      * <p>
