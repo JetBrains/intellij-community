@@ -64,26 +64,48 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
     val ackFlow = MutableStateFlow<Long?>(0L)
 
+    // actor { ... } is technically equivalent to the following code:
+    //
+    // val channel = Channel().also { receiveChannel: ReceiveChannel ->
+    //   launch { ... }
+    //     .invokeOnCompletion { receiveChannel.cancel() }
+    // }
     val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
-        processMediatorClient.writeStream(pid.await(), fd, channel.consumeAsFlow())
-          .onCompletion { ackFlow.value = null }
-          .fold(0L) { l, _ ->
-            (l + 1).also {
-              ackFlow.value = it
+        try {
+          processMediatorClient.writeStream(pid.await(), fd, channel.consumeAsFlow())
+            .onCompletion { ackFlow.value = null }
+            .fold(0L) { l, _ ->
+              (l + 1).also {
+                ackFlow.value = it
+              }
             }
-          }
+        }
+        catch (e: IOException) {
+          channel.cancel(CancellationException(e.message, e))
+        }
       }
     }
     val stream = ChannelOutputStream(channel, ackFlow)
     return BufferedOutputStream(stream)
   }
 
+  @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    val channel = handle.produce(capacity = Channel.BUFFERED) {
+    // produce { ... } is technically equivalent to the following code:
+    //
+    // val channel = Channel().also { sendChannel: SendChannel ->
+    //   launch { ... }
+    //     .invokeOnCompletion { sendChannel.close() }
+    // }
+    val channel = handle.produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
-        processMediatorClient.readStream(pid.await(), fd).collect(channel::send)
+        try {
+          processMediatorClient.readStream(pid.await(), fd).collect(channel::send)
+        }
+        catch (e: IOException) {
+          channel.close(e)
+        }
       }
     }
     val stream = ChannelInputStream(channel)
