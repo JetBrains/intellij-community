@@ -441,6 +441,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
     "ActivateErrorsInSolutionToolWindow", "ActivateUnitTestsToolWindow", "ActivateInspectionResultsToolWindow",
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
+    "CIDR.Lang.SwitchHeaderSource", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     ""
   );
 
