@@ -25,13 +25,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum FutureFeature {
   GENERATORS("generators", 22, 23), // historical
-  DIVISION("division", 22, 30),
-  ABSOLUTE_IMPORT("absolute_import", 25, 27),
+  DIVISION("division", 22, 300),
+  ABSOLUTE_IMPORT("absolute_import", 25, 300),
   WITH_STATEMENT("with_statement", 25, 26),
-  PRINT_FUNCTION("print_function", 26, 30),
-  UNICODE_LITERALS("unicode_literals", 26, 30),
-  BARRY_AS_FLUFL("barry_as_FLUFL", 31, 39), // last as of CPython 3.2
-  ANNOTATIONS("annotations", 37, 40)
+  PRINT_FUNCTION("print_function", 26, 300),
+  UNICODE_LITERALS("unicode_literals", 26, 300),
+  BARRY_AS_FLUFL("barry_as_FLUFL", 301, 309), // last as of CPython 3.2
+  ANNOTATIONS("annotations", 307, 310)
   // NOTE: only add new features to the end unless you want to break existing stubs that rely on ordinal
   ;
   // TODO: link it to LanguageLevel

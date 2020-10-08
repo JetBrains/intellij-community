@@ -77,7 +77,7 @@ class PyAddNewCondaEnvPanel(
     layout = BorderLayout()
 
     // https://docs.conda.io/projects/conda/en/latest/user-guide/install/
-    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it != LanguageLevel.PYTHON39 }.map { it.toString() }
+    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it < LanguageLevel.PYTHON39 }.map { it.toString() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null

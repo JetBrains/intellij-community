@@ -55,34 +55,35 @@ public enum LanguageLevel {
    * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
    */
   @Deprecated
-  PYTHON30(30, true, false, false, true),
+  PYTHON30(300, true, false, false, true),
   /**
    * @deprecated This level is not supported since 2018.1.
    */
   @Deprecated
-  PYTHON31(31, true, false, true, true),
+  PYTHON31(301, true, false, true, true),
   /**
    * @deprecated This level is not supported since 2018.1.
    */
   @Deprecated
-  PYTHON32(32, true, false, true, true),
+  PYTHON32(302, true, false, true, true),
   /**
    * @deprecated This level is not supported since 2018.1.
    */
   @Deprecated
-  PYTHON33(33, true, false, true, true),
+  PYTHON33(303, true, false, true, true),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON34(34, true, false, true, true),
+  PYTHON34(304, true, false, true, true),
   /**
    * @apiNote This level is not supported since 2020.3.
    */
-  PYTHON35(35, true, false, true, true),
-  PYTHON36(36, true, false, true, true),
-  PYTHON37(37, true, false, true, true),
-  PYTHON38(38, true, false, true, true),
-  PYTHON39(39, true, false, true, true);
+  PYTHON35(305, true, false, true, true),
+  PYTHON36(306, true, false, true, true),
+  PYTHON37(307, true, false, true, true),
+  PYTHON38(308, true, false, true, true),
+  PYTHON39(309, true, false, true, true),
+  PYTHON310(310, true, false, true, true);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -92,12 +93,12 @@ public enum LanguageLevel {
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion > 35 || v.myVersion == 27)
+        .filter(v -> v.myVersion > 305 || v.myVersion == 27)
         .collect(Collectors.toList())
     );
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON39;
+  private static final LanguageLevel DEFAULT3 = PYTHON310;
 
   @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
@@ -124,9 +125,21 @@ public enum LanguageLevel {
 
   /**
    * @return an int where major and minor version are represented decimally: "version 2.5" is 25.
+   * @deprecated please migrate to {@link LanguageLevel#getMajorVersion()} and {@link LanguageLevel#getMinorVersion()}
+   * since this method disclose {@link LanguageLevel} internals.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public int getVersion() {
     return myVersion;
+  }
+
+  public int getMajorVersion() {
+    return isPython2() ? myVersion / 10 : myVersion / 100;
+  }
+
+  public int getMinorVersion() {
+    return isPython2() ? myVersion % 10 : myVersion % 100;
   }
 
   public boolean hasWithStatement() {
@@ -178,13 +191,10 @@ public enum LanguageLevel {
       return DEFAULT2;
     }
     if (pythonVersion.startsWith("3")) {
-      if (pythonVersion.startsWith("3.10")) {
-        return PYTHON39;
-      }
       if (pythonVersion.startsWith("3.0")) {
         return PYTHON30;
       }
-      if (pythonVersion.startsWith("3.1")) {
+      if (pythonVersion.startsWith("3.1.") || pythonVersion.equals("3.1")) {
         return PYTHON31;
       }
       if (pythonVersion.startsWith("3.2")) {
@@ -211,6 +221,9 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.9")) {
         return PYTHON39;
       }
+      if (pythonVersion.startsWith("3.10")) {
+        return PYTHON310;
+      }
       return DEFAULT3;
     }
     return getDefault();
@@ -219,9 +232,7 @@ public enum LanguageLevel {
   @Nullable
   @Contract("null->null;!null->!null")
   public static String toPythonVersion(@Nullable LanguageLevel level) {
-    if (level == null) return null;
-    final int version = level.getVersion();
-    return version / 10 + "." + version % 10;
+    return level == null ? null : level.getMajorVersion() + "." + level.getMinorVersion();
   }
 
   @NotNull
