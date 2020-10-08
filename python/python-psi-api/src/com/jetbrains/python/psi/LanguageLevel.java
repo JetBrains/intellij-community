@@ -75,6 +75,9 @@ public enum LanguageLevel {
    * @apiNote This level is not supported since 2019.1.
    */
   PYTHON34(34, true, false, true, true),
+  /**
+   * @apiNote This level is not supported since 2020.3.
+   */
   PYTHON35(35, true, false, true, true),
   PYTHON36(36, true, false, true, true),
   PYTHON37(37, true, false, true, true),
@@ -89,7 +92,7 @@ public enum LanguageLevel {
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion > 34 || v.myVersion == 27)
+        .filter(v -> v.myVersion > 35 || v.myVersion == 27)
         .collect(Collectors.toList())
     );
 
