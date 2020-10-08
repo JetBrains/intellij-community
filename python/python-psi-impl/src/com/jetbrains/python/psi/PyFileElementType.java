@@ -30,7 +30,6 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.PythonParser;
-import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.parsing.console.PyConsoleParser;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.parsing.console.PythonConsoleLexer;
@@ -63,7 +62,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 81;
+    return 82;
   }
 
   @Nullable
