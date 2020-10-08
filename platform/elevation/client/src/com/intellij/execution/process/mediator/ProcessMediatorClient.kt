@@ -81,7 +81,7 @@ class ProcessMediatorClient(
     }
   }
 
-  suspend fun writeStream(pid: Long, fd: Int, chunkFlow: Flow<ByteString>) {
+  suspend fun writeStream(pid: Long, fd: Int, chunkFlow: Flow<ByteString>): Flow<Unit> {
     val handle = FileHandle.newBuilder()
       .setPid(pid)
       .setFd(fd)
@@ -101,8 +101,10 @@ class ProcessMediatorClient(
           .build()
       })
     }
-    ExceptionAsStatus.unwrap {
+    return ExceptionAsStatus.unwrap {
       stub.writeStream(requests)
+    }.map {}.catch { cause ->
+      ExceptionAsStatus.unwrap { throw cause }
     }
   }
 

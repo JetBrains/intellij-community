@@ -68,23 +68,29 @@ class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMediatorCorout
     }
   }
 
-  override suspend fun writeStream(requests: Flow<WriteStreamRequest>): Empty = coroutineScope {
-    ExceptionAsStatus.wrap {
-      @Suppress("EXPERIMENTAL_API_USAGE")
-      val receiveChannel = requests.produceIn(this)
+  override fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> {
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    return channelFlow<Unit> {
+      coroutineScope {
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        val receiveChannel = requests.produceIn(this)
 
-      val handle = receiveChannel.receive().also { request ->
-        require(request.hasHandle()) { "the first request must specify the handle" }
-      }.handle
+        val handle = receiveChannel.receive().also { request ->
+          require(request.hasHandle()) { "the first request must specify the handle" }
+        }.handle
 
-      val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
-        require(request.hasChunk()) { "got handle in the middle of the stream" }
-        request.chunk.buffer
+        val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
+          require(request.hasChunk()) { "got handle in the middle of the stream" }
+          request.chunk.buffer
+        }
+
+        processManager.writeStream(handle.pid, handle.fd, chunkFlow, channel)
       }
-
-      processManager.writeStream(handle.pid, handle.fd, chunkFlow)
+    }.map {
+      Empty.getDefaultInstance()
+    }.catch { cause ->
+      ExceptionAsStatus.wrap { throw cause }
     }
-    return@coroutineScope Empty.getDefaultInstance()
   }
 
   companion object {
@@ -94,3 +100,4 @@ class ProcessMediatorServerService : ProcessMediatorGrpcKt.ProcessMediatorCorout
     }
   }
 }
+

@@ -8,6 +8,7 @@ import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -82,7 +83,7 @@ internal class ProcessMediatorProcessManager {
     }.flowOn(Dispatchers.IO)
   }
 
-  suspend fun writeStream(pid: Pid, fd: Int, chunkFlow: Flow<ByteString>) {
+  suspend fun writeStream(pid: Pid, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
     val process = getProcess(pid)
     val outputStream = when (fd) {
       STDIN -> process.outputStream
@@ -92,10 +93,14 @@ internal class ProcessMediatorProcessManager {
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
         process.onExit().whenComplete { _, _ -> cancel(CancellationException("Process exited")) }
-        chunkFlow.collect { chunk ->
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        chunkFlow.onCompletion {
+          ackChannel?.close(it)
+        }.collect { chunk ->
           val buffer = chunk.toByteArray()
           outputStream.write(buffer)
           outputStream.flush()
+          ackChannel?.send(Unit)
         }
       }
     }

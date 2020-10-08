@@ -16,11 +16,11 @@ import io.grpc.StatusException
 import io.grpc.kotlin.AbstractCoroutineServerImpl
 import io.grpc.kotlin.AbstractCoroutineStub
 import io.grpc.kotlin.ClientCalls
-import io.grpc.kotlin.ClientCalls.clientStreamingRpc
+import io.grpc.kotlin.ClientCalls.bidiStreamingRpc
 import io.grpc.kotlin.ClientCalls.serverStreamingRpc
 import io.grpc.kotlin.ClientCalls.unaryRpc
 import io.grpc.kotlin.ServerCalls
-import io.grpc.kotlin.ServerCalls.clientStreamingServerMethodDefinition
+import io.grpc.kotlin.ServerCalls.bidiStreamingServerMethodDefinition
 import io.grpc.kotlin.ServerCalls.serverStreamingServerMethodDefinition
 import io.grpc.kotlin.ServerCalls.unaryServerMethodDefinition
 import io.grpc.kotlin.StubFor
@@ -128,22 +128,24 @@ object ProcessMediatorGrpcKt {
       Metadata()
     )
     /**
-     * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
-     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
-     * with the corresponding exception as a cause.
+     * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
+     * server as they arrive.  That flow finishes normally if the server closes its response with
+     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
+     * is cancelled with that exception as a cause.
      *
-     * This function collects the [Flow] of requests.  If the server terminates the RPC
-     * for any reason before collection of requests is complete, the collection of requests
-     * will be cancelled.  If the collection of requests completes exceptionally for any other
-     * reason, the RPC will be cancelled for that reason and this method will throw that
-     * exception.
+     * The [Flow] of requests is collected once each time the [Flow] of responses is
+     * collected. If collection of the [Flow] of responses completes normally or
+     * exceptionally before collection of `requests` completes, the collection of
+     * `requests` is cancelled.  If the collection of `requests` completes
+     * exceptionally for any other reason, then the collection of the [Flow] of responses
+     * completes exceptionally for the same reason and the RPC is cancelled with that reason.
      *
      * @param requests A [Flow] of request messages.
      *
-     * @return The single response from the server.
+     * @return A flow that, when collected, emits the responses from the server.
      */
-    suspend fun writeStream(requests: Flow<WriteStreamRequest>): Empty = clientStreamingRpc(
+    fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = bidiStreamingRpc(
       channel,
       ProcessMediatorGrpc.getWriteStreamMethod(),
       requests,
@@ -240,20 +242,22 @@ object ProcessMediatorGrpcKt {
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.AwaitTermination is unimplemented"))
 
     /**
-     * Returns the response to an RPC for intellij.process.mediator.rpc.ProcessMediator.WriteStream.
+     * Returns a [Flow] of responses to an RPC for
+     * intellij.process.mediator.rpc.ProcessMediator.WriteStream.
      *
-     * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
-     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
-     * fail with `Status.UNKNOWN` with the exception as a cause.
+     * If creating or collecting the returned flow fails with a [StatusException], the RPC
+     * will fail with the corresponding [Status].  If it fails with a
+     * [java.util.concurrent.CancellationException], the RPC will fail with status
+     * `Status.CANCELLED`.  If creating
+     * or collecting the returned flow fails for any other reason, the RPC will fail with
+     * `Status.UNKNOWN` with the exception as a cause.
      *
      * @param requests A [Flow] of requests from the client.  This flow can be
      *        collected only once and throws [java.lang.IllegalStateException] on attempts to
      * collect
      *        it more than once.
      */
-    open suspend fun writeStream(requests: Flow<WriteStreamRequest>): Empty = throw
+    open fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.WriteStream is unimplemented"))
 
     /**
@@ -302,7 +306,7 @@ object ProcessMediatorGrpcKt {
       descriptor = ProcessMediatorGrpc.getAwaitTerminationMethod(),
       implementation = ::awaitTermination
     ))
-      .addMethod(clientStreamingServerMethodDefinition(
+      .addMethod(bidiStreamingServerMethodDefinition(
       context = this.context,
       descriptor = ProcessMediatorGrpc.getWriteStreamMethod(),
       implementation = ::writeStream

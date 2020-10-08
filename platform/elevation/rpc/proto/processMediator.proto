@@ -14,7 +14,7 @@ service ProcessMediator {
   rpc DestroyProcess (DestroyProcessRequest) returns (google.protobuf.Empty);
   rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
 
-  rpc WriteStream (stream WriteStreamRequest) returns (google.protobuf.Empty);
+  rpc WriteStream (stream WriteStreamRequest) returns (stream google.protobuf.Empty);
   rpc ReadStream (ReadStreamRequest) returns (stream DataChunk);
 
   rpc Release (ReleaseRequest) returns (google.protobuf.Empty);
