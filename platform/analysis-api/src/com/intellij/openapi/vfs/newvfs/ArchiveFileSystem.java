@@ -213,7 +213,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     Pair<byte[], IOException> pair = myContentGetter.apply(file);
-    if (pair.second != null) throw pair.second;
+    IOException exception = pair.second;
+    if (exception != null) {
+      exception.addSuppressed(new Throwable("Caller thread's stacktrace"));
+      throw exception;
+    }
     return pair.first;
   }
 
