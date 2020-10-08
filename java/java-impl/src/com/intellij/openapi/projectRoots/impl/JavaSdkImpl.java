@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
@@ -242,7 +243,11 @@ public final class JavaSdkImpl extends JavaSdk {
     var info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
-    return JdkUtil.suggestJdkName(info.version, info.vendorPrefix);
+    String vendorPrefix = info.vendorPrefix;
+    if (!Registry.is("use.jdk.vendor.in.suggested.jdk.name", true)) {
+      vendorPrefix = null;
+    }
+    return JdkUtil.suggestJdkName(info.version, vendorPrefix);
   }
 
   @Override
