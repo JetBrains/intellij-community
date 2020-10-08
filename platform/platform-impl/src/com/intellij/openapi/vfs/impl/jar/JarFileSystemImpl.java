@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.IntegrityCheckCapableFileSystem;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
@@ -104,6 +105,13 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     boolean useNewJarHandler = SystemInfo.isWindows && Registry.is("vfs.use.new.jar.handler");
     return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
+  }
+
+  @TestOnly
+  public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
+    // clear caches in ArchiveHandler so that refresh will actually refresh something
+    getHandler(file).dispose();
+    VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 
   @Override

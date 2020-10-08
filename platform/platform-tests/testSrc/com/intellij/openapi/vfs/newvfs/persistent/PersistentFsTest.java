@@ -23,10 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -754,7 +751,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testChangeInsideJarFileMustCauseLocalJarFileChangeEvent() throws IOException {
+  public void testDeleteJarRootInsideJarMustCauseDeleteLocalJarFile() throws IOException {
     File generationDir = tempDirectory.newDirectory("gen");
     File testDir = tempDirectory.newDirectory("test");
 
@@ -778,6 +775,36 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     events.sort(Comparator.comparing((VFileEvent e) ->e.getFile().getUrl()));
     assertEquals(vFile.getUrl(), events.get(0).getFile().getUrl());
     assertEquals(jarVFile.getUrl(), events.get(1).getFile().getUrl());
+  }
+
+  @Test
+  public void testDeleteFileDeepInsideJarFileMustCauseContentChangeForLocalJar() throws IOException {
+    File generationDir = tempDirectory.newDirectory("gen");
+    File testDir = tempDirectory.newDirectory("test");
+
+    File jarFile = zipWithEntry("test.jar", generationDir, testDir, "web.xml", "<web/>");
+    VirtualFile vFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(jarFile.getPath()));
+    VirtualFile jarVFile = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
+    VirtualFile webXml = jarVFile.findChild("web.xml");
+    File newJarFile = zipWithEntry("test2.jar", generationDir, testDir, "x.java", "class X{}");
+    FileUtil.copy(newJarFile, jarFile);
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> e) {
+        events.addAll(e);
+      }
+    });
+
+    ((JarFileSystemImpl)JarFileSystem.getInstance()).markDirtyAndRefreshVirtualFileDeepInsideJarForTest(webXml);
+
+    assertEquals(2, events.size());
+    VFileEvent event0 = events.get(0);
+    assertTrue(event0.toString(), event0 instanceof VFileDeleteEvent);
+    assertEquals(webXml.getUrl(), event0.getFile().getUrl());
+    VFileEvent event1 = events.get(1);
+    assertTrue(event1.toString(), event1 instanceof VFileContentChangeEvent);
+    assertEquals(vFile.getUrl(), event1.getFile().getUrl());
   }
 
   //<editor-fold desc="Helpers.">

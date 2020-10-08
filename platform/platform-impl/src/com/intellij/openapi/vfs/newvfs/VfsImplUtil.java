@@ -357,8 +357,7 @@ public final class VfsImplUtil {
    * should generate {@link VFileDeleteEvent}('file://x.jar').</p>
    * (The latter might happen when someone explicitly called {@code fileInsideJar.refresh()} without refreshing jar file in local file system).
    */
-  @NotNull
-  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
+  public static List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
@@ -390,7 +389,7 @@ public final class VfsImplUtil {
     if (jarPaths == null) {
       jarPaths = Collections.singletonList(path);
     }
-    List<VFileDeleteEvent> events = new ArrayList<>(jarPaths.size());
+    List<VFileEvent> events = new ArrayList<>(jarPaths.size());
     for (String jarPath : jarPaths) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.get(jarPath);
       if (handlerPair == null) {
@@ -418,7 +417,11 @@ public final class VfsImplUtil {
         }
       }
       else if (local != null) {
-        VFileDeleteEvent localJarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh());
+        // for "delete jar://x.jar!/" generate "delete x.jar", but
+        // for "delete jar://x.jar!/web.xml" generate "changed x.jar"
+        VFileEvent localJarDeleteEvent = file.getParent() == null ?
+           new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh()) :
+           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp(), event.isFromRefresh());
         events.add(localJarDeleteEvent);
       }
     }

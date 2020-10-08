@@ -786,7 +786,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
     outValidatedEvents.add(event);
     List<Runnable> outApplyActions = new ArrayList<>();
-    List<VFileDeleteEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
+    List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
     BulkFileListener publisher = getPublisher();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
@@ -799,7 +799,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     else {
       outApplyActions.add(() -> applyEvent(event));
       // there are a number of additional jar events generated
-      for (VFileDeleteEvent jarDeleteEvent : jarDeleteEvents) {
+      for (VFileEvent jarDeleteEvent : jarDeleteEvents) {
         outApplyActions.add(() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
@@ -954,8 +954,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     for (int i = startIndex; i < endIndex; i++) {
       VFileEvent event = events.get(i);
-      List<VFileDeleteEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
-      for (VFileDeleteEvent jarDeleteEvent : jarDeleteEvents) {
+      List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
+      for (VFileEvent jarDeleteEvent : jarDeleteEvents) {
         outApplyActions.add((Runnable)() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
