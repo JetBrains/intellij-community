@@ -7,10 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSerializer
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
@@ -39,7 +37,7 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
   }
 }
 
-class ModulePathShortener(private val storage: WorkspaceEntityStorage, private val virtualFileManager: VirtualFileUrlManager) {
+class ModulePathShortener(private val storage: WorkspaceEntityStorage) {
   private val contentRootsToModule by lazy {
     storage.entities(ContentRootEntity::class.java).associateBy({ it.url.url }, { it.module.name })
   }
@@ -52,13 +50,13 @@ class ModulePathShortener(private val storage: WorkspaceEntityStorage, private v
       if (moduleName != null) {
         return "/$moduleName${file.url.substring(current.url.length)}"
       }
-      current = virtualFileManager.getParentVirtualUrl(current)
+      current = current.parent
     }
     return null
   }
 
   fun isUnderContentRoots(file: VirtualFile): Boolean {
     val map = contentRootsToModule
-    return generateSequence(file, {virtualFileManager.getParentVirtualUrl(it)}).any { it.url in map }
+    return generateSequence(file, {it.parent}).any { it.url in map }
   }
 }

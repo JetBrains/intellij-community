@@ -398,7 +398,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val entitySource = contentRoots.asSequence().map { it.entitySource }.filterIsInstance<EclipseProjectFile>().firstOrNull() ?: return
     val classpathFile = VirtualFileManager.getInstance().findFileByUrl(entitySource.classpathFile.url)
     val oldClasspath = classpathFile?.inputStream?.use { JDOMUtil.load(it) }
-    val pathShortener = ModulePathShortener(storage, virtualFileManager)
+    val pathShortener = ModulePathShortener(storage)
     if (oldClasspath != null || !entities[SourceRootEntity::class.java].isNullOrEmpty() || module.dependencies.size > 2) {
       val newClasspath = saveClasspathTags(module, entities, entitySource, oldClasspath, pathShortener)
       if (oldClasspath == null || !JDOMUtil.areElementsEqual(newClasspath, oldClasspath)) {
