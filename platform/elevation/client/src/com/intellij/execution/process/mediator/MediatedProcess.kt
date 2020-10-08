@@ -8,8 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.*
 import java.io.*
 import java.lang.ref.Cleaner
 
@@ -61,14 +60,22 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   override fun getInputStream(): InputStream = stdout
   override fun getErrorStream(): InputStream = stderr
 
+  @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
-    @Suppress("EXPERIMENTAL_API_USAGE")
+    val ackFlow = MutableStateFlow<Long?>(0L)
+
     val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         processMediatorClient.writeStream(pid.await(), fd, channel.consumeAsFlow())
+          .onCompletion { ackFlow.value = null }
+          .fold(0L) { l, _ ->
+            (l + 1).also {
+              ackFlow.value = it
+            }
+          }
       }
     }
-    val stream = ChannelOutputStream(channel)
+    val stream = ChannelOutputStream(channel, ackFlow)
     return BufferedOutputStream(stream)
   }
 

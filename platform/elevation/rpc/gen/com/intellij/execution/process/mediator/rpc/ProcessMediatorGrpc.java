@@ -127,7 +127,7 @@ public final class ProcessMediatorGrpc {
       fullMethodName = SERVICE_NAME + '/' + "WriteStream",
       requestType = com.intellij.execution.process.mediator.rpc.WriteStreamRequest.class,
       responseType = com.google.protobuf.Empty.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING)
+      methodType = io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.WriteStreamRequest,
       com.google.protobuf.Empty> getWriteStreamMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.WriteStreamRequest, com.google.protobuf.Empty> getWriteStreamMethod;
@@ -136,7 +136,7 @@ public final class ProcessMediatorGrpc {
         if ((getWriteStreamMethod = ProcessMediatorGrpc.getWriteStreamMethod) == null) {
           ProcessMediatorGrpc.getWriteStreamMethod = getWriteStreamMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.WriteStreamRequest, com.google.protobuf.Empty>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING)
+              .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "WriteStream"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
@@ -328,7 +328,7 @@ public final class ProcessMediatorGrpc {
                   this, METHODID_AWAIT_TERMINATION)))
           .addMethod(
             getWriteStreamMethod(),
-            asyncClientStreamingCall(
+            asyncBidiStreamingCall(
               new MethodHandlers<
                 com.intellij.execution.process.mediator.rpc.WriteStreamRequest,
                 com.google.protobuf.Empty>(
@@ -393,7 +393,7 @@ public final class ProcessMediatorGrpc {
      */
     public io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.WriteStreamRequest> writeStream(
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      return asyncClientStreamingCall(
+      return asyncBidiStreamingCall(
           getChannel().newCall(getWriteStreamMethod(), getCallOptions()), responseObserver);
     }
 
