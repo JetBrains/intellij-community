@@ -30,7 +30,7 @@ import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.nio.charset.Charset
 
-private val LOG : Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
+private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 
 /**
  * Unstash the given roots one by one, handling common error scenarios.
@@ -69,11 +69,13 @@ fun unstash(project: Project,
       }
       else if (localChangesDetector.wasMessageDetected()) {
         LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.stash.local.changes.detected", root,
-                                                                   GitBundle.message("unstash.operation.name"), localChangesDetector.relativeFilePaths)
+                                                                   GitBundle.message("unstash.operation.name"),
+                                                                   localChangesDetector.relativeFilePaths)
         return
       }
       else if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError("git.unstash.failed", GitBundle.message("notification.title.unstash.failed"), result.errorOutputAsHtmlString, true)
+        VcsNotifier.getInstance(project).notifyError("git.unstash.failed", GitBundle.message("notification.title.unstash.failed"),
+                                                     result.errorOutputAsHtmlString, true)
         return
       }
     }
@@ -89,7 +91,7 @@ private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash):
     return (0 until stashCommit.parents.size).map { stashCommit.getChanges(it) }
   }
   catch (e: Exception) {
-    LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]" , e)
+    LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]", e)
     null
   }
 }
@@ -114,7 +116,7 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
 
   val result = mutableListOf<StashInfo>()
   for (line in output.output) {
-    val parts = line.split(':', limit = 4);
+    val parts = line.split(':', limit = 4)
     when {
       parts.size < 3 -> {
         logger<GitUtil>().error("Can't parse stash record: ${line}")

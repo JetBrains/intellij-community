@@ -26,7 +26,6 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import java.awt.Component

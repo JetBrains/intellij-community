@@ -40,7 +40,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     isKeepTreeState = true
     setEmptyText(GitBundle.message("stash.empty.text"))
 
-    doubleClickHandler = Processor {e ->
+    doubleClickHandler = Processor { e ->
       val diffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)
 
       val dataContext = DataManager.getInstance().getDataContext(this)
@@ -157,6 +157,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   companion object {
     val GIT_STASH_TREE_FLAG = DataKey.create<Boolean>("GitStashTreeFlag")
-    @NonNls private const val GROUPING_PROPERTY_NAME = "GitStash.ChangesTree.GroupingKeys"
+    @NonNls
+    private const val GROUPING_PROPERTY_NAME = "GitStash.ChangesTree.GroupingKeys"
   }
 }

@@ -60,7 +60,7 @@ class GitRevisionContentPreLoader(val project: Project) {
 
     val output: ByteArray
     try {
-      output = h.run() 
+      output = h.run()
     }
     catch (e: Exception) {
       LOG.error("Couldn't get git cat-file for $hashesAndPaths", e)
@@ -127,7 +127,7 @@ class GitRevisionContentPreLoader(val project: Project) {
         return null
       }
 
-      val content   = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
+      val content = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
       result[path] = content
       currentPosition = endIndex
     }

@@ -72,8 +72,8 @@ class GitStashCache(val project: Project) : Disposable {
   }
 
   sealed class StashData {
-    class ChangeList(val changeList: CommittedChangeList): StashData()
-    class Error(val error: VcsException): StashData()
+    class ChangeList(val changeList: CommittedChangeList) : StashData()
+    class Error(val error: VcsException) : StashData()
   }
 
   interface StashLoadedListener : EventListener {
