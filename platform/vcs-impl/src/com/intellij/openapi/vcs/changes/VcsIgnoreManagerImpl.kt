@@ -2,12 +2,16 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -22,6 +26,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 
@@ -39,6 +44,16 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     checkProjectNotDefault(project)
     ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, project, null,
                                             Alarm.ThreadToUse.POOLED_THREAD)
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      project.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        override fun projectClosing(closedProject: Project) {
+          if (project === closedProject) {
+            ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
+          }
+        }
+      })
+    }
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
