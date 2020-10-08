@@ -23,6 +23,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitStageManagerKt;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
@@ -261,6 +262,10 @@ public final class GitVFSListener extends VcsVFSListener {
     return toRefresh;
   }
 
+  private boolean isStageEnabled() {
+    return GitStageManagerKt.isStageAvailable(myProject);
+  }
+
   @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
@@ -278,6 +283,9 @@ public final class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
+    if (isStageEnabled()) {
+      return super.selectFilePathsToDelete(deletedFiles);
+    }
     // For git asking about vcs delete does not make much sense. The result is practically identical.
     return deletedFiles;
   }
