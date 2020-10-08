@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
@@ -16,6 +17,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
@@ -25,7 +27,14 @@ private fun Project.getLocalChangesTab(): Content? =
 internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commitWorkflowUi: CommitWorkflowUi) :
   BorderLayoutPanel(), ChangesViewContentManagerListener, InclusionListener {
 
-  private val branchComponent = CurrentBranchComponent(tree.project, tree, commitWorkflowUi)
+  private val branchComponent = CurrentBranchComponent(tree).apply {
+    Disposer.register(commitWorkflowUi, this)
+
+    pathsProvider = {
+      val singleRoot = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.singleOrNull()
+      if (singleRoot != null) listOf(getFilePath(singleRoot)) else commitWorkflowUi.getDisplayedPaths()
+    }
+  }
 
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator).apply {
