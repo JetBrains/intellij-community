@@ -17,11 +17,9 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateSubstitutor;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,15 +31,26 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaTemplateSubstitutor implements TemplateSubstitutor {
   private static final ElementPattern<PsiElement> EXPR_LAMBDA_BODY = psiElement().afterLeaf(psiElement(JavaTokenType.ARROW));
 
-  @Nullable
   @Override
-  public TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template) {
-    if (file.getLanguage().isKindOf(JavaLanguage.INSTANCE) && EXPR_LAMBDA_BODY.accepts(file.findElementAt(caretOffset))) {
+  public @Nullable TemplateImpl substituteTemplate(@NotNull TemplateSubstitutionContext substitutionContext,
+                                                   @NotNull TemplateImpl template) {
+    PsiFile file = substitutionContext.getPsiFile();
+    if (file.getLanguage().isKindOf(JavaLanguage.INSTANCE) && 
+        EXPR_LAMBDA_BODY.accepts(file.findElementAt(substitutionContext.getOffset()))) {
       String text = template.getString();
-      if (!text.contains("\n") && text.endsWith(";")) {
+      try {
+        PsiStatement statement = JavaPsiFacade.getElementFactory(substitutionContext.getProject()).createStatementFromText(text, null);
+        String resultText;
+        if (statement instanceof PsiExpressionStatement) {
+          resultText = ((PsiExpressionStatement)statement).getExpression().getText();
+        } else {
+          resultText = "{" + text + "}";
+        }
         TemplateImpl copy = template.copy();
-        copy.setString(StringUtil.trimEnd(text, ";"));
+        copy.setString(resultText);
         return copy;
+      }
+      catch (IncorrectOperationException ignored) {
       }
     }
     return null;

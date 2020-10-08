@@ -460,6 +460,27 @@ class Foo {
 '''
   }
 
+  void "test ritar template in expression lambda"() {
+    myFixture.configureByText 'a.java', '''class Foo {
+  void test(int[] arr) {
+    Runnable r = () -> itar<caret>
+  }
+}
+'''
+    myFixture.type('\t')
+    myFixture.checkResult '''class Foo {
+  void test(int[] arr) {
+    Runnable r = () -> {
+        for (int i = 0; i < arr.length; i++) {
+            int i1 = arr[i];
+            
+        }
+    }
+  }
+}
+'''
+  }
+
   void "test iterate over list with wildcard component type"() {
     myFixture.configureByText 'a.java', '''class C {{
 java.util.List<? extends Integer> list;
