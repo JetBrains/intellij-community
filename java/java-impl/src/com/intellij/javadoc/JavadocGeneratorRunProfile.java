@@ -386,6 +386,11 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
         return;
       }
 
+      // Using 11 as source level makes the -bootclasspath stop working. Since the source level for Android code is currently 8,
+      // we ask javadoc to use that source level when Android modules are involved.
+      cmdLine.addParameter("-source");
+      cmdLine.addParameter("8");
+
       File androidJar = new File(sdkDir, "platforms" + File.separator + buildTarget + File.separator + "android.jar");
       if (androidJar.isFile()) {
         cmdLine.addParameter("-bootclasspath");
