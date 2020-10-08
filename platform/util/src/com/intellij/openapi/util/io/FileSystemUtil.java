@@ -11,6 +11,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
+import com.sun.jna.platform.win32.WTypes;
+import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -459,8 +463,23 @@ public final class FileSystemUtil {
    * Detects case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names.
    */
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
-    // todo call some native API here, instead of slowly querying file attributes
     File parent = anyChild.getParentFile();
+
+    if (SystemInfo.isWindows) {
+      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      if (OSAgnosticPathUtil.isAbsoluteDosPath(path) && JnaLoader.isLoaded()) {
+        FileAttributes.CaseSensitivity detected = getNtfsCaseSensitivity(path);
+        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+      }
+      if (parent == null) {
+        String name = findCaseSensitiveSiblingName(anyChild);
+        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+        parent = anyChild;
+        anyChild = new File(anyChild, name);
+      }
+    }
+
+    // todo call some native API here, instead of slowly querying file attributes
     if (parent == null) {
       // assume root always has FS case-sensitivity
       return SystemInfo.isFileSystemCaseSensitive
@@ -526,4 +545,88 @@ public final class FileSystemUtil {
     catch (Exception ignored) { }
     return null;
   }
+
+  //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
+    try {
+      NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
+
+      NtOsKrnl.OBJECT_ATTRIBUTES_P objectAttributes = new NtOsKrnl.OBJECT_ATTRIBUTES_P();
+      objectAttributes.ObjectName = new NtOsKrnl.UNICODE_STRING_P("\\??\\" + path);
+
+      NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P fileInformation = new NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P();
+
+      int result = ntOsKrnl.NtQueryInformationByName(
+        objectAttributes,
+        new NtOsKrnl.IO_STATUS_BLOCK_P(),
+        fileInformation,
+        fileInformation.size(),
+        NtOsKrnl.FileCaseSensitiveInformation);
+
+      if (result != 0) {
+        if (LOG.isTraceEnabled()) LOG.trace("NtQueryInformationByName(" + path + "): " + result);
+      }
+      else if (fileInformation.Flags == 0) {
+        return FileAttributes.CaseSensitivity.INSENSITIVE;
+      }
+      else if (fileInformation.Flags == 1) {
+        return FileAttributes.CaseSensitivity.SENSITIVE;
+      }
+      else {
+        LOG.warn("NtQueryInformationByName(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
+      }
+    }
+    catch (Throwable t) {
+      LOG.warn("path: " + path, t);
+    }
+
+    return FileAttributes.CaseSensitivity.UNKNOWN;
+  }
+
+  private interface NtOsKrnl extends StdCallLibrary, WinNT {
+    NtOsKrnl INSTANCE = Native.load("NtDll", NtOsKrnl.class, W32APIOptions.UNICODE_OPTIONS);
+
+    @Structure.FieldOrder({"Length", "MaximumLength", "Buffer"})
+    class UNICODE_STRING_P extends Structure implements Structure.ByReference {
+      public short Length;
+      public short MaximumLength;
+      public WTypes.LPWSTR Buffer;
+
+      public UNICODE_STRING_P(String value) {
+        Buffer = new WTypes.LPWSTR(value);
+        Length = MaximumLength = (short)(value.length() * 2);
+      }
+    }
+
+    @Structure.FieldOrder({"Length", "RootDirectory", "ObjectName", "Attributes", "SecurityDescriptor", "SecurityQualityOfService"})
+    class OBJECT_ATTRIBUTES_P extends Structure implements Structure.ByReference {
+      public long Length = size();
+      public WinNT.HANDLE RootDirectory;
+      public UNICODE_STRING_P ObjectName;
+      public long Attributes;
+      public Pointer SecurityDescriptor;
+      public Pointer SecurityQualityOfService;
+    }
+
+    @Structure.FieldOrder({"Pointer", "Information"})
+    class IO_STATUS_BLOCK_P extends Structure implements Structure.ByReference {
+      public Pointer Pointer;
+      public Pointer Information;
+    }
+
+    @Structure.FieldOrder("Flags")
+    class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
+      public long Flags;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
+    }
+
+    int FileCaseSensitiveInformation = 71;
+
+    int NtQueryInformationByName(
+      OBJECT_ATTRIBUTES_P objectAttributes,
+      IO_STATUS_BLOCK_P ioStatusBlock,
+      Structure fileInformation,
+      long length,
+      int fileInformationClass);
+  }
+  //</editor-fold>
 }
