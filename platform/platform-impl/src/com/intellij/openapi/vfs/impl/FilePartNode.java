@@ -201,7 +201,9 @@ class FilePartNode {
         assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
       }
       else {
-        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile + "; getParentThroughJar(myFile, myFS): " + getParentThroughJar(myFile, myFS) + "; myFS: " + myFS + "; myFile.getParent(): " + myFile.getParent()+"; this: "+this;
+        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) :
+          "parent: " + parent + "\n myFile: " + myFile + "\n getParentThroughJar(myFile, myFS): " + getParentThroughJar(myFile, myFS) +
+          "\n myFS: " + myFS + "\n myFile.getParent(): " + myFile.getParent()+"\n this: "+this;
       }
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
