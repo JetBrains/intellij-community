@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyConfiguration;
 
 /**
  * @author Eugene.Kudelevsky
@@ -249,14 +249,25 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   private static final class XmlPredefinedConfigurations {
     static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.tag"), "<'a/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.attribute"), "<'_tag 'attribute=\"'_value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.html.attribute"), "<'_tag 'attribute />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.attribute.value"), "<'_tag '_attribute=\"'value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.html.attribute.value"), "<'_tag '_attribute='value />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.html.tag.value"), "<table>'_content*</table>", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.ul.or.ol"), "<'_tag:[regex( ul|ol )] />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE)
+        createLegacyConfiguration(SSRBundle.message("predefined.template.xml.tag"), "Xml tag",
+                            "<'a/>", getHtmlXml(), XmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.xml.attribute"), "Xml attribute",
+                            "<'_tag 'attribute=\"'_value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.html.attribute"), "Html attribute",
+                            "<'_tag 'attribute />", getHtmlXml(), HtmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.xml.attribute.value"), "Xml attribute value",
+                            "<'_tag '_attribute=\"'value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.html.attribute.value"), "Html attribute value",
+                            "<'_tag '_attribute='value />", getHtmlXml(), HtmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.xml.html.tag.value"), "Xml/html tag value",
+                            "<table>'_content*</table>", getHtmlXml(), HtmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.ul.or.ol"), "<ul> or <ol>",
+                            "<'_tag:[regex( ul|ol )] />", getHtmlXml(), HtmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "<li> not contained in <ul> or <ol>",
+                            "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE),
+        createLegacyConfiguration(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "xml attribute referencing java class",
+                            "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>",
+                            SSRBundle.message("xml_html.category"), XmlFileType.INSTANCE),
       };
     }
 

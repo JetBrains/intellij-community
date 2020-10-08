@@ -14,7 +14,7 @@ public final class PredefinedConfigurationUtil {
 
   /**
    * @deprecated this creates a Java template, which is most likely not what you need. Use
-   * {@link #createSearchTemplateInfo(java.lang.String, java.lang.String, java.lang.String, com.intellij.openapi.fileTypes.LanguageFileType)}
+   * {@link #createSearchTemplateInfo(String, String, String, LanguageFileType)}
    * instead.
    */
   @Deprecated
@@ -24,6 +24,11 @@ public final class PredefinedConfigurationUtil {
     return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
   }
 
+  /**
+   * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
+   * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
+   */
+  @Deprecated
   @NotNull
   public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
                                                        @NonNls @NotNull String criteria,
@@ -31,6 +36,11 @@ public final class PredefinedConfigurationUtil {
     return createSearchTemplateInfo(name, criteria, category, fileType, null);
   }
 
+  /**
+   * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
+   * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
+   */
+  @Deprecated
   @NotNull
   public static Configuration createSearchTemplateInfo(@NotNull String name,
                                                        @NonNls @NotNull String criteria,
@@ -49,8 +59,61 @@ public final class PredefinedConfigurationUtil {
     return config;
   }
 
+  @NotNull
+  public static Configuration createConfiguration(@NotNull @Nls String name,
+                                                  @NotNull @NonNls String refName,
+                                                  @NotNull @NonNls String criteria,
+                                                  @NotNull String category,
+                                                  @NotNull LanguageFileType fileType) {
+    return createConfiguration(name, refName, criteria, category, fileType, null);
+  }
+
+  @NotNull
+  public static Configuration createLegacyConfiguration(@NotNull @Nls String name,
+                                                  @NotNull @NonNls String refName,
+                                                  @NotNull @NonNls String criteria,
+                                                  @NotNull String category,
+                                                  @NotNull LanguageFileType fileType) {
+    return createLegacyConfiguration(name, refName, criteria, category, fileType, null);
+  }
+
+  /**
+   * This creates a predefined search configuration.
+   * @param name localizable name of the template
+   * @param refName unique identifier of the template used by the reference filter
+   */
+  @NotNull
+  public static Configuration createConfiguration(@NotNull @Nls String name,
+                                                  @NotNull @NonNls String refName,
+                                                  @NotNull @NonNls String criteria,
+                                                  @NotNull String category,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @Nullable PatternContext context) {
+    final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
+    config.setRefName(refName + " (" + config.getFileType().getLanguage().getDisplayName() + ")");
+    return config;
+  }
+
+  /**
+   * This creates a predefined search configuration with backwards reference support.
+   * If you are creating a new configuration, use
+   * {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
+   */
+  @NotNull
+  public static Configuration createLegacyConfiguration(@NotNull @Nls String name,
+                                                  @NotNull @NonNls String refName,
+                                                  @NotNull @NonNls String criteria,
+                                                  @NotNull String category,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @Nullable PatternContext context) {
+    final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
+    config.setRefName(refName);
+    return config;
+  }
+
   /**
    * @deprecated this creates a Java template, which is most likely not what you need.
+   * Use {@link #createNonRecursiveConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
   @Deprecated
   public static Configuration createSearchTemplateInfoSimple(@Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -59,5 +122,29 @@ public final class PredefinedConfigurationUtil {
     info.getMatchOptions().setRecursiveSearch(false);
 
     return info;
+  }
+
+  @NotNull
+  public static Configuration createNonRecursiveConfiguration(@NotNull @Nls String name,
+                                                              @NotNull @NonNls String refName,
+                                                              @NotNull @NonNls String criteria,
+                                                              @NotNull String category,
+                                                              @NotNull LanguageFileType fileType,
+                                                              @Nullable PatternContext context) {
+    final Configuration config = createConfiguration(name, refName, criteria, category, fileType, context);
+    config.getMatchOptions().setRecursiveSearch(false);
+    return config;
+  }
+
+  @NotNull
+  public static Configuration createLegacyNonRecursiveConfiguration(@NotNull @Nls String name,
+                                                                    @NotNull @NonNls String refName,
+                                                                    @NotNull @NonNls String criteria,
+                                                                    @NotNull String category,
+                                                                    @NotNull LanguageFileType fileType,
+                                                                    @Nullable PatternContext context) {
+    final Configuration config = createLegacyConfiguration(name, refName, criteria, category, fileType, context);
+    config.getMatchOptions().setRecursiveSearch(false);
+    return config;
   }
 }

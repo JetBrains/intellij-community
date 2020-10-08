@@ -13,6 +13,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public abstract class Configuration implements JDOMExternalizable {
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
-  private String name;
+  private @Nls String name;
   private String category;
   private boolean predefined;
   private long created;
@@ -44,6 +45,7 @@ public abstract class Configuration implements JDOMExternalizable {
   private String suppressId;
   private String problemDescriptor;
   private int order;
+  private @NonNls String refName;
 
   private transient String myCurrentVariableName;
 
@@ -53,7 +55,7 @@ public abstract class Configuration implements JDOMExternalizable {
     created = -1L;
   }
 
-  public Configuration(@NotNull String name, @NotNull String category) {
+  public Configuration(@NotNull @Nls String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
@@ -69,12 +71,13 @@ public abstract class Configuration implements JDOMExternalizable {
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
     order = configuration.order;
+    refName = configuration.refName;
   }
 
   @NotNull
   public abstract Configuration copy();
 
-  @NotNull @NlsSafe
+  @NotNull @Nls
   public String getName() {
     return name;
   }
@@ -86,7 +89,7 @@ public abstract class Configuration implements JDOMExternalizable {
     name = value;
   }
 
-  @NonNls
+  @NotNull @Nls
   public String getTypeText() {
     final LanguageFileType type = getFileType();
     return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", type.getLanguage().getDisplayName())
@@ -260,4 +263,14 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   public abstract LanguageFileType getFileType();
+
+  @Nullable @NonNls
+  public String getRefName() {
+    return refName;
+  }
+
+  public void setRefName(String refName) {
+    if (isPredefined())
+      this.refName = refName;
+  }
 }
