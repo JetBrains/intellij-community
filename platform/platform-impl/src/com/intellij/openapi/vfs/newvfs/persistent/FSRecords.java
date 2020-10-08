@@ -1642,7 +1642,7 @@ public final class FSRecords {
   private static int reuses;
 
   @NotNull
-  public static MessageDigest getContentHashDigest() {
+  private static MessageDigest getContentHashDigest() {
     // TODO replace with sha-256
     return DigestUtil.sha1();
   }

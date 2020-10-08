@@ -5,9 +5,9 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +35,9 @@ public final class IndexedHashesSupport {
   }
 
   public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
-    //TODO: duplicate of com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash
-    MessageDigest digest = FSRecords.getContentHashDigest();
+    // TODO: simplify to calculating content hash of only the content[].
+    // Shared Indexes that are already available on CDN will have their hashes invalidated after it.
+    MessageDigest digest = DigestUtil.sha1();
     digest.update(String.valueOf(content.length).getBytes(StandardCharsets.UTF_8));
     digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
     digest.update(content);
