@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.search.LowLevelSearchUtil
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.util.Processor
 import com.intellij.util.text.StringSearcher
 import gnu.trove.TIntProcedure
@@ -30,7 +31,7 @@ open class MemberUsageCollector(targetName: String,
     get() = if (tooManyUsages) null else usages
 
   override fun process(psiFile: PsiFile): Boolean {
-    if (psiFile == targetFile || !fileIndexFacade.isInSource(psiFile.virtualFile)) return true
+    if (psiFile == targetFile || psiFile !is PsiJavaFileImpl || !fileIndexFacade.isInSource(psiFile.virtualFile)) return true
     if (!isCheapEnoughToProcess(psiFile)) {
       tooManyUsages = true
       return false
