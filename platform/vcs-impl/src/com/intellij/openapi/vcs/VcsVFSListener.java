@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.ConcurrencyUtil.withLock;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
 public abstract class VcsVFSListener implements Disposable {
@@ -486,9 +487,7 @@ public abstract class VcsVFSListener implements Disposable {
     else if (removeOption == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
       if (!deletedFiles.isEmpty()) {
         Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
-        if (filePaths != null) {
-          filesToDelete.addAll(filePaths);
-        }
+        filesToDelete.addAll(filePaths);
       }
     }
     if (!filesToDelete.isEmpty()) {
@@ -521,15 +520,40 @@ public abstract class VcsVFSListener implements Disposable {
    * Select file paths to delete
    *
    * @param deletedFiles deleted files set
-   * @return selected files or null (that is considered as empty file set)
+   * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
-  @Nullable
-  protected Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
+  protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
+    return selectFilesForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
+                                getSingleFileDeletePromptTemplate());
+  }
+
+  /**
+   * Same as {@link #selectFilePathsToDelete} but for add operation
+   * @param addFiles added files set
+   * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
+   */
+  protected @NotNull Collection<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
+    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate());
+  }
+
+  private @NotNull Collection<FilePath> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
+                                                             @NotNull List<FilePath> files,
+                                                             @NlsContexts.DialogTitle String title,
+                                                             @NlsContexts.DialogTitle String singleFileTitle,
+                                                             @NlsContexts.DialogMessage String singleFilePromptTemplate) {
+    VcsShowConfirmationOption.Value optionValue = option.getValue();
+    if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      return emptyList();
+    }
+    if (optionValue == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      return files;
+    }
+
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
     Ref<Collection<FilePath>> ref = Ref.create();
     ApplicationManager.getApplication()
-      .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
-                                                                   getSingleFileDeletePromptTemplate(), myRemoveOption)));
+      .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
+                                                                   singleFilePromptTemplate, option)));
     return ref.get();
   }
 

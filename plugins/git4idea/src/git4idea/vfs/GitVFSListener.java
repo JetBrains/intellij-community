@@ -187,6 +187,18 @@ public final class GitVFSListener extends VcsVFSListener {
         toAdd.add(VcsUtil.getFilePath(newPath));
       }
     }
+
+    Collection<FilePath> selectedToAdd;
+    Collection<FilePath> selectedToRemove;
+    if (isStageEnabled()) {
+      selectedToAdd = selectFilePathsToAdd(toAdd);
+      selectedToRemove = selectFilePathsToDelete(toRemove);
+    }
+    else {
+      selectedToAdd = toAdd;
+      selectedToRemove = toRemove;
+    }
+
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     GitVcs.runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("progress.title.moving.files")) {
       @Override
@@ -195,13 +207,13 @@ public final class GitVFSListener extends VcsVFSListener {
           List<FilePath> dirtyPaths = new ArrayList<>();
           List<File> toRefresh = new ArrayList<>();
           //perform adding
-          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
             executeAdding(toAddEntry.getKey(), files);
             dirtyPaths.addAll(files);
           }
           //perform deletion
-          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toRemove).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
             toRefresh.addAll(executeDeletion(toRemoveEntry.getKey(), paths));
             dirtyPaths.addAll(paths);
@@ -282,7 +294,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
+  protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
     if (isStageEnabled()) {
       return super.selectFilePathsToDelete(deletedFiles);
     }
