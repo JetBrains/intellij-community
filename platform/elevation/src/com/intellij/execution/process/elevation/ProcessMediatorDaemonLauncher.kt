@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.mediator
+package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.mediator.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
