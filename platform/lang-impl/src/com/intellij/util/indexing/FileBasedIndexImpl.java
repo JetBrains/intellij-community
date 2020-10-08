@@ -1040,7 +1040,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (psiFile != null) {
       Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
         try {
-          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile)
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? ((FileContentImpl)FileContentImpl.createByFile(virtualFile))
                                                                 : FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents());
           initFileContent(fc, project, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));

@@ -110,7 +110,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return new FileContentImpl(file, fileType, null, contentComputable, true);
   }
 
-  public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file) throws IOException {
+  public static @NotNull FileContent createByFile(@NotNull VirtualFile file) throws IOException {
     return createByFile(file, null);
   }
 
