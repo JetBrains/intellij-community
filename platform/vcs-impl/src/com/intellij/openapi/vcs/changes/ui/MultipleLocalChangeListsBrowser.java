@@ -32,8 +32,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import org.jetbrains.annotations.NotNull;
@@ -488,12 +488,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private class MyChangeListListener extends ChangeListAdapter {
     @Override
     public void changeListsChanged() {
-      myUpdateQueue.queue(new Update("updateChangeLists") {
-        @Override
-        public void run() {
-          updateDisplayedChangeLists();
-        }
-      });
+      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateChangeLists", () -> {
+        updateDisplayedChangeLists();
+      }));
     }
   }
 }

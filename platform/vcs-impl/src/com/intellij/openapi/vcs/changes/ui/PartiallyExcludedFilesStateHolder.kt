@@ -8,8 +8,8 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
@@ -58,7 +58,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     myTrackerExclusionStates[element] ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
 
   private fun scheduleExclusionStatesUpdate() {
-    myUpdateQueue.queue(Update.create("updateExcludedFromCommit") { updateExclusionStates() })
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateExcludedFromCommit") { updateExclusionStates() })
   }
 
   private inner class MyTrackerListener : PartialLocalLineStatusTracker.ListenerAdapter() {

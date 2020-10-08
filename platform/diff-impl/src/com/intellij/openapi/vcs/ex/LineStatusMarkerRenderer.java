@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.IntPair;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,12 +65,9 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   public void scheduleUpdate() {
-    myUpdateQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        updateHighlighters();
-      }
-    });
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
+      updateHighlighters();
+    }));
   }
 
   @RequiresEdt
