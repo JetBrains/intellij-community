@@ -139,6 +139,25 @@ internal class ProcessMediatorTest {
     }
     finally {
       destroyProcess(process)
+      assertNotEquals(-1, process.exitValue())
+    }
+  }
+
+  @Test
+  internal fun `read from externally closed stream`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.StreamInterruptor::class)
+      .startMediatedProcess()
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertFalse(hasExited)
+
+    try {
+      assertEquals(-1, process.inputStream.read())
+      assertEquals(-1, process.errorStream.read())
+    }
+    finally {
+      destroyProcess(process)
+      assertNotEquals(-1, process.exitValue())
     }
   }
 
