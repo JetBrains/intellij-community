@@ -15,7 +15,7 @@ import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-internal class ProcessMediatorClient(
+class ProcessMediatorClient(
   coroutineScope: CoroutineScope,
   private val channel: ManagedChannel
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
