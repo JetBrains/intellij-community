@@ -680,17 +680,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun toStorage(): WorkspaceEntityStorageImpl {
-    return toStorage(true)
-  }
-
-  fun toStorage(assertConsistency: Boolean): WorkspaceEntityStorageImpl {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val storage = WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes)
-
-    if (assertConsistency) storage.assertConsistencyInStrictMode()
-
     return storage
   }
 
@@ -1295,7 +1288,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
-    return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage(false) else this
+    return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage() else this
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
