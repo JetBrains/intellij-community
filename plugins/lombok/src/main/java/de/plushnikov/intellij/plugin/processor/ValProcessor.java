@@ -13,6 +13,7 @@ import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -24,9 +25,11 @@ public class ValProcessor extends AbstractProcessor {
   private static final String LOMBOK_VAR_FQN = "lombok.var";
   private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
 
-  @SuppressWarnings("deprecation")
-  public ValProcessor() {
-    super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
+  @SuppressWarnings("unchecked")
+  public ValProcessor() throws ClassNotFoundException {
+    super(PsiElement.class, val.class,
+          (Class<Annotation>)Class.forName("lombok.experimental.var"),
+          (Class<Annotation>)Class.forName("lombok.var"));
   }
 
   public static boolean isVal(@NotNull PsiVariable psiVariable) {

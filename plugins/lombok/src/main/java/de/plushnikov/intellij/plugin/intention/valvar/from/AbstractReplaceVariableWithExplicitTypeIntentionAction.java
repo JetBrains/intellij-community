@@ -26,13 +26,18 @@ public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction ext
 
   @Override
   public boolean isAvailableOnVariable(PsiVariable psiVariable) {
-    if (variableClass == lombok.val.class) {
-      return ValProcessor.isVal(psiVariable);
+    try {
+      if (variableClass == lombok.val.class) {
+        return ValProcessor.isVal(psiVariable);
+      }
+      if (variableClass == Class.forName("lombok.var")) {
+        return ValProcessor.isVar(psiVariable);
+      }
+      return false;
     }
-    if (variableClass == lombok.var.class) {
-      return ValProcessor.isVar(psiVariable);
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
     }
-    return false;
   }
 
   @Override
