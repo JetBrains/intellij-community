@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -125,9 +126,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       return "";
     }
     if (isAlreadySuppressedFromView()) {
-      return "Suppressed";
+      return LangBundle.message("suppressed");
     }
-    return !isValid() ? "No longer valid" : null;
+    return !isValid() ? LangBundle.message("no.longer.valid") : null;
   }
 
   @NotNull

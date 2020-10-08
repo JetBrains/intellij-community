@@ -173,7 +173,7 @@ public abstract class InspectionRVContentProvider {
       .map(fixAndOccurrence -> {
         LocalQuickFixWrapper fix = fixAndOccurrence.fix;
         int occurrences = fixAndOccurrence.occurrences;
-        fix.setText(fix.getText() + " (" + occurrences + " problem" + (occurrences == 1 ? "" : "s") + ")");
+        fix.setText(LangBundle.message("action.fix.n.problems.text", fix.getText(), occurrences));
         return fix;
       })
       .toArray(QuickFixAction[]::new);

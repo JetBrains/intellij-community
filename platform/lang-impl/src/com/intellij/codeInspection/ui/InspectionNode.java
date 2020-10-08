@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class InspectionNode extends InspectionTreeNode {
   @Override
   public String getTailText() {
     final String shortName = getToolWrapper().getShortName();
-    return myProfile.getTools(shortName, null).isEnabled() ? null : "Disabled";
+    return myProfile.getTools(shortName, null).isEnabled() ? null : InspectionsBundle.message("inspection.node.disabled.state");
   }
 
   @Override

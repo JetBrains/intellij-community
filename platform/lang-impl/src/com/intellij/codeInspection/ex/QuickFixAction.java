@@ -95,7 +95,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return false;
   }
 
-  public String getText() {
+  public @NlsActions.ActionText String getText() {
     return getTemplatePresentation().getText();
   }
 
