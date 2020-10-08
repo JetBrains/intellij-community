@@ -8,6 +8,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ public class PyConsoleParsingContext extends ParsingContext {
 
   public PyConsoleParsingContext(final SyntaxTreeBuilder builder,
                                  LanguageLevel languageLevel,
-                                 StatementParsing.FUTURE futureFlag,
+                                 FutureFeature futureFlag,
                                  PythonConsoleData pythonConsoleData,
                                  boolean startsWithIPythonSymbol) {
     super(builder, languageLevel, futureFlag);
@@ -46,7 +47,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     private final PythonConsoleData myPythonConsoleData;
 
     protected ConsoleStatementParsing(ParsingContext context,
-                                      @Nullable FUTURE futureFlag,
+                                      @Nullable FutureFeature futureFlag,
                                       boolean startsWithIPythonSymbol,
                                       PythonConsoleData pythonConsoleData) {
       super(context, futureFlag);

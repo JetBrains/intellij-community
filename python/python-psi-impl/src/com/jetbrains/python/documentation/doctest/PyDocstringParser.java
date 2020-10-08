@@ -18,7 +18,7 @@ package com.jetbrains.python.documentation.doctest;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.parsing.StatementParsing;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.LanguageLevel;
  */
 public class PyDocstringParser extends PyParser {
   @Override
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, FutureFeature futureFlag) {
     return new PyDocstringParsingContext(builder, languageLevel, futureFlag);
   }
 }

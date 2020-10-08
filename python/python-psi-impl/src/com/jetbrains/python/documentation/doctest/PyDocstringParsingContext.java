@@ -22,6 +22,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class PyDocstringParsingContext extends ParsingContext {
 
   public PyDocstringParsingContext(final SyntaxTreeBuilder builder,
                                    LanguageLevel languageLevel,
-                                   StatementParsing.FUTURE futureFlag) {
+                                   FutureFeature futureFlag) {
     super(builder, languageLevel, futureFlag);
     myStatementParser = new PyDocstringStatementParsing(this, futureFlag);
     myExpressionParser = new PyDocstringExpressionParsing(this);
@@ -64,7 +65,7 @@ public class PyDocstringParsingContext extends ParsingContext {
   private static class PyDocstringStatementParsing extends StatementParsing {
 
     protected PyDocstringStatementParsing(ParsingContext context,
-                                          @Nullable FUTURE futureFlag) {
+                                          @Nullable FutureFeature futureFlag) {
       super(context, futureFlag);
     }
 

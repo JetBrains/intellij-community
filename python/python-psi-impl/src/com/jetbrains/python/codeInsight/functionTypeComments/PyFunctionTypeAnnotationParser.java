@@ -26,6 +26,7 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyFunctionTypeAnnotationParser extends PyParser {
   @Override
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, FutureFeature futureFlag) {
     return new ParsingContext(builder, languageLevel, futureFlag) {
       private final StatementParsing myStatementParsing = new AnnotationParser(this, futureFlag);
       private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
@@ -58,7 +59,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
   }
 
   private static class AnnotationParser extends StatementParsing {
-    AnnotationParser(ParsingContext context, @Nullable FUTURE futureFlag) {
+    AnnotationParser(ParsingContext context, @Nullable FutureFeature futureFlag) {
       super(context, futureFlag);
     }
 

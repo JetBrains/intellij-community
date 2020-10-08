@@ -3,12 +3,13 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 
 public class PythonParser {
   protected static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
   protected LanguageLevel myLanguageLevel;
-  private StatementParsing.FUTURE myFutureFlag;
+  private FutureFeature myFutureFlag;
 
   public PythonParser() {myLanguageLevel = LanguageLevel.getDefault();}
 
@@ -36,11 +37,11 @@ public class PythonParser {
     rootMarker.done(root);
   }
 
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, FutureFeature futureFlag) {
     return new ParsingContext(builder, languageLevel, futureFlag);
   }
 
-  public void setFutureFlag(StatementParsing.FUTURE future) {
+  public void setFutureFlag(FutureFeature future) {
     myFutureFlag = future;
   }
 }

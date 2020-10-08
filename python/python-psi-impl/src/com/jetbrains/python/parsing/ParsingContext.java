@@ -16,6 +16,7 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.SyntaxTreeBuilder;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ public class ParsingContext {
   private final LanguageLevel myLanguageLevel;
   private final Deque<ParsingScope> myScopes;
 
-  public ParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  public ParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel, FutureFeature futureFlag) {
     myBuilder = builder;
     myLanguageLevel = languageLevel;
     stmtParser = new StatementParsing(this, futureFlag);

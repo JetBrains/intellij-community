@@ -25,6 +25,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NonNls;
@@ -39,8 +40,6 @@ import java.util.Set;
 public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private static final Logger LOG = Logger.getInstance(StatementParsing.class);
   @NonNls protected static final String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
-  @NonNls protected static final String TOK_WITH_STATEMENT = "with_statement";
-  @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
   @NonNls protected static final String TOK_PRINT_FUNCTION = "print_function";
   @NonNls protected static final String TOK_WITH = PyNames.WITH;
   @NonNls protected static final String TOK_AS = PyNames.AS;
@@ -63,9 +62,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
   private Phase myFutureImportPhase = Phase.NONE;
 
-  public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
-
-  protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
+  protected Set<FutureFeature> myFutureFlags = EnumSet.noneOf(FutureFeature.class);
 
   public static class ImportTypes {
     public final IElementType statement;
@@ -79,7 +76,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
   }
 
-  public StatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
+  public StatementParsing(ParsingContext context, @Nullable FutureFeature futureFlag) {
     super(context);
     if (futureFlag != null) {
       myFutureFlags.add(futureFlag);
@@ -289,7 +286,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   protected boolean hasPrintStatement() {
-    return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
+    return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FutureFeature.PRINT_FUNCTION);
   }
 
   protected void checkEndOfStatement() {
@@ -509,14 +506,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         String token_text = parseIdentifier(getReferenceType());
         if (from_future) {
           // TODO: mark all known future feature names
-          if (TOK_WITH_STATEMENT.equals(token_text)) {
-            myFutureFlags.add(FUTURE.WITH_STATEMENT);
-          }
-          else if (TOK_NESTED_SCOPES.equals(token_text)) {
-            myFutureFlags.add(FUTURE.NESTED_SCOPES);
-          }
-          else if (TOK_PRINT_FUNCTION.equals(token_text)) {
-            myFutureFlags.add(FUTURE.PRINT_FUNCTION);
+          if (TOK_PRINT_FUNCTION.equals(token_text)) {
+            myFutureFlags.add(FutureFeature.PRINT_FUNCTION);
           }
         }
       }
