@@ -99,12 +99,12 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return psiFile;
   }
 
-  public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file, byte @NotNull [] content) {
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file, byte @NotNull [] content) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
     return new FileContentImpl(file, fileType, null, () -> content, true);
   }
 
-  public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file,
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
                                                          @NotNull NotNullComputable<byte[]> contentComputable) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     return new FileContentImpl(file, fileType, null, contentComputable, true);
@@ -114,15 +114,15 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return createByFile(file, null);
   }
 
-  public static @NotNull FileContentImpl createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
-    FileContentImpl content = createByContent(file, file.contentsToByteArray(false));
+  public static @NotNull FileContent createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
+    FileContentImpl content = (FileContentImpl)createByContent(file, file.contentsToByteArray(false));
     if (project != null) {
       content.setProject(project);
     }
     return content;
   }
 
-  public static @NotNull FileContentImpl createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText) {
+  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     return new FileContentImpl(file,
                                fileType,

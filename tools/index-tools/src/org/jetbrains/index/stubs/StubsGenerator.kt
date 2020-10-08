@@ -10,10 +10,7 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.*
 import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.io.write
 import junit.framework.TestCase
@@ -58,8 +55,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
                              HashCodeDescriptor.instance, GeneratingFullStubExternalizer())
   }
 
-  open fun buildStubForFile(fileContent: FileContentImpl,
-                            serializationManager: SerializationManagerImpl): Stub? {
+  open fun buildStubForFile(fileContent: FileContent, serializationManager: SerializationManagerImpl): Stub? {
     return ReadAction.compute<Stub, Throwable> { StubTreeBuilder.buildStubTree(fileContent) }
   }
 }
@@ -172,7 +168,7 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
 
   abstract fun defaultLanguageLevel(): T
 
-  override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub? {
+  override fun buildStubForFile(fileContent: FileContent, serializationManager: SerializationManagerImpl): Stub? {
     var prevLanguageLevel: T? = null
     var prevStub: Stub? = null
     val iter = languageLevelIterator()

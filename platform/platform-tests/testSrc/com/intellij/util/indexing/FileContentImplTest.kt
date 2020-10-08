@@ -71,7 +71,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     assertEquals(text, content.contentAsText.toString())
   }
 
-  private fun createFileContent(bytes: ByteArray, binary: Boolean = false): FileContentImpl {
+  private fun createFileContent(bytes: ByteArray, binary: Boolean = false): FileContent {
     val virtualFile = createInputFile(bytes, binary)
     return FileContentImpl.createByFile(virtualFile, myProject)
   }

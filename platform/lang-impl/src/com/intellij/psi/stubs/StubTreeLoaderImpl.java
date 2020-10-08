@@ -47,11 +47,10 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       byte[] content = vFile.contentsToByteArray();
       return vFile.computeWithPreloadedContentHint(content, () -> {
-        FileContentImpl content1 = FileContentImpl.createByContent(vFile, content);
+        FileContentImpl fc = (FileContentImpl)FileContentImpl.createByContent(vFile, content);
         if (project != null) {
-          content1.setProject(project);
+          fc.setProject(project);
         }
-        final FileContent fc = content1;
         if (psiFile != null && !vFile.getFileType().isBinary()) {
           fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
           // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.

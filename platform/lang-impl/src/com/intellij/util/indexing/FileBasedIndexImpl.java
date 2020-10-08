@@ -992,7 +992,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             newFc = previousContentAndStamp.getFirst();
           }
           else {
-            newFc = FileContentImpl.createByText(vFile, contentText);
+            newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText);
             document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
           }
 
@@ -1040,8 +1040,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (psiFile != null) {
       Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
         try {
-          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? ((FileContentImpl)FileContentImpl.createByFile(virtualFile))
-                                                                : FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents());
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? (FileContentImpl)FileContentImpl.createByFile(virtualFile)
+                                                                : (FileContentImpl)FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents());
           initFileContent(fc, project, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);
@@ -1318,7 +1318,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           ProgressManager.checkCanceled();
 
           if (fc == null) {
-            fc = FileContentImpl.createByContent(file, () -> getBytesOrNull(content));
+            fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content));
 
             ProgressManager.checkCanceled();
 
