@@ -220,23 +220,21 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
         if (myIsAction) {
           IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
-        } else {
+        }
+        else {
           IdeaPluginRegistrationIndex.processGroup(project, idWithoutPlaceSuffix, scope, processor);
         }
 
-        boolean foundOverrideText = false;
         for (ActionOrGroup result : processor.getResults()) {
           for (OverrideText overrideText : result.getOverrideTexts()) {
             if (place.equals(overrideText.getPlace().getStringValue())) {
-              foundOverrideText = true;
-              break;
+              final DomTarget overrideTarget = DomTarget.getTarget(overrideText, overrideText.getPlace());
+              assert overrideTarget != null;
+              return PsiElementResolveResult.createResults(PomService.convertToPsi(overrideTarget));
             }
           }
         }
-
-        if (!foundOverrideText) {
-          return ResolveResult.EMPTY_ARRAY;
-        }
+        return ResolveResult.EMPTY_ARRAY;
       }
 
       final List<PsiElement> psiElements =
