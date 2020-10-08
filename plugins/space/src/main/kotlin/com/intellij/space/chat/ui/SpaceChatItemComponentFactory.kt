@@ -14,8 +14,8 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.space.chat.model.SpaceChatItem
-import com.intellij.space.chat.model.SpaceChatItem.Companion.convertToChatItem
+import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
@@ -59,8 +59,9 @@ internal class SpaceChatItemComponentFactory(
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
-          createDiff(project, discussion, item.thread!!)
-            ?.withThread(lifetime, item.thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
+          val thread = item.thread!!
+          createDiff(project, discussion, thread)
+            ?.withThread(lifetime, thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
         }
         is M2TextItemContent -> {
           val messagePanel = createSimpleMessagePanel(item)
@@ -262,7 +263,7 @@ internal class SpaceChatItemComponentFactory(
     return NonOpaquePanel(HorizontalLayout(JBUI.scale(5))).apply {
       add(nameLabel)
 
-      if (!parentPath.isBlank()) {
+      if (parentPath.isNotBlank()) {
         add(JBLabel(parentPath).apply {
           foreground = UIUtil.getContextHelpForeground()
         })

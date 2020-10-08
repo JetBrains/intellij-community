@@ -1,6 +1,6 @@
 package com.intellij.space.chat.ui
 
-import com.intellij.space.chat.model.SpaceChatItem
+import com.intellij.space.chat.model.api.SpaceChatItem
 import javax.swing.AbstractListModel
 import kotlin.math.min
 

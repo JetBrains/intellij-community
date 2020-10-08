@@ -1,4 +1,4 @@
-package com.intellij.space.chat.model
+package com.intellij.space.chat.model.impl
 
 import circlet.client.api.CPrincipal
 import circlet.client.api.M2ItemContentDetails
@@ -9,30 +9,29 @@ import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.client.resolve
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.awaitFullLoad
-import com.intellij.util.ui.codereview.timeline.TimelineItem
 import libraries.coroutines.extra.Lifetime
 
-internal class SpaceChatItem private constructor(
+internal class SpaceChatItemImpl private constructor(
   messageVm: M2MessageVm,
-  val link: String?,
-  val thread: M2ChannelVm? = null
-) : TimelineItem {
+  override val link: String?,
+  override val thread: M2ChannelVm? = null
+) : SpaceChatItem {
   private val record = messageVm.message
-  val author: CPrincipal = record.author
-  val created: circlet.platform.api.KDateTime = record.created
-  val details: M2ItemContentDetails? = record.details
-  val delivered: Boolean = messageVm.delivered
+  override val author: CPrincipal = record.author
+  override val created: circlet.platform.api.KDateTime = record.created
+  override val details: M2ItemContentDetails? = record.details
+  override val delivered: Boolean = messageVm.delivered
 
-  @NlsSafe
-  val text: String = record.text
+  override val text: @NlsSafe String = record.text
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {
       return true
     }
 
-    if (other !is SpaceChatItem) {
+    if (other !is SpaceChatItemImpl) {
       return false
     }
 
@@ -60,11 +59,11 @@ internal class SpaceChatItem private constructor(
           else -> {
             message.thread?.let { channelsVm.channel(lifetime, it) }
           }
-        } ?: return SpaceChatItem(this, link)
+        } ?: return SpaceChatItemImpl(this, link)
       thread.awaitFullLoad(lifetime)
-      return SpaceChatItem(this, link, thread)
+      return SpaceChatItemImpl(this, link, thread)
     }
 
-    internal fun M2MessageVm.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItem(this, link)
+    internal fun M2MessageVm.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItemImpl(this, link)
   }
 }
