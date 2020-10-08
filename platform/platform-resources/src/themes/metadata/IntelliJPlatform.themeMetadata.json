@@ -411,20 +411,24 @@
       "description": "Notification that appears in in bottom-right corner. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
     {
-      "key": "Notification.borderColor"
+      "key": "Notification.borderColor",
+      "description": "Color of the border around notification balloon"
     },
     {
       "key": "Notification.errorBackground",
       "description": "Exception notifications. Use the \"Drop an error\" action in internal mode to show notifications on demand."
     },
     {
-      "key": "Notification.errorBorderColor"
+      "key": "Notification.errorBorderColor",
+      "description": "Color of the border around exception notification balloon"
     },
     {
-      "key": "Notification.errorForeground"
+      "key": "Notification.errorForeground",
+      "description": "Color of the text in exception notification balloon"
     },
     {
-      "key": "Notification.foreground"
+      "key": "Notification.foreground",
+      "description": "Color of the text in notification balloon"
     },
     {
       "key": "Notification.MoreButton.background",
@@ -536,6 +540,10 @@
     {
       "key": "Plugins.lightSelectionBackground",
       "description": "Selection background"
+    },
+    {
+      "key": "Plugins.hoverBackground",
+      "description": "A background of a hovered plugin row."
     },
     {
       "key": "Plugins.SearchField.background"

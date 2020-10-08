@@ -3156,7 +3156,7 @@ public final class UIUtil {
   }
 
   private static final class FocusedHover {
-    private static final Color BACKGROUND = new JBColor(0xE9EEF5, 0x464A4D);
+    private static final Color BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
     private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverBackground", BACKGROUND);
     private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverBackground", BACKGROUND);
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverBackground", BACKGROUND);
