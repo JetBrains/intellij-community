@@ -53,7 +53,7 @@ public abstract class ResourceInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    defaultWriteSettings(node, "anyMethodMayClose");
+    defaultWriteSettings(node, "anyMethodMayClose", "ignoreResourcesWithClose");
     writeBooleanOption(node, "anyMethodMayClose", true);
     writeBooleanOption(node, "ignoreResourcesWithClose", true);
   }
