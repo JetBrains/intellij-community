@@ -15,7 +15,7 @@ import java.io.Serializable
  */
 
 @Suppress("unused")
-class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable {
+class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var name: String
   var type: String? = null
   lateinit var dependencies: List<ModuleDependencyItem>
@@ -65,6 +65,15 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    this.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>().forEach { libraryDependency ->
+      val tableId = libraryDependency.library.tableId
+      if (tableId is LibraryTableId.ModuleLibraryTableId) {
+        assert(tableId.moduleId.name == this.name)
+      }
+    }
+  }
 }
 
 class ModuleEntity(
