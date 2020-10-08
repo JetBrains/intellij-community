@@ -35,16 +35,16 @@ public enum LanguageLevel {
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON24(24, true, false),
+  PYTHON24(24),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON25(25, true, false),
+  PYTHON25(25),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON26(26, true, false),
-  PYTHON27(27, true, false),
+  PYTHON26(26),
+  PYTHON27(27),
   /**
    * @apiNote This level is not supported since 2018.1.
    * Use it only to distinguish Python 2 and Python 3.
@@ -52,32 +52,32 @@ public enum LanguageLevel {
    * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
    * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
    */
-  PYTHON30(300, false, true),
+  PYTHON30(300),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON31(301, false, true),
+  PYTHON31(301),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON32(302, false, true),
+  PYTHON32(302),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON33(303, false, true),
+  PYTHON33(303),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON34(304, false, true),
+  PYTHON34(304),
   /**
    * @apiNote This level is not supported since 2020.3.
    */
-  PYTHON35(305, false, true),
-  PYTHON36(306, false, true),
-  PYTHON37(307, false, true),
-  PYTHON38(308, false, true),
-  PYTHON39(309, false, true),
-  PYTHON310(310, false, true);
+  PYTHON35(305),
+  PYTHON36(306),
+  PYTHON37(307),
+  PYTHON38(308),
+  PYTHON39(309),
+  PYTHON310(310);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -104,13 +104,8 @@ public enum LanguageLevel {
 
   private final int myVersion;
 
-  private final boolean myHasPrintStatement;
-  private final boolean myIsPy3K;
-
-  LanguageLevel(int version, boolean hasPrintStatement, boolean isPy3K) {
+  LanguageLevel(int version) {
     myVersion = version;
-    myHasPrintStatement = hasPrintStatement;
-    myIsPy3K = isPy3K;
   }
 
   /**
@@ -125,23 +120,23 @@ public enum LanguageLevel {
   }
 
   public int getMajorVersion() {
-    return isPython2() ? myVersion / 10 : myVersion / 100;
+    return myVersion < 100 ? myVersion / 10 : myVersion / 100;
   }
 
   public int getMinorVersion() {
-    return isPython2() ? myVersion % 10 : myVersion % 100;
+    return myVersion < 100 ? myVersion % 10 : myVersion % 100;
   }
 
   public boolean hasPrintStatement() {
-    return myHasPrintStatement;
+    return isPython2();
   }
 
   public boolean isPython2() {
-    return !myIsPy3K;
+    return getMajorVersion() == 2;
   }
 
   public boolean isPy3K() {
-    return myIsPy3K;
+    return getMajorVersion() == 3;
   }
 
   public boolean isOlderThan(@NotNull LanguageLevel other) {
