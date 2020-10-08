@@ -58,7 +58,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @Override
   @Nls
   public String getGroupName() {
-    int x = 044543;
     return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
 
