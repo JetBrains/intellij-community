@@ -66,39 +66,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDictCompExpression(@NotNull PyDictCompExpression node) {
-    super.visitPyDictCompExpression(node);
-
-    registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
-                                   PyPsiBundle.message("INSP.compatibility.feature.support.dictionary.comprehensions"),
-                                   node,
-                                   new ConvertDictCompQuickFix(),
-                                   false);
-  }
-
-  @Override
-  public void visitPySetLiteralExpression(@NotNull PySetLiteralExpression node) {
-    super.visitPySetLiteralExpression(node);
-
-    registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
-                                   PyPsiBundle.message("INSP.compatibility.feature.support.set.literal.expressions"),
-                                   node,
-                                   new ConvertSetLiteralQuickFix(),
-                                   false);
-  }
-
-  @Override
-  public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
-    super.visitPySetCompExpression(node);
-
-    registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
-                                   PyPsiBundle.message("INSP.compatibility.feature.support.set.comprehensions"),
-                                   node,
-                                   null,
-                                   false);
-  }
-
-  @Override
   public void visitPyExceptBlock(@NotNull PyExceptPart node) {
     super.visitPyExceptBlock(node);
 
@@ -338,15 +305,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyWithStatement(@NotNull PyWithStatement node) {
     super.visitPyWithStatement(node);
-
-    final PyWithItem[] items = node.getWithItems();
-    if (items.length > 1) {
-      registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.multiple.context.managers"),
-                                     Arrays.asList(items).subList(1, items.length),
-                                     null);
-    }
-
     checkAsyncKeyword(node);
   }
 

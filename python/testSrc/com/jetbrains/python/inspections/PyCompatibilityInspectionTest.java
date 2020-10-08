@@ -10,18 +10,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
-  public void testDictCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetLiteralExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
   public void testExceptBlock() {
     doTest(LanguageLevel.PYTHON27);
   }
@@ -64,10 +52,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   public void testReprExpression() {
     doTest();
-  }
-
-  public void testWithStatement() {
-    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testPrintStatement() {

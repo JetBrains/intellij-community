@@ -37,7 +37,7 @@ import java.util.Set;
  * @author yole
  */
 public class StatementParsing extends Parsing implements ITokenTypeRemapper {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.StatementParsing");
+  private static final Logger LOG = Logger.getInstance(StatementParsing.class);
   @NonNls protected static final String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
   @NonNls protected static final String TOK_WITH_STATEMENT = "with_statement";
   @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
@@ -62,7 +62,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
   private Phase myFutureImportPhase = Phase.NONE;
-  private boolean myExpectAsKeyword = false;
 
   public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
 
@@ -85,11 +84,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (futureFlag != null) {
       myFutureFlags.add(futureFlag);
     }
-  }
-
-  private void setExpectAsKeyword(boolean expectAsKeyword) {
-    myExpectAsKeyword = expectAsKeyword;
-    myBuilder.setTokenTypeRemapper(this);  // clear cached token type
   }
 
   public void parseStatement() {
@@ -296,10 +290,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
   protected boolean hasPrintStatement() {
     return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
-  }
-
-  protected boolean hasWithStatement() {
-    return myContext.getLanguageLevel().hasWithStatement() || myFutureFlags.contains(FUTURE.WITH_STATEMENT);
   }
 
   protected void checkEndOfStatement() {
@@ -510,7 +500,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (true) {
       final SyntaxTreeBuilder.Marker asMarker = builder.mark();
       if (is_module_import) { // import _
-        if (!parseDottedNameAsAware(true, false)) {
+        if (!parseDottedNameAsAware(false)) {
           asMarker.drop();
           break;
         }
@@ -530,14 +520,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
       }
-      setExpectAsKeyword(true); // possible 'as' comes as an ident; reparse it as keyword if found
       if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         builder.advanceLexer();
-        setExpectAsKeyword(false);
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
       asMarker.done(elementType);
-      setExpectAsKeyword(false);
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
         if (in_parens && builder.getTokenType() == PyTokenTypes.RPAR) {
@@ -567,15 +554,15 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   public boolean parseOptionalDottedName() {
-    return parseDottedNameAsAware(false, true);
+    return parseDottedNameAsAware(true);
   }
 
   public boolean parseDottedName() {
-    return parseDottedNameAsAware(false, false);
+    return parseDottedNameAsAware(false);
   }
 
   // true if identifier was parsed or skipped as optional, false on error
-  protected boolean parseDottedNameAsAware(boolean expect_as, boolean optional) {
+  protected boolean parseDottedNameAsAware(boolean optional) {
     if (myBuilder.getTokenType() != PyTokenTypes.IDENTIFIER) {
       if (optional) return true;
       myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
@@ -584,15 +571,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     SyntaxTreeBuilder.Marker marker = myBuilder.mark();
     myBuilder.advanceLexer();
     marker.done(getReferenceType());
-    boolean old_expect_AS_kwd = myExpectAsKeyword;
-    setExpectAsKeyword(expect_as);
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, PyPsiBundle.message("PARSE.expected.identifier"));
       marker.done(getReferenceType());
     }
-    setExpectAsKeyword(old_expect_AS_kwd);
     return true;
   }
 
@@ -744,7 +728,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           if (!getExpressionParser().parseSingleExpression(false)) {
             myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
           }
-          setExpectAsKeyword(true);
           if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true)) {
@@ -798,7 +781,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (true) {
       SyntaxTreeBuilder.Marker withItem = myBuilder.mark();
       getExpressionParser().parseExpression();
-      setExpectAsKeyword(true);
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
         if (!getExpressionParser().parseSingleExpression(true)) {
@@ -937,8 +919,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   protected IElementType filter(final IElementType source, final int start, final int end, final CharSequence text, boolean checkLanguageLevel) {
-    if ((myExpectAsKeyword || hasWithStatement()) &&
-        source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)) {
+    if (source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
@@ -949,11 +930,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myFutureImportPhase = Phase.FUTURE;
       return source;
     }
-    else if (
-      hasWithStatement() &&
-      source == PyTokenTypes.IDENTIFIER &&
-      isWordAtPosition(text, start, end, TOK_WITH)
-      ) {
+    else if (source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_WITH)) {
       return PyTokenTypes.WITH_KEYWORD;
     }
     else if (hasPrintStatement() &&

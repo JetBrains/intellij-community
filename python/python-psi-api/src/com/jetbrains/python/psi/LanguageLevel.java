@@ -35,16 +35,16 @@ public enum LanguageLevel {
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON24(24, false, true, false, false),
+  PYTHON24(24, true, false),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON25(25, false, true, false, false),
+  PYTHON25(25, true, false),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON26(26, true, true, false, false),
-  PYTHON27(27, true, true, true, false),
+  PYTHON26(26, true, false),
+  PYTHON27(27, true, false),
   /**
    * @apiNote This level is not supported since 2018.1.
    * Use it only to distinguish Python 2 and Python 3.
@@ -52,32 +52,32 @@ public enum LanguageLevel {
    * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
    * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
    */
-  PYTHON30(300, true, false, false, true),
+  PYTHON30(300, false, true),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON31(301, true, false, true, true),
+  PYTHON31(301, false, true),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON32(302, true, false, true, true),
+  PYTHON32(302, false, true),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON33(303, true, false, true, true),
+  PYTHON33(303, false, true),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON34(304, true, false, true, true),
+  PYTHON34(304, false, true),
   /**
    * @apiNote This level is not supported since 2020.3.
    */
-  PYTHON35(305, true, false, true, true),
-  PYTHON36(306, true, false, true, true),
-  PYTHON37(307, true, false, true, true),
-  PYTHON38(308, true, false, true, true),
-  PYTHON39(309, true, false, true, true),
-  PYTHON310(310, true, false, true, true);
+  PYTHON35(305, false, true),
+  PYTHON36(306, false, true),
+  PYTHON37(307, false, true),
+  PYTHON38(308, false, true),
+  PYTHON39(309, false, true),
+  PYTHON310(310, false, true);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -104,16 +104,12 @@ public enum LanguageLevel {
 
   private final int myVersion;
 
-  private final boolean myHasWithStatement;
   private final boolean myHasPrintStatement;
-  private final boolean mySupportsSetLiterals;
   private final boolean myIsPy3K;
 
-  LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean supportsSetLiterals, boolean isPy3K) {
+  LanguageLevel(int version, boolean hasPrintStatement, boolean isPy3K) {
     myVersion = version;
-    myHasWithStatement = hasWithStatement;
     myHasPrintStatement = hasPrintStatement;
-    mySupportsSetLiterals = supportsSetLiterals;
     myIsPy3K = isPy3K;
   }
 
@@ -136,16 +132,8 @@ public enum LanguageLevel {
     return isPython2() ? myVersion % 10 : myVersion % 100;
   }
 
-  public boolean hasWithStatement() {
-    return myHasWithStatement;
-  }
-
   public boolean hasPrintStatement() {
     return myHasPrintStatement;
-  }
-
-  public boolean supportsSetLiterals() {
-    return mySupportsSetLiterals;
   }
 
   public boolean isPython2() {
