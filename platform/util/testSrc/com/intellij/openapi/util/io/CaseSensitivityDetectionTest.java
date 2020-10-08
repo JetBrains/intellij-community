@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -36,6 +37,7 @@ public class CaseSensitivityDetectionTest {
   @Test
   public void wslRoots() throws Exception {
     IoTestUtil.assumeWindows();
+    assumeTrue("'wsl.exe' not found in %Path%", PathEnvironmentVariableUtil.findInPath("wsl.exe") != null);
 
     ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine("wsl", "-l", "-v").withRedirectErrorStream(true), 30_000);
     List<String> lines = output.getStdoutLines().stream().map(String::trim).filter(Strings::isNotEmpty).collect(Collectors.toList());
