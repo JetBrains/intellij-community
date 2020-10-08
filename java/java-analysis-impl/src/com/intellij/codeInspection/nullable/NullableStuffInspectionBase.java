@@ -995,19 +995,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     return null;
   }
 
-  private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
-                                                    final PsiAnnotation declaredNotNull) {
-    final String bothNullableNotNullMessage = JavaAnalysisBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict",
-                                                                        getPresentableAnnoName(declaredNullable),
-                                                                        getPresentableAnnoName(declaredNotNull));
-    holder.registerProblem(declaredNotNull.isPhysical() ? declaredNotNull : listOwner.getNavigationElement(),
-                           bothNullableNotNullMessage,
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNotNull, listOwner));
-    holder.registerProblem(declaredNullable.isPhysical() ? declaredNullable : listOwner.getNavigationElement(),
-                           bothNullableNotNullMessage,
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNullable, listOwner));
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     throw new RuntimeException("No UI in headless mode");
