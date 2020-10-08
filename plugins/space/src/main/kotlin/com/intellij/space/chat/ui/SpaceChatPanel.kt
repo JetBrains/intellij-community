@@ -8,11 +8,9 @@ import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.Ref
 import circlet.platform.api.isTemporary
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
-import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLoadingPanel
@@ -20,8 +18,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitAll
@@ -91,15 +87,6 @@ internal class SpaceChatPanel(
       border = JBUI.Borders.empty(16, 0)
     }
 
-    val submittableModel = object : SubmittableTextFieldModelBase("") {
-      override fun submit() {
-        chatVM.sendMessage(document.text)
-        runWriteAction {
-          document.setText("")
-        }
-      }
-    }
-
     return JPanel(null).apply {
       isOpaque = false
       border = JBUI.Borders.empty(24, 20)
@@ -111,7 +98,7 @@ internal class SpaceChatPanel(
                            .flowY(),
                          AC().size(":$maxWidth:$maxWidth").gap("push"))
       add(timeline, CC().growX().minWidth(""))
-      add(SubmittableTextField(SpaceBundle.message("chat.comment.action.text"), submittableModel), CC().growX().minWidth(""))
+      add(createNewMessageField(chatVM), CC().growX().minWidth(""))
     }
   }
 

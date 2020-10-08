@@ -3,6 +3,7 @@ package com.intellij.space.chat.ui
 import circlet.client.api.*
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
+import circlet.m2.M2MessagesVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.format
 import circlet.platform.client.resolve
@@ -39,9 +40,6 @@ import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.date.DateFormat
@@ -200,6 +198,10 @@ internal class SpaceChatItemComponentFactory(
       val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
       val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory)
 
+      val replyComponent = createReplyComponent(thread).apply {
+        border = JBUI.Borders.empty()
+      }
+
       // TODO: don't subscribe on thread changes in factory
       thread.mvms.forEach(lifetime) { messageList ->
         launch(lifetime, Ui) {
@@ -212,6 +214,7 @@ internal class SpaceChatItemComponentFactory(
       }
       panel.add(this, VerticalLayout.FILL_HORIZONTAL)
       panel.add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
+      panel.add(replyComponent, VerticalLayout.FILL_HORIZONTAL)
     }
   }
 
@@ -307,21 +310,29 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private class Item(avatar: Icon, title: JComponent, content: JComponent? = null) : JPanel() {
+  private class Item(avatar: Icon, title: JComponent, content: JComponent) : BorderLayoutPanel() {
+    companion object {
+      val AVATAR_GAP: Int
+        get() = UI.scale(8)
+    }
+
     init {
-      val avatarLabel = userAvatar(avatar)
+      val avatarPanel = BorderLayoutPanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty()
+        addToTop(userAvatar(avatar))
+      }
       isOpaque = false
-      layout = MigLayout(LC().gridGap("0", JBUI.scale(5).toString())
-                           .insets("0", "0", "0", "0")
-                           .fill()).apply {
-        columnConstraints = "[]${UI.scale(8)}[]"
+      addToLeft(avatarPanel)
+
+      val rightPart = JPanel(VerticalLayout(JBUI.scale(5))).apply {
+        isOpaque = false
+        border = JBUI.Borders.emptyLeft(AVATAR_GAP)
+        add(title, VerticalLayout.FILL_HORIZONTAL)
+        add(content, VerticalLayout.FILL_HORIZONTAL)
       }
 
-      add(avatarLabel, CC().pushY().spanY(2).alignY("top"))
-      add(title, CC().pushX().alignY("top"))
-      if (content != null) {
-        add(content, CC().newline().grow().push())
-      }
+      addToCenter(rightPart)
     }
 
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
