@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.Disposable
@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.replaceService
 
 abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
@@ -26,7 +27,7 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
     application.replaceService(Environment::class.java, TestEnvironment(), testRootDisposable)
     application.replaceService(ExternalSystemJdkProvider::class.java, TestJdkProvider(), testRootDisposable)
 
-    UnknownSdkResolver.EP_NAME.point.registerExtension(TestUnknownSdkResolver, testRootDisposable)
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(TestUnknownSdkResolver), testRootDisposable)
 
     environment.variables(ExternalSystemJdkUtil.JAVA_HOME to null)
 
