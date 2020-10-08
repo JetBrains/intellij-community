@@ -99,8 +99,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                   boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
-    new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
-    if (stop) {
+    Worker worker = new Worker(rootSchema, parameters.getPosition(), completionPosition, result);
+    worker.work();
+    // stop further completion only if current contributor has at least one new completion variant
+    if (stop && !worker.myVariants.isEmpty()) {
       result.stopHere();
     }
   }
