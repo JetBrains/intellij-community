@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -11,6 +13,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -18,6 +21,7 @@ import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -52,6 +56,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.function.Consumer;
 import java.net.SocketException;
 import java.util.function.Consumer;
 
@@ -61,25 +66,28 @@ import static com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtens
  * @author Vladislav.Soroka
  */
 class ForkedDebuggerThread extends Thread {
-  @NotNull
-  private final ProcessHandler myMainProcessHandler;
-  @NotNull
-  private final ServerSocket mySocket;
-  @NotNull
-  private final Project myProject;
-  @Nullable
-  private final ExecutionConsole myMainExecutionConsole;
+  private final @NotNull ProcessHandler myMainProcessHandler;
+  private final @NotNull ServerSocket mySocket;
+  private final @NotNull Project myProject;
+  private final @NotNull RunContentDescriptor myMainRunContentDescriptor;
+  private final @NotNull ExecutionEnvironment myMainExecutionEnvironment;
+  private final @NotNull ExternalSystemRunnableState myMainRunnableState;
 
   ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
                        @NotNull RunContentDescriptor mainRunContentDescriptor,
                        @NotNull ServerSocket socket,
-                       @NotNull Project project) {
+                       @NotNull ExecutionEnvironment mainExecutionEnvironment,
+                       @NotNull ExternalSystemRunnableState mainRunnableState) {
     super("external task forked debugger runner");
     setDaemon(true);
     mySocket = socket;
-    myProject = project;
+    myProject = mainExecutionEnvironment.getProject();
+
     myMainProcessHandler = mainProcessHandler;
-    myMainExecutionConsole = mainRunContentDescriptor.getExecutionConsole();
+    myMainRunContentDescriptor = mainRunContentDescriptor;
+    myMainExecutionEnvironment = mainExecutionEnvironment;
+    myMainRunnableState = mainRunnableState;
+
     myMainProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
@@ -161,17 +169,52 @@ class ForkedDebuggerThread extends Thread {
       }
     });
 
-    for (DebuggerBackendExtension extension : DebuggerBackendExtension.EP_NAME.getExtensionList()) {
-      if (extension.id().equals(debuggerId)) {
-        RunnerAndConfigurationSettings settings = extension.debugConfigurationSettings(myProject, processName, processParameters);
-        runDebugConfiguration(settings, new ProgramRunner.Callback() {
-          @Override
-          public void processStarted(RunContentDescriptor descriptor) {
-            handleStartedDebugConfiguration(descriptor, processName, accept, stream);
-          }
+    attachRemoteDebugger(debuggerId, processName, processParameters, accept, stream);
+  }
+
+  private void attachRemoteDebugger(
+    @NotNull String debuggerId,
+    @NotNull String processName,
+    @NotNull String processParameters,
+    @NotNull Socket accept,
+    @NotNull DataInputStream inputStream
+  ) {
+    DebuggerBackendExtension extension = DebuggerBackendExtension.EP_NAME.findFirstSafe(it -> it.id().equals(debuggerId));
+    if (extension != null) {
+      RunnerAndConfigurationSettings settings = extension.debugConfigurationSettings(myProject, processName, processParameters);
+      if (myMainRunnableState.isReattachDebugProcess()) {
+        reattachRemoteDebugger(settings, debugProcess -> {
+          stopForkedProcessWhenMainProcessTerminated(debugProcess.getProcessHandler());
+          initTerminateForkedProcessHandler(debugProcess.getProcessHandler());
+          unblockRemote(accept, inputStream);
         });
-        break;
       }
+      else {
+        runDebugConfiguration(settings, descriptor -> {
+          // select tab for the forked process only when it has been suspended
+          descriptor.setSelectContentWhenAdded(false);
+
+          // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
+          stopForkedProcessWhenMainProcessTerminated(descriptor.getProcessHandler());
+          removeRunContentWhenProcessIsTerminated(descriptor);
+          initForkedProcessLogger(descriptor, processName);
+          initTerminateForkedProcessHandler(descriptor.getProcessHandler());
+          unblockRemote(accept, inputStream);
+        });
+      }
+    }
+  }
+
+  private void reattachRemoteDebugger(@NotNull RunnerAndConfigurationSettings settings, @NotNull Consumer<DebugProcess> callback) {
+    DebuggerManager debuggerManager = DebuggerManager.getInstance(myProject);
+    DebugProcess debugProcess = debuggerManager.getDebugProcess(myMainProcessHandler);
+    if (debugProcess instanceof DebugProcessImpl) {
+      RemoteConfiguration runConfiguration = (RemoteConfiguration)settings.getConfiguration();
+      RemoteConnection connection = runConfiguration.createRemoteConnection();
+      DebugEnvironment environment = new DefaultDebugEnvironment(myMainExecutionEnvironment, myMainRunnableState, connection, true);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ((DebugProcessImpl)debugProcess).reattach(environment, () -> callback.accept(debugProcess));
+      });
     }
   }
 
@@ -185,32 +228,60 @@ class ForkedDebuggerThread extends Thread {
     }
   }
 
-  private void handleStartedDebugConfiguration(RunContentDescriptor descriptor,
-                                               String processName,
-                                               Socket socket,
-                                               DataInputStream inputStream) {
-    // select tab for the forked process only when it has been suspended
-    descriptor.setSelectContentWhenAdded(false);
-
-    // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
-    ProcessHandler forkedProcessHandler = descriptor.getProcessHandler();
-    if (forkedProcessHandler != null) {
+  private void stopForkedProcessWhenMainProcessTerminated(@Nullable ProcessHandler processHandler) {
+    if (processHandler != null) {
       myMainProcessHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           myMainProcessHandler.removeProcessListener(this);
-          terminateForkedProcess(forkedProcessHandler);
+          terminateForkedProcess(processHandler);
         }
       });
-
-      forkedProcessHandler.addProcessListener(new MyForkedProcessListener(descriptor, processName));
-      unblockRemote(socket, inputStream);
     }
   }
 
-  private void removeTerminatedForks(@NotNull String processName,
-                                     Socket socket,
-                                     DataInputStream inputStream) {
+  private void removeRunContentWhenProcessIsTerminated(@NotNull RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler != null) {
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+          ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
+          if (window != null) {
+            ContentManager contentManager = window.getContentManager();
+            Content content = descriptor.getAttachedContent();
+            if (content != null) {
+              ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private void initForkedProcessLogger(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler != null) {
+      processHandler.addProcessListener(new MyForkedProcessListener(descriptor, processName));
+    }
+  }
+
+  private void initTerminateForkedProcessHandler(@Nullable ProcessHandler processHandler) {
+    if (processHandler != null) {
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+          if (!willBeDestroyed) {
+            // always terminate forked process
+            terminateForkedProcess(event.getProcessHandler());
+          }
+        }
+      });
+    }
+  }
+
+  private void removeTerminatedForks(@NotNull String processName, @NotNull Socket socket, @NotNull DataInputStream inputStream) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
@@ -274,25 +345,7 @@ class ForkedDebuggerThread extends Thread {
     }
 
     @Override
-    public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-      if (!willBeDestroyed) {
-        // always terminate forked process
-        terminateForkedProcess(event.getProcessHandler());
-      }
-    }
-
-    @Override
     public void processTerminated(@NotNull ProcessEvent event) {
-      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
-      if (window != null) {
-        ContentManager contentManager = window.getContentManager();
-        Content content = myDescriptor.getAttachedContent();
-        if (content != null) {
-          ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
-        }
-      }
-
       removeLink();
     }
 
@@ -305,10 +358,9 @@ class ForkedDebuggerThread extends Thread {
         if (debugProcess instanceof DebugProcessImpl) {
           addressDisplayName = "(" + JavaDebuggerBundle.getAddressDisplayName(((DebugProcessImpl)debugProcess).getConnection()) + ")";
         }
+        String statusText = ExternalSystemBundle.message("debugger.status.connected", myProcessName, addressDisplayName);
         String linkText = ExternalSystemBundle.message("debugger.open.session.tab");
-        String debuggerAttachedStatusMessage =
-          ExternalSystemBundle.message("debugger.status.connected", myProcessName, addressDisplayName) + ". " + linkText + '\n';
-
+        String debuggerAttachedStatusMessage = statusText + " " + linkText + '\n';
         mainConsoleView.print(debuggerAttachedStatusMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
         mainConsoleView.performWhenNoDeferredOutput(() -> {
           EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
@@ -351,12 +403,12 @@ class ForkedDebuggerThread extends Thread {
 
     @Nullable
     private ConsoleViewImpl getMainConsoleView() {
-      if (myMainExecutionConsole == null) return null;
-      if (myMainExecutionConsole instanceof ConsoleViewImpl) {
-        return (ConsoleViewImpl)myMainExecutionConsole;
+      ExecutionConsole executionConsole = myMainRunContentDescriptor.getExecutionConsole();
+      if (executionConsole instanceof ConsoleViewImpl) {
+        return (ConsoleViewImpl)executionConsole;
       }
-      if (myMainExecutionConsole instanceof DataProvider) {
-        Object consoleView = ((DataProvider)myMainExecutionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
+      if (executionConsole instanceof DataProvider) {
+        Object consoleView = ((DataProvider)executionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
         if (consoleView instanceof ConsoleViewImpl) {
           return (ConsoleViewImpl)consoleView;
         }

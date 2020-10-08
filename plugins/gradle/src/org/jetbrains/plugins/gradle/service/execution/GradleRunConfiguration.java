@@ -37,6 +37,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
+    setReattachDebugProcess(true);
   }
 
   public boolean isScriptDebugEnabled() {

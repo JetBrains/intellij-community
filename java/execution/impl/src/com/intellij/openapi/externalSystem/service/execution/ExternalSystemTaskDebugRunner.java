@@ -71,16 +71,16 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     if (state instanceof ExternalSystemRunnableState) {
-      ExternalSystemRunnableState myRunnableState = (ExternalSystemRunnableState)state;
-      int port = myRunnableState.getDebugPort();
+      ExternalSystemRunnableState runnableState = (ExternalSystemRunnableState)state;
+      int port = runnableState.getDebugPort();
       if (port > 0) {
-        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(myRunnableState, environment);
+        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(runnableState, environment);
         if (runContentDescriptor == null) return null;
 
         ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
-        final ServerSocket socket = myRunnableState.getForkSocket();
+        final ServerSocket socket = runnableState.getForkSocket();
         if (socket != null && processHandler != null) {
-          new ForkedDebuggerThread(processHandler, runContentDescriptor, socket, environment.getProject()).start();
+          new ForkedDebuggerThread(processHandler, runContentDescriptor, socket, environment, runnableState).start();
         }
         return runContentDescriptor;
       }
