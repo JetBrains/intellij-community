@@ -167,7 +167,7 @@ public final class PathEnvironmentVariableUtil {
    *
    * @see EnvironmentUtil#getEnvironmentMap Javadoc for more info
    */
-  public static @NotNull String clarifyExePathOnMac(@NotNull String exePath) {
+  public static @NotNull String clarifyExePath(@NotNull String exePath) {
     if (SystemInfoRt.isMac && exePath.indexOf(File.separatorChar) == -1) {
       String systemPath = System.getenv("PATH");
       String shellPath = EnvironmentUtil.getValue("PATH");

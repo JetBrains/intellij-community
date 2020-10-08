@@ -398,7 +398,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myParentEnvironmentType == ParentEnvironmentType.CONSOLE
-                     ? PathEnvironmentVariableUtil.clarifyExePathOnMac(myExePath)
+                     ? PathEnvironmentVariableUtil.clarifyExePath(myExePath)
                      : myExePath;
     if (exePath != myExePath) {
       LOG.debug(myExePath + " => " + exePath);
