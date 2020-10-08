@@ -13,6 +13,7 @@ import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.WTypes;
 import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.ApiStatus;
@@ -478,6 +479,19 @@ public final class FileSystemUtil {
         anyChild = new File(anyChild, name);
       }
     }
+    else if (SystemInfo.isMac) {
+      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      if (JnaLoader.isLoaded()) {
+        FileAttributes.CaseSensitivity detected = getMacOsCaseSensitivity(path);
+        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+      }
+      if (parent == null) {
+        String name = findCaseSensitiveSiblingName(anyChild);
+        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+        parent = anyChild;
+        anyChild = new File(anyChild, name);
+      }
+    }
 
     // todo call some native API here, instead of slowly querying file attributes
     if (parent == null) {
@@ -627,6 +641,38 @@ public final class FileSystemUtil {
       Structure fileInformation,
       long length,
       int fileInformationClass);
+  }
+  //</editor-fold>
+
+  //<editor-fold desc="macOS case sensitivity detection">
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
+    CoreFoundation cf = CoreFoundation.INSTANCE;
+
+    CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
+    try {
+      PointerByReference result = new PointerByReference();
+      if (cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, result, null)) {
+        boolean value = new CoreFoundation.CFBooleanRef(result.getValue()).booleanValue();
+        return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+      }
+      else {
+        LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+      }
+    }
+    finally {
+      url.release();
+    }
+
+    return FileAttributes.CaseSensitivity.UNKNOWN;
+  }
+
+  private interface CoreFoundation extends com.sun.jna.platform.mac.CoreFoundation {
+    CoreFoundation INSTANCE = Native.load("CoreFoundation", CoreFoundation.class);
+
+    CFStringRef kCFURLVolumeSupportsCaseSensitiveNamesKey = CFStringRef.createCFString("NSURLVolumeSupportsCaseSensitiveNamesKey");
+
+    CFTypeRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, String buffer, long bufLen, boolean isDirectory);
+    boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, Pointer error);
   }
   //</editor-fold>
 }
