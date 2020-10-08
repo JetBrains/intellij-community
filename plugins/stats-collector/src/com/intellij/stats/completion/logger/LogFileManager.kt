@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,17 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
                 flushImpl()
             }
             storage.appendLine(message)
+        }
+    }
+
+    override fun printLines(lines: List<String>) {
+        synchronized(this) {
+            if (storage.size > 0 && storage.sizeWithNewLines(lines) > MAX_SIZE_BYTE) {
+                flushImpl()
+            }
+            for (line in lines) {
+                storage.appendLine(line)
+            }
         }
     }
 
