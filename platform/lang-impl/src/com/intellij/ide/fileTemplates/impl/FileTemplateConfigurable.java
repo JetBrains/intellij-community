@@ -433,14 +433,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
-
   public void focusToNameField() {
-    myNameField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
-  }
-
-  public void focusToExtensionField() {
-    myExtensionField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true));
+    JTextField field = FileTemplateBase.isChild(myTemplate) ? myExtensionField : myNameField;
+    field.selectAll();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
   }
 }
