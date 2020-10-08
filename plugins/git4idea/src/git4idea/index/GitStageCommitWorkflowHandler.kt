@@ -4,9 +4,7 @@ package git4idea.index
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.commit.*
-import kotlin.properties.Delegates.observable
 
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
@@ -16,9 +14,7 @@ class GitStageCommitWorkflowHandler(
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
 
-  var state: GitStageTracker.State by observable(GitStageTracker.State.EMPTY) { _, _, _ ->
-    updateDefaultCommitActionEnabled()
-  }
+  var state: GitStageTracker.State = GitStageTracker.State.EMPTY
 
   init {
     Disposer.register(ui, this)
@@ -44,11 +40,18 @@ class GitStageCommitWorkflowHandler(
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   private fun updateDefaultCommitActionEnabled() {
-    ui.isDefaultCommitActionEnabled = !workflow.isExecuting && state.hasStagedRoots()
+    ui.isDefaultCommitActionEnabled = !workflow.isExecuting
   }
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =
-    state.stagedRoots.isNotEmpty() && (getCommitMessage().isNotBlank() || showEmptyCommitMessageConfirmation(project))
+    ui.commitProgressUi.run {
+      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
+
+      isEmptyChanges = !executorWithoutChangesAllowed && !state.hasStagedRoots()
+      isEmptyMessage = getCommitMessage().isBlank()
+
+      !isEmptyChanges && !isEmptyMessage
+    }
 
   override fun updateWorkflow() {
     workflow.commitState = GitStageCommitState(state.stagedRoots, getCommitMessage())

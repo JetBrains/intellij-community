@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsContexts
 
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi {
+  val commitProgressUi: CommitProgressUi
+
   fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
 }
 

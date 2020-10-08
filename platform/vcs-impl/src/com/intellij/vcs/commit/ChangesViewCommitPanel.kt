@@ -16,10 +16,10 @@ import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -35,8 +35,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi {
 
   private val changesView get() = changesViewHost.changesView
-
-  private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val toolbarPanel = simplePanel().apply {
     isOpaque = false
@@ -69,7 +67,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     }
 
     with(changesView) {
-      setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
+      setInclusionListener { fireInclusionChanged() }
       isShowCheckboxes = true
     }
     changesViewHost.statusComponent =
@@ -202,9 +200,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
 
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
-  override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
-    inclusionEventDispatcher.addListener(listener, parent)
-
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
   override fun endExecution() = closeEditorPreviewIfEmpty()
@@ -223,5 +218,24 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       isShowCheckboxes = false
       setInclusionListener(null)
     }
+  }
+}
+
+private class ChangesViewCommitProgressPanel(
+  private val commitWorkflowUi: ChangesViewCommitWorkflowUi,
+  commitMessage: EditorTextComponent
+) : CommitProgressPanel() {
+
+  private var oldInclusion: Set<Any> = emptySet()
+
+  init {
+    setup(commitWorkflowUi, commitMessage)
+  }
+
+  override fun inclusionChanged() {
+    val newInclusion = commitWorkflowUi.inclusionModel?.getInclusion().orEmpty()
+
+    if (oldInclusion != newInclusion) super.inclusionChanged()
+    oldInclusion = newInclusion
   }
 }

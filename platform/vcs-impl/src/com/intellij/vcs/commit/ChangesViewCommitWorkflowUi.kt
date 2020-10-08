@@ -11,7 +11,6 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   val isActive: Boolean
   fun deactivate(isRestoreState: Boolean)
 
-  val commitProgressUi: CommitProgressUi
   fun endExecution()
 
   var commitAuthor: VcsUser?

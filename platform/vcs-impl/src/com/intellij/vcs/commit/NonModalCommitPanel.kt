@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
@@ -22,6 +24,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
@@ -47,6 +50,7 @@ abstract class NonModalCommitPanel(
     ComponentContainer,
     EditorColorsListener {
 
+  private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
   private val dataProviders = mutableListOf<DataProvider>()
   private var needUpdateCommitOptionsUi = false
 
@@ -75,6 +79,11 @@ abstract class NonModalCommitPanel(
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
   }
+
+  override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
+    inclusionEventDispatcher.addListener(listener, parent)
+
+  protected fun fireInclusionChanged() = inclusionEventDispatcher.multicaster.inclusionChanged()
 
   override fun startBeforeCommitChecks() = Unit
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit

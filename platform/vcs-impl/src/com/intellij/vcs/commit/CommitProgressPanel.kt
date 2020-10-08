@@ -28,14 +28,7 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
   isVisible = true
 }
 
-class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCommitWorkflowUi, commitMessage: EditorTextComponent) :
-  NonOpaquePanel(VerticalLayout(0)),
-  CommitProgressUi,
-  InclusionListener,
-  DocumentListener {
-
-  private var oldInclusion: Set<Any> = emptySet()
-
+open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(0)), CommitProgressUi, InclusionListener, DocumentListener {
   private val label = JBLabel().apply { isVisible = false }
 
   override var isEmptyMessage: Boolean by observable(false) { _, oldValue, newValue ->
@@ -53,7 +46,7 @@ class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCo
     update()
   }
 
-  init {
+  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) {
     add(label)
 
     commitMessage.addDocumentListener(this)
@@ -61,13 +54,7 @@ class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCo
   }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
-
-  override fun inclusionChanged() {
-    val newInclusion = commitWorkflowUi.inclusionModel?.getInclusion().orEmpty()
-
-    if (oldInclusion != newInclusion) clearError()
-    oldInclusion = newInclusion
-  }
+  override fun inclusionChanged() = clearError()
 
   private fun update() {
     val error = buildErrorText()

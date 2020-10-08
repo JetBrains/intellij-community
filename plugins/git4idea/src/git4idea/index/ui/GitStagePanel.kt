@@ -125,6 +125,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       return
     }
     tree.update()
+    commitPanel.state = state
     commitWorkflowHandler.state = state
   }
 
