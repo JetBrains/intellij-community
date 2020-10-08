@@ -1744,6 +1744,13 @@ class Foo extends myClass
     doAntiTest()
   }
 
+  void testClassesWithDollarInTheMiddle() {
+    myFixture.addClass('package imported; public class Foo$WithDollarImported {}')
+    configureByTestName()
+    myFixture.completeBasic()
+    assert 'Foo$WithDollarImported' in myFixture.lookupElementStrings
+  }
+
   @NeedsIndex.ForStandardLibrary
   void "test don't show static inner class after instance qualifier"() {
     myFixture.configureByText "a.java", """
