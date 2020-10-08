@@ -561,4 +561,10 @@
   <action id="Sql.EditParameter">
     <keyboard-shortcut first-keystroke="f4" />
   </action>
+  <action id="CIDR.Lang.SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+  </action>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+  </action>
 </keymap>

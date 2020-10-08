@@ -153,6 +153,8 @@
   </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="W"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control W"/>
   </action>
   <action id="GotoNextBookmark">
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="N"/>
@@ -531,6 +533,16 @@
   <action id="RiderBackendAction-EncapsulateField">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="E" />
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control E" />
+  </action>
+  <action id="CIDR.Lang.SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control O"/>
+  </action>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control O"/>
   </action>
 
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

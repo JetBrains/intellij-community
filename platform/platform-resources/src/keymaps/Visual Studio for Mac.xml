@@ -177,6 +177,9 @@
     <keyboard-shortcut first-keystroke="alt meta P" />
   </action>
 
+  <action id="CIDR.Lang.SwitchHeaderSource"/>
+  <action id="SwitchHeaderSource"/>
+
 <!--  Rider-specific actions-->
   <action id="RiderNewSolution">
     <keyboard-shortcut first-keystroke="shift meta N" />

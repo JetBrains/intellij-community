@@ -660,4 +660,7 @@
         <keyboard-shortcut first-keystroke="ctrl T"/>
     </action>
 
+    <action id="CIDR.Lang.SwitchHeaderSource"/>
+    <action id="SwitchHeaderSource"/>
+
 </keymap>
