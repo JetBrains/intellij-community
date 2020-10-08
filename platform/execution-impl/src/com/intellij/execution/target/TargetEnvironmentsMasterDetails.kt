@@ -94,11 +94,12 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
       .filterNotNull()
       .toList()
 
-  private inner class CreateNewTargetAction(private val type: TargetEnvironmentType<*>)
+  private inner class CreateNewTargetAction<T : TargetEnvironmentConfiguration>(private val type: TargetEnvironmentType<T>)
     : DumbAwareAction(type.displayName, null, type.icon) {
 
     override fun actionPerformed(e: AnActionEvent) {
       val newConfig = type.createDefaultConfig()
+      type.initializeNewlyCreated(newConfig)
       // there may be not yet stored names
       newConfig.displayName = UniqueNameGenerator.generateUniqueName(type.displayName) { curName ->
         getConfiguredTargets().none { it.displayName == curName }
