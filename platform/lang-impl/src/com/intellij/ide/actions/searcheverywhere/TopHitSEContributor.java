@@ -76,11 +76,6 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
   }
 
   @Override
-  public boolean isSearchingInProject() {
-    return false;
-  }
-
-  @Override
   public void fetchElements(@NotNull String pattern,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Processor<? super Object> consumer) {
     fill(pattern, consumer);

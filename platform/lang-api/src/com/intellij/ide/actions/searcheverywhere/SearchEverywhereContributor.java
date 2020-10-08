@@ -40,10 +40,6 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
 
   boolean showInFindResults();
 
-  default boolean isSearchingInProject() {
-    return true;
-  }
-
   default boolean isShownInSeparateTab() {
     return false;
   }

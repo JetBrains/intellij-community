@@ -36,8 +36,6 @@ import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.IDE_CONTRIBUTORS_GROUP_ID;
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 public class SearchEverywhereHeader {
@@ -55,7 +53,7 @@ public class SearchEverywhereHeader {
   private boolean myEverywhereAutoSet = true;
 
   public SearchEverywhereHeader(@Nullable Project project,
-                                @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
+                                Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
                                 @NotNull Runnable scopeChangedCallback, Function<String, String> shortcutSupplier,
                                 AnAction showInFindToolWindowAction, SearchEverywhereUIBase ui) {
     myScopeChangedCallback = scopeChangedCallback;
@@ -130,20 +128,21 @@ public class SearchEverywhereHeader {
     return contributorsPanel;
   }
 
-  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
+  private List<SETab> createTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     if (Registry.is("search.everywhere.group.contributors.by.type")) {
       return createGroupedTabs(contributors);
     } else {
-      return createSeparateTabs(contributors);
+      return createSeparateTabs(new ArrayList<>(contributors.keySet()));
     }
   }
 
-  private List<SETab> createGroupedTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
+  private List<SETab> createGroupedTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     List<SearchEverywhereContributor<?>> projectContributors = new ArrayList<>();
     List<SearchEverywhereContributor<?>> ideContributors = new ArrayList<>();
-    contributors.forEach(contributor -> {
-      if (contributor.isSearchingInProject()) projectContributors.add(contributor);
-      else ideContributors.add(contributor);
+    contributors.forEach((contributor, tab) -> {
+      if (tab == SearchEverywhereTabDescriptor.PROJECT) projectContributors.add(contributor);
+      else if (tab == SearchEverywhereTabDescriptor.IDE) ideContributors.add(contributor);
+      else throw new IllegalArgumentException("Unsupported tab - " + tab.getId());
     });
     List<SETab> res = new ArrayList<>();
 
@@ -152,7 +151,7 @@ public class SearchEverywhereHeader {
         new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
         new SearchEverywhereUIBase.FiltersAction(createContributorsFilter(myProject, projectContributors), myScopeChangedCallback)
       );
-      res.add(createTab(PROJECT_CONTRIBUTORS_GROUP_ID, IdeBundle.message("searcheverywhere.project.search.tab.name"), projectContributors,
+      res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"), projectContributors,
                         projectActions));
 
     }
@@ -179,7 +178,8 @@ public class SearchEverywhereHeader {
         },
         new SearchEverywhereUIBase.FiltersAction(createContributorsFilter(myProject, ideContributors), myScopeChangedCallback)
       );
-      res.add(createTab(IDE_CONTRIBUTORS_GROUP_ID, IdeBundle.message("searcheverywhere.ide.search.tab.name"), ideContributors, ideActions));
+      res.add(createTab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
+                        ideContributors, ideActions));
     }
 
     return res;

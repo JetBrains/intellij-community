@@ -46,8 +46,6 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
-  public static final String PROJECT_CONTRIBUTORS_GROUP_ID = "SearchEverywhere.Project";
-  public static final String IDE_CONTRIBUTORS_GROUP_ID = "SearchEverywhere.IDE";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   private final Map<String, String> myTabsShortcutsMap;
@@ -82,9 +80,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Project project = initEvent.getProject();
     Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
-    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, contextComponent);
+    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>
+      contributors = createContributors(initEvent, project, contextComponent);
     mySearchEverywhereUI = createView(myProject, contributors);
-    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
+    contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
@@ -158,27 +157,28 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
+  private Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
-      return Collections.singletonList(factory.createContributor(initEvent));
+      return Collections.singletonMap(factory.createContributor(initEvent), SearchEverywhereTabDescriptor.IDE);
     }
 
-    List<SearchEverywhereContributor<?>> serviceContributors = Arrays.asList(
-      new TopHitSEContributor(project, contextComponent, s ->
-        mySearchEverywhereUI.getSearchField().setText(s)),
-      new RecentFilesSEContributor(initEvent),
-      new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText())
-    );
+    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res =
+      new TreeMap<>(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
 
-    List<SearchEverywhereContributor<?>> contributors = new ArrayList<>(serviceContributors);
+    res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
+            SearchEverywhereTabDescriptor.IDE);
+    res.put(new RecentFilesSEContributor(initEvent), SearchEverywhereTabDescriptor.PROJECT);
+    res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
+            SearchEverywhereTabDescriptor.IDE);
+
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
       SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-      contributors.add(contributor);
+      SearchEverywhereTabDescriptor tab = factory.getTab();
+      res.put(contributor, tab);
     }
-    contributors.sort(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
 
-    return contributors;
+    return res;
   }
 
   private void calcPositionAndShow(Project project, JBPopup balloon) {
@@ -256,7 +256,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private SearchEverywhereUIBase createView(Project project,
-                                        List<SearchEverywhereContributor<?>> contributors) {
+                                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -30,7 +31,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String tabID = Registry.is("search.everywhere.group.contributors.by.type")
-                   ? SearchEverywhereManagerImpl.IDE_CONTRIBUTORS_GROUP_ID
+                   ? SearchEverywhereTabDescriptor.IDE.getId()
                    : ActionSearchEverywhereContributor.class.getSimpleName();
     showInSearchEverywherePopup(tabID, e, false, true);
   }

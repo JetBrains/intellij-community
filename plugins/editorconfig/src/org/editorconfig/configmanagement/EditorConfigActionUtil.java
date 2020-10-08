@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -117,7 +118,7 @@ public class EditorConfigActionUtil {
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
     String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
-                              ? SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID
+                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
                               : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     if (seManager.isShown()) {
       if (!searchProviderID.equals(seManager.getSelectedTabID())) {

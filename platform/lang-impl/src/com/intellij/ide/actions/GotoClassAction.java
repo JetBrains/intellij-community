@@ -3,7 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.*;
@@ -38,7 +38,7 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
     boolean dumb = DumbService.isDumb(project);
     if (!dumb || isModelDumbAware(e)) {
       String tabID = Registry.is("search.everywhere.group.contributors.by.type")
-                     ? SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID
+                     ? SearchEverywhereTabDescriptor.PROJECT.getId()
                      : ClassSearchEverywhereContributor.class.getSimpleName();
       showInSearchEverywherePopup(tabID, e, true, true);
     }

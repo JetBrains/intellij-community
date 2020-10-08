@@ -34,8 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -115,13 +113,13 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
   private final SEListSelectionTracker mySelectionTracker;
 
   public SearchEverywhereUIMixedResults(@Nullable Project project,
-                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
+                                        Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     this(project, contributors, s -> null);
   }
 
   public SearchEverywhereUIMixedResults(@Nullable Project project,
-                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
-                            @NotNull Function<String, String> shortcutSupplier) {
+                                        Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
+                                        @NotNull Function<String, String> shortcutSupplier) {
     super(project);
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);

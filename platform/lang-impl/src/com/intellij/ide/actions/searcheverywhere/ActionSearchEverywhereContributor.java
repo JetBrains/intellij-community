@@ -85,11 +85,6 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   }
 
   @Override
-  public boolean isSearchingInProject() {
-    return false;
-  }
-
-  @Override
   public void fetchWeightedElements(@NotNull String pattern,
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {
@@ -238,6 +233,11 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
+    }
+
+    @Override
+    public @NotNull SearchEverywhereTabDescriptor getTab() {
+      return SearchEverywhereTabDescriptor.IDE;
     }
   }
 }

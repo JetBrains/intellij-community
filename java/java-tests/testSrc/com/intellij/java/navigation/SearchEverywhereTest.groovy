@@ -242,12 +242,20 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private SearchEverywhereUIBase createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
+    def map = new HashMap<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>()
+    contributors.forEach({map.put(it, null)})
+    return createTestUI(map)
+  }
+
+  private SearchEverywhereUIBase createTestUI(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributorsMap) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
     def mixingEnabled = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-    mySearchUI = mixingEnabled ? new SearchEverywhereUIMixedResults(project, contributors)
-                               : new SearchEverywhereUI(project, contributors)
-    def tab = contributors.size() > 1 ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID : contributors.get(0).getSearchProviderId()
+    mySearchUI = mixingEnabled ? new SearchEverywhereUIMixedResults(project, contributorsMap)
+                               : new SearchEverywhereUI(project, contributorsMap)
+    def tab = contributorsMap.size() > 1
+      ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+      : contributorsMap.keySet().find().getSearchProviderId()
     mySearchUI.switchToTab(tab)
     return mySearchUI
   }

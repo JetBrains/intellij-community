@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -90,7 +91,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
     }
 
     String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
-                              ? SearchEverywhereManagerImpl.PROJECT_CONTRIBUTORS_GROUP_ID
+                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
                               : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     showInSearchEverywherePopup(searchProviderID, e, true, true);
   }

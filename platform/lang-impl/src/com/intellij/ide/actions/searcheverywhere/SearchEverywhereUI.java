@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -109,12 +108,12 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   private final SEListSelectionTracker mySelectionTracker;
 
   public SearchEverywhereUI(@Nullable Project project,
-                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
+                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     this(project, contributors, s -> null);
   }
 
   public SearchEverywhereUI(@Nullable Project project,
-                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
+                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
                             @NotNull Function<String, String> shortcutSupplier) {
     super(project);
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
