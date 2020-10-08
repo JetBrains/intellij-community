@@ -178,7 +178,7 @@ public class GrabDependencies implements IntentionAction {
         DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
         javaParameters.getProgramParametersList().add(queries.get(grabText));
-        javaParameters.setUseDynamicClasspath(true);
+        javaParameters.setUseDynamicClasspath(project);
         lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
