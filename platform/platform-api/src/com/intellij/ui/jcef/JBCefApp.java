@@ -52,7 +52,7 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("JCEF errors", NotificationDisplayType.BALLOON, true);
+    NotificationGroup.create("JCEF errors", NotificationDisplayType.BALLOON, true, null, null, null, null);
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
