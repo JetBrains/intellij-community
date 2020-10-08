@@ -7,8 +7,6 @@ import com.intellij.diff.util.Side;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,7 +33,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
@@ -49,7 +46,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement;
@@ -222,14 +218,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
 
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
-      ModalityState modality = ModalityState.defaultModalityState();
-      TransactionGuard.getInstance().assertWriteSafeContext(modality);
-
-      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
-      GuiUtils.invokeLaterIfNeeded(
-        () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
-                                           GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
-        modality, myProject.getDisposed());
+      GitPushAfterCommitDialog.showOrPush(myProject, repositories);
     }
     return exceptions;
   }

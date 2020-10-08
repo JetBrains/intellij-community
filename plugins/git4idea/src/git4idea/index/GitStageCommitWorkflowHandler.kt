@@ -29,20 +29,6 @@ class GitStageCommitWorkflowHandler(
     vcsesChanged()
   }
 
-  override fun vcsesChanged() {
-    initCommitHandlers()
-
-    updateDefaultCommitActionEnabled()
-    ui.defaultCommitActionName = getCommitActionName()
-  }
-
-  override fun executionStarted() = updateDefaultCommitActionEnabled()
-  override fun executionEnded() = updateDefaultCommitActionEnabled()
-
-  private fun updateDefaultCommitActionEnabled() {
-    ui.isDefaultCommitActionEnabled = !workflow.isExecuting
-  }
-
   override fun checkCommit(executor: CommitExecutor?): Boolean =
     ui.commitProgressUi.run {
       val executorWithoutChangesAllowed = executor?.areChangesRequired() == false

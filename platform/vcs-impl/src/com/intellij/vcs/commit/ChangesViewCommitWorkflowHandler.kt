@@ -3,9 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
@@ -17,10 +14,8 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.EventDispatcher
-import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
 import kotlin.properties.Delegates.observable
@@ -98,15 +93,6 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList?.let { commitOptions.changeListChanged(it) }
   }
 
-  override fun vcsesChanged() {
-    initCommitHandlers()
-    workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
-
-    updateDefaultCommitActionEnabled()
-    ui.defaultCommitActionName = getCommitActionName()
-    ui.setCustomCommitActions(createCommitExecutorActions())
-  }
-
   override fun enteredDumbMode() {
     ui.commitProgressUi.isDumbMode = true
   }
@@ -115,24 +101,12 @@ internal class ChangesViewCommitWorkflowHandler(
     ui.commitProgressUi.isDumbMode = false
   }
 
-  override fun executionStarted() = updateDefaultCommitActionEnabled()
   override fun executionEnded() {
-    updateDefaultCommitActionEnabled()
+    super.executionEnded()
     ui.endExecution()
   }
 
-  internal fun updateDefaultCommitActionEnabled() {
-    ui.isDefaultCommitActionEnabled = isReady()
-  }
-
-  private fun isReady() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading
-
-  private fun createCommitExecutorActions(): List<AnAction> {
-    val executors = workflow.commitExecutors.ifEmpty { return emptyList() }
-    val group = ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions") as ActionGroup
-
-    return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
-  }
+  override fun isReady() = super.isReady() && !amendCommitHandler.isLoading
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
@@ -247,8 +221,6 @@ internal class ChangesViewCommitWorkflowHandler(
       if (isToggleCommitUi.asBoolean()) deactivate(true)
     }
   }
-
-  override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =
     ui.commitProgressUi.run {

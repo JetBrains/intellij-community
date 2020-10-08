@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitRepository
 
 internal class GitStageShowNotificationCommitResultHandler(private val committer: GitStageCommitter) : CommitResultHandler {
   private val project get() = committer.project
@@ -21,17 +22,18 @@ internal class GitStageShowNotificationCommitResultHandler(private val committer
   override fun onFailure(errors: MutableList<VcsException>) = reportResult()
 
   private fun reportResult() {
-    reportSuccess(committer.successfulRoots, committer.commitMessage)
+    reportSuccess(committer.successfulRepositories, committer.commitMessage)
     reportFailure(committer.failedRoots)
   }
 
-  private fun reportSuccess(roots: Collection<VirtualFile>, commitMessage: String) {
-    if (roots.isEmpty()) return
+  private fun reportSuccess(repositories: Collection<GitRepository>, commitMessage: String) {
+    if (repositories.isEmpty()) return
 
+    val repositoriesText = repositories.joinToString { "'${getShortVcsRootName(project, it.root)}'" }
     notifier.notifySuccess(
       "git.stage.commit.successful",
       "",
-      message("stage.commit.successful", roots.joinToString { "'${getShortVcsRootName(project, it)}'" }, escapeString(commitMessage))
+      message("stage.commit.successful", repositoriesText, escapeString(commitMessage))
     )
   }
 

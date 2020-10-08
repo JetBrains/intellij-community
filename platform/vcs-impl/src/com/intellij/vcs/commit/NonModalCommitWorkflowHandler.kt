@@ -1,11 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
 abstract class NonModalCommitWorkflowHandler<W : AbstractCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>() {
@@ -24,6 +30,33 @@ abstract class NonModalCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Non
     disposeCommitOptions()
 
     initCommitHandlers()
+  }
+
+  override fun vcsesChanged() {
+    initCommitHandlers()
+    workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
+
+    updateDefaultCommitActionEnabled()
+    ui.defaultCommitActionName = getCommitActionName()
+    ui.setCustomCommitActions(createCommitExecutorActions())
+  }
+
+  override fun executionStarted() = updateDefaultCommitActionEnabled()
+  override fun executionEnded() = updateDefaultCommitActionEnabled()
+
+  fun updateDefaultCommitActionEnabled() {
+    ui.isDefaultCommitActionEnabled = isReady()
+  }
+
+  protected open fun isReady() = workflow.vcses.isNotEmpty() && !workflow.isExecuting
+
+  override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
+
+  private fun createCommitExecutorActions(): List<AnAction> {
+    val executors = workflow.commitExecutors.ifEmpty { return emptyList() }
+    val group = ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions") as ActionGroup
+
+    return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =

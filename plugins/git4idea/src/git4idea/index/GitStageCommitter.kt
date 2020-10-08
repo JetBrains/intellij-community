@@ -10,22 +10,27 @@ import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.GitCommitOptions
+import git4idea.checkin.GitPushAfterCommitDialog
 import git4idea.checkin.GitRepositoryCommitter
+import git4idea.checkin.isPushAfterCommit
 import git4idea.index.vfs.GitIndexFileSystemRefresher
+import git4idea.repo.GitRepository
 
 internal class GitStageCommitState(val roots: Collection<VirtualFile>, val commitMessage: String)
 
 internal class GitStageCommitter(project: Project, private val commitState: GitStageCommitState, commitContext: CommitContext) :
   AbstractCommitter(project, emptyList(), commitState.commitMessage, commitContext) {
 
-  val successfulRoots = mutableSetOf<VirtualFile>()
+  val successfulRepositories = mutableSetOf<GitRepository>()
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
 
   override fun commit() {
     for (root in commitState.roots) {
       try {
-        commitRoot(root)
-        successfulRoots.add(root)
+        val repository = getRepositoryForFile(project, root)
+
+        commitRepository(repository)
+        successfulRepositories.add(repository)
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -40,7 +45,13 @@ internal class GitStageCommitter(project: Project, private val commitState: GitS
   }
 
   override fun afterCommit() = Unit
-  override fun onSuccess() = Unit
+
+  override fun onSuccess() {
+    if (commitContext.isPushAfterCommit) {
+      GitPushAfterCommitDialog.showOrPush(project, successfulRepositories)
+    }
+  }
+
   override fun onFailure() = Unit
 
   override fun onFinish() {
@@ -49,10 +60,8 @@ internal class GitStageCommitter(project: Project, private val commitState: GitS
   }
 
   @Throws(VcsException::class)
-  private fun commitRoot(root: VirtualFile) {
-    val repository = getRepositoryForFile(project, root)
+  private fun commitRepository(repository: GitRepository) {
     val committer = GitRepositoryCommitter(repository, GitCommitOptions(commitContext))
-
     committer.commitStaged(commitMessage)
   }
 }
