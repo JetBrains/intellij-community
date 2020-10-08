@@ -6,6 +6,7 @@ import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
@@ -31,12 +32,12 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
                GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
-      .filter { it.permissions.isPush }
-      .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
-  override val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
-    get() = collaboratorsValue.value
+  override val collaborators: CompletableFuture<List<GHUser>>
+    get() = collaboratorsValue.value.thenApply { list ->
+      list.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+    }
 
   private val teamsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
@@ -49,10 +50,13 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     get() = teamsValue.value
 
   override val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
-    get() = collaboratorsWithPushAccess.thenCombine(teams,
-                                                    BiFunction<List<GHUser>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
-                                                      users + teams
-                                                    })
+    get() = collaboratorsValue.value.thenCombine(teams,
+                                                 BiFunction<List<GithubUserWithPermissions>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
+                                                   users
+                                                     .filter { it.permissions.isPush }
+                                                     .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) } +
+                                                   teams
+                                                 })
 
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
