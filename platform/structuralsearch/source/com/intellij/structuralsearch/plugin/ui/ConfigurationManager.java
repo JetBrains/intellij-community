@@ -72,13 +72,13 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
     outer:
     for (Configuration configuration : configurations) {
-      Configuration existing = myApplicationState.get(configuration.getName());
+      Configuration existing = myApplicationState.get(configuration.getRefName());
       while (existing != null) {
         if (configuration.equals(existing)) {
           continue outer;
         }
         configuration.setName(configuration.getName() + '~');
-        existing = myApplicationState.get(configuration.getName());
+        existing = myApplicationState.get(configuration.getRefName());
       }
       myApplicationState.add(configuration);
     }
@@ -108,7 +108,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public void removeConfiguration(Configuration configuration) {
     if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      myApplicationState.remove(configuration.getName());
+      myApplicationState.remove(configuration.getRefName());
     }
     configurations.remove(configuration);
   }
@@ -180,7 +180,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
    */
   public List<String> getAllConfigurationNames() {
     final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
-    return stream.map(c -> c.getName()).collect(Collectors.toList());
+    return stream.map(c -> c.getRefName()).collect(Collectors.toList());
   }
 
   public List<Configuration> getAllConfigurations() {
@@ -213,7 +213,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @Nullable
   private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
-    return ContainerUtil.find(configurations, config -> config.getName().equals(name));
+    return ContainerUtil.find(configurations, config -> config.getRefName().equals(name));
   }
 
   @Nullable
@@ -316,7 +316,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
     public void add(Configuration configuration) {
       configuration.getMatchOptions().setScope(null);
-      configurations.put(configuration.getName(), configuration);
+      configurations.put(configuration.getRefName(), configuration);
     }
 
     public Configuration get(String name) {
@@ -346,7 +346,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       for (Element child : state.getChildren()) {
         final Configuration configuration = readConfiguration(child);
         if (configuration != null) {
-          configurations.put(configuration.getName(), configuration);
+          configurations.put(configuration.getRefName(), configuration);
         }
       }
     }

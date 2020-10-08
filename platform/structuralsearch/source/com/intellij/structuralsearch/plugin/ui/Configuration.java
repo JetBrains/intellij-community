@@ -36,7 +36,7 @@ public abstract class Configuration implements JDOMExternalizable {
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
-  private @Nls String name;
+  private @NotNull @Nls String name;
   private String category;
   private boolean predefined;
   private long created;
@@ -264,9 +264,9 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public abstract LanguageFileType getFileType();
 
-  @Nullable @NonNls
+  @NotNull @NonNls
   public String getRefName() {
-    return refName;
+    return refName == null ? name : refName;
   }
 
   public void setRefName(String refName) {
