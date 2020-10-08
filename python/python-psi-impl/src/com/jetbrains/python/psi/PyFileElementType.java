@@ -91,9 +91,6 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       if (parser instanceof PyParser) {
         final PythonParser pythonParser = (PythonParser)parser;
         pythonParser.setLanguageLevel(languageLevel);
-        if (languageLevel == LanguageLevel.PYTHON26 && psi.getContainingFile().getName().equals("__builtin__.py")) {
-          pythonParser.setFutureFlag(FutureFeature.PRINT_FUNCTION);
-        }
       }
       return parser.parse(this, builder).getFirstChildNode();
     }

@@ -8,22 +8,18 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
-import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class PyTypeHintParser extends PyParser {
 
   @Override
   @NotNull
-  protected ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder,
-                                                @NotNull LanguageLevel languageLevel,
-                                                @Nullable FutureFeature futureFlag) {
-    return new ParsingContext(builder, languageLevel, futureFlag) {
+  protected ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel) {
+    return new ParsingContext(builder, languageLevel) {
 
       @NotNull
-      private final StatementParsing myStatementParsing = new StatementParsing(this, futureFlag) {
+      private final StatementParsing myStatementParsing = new StatementParsing(this) {
         @Override
         @NotNull
         protected IElementType getReferenceType() {

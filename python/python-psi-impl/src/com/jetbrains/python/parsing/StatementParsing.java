@@ -76,11 +76,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
   }
 
-  public StatementParsing(ParsingContext context, @Nullable FutureFeature futureFlag) {
+  public StatementParsing(ParsingContext context) {
     super(context);
-    if (futureFlag != null) {
-      myFutureFlags.add(futureFlag);
-    }
   }
 
   public void parseStatement() {
