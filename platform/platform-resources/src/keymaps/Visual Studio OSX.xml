@@ -494,6 +494,9 @@
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="O"/>
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta O"/>
   </action>
+  <action id="BuildProject">
+    <keyboard-shortcut first-keystroke="meta shift B"/>
+  </action>
 
   <!--  Rider-specific actions-->
 

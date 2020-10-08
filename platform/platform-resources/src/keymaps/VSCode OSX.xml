@@ -662,5 +662,8 @@
 
     <action id="CIDR.Lang.SwitchHeaderSource"/>
     <action id="SwitchHeaderSource"/>
+    <action id="BuildSolutionAction">
+        <keyboard-shortcut first-keystroke="meta shift B"/>
+    </action>
 
 </keymap>

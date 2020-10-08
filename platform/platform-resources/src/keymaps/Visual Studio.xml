@@ -509,6 +509,9 @@
   <action id="IncrementalSearch">
     <keyboard-shortcut first-keystroke="control I"/>
   </action>
+  <action id="BuildProject">
+    <keyboard-shortcut first-keystroke="control shift B"/>
+  </action>
 
   <!--  Rider-specific actions-->
 
