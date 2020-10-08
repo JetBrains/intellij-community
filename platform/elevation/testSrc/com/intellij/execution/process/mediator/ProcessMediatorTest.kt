@@ -8,7 +8,10 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.*
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -85,13 +88,13 @@ internal class ProcessMediatorTest {
     process.outputStream.close()
 
     try {
-      OutputStreamWriter(process.outputStream).use {
-        it.write("test")
-        it.flush()
+      assertThrows(IOException::class.java) {
+        OutputStreamWriter(process.outputStream).use {
+          it.write("test")
+          it.flush()
+        }
       }
-      fail()
     }
-    catch (expected: IOException) {}
     finally {
       destroyProcess(process)
     }
@@ -106,13 +109,13 @@ internal class ProcessMediatorTest {
     assertFalse(hasExited)
 
     try {
-      OutputStreamWriter(process.outputStream).use {
-        it.write("test\n")
-        it.flush()
+      assertThrows(IOException::class.java) {
+        OutputStreamWriter(process.outputStream).use {
+          it.write("test\n")
+          it.flush()
+        }
       }
-      fail()
     }
-    catch (expected: IOException) {}
     finally {
       destroyProcess(process)
     }
@@ -123,18 +126,16 @@ internal class ProcessMediatorTest {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
 
-    fun readCheck(stream: () -> InputStream) {
-      stream().close()
-      try {
-        stream().use { it.read() }
-        fail()
-      }
-      catch (expected: IOException) {}
-    }
-
     try {
-      readCheck { process.inputStream }
-      readCheck { process.errorStream }
+      process.inputStream.close()
+      assertThrows(IOException::class.java) {
+        process.inputStream.read()
+      }
+
+      process.errorStream.close()
+      assertThrows(IOException::class.java) {
+        process.errorStream.read()
+      }
     }
     finally {
       destroyProcess(process)
