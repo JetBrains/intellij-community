@@ -38,4 +38,19 @@ class MediatedProcessTestMain {
     }
   }
 
+  object StreamInterruptor {
+    @JvmStatic
+    fun main(args: Array<String>) {
+      try {
+        System.out.close()
+        System.err.close()
+        System.`in`.close()
+      } catch (e: Exception) {
+        System.exit(-1)
+      }
+      @Suppress("ControlFlowWithEmptyBody")
+      while (true) {}
+    }
+  }
+
 }
