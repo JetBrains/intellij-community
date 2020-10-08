@@ -224,6 +224,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               val processHandler = descriptor.processHandler
               if (processHandler != null) {
                 if (!processHandler.isStartNotified) {
+                  project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarting(executor.id, environment, processHandler)
                   processHandler.startNotify()
                 }
                 inProgress.remove(InProgressEntry(executor.id, environment.runner.runnerId))
