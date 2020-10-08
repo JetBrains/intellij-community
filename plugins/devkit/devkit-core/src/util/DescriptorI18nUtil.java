@@ -7,6 +7,8 @@ import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,12 +63,15 @@ public class DescriptorI18nUtil {
     final Module module = actions.getModule();
     if (module == null) return false;
 
+    if (PsiUtil.isIdeaProject(module.getProject()) &&
+        (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode())) {
+      return true;
+    }
+
     final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actions, IdeaPlugin.class, true);
     if (ideaPlugin == null) return false;
 
-    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId()) ||
-           PsiUtil.isIdeaProject(module.getProject()) &&
-           (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode());
+    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId());
   }
 
   private static @Nullable PropertiesFile findCoreActionsBundlePropertiesFile(@Nullable Actions actions) {
@@ -74,8 +79,13 @@ public class DescriptorI18nUtil {
 
     final Module module = actions.getModule();
     assert module != null;
-    final List<PropertiesFile> actionsBundleFiles =
-      PropertiesReferenceManager.getInstance(module.getProject()).findPropertiesFiles(module, CORE_ACTIONS_BUNDLE);
+    final Project project = module.getProject();
+    Module resourcesModule = ApplicationManager.getApplication().isUnitTestMode() ? module :
+                             ModuleManager.getInstance(project).findModuleByName("intellij.platform.resources.en");
+    if (resourcesModule == null) return null;
+
+    final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
+    List<PropertiesFile> actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(resourcesModule, CORE_ACTIONS_BUNDLE);
     return ObjectUtils.tryCast(ContainerUtil.getOnlyItem(actionsBundleFiles), PropertiesFile.class);
   }
 }
