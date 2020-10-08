@@ -287,7 +287,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         //it could be that the suggested SDK is already registered, so we could simply return it
         //NOTE: something similar has to be done with downloading SDKs, e.g. we should replace download task with an already running one
         val sdkPrototype = possibleFix.registeredSdkPrototype
-        if (sdkPrototype != null) {
+        if (sdkPrototype != null && sdkPrototype in runReadAction { ProjectJdkTable.getInstance().allJdks }) {
           if (testLoadSdkAndWaitIfNeeded(sdkPrototype, indicator)) {
             return@runSdkResolutionUnderProgress
           } else {
