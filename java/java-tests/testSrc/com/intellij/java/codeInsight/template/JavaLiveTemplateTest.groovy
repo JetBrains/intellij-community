@@ -570,4 +570,27 @@ class Bar2 extends Foo {}
     assert myFixture.editor.document.text.contains('Foo var = new Foo();')
     assertSameElements(myFixture.lookupElementStrings, 'Foo', 'Bar1', 'Bar2')
   }
+
+  void "test methodParameterTypes"() {
+    myFixture.configureByText "a.java", """
+class X {
+  void test(int a, String b, double[] c) {
+    <caret>
+  }
+}
+"""
+    Template template = templateManager.createTemplate("xxx", "user", 'System.out.println("$TYPES$");')
+    template.addVariable('TYPES', 'methodParameterTypes()', '', true)
+
+    startTemplate(template)
+
+    myFixture.checkResult("""
+class X {
+  void test(int a, String b, double[] c) {
+    System.out.println("[int, java.lang.String, double[]]");
+  }
+}
+""")
+  }
+
 }
