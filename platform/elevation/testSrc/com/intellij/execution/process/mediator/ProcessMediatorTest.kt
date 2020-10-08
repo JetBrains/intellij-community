@@ -8,6 +8,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -60,11 +63,7 @@ internal class ProcessMediatorTest {
     assertTrue(process.isAlive)
     assertTrue(ProcessHandle.of(pid).isPresent)
 
-    process.destroy()
-
-    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    assertTrue(hasExited)
-    assertTrue(ProcessHandle.of(pid).isEmpty)
+    destroyProcess(process)
   }
 
   @Test
@@ -77,10 +76,36 @@ internal class ProcessMediatorTest {
     assertTrue(ProcessHandle.of(process.pid()).isEmpty)
     assertFalse(process.isAlive)
 
-    process.destroy()
+    destroyProcess(process)
+  }
 
+  @Test
+  internal fun `test echo process`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
+      .startMediatedProcess()
+
+    OutputStreamWriter(process.outputStream).use {
+      it.write("Hello ")
+      it.flush()
+      Thread.sleep(500)
+      it.write("World\n")
+      it.flush()
+    }
+
+    val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+    assertEquals("Hello World\n", output)
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
+    assertFalse(process.isAlive)
+    destroyProcess(process)
+  }
+
+  private fun destroyProcess(process: Process) {
+    process.destroy()
     assertTrue(process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS))
     assertFalse(process.isAlive)
+    assertTrue(ProcessHandle.of(process.pid()).isEmpty)
   }
 
   private fun ProcessBuilder.startMediatedProcess(): Process {
