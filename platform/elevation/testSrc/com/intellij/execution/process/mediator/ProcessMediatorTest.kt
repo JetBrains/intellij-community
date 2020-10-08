@@ -8,9 +8,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
+import java.io.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -77,6 +75,49 @@ internal class ProcessMediatorTest {
     assertFalse(process.isAlive)
 
     destroyProcess(process)
+  }
+
+  @Test
+  internal fun `write to closed stream`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
+      .startMediatedProcess()
+
+    process.outputStream.close()
+
+    try {
+      OutputStreamWriter(process.outputStream).use {
+        it.write("test")
+        it.flush()
+      }
+      fail()
+    }
+    catch (expected: IOException) {}
+    finally {
+      destroyProcess(process)
+    }
+  }
+
+  @Test
+  internal fun `read from closed stream`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
+      .startMediatedProcess()
+
+    fun readCheck(stream: () -> InputStream) {
+      stream().close()
+      try {
+        stream().use { it.read() }
+        fail()
+      }
+      catch (expected: IOException) {}
+    }
+
+    try {
+      readCheck { process.inputStream }
+      readCheck { process.errorStream }
+    }
+    finally {
+      destroyProcess(process)
+    }
   }
 
   @Test
