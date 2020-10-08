@@ -46,7 +46,7 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
     }
 
     final File file =
-      TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), moduleName, rootPath, TestNGXmlSuiteHelper.Logger.DEAF);
+      TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), moduleName, rootPath, TestNGXmlSuiteHelper.Logger.DEAF, false);
     file.deleteOnExit();
 
     return Math.min(result, startChildFork(Collections.singletonList(file.getAbsolutePath()), new File(workingDir), classpath,
