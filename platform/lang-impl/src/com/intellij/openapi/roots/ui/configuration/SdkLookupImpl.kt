@@ -71,12 +71,17 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   }
 
   fun checkSdkHomeAndVersion(sdk: Sdk?): Boolean {
-    val sdkHome = sdk?.homePath ?: return false
+    if (sdk == null) return false
+
+    val sdkHome = runCatching { sdk.homePath }.getOrNull() ?: return false
     return params.sdkHomeFilter?.invoke(sdkHome) != false && checkSdkVersion(sdk)
   }
 
   fun checkSdkVersion(sdk: Sdk?) : Boolean {
-    val versionString = sdk?.versionString ?: return false
+    if (sdk == null) return false
+    if (sdkType != null && sdk.sdkType != sdkType) return false
+
+    val versionString = runCatching { sdk.versionString  }.getOrNull() ?: return false
     return params.versionFilter?.invoke(versionString) != false
   }
 
@@ -155,9 +160,9 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     val rootProgressIndicator = ProgressIndicatorBase()
     attachIndicatorIfNeeded(rootProgressIndicator)
 
-    sequence {
-      val namedSdk = runReadAction {
-        sdkName?.let {
+    run {
+      val namedSdk = sdkName?.let {
+        runReadAction {
           when (sdkType) {
             null -> ProjectJdkTable.getInstance().findJdk(sdkName)
             else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
@@ -165,27 +170,32 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         }
       }
 
-      //include currently downloading Sdks
-      yieldAll(SdkDownloadTracker.getInstance().findDownloadingSdks(sdkName))
+      if (trySdk(namedSdk, rootProgressIndicator)) return
+    }
 
-      yield(namedSdk)
+    for (sdk : Sdk? in SdkDownloadTracker.getInstance().findDownloadingSdks(sdkName)) {
+      if (trySdk(sdk, rootProgressIndicator)) return
+    }
 
-      yieldAll(testSdkSequence)
-    } .onEach { rootProgressIndicator.checkCanceled() }
-      .filterNotNull()
-      .filter { candidate -> sdkType == null || candidate.sdkType == sdkType }
-      .filter { checkSdkVersion(it) }
-      .forEach {
-        if (testLoadSdkAndWaitIfNeeded(it, rootProgressIndicator)) return
-      }
+    for (sdk in testSdkSequence) {
+      if (trySdk(sdk, rootProgressIndicator)) return
+    }
 
     continueSdkLookupWithSuggestions(rootProgressIndicator)
   }
 
-  private fun testLoadSdkAndWaitIfNeeded(it: Sdk,
+  private fun trySdk(sdk: Sdk?, rootProgressIndicator: ProgressIndicator) : Boolean {
+    rootProgressIndicator.checkCanceled()
+    if (sdk == null) return false
+    return testLoadSdkAndWaitIfNeeded(sdk, rootProgressIndicator)
+  }
+
+  private fun testLoadSdkAndWaitIfNeeded(sdk: Sdk,
                                          rootProgressIndicator: ProgressIndicator): Boolean {
-    if (testSdkAndWaitForDownloadIfNeeded(it, rootProgressIndicator)) return true
-    if (testExistingSdk(it)) return true
+
+    if (!checkSdkVersion(sdk)) return false
+    if (testSdkAndWaitForDownloadIfNeeded(sdk, rootProgressIndicator)) return true
+    if (testExistingSdk(sdk)) return true
     return false
   }
 
@@ -229,12 +239,10 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
   private fun testExistingSdk(sdk: Sdk): Boolean {
     //it could be the case with an ordinary SDK, it may not pass the test below
-    if (checkSdkHomeAndVersion(sdk)) {
-      onSdkResolved(sdk)
-      return true
-    }
+    if (!checkSdkHomeAndVersion(sdk)) return false
 
-    return false
+    onSdkResolved(sdk)
+    return true
   }
 
   private fun continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicatorBase) {
