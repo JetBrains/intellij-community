@@ -37,11 +37,6 @@ public abstract class SimpleMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return myName + "()";
-  }
-
-  @Override
   @NotNull
   @NonNls
   public String getDefaultValue() {

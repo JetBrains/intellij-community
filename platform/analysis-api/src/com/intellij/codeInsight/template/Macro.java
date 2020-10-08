@@ -22,8 +22,11 @@ public abstract class Macro {
 
   /**
    * @return a presentable string that will be shown in the combobox in <em>Edit Template Variables</em> dialog
+   * Default implementation returns a macro name with parentheses. Override it if parameters should be passed to the macro.
    */
-  public abstract @NlsSafe String getPresentableName();
+  public @NlsSafe String getPresentableName() {
+    return getName() + "()";
+  }
 
   @NonNls
   @NotNull

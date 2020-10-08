@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -30,11 +29,6 @@ public class MethodParametersMacro extends Macro {
   @Override
   public String getName() {
     return "methodParameters";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.method.parameters");
   }
 
   @Override

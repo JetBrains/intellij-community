@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -28,11 +27,6 @@ class CurrentPackageMacro extends Macro {
   @Override
   public String getName() {
     return "currentPackage";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.current.package");
   }
 
   @Override

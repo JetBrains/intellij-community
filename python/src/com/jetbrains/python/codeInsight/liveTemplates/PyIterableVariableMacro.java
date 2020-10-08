@@ -47,11 +47,6 @@ public class PyIterableVariableMacro extends Macro {
     return "pyIterableVariable";
   }
 
-  @Override
-  public String getPresentableName() {
-    return "pyIterableVariable()";
-  }
-
   @Nullable
   @Override
   public Result calculateResult(Expression @NotNull [] params, @NotNull ExpressionContext context) {
