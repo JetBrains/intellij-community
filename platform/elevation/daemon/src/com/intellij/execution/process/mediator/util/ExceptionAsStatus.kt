@@ -47,6 +47,7 @@ data class ExceptionAsStatus private constructor(val status: Status,
       ExceptionDescriptor.withThrowable(::Error)                           asStatus DATA_LOSS,
 
       ExceptionDescriptor.withThrowable(::AssertionError)                  asStatus DATA_LOSS,
+      ExceptionDescriptor.withInitCause(::NoClassDefFoundError)            asStatus DATA_LOSS,
       ExceptionDescriptor.withInitCause(::ClassCastException)              asStatus DATA_LOSS,
       ExceptionDescriptor.withInitCause(::NullPointerException)            asStatus DATA_LOSS,
       ExceptionDescriptor.withInitCause(::KotlinNullPointerException)      asStatus DATA_LOSS,

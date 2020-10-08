@@ -19,6 +19,7 @@ import io.grpc.stub.AbstractStub;
 import io.perfmark.PerfMark;
 import kotlin.KotlinVersion;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -32,6 +33,7 @@ public class ProcessMediatorDaemonRuntimeClasspath {
 
     KotlinVersion.class, // kotlin-stdlib
     CoroutineScope.class, // kotlinx-coroutines-core
+    FutureKt.class, // kotlinx-coroutines-jdk8
 
     Grpc.class, // grpc-api
     ServerImpl.class, // grpc-core
