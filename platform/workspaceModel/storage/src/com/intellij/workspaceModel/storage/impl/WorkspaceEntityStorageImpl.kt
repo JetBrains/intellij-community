@@ -170,8 +170,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
           removeEntityAndAssertConsistency(existingEntity, false)
           LOG.error("""
             modifyEntity: persistent id already exists. Replacing entity with the new one.
-            Old persistent id: $newPersistentId
-            Persistent id: $newPersistentId
+            Old entity: $existingEntity
+            Persistent id: $copiedData
           """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
         }
       }
