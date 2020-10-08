@@ -6,9 +6,18 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillActionComponent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.SwingUtilities
 
 class SegmentedRDCAction : PillActionComponent(), DumbAware {
+  companion object {
+    const val runDebugKey = "ide.new.navbar.run.debug"
+  }
+
+  private fun isNewRunDebug(): Boolean {
+    return Registry.get(runDebugKey).asBoolean()
+  }
+
   init {
     ActionManager.getInstance().getAction("SegmentedRunDebugConfigActionGroup")?.let {
       if(it is ActionGroup) {
@@ -21,10 +30,12 @@ class SegmentedRDCAction : PillActionComponent(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.project?.let {
+    e.presentation.isEnabledAndVisible = isNewRunDebug()
+
+    e.presentation.putClientProperty(PILL_SHOWN, e.project?.let {
       RunDebugConfigManager.getInstance(it)?.let { debugConfigManager ->
-        if(debugConfigManager.getState() != RunDebugConfigManager.State.DEFAULT) showPill() else hidePill()
-      }
-    }
+        debugConfigManager.getState() != RunDebugConfigManager.State.DEFAULT
+      } ?: false
+    } ?: false)
   }
 }

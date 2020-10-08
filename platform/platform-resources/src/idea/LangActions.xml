@@ -506,7 +506,9 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction"/>
+    <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction">
+      <add-to-group group-id="ToolbarRunGroup" anchor="first"/>
+    </action>
 
     <group id="SegmentedRunDebugConfigActionGroup">
       <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->

@@ -34,17 +34,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private JPanel myRunPanel;
   private final boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
-  private NavBarModifier myNavBarModifier;
 
   public NavBarRootPaneExtension(@NotNull Project project) {
     myProject = project;
-
-    myNavBarModifier = new NavBarModifier(
-      () -> {
-        revalidate();
-        return Unit.INSTANCE;
-      },
-      project);
 
     myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> {
       toggleRunPanel(!uiSettings.getShowMainToolbar() && uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode());
@@ -131,7 +123,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
-      toolbarRunGroup = myNavBarModifier.modify(toolbarRunGroup);
 
       if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
