@@ -17,4 +17,14 @@ class MediatedProcessTestMain {
       exitProcess(42)
     }
   }
+
+  object Loop {
+    @JvmStatic
+    fun main(args: Array<String>) {
+      while (true) {
+        Thread.sleep(500)
+      }
+    }
+  }
+
 }
