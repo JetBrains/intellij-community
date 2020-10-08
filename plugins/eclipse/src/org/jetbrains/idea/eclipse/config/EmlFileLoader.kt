@@ -81,18 +81,17 @@ internal class EmlFileLoader(
   private fun loadModuleLibrary(libTag: Element, library: LibraryEntity) {
     val eclipseSrcRoot = library.roots.firstOrNull { it.type.name == OrderRootType.SOURCES.name() }
     val rootsToRemove = HashSet<LibraryRoot>()
-    if (eclipseSrcRoot != null && libTag.getChildren(IdeaSpecificSettings.SRCROOT_ATTR).any { rootTag ->
+    val rootsToAdd = ArrayList<LibraryRoot>()
+    libTag.getChildren(IdeaSpecificSettings.SRCROOT_ATTR).forEach { rootTag ->
       val url = rootTag.getAttributeValue("url")
       val bindAttribute = rootTag.getAttributeValue(IdeaSpecificSettings.SRCROOT_BIND_ATTR)
-      (bindAttribute == null || bindAttribute.toBoolean()) && url != eclipseSrcRoot.url.url && EPathUtil.areUrlsPointTheSame(url, eclipseSrcRoot.url.url)
-    }) {
-      rootsToRemove.add(eclipseSrcRoot)
-    }
-
-    val rootsToAdd = ArrayList<LibraryRoot>()
-    libTag.getChildren(IdeaSpecificSettings.SRCROOT_ATTR).mapTo(rootsToAdd) {
-      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!),
-                  LibraryRootTypeId.SOURCES)
+      if (bindAttribute != null && !bindAttribute.toBoolean()) {
+        rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(url!!), LibraryRootTypeId.SOURCES))
+      }
+      else if (eclipseSrcRoot != null && url != eclipseSrcRoot.url.url && EPathUtil.areUrlsPointTheSame(url, eclipseSrcRoot.url.url)) {
+        rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(url!!), LibraryRootTypeId.SOURCES))
+        rootsToRemove.add(eclipseSrcRoot)
+      }
     }
     libTag.getChildren(IdeaSpecificSettings.JAVADOCROOT_ATTR).mapTo(rootsToAdd) {
       LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!), EclipseModuleRootsSerializer.JAVADOC_TYPE)
@@ -102,7 +101,7 @@ internal class EmlFileLoader(
       libTag.getChildren(tagName).forEach { rootTag ->
         val root = expandMacroToPathMap.substitute(rootTag.getAttributeValue(IdeaSpecificSettings.PROJECT_RELATED)!!, SystemInfo.isFileSystemCaseSensitive)
         library.roots.forEach { libRoot ->
-          if (libRoot.type.name == rootType && EPathUtil.areUrlsPointTheSame(root, libRoot.url.url)) {
+          if (libRoot !in rootsToRemove && libRoot.type.name == rootType && EPathUtil.areUrlsPointTheSame(root, libRoot.url.url)) {
             rootsToRemove.add(libRoot)
             rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(root), LibraryRootTypeId(rootType)))
           }
@@ -227,7 +226,7 @@ internal class EmlFileLoader(
     val excludedUrls = contentEntryTag.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)
       .mapNotNull { it.getAttributeValue(IdeaXml.URL_ATTR) }
       .filter { FileUtil.isAncestor(entity.url.file!!, JpsPathUtil.urlToFile(it), false) }
-      .map { virtualFileManager.fromPath(it) }
+      .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(ModifiableContentRootEntity::class.java, entity) {
         this.excludedUrls = this.excludedUrls + excludedUrls

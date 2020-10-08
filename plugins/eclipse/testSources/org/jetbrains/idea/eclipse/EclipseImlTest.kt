@@ -67,7 +67,7 @@ class EclipseImlTest {
 
 
   private fun doTest(setupPathVariables: Boolean = false, testDataDir: String = "iml") {
-    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+    val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot / testDataDir / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = testDataRoot / "common" / "testModuleWithClasspathStorage"
 

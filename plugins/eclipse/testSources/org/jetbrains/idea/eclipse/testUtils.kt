@@ -2,6 +2,7 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
@@ -20,11 +21,23 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 
+internal val eclipseTestDataRoot: Path
+  get() = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+
 internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
                                     tempDirectory: TempDirectory,
                                     setupPathVariables: Boolean = false,
                                     imlFilePaths: List<Pair<String, String>>) {
   loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, {}, {})
+}
+
+internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
+                                    tempDirectory: TempDirectory,
+                                    imlFilePaths: List<Pair<String, String>>,
+                                    edit: (Project) -> Unit = {},
+                                    updateExpectedDir: (Path) -> Unit = {}) {
+  val emlFileName = "${imlFilePaths.first().second.substringAfterLast('/')}.eml"
+  loadEditSaveAndCheck(testDataDirs, tempDirectory, false, imlFilePaths, edit, updateExpectedDir, listOf(emlFileName))
 }
 
 internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
@@ -47,12 +60,13 @@ internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
 }
 
 
-private fun loadEditSaveAndCheck(testDataDirs: List<Path>,
-                                 tempDirectory: TempDirectory,
-                                 setupPathVariables: Boolean = false,
-                                 imlFilePaths: List<Pair<String, String>>,
-                                 edit: (Project) -> Unit,
-                                 updateExpectedDir: (Path) -> Unit) {
+internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
+                                  tempDirectory: TempDirectory,
+                                  setupPathVariables: Boolean = false,
+                                  imlFilePaths: List<Pair<String, String>>,
+                                  edit: (Project) -> Unit,
+                                  updateExpectedDir: (Path) -> Unit,
+                                  fileSuffixesToCheck: List<String> = listOf("/.classpath", ".iml")) {
   val originalProjectDir = tempDirectory.newDirectory("original").toPath()
   testDataDirs.forEach {
     FileUtil.copyDir(it.toFile(), originalProjectDir.toFile())
@@ -101,8 +115,8 @@ private fun loadEditSaveAndCheck(testDataDirs: List<Path>,
         }
         project.stateStore.save(true)
         projectDir.assertMatches(directoryContentOf(originalProjectDir), filePathFilter = { path ->
-          path.endsWith("/.classpath") || path.endsWith(".iml")
-        })
+          fileSuffixesToCheck.any { path.endsWith(it) }
+        }, fileTextMatcher = FileTextMatcher.ignoreXmlFormatting())
       }
     }
   }
@@ -115,4 +129,3 @@ private fun loadEditSaveAndCheck(testDataDirs: List<Path>,
     }
   }
 }
-

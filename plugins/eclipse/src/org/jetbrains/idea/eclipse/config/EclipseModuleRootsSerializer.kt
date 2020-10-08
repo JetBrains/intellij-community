@@ -63,13 +63,14 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
   }
 
   override fun loadRoots(builder: WorkspaceEntityStorageBuilder,
-                         moduleEntity: ModuleEntity,
+                         originalModuleEntity: ModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager) {
+    var moduleEntity = originalModuleEntity
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
     val entitySource = moduleEntity.entitySource as EclipseProjectFile
     val contentRootEntity = builder.addContentRootEntity(storageRootUrl, emptyList(), emptyList(), moduleEntity)
@@ -77,8 +78,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val classpathTag = reader.loadComponent(entitySource.classpathFile.url, "", null)
     if (classpathTag != null) {
       val relativePathResolver = ModuleRelativePathResolver(internalModuleListSerializer, reader, virtualFileManager)
-      loadClasspathTags(classpathTag, builder, contentRootEntity, storageRootUrl, reader, relativePathResolver, errorReporter, imlFileUrl,
-                        virtualFileManager)
+      moduleEntity = loadClasspathTags(classpathTag, builder, contentRootEntity, storageRootUrl, reader, relativePathResolver, errorReporter, imlFileUrl,
+                                       virtualFileManager)
     }
     else {
       builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin"), null,
@@ -114,7 +115,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                 relativePathResolver: ModuleRelativePathResolver,
                                 errorReporter: ErrorReporter,
                                 imlFileUrl: VirtualFileUrl,
-                                virtualUrlManager: VirtualFileUrlManager) {
+                                virtualUrlManager: VirtualFileUrlManager): ModuleEntity {
     fun reportError(message: String) {
       errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE))
     }
@@ -335,7 +336,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       dependencies.add(0, ModuleDependencyItem.InheritedSdkDependency)
     }
     storeSourceRootsOrder(sourceRoots, contentRootEntity, builder)
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    return builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       this.dependencies = dependencies
     }
   }
@@ -401,7 +402,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     }
 
     val emlFileUrl = getEmlFileUrl(imlFileUrl)
-    val emlRoot = EmlFileSaver(module, entities, pathShortener, writer.getReplacePathMacroMap(imlFileUrl.url)).saveEml()
+    val emlRoot = EmlFileSaver(module, entities, pathShortener, writer.getReplacePathMacroMap(imlFileUrl.url),
+                               writer.getReplacePathMacroMap(emlFileUrl)).saveEml()
     if (emlRoot != null) {
       saveXmlFile(Paths.get(JpsPathUtil.urlToPath(emlFileUrl)), emlRoot)
     }

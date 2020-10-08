@@ -46,7 +46,7 @@ class EclipseClasspath2ModulesTest {
   }
 
   private fun doTest(workspacePath: String, projectName: String) {
-    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+    val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot / "round" / StringUtil.decapitalize(testName.methodName.removePrefix("test"))
     val commonRoot = testDataRoot / "common" / "twoModulesWithClasspathStorage"
     checkLoadSaveRoundTrip(listOf(testRoot, commonRoot), tempDirectory, false, listOf(

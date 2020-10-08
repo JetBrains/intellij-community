@@ -26,7 +26,8 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 internal class EmlFileSaver(private val module: ModuleEntity,
                             private val entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             private val pathShortener: ModulePathShortener,
-                            private val replacePathMacroMap: PathMacroMap) {
+                            private val moduleReplacePathMacroMap: PathMacroMap,
+                            private val projectReplacePathMacroMap: PathMacroMap) {
   fun saveEml(): Element? {
     val root = Element(COMPONENT_TAG)
     saveCustomJavaSettings(root)
@@ -43,11 +44,9 @@ internal class EmlFileSaver(private val module: ModuleEntity,
           }
         }
         is ModuleDependencyItem.InheritedSdkDependency -> {
-          //todo don't set if sdk is unresolved
           root.setAttribute(IdeaSpecificSettings.INHERIT_JDK, true.toString())
         }
         is ModuleDependencyItem.SdkDependency -> {
-          //todo don't set if sdk is unresolved
           root.setAttribute("jdk", dep.sdkName)
           root.setAttribute("jdk_type", dep.sdkType)
         }
@@ -70,7 +69,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
                   }
                   libTag.addContent(srcTag)
                 }
-                library.roots.filter { it.type.name == "JAVADOC" }.forEach {
+                library.roots.filter { it.type.name == "JAVADOC" }.drop(1).forEach {
                   libTag.addContent(Element(IdeaSpecificSettings.JAVADOCROOT_ATTR).setAttribute("url", it.url.url))
                 }
                 saveModuleRelatedRoots(libTag, library, OrderRootType.SOURCES, IdeaSpecificSettings.RELATIVE_MODULE_SRC)
@@ -99,7 +98,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       root.addContent(levelsTag)
     }
 
-    replacePathMacroMap.substitute(root, SystemInfo.isFileSystemCaseSensitive)
+    moduleReplacePathMacroMap.substitute(root, SystemInfo.isFileSystemCaseSensitive)
     return if (JDOMUtil.isEmpty(root)) null else root
   }
 
@@ -108,7 +107,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       val file = it.url.virtualFile
       val localFile = if (file?.fileSystem is JarFileSystem) JarFileSystem.getInstance().getVirtualFileForJar(file) else file
       if (localFile != null && pathShortener.isUnderContentRoots(localFile)) {
-        libTag.addContent(Element(tagName).setAttribute(IdeaSpecificSettings.PROJECT_RELATED, it.url.url))
+        libTag.addContent(Element(tagName).setAttribute(IdeaSpecificSettings.PROJECT_RELATED, projectReplacePathMacroMap.substitute(it.url.url, SystemInfo.isFileSystemCaseSensitive)))
       }
     }
   }
