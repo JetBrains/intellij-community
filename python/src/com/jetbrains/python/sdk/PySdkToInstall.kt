@@ -47,7 +47,7 @@ private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
 internal fun getSdksToInstall(): List<PySdkToInstall> {
-  return if (SystemInfo.isWindows) listOf(getPy37ToInstallOnWindows(), getPy38ToInstallOnWindows())
+  return if (SystemInfo.isWindows) listOf(getPy38ToInstallOnWindows(), getPy39ToInstallOnWindows())
   else emptyList()
 }
 
@@ -61,8 +61,8 @@ fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>, cont
   return sdk.let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
 }
 
-private fun getPy37ToInstallOnWindows(): PySdkToInstallOnWindows {
-  val version = "3.7"
+private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
+  val version = "3.9"
   val name = "Python $version"
   val hashFunction = Hashing.md5()
 
@@ -70,22 +70,22 @@ private fun getPy37ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.7.7/python-3.7.7.exe",
-      25747128,
-      "e9db9cf43b4f2472d75a055380871045",
+      "https://www.python.org/ftp/python/3.9.0/python-3.9.0.exe",
+      27066912,
+      "4a2812db8ab9f2e522c96c7728cfcccb",
       hashFunction,
-      "python-3.7.7.exe"
+      "python-3.9.0.exe"
     )
   }
   else {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.7.7/python-3.7.7-amd64.exe",
-      26797616,
-      "e0c910087459df78d827eb1554489663",
+      "https://www.python.org/ftp/python/3.9.0/python-3.9.0-amd64.exe",
+      28158664,
+      "b61a33dc28f13b561452f3089c87eb63",
       hashFunction,
-      "python-3.7.7-amd64.exe"
+      "python-3.9.0-amd64.exe"
     )
   }
 }
@@ -99,22 +99,22 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.3/python-3.8.3.exe",
-      26744744,
-      "452373e2c467c14220efeb10f40c231f",
+      "https://www.python.org/ftp/python/3.8.6/python-3.8.6.exe",
+      26987416,
+      "02cd63bd5b31e642fc3d5f07b3a4862a",
       hashFunction,
-      "python-3.8.3.exe"
+      "python-3.8.6.exe"
     )
   }
   else {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.3/python-3.8.3-amd64.exe",
-      27805800,
-      "fd2458fa0e9ead1dd9fbc2370a42853b",
+      "https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe",
+      28076528,
+      "2acba3117582c5177cdd28b91bbe9ac9",
       hashFunction,
-      "python-3.8.3-amd64.exe"
+      "python-3.8.6-amd64.exe"
     )
   }
 }
