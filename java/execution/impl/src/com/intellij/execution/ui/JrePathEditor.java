@@ -48,6 +48,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   private DefaultJreSelector myDefaultJreSelector;
   private final SortedComboBoxModel<JreComboBoxItem> myComboBoxModel;
   private String myPreviousCustomJrePath;
+  private boolean myRemoteTarget;
 
   public JrePathEditor(DefaultJreSelector defaultJreSelector) {
     this();
@@ -146,9 +147,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
    */
   public boolean updateModel(@Nullable String targetName) {
     myComboBoxModel.clear();
+    myRemoteTarget = false;
     if (targetName != null) {
       TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
       if (config != null) {
+        myRemoteTarget = true;
         List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
                                                              configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
                                                                               new CustomJreItem((JavaLanguageRuntimeConfiguration)configuration) : null);
@@ -212,14 +215,14 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   @Nullable
   public String getJrePathOrName() {
     JreComboBoxItem jre = getSelectedJre();
-    if (jre instanceof DefaultJreItem) {
+    if (jre instanceof DefaultJreItem || myRemoteTarget) {
       return myPreviousCustomJrePath;
     }
     return jre.getPathOrName();
   }
 
   public boolean isAlternativeJreSelected() {
-    return !(getSelectedJre() instanceof DefaultJreItem);
+    return !(getSelectedJre() instanceof DefaultJreItem) && !myRemoteTarget;
   }
 
   private JreComboBoxItem getSelectedJre() {
