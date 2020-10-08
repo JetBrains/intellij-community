@@ -40,10 +40,8 @@ public final class FileSystemUtil {
     boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
   }
 
-  @NotNull
   private static final Mediator ourMediator = computeMediator();
 
-  @NotNull
   static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
@@ -62,8 +60,7 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  @NotNull
-  private static Mediator check(@NotNull Mediator mediator) throws Exception {
+  private static Mediator check(Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -71,8 +68,7 @@ public final class FileSystemUtil {
 
   private FileSystemUtil() { }
 
-  @Nullable
-  public static FileAttributes getAttributes(@NotNull String path) {
+  public static @Nullable FileAttributes getAttributes(@NotNull String path) {
     try {
       if (LOG.isTraceEnabled()) {
         LOG.trace("getAttributes(" + path + ")");
@@ -92,8 +88,7 @@ public final class FileSystemUtil {
     return null;
   }
 
-  @Nullable
-  public static FileAttributes getAttributes(@NotNull File file) {
+  public static @Nullable FileAttributes getAttributes(@NotNull File file) {
     return getAttributes(file.getPath());
   }
 
@@ -120,8 +115,7 @@ public final class FileSystemUtil {
     return isSymLink(file.getAbsolutePath());
   }
 
-  @Nullable
-  public static String resolveSymLink(@NotNull String path) {
+  public static @Nullable String resolveSymLink(@NotNull String path) {
     try {
       String realPath;
       if (LOG.isTraceEnabled()) {
@@ -144,8 +138,7 @@ public final class FileSystemUtil {
     return null;
   }
 
-  @Nullable
-  public static String resolveSymLink(@NotNull File file) {
+  public static @Nullable String resolveSymLink(@NotNull File file) {
     return resolveSymLink(file.getAbsolutePath());
   }
 
@@ -334,7 +327,7 @@ public final class FileSystemUtil {
     }
 
     @Override
-    public String resolveSymLink(@NotNull final String path) throws IOException {
+    public String resolveSymLink(@NotNull String path) throws IOException {
       try {
         return DO_NOT_RESOLVE_SYMLINKS ? path : new File(path).getCanonicalPath();
       }
@@ -465,8 +458,7 @@ public final class FileSystemUtil {
   /**
    * Detects case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names.
    */
-  @NotNull
-  public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
+  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
     // todo call some native API here, instead of slowly querying file attributes
     File parent = anyChild.getParentFile();
     if (parent == null) {
