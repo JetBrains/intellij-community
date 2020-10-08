@@ -54,7 +54,7 @@ class SdkLookupProviderImpl : SdkLookupProvider {
           context.setSdkInfo(sdk)
           builder.onSdkNameResolved(sdk)
         },
-        onSdkResolved =  { sdk ->
+        onSdkResolved = { sdk ->
           context.setSdk(sdk)
           builder.onSdkResolved(sdk)
         }
