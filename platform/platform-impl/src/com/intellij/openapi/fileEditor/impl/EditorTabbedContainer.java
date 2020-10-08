@@ -51,7 +51,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -600,7 +599,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       super(project, parentDisposable);
 
       myWindow = window;
-      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), parentDisposable);
+      UIUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -661,15 +660,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     public ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
       active = true;
       return super.select(info, requestFocus);
-    }
-
-    private IdeEventQueue.EventDispatcher createFocusDispatcher() {
-      return e -> {
-        if (e instanceof FocusEvent) {
-          updateActive();
-        }
-        return false;
-      };
     }
 
     private void updateActive() {

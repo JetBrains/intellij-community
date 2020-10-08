@@ -189,10 +189,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     init {
       val awtFocusListener = AWTEventListener { event ->
-        handleFocusEvent(event as FocusEvent)
+        if (event is FocusEvent) {
+          handleFocusEvent(event)
+        }
+        else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+          process { manager ->
+            val frame = event.getSource() as? JFrame
+            if (frame === manager.frame?.frame) {
+              manager.resetHoldState()
+            }
+          }
+        }
       }
 
-      Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK)
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK or AWTEvent.WINDOW_FOCUS_EVENT_MASK)
 
       val updateHeadersAlarm = SingleAlarm(Runnable {
         processOpenedProjects { project ->
@@ -244,15 +254,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         if (event is KeyEvent) {
           process { manager ->
             manager.dispatchKeyEvent(event)
-          }
-        }
-
-        if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-          process { manager ->
-            val frame = event.getSource() as? JFrame
-            if (frame === manager.frame?.frame) {
-              manager.resetHoldState()
-            }
           }
         }
 
