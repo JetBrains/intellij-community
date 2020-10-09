@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
  * @author Plushnikov Michail
  */
 public class LombokProblem {
-  private static final LocalQuickFix[] EMPTY_QUICK_FIX = new LocalQuickFix[0];
+  private static final LocalQuickFix[] EMPTY_QUICK_FIX = LocalQuickFix.EMPTY_ARRAY;
 
   private final ProblemHighlightType highlightType;
   private final LocalQuickFix[] quickFixes;

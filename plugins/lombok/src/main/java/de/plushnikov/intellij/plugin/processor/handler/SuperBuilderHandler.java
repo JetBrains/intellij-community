@@ -44,7 +44,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.STATIC))
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
-      if (!isStaticAndAbstract.isPresent()) {
+      if (isStaticAndAbstract.isEmpty()) {
         problemBuilder.addError("Existing Builder must be an abstract static inner class.");
         return false;
       }

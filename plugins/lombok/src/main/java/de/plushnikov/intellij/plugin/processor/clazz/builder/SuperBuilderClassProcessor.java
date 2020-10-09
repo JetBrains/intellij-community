@@ -48,7 +48,7 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
 
     Optional<PsiClass> builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
-    if (!builderClass.isPresent()) {
+    if (builderClass.isEmpty()) {
       final PsiClass createdBuilderClass = builderHandler.createBuilderBaseClass(psiClass, psiAnnotation);
       target.add(createdBuilderClass);
       builderClass = Optional.of(createdBuilderClass);
@@ -57,7 +57,7 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
     // skip generation of BuilderImpl class, if class is abstract
     if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final String builderImplClassName = builderHandler.getBuilderImplClassName(psiClass);
-      if (!PsiClassUtil.getInnerClassInternByName(psiClass, builderImplClassName).isPresent()) {
+      if (PsiClassUtil.getInnerClassInternByName(psiClass, builderImplClassName).isEmpty()) {
         target.add(builderHandler.createBuilderImplClass(psiClass, builderClass.get(), psiAnnotation));
       }
     }

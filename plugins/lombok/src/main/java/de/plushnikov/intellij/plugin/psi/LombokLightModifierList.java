@@ -89,7 +89,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     PsiAnnotation[] result = PsiAnnotation.EMPTY_ARRAY;
     if (!myAnnotations.isEmpty()) {
       Collection<PsiAnnotation> annotations = myAnnotations.values();
-      result = annotations.toArray(new PsiAnnotation[0]);
+      result = annotations.toArray(PsiAnnotation.EMPTY_ARRAY);
     }
     return result;
   }

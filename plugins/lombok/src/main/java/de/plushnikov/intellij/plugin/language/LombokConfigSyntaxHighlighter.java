@@ -25,7 +25,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TextAttributesKey[] VALUE_KEYS = new TextAttributesKey[]{VALUE};
   private static final TextAttributesKey[] COMMENT_KEYS = new TextAttributesKey[]{COMMENT};
   private static final TextAttributesKey[] CLEAR_KEYS = new TextAttributesKey[]{CLEAR};
-  private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
+  private static final TextAttributesKey[] EMPTY_KEYS = TextAttributesKey.EMPTY_ARRAY;
 
   @NotNull
   @Override
