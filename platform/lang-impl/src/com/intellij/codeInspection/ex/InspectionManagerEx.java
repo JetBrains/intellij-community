@@ -18,7 +18,9 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,37 +55,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
           ContentManager contentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
-          contentManager.addContentManagerListener(new ContentManagerListener() {
-            private static final String PREFIX = "of ";
-
-            @Override
-            public void contentAdded(@NotNull ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            @Override
-            public void contentRemoved(@NotNull ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            private void handleContentSizeChanged() {
-              final int count = contentManager.getContentCount();
-              if (count == 1) {
-                final Content content = contentManager.getContent(0);
-                final String displayName = content.getDisplayName();
-                if (!content.getDisplayName().startsWith(PREFIX)) {
-                  content.setDisplayName(PREFIX + displayName);
-                }
-              }
-              else if (count > 1) {
-                for (Content content : contentManager.getContents()) {
-                  if (content.getDisplayName().startsWith(PREFIX)) {
-                    content.setDisplayName(content.getDisplayName().substring(PREFIX.length()));
-                  }
-                }
-              }
-            }
-          });
           return contentManager;
         }
       };
