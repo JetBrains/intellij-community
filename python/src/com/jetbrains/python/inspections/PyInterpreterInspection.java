@@ -99,16 +99,21 @@ public final class PyInterpreterInspection extends PyInspection {
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
         if (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) {
-          PySdkProvider.EP_NAME.extensions()
+          final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.extensions()
             .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
             .filter(it -> it != null)
-            .findFirst().ifPresent(fixData ->  {
-              fixes.add(fixData.getQuickFix());
-              // noinspection HardCodedStringLiteral
-              registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
-          });
+            .findFirst()
+            .orElse(null);
+
+          if (fixData != null) {
+            fixes.add(fixData.getQuickFix());
+            // noinspection HardCodedStringLiteral
+            registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
+            return;
+          }
         }
-        else if (PythonSdkUtil.isInvalid(sdk)) {
+
+        if (PythonSdkUtil.isInvalid(sdk)) {
           final @InspectionMessage String message;
           if (pyCharm) {
             message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");
