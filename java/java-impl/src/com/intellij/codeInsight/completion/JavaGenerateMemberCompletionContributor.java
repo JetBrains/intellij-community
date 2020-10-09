@@ -66,7 +66,7 @@ public final class JavaGenerateMemberCompletionContributor {
       PsiAnnotation annotation = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
       int annoStart = annotation.getTextRange().getStartOffset();
 
-      result.addElement(itemWithOverrideImplementDialog(annoStart));
+      result.addElement(itemWithOverrideImplementDialog());
 
       suggestGeneratedMethods(
         result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(annotation.getText().substring(0, parameters.getOffset() - annoStart))),
@@ -99,15 +99,18 @@ public final class JavaGenerateMemberCompletionContributor {
   }
 
   @NotNull
-  private static LookupElementBuilder itemWithOverrideImplementDialog(int annoStart) {
+  private static LookupElementBuilder itemWithOverrideImplementDialog() {
     return LookupElementBuilder.create(JavaBundle.message("completion.override.implement.methods")).withLookupString("Override")
       .withInsertHandler((context, item) -> {
-      context.getDocument().deleteString(annoStart, context.getTailOffset());
-      context.commitDocument();
-      context.setAddCompletionChar(false);
-      context.setLaterRunnable(() -> {
-        new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
-      });
+        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiAnnotation.class);
+        if (annotation != null) {
+          context.getDocument().deleteString(annotation.getTextRange().getStartOffset(), context.getTailOffset());
+          context.commitDocument();
+        }
+        context.setAddCompletionChar(false);
+        context.setLaterRunnable(() -> {
+          new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
+        });
     });
   }
 

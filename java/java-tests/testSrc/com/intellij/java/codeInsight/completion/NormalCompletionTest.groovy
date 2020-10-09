@@ -1633,6 +1633,14 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
+  void testSuggestToOverrideMethodsInMulticaretMode() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.type('\n')
+    checkResult()
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for implementing methods)")
   void testStrikeOutDeprecatedSuperMethods() {
     configure()
