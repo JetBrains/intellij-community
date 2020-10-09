@@ -50,7 +50,7 @@ public final class Splash extends Window {
     myHeight = myImage.getHeight(null);
     long rgba = info.getProgressColor();
     //noinspection UseJBColor
-    myProgressColor = rgba == -1 ? null :new Color((int)rgba, rgba > 0xffffff);
+    myProgressColor = rgba == -1 ? null : new Color((int)rgba, rgba > 0xffffff);
 
     Dimension size = new Dimension(myWidth, myHeight);
     setAutoRequestFocus(false);
@@ -93,8 +93,7 @@ public final class Splash extends Window {
     super.dispose();
   }
 
-  @NotNull
-  private static Image loadImage(@NotNull String path) {
+  private static @NotNull Image loadImage(@NotNull String path) {
     Image result = SplashSlideLoader.loadImage(path);
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
