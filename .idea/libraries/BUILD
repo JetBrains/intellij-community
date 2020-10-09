@@ -604,24 +604,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "asm-tools",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/adt/idea/android/lib:asm-5.0.3",
-        "//tools/adt/idea/android/lib:asm-analysis-5.0.3",
-        "//tools/adt/idea/android/lib:asm-tree-5.0.3",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/adt/idea/android/lib:asm-5.0.3",
-        "//tools/adt/idea/android/lib:asm-analysis-5.0.3",
-        "//tools/adt/idea/android/lib:asm-tree-5.0.3",
-    ],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "org.codehaus.groovy_groovy",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy/2.5.11:jar"],
