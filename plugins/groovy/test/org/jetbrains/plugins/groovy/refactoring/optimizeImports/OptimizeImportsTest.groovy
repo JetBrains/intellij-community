@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
 
@@ -407,5 +407,30 @@ void newifyImportsIncorrectlyMarkedAsUnused() {
     def b = Abc()
 }
 ''')
+  }
+
+  void 'test annotated unresolved import'() {
+    doTest '''\
+import groovy.xml.XmlUtil
+import javax.security.auth.AuthPermission
+@Grab("coordinates")
+import org.foo.Bar
+
+XmlUtil xx
+Bar bar
+''', '''\
+import groovy.xml.XmlUtil
+@Grab("coordinates")
+import org.foo.Bar
+
+XmlUtil xx
+Bar bar
+'''
+  }
+
+  private void doTest(String before, String after) {
+    myFixture.configureByText '_.groovy', before
+    doOptimizeImports()
+    myFixture.checkResult after
   }
 }
