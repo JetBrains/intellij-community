@@ -3,20 +3,19 @@ package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
+import java.io.*
+import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 internal class ProcessMediatorTest {
   private val deferred = CompletableDeferred<Unit>()
@@ -215,6 +214,49 @@ internal class ProcessMediatorTest {
     assertTrue(hasExited)
     assertFalse(process.isAlive)
     destroyProcess(process)
+  }
+
+  @Test
+  internal fun `stress test input - output`() {
+    val builder = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class).apply {
+      command().add("with_stderr")
+    }
+    val process = builder.startMediatedProcess()
+
+    val executor = Executors.newFixedThreadPool(3)
+    val expectedData = executor.submit(Callable {
+      var expected = ""
+      OutputStreamWriter(process.outputStream).use {
+        for (i in 0..1000) {
+          val content = Stream.generate { "ping! ping! ping!\n" }
+            .limit(Random().nextInt(1000).toLong())
+            .collect(Collectors.joining())
+          it.write(content)
+          it.flush()
+
+          expected += content
+        }
+      }
+      expected
+    })
+
+    val inputData = executor.submit(Callable {
+      BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+    })
+
+    val errorData = executor.submit(Callable {
+      BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
+    })
+
+    val expected = expectedData.get(60, TimeUnit.SECONDS)
+    assertEquals(expected, inputData.get(60, TimeUnit.SECONDS))
+    assertEquals(expected, errorData.get(60, TimeUnit.SECONDS))
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
+    assertFalse(process.isAlive)
+    destroyProcess(process)
+    executor.shutdown()
   }
 
   private fun destroyProcess(process: Process) {
