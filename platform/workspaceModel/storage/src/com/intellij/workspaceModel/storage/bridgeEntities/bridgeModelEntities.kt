@@ -488,7 +488,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val thisTableId = tableId
     if (thisTableId is LibraryTableId.ModuleLibraryTableId) {
       val moduleId = thisTableId.moduleId
-      assert(storage.resolve(moduleId) != null)
+      assert(storage.resolve(moduleId) != null) { "Module isn't found.\nPersistent id: $moduleId\nLibrary: $this" }
     }
   }
 }
