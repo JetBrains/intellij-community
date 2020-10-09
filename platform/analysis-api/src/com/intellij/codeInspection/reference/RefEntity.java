@@ -42,6 +42,7 @@ public interface RefEntity extends UserDataHolder {
   String getName();
 
   @NotNull
+  @NlsSafe
   String getQualifiedName();
 
   /**
@@ -71,6 +72,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the user-readable name.
    */
+  @NlsSafe
   String getExternalName();
 
   /**
