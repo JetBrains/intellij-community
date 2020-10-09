@@ -5,11 +5,14 @@ import com.intellij.codeInsight.daemon.problems.FileStateCache;
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -175,6 +178,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     VirtualFile changedFile = PsiUtilCore.getVirtualFile(psiFile);
     if (changedFile == null) return;
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     for (Editor editor : editors) {
       EditorImpl editorImpl = tryCast(editor, EditorImpl.class);
       if (editorImpl == null || !editorImpl.getContentComponent().isShowing()) continue;
@@ -183,7 +187,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
         DocumentEx document = editorImpl.getDocument();
         editorFile = FileDocumentManager.getInstance().getFile(document);
       }
-      if (editorFile == null || changedFile.equals(editorFile)) continue;
+      if (editorFile == null || changedFile.equals(editorFile) || !fileIndex.isInContent(editorFile)) continue;
       PsiJavaFile psiJavaFile = getJavaFile(myProject, editorFile);
       if (psiJavaFile == null) continue;
       FileStateUpdater.setPreviousState(psiJavaFile);
@@ -192,6 +196,9 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
 
   private static @Nullable PsiJavaFile getJavaFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || file instanceof VirtualFileWindow || !file.isValid()) return null;
+    FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
+    LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
+    if (languageFileType == null || !(languageFileType.getLanguage() instanceof JvmLanguage)) return null;
     return tryCast(PsiManager.getInstance(project).findFile(file), PsiJavaFile.class);
   }
 
