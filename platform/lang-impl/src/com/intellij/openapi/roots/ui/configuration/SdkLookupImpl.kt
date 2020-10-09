@@ -113,7 +113,6 @@ internal class SdkLookupImpl : SdkLookup {
   override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
 
   override fun lookup(lookup: SdkLookupParameters) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     SdkLookupContextEx(lookup).lookup()
   }
 
