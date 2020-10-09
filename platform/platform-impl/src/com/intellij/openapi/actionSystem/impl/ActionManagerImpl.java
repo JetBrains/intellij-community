@@ -1463,7 +1463,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Language language = file != null ? file.getLanguage() : null;
-    final List<EventPair> customData = new ArrayList<>();
+    final List<EventPair<?>> customData = new ArrayList<>();
     customData.add(EventFields.CurrentFile.with(language));
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     customData.add(EventFields.Language.with(getHostFileLanguage(dataContext, project)));

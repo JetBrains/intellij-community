@@ -47,7 +47,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static void recordActionInvoked(@Nullable Project project,
                                          @Nullable AnAction action,
                                          @Nullable AnActionEvent event,
-                                         @NotNull List<EventPair> customData) {
+                                         @NotNull List<EventPair<?>> customData) {
     record(ActionsEventLogGroup.ACTION_INVOKED, project, action, event, customData);
   }
 
@@ -55,11 +55,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
                             @Nullable Project project,
                             @Nullable AnAction action,
                             @Nullable AnActionEvent event,
-                            @Nullable List<EventPair> customData) {
+                            @Nullable List<EventPair<?>> customData) {
     if (action == null) return;
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
 
-    List<EventPair> data = new ArrayList<>();
+    List<EventPair<?>> data = new ArrayList<>();
     data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
@@ -72,7 +72,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       data.addAll(customData);
     }
     addActionClass(data, action, info);
-    eventId.log(project, data.toArray(new EventPair[0]));
+    eventId.log(project, data);
   }
 
   public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
@@ -84,7 +84,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   @NotNull
-  public static String addActionClass(@NotNull List<EventPair> data,
+  public static String addActionClass(@NotNull List<EventPair<?>> data,
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
     String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
@@ -106,9 +106,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static void addActionClass(@NotNull FeatureUsageData data,
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
-    List<EventPair> list = new ArrayList<>();
+    List<EventPair<?>> list = new ArrayList<>();
     addActionClass(list, action, info);
-    for (EventPair pair : list) {
+    for (EventPair<?> pair : list) {
       data.addData(pair.component1().getName(), pair.component2().toString());
     }
   }

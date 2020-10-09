@@ -101,18 +101,30 @@ class VarargEventId internal constructor(private val group: EventLogGroup, event
   private val fields = fields.toMutableList()
 
   fun log(vararg pairs: EventPair<*>) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
+    log(listOf(*pairs))
+  }
+
+  fun log(pairs: List<EventPair<*>>) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(pairs).build())
   }
 
   fun log(project: Project?, vararg pairs: EventPair<*>) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).addProject(project).build())
+    log(project, listOf(*pairs))
+  }
+
+  fun log(project: Project?, pairs: List<EventPair<*>>) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(pairs).addProject(project).build())
   }
 
   fun metric(vararg pairs: EventPair<*>): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(*pairs))
+    return metric(listOf(*pairs))
   }
 
-  private fun buildUsageData(vararg pairs: EventPair<*>): FeatureUsageData {
+  fun metric(pairs: List<EventPair<*>>): MetricEvent {
+    return MetricEvent(eventId, buildUsageData(pairs))
+  }
+
+  private fun buildUsageData(pairs: List<EventPair<*>>): FeatureUsageData {
     val data = FeatureUsageData()
     for (pair in pairs) {
       if (pair.field !in fields) throw IllegalArgumentException("Field not in fields for this event ID")
