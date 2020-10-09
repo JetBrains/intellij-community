@@ -300,6 +300,15 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                          "    return movie[<warning descr=\"TypedDict key must be a string literal; expected one of ('name', 'year')\">key</warning>]"));
   }
 
+  // PY-44714
+  public void testNoneAsType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    n: None\n"));
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
