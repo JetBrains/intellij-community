@@ -12,7 +12,7 @@ public class ReturnFromFinallyBlock
         }
         finally
         {
-            <warning descr="'return' inside 'finally' block">return</warning>;
+            <warning descr="'return' inside 'finally' block">return;</warning>
         }
     }
 
@@ -24,7 +24,7 @@ public class ReturnFromFinallyBlock
         }
         finally
         {
-            <warning descr="'return' inside 'finally' block">return</warning> 3;
+            <warning descr="'return' inside 'finally' block">return 3;</warning>
         }
     }
 

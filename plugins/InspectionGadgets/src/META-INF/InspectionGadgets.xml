@@ -913,7 +913,7 @@
                      key="non.final.field.of.exception.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NonFinalFieldOfExceptionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="UAST" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
                      key="return.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection"/>
