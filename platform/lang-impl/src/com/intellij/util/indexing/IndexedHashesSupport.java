@@ -21,6 +21,8 @@ public final class IndexedHashesSupport {
   // TODO replace with sha-256
   private static final HashFunction INDEXED_FILE_CONTENT_HASHER = Hashing.sha1();
 
+  public static final int HASH_SIZE_IN_BYTES = INDEXED_FILE_CONTENT_HASHER.bits() / Byte.SIZE;
+
   public static int getVersion() {
     return 3;
   }
