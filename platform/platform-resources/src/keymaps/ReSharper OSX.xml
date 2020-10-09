@@ -178,7 +178,6 @@
   <action id="VcsShowNextChangeMarker"/>
   <action id="VcsShowPrevChangeMarker"/>
   <action id="CallHierarchy"/>
-  <action id="CIDR.Lang.SwitchHeaderSource"/>
   <action id="SwitchHeaderSource"/>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>

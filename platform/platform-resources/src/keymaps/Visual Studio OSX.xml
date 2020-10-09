@@ -486,10 +486,6 @@
   <action id="IncrementalSearch">
     <keyboard-shortcut first-keystroke="meta I"/>
   </action>
-  <action id="CIDR.Lang.SwitchHeaderSource">
-    <keyboard-shortcut first-keystroke="meta K" second-keystroke="O"/>
-    <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta O"/>
-  </action>
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="O"/>
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta O"/>
