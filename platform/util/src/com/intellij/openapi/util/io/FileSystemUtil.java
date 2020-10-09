@@ -646,21 +646,26 @@ public final class FileSystemUtil {
 
   //<editor-fold desc="macOS case sensitivity detection">
   private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
-    CoreFoundation cf = CoreFoundation.INSTANCE;
-
-    CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
     try {
-      PointerByReference result = new PointerByReference();
-      if (cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, result, null)) {
-        boolean value = new CoreFoundation.CFBooleanRef(result.getValue()).booleanValue();
-        return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+      CoreFoundation cf = CoreFoundation.INSTANCE;
+
+      CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
+      try {
+        PointerByReference result = new PointerByReference();
+        if (cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, result, null)) {
+          boolean value = new CoreFoundation.CFBooleanRef(result.getValue()).booleanValue();
+          return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+        }
+        else {
+          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+        }
       }
-      else {
-        LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+      finally {
+        url.release();
       }
     }
-    finally {
-      url.release();
+    catch (Throwable t) {
+      LOG.warn("path: " + path, t);
     }
 
     return FileAttributes.CaseSensitivity.UNKNOWN;
