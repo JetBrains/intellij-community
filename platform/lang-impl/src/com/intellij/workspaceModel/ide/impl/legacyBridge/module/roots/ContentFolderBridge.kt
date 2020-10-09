@@ -27,7 +27,10 @@ internal abstract class ContentFolderBridge(private val entry: ContentEntryBridg
 internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sourceRootEntity: SourceRootEntity)
   : ContentFolderBridge(entry, sourceRootEntity.url), SourceFolder {
 
-  override fun getFile(): VirtualFile? = (sourceRootEntity.url as VirtualFilePointer).file
+  override fun getFile(): VirtualFile? {
+    val virtualFilePointer = sourceRootEntity.url as VirtualFilePointer
+    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
+  }
 
   private var packagePrefixVar: String? = null
   private val sourceRootType: JpsModuleSourceRootType<out JpsElement> = getSourceRootType(sourceRootEntity)
@@ -118,5 +121,8 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
 internal class ExcludeFolderBridge(val entry: ContentEntryBridge, val excludeFolderUrl: VirtualFileUrl)
   : ContentFolderBridge(entry, excludeFolderUrl), ExcludeFolder {
-  override fun getFile(): VirtualFile? = (excludeFolderUrl as VirtualFilePointer).file
+  override fun getFile(): VirtualFile? {
+    val virtualFilePointer = excludeFolderUrl as VirtualFilePointer
+    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
+  }
 }
