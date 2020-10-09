@@ -2,7 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
@@ -41,7 +41,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
     myTagName = getTagName(beanClass);
-    assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
+    assert !Strings.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
@@ -196,7 +196,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
-      if (StringUtil.isEmpty(attribute.getNamespaceURI())) {
+      if (Strings.isEmpty(attribute.getNamespaceURI())) {
         for (NestedBinding binding : myBindings) {
           if (binding instanceof AttributeBinding && ((AttributeBinding)binding).myName.equals(attribute.getName())) {
             if (accessorNameTracker != null) {
