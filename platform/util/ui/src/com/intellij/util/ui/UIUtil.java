@@ -457,7 +457,7 @@ public final class UIUtil {
   }
 
   public static boolean isRetina(@NotNull Graphics2D graphics) {
-    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
+    return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
