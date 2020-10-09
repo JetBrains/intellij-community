@@ -2267,4 +2267,16 @@ class Abc {
     myFixture.completeBasic()
     myFixture.checkResult("import java.util.*; class X { protected<caret> @NotNull String foo() {}}")
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test suggest UTF8 Charset"() {
+    myFixture.configureByText("a.java", "import java.nio.charset.Charset; class X { Charset test() {return U<caret>;}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, "StandardCharsets.UTF_8")
+    myFixture.type('\n')
+    myFixture.checkResult("import java.nio.charset.Charset;\n" +
+                          "import java.nio.charset.StandardCharsets;\n" +
+                          "\n" +
+                          "class X { Charset test() {return StandardCharsets.UTF_8;}}")
+  }
 }
