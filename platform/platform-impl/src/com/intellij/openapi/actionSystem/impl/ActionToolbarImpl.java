@@ -1253,12 +1253,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       @Override
       public @Nullable Object getData(@NotNull @NonNls String dataId) {
         // Prevent recursion like in EA-239860 that might happen when ActionToolbar is reattached to the new popup as a child component.
-        for (Component c = ActionToolbarImpl.this; c != null; c = c.getParent()) {
-          if (c == this) {
-            return null;
-          }
+        if (ActionToolbarImpl.this.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT) != this) {
+          return ActionToolbarImpl.this.getDataContext().getData(dataId);
         }
-        return ActionToolbarImpl.this.getDataContext().getData(dataId);
+        return null;
       }
     }
 
