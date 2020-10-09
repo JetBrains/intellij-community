@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isApplicationExpression
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
@@ -61,6 +62,12 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
       }
       else if (variableDeclaration.variables.size > 1) {
         holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.multiple.variables.in.for")).create()
+      }
+    }
+    else if (variableDeclaration.isTuple) {
+      val initializer = variableDeclaration.tupleInitializer
+      if (initializer != null && initializer.isApplicationExpression()) {
+        error(initializer, message("unsupported.tuple.application.initializer"))
       }
     }
   }
@@ -236,6 +243,13 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitCodeReferenceElement(refElement: GrCodeReferenceElement) {
     refElement.annotations.forEach {
       error(it, message("unsupported.type.annotations"))
+    }
+  }
+
+  override fun visitTupleAssignmentExpression(expression: GrTupleAssignmentExpression) {
+    val rValue = expression.rValue
+    if (rValue != null && rValue.isApplicationExpression()) {
+      error(rValue, message("unsupported.tuple.application.initializer"))
     }
   }
 }

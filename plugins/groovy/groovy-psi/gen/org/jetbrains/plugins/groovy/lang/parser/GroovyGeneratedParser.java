@@ -7007,7 +7007,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '=' mb_nl expression
+  // '=' mb_nl expression_or_application
   static boolean tuple_initializer(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_initializer")) return false;
     if (!nextTokenIs(b, T_ASSIGN)) return false;
@@ -7016,7 +7016,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_ASSIGN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && expression(b, l + 1, -1) && r;
+    r = p && expression_or_application(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }

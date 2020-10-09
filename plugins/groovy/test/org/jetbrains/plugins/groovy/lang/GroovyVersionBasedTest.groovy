@@ -33,4 +33,6 @@ abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements Hig
   void 'test ambiguous code block'() { fileHighlightingTest() }
 
   void 'test type annotations'() { fileHighlightingTest() }
+
+  void 'test application tuple initializer'() { fileHighlightingTest() }
 }

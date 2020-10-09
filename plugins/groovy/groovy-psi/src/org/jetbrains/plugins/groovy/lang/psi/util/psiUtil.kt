@@ -15,11 +15,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -92,3 +91,13 @@ fun GroovyPsiElement.isFake(): Boolean {
 }
 
 fun PsiMethod.isClosureCall(): Boolean = name == "call" && containingClass?.qualifiedName == GROOVY_LANG_CLOSURE
+
+fun GrExpression.isApplicationExpression(): Boolean {
+  return when (this) {
+    is GrApplicationStatement -> true
+    is GrReferenceExpression -> isQualified && dotTokenType == null
+    is GrMethodCallExpression -> invokedExpression.isApplicationExpression()
+    is GrIndexProperty -> invokedExpression.isApplicationExpression()
+    else -> false
+  }
+}
