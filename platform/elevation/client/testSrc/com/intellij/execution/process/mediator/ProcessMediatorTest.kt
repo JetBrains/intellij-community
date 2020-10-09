@@ -3,7 +3,10 @@ package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -12,11 +15,16 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal class ProcessMediatorTest {
-  private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+  private val deferred = CompletableDeferred<Unit>()
+  private val coroutineScope = CoroutineScope(CoroutineExceptionHandler { _, cause ->
+    if (cause !is CancellationException) {
+      deferred.completeExceptionally(cause)
+    }
+  })
   private val client = ProcessMediatorClient(coroutineScope, createInProcessChannelForTesting())
   private val server = ProcessMediatorDaemon(createInProcessServerForTesting())
 
@@ -36,6 +44,11 @@ internal class ProcessMediatorTest {
       server.stop()
       server.blockUntilShutdown()
     }
+    runBlocking {
+      deferred.complete(Unit)
+      deferred.await()  // throw in case any background coroutine failed with uncaught exception
+    }
+    assertFalse(deferred.isCancelled)
   }
 
   @Test
