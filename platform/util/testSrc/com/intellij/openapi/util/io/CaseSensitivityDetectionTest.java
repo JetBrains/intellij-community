@@ -63,4 +63,16 @@ public class CaseSensitivityDetectionTest {
     assertEquals(root, child.getParentFile());
     assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
   }
+
+  @Test
+  public void linuxBasics() {
+    assumeTrue("Need Linux, can't run on " + SystemInfo.OS_NAME, SystemInfo.isLinux);
+
+    File root = new File("/");
+    FileAttributes.CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, rootCs);
+
+    File child = new File("/home");
+    assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
+  }
 }

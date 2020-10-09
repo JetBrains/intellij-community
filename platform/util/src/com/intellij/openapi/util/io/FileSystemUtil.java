@@ -13,6 +13,7 @@ import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.WTypes;
 import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
@@ -492,6 +493,19 @@ public final class FileSystemUtil {
         anyChild = new File(anyChild, name);
       }
     }
+    else if (SystemInfo.isLinux) {
+      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      if (JnaLoader.isLoaded()) {
+        FileAttributes.CaseSensitivity detected = getLinuxCaseSensitivity(path);
+        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+      }
+      if (parent == null) {
+        String name = findCaseSensitiveSiblingName(anyChild);
+        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+        parent = anyChild;
+        anyChild = new File(anyChild, name);
+      }
+    }
 
     // todo call some native API here, instead of slowly querying file attributes
     if (parent == null) {
@@ -678,6 +692,57 @@ public final class FileSystemUtil {
 
     CFTypeRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, String buffer, long bufLen, boolean isDirectory);
     boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, Pointer error);
+  }
+  //</editor-fold>
+
+  //<editor-fold desc="Linux case sensitivity detection">
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
+    try {
+      Memory buf = new Memory(256);
+      if (LibC.INSTANCE.statfs(path, buf) != 0) {
+        if (LOG.isTraceEnabled()) LOG.trace("statfs(" + path + "): error");
+      }
+      else {
+        long fs = SystemInfo.is32Bit ? buf.getInt(0) : buf.getLong(0);
+        // Btrfs, XFS
+        if (fs == 0x9123683e || fs == 0x58465342) {
+          return FileAttributes.CaseSensitivity.SENSITIVE;
+        }
+        // VFAT
+        if (fs == 0x4d44) {
+          return FileAttributes.CaseSensitivity.INSENSITIVE;
+        }
+        // Ext*, F2FS
+        if (fs == 0xef53 || fs == 0xf2f52010) {
+          LongByReference flags = new LongByReference();
+          if (E2P.INSTANCE.fgetflags(path, flags) == 0) {
+            if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
+          }
+          else {
+            return (flags.getValue() & E2P.CASE_FOLD) != 0 ? FileAttributes.CaseSensitivity.INSENSITIVE : FileAttributes.CaseSensitivity.SENSITIVE;
+          }
+        }
+      }
+    }
+    catch (Throwable t) {
+      LOG.warn("path: " + path, t);
+    }
+
+    return FileAttributes.CaseSensitivity.UNKNOWN;
+  }
+
+  private interface LibC extends Library {
+    LibC INSTANCE = Native.load(LibC.class);
+
+    int statfs(String path, Memory buf);
+  }
+
+  interface E2P extends Library {
+    E2P INSTANCE = Native.load("e2p", E2P.class);
+
+    long CASE_FOLD = 0x4000_0000L;
+
+    int fgetflags(String path, LongByReference flags);
   }
   //</editor-fold>
 }
