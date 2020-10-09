@@ -12,7 +12,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
-import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureAction
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
@@ -46,7 +45,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitModifierList(modifierList: GrModifierList) {
     val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
-    error(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
+    error(modifier, message("default.modifier.in.old.versions"))
   }
 
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
@@ -126,7 +125,10 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     if (tokenType === T_METHOD_REFERENCE) {
       val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
       val message = message("operator.is.not.supported.in", tokenType)
-      val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(dot, dot, message, ProblemHighlightType.ERROR, true)
+      val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(
+        dot, dot, message,
+        ProblemHighlightType.ERROR, true
+      )
       holder.newAnnotation(HighlightSeverity.ERROR, message).range(dot)
         .newLocalQuickFix(fix, descriptor).registerFix()
         .create()
@@ -141,7 +143,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
     holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.lambda")).range(expression.arrow)
-    .withFix(ConvertLambdaToClosureAction(expression))
+      .withFix(ConvertLambdaToClosureAction(expression))
       .create()
   }
 
@@ -181,7 +183,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitClosure(closure: GrClosableBlock) {
     super.visitClosure(closure)
     if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
-      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("ambiguous.code.block")).create()
+      holder.newAnnotation(HighlightSeverity.ERROR, message("ambiguous.code.block")).create()
     }
   }
 
