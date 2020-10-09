@@ -15,22 +15,23 @@
  */
 package org.intellij.plugins.xsltDebugger.rt.engine;
 
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class BreakpointManagerImpl implements BreakpointManager {
-  private final TIntObjectHashMap<Map<String, Breakpoint>> myBreakpoints =
-    new TIntObjectHashMap<Map<String, Breakpoint>>();
+public final class BreakpointManagerImpl implements BreakpointManager {
+  private final Map<Integer, Map<String, Breakpoint>> myBreakpoints = new HashMap<Integer, Map<String, Breakpoint>>();
 
+  @Override
   public Breakpoint setBreakpoint(File file, int line) {
     return setBreakpoint(file.toURI().toASCIIString(), line);
   }
 
+  @Override
   public synchronized void removeBreakpoint(String uri, int line) {
     final Map<String, Breakpoint> s = myBreakpoints.get(line);
     if (s != null) {
@@ -38,21 +39,21 @@ public class BreakpointManagerImpl implements BreakpointManager {
     }
   }
 
+  @Override
   public synchronized List<Breakpoint> getBreakpoints() {
-    final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
-    myBreakpoints.forEachEntry(new TIntObjectProcedure<Map<String, Breakpoint>>() {
-      public boolean execute(int i, Map<String, Breakpoint> map) {
-        breakpoints.addAll(map.values());
-        return true;
-      }
-    });
+    List<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+    for (Map<String, Breakpoint> map : myBreakpoints.values()) {
+      breakpoints.addAll(map.values());
+    }
     return breakpoints;
   }
 
+  @Override
   public void removeBreakpoint(Breakpoint bp) {
     removeBreakpoint(bp.getUri(), bp.getLine());
   }
 
+  @Override
   public synchronized Breakpoint setBreakpoint(String uri, int line) {
     assert line > 0 : "No line number for breakpoint in file " + uri;
 
@@ -90,6 +91,7 @@ public class BreakpointManagerImpl implements BreakpointManager {
     return breakpoint != null && breakpoint.isEnabled();
   }
 
+  @Override
   public synchronized Breakpoint getBreakpoint(String uri, int lineNumber) {
     final Map<String, Breakpoint> s = myBreakpoints.get(lineNumber);
     if (s != null) {

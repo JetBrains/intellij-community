@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
@@ -40,7 +39,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.net.NetUtils;
-import gnu.trove.THashMap;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
@@ -51,7 +49,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +62,7 @@ import java.util.jar.Manifest;
  * Extension for XPathView that hooks into the execution of XSLT-scripts. Manages the creation of the XSLT-Debugger UI
  * and ensures the debugged process is started with the required JVM properties.
  */
-public class XsltDebuggerExtension extends XsltRunnerExtension {
+public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Logger LOG = Logger.getInstance(XsltDebuggerExtension.class.getName());
 
   public static final Key<XsltChecker.LanguageLevel> VERSION = Key.create("VERSION");
@@ -150,9 +147,6 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.impl.rt"));
       addPathToClasspath(parameters, getPluginEngineDirInSources().resolve("lib/rmi-stubs.jar"));
     }
-
-    File trove4j = new File(PathUtil.getJarPathForClass(THashMap.class));
-    parameters.getClassPath().addTail(trove4j.getAbsolutePath());
 
     String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type"); //NON-NLS
     if ("saxon".equalsIgnoreCase(type)) {
