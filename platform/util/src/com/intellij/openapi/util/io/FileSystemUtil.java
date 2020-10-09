@@ -462,57 +462,35 @@ public final class FileSystemUtil {
   }
 
   /**
-   * Detects case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names.
+   * Detects case-sensitivity of the directory containing {@code anyChild} (or {@code anyChild} itself, if it happens to be
+   * a file system root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
+   * via different names.
    */
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
     File parent = anyChild.getParentFile();
 
-    if (SystemInfo.isWindows) {
+    if (JnaLoader.isLoaded()) {
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (OSAgnosticPathUtil.isAbsoluteDosPath(path) && JnaLoader.isLoaded()) {
-        FileAttributes.CaseSensitivity detected = getNtfsCaseSensitivity(path);
-        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+      FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
+      if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+        detected = getNtfsCaseSensitivity(path);
       }
-      if (parent == null) {
-        String name = findCaseSensitiveSiblingName(anyChild);
-        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
-        parent = anyChild;
-        anyChild = new File(anyChild, name);
+      else if (SystemInfo.isMac) {
+        detected = getMacOsCaseSensitivity(path);
       }
-    }
-    else if (SystemInfo.isMac) {
-      String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (JnaLoader.isLoaded()) {
-        FileAttributes.CaseSensitivity detected = getMacOsCaseSensitivity(path);
-        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+      else if (SystemInfo.isLinux) {
+        detected = getLinuxCaseSensitivity(path);
       }
-      if (parent == null) {
-        String name = findCaseSensitiveSiblingName(anyChild);
-        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
-        parent = anyChild;
-        anyChild = new File(anyChild, name);
-      }
-    }
-    else if (SystemInfo.isLinux) {
-      String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (JnaLoader.isLoaded()) {
-        FileAttributes.CaseSensitivity detected = getLinuxCaseSensitivity(path);
-        if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
-      }
-      if (parent == null) {
-        String name = findCaseSensitiveSiblingName(anyChild);
-        if (name == null) return FileAttributes.CaseSensitivity.UNKNOWN;
-        parent = anyChild;
-        anyChild = new File(anyChild, name);
+      if (detected != FileAttributes.CaseSensitivity.UNKNOWN) {
+        return detected;
       }
     }
 
-    // todo call some native API here, instead of slowly querying file attributes
     if (parent == null) {
-      // assume root always has FS case-sensitivity
-      return SystemInfo.isFileSystemCaseSensitive
-               ? FileAttributes.CaseSensitivity.SENSITIVE
-               : FileAttributes.CaseSensitivity.INSENSITIVE;
+      String probe = findCaseSensitiveSiblingName(anyChild);
+      if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+      parent = anyChild;
+      anyChild = new File(parent, probe);
     }
 
     String name = anyChild.getName();
@@ -527,7 +505,7 @@ public final class FileSystemUtil {
       altName = toggleCase(name);
     }
 
-    String altPath = parent + "/" + altName;
+    String altPath = parent.getPath() + '/' + altName;
     FileAttributes newAttributes = getAttributes(altPath);
     if (newAttributes == null) {
       // couldn't file this file by other-cased name, so deduce FS is sensitive
