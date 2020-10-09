@@ -457,20 +457,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     Project project = myManager.getProject();
     IdeFrameEx frame = getFrame(project);
-    if (frame != null) {
-      String fileTitle = null;
-      Path ioFile = null;
-      VirtualFile file = getCurrentFile();
-      if (file != null) {
-        try {
-          ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
-        }
-        catch (InvalidPathException ignored) {
-        }
-        fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
-      }
-      frame.setFileTitle(fileTitle, ioFile);
+    if (frame == null) {
+      return;
     }
+
+    String fileTitle = null;
+    Path ioFile = null;
+    VirtualFile file = getCurrentFile();
+    if (file != null) {
+      try {
+        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+      }
+      catch (InvalidPathException ignored) {
+      }
+      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
+    }
+    frame.setFileTitle(fileTitle, ioFile);
   }
 
   protected @Nullable IdeFrameEx getFrame(@NotNull Project project) {
@@ -1087,11 +1089,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return null;
   }
-  
+
   @Nullable
   public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
     EditorWindow window = getCurrentWindow();
-    
+
     if (window == null) {
       return null;
     }
@@ -1107,7 +1109,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
       }
     }
-    
+
     return window.split(SwingConstants.VERTICAL, true, file, true);
   }
 

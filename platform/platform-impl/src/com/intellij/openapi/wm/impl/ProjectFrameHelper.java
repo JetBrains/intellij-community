@@ -17,9 +17,9 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -76,6 +76,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   private volatile Image selfie;
 
   private IdeFrameImpl myFrame;
+
+  private List<TitleInfoProvider> titleInfoExtensions;
 
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     myFrame = frame;
@@ -186,15 +188,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    myRootPane.init(this, this);
-
+    myRootPane.createAndConfigureStatusBar(this, this);
     MnemonicHelper.init(myFrame);
-
     myFrame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       myFrame.setIconImage(null);
     }
 
@@ -237,14 +237,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
-  /**
-   * @deprecated Get frame and set title directly.
-   */
-  @Deprecated
-  public void setTitle(@NotNull String title) {
-    myFrame.setTitle(title);
-  }
-
   @Override
   public void setFrameTitle(String text) {
     myFrame.setTitle(text);
@@ -263,19 +255,18 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void updateTitle() {
-    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myTitleInfoExtensions);
+    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myProject, titleInfoExtensions);
   }
 
   public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "Administrator" : "ROOT";
   }
-
-  private List<TitleInfoProvider> myTitleInfoExtensions = null;
 
   public static void updateTitle(@NotNull JFrame frame,
                                  @Nullable String title,
                                  @Nullable String fileTitle,
                                  @Nullable Path currentFile,
+                                 @Nullable Project project,
                                  @Nullable List<TitleInfoProvider> extensions) {
     if (ourUpdatingTitle) {
       return;
@@ -289,19 +280,24 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
-      Builder builder = new Builder().append(title).append(fileTitle);
+      StringBuilder builder = new StringBuilder();
+      appendTitlePart(builder, title);
+      appendTitlePart(builder, fileTitle);
       if (extensions != null && !extensions.isEmpty()) {
+        assert project != null;
         for (TitleInfoProvider extension : extensions) {
-          if (extension.isActive()) {
-            String it = extension.getValue();
+          if (extension.isActive(project)) {
+            String it = extension.getValue(project);
             if (!it.isEmpty()) {
-              builder.append(it, " ");
+              appendTitlePart(builder, it, " ");
             }
           }
         }
       }
 
-      frame.setTitle(builder.toString());
+      if (builder.length() > 0) {
+        frame.setTitle(builder.toString());
+      }
     }
     finally {
       ourUpdatingTitle = false;
@@ -319,24 +315,16 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myFrame.getAccessibleContext();
   }
 
-  private static final class Builder {
-    private final StringBuilder sb = new StringBuilder();
+  private static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s) {
+    appendTitlePart(sb, s, " \u2013 ");
+  }
 
-    Builder append(@Nullable String s) {
-      return append(s, " \u2013 ");
-    }
-
-    Builder append(@Nullable String s, String separator) {
-      if (!StringUtil.isEmptyOrSpaces(s)) {
-        if (sb.length() > 0) sb.append(separator);
-        sb.append(s);
+  private static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s, String separator) {
+    if (!Strings.isEmptyOrSpaces(s)) {
+      if (sb.length() > 0) {
+        sb.append(separator);
       }
-      return this;
-    }
-
-    @Override
-    public String toString() {
-      return sb.toString();
+      sb.append(s);
     }
   }
 
@@ -388,7 +376,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   protected void initTitleInfoProviders(@NotNull Project project) {
-    myTitleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
+    titleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
       updateTitle();
       return Unit.INSTANCE;
     });
@@ -475,7 +463,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private boolean temporaryFixForIdea156004(boolean state) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
         modalBlockerField.setAccessible(true);

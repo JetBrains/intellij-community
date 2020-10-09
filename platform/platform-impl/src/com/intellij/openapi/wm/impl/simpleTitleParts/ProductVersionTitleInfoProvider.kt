@@ -5,5 +5,5 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 
 private class ProductVersionTitleInfoProvider : SimpleTitleInfoProvider(VMOOption("ide.ui.version.in.title")) {
-  override val value: String =  ApplicationInfo.getInstance().fullVersion
+  override fun getValue(project: Project) = ApplicationInfo.getInstance().fullVersion
 }

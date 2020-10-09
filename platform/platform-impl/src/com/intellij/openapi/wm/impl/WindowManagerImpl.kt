@@ -296,7 +296,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     projectToFrame.put(project, frameHelper)
     frameHelper.project = project
     val frame = frameHelper.frame!!
-    frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
+    // set only if not previously set (we remember previous project name and set it on frame creation)
+    //if (Strings.isEmpty(frame.title)) {
+      frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
+    //}
     frame.addComponentListener(frameStateListener)
   }
 
@@ -309,52 +312,58 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       eventDispatcher.multicaster.frameCreated(frame)
       return frame
     }
+
     frame = removeAndGetRootFrame()
-    val isNewFrame = frame == null
-    var frameInfo: FrameInfo? = null
-    if (isNewFrame) {
+    if (frame == null) {
       frame = projectFrameHelperFactory.get()
-      frame.init()
-      frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
-      if (frameInfo?.bounds == null) {
-        val lastFocusedProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
-        if (lastFocusedProject != null) {
-          frameInfo = ProjectFrameBounds.getInstance(lastFocusedProject).getActualFrameInfoInDeviceSpace(frame, this)
-        }
-        if (frameInfo?.bounds == null) {
-          frameInfo = defaultFrameInfoHelper.info
-        }
-      }
-      if (frameInfo?.bounds != null) {
-        // update default frame info - newly opened project frame should be the same as last opened
-        if (frameInfo !== defaultFrameInfoHelper.info) {
-          defaultFrameInfoHelper.copyFrom(frameInfo)
-        }
-        val bounds = frameInfo.bounds
-        if (bounds != null) {
-          frame.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
-        }
-      }
+      allocateNewFrame(project, frame)
     }
-    frame!!.project = project
-    projectToFrame.put(project, frame)
-    if (isNewFrame) {
-      val uiFrame = frame.frame!!
-      if (frameInfo != null) {
-        uiFrame.extendedState = frameInfo.extendedState
-      }
-      uiFrame.isVisible = true
-      if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-        frame.toggleFullScreen(true)
-      }
-    }
-    if (isNewFrame) {
-      val uiFrame = frame.frame!!
-      uiFrame.addComponentListener(frameStateListener)
-      IdeMenuBar.installAppMenuIfNeeded(uiFrame)
+    else {
+      frame.project = project
+      projectToFrame.put(project, frame)
     }
     eventDispatcher.multicaster.frameCreated(frame)
     return frame
+  }
+
+  private fun allocateNewFrame(project: Project, frame: ProjectFrameHelper) {
+    frame.init()
+
+    var frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
+    if (frameInfo?.bounds == null) {
+      val lastFocusedProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
+      if (lastFocusedProject != null) {
+        frameInfo = ProjectFrameBounds.getInstance(lastFocusedProject).getActualFrameInfoInDeviceSpace(frame, this)
+      }
+      if (frameInfo?.bounds == null) {
+        frameInfo = defaultFrameInfoHelper.info
+      }
+    }
+
+    if (frameInfo?.bounds != null) {
+      // update default frame info - newly opened project frame should be the same as last opened
+      if (frameInfo !== defaultFrameInfoHelper.info) {
+        defaultFrameInfoHelper.copyFrom(frameInfo)
+      }
+      val bounds = frameInfo.bounds
+      if (bounds != null) {
+        frame.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
+      }
+    }
+
+    frame.project = project
+    projectToFrame.put(project, frame)
+    val uiFrame = frame.frame!!
+    if (frameInfo != null) {
+      uiFrame.extendedState = frameInfo.extendedState
+    }
+    uiFrame.isVisible = true
+    if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
+      frame.toggleFullScreen(true)
+    }
+
+    uiFrame.addComponentListener(frameStateListener)
+    IdeMenuBar.installAppMenuIfNeeded(uiFrame)
   }
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {

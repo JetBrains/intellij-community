@@ -114,7 +114,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     RIGHT_SPLIT,
     DEFAULT
   }
-  
+
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
@@ -181,7 +181,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     });
 
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         for (EditorComposite editor : myOpenedEditors) {
@@ -630,7 +630,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       Pair<FileEditor[], FileEditorProvider[]> pair = openInRightSplit(file);
       if (pair != null) return pair;
     }
-    
+
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
       Set<EditorsSplitters> all = getAllSplitters();
@@ -666,19 +666,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
-  
+
   @Nullable
   private Pair<FileEditor[], FileEditorProvider[]> openInRightSplit(@NotNull VirtualFile file) {
     EditorsSplitters active = getSplitters();
     EditorWindow window = active.getCurrentWindow();
     if (window != null) {
-      if (window.inSplitter() && 
-          file.equals(window.getSelectedFile()) && 
+      if (window.inSplitter() &&
+          file.equals(window.getSelectedFile()) &&
           file.equals(ArrayUtil.getLastElement(window.getFiles()))) {
         //already in right splitter
         return null;
       }
-      
+
       EditorWindow split = active.openInRightSplit(file);
       if (split != null) {
         Ref<Pair<FileEditor[], FileEditorProvider[]>> ref = Ref.create();

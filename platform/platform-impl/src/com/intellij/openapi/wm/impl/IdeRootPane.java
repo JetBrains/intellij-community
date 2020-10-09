@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.Objects;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
+@ApiStatus.Internal
 public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
    * Toolbar and status bar.
@@ -129,10 +131,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public @NotNull ToolWindowsPane getToolWindowPane() {
     return myToolWindowsPane;
-  }
-
-  public void init(@NotNull ProjectFrameHelper frame, @NotNull Disposable parentDisposable) {
-    createAndConfigureStatusBar(frame, parentDisposable);
   }
 
   private void updateScreenState(@NotNull IdeFrame helper) {
@@ -248,7 +246,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return toolBar.getComponent();
   }
 
-  private void createAndConfigureStatusBar(@NotNull IdeFrame frame, @NotNull Disposable parentDisposable) {
+  public void createAndConfigureStatusBar(@NotNull IdeFrame frame, @NotNull Disposable parentDisposable) {
     myStatusBar = createStatusBar(frame);
     Disposer.register(parentDisposable, myStatusBar);
 

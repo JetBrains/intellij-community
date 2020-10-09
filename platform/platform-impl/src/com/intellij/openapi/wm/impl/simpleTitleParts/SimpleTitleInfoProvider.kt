@@ -1,42 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.simpleTitleParts
 
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 
 abstract class SimpleTitleInfoProvider(val option: TitleInfoOption) : TitleInfoProvider {
-
   init {
-    option.listener = { updateSubscriptions() }
+    option.listener = {
+      updateNotify()
+    }
   }
 
-  private var updateListener: HashSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
+  private var updateListeners: MutableSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
 
-  override fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit) {
-    updateListener.add(value)
+  override val borderlessSuffix: String = ""
+  override val borderlessPrefix: String = " "
 
-    updateSubscriptions()
-  }
-
-  protected open fun updateSubscriptions() {
-    updateValue()
-  }
-
-  protected open fun updateValue() {
+  override fun addUpdateListener(project: Project, value: (provider: TitleInfoProvider) -> Unit) {
+    updateListeners.add(value)
     updateNotify()
   }
 
   protected open fun isEnabled(): Boolean {
-    return option.isActive && updateListener.isNotEmpty()
+    return option.isActive && updateListeners.isNotEmpty()
   }
 
   private fun updateNotify() {
-    updateListener.forEach { it(this) }
+    updateListeners.forEach { it(this) }
   }
 
-  override val isActive: Boolean
-    get() = isEnabled()
-
-  override val borderlessSuffix: String = ""
-  override val borderlessPrefix: String = " "
+  override fun isActive(project: Project) = isEnabled()
 }

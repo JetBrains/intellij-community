@@ -2789,7 +2789,7 @@ public final class UIUtil {
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       window.setAutoRequestFocus(value);
     }
   }
