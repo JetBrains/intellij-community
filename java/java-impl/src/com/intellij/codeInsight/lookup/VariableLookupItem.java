@@ -254,6 +254,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (ref != null && ref.getParent() instanceof PsiMethodCallExpression) {
       PsiExpressionList argList = ((PsiMethodCallExpression)ref.getParent()).getArgumentList();
       if (argList.getExpressionCount() == 0) {
+        PsiDocumentManager.getInstance(argList.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
         context.getDocument().deleteString(argList.getTextRange().getStartOffset(), argList.getTextRange().getEndOffset());
       }
     }
