@@ -10,8 +10,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SequentialModalProgressTask;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
 
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                                   @Nls @NotNull String presentationText,
+                                                   @NlsContexts.DialogTitle @NotNull String presentationText,
                                                    @NotNull List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class<?> quickfixClass,
                                                    boolean startInWriteAction,
