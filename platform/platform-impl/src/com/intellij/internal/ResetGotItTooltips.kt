@@ -16,7 +16,7 @@ class ResetGotItTooltips : AnAction(), DumbAware {
     if (propertiesComponent is PropertiesComponentImpl) {
       propertiesComponent.keys.stream().
         filter(Predicate{ it.startsWith(GotItTooltip.PROPERTY_PREFIX)}).
-        forEach(Consumer { propertiesComponent.setValue(it, false) })
+        forEach(Consumer { propertiesComponent.setValue(it, null) })
     }
   }
 }

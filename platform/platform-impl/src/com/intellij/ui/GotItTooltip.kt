@@ -30,6 +30,8 @@ import java.awt.event.ActionListener
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.AncestorEvent
+import javax.swing.plaf.basic.BasicHTML
+import javax.swing.text.View
 
 class PointPosition(val point: RelativePoint, val position: Balloon.Position)
 
@@ -47,6 +49,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var timeout : Int = -1
   private var link : LinkLabel<Unit>? = null
   private var linkAction : () -> Unit = {}
+  private var maxWidth = MAX_WIDTH
 
   private var canShow : (String) -> Boolean = { !PropertiesComponent.getInstance().isTrueValue(PROPERTY_PREFIX + it) }
   private var onGotIt : (String) -> Unit = { PropertiesComponent.getInstance().setValue(PROPERTY_PREFIX + it, true) }
@@ -73,52 +76,61 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     return this
   }
 
-  fun withTimeout(timeout : Int = DEFAULT_TIMEOUT) : GotItTooltip {
+  @JvmOverloads
+  fun withTimeout(timeout: Int = DEFAULT_TIMEOUT) : GotItTooltip {
     if (timeout > 0) {
       this.timeout = timeout
     }
     return this
   }
 
-  fun withLink(@Nls linkLabel: String, action : () -> Unit) : GotItTooltip {
+  /**
+   * Limit tooltip body width to the given value. By default it's limited to <code>MAX_WIDTH</code> pixels.
+   */
+  fun withMaxWidth(width: Int) : GotItTooltip {
+    maxWidth = width
+    return this
+  }
+
+  fun withLink(@Nls linkLabel: String, action: () -> Unit) : GotItTooltip {
     link = LinkLabel<Unit>(linkLabel, null)
     linkAction = action
     return this
   }
 
-  fun withLink(@Nls linkLabel: String, action : Runnable) : GotItTooltip {
+  fun withLink(@Nls linkLabel: String, action: Runnable) : GotItTooltip {
     return withLink(linkLabel) { action.run() }
   }
 
-  fun withBrowserLink(@Nls linkLabel: String, url : URL) : GotItTooltip {
+  fun withBrowserLink(@Nls linkLabel: String, url: URL) : GotItTooltip {
     link = LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow).apply{ horizontalTextPosition = SwingConstants.LEFT }
     linkAction = { BrowserUtil.browse(url) }
     return this
   }
 
-  fun showFor(component: JComponent, pointPosition: (AncestorEvent) -> PointPosition) {
+  fun showFor(component: JComponent, positionProvider: (AncestorEvent) -> PointPosition) {
     var balloon : Balloon? = null
 
     component.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
         event?.let {
           if (canShow(id)) {
-            val pp = pointPosition(event)
+            val provider = positionProvider(event)
             balloon = createBalloon().also {
               it.addListener(object : JBPopupListener {
                 override fun onClosed(event: LightweightWindowEvent) {
-                  if (event.isOk) onGotIt(id)
+                  onGotIt(id)
                 }
               })
 
-              it.show(pp.point, pp.position)
+              it.show(provider.point, provider.position)
             }
           }
         }
       }
 
       override fun ancestorRemoved(event: AncestorEvent?) {
-        balloon?.hide(false)
+        balloon?.hide()
         balloon = null
       }
     })
@@ -130,9 +142,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
 
   private fun createBalloon() : Balloon {
     var button : JButton? = null
-    val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent{ button = it }).
+    val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).
         setDisposable(disposable).
-        setHideOnClickOutside(false).
+        setHideOnClickOutside(true).
         setHideOnAction(false).
         setHideOnFrameResize(false).
         setHideOnKeyOutside(false).
@@ -151,12 +163,12 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     }
 
     button?.apply {
-      addActionListener(ActionListener { balloon.hide(true) })
+      addActionListener(ActionListener { balloon.hide() })
     }
 
     if (timeout > 0) {
       alarm.cancelAllRequests()
-      alarm.addRequest({ balloon.hide(true) }, timeout)
+      alarm.addRequest({ balloon.hide() }, timeout)
     }
 
     return balloon
@@ -184,9 +196,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
               append(HtmlChunk.text(shortcut).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(SHORTCUT_COLOR))))
     }
 
-    panel.add(JBLabel(builder.wrapWith(HtmlChunk.div().attr("width", MAX_WIDTH)).wrapWith(HtmlChunk.html()).toString()),
-              gc.nextLine().setColumn(column).anchor(GridBagConstraints.LINE_START).
-              insets(if (header.isNotEmpty()) 5 else 0, left, 0, 0))
+    panel.add(LimitedWidthLabel(builder, maxWidth),
+              gc.nextLine().setColumn(column).anchor(GridBagConstraints.LINE_START).insets(if (header.isNotEmpty()) 5 else 0, left, 0, 0))
 
     link?.let {
       panel.add(it, gc.nextLine().setColumn(column).anchor(GridBagConstraints.LINE_START).insets(5, left, 0, 0))
@@ -196,9 +207,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
       val button = JButton(buttonLabel).apply{
         isFocusable = false
         isOpaque = false
+        putClientProperty("styleBorderless", true)
       }
       buttonSupplier(button)
-      panel.add(button, gc.nextLine().setColumn(column).insets(11, left - button.insets.left, 0, 0).anchor(GridBagConstraints.LINE_START))
+      panel.add(button, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
     }
 
     panel.background = BACKGROUND_COLOR
@@ -216,5 +228,34 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
     val BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", JBColor(0xf7f7f7, 0x474a4c))
     val BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", JBColor(0xadadad, 0x636569))
+  }
+}
+
+private class LimitedWidthLabel(val htmlBuilder: HtmlBuilder, val limit: Int) : JLabel() {
+  init {
+    var view = BasicHTML.createHTMLView(this, htmlBuilder.wrapWith(HtmlChunk.html()).toString())
+    var width = view.getPreferredSpan(View.X_AXIS)
+
+    if (width < limit) {
+      text = htmlBuilder.wrapWith(HtmlChunk.div()).wrapWith(HtmlChunk.html()).toString()
+    }
+    else {
+      view = BasicHTML.createHTMLView(this, htmlBuilder.wrapWith(HtmlChunk.div().attr("width", limit)).wrapWith(HtmlChunk.html()).toString())
+      width = rows(view).maxOf { it.getPreferredSpan(View.X_AXIS) }
+      text = htmlBuilder.wrapWith(HtmlChunk.div().attr("width", width.toInt())).wrapWith(HtmlChunk.html()).toString()
+    }
+  }
+
+  private fun rows(root: View) : Collection<View> {
+    return ArrayList<View>().also { visit(root, it) }
+  }
+
+  private fun visit(view: View, collection: MutableCollection<View>) {
+    val cname : String? = view.javaClass.canonicalName
+    cname?.let { if (it.contains("ParagraphView.Row")) collection.add(view) }
+
+    for (i in 0 until view.viewCount) {
+      visit(view.getView(i), collection)
+    }
   }
 }

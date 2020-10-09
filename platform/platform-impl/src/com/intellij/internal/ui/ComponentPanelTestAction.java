@@ -110,6 +110,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String GOT_IT_HEADER = "IDE features trainer";
     private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
+    //private static final String GOT_IT_TEXT = "Press Tab to show options";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -266,17 +267,19 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
       topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      try {
-        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
-          withIcon(AllIcons.General.BalloonInformation).
-          withHeader(GOT_IT_HEADER).
-          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
-          withShortcut("Ctrl+Alt+D");
+      //try {
+        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project);
+
+          //withTimeout();
+          //withIcon(AllIcons.General.BalloonInformation).
+          //withHeader(GOT_IT_HEADER).
+          //withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          //withShortcut("Ctrl+Alt+D");
 
         gotItTooltip.showFor(button, e -> new PointPosition(
           new RelativePoint(e.getComponent(), new Point(e.getComponent().getWidth() / 2, e.getComponent().getHeight())),
                                                             Balloon.Position.below));
-      } catch (MalformedURLException ex) {}
+      //} catch (MalformedURLException ex) {}
 
       // Combobox with comment
       gc.gridy++;

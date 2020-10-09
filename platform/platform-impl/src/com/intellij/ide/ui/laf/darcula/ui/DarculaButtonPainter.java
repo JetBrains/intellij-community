@@ -37,7 +37,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       boolean isSmallComboButton = isSmallVariant(c);
       int diam = HELP_BUTTON_DIAMETER.get();
       float lw = LW.getFloat();
-      float bw = isSmallComboButton ? 0 : BW.getFloat();
+      float bw = isSmallComboButton || isBorderless(c) ? 0 : BW.getFloat();
       float arc = isTag(c) ? height - bw * 2 - lw * 2: BUTTON_ARC.getFloat();
 
       Rectangle r = new Rectangle(x, y, width, height);
@@ -51,7 +51,8 @@ public class DarculaButtonPainter implements Border, UIResource {
         g2.fill(border);
       }
 
-      JBInsets.removeFrom(r, JBUI.insets(1));
+      if (!isBorderless(c)) JBInsets.removeFrom(r, JBUI.insets(1));
+
       g2.translate(r.x, r.y);
 
       if (!isSmallComboButton) {
@@ -115,7 +116,8 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
+    return isBorderless(c) ? JBUI.emptyInsets().asUIResource() :
+            isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
   }
 
   protected int getOffset() {
