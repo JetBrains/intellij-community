@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated use {@link CollapseAllAction} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public abstract class TreeCollapseAllActionBase extends DumbAwareAction {
   protected abstract @Nullable TreeExpander getExpander(@NotNull DataContext context);
 
