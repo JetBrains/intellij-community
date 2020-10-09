@@ -7,10 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedRe
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -47,6 +44,8 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
+
+  public static final DataKey<Boolean> IS_SELECT_SEARCH_TEXT = DataKey.create("search.everywhere.is.select.search.text");
 
   private final Map<String, String> myTabsShortcutsMap;
 
@@ -134,7 +133,9 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     if (searchText != null && !searchText.isEmpty()) {
       mySearchEverywhereUI.getSearchField().setText(searchText);
-      mySearchEverywhereUI.getSearchField().selectAll();
+      if (!Boolean.FALSE.equals(initEvent.getData(IS_SELECT_SEARCH_TEXT))) {
+        mySearchEverywhereUI.getSearchField().selectAll();
+      }
     }
 
     Disposer.register(myBalloon, () -> {
