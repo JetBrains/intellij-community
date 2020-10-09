@@ -100,7 +100,8 @@ public final class JavaGenerateMemberCompletionContributor {
 
   @NotNull
   private static LookupElementBuilder itemWithOverrideImplementDialog(int annoStart) {
-    return LookupElementBuilder.create("Override/Implement methods...").withInsertHandler((context, item) -> {
+    return LookupElementBuilder.create(JavaBundle.message("completion.override.implement.methods")).withLookupString("Override")
+      .withInsertHandler((context, item) -> {
       context.getDocument().deleteString(annoStart, context.getTailOffset());
       context.commitDocument();
       context.setAddCompletionChar(false);
