@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -28,6 +29,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.impl.asAttachment
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -143,7 +145,15 @@ internal class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      throwDisposalError("library $entityId already disposed: $stackTrace")
+      val message = "library $entityId already disposed: $stackTrace"
+      try {
+        throwDisposalError(message)
+      }
+      catch (e: Exception) {
+        val attachment = entityStorage.current.asAttachment("Storage", "Serializer version of entity storage")
+        thisLogger().error(message, e, attachment)
+        throw e
+      }
     }
   }
 
