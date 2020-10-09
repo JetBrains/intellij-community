@@ -32,8 +32,14 @@ class MediatedProcessTestMain {
     @JvmStatic
     fun main(args: Array<String>) {
       val scanner = Scanner(System.`in`)
+      val printToStderr = args.isNotEmpty() && args[0] == "with_stderr"
       while (scanner.hasNextLine()) {
-        println(scanner.nextLine())
+        val line = scanner.nextLine()
+        println(line)
+
+        if (printToStderr) {
+          System.err.println(line)
+        }
       }
     }
   }
