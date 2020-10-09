@@ -13,10 +13,10 @@ could be converted to
 <p>
   Note that sometimes the converted stream chain may replace explicit <code>ArrayList</code> with <code>Collectors.toList()</code> or explicit
   <code>HashSet</code> with <code>Collectors.toSet()</code>. While the current library implementation uses these collections internally,
-  this is not specified and thus can be changed in future, which may affect the semantics of your code. If you are concerned about this,
-  use the checkbox below to suggest <code>Collectors.toCollection()</code> instead of <code>toList</code> and <code>toSet</code> collectors.
-</p>
+  this is not specified and thus can be changed in future, which may affect the semantics of your code.
 <!-- tooltip end -->
+If you are concerned about this,
+use the checkbox below to suggest <code>Collectors.toCollection()</code> instead of <code>toList</code> and <code>toSet</code> collectors.
 <p>This inspection only applies to language level 8 or higher.</p>
 <p><small>New in 2017.3</small></p>
 </body>
