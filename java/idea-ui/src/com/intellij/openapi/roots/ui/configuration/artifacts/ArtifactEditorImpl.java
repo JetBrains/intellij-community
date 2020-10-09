@@ -449,6 +449,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   @Override
   public void dispose() {
+    myPropertiesEditors.disposeUIResources();
     myDisposed = true;
   }
 
