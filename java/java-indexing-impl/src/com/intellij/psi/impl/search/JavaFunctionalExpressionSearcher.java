@@ -258,7 +258,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (psi == null) {
         StubTextInconsistencyException.checkStubTextConsistency(file);
         throw new RuntimeExceptionWithAttachments(
-          "No functional expression at " + entry + ", file will be indexed",
+          "No functional expression at " + entry + ", file will be reindexed",
           new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
       }
       return psi;
@@ -279,7 +279,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     if (memberRange.getEndOffset() > contents.length()) {
       StubTextInconsistencyException.checkStubTextConsistency(file);
       throw new RuntimeExceptionWithAttachments(
-        "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be indexed",
+        "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be reindexed",
         new Attachment(file.getVirtualFile().getPath(), contents.toString()));
     }
     String contextText = memberRange.subSequence(contents).toString();
