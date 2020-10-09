@@ -9,6 +9,7 @@ import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlElementTypes.*
 
 class TomlBraceMatcher : PairedBraceMatcher {
@@ -21,6 +22,9 @@ class TomlBraceMatcher : PairedBraceMatcher {
 
     companion object {
         private val PAIRS: Array<BracePair> = arrayOf(
+            // Grammar Kit hack - ignore braces in recovery
+            BracePair(IElementType("FAKE_L_BRACE", TomlLanguage), IElementType("FAKE_L_BRACE", TomlLanguage), false),
+
             BracePair(L_CURLY, R_CURLY, false),
             BracePair(L_BRACKET, R_BRACKET, false)
         )

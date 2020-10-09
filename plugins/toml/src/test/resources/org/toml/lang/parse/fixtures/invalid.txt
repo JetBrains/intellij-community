@@ -156,6 +156,32 @@ TOML File
       TomlLiteral
         PsiElement(NUMBER)('42')
       PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key36')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, '[' or '{' expected, got 'invalid'
+        <empty list>
+      PsiElement(BARE_KEY)('invalid')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlInlineTable
+        PsiElement({)('{')
+        TomlKeyValue
+          TomlKey
+            PsiElement(BARE_KEY)('valid')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          TomlLiteral
+            PsiElement(NUMBER)('2')
+        PsiElement(})('}')
+      PsiElement(])(']')
   PsiWhiteSpace('\n\n')
   TomlTable
     TomlTableHeader
