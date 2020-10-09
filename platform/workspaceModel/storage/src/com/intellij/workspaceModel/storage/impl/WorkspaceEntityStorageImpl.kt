@@ -116,7 +116,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // Oh oh. This persistent id exists already
         // Fallback strategy: remove existing entity with all it's references
         val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
-        removeEntityAndAssertConsistency(existingEntity, false)
+        removeEntity(existingEntity)
         LOG.error("""
           addEntity: persistent id already exists. Replacing entity with the new one.
           Persistent id: $persistentId
@@ -132,9 +132,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Update indexes
     indexes.entityAdded(pEntityData, this)
-
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
 
     return pEntityData.createEntity(this)
   }
@@ -166,7 +163,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // Remove an existing entity and replace it with the new one.
 
           val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
-          removeEntityAndAssertConsistency(existingEntity, false)
+          removeEntity(existingEntity)
           LOG.error("""
             modifyEntity: persistent id already exists. Replacing entity with the new one.
             Old entity: $existingEntity
@@ -185,9 +182,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val updatedEntity = copiedData.createEntity(this)
 
     updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData)
-
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
 
     return updatedEntity
   }
@@ -266,20 +260,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun removeEntity(e: WorkspaceEntity) {
-    removeEntityAndAssertConsistency(e, true)
-  }
-
-  private fun removeEntityAndAssertConsistency(e: WorkspaceEntity, assertConsistencyInStrict: Boolean) {
     e as WorkspaceEntityBase
-
     val removedEntities = removeEntity(e.id)
     updateChangeLog {
       removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
-    }
-
-    if (assertConsistencyInStrict) {
-      // Assert consistency
-      this.assertConsistencyInStrictMode()
     }
   }
 
@@ -321,9 +305,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     val initialStore = this.toStorage()
     val initialChangeLogSize = this.changeLog.size
-
-    this.assertConsistencyInStrictMode()
-    replaceWith.assertConsistencyInStrictMode()
 
     LOG.debug { "Performing replace by source" }
 
@@ -707,7 +688,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               // This is a bad at the moment, but theoretically it's possible to add entity and rename it.
               //   In this situation this should be fine. But at the moment we don't support it.
               val existingEntity = this.entityDataByIdOrDie(existingIds.single()).createEntity(this)
-              removeEntityAndAssertConsistency(existingEntity, false)
+              removeEntity(existingEntity)
               addDiffAndReport(
                 """
                   addDiff: persistent id already exists. Replacing entity with the new one.
@@ -759,7 +740,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               // This is a bad at the moment, but theoretically it's possible to add entity and rename it.
               //   In this situation this should be fine. But at the moment we don't support it.
               val existingEntity = this.entityDataByIdOrDie(existingIds.single()).createEntity(this)
-              removeEntityAndAssertConsistency(existingEntity, false)
+              removeEntity(existingEntity)
               addDiffAndReport(
                 """
                   addDiff: persistent id already exists. Removing old entity
@@ -800,7 +781,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     indexes.applyExternalMappingChanges(diff, replaceMap)
 
     // Assert consistency
-    this.assertConsistencyInStrictMode()
     this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this, initialChangeLogSize)
   }
 
@@ -935,7 +915,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       // ...    Remove removed children ....
       val removedChildrenSet = removedChildrenMap[connectionId] ?: mutableSetOf()
       for (removedChild in removedChildrenSet) {
-        if (removedChild !in mutableChildren && StrictMode.enabled) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this, initialChangeLogSize)
+        if (removedChild !in mutableChildren) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this,
+                                                               initialChangeLogSize)
         mutableChildren.remove(removedChild)
       }
 
@@ -947,7 +928,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       removedChildrenMap.removeAll(connectionId)
     }
     // Do we have more children to remove? This should not happen
-    if (!removedChildrenMap.isEmpty && StrictMode.enabled) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this, initialChangeLogSize)
+    if (!removedChildrenMap.isEmpty) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this,
+                                                      initialChangeLogSize)
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       refs.updateChildrenOfParent(connectionId, id, children)
@@ -1209,12 +1191,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  internal fun assertConsistencyInStrictMode() {
-    if (StrictMode.enabled) this.assertConsistency()
-  }
-
   internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
-    if (StrictMode.enabled || StrictMode.rbsEnabled) {
+    if (StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
       }

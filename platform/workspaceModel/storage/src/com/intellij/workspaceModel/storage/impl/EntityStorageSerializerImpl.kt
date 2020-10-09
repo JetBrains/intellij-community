@@ -424,7 +424,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
 
       val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-      storage.assertConsistencyInStrictMode()
       val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
 
       builder.entitiesByType.entityFamilies.forEach { family ->
