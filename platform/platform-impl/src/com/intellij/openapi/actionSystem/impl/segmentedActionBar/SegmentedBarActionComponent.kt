@@ -45,7 +45,25 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
 
   }
 
+  private val group: ActionGroup = object : ActionGroup() {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+      val actions = mutableListOf<AnAction>()
+      actionGroup?.let {
+        actions.add(it)
+      }
+      return actions.toTypedArray()
+    }
+  }
+
   protected var actionGroup: ActionGroup? = null
+    set(value) {
+      val bla = field == null && value != null
+
+      field = value
+      if (bla) {
+        ActionToolbarImpl.updateAllToolbarsImmediately()
+      }
+    }
 
   private val buttonLook = object : ActionButtonLook() {
     override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
@@ -70,8 +88,7 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return actionGroup?.let {
-      val bar = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, it, true) {
+      val bar = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
         private var isActive = false
 
         override fun getInsets(): Insets {
@@ -198,8 +215,8 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
       }.apply {
         component.isOpaque = false
       }
-      bar.component
-    } ?: JPanel()
+
+      return bar.component
   }
 }
 
