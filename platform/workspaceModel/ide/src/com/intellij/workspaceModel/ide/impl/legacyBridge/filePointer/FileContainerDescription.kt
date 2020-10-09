@@ -43,6 +43,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
     val cachedDirectories: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size / 3)
     var allFilesAreDirs = true
     for (pointer in virtualFilePointersList) {
+      if (!pointer.isValid) continue
       val file = pointer.file
       if (file != null) {
         cachedFiles.add(file)
@@ -56,7 +57,9 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
     }
 
     for (jarDirectory in jarDirectories) {
-      val directoryFile = (jarDirectory.directoryUrl as VirtualFilePointer).file
+      val virtualFilePointer = jarDirectory.directoryUrl as VirtualFilePointer
+      if (!virtualFilePointer.isValid) continue
+      val directoryFile = virtualFilePointer.file
       if (directoryFile != null) {
         cachedDirectories.remove(directoryFile)
         if (jarDirectory.recursive) {
