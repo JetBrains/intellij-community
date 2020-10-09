@@ -56,7 +56,6 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     (container.picoContainer as MutablePicoContainer).unregisterComponent(ExternalModuleListStorage::class.java)
 
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
-    container.registerService(VirtualFileUrlManager::class.java, IdeVirtualFileUrlManagerImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
 
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
