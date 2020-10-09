@@ -9,6 +9,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link CollapseAllAction} instead
+ */
+@Deprecated
 public abstract class TreeCollapseAllActionBase extends DumbAwareAction {
   protected abstract @Nullable TreeExpander getExpander(@NotNull DataContext context);
 

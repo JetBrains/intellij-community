@@ -9,6 +9,10 @@ import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link ExpandAllAction} instead
+ */
+@Deprecated
 public class ExpandAllToolbarAction extends TreeExpandAllActionBase {
   private TreeExpander myTreeExpander;
 
