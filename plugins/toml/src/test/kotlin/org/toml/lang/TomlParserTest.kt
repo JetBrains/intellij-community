@@ -6,7 +6,9 @@
 package org.toml.lang
 
 import com.intellij.lang.LanguageASTFactory
+import com.intellij.lang.LanguageBraceMatching
 import com.intellij.testFramework.ParsingTestCase
+import org.toml.ide.TomlBraceMatcher
 import org.toml.lang.parse.TomlParserDefinition
 import org.toml.lang.psi.impl.TomlASTFactory
 
@@ -30,6 +32,7 @@ class TomlParserTest
     override fun setUp() {
         super.setUp()
         addExplicitExtension(LanguageASTFactory.INSTANCE, myLanguage, TomlASTFactory())
+        addExplicitExtension(LanguageBraceMatching.INSTANCE, myLanguage, TomlBraceMatcher())
     }
 
     private fun doTest() = doTest(true)
