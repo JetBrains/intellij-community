@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -66,7 +67,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     val module = getModule(moduleRef, project) ?: return
-    val extension = PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.isApplicable(module) }
+    val extension = findExtension(module)
     val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
@@ -76,6 +77,11 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
         }
       )
     }
+  }
+
+  private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
+    return if (ApplicationManager.getApplication().isHeadlessEnvironment) null
+    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.isApplicable(module) }
   }
 
   private fun configureSdk(project: Project,

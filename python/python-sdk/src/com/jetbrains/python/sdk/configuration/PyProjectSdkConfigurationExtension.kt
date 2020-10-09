@@ -8,6 +8,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Used on directory opening with an attempt to configure suitable Python interpreter
+ * (mentioned below as sdk configurator, ignored in headless mode).
+ *
+ * Used with an attempt to suggest suitable Python interpreter if no interpreter is specified.
+ */
 @ApiStatus.Experimental
 interface PyProjectSdkConfigurationExtension {
 
