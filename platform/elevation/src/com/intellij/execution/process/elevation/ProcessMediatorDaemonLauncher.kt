@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.util.ExecUtil
@@ -13,78 +13,98 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import java.io.File
 import java.io.IOException
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.*
 
+private typealias Port = Int
 
-internal val DEFAULT_HOST = if (java.lang.Boolean.getBoolean("java.net.preferIPv6Addresses")) "::1" else "127.0.0.1"
-internal const val DEFAULT_PORT = 50051
+private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
-internal fun launchDaemon(coroutineScope: CoroutineScope, sudo: Boolean): ProcessMediatorClient {
-  val (idePort, daemonPortDeferred) = initCommunication()
 
-  val daemonCommandLine = createProcessMediatorDaemonCommandLine(DEFAULT_HOST, idePort).let {
-    if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
-  }
-
-  val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
-    addProcessListener(object : ProcessAdapter() {
-      override fun processTerminated(event: ProcessEvent) {
-        println("Daemon exited with code ${event.exitCode}")
+object ProcessMediatorDaemonLauncher {
+  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
+    val (idePort, daemonPortDeferred) = initCommunication()
+    val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+      .withParameters(LOOPBACK_IP, idePort.toString()).let {
+        if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
       }
-
-      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        println("Daemon [$outputType]: ${event.text}")
-      }
-    })
-  }
-  daemonProcessHandler.startNotify()
-
-  val daemonPort = daemonPortDeferred.blockingGet()
-
-  return startProcessMediatorClient(coroutineScope, DEFAULT_HOST, daemonPort)
-}
-
-private fun initCommunication(): Pair<Int, Deferred<Int>> {
-  val serverSocket = ServerSocket(0)
-  val daemonPortDeferred = GlobalScope.async(Dispatchers.IO) {
-    serverSocket.accept().use { socket ->
-      Scanner(socket.getInputStream().reader(Charsets.UTF_8)).use { scanner ->
-        try {
-          scanner.nextInt()
+    val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
+      addProcessListener(object : ProcessAdapter() {
+        override fun processTerminated(event: ProcessEvent) {
+          println("Daemon exited with code ${event.exitCode}")
         }
-        catch (e: NoSuchElementException) {
-          throw IOException(e)
+
+        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+          print("Daemon [$outputType]: ${event.text}")
+        }
+      })
+    }
+    daemonProcessHandler.startNotify()
+    return ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonPortDeferred.blockingGet())
+  }
+
+  private fun initCommunication(): Pair<Port, Deferred<Port>> {
+    val serverSocket = ServerSocket(0)
+    val daemonPortDeferred = GlobalScope.async(Dispatchers.IO) {
+      serverSocket.accept().use { socket ->
+        Scanner(socket.getInputStream().reader(Charsets.UTF_8)).use { scanner ->
+          try {
+            scanner.nextInt()
+          }
+          catch (e: NoSuchElementException) {
+            throw IOException(e)
+          }
         }
       }
     }
+    daemonPortDeferred.invokeOnCompletion {
+      serverSocket.close()
+    }
+    return serverSocket.localPort to daemonPortDeferred
   }
-  daemonPortDeferred.invokeOnCompletion {
-    serverSocket.close()
-  }
-  return serverSocket.localPort to daemonPortDeferred
 }
 
-internal fun startProcessMediatorClient(coroutineScope: CoroutineScope,
-                                        host: String = DEFAULT_HOST, port: Int = DEFAULT_PORT): ProcessMediatorClient {
-  val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build()
-  return ProcessMediatorClient(coroutineScope, channel)
+private class ProcessMediatorDaemonImpl(private val process: Process,
+                                        private val port: Port) : ProcessMediatorDaemon {
+  override fun createChannel(): ManagedChannel {
+    return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext().build()
+  }
+
+  override fun stop() {
+    process.destroy()
+  }
+
+  override fun blockUntilShutdown() {
+    process.waitFor()
+  }
 }
 
-internal fun createProcessMediatorDaemonCommandLine(host: String = DEFAULT_HOST, port: Int = DEFAULT_PORT): GeneralCommandLine {
-  val processMediatorClass = ProcessMediatorDaemonRuntimeClasspath.getMainClass().name
-  val classpathClasses = ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses()
-  val classpath = classpathClasses.mapNotNullTo(LinkedHashSet()) { it.getResourcePath() }.joinToString(File.pathSeparator)
+
+private fun createJavaVmCommandLine(classpathClasses: MutableList<Class<*>>): GeneralCommandLine {
   val javaVmExecutablePath = SystemProperties.getJavaHome() + File.separator + "bin" + File.separator + "java"
+  val classpath = classpathClasses.mapNotNullTo(LinkedHashSet()) { it.getResourcePath() }.joinToString(File.pathSeparator)
 
   return GeneralCommandLine(javaVmExecutablePath)
+    .withPropertyInherited("java.net.preferIPv4Stack")
+    .withPropertyInherited("java.net.preferIPv6Addresses")
+    .withPropertyInherited("java.util.logging.config.file")
     .withParameters("-cp", classpath)
-    .withParameters(processMediatorClass)
-    .withParameters(host, port.toString())
+}
+
+private fun GeneralCommandLine.withPropertyInherited(propertyName: String): GeneralCommandLine = apply {
+  System.getProperty(propertyName)?.let { value ->
+    addParameter("-D$propertyName=$value")
+  }
 }
 
 private fun Class<*>.getResourcePath(): String? {

@@ -7,32 +7,38 @@ import java.net.InetAddress
 import java.net.Socket
 import kotlin.system.exitProcess
 
-class ProcessMediatorDaemon(private val server: Server) {
-  fun start() {
+open class ProcessMediatorServerDaemon private constructor(private val server: Server) : ProcessMediatorDaemon {
+  val port get() = server.port
+
+  init {
     server.start()
-    println("Started server on port ${server.port}")
+    println("Started server on port $port")
     Runtime.getRuntime().addShutdownHook(
       Thread {
         println("*** shutting down gRPC server since JVM is shutting down")
-        this@ProcessMediatorDaemon.stop()
+        this@ProcessMediatorServerDaemon.stop()
         println("*** server shut down")
       }
     )
   }
 
-  fun stop() {
+  constructor(builder: ServerBuilder<*>) : this(buildServer(builder))
+
+  override fun stop() {
     server.shutdown()
   }
 
-  fun blockUntilShutdown() {
+  override fun blockUntilShutdown() {
     server.awaitTermination()
   }
-}
 
-private fun createServer(): Server {
-  return ServerBuilder.forPort(0)
-    .addService(ProcessMediatorServerService.createServiceDefinition())
-    .build()
+  companion object {
+    private fun buildServer(builder: ServerBuilder<*>): Server {
+      return builder
+        .addService(ProcessMediatorServerService.createServiceDefinition())
+        .build()
+    }
+  }
 }
 
 private fun die(message: String): Nothing {
@@ -49,13 +55,11 @@ fun main(args: Array<String>) {
   val host = args[0]
   val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
 
-  val server = createServer()
-  val daemon = ProcessMediatorDaemon(server)
-  daemon.start()
+  val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
 
   Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
     socket.getOutputStream().writer(Charsets.UTF_8).use { writer ->
-      writer.write(server.port.toString())
+      writer.write(daemon.port.toString())
       writer.write("\n")
       writer.flush()
     }
