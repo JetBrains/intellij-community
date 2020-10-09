@@ -60,14 +60,14 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myNotNullName != null) {
       List<String> notNulls = myManager.getNotNulls();
-      if (notNulls.contains(myNotNullName)) {
+      if (!notNulls.contains(myNotNullName)) {
         myManager.setNotNulls(StreamEx.of(notNulls).append(myNotNullName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
       }
       myManager.setDefaultNotNull(myNotNullName);
     }
     else {
       List<String> nullables = myManager.getNullables();
-      if (nullables.contains(myNullableName)) {
+      if (!nullables.contains(myNullableName)) {
         myManager.setNullables(StreamEx.of(nullables).append(myNullableName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
       }
       myManager.setDefaultNullable(myNullableName);
