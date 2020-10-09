@@ -19,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +110,7 @@ public final class ProblemDescriptorUtil {
     return message.trim();
   }
 
+  @Contract(pure = true)
   @NotNull
   public static String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
