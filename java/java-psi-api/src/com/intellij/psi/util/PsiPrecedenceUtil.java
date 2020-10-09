@@ -211,16 +211,7 @@ public final class PsiPrecedenceUtil {
       if (childType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
           !PsiTreeUtil.isAncestor(parentPolyadicExpression.getOperands()[0], childPolyadicExpression, true)) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
-        for (int i = 0, length = operands.length; i < length; i++) {
-          final PsiExpression operand = operands[i];
-          final PsiType operandType = operand.getType();
-          if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            return false;
-          }
-          else if (!childType.equals(operandType) && i > 0) {
-            return true;
-          }
-        }
+        return !childType.equals(operands[0].getType()) && !childType.equals(operands[1].getType());
       }
       else if (childType.equals(PsiType.BOOLEAN)) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
