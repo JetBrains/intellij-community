@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -74,8 +75,16 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
     if (!template.getFileName().isEmpty()) {
       String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
-      myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
-      mustEnterName = false;
+      try {
+        String[] strings = FileTemplateUtil.calculateAttributes(fileName, myDefaultProperties, false, project);
+        if (strings.length == 0) {
+          myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
+          mustEnterName = false;
+        }
+      }
+      catch (ParseException e) {
+        showErrorDialog(e);
+      }
     }
     String[] unsetAttributes = null;
     try {
@@ -129,27 +138,27 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   private void doCreate(@Nullable String fileName)  {
     try {
+      Properties properties = myAttrPanel.getProperties(myDefaultProperties);
       for (FileTemplate child : myTemplate.getChildren()) {
-        String childName = FileTemplateUtil.mergeTemplate(myDefaultProperties, child.getFileName(), false);
-        createFile(childName, child);
+        createFile(child.getFileName(), child, properties);
       }
-      myCreatedElement = createFile(fileName, myTemplate);
+      String mainFileName = StringUtil.isEmpty(myTemplate.getFileName()) ? fileName : myTemplate.getFileName();
+      myCreatedElement = createFile(mainFileName, myTemplate, properties);
     }
     catch (Exception e) {
       showErrorDialog(e);
     }
   }
 
-  private @NotNull PsiElement createFile(@Nullable String fileName, @NotNull FileTemplate template) throws Exception {
-    String newName = fileName;
-    PsiDirectory directory = myDirectory;
+  private @NotNull PsiElement createFile(@Nullable String fileName,
+                                         @NotNull FileTemplate template,
+                                         @NotNull Properties properties) throws Exception {
     if (fileName != null) {
-      CreateFileAction.MkDirs mkDirs = WriteAction.compute(() -> new CreateFileAction.MkDirs(fileName, myDirectory));
-      newName = mkDirs.newName;
-      directory = mkDirs.directory;
+      String newName = FileTemplateUtil.mergeTemplate(properties, fileName, false);
+      CreateFileAction.MkDirs mkDirs = WriteAction.compute(() -> new CreateFileAction.MkDirs(newName, myDirectory));
+      return FileTemplateUtil.createFromTemplate(template, mkDirs.newName, properties, mkDirs.directory);
     }
-    Properties properties = myAttrPanel.getProperties(myDefaultProperties);
-    return FileTemplateUtil.createFromTemplate(template, newName, properties, directory);
+    return FileTemplateUtil.createFromTemplate(template, fileName, properties, myDirectory);
   }
 
   public Properties getEnteredProperties() {
