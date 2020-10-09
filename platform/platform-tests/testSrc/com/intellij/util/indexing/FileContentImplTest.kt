@@ -1,14 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.NotNullComputable
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.div
 import com.intellij.util.io.write
+import junit.framework.TestCase
 import org.junit.Assert.assertArrayEquals
+import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
 
 class FileContentImplTest : HeavyPlatformTestCase() {
@@ -69,6 +74,24 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     assertEquals(text, content.contentAsText.toString())
     assertArrayEquals(textBytes, content.content)
     assertEquals(text, content.contentAsText.toString())
+  }
+
+  fun `test bom is truncated from getContent()`() {
+    val text = "哇你居然翻译了这篇中文文本"
+    for (charset in listOf(
+      CharsetToolkit.UTF8_CHARSET,
+      CharsetToolkit.UTF_16LE_CHARSET,
+      CharsetToolkit.UTF_16BE_CHARSET,
+      CharsetToolkit.UTF_32LE_CHARSET,
+      CharsetToolkit.UTF_32BE_CHARSET
+    )) {
+      val bom = CharsetToolkit.getPossibleBom(charset)
+      val bytes = ArrayUtil.mergeArrays(bom, text.toByteArray (charset))
+      val fileContent = createFileContent(bytes)
+      assertFalse(fileContent.fileType.isBinary)
+      val detectedBom = LoadTextUtil.guessFromContent(fileContent.file, fileContent.content).BOM
+      assertNull(detectedBom)
+    }
   }
 
   private fun createFileContent(bytes: ByteArray, binary: Boolean = false): FileContent {
