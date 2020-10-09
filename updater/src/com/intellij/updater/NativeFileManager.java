@@ -54,7 +54,7 @@ public class NativeFileManager {
 
     public boolean terminate() {
       Kernel32.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_TERMINATE | WinNT.SYNCHRONIZE, false, pid);
-      if (process.getPointer() == null) {
+      if (process == null || process.getPointer() == null) {
         Runner.logger().warn("Unable to find process " + name + '[' + pid + ']');
         return false;
       }
