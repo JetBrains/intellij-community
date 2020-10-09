@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
@@ -14,9 +13,7 @@ import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapp
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import it.unimi.dsi.fastutil.ints.IntSet
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -1227,70 +1224,43 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
-    val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
-
+  internal fun reportConsistencyIssue(message: String,
+                                      e: Throwable,
+                                      sourceFilter: ((EntitySource) -> Boolean)?,
+                                      left: WorkspaceEntityStorage,
+                                      right: WorkspaceEntityStorage,
+                                      resulting: WorkspaceEntityStorageBuilder,
+                                      initialChangeLogSize: Int) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
       allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
       allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
-    } else null
-
-    val rightLogBytes = if (right is WorkspaceEntityStorageBuilder) {
-      right as WorkspaceEntityStorageBuilderImpl
-      val stream = ByteArrayOutputStream()
-      serializer.serializeDiffLog(stream, right.changeLogImpl)
-      stream.toByteArray()
-    } else null
-
-    var stream = ByteArrayOutputStream()
-    serializer.serializeDiffLog(stream, (resulting as WorkspaceEntityStorageBuilderImpl).changeLogImpl.take(initialChangeLogSize))
-    val leftLogBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, left.makeSureItsStore())
-    val leftBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, right.makeSureItsStore())
-    val rightBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, resulting.makeSureItsStore())
-    val resBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeClassToIntConverter(stream)
-    val classToIntConverter = stream.toByteArray()
+    }
+    else null
 
     val displayText = "Content of the workspace model in binary format"
     var _message = "$message\n\n!Please include all attachments to the report!"
     _message += "\n\nEntity source filter: $entitySourceFilter"
-    _message += "\n\nVersion: ${serializer.serializerDataFormatVersion}"
+    _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
-    val leftAttachment = createAttachment("Left_Store", leftBytes, displayText)
-    val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
-    val resAttachment = createAttachment("Res_Store", resBytes, displayText)
-    val classToIntConverterAttachment = createAttachment("ClassToIntConverter", classToIntConverter, "Class to int converter")
-    val leftLogAttachment = createAttachment("Left_Diff_Log", leftLogBytes, "Log of left builder")
-
-    if (rightLogBytes == null) {
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment, leftLogAttachment)
+    val leftAttachment = left.asAttachment("Left_Store", displayText)
+    val rightAttachment = right.asAttachment("Right_Store", displayText)
+    val resAttachment = resulting.asAttachment("Res_Store", displayText)
+    val classToIntConverterAttachment = createAttachment("ClassToIntConverter", "Class to int converter") { serializer, stream ->
+      serializer.serializeClassToIntConverter(stream)
     }
-    else {
-      val rightLogAttachment = createAttachment("Right_Diff_Log", rightLogBytes, "Log of right builder")
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment, classToIntConverterAttachment, leftLogAttachment)
+    val leftLogAttachment = createAttachment("Left_Diff_Log", "Log of left builder") { serializer, stream ->
+      serializer.serializeDiffLog(stream, (resulting as WorkspaceEntityStorageBuilderImpl).changeLogImpl.take(initialChangeLogSize))
     }
-  }
 
-  private fun createAttachment(path: String, leftBytes: ByteArray, displayText: String): Attachment {
-    val attachment = Attachment(path, leftBytes, displayText)
-    attachment.isIncluded = true
-    return attachment
-  }
-
-  private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
-    return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage() else this
+    var attachments = arrayOf(leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment, leftLogAttachment)
+    if (right is WorkspaceEntityStorageBuilder) {
+      attachments += createAttachment("Right_Diff_Log", "Log of right builder") { serializer, stream ->
+        right as WorkspaceEntityStorageBuilderImpl
+        serializer.serializeDiffLog(stream, right.changeLogImpl)
+      }
+    }
+    LOG.error(_message, e, *attachments)
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {

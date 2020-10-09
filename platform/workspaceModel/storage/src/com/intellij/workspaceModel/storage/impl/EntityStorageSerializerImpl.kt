@@ -40,7 +40,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
-  override var serializerDataFormatVersion: String = "v4"
+  override var serializerDataFormatVersion: String = SERIALIZER_VERSION
 
   internal fun createKryo(): Kryo {
     val kryo = Kryo()
@@ -499,5 +499,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
   companion object {
     val logger = logger<EntityStorageSerializerImpl>()
+
+    const val SERIALIZER_VERSION = "v4"
   }
 }
