@@ -14,8 +14,8 @@ import java.lang.ref.Cleaner
 
 private val CLEANER = Cleaner.create()
 
-internal class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
-                                                   pipeStdin: Boolean) : Process(), CoroutineScope by handle {
+class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
+                                          pipeStdin: Boolean) : Process(), CoroutineScope by handle {
   companion object {
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {

@@ -1,2 +1,47 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
+
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.mediator.MediatedProcess
+import com.intellij.execution.process.mediator.ProcessMediatorClient
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.io.BaseOutputReader
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.EmptyCoroutineContext
+
+private val LOG = logger<ElevationService>()
+
+@Service
+class ElevationService : Disposable {
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<ElevationService>()
+  }
+
+  private val elevatorClientLazy = SynchronizedClearableLazy {
+    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    launchDaemon(coroutineScope, true)
+  }
+
+  private val elevatorClient: ProcessMediatorClient by elevatorClientLazy
+
+  override fun dispose() {
+    elevatorClientLazy.drop()?.close()
+  }
+
+  fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
+    val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).also {
+      LOG.debug("Created process PID ${it.pid()}")
+    }
+    return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
+      override fun readerOptions(): BaseOutputReader.Options {
+        return BaseOutputReader.Options.BLOCKING  // our ChannelInputStream unblocks read() on close()
+      }
+    }
+  }
+}

@@ -2,8 +2,9 @@
 package com.intellij.execution.process.mediator.daemon
 
 import io.grpc.Server
-import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-import java.net.InetSocketAddress
+import io.grpc.ServerBuilder
+import java.net.InetAddress
+import java.net.Socket
 import kotlin.system.exitProcess
 
 class ProcessMediatorDaemon(private val server: Server) {
@@ -28,8 +29,8 @@ class ProcessMediatorDaemon(private val server: Server) {
   }
 }
 
-private fun createServer(host: String, port: Int): Server {
-  return NettyServerBuilder.forAddress(InetSocketAddress(host, port))
+private fun createServer(): Server {
+  return ServerBuilder.forPort(0)
     .addService(ProcessMediatorServerService.createServiceDefinition())
     .build()
 }
@@ -48,7 +49,17 @@ fun main(args: Array<String>) {
   val host = args[0]
   val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
 
-  val server = ProcessMediatorDaemon(createServer(host, port))
-  server.start()
-  server.blockUntilShutdown()
+  val server = createServer()
+  val daemon = ProcessMediatorDaemon(server)
+  daemon.start()
+
+  Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
+    socket.getOutputStream().writer(Charsets.UTF_8).use { writer ->
+      writer.write(server.port.toString())
+      writer.write("\n")
+      writer.flush()
+    }
+  }
+
+  daemon.blockUntilShutdown()
 }
