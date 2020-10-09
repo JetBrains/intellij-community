@@ -1,10 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -14,8 +10,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class ValueModifierTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
-  protected String getTestDataPath() {
-    return "testData/augment/modifier";
+  protected String getBasePath() {
+    return "/plugins/lombok/testData/augment/modifier";
   }
 
   @Override

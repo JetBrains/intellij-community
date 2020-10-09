@@ -25,8 +25,8 @@ public class LoggerCompletionTest extends AbstractLombokLightCodeInsightTestCase
   private void doTest(String... expectedSuggestions) {
     final String fileName = getTestName(false).replace('$', '/') + ".java";
 
-    myFixture.copyFileToProject(getBasePath() + "/lombok.config", "lombok.config");
-    myFixture.configureByFile(getBasePath() + "/" + fileName);
+    myFixture.copyFileToProject("lombok.config", "lombok.config");
+    myFixture.configureByFile( fileName);
     myFixture.complete(CompletionType.BASIC, 1);
     List<String> autoSuggestions = myFixture.getLookupElementStrings();
     assertNotNull(autoSuggestions);

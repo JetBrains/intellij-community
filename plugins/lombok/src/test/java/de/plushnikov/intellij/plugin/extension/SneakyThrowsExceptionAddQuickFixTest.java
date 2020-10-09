@@ -16,7 +16,7 @@ public class SneakyThrowsExceptionAddQuickFixTest extends AbstractLombokLightCod
   }
 
   public void testCheckedExeptionQuickFixExample() {
-    myFixture.configureByFile(getBasePath() + '/' + getTestName(false) + ".java");
+    myFixture.configureByFile('/' + getTestName(false) + ".java");
 
     final List<IntentionAction> availableActions = getAvailableActions();
     assertTrue("Intention to add @SneakyThrows was not presented",
@@ -24,7 +24,7 @@ public class SneakyThrowsExceptionAddQuickFixTest extends AbstractLombokLightCod
   }
 
   public void testCheckedMultipleExceptionQuickFixExample() {
-    myFixture.configureByFile(getBasePath() + '/' + getTestName(false) + ".java");
+    myFixture.configureByFile( '/' + getTestName(false) + ".java");
 
     final List<IntentionAction> availableActions = getAvailableActions();
     assertTrue("Intention to add @SneakyThrows was not presented",

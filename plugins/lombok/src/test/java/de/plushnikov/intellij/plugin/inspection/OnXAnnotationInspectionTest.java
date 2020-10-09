@@ -5,8 +5,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 public class OnXAnnotationInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/onXAnnotation";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/onXAnnotation";
   }
 
   @Override

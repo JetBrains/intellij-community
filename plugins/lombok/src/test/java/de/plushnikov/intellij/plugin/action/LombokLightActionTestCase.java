@@ -15,9 +15,9 @@ import java.util.concurrent.TimeoutException;
 
 public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeInsightTestCase {
   protected void doTest() throws Exception {
-    myFixture.configureByFile(getBasePath() + "/before" + getTestName(false) + ".java");
+    myFixture.configureByFile("/before" + getTestName(false) + ".java");
     performActionTest();
-    checkResultByFile(getBasePath() + "/after" + getTestName(false) + ".java");
+    checkResultByFile( "/after" + getTestName(false) + ".java");
   }
 
   private void performActionTest() throws TimeoutException, ExecutionException {

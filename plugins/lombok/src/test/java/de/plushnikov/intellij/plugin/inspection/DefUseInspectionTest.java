@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class DefUseInspectionTest extends LombokInspectionTest {
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/diverse";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/diverse";
   }
 
   @Nullable

@@ -13,13 +13,13 @@ public class RenameClassActionTest extends AbstractLombokLightCodeInsightTestCas
   }
 
   protected void doTest(String newName) throws Exception {
-    myFixture.configureByFile(getBasePath() + "/before" + getTestName(false) + ".java");
+    myFixture.configureByFile("/before" + getTestName(false) + ".java");
 
     PsiElement psiElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiElement psiClass = PsiTreeUtil.getContextOfType(psiElement, PsiClass.class, true);
     myFixture.renameElement(psiClass, newName);
 
-    checkResultByFile(getBasePath() + "/after" + getTestName(false) + ".java");
+    checkResultByFile("/after" + getTestName(false) + ".java");
   }
 
   public void testLogClassRenamed() throws Exception {

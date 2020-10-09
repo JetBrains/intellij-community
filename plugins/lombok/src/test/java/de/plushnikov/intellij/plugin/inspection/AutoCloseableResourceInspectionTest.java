@@ -6,8 +6,8 @@ import com.siyeh.ig.resources.AutoCloseableResourceInspection;
 public class AutoCloseableResourceInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/autoCloseableResource";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/autoCloseableResource";
   }
 
   @Override

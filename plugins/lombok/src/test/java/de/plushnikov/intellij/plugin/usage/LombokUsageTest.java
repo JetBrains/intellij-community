@@ -60,7 +60,7 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
 
   @NotNull
   private Collection<UsageInfo> loadTestClass() {
-    return myFixture.testFindUsages(getBasePath() + getTestName(false) + ".java");
+    return myFixture.testFindUsages(getTestName(false) + ".java");
   }
 
   @Override

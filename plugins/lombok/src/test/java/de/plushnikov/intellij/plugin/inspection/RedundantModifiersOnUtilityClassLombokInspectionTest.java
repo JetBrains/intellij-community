@@ -6,8 +6,8 @@ import de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUt
 public class RedundantModifiersOnUtilityClassLombokInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/redundantModifierInspection";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/redundantModifierInspection";
   }
 
   @Override

@@ -10,17 +10,19 @@ public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
   static final String TEST_DATA_INSPECTION_DIRECTORY = "testData/inspection";
 
   @Override
+  protected String getBasePath() {
+    return "/plugins/lombok/";
+  }
+
+  @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    LombokTestUtil.loadLombokLibrary(myFixture.getProjectDisposable(), getModule());
-
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.getProjectDescriptor();
+    return LombokTestUtil.LOMBOK_DESCRIPTOR;
   }
 }

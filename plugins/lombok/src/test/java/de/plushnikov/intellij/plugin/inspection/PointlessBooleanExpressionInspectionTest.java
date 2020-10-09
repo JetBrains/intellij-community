@@ -10,8 +10,8 @@ import com.siyeh.ig.controlflow.PointlessBooleanExpressionInspection;
  */
 public class PointlessBooleanExpressionInspectionTest extends LombokInspectionTest {
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/pointlessBooleanExpression";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/pointlessBooleanExpression";
   }
 
   @Override

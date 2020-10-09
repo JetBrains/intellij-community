@@ -12,13 +12,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Lekanich
  */
 public abstract class AbstractLombokHighlightsTest extends LightJavaInspectionTestCase {
-  public static final String TEST_DATA_INSPECTION_DIRECTORY = "testData/highlights";
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    LombokTestUtil.loadLombokLibrary(myFixture.getProjectDisposable(), getModule());
+    myFixture.getProjectDisposable();
+    getModule();
 
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
   }
@@ -26,7 +26,12 @@ public abstract class AbstractLombokHighlightsTest extends LightJavaInspectionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.getProjectDescriptor();
+    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/lombok/testData/highlights";
   }
 
   @Override

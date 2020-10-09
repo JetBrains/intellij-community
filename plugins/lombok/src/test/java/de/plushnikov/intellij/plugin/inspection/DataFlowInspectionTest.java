@@ -6,8 +6,8 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 public class DataFlowInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/diverse";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/diverse";
   }
 
   @Override

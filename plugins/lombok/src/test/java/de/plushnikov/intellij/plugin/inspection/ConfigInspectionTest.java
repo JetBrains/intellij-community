@@ -8,8 +8,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 public class ConfigInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/equalsAndHashCodeCallSuperConfigSkip";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/equalsAndHashCodeCallSuperConfigSkip";
   }
 
   @Override
