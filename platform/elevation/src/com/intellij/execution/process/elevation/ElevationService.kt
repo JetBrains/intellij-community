@@ -25,7 +25,9 @@ class ElevationService : Disposable {
 
   private val elevatorClientLazy = SynchronizedClearableLazy {
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    launchDaemon(coroutineScope, true)
+    val daemon = ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
+    val channel = daemon.createChannel()
+    ProcessMediatorClient(coroutineScope, channel)
   }
 
   private val elevatorClient: ProcessMediatorClient by elevatorClientLazy

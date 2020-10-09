@@ -2,13 +2,24 @@
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
-import kotlinx.coroutines.*
+import io.grpc.ManagedChannel
+import io.grpc.inprocess.InProcessChannelBuilder
+import io.grpc.inprocess.InProcessServerBuilder
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.*
+import org.junit.jupiter.api.TestInfo
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
@@ -17,21 +28,33 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-internal class ProcessMediatorTest {
+open class ProcessMediatorTest {
   private val deferred = CompletableDeferred<Unit>()
   private val coroutineScope = CoroutineScope(CoroutineExceptionHandler { _, cause ->
     if (cause !is CancellationException) {
       deferred.completeExceptionally(cause)
     }
   })
-  private val client = ProcessMediatorClient(coroutineScope, createInProcessChannelForTesting())
-  private val server = ProcessMediatorDaemon(createInProcessServerForTesting())
+
+  private lateinit var client: ProcessMediatorClient
+  private lateinit var daemon: ProcessMediatorDaemon
+
+  protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
+    val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
+    return object : ProcessMediatorServerDaemon(InProcessServerBuilder.forName(bindName).directExecutor()) {
+      override fun createChannel(): ManagedChannel {
+        return InProcessChannelBuilder.forName(bindName).directExecutor().build()
+      }
+    }
+  }
 
   private val TIMEOUT_MS = 3000.toLong()
 
   @BeforeEach
-  fun start() {
-    server.start()
+  fun start(testInfo: TestInfo) {
+    daemon = createProcessMediatorDaemon(testInfo)
+    val channel = daemon.createChannel()
+    client = ProcessMediatorClient(coroutineScope, channel)
   }
 
   @AfterEach
@@ -40,8 +63,8 @@ internal class ProcessMediatorTest {
       client.close()
     }
     finally {
-      server.stop()
-      server.blockUntilShutdown()
+      daemon.stop()
+      daemon.blockUntilShutdown()
     }
     runBlocking {
       deferred.complete(Unit)
