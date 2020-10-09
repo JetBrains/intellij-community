@@ -119,8 +119,6 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
       facetEntity as FacetEntity
       // Check facets which belong to the this module
       if (facetEntity.module != moduleEntity) return@forEach
-      // Check configuration only for newly created facets
-      if (initialStorage.resolve(facetEntity.persistentId()) != null) return@forEach
       val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
       val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
