@@ -18,7 +18,9 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +103,11 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
       myPointers.put(artifact, pointer);
     }
     return pointer;
+  }
+
+  @TestOnly
+  public Map<Artifact, ArtifactPointerImpl> getPointers() {
+    return Collections.unmodifiableMap(myPointers);
   }
 
   @Override

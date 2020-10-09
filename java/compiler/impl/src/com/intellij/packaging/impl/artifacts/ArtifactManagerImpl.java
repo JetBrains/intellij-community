@@ -353,6 +353,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
       final List<ArtifactImpl> added = new ArrayList<>();
       final List<Pair<ArtifactImpl, String>> changed = new ArrayList<>();
 
+      List<Artifact> modifiableCopiesToDispose = new ArrayList<>();
       for (ArtifactImpl artifact : allArtifacts) {
         final boolean isAdded = !removed.remove(artifact);
         final ArtifactImpl modifiableCopy = artifactModel.getModifiableCopy(artifact);
@@ -362,10 +363,11 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
         else if (modifiableCopy != null && !modifiableCopy.equals(artifact)) {
           final String oldName = artifact.getName();
           artifact.copyFrom(modifiableCopy);
+          modifiableCopiesToDispose.add(modifiableCopy);
           changed.add(Pair.create(artifact, oldName));
         }
       }
-
+      ((ArtifactPointerManagerImpl)ArtifactPointerManager.getInstance(myProject)).disposePointers(modifiableCopiesToDispose);
       myModel.setArtifactsList(allArtifacts);
       myModificationTracker.incModificationCount();
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
