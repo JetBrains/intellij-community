@@ -3,18 +3,34 @@ package com.intellij.ui;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.util.Base64;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -52,10 +68,9 @@ public final class Splash extends Window {
     //noinspection UseJBColor
     myProgressColor = rgba == -1 ? null : new Color((int)rgba, rgba > 0xffffff);
 
-    Dimension size = new Dimension(myWidth, myHeight);
     setAutoRequestFocus(false);
-    setSize(size);
-    setLocationInTheCenterOfScreen();
+    setSize(new Dimension(myWidth, myHeight));
+    setLocationInTheCenterOfScreen(this);
   }
 
   private static @Nullable Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
@@ -63,7 +78,11 @@ public final class Splash extends Window {
     Icon progressTail = null;
     if (progressTailIconName != null) {
       try {
-        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName));
+        int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+        if (StartupUiUtil.isUnderDarcula()) {
+          flags |= ImageLoader.USE_CACHE;
+        }
+        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName).toString(), null, flags, null, ScaleContext.create());
         if (image != null) {
           progressTail = new JBImageIcon(image);
         }
@@ -74,7 +93,7 @@ public final class Splash extends Window {
     return progressTail;
   }
 
-  public void initAndShow(Boolean visible) {
+  public void initAndShow(boolean visible) {
     if (myProgressSlidePainter != null) {
       myProgressSlidePainter.startPreloading();
     }
@@ -94,11 +113,43 @@ public final class Splash extends Window {
   }
 
   private static @NotNull Image loadImage(@NotNull String path) {
-    Image result = SplashSlideLoader.loadImage(path);
+    float scale = JBUIScale.sysScale();
+    if (isCacheNeeded(scale)) {
+      var image = loadImageFromCache(path, scale);
+      if (image != null) {
+        return image;
+      }
+
+      cacheAsync(path);
+    }
+
+    Image result = doLoadImage(path);
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
     }
     return result;
+  }
+
+  private static void cacheAsync(@NotNull String url) {
+    // Don't use already loaded image to avoid oom
+    NonUrgentExecutor.getInstance().execute(() -> {
+      var cacheFile = getCacheFile(url, JBUIScale.sysScale());
+      if (cacheFile == null) {
+        return;
+      }
+      var image = doLoadImage(url);
+      if (image != null) {
+        saveImage(cacheFile, FileUtilRt.getExtension(url), image);
+      }
+    });
+  }
+
+  private static boolean isCacheNeeded(float scale) {
+    return scale != 1 && scale != 2;
+  }
+
+  static @Nullable Image doLoadImage(@NotNull String path) {
+    return ImageLoader.load(path, null, Splash.class, null, ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(), !path.endsWith(".svg"));
   }
 
   @Override
@@ -111,12 +162,13 @@ public final class Splash extends Window {
     }
   }
 
-  private void setLocationInTheCenterOfScreen() {
-    Rectangle bounds = getGraphicsConfiguration().getBounds();
-    if (SystemInfo.isWindows) {
-      JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
+  private static void setLocationInTheCenterOfScreen(@NotNull Window window) {
+    GraphicsConfiguration graphicsConfiguration = window.getGraphicsConfiguration();
+    Rectangle bounds = graphicsConfiguration.getBounds();
+    if (SystemInfoRt.isWindows) {
+      JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(graphicsConfiguration));
     }
-    setLocation(StartupUiUtil.getCenterPoint(bounds, getSize()));
+    window.setLocation(StartupUiUtil.getCenterPoint(bounds, window.getSize()));
   }
 
   public void showProgress(double progress) {
@@ -168,4 +220,64 @@ public final class Splash extends Window {
   private static int uiScale(int i) {
     return (int)(i * JBUI_INIT_SCALE);
   }
+
+   private static void saveImage(@NotNull Path file, String extension, @NotNull Image image) {
+     try {
+       var tmp = file.resolve(file.toString() + ".tmp" + System.currentTimeMillis());
+       Files.createDirectories(tmp.getParent());
+       try {
+         ImageIO.write(ImageUtil.toBufferedImage(image), extension, tmp.toFile());
+         try {
+           Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE);
+         }
+         catch (AtomicMoveNotSupportedException e) {
+           Files.move(tmp, file);
+         }
+       }
+       finally {
+         Files.deleteIfExists(tmp);
+       }
+     }
+     catch (Throwable ignored) {
+     }
+   }
+
+   private static @Nullable Image loadImageFromCache(@NotNull String path, float scale) {
+     var file = getCacheFile(path, scale);
+     if (file == null) {
+       return null;
+     }
+
+     try {
+       if (!Files.isRegularFile(file)) {
+         return null;
+       }
+       Image image = ImageIO.read(file.toFile());
+       if (StartupUiUtil.isJreHiDPI()) {
+         int w = image.getWidth(ImageLoader.ourComponent);
+         int h = image.getHeight(ImageLoader.ourComponent);
+         image = new JBHiDPIScaledImage(image, w / (double)scale, h / (double)scale, BufferedImage.TYPE_INT_ARGB);
+       }
+       return image;
+     }
+     catch (IOException e) {
+       // don't use `error`, because it can crash application
+       Logger.getInstance(Splash.class).warn("Failed to load splash image", e);
+     }
+     return null;
+   }
+
+   private static @Nullable Path getCacheFile(@NotNull String path, float scale) {
+     try {
+       var d = MessageDigest.getInstance("SHA-256", Security.getProvider("SUN"));
+       // cache version
+       int dotIndex = path.lastIndexOf('.');
+       d.update((dotIndex < 0 ? path : path.substring(0, dotIndex)).getBytes(StandardCharsets.UTF_8));
+       var encodedDigest = Base64.getUrlEncoder().encodeToString(d.digest());
+       return Paths.get(PathManager.getSystemPath(), "splashSlides").resolve(encodedDigest + '.' + scale + '.' + (dotIndex < 0 ? "" : path.substring(dotIndex)));
+     }
+     catch (NoSuchAlgorithmException e) {
+       return null;
+     }
+   }
 }

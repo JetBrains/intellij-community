@@ -5,12 +5,12 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public final class StartupUiUtil {
       return ourSystemLaFClassName;
     }
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
       // 2) gtk lib is available
@@ -51,7 +51,7 @@ public final class StartupUiUtil {
         @SuppressWarnings("SpellCheckingInspection")
         String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
         Class<?> cls = Class.forName(name);
-        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        LookAndFeel laf = (LookAndFeel)cls.getDeclaredConstructor().newInstance();
         // if gtk lib is available
         if (laf.isSupportedLookAndFeel()) {
           ourSystemLaFClassName = name;
@@ -111,7 +111,7 @@ public final class StartupUiUtil {
 
   @ApiStatus.Internal
   public static int doGetLcdContrastValueForSplash(boolean isUnderDarcula) {
-    if (SystemInfo.isMacIntel64) {
+    if (SystemInfoRt.isMac && SystemInfo.isIntel64) {
       return isUnderDarcula ? 140 : 230;
     }
     else {
@@ -144,7 +144,7 @@ public final class StartupUiUtil {
   private static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
     //noinspection SpellCheckingInspection
-    if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
+    if (!SystemInfoRt.isLinux || !Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
       return;
     }
 
