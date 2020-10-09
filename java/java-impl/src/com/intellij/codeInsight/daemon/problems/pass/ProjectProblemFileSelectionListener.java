@@ -196,9 +196,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
 
   private static @Nullable PsiJavaFile getJavaFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || file instanceof VirtualFileWindow || !file.isValid()) return null;
-    FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
-    LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
-    if (languageFileType == null || !(languageFileType.getLanguage() instanceof JvmLanguage)) return null;
+    if (!ProjectProblemUtils.containsJvmLanguage(file)) return null;
     return tryCast(PsiManager.getInstance(project).findFile(file), PsiJavaFile.class);
   }
 

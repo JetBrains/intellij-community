@@ -1,55 +1,66 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils.*
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.impl.search.LowLevelSearchUtil
 import com.intellij.psi.impl.source.PsiJavaFileImpl
-import com.intellij.util.Processor
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.util.text.StringSearcher
 import gnu.trove.TIntProcedure
 
-open class MemberUsageCollector(targetName: String,
-                                private val targetFile: PsiFile,
-                                private val usageExtractor: (PsiFile, Int) -> PsiElement?) : Processor<PsiFile> {
-
-  private val maxFilesToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn", 10)
-  private val maxFilesSizeToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn", 524288)
-
-  private var filesVisited = 0
-  private var filesSize = 0L
-
-  private val fileIndexFacade = FileIndexFacade.getInstance(targetFile.project)
-  private val searcher = StringSearcher(targetName, true, true, false)
-
-  private val usages: MutableList<PsiElement> = mutableListOf()
-  private var tooManyUsages = false
-
-  val collectedUsages: MutableList<PsiElement>?
-    get() = if (tooManyUsages) null else usages
-
-  override fun process(psiFile: PsiFile): Boolean {
-    if (psiFile == targetFile || psiFile !is PsiJavaFileImpl || !fileIndexFacade.isInSource(psiFile.virtualFile)) return true
-    if (!isCheapEnoughToProcess(psiFile)) {
-      tooManyUsages = true
-      return false
+open class MemberUsageCollector {
+  companion object {
+    fun collect(
+      memberName: String,
+      containingFile: PsiFile,
+      scope: GlobalSearchScope,
+      usageExtractor: (PsiFile, Int) -> PsiElement?
+    ): List<PsiElement>? {
+      val cacheManager = CacheManager.getInstance(containingFile.project)
+      val relatedFiles = cacheManager.getVirtualFilesWithWord(memberName, UsageSearchContext.IN_CODE, scope, true)
+      val javaFiles = getJavaFiles(relatedFiles, containingFile) ?: return null
+      val usages: MutableList<PsiElement> = mutableListOf()
+      val searcher = StringSearcher(memberName, true, true, false)
+      for (javaFile in javaFiles) {
+        val text = javaFile.viewProvider.contents
+        val occurenceProcedure = TIntProcedure { index ->
+          val usage = usageExtractor(javaFile, index)
+          if (usage != null) usages.add(usage)
+          return@TIntProcedure true
+        }
+        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length, searcher, occurenceProcedure)
+      }
+      return usages
     }
-    val text = psiFile.viewProvider.contents
-    val occurenceProcedure = TIntProcedure { index ->
-      val usage = usageExtractor(psiFile, index)
-      if (usage != null) usages.add(usage)
-      return@TIntProcedure true
-    }
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length, searcher, occurenceProcedure)
-    return true
-  }
 
-  private fun isCheapEnoughToProcess(psiFile: PsiFile): Boolean {
-    filesVisited++
-    if (filesVisited >= maxFilesToProcess) return false
-    filesSize += psiFile.textLength
-    return filesSize < maxFilesSizeToProcess
+    private fun getJavaFiles(relatedFiles: Array<VirtualFile>, targetFile: PsiFile): List<PsiJavaFile>? {
+      val project = targetFile.project
+      val fileIndexFacade = FileIndexFacade.getInstance(project)
+      val virtualFile = targetFile.virtualFile
+      var nFiles = 0
+      var filesSize = 0L
+      val maxFilesToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn", 10)
+      val maxFilesSizeToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn", 524288)
+      val filtered = mutableSetOf<VirtualFile>()
+      for (relatedFile in relatedFiles) {
+        if (virtualFile == relatedFile || !containsJvmLanguage(relatedFile) || !fileIndexFacade.isInSource(relatedFile)) continue
+        nFiles += 1
+        if (nFiles >= maxFilesToProcess) return null
+        filesSize += relatedFile.length
+        if (filesSize >= maxFilesSizeToProcess) return null
+        filtered.add(relatedFile)
+      }
+      val psiManager = PsiManager.getInstance(project)
+      return filtered.mapNotNull { vFile -> psiManager.findFile(vFile) as? PsiJavaFileImpl }
+    }
   }
 }
