@@ -33,6 +33,7 @@ public final class ExperimentsDialog extends DialogWrapper {
   protected @NotNull JComponent createCenterPanel() {
     ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
     JBTable table = new JBTable(createModel(features));
+    table.setShowGrid(false);
     table.getEmptyText().setText(IdeBundle.message("empty.text.no.features.available"));
     table.getColumnModel().getColumn(0).setCellRenderer(getIdRenderer());
     table.getColumnModel().getColumn(1).setCellRenderer(getValueRenderer());

@@ -68,6 +68,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
+    myTableView.setShowGrid(false);
     myTableView.setIntercellSpacing(JBUI.emptySize());
     myTableView.getTableViewModel().setSortable(false);
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

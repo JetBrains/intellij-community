@@ -70,6 +70,7 @@ public class RegistryUi implements Disposable {
 
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
+    myTable.setShowGrid(false);
     myTable.setCellSelectionEnabled(true);
     myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();

@@ -74,7 +74,6 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   }
 
   val editor = TableModelEditor(COLUMNS, itemEditor, IcsBundle.message("readonly.sources.configuration.no.sources.configured"))
-  editor.setShowGrid(false)
   editor.reset(if (ApplicationManager.getApplication().isUnitTestMode) emptyList() else icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified

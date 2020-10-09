@@ -587,12 +587,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
-  public void setShowGrid(boolean showGrid) {
-    if (!showGrid) {
+  public void setShowVerticalLines(boolean showVerticalLines) {
+    if (!showVerticalLines) {
       getColumnModel().setColumnMargin(0);
       setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
     }
-    super.setShowGrid(showGrid);
+    super.setShowVerticalLines(showVerticalLines);
   }
 
   @Override

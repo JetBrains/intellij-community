@@ -52,6 +52,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
     model = new MyListTableModel(columns, new ArrayList<>(items));
     table = new TableView<>(model);
+    table.setShowGrid(false);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setEnableAntialiasing(true);
     table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
