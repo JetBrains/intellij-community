@@ -11,7 +11,7 @@ internal inline fun createAttachment(path: String,
                                      displayText: String,
                                      howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit): Attachment {
   val stream = ByteArrayOutputStream()
-  val serializer = getPrimitiveSerializer()
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
   howToSerialize(serializer, stream)
   val bytes = stream.toByteArray()
   return createAttachment(path, bytes, displayText)
@@ -22,8 +22,6 @@ fun WorkspaceEntityStorage.asAttachment(path: String, displayText: String): Atta
     serializer.serializeCache(stream, this.makeSureItsStore())
   }
 }
-
-fun getPrimitiveSerializer() = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
 
 private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
   return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage() else this
