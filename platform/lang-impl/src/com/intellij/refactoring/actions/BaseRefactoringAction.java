@@ -122,7 +122,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
 
     final PsiElement[] elements = getPsiElementArray(dataContext);
     InplaceRefactoring activeInplaceRenamer = InplaceRefactoring.getActiveInplaceRenamer(editor);
-    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements) && activeInplaceRenamer != null) {
+    if (activeInplaceRenamer != null && !InplaceRefactoring.canStartAnotherRefactoring(editor, handler, elements)) {
       InplaceRefactoring.unableToStartWarning(project, editor);
       return;
     }
