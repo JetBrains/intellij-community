@@ -7,7 +7,7 @@ internal fun CoroutineScope.childSupervisorScope(): CoroutineScope = this + chil
 internal fun CoroutineScope.childSupervisorJob(): CompletableJob = SupervisorJob(coroutineContext[Job]!!)
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-internal fun <T> Deferred<T>.blockingGet(): T =
+fun <T> Deferred<T>.blockingGet(): T =
   if (isCompleted) {  // fast path
     getCompleted()
   }
