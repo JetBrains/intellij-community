@@ -22,13 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiParenthesizedExpression;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,25 +48,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
-  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression, CommentTracker tracker) {
-    PsiExpression expressionToReplace = expression;
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expressionToReplace);
-      expString = newExpression;
-    }
-    else {
-      PsiElement parent = expressionToReplace.getParent();
-      while (parent instanceof PsiParenthesizedExpression) {
-        expressionToReplace = (PsiExpression)parent;
-        parent = parent.getParent();
-      }
-      expString = "!(" + newExpression + ')';
-    }
-    assert expressionToReplace != null;
-    PsiReplacementUtil.replaceExpression(expressionToReplace, expString, tracker);
-  }
 
 
   @Nullable

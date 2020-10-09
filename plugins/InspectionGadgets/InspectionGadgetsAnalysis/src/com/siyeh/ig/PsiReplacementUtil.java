@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -188,5 +187,26 @@ public class PsiReplacementUtil {
       return "";
     }
     return '(' + lType.getCanonicalText() + ')';
+  }
+
+  public static void replaceExpressionWithNegatedExpression(@NotNull String newExpression,
+                                                            @NotNull PsiExpression expression,
+                                                            CommentTracker tracker) {
+    PsiExpression expressionToReplace = expression;
+    final String expString;
+    if (BoolUtils.isNegated(expression)) {
+      expressionToReplace = BoolUtils.findNegation(expressionToReplace);
+      expString = newExpression;
+    }
+    else {
+      PsiElement parent = expressionToReplace.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        expressionToReplace = (PsiExpression)parent;
+        parent = parent.getParent();
+      }
+      expString = "!(" + newExpression + ')';
+    }
+    assert expressionToReplace != null;
+    replaceExpression(expressionToReplace, expString, tracker);
   }
 }
