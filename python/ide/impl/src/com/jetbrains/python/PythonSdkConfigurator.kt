@@ -80,7 +80,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (ApplicationManager.getApplication().isHeadlessEnvironment) null
+    return if (ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) null
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.isApplicable(module) }
   }
 
