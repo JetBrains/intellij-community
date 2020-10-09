@@ -42,7 +42,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -566,7 +565,7 @@ public final class PyPackageUtil {
   @NotNull
   private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
     final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) ||
                           vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||

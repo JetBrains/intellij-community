@@ -15,7 +15,6 @@ import com.jetbrains.python.sdk.BasePySdkExtKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +31,6 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-
-  /**
-   * @deprecated Use {@link #getInstance()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public final static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
   public static VirtualEnvSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(VirtualEnvSdkFlavor.class);
