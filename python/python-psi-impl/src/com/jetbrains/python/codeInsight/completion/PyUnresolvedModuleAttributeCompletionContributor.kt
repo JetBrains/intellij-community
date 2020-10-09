@@ -31,14 +31,10 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
   private companion object {
     val UNRESOLVED_FIRST_COMPONENT = object : PatternCondition<PyReferenceExpression>("unresolved first component") {
       override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
-        val qualifiedName = expression.asQualifiedName() ?: return false
-        val qualifiersFirstComponent = qualifiedName.firstComponent ?: return false
+        val qualifier = context.get(REFERENCE_QUALIFIER)
+        val qualifiersFirstComponent = qualifier.firstComponent ?: return false
         val scopeOwner = ScopeUtil.getScopeOwner(expression) ?: return false
-        if (PyResolveUtil.resolveLocally(scopeOwner, qualifiersFirstComponent).isEmpty()) {
-          context.put(REFERENCE_QUALIFIER, qualifiedName.removeLastComponent())
-          return true
-        }
-        return false
+        return PyResolveUtil.resolveLocally(scopeOwner, qualifiersFirstComponent).isEmpty()
       }
     }
 
@@ -47,7 +43,10 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         .andNot(psiElement().inside(PyImportStatementBase::class.java))
         .with(object : PatternCondition<PyReferenceExpression>("plain qualified name") {
           override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
-            return expression.isQualified
+            if (!expression.isQualified) return false
+            val qualifiedName = expression.asQualifiedName() ?: return false
+            context.put(REFERENCE_QUALIFIER, qualifiedName.removeLastComponent())
+            return true
           }
         })
         .with(UNRESOLVED_FIRST_COMPONENT)
@@ -102,37 +101,44 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val attribute = result.prefixMatcher.prefix
         val qualifier = context.get(REFERENCE_QUALIFIER)
         val qualifierString = qualifier.toString()
-        if (attribute.isEmpty()) {
-          result.restartCompletionOnAnyPrefixChange()
-          ProgressManager.checkCanceled()
+        val suggestedQualifiedNames = HashSet<String>()
 
-          val builders = PyModuleNameIndex.find(qualifier.lastComponent!!, project, true).asSequence()
-            // checks that the name can be imported and name to import matches the qualifier
-            .filter { PyUtil.isImportable(parameters.originalFile, it) && QualifiedNameFinder.findShortestImportableQName(it) == qualifier }
-            .flatMap { it.iterateNames().asSequence() }
-            // filters out files/directories and symbols whose names start with an underscore
-            .filter { it !is PsiFileSystemItem && it.name != null && !it.name!!.startsWith('_') }
-            .mapNotNull {
-              LookupElementBuilder.create(it, "$qualifierString.${it.name}")
+        ProgressManager.checkCanceled()
+        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifierString, attribute))
+        PyModuleNameIndex.find(qualifier.lastComponent!!, project, true).asSequence()
+          .filter { QualifiedNameFinder.findShortestImportableQName(it) == qualifier }
+          .flatMap { it.iterateNames().asSequence() }
+          .filterNot { it is PsiFileSystemItem }
+          .filterNot { it.name == null || it.name!!.startsWith('_') }
+          .filter { attribute.isEmpty() || result.prefixMatcher.prefixMatches(it.name!!) }
+          .mapNotNull {
+            val qualifiedNameToSuggest = "$qualifierString.${it.name}"
+            if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
+              LookupElementBuilder.create(it, qualifiedNameToSuggest)
                 .withIcon(it.getIcon(0))
                 .withInsertHandler(getInsertHandler(it, parameters.position))
             }
+            else null
+          }
+          .forEach { resultMatchingCompleteReference.addElement(it) }
 
-          val newResultSet = result.withPrefixMatcher(PlainPrefixMatcher("$qualifierString."))
-          builders.forEach { newResultSet.addElement(it) }
-
+        if (attribute.isEmpty()) {
+          result.restartCompletionOnAnyPrefixChange()
           return
         }
         val scope = PySearchUtilBase.excludeSdkTestsScope(project)
-        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifierString, attribute))
-        PyQualifiedNameCompletionMatcher.processMatchingExportedNames(qualifierString, attribute, parameters.originalFile, scope, Processor {
-          ProgressManager.checkCanceled()
-          resultMatchingCompleteReference.addElement(LookupElementBuilder
-                                                       .createWithSmartPointer(it.qualifiedName.toString(), it.element)
-                                                       .withIcon(it.element.getIcon(0))
-                                                       .withInsertHandler(importingInsertHandler))
-          return@Processor true
-        })
+        PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
+          qualifierString, attribute, parameters.originalFile, scope,
+          Processor {
+            ProgressManager.checkCanceled()
+            if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
+              resultMatchingCompleteReference.addElement(LookupElementBuilder
+                                                           .createWithSmartPointer(it.qualifiedName.toString(), it.element)
+                                                           .withIcon(it.element.getIcon(0))
+                                                           .withInsertHandler(getInsertHandler(it.element, parameters.position)))
+            }
+            return@Processor true
+          })
       }
     })
   }
