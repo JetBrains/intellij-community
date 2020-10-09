@@ -77,29 +77,31 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   private void init() {
-    boolean notify = false;
     Project project = getOrCreateProject();
-    if (myFrameWrapper == null) {
-      myFrameWrapper = LightEditFrameWrapper.allocate(project, () -> closeEditorWindow());
-      LOG.info("Frame created");
-      restoreSession();
-      notify = true;
-    }
-    if (!myFrameWrapper.getFrame().isVisible()) {
-      myFrameWrapper.getFrame().setVisible(true);
-      LOG.info("Window opened");
-      notify = true;
-    }
-    if (notify) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowOpened(project);
-    }
+    invokeOnEdt(() -> {
+      boolean notify = false;
+      if (myFrameWrapper == null) {
+        myFrameWrapper = LightEditFrameWrapper.allocate(project, () -> closeEditorWindow());
+        LOG.info("Frame created");
+        restoreSession();
+        notify = true;
+      }
+      if (!myFrameWrapper.getFrame().isVisible()) {
+        myFrameWrapper.getFrame().setVisible(true);
+        LOG.info("Window opened");
+        notify = true;
+      }
+      myFrameWrapper.setFrameTitle(getAppName());
+      if (notify) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowOpened(project);
+      }
+    });
   }
 
   @Override
   public void showEditorWindow() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       init();
-      myFrameWrapper.setFrameTitle(getAppName());
     }
   }
 

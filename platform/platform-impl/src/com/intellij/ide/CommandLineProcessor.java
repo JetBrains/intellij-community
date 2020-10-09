@@ -255,6 +255,11 @@ public final class CommandLineProcessor {
       );
     }
 
+    if (projectAndCallback == null && LightEditUtil.isForceOpenInLightEditMode()) {
+      LightEditService.getInstance().showEditorWindow();
+      return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
+    }
+
     return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;
   }
 }
