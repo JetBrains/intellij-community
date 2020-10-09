@@ -304,26 +304,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @NonNls String text = "import java.util.List; class S { } <caret>";
     configureByText(text);
     //ensure error will be provided by a local inspection
-    NewClassNamingConventionInspection tool = new NewClassNamingConventionInspection() {
-      @NotNull
-      @Override
-      public HighlightDisplayLevel getDefaultLevel() {
-        return HighlightDisplayLevel.ERROR;
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return "Too short name";
-      }
-
-      @NotNull
-      @Override
-      public String getShortName() {
-        return "TooShortName";
-      }
-    };
+    NewClassNamingConventionInspection tool = new MyNewClassNamingConventionInspection();
     tool.setEnabled(true, ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
     enableInspectionTool(tool);
 
@@ -536,5 +517,26 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertTrue(fix.isAvailable(getProject(), getEditor(), getFile()));
     //hint is not available
     assertFalse(fix.showHint(getEditor()));
+  }
+
+  private static class MyNewClassNamingConventionInspection extends NewClassNamingConventionInspection {
+    @NotNull
+    @Override
+    public HighlightDisplayLevel getDefaultLevel() {
+      return HighlightDisplayLevel.ERROR;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return "Too short name";
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return "TooShortName";
+    }
   }
 }
