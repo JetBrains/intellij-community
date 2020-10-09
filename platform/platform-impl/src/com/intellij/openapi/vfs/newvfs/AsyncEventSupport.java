@@ -47,9 +47,13 @@ public final class AsyncEventSupport {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (ourSuppressAppliers) return;
-        List<AsyncFileListener.ChangeApplier> appliers = appliersFromBefore != null && appliersFromBefore.first.equals(events)
-                                                         ? appliersFromBefore.second
-                                                         : runAsyncListeners(events);
+        List<AsyncFileListener.ChangeApplier> appliers;
+        if (appliersFromBefore != null && appliersFromBefore.first.equals(events)) {
+          appliers = appliersFromBefore.second;
+        } else {
+          LOG.error("Unpaired VFS events: 'after' should be preceded by 'before' with the same events");
+          appliers = runAsyncListeners(events);
+        }
         appliersFromBefore = null;
         afterVfsChange(appliers);
       }
