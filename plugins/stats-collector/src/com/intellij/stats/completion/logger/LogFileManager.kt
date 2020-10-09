@@ -35,6 +35,9 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
             for (line in lines) {
                 storage.appendLine(line)
             }
+            if (storage.size > MAX_SIZE_BYTE) {
+                flushImpl()
+            }
         }
     }
 
