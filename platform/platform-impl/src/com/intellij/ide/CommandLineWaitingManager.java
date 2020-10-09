@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.lightEdit.LightEditorInfo;
 import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.ide.util.PropertiesComponent;
@@ -29,6 +30,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -53,6 +55,10 @@ public final class CommandLineWaitingManager {
       @Override
       public void afterClose(@NotNull LightEditorInfo editorInfo) {
         freeObject(editorInfo.getFile());
+        Path path = editorInfo.getPreferredSavePath();
+        if (path != null) {
+          freeObject(path);
+        }
       }
     });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -61,6 +67,10 @@ public final class CommandLineWaitingManager {
         freeObject(project);
       }
     });
+  }
+
+  public @NotNull Future<CliResult> addHookForPath(@NotNull Path path) {
+    return addHookAndNotify(path, IdeBundle.message("activation.file.is.waiting.notification", path.toString()));
   }
 
   public static @NotNull CommandLineWaitingManager getInstance() {
@@ -92,6 +102,10 @@ public final class CommandLineWaitingManager {
   }
 
   public boolean hasHookFor(@NotNull VirtualFile file) {
+    Path path = LightEditUtil.getPreferredSavePathForNonExistentFile(file);
+    if (path != null && myFileOrProjectToCallback.containsKey(path)) {
+      return true;
+    }
     return myFileOrProjectToCallback.containsKey(file);
   }
 

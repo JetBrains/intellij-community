@@ -75,7 +75,8 @@ public final class CommandLineProcessor {
       if (LightEditUtil.isForceOpenInLightEditMode()) {
         Project lightEditProject = LightEditUtil.openFile(ioFile);
         if (lightEditProject != null) {
-          return new CommandLineProcessorResult(lightEditProject, OK_FUTURE);
+          Future<CliResult> future = shouldWait ? CommandLineWaitingManager.getInstance().addHookForPath(ioFile) : OK_FUTURE;
+          return new CommandLineProcessorResult(lightEditProject, future);
         }
       }
       return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
