@@ -45,11 +45,14 @@ class MediatedProcessTestMain {
         System.out.close()
         System.err.close()
         System.`in`.close()
-      } catch (e: Exception) {
-        System.exit(-1)
       }
-      @Suppress("ControlFlowWithEmptyBody")
-      while (true) {}
+      catch (e: Exception) {
+        exitProcess(-1)
+      }
+
+      while (true) {
+        Thread.sleep(500)
+      }
     }
   }
 
