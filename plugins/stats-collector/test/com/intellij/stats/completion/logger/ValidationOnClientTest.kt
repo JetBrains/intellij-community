@@ -92,15 +92,13 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
 
     private fun createLogger(onLogCallback: (List<DeserializedLogEvent>) -> Unit): EventLoggerWithValidation {
         return EventLoggerWithValidation(object : FileLogger {
-            override fun println(message: String) { }
 
             override fun printLines(lines: List<String>) {
                 val session = lines.map { LogEventSerializer.fromString(it) }
                 onLogCallback(session)
             }
 
-            override fun flush() {
-            }
+            override fun flush() = Unit
         }, DefaultValidator())
     }
 }

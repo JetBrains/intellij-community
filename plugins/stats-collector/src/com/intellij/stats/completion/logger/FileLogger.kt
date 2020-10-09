@@ -20,7 +20,6 @@ package com.intellij.stats.completion.logger
  * @author Vitaliy.Bibaev
  */
 interface FileLogger {
-    fun println(message: String)
     fun printLines(lines: List<String>)
     fun flush()
 }

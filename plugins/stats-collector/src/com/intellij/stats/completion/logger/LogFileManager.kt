@@ -27,15 +27,6 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
 
     private var storage = LineStorage()
 
-    override fun println(message: String) {
-        synchronized(this) {
-            if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
-                flushImpl()
-            }
-            storage.appendLine(message)
-        }
-    }
-
     override fun printLines(lines: List<String>) {
         synchronized(this) {
             if (storage.size > 0 && storage.sizeWithNewLines(lines) > MAX_SIZE_BYTE) {

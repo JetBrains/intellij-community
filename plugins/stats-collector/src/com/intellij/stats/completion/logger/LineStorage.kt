@@ -29,8 +29,6 @@ class LineStorage {
         lines.add(line)
     }
 
-    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
-
     fun sizeWithNewLines(newLines: List<String>): Int = size + newLines.sumBy { it.length + System.lineSeparator().length }
 
     fun dump(dest: File) {

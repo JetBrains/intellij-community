@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ class AsciiMessageStorageTest {
     fun `test size with new lines`() {
         val line = "text"
         storage.appendLine(line)
-        assertThat(storage.sizeWithNewLine("")).isEqualTo(line.length + 2 * System.lineSeparator().length)
+        assertThat(storage.sizeWithNewLines(listOf(""))).isEqualTo(line.length + 2 * System.lineSeparator().length)
     }
     
     @Test
@@ -109,7 +109,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     fun `test chunk is around 256Kb`() {
         val bytesToWrite = 1024 * 200
         val text = StringUtil.repeat("c", bytesToWrite)
-        fileLogger.println(text)
+        fileLogger.printLines(listOf(text))
         fileLogger.flush()
 
         val chunks = filesProvider.getDataFiles()
@@ -125,8 +125,8 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
         val files = filesProvider.getDataFiles()
         val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
-        assertThat(files.isNotEmpty()).isTrue()
-        assertThat(fileIndexes).isEqualTo((0 until files.size).toList())
+        assertThat(files.isNotEmpty()).isTrue
+        assertThat(fileIndexes).isEqualTo((files.indices).toList())
     }
 
     fun `test delete old stuff`() {
@@ -134,20 +134,18 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
         val files = filesProvider.getDataFiles()
         val totalSizeAfterCleanup = files.fold(0L) { total, file -> total + file.length() }
-        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue()
+        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue
 
-        val firstAfter = files
-          .map { it.name.substringAfter('_').toInt() }
-          .sorted()
-          .first()
+        val firstAfter = files.map { it.name.substringAfter('_').toInt() }.minOrNull()
         
         assertThat(firstAfter).isGreaterThan(0)
     }
 
     private fun writeKb(kb: Int) {
-        val lineLength = System.lineSeparator().length
-        (0..kb * 1024 / lineLength).forEach {
-            fileLogger.println("")
+        val session = listOf("", "")
+        val sessionLength = System.lineSeparator().length * 2
+        (0..kb * 1024 / sessionLength).forEach {
+            fileLogger.printLines(session)
         }
 
         fileLogger.flush()
