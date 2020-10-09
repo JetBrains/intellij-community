@@ -84,12 +84,6 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema));
-    doCompletion(parameters, result, rootSchema);
-  }
-
-  public static void doCompletion(@NotNull final CompletionParameters parameters,
-                                  @NotNull final CompletionResultSet result,
-                                  @NotNull final JsonSchemaObject rootSchema) {
     doCompletion(parameters, result, rootSchema, true);
   }
 
