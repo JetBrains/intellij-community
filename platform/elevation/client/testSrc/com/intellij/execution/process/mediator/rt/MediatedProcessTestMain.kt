@@ -45,6 +45,8 @@ class MediatedProcessTestMain {
         System.out.close()
         System.err.close()
         System.`in`.close()
+      } catch (e: Exception) {
+        exitProcess(-1)
       }
       catch (e: Exception) {
         exitProcess(-1)
@@ -53,6 +55,17 @@ class MediatedProcessTestMain {
       while (true) {
         Thread.sleep(500)
       }
+    }
+  }
+
+  object TestClosedStream {
+    @JvmStatic
+    fun main(args: Array<String>) {
+      Thread.sleep(1500)
+      if (System.`in`.read() != -1) {
+        exitProcess(42)
+      }
+      // System.out and System.err (write -> flush) work even output stream is closed
     }
   }
 
