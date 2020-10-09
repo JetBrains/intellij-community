@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -31,7 +32,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyDisposable;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -269,14 +269,13 @@ public class PythonTask {
    * Listener is removed from process stopped to prevent leak
    */
   private void stopProcessWhenAppClosed(@NotNull ProcessHandler process) {
-    Disposable disposable = Disposer.newDisposable();
-    Disposer.register(PyDisposable.getInstance(myModule), disposable);
+    Disposable disposable = PluginManager.getInstance().createDisposable(PythonTask.class, myModule);
     process.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         Disposer.dispose(disposable);
       }
-    }, PyDisposable.getInstance(myModule));
+    }, disposable);
     ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {

@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
@@ -222,5 +226,34 @@ public final class PluginManager {
     @SuppressWarnings("SuspiciousToArrayCall")
     IdeaPluginDescriptorImpl[] list = descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     PluginManagerCore.doSetPlugins(list);
+  }
+
+  public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {
+    ClassLoader classLoader = requestor.getClassLoader();
+    if (!(classLoader instanceof PluginAwareClassLoader)) {
+      return Disposer.newDisposable();
+    }
+
+    PluginId pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
+    // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
+    return new PluginAwareDisposable() {
+      @Override
+      public @NotNull PluginId getPluginId() {
+        return pluginId;
+      }
+
+      @Override
+      public void dispose() { }
+    };
+  }
+
+  public @NotNull Disposable createDisposable(@NotNull Class<?> requestor, @NotNull ComponentManager parentDisposable) {
+    Disposable disposable = createDisposable(requestor);
+    Disposer.register(parentDisposable, disposable);
+    return disposable;
+  }
+
+  interface PluginAwareDisposable extends Disposable {
+    @NotNull PluginId getPluginId();
   }
 }

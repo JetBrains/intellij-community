@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * <p>Manages a parent-child relation of chained objects requiring cleanup.</p>
@@ -89,7 +90,7 @@ public final class Disposer {
     register(child, new KeyDisposable(key));
   }
 
-  private static class KeyDisposable implements Disposable {
+  private static final class KeyDisposable implements Disposable {
     @NotNull
     private final String myKey;
 
@@ -129,10 +130,12 @@ public final class Disposer {
     dispose(disposable, true);
   }
 
+  /**
+   * {@code predicate} is used only for direct children.
+   */
   @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public static void disposeChildren(@NotNull Disposable disposable) {
-    ourTree.executeAllChildren(disposable);
+  public static void disposeChildren(@NotNull Disposable disposable, @Nullable Predicate<? super Disposable> predicate) {
+    ourTree.executeAllChildren(disposable, predicate);
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {

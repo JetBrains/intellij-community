@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 final class ObjectTree {
@@ -150,14 +151,15 @@ final class ObjectTree {
     }
   }
 
-  void executeAllChildren(@NotNull Disposable object) {
+  void executeAllChildren(@NotNull Disposable object, @Nullable Predicate<? super Disposable> predicate) {
     runWithTrace(() -> {
       ObjectNode node = getNode(object);
       if (node == null) {
         return Collections.emptyList();
       }
+
       List<Disposable> disposables = new ArrayList<>();
-      node.getAndRemoveChildrenRecursively(disposables);
+      node.getAndRemoveChildrenRecursively(disposables, predicate);
       return disposables;
     });
   }

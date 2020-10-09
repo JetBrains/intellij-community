@@ -14,6 +14,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
@@ -738,12 +739,17 @@ object DynamicPlugins {
       val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
+        Disposer.disposeChildren(module, createDisposeTreePredicate(pluginId))
       }
+
+      Disposer.disposeChildren(project, createDisposeTreePredicate(pluginId))
     }
 
     appMessageBus.disconnectPluginConnections(Predicate { aClass ->
       (aClass.classLoader as? PluginClassLoader)?.pluginId == pluginId
     })
+
+    Disposer.disposeChildren(ApplicationManager.getApplication(), createDisposeTreePredicate(pluginId))
   }
 
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
@@ -932,6 +938,18 @@ object DynamicPlugins {
       analysis.includeClassesAsRoots = false
       analysis.setIncludeMetaInfo(false)
       return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
+    }
+  }
+}
+
+private fun createDisposeTreePredicate(pluginId: PluginId): Predicate<Disposable> {
+  return Predicate {
+    if (it is PluginManager.PluginAwareDisposable) {
+      it.pluginId == pluginId
+    }
+    else {
+      val classLoader = it::class.java.classLoader
+      classLoader is PluginAwareClassLoader && classLoader.pluginId == pluginId
     }
   }
 }

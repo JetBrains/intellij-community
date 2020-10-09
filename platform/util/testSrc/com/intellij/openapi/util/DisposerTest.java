@@ -335,7 +335,7 @@ public class DisposerTest extends TestCase {
     Disposer.register(child, grand);
 
     try {
-      Disposer.disposeChildren(parent);
+      Disposer.disposeChildren(parent, null);
       assertThat(Disposer.isDisposed(parent)).isFalse();
       assertThat(Disposer.findRegisteredObject(parent, child)).isNull();
       assertThat(Disposer.findRegisteredObject(child, grand)).isNull();
@@ -345,6 +345,37 @@ public class DisposerTest extends TestCase {
     finally {
       Disposer.dispose(grand);
       Disposer.dispose(child);
+      Disposer.dispose(parent);
+    }
+  }
+
+  public void testRemoveOnlyChildrenByCondition() {
+    Disposable parent = newDisposable("parent");
+    Disposable child1 = newDisposable("child1");
+    Disposable child2 = newDisposable("child2");
+    Disposer.register(parent, child1);
+    Disposer.register(parent, child2);
+
+    Disposable grand1 = newDisposable("grand1");
+    Disposer.register(child1, grand1);
+
+    try {
+      Disposer.disposeChildren(parent, disposable -> disposable == child1);
+      assertThat(Disposer.isDisposed(parent)).isFalse();
+      assertThat(Disposer.findRegisteredObject(parent, child1)).isNull();
+      assertThat(Disposer.findRegisteredObject(child1, grand1)).isNull();
+
+      assertThat(Disposer.isDisposed(child2)).isFalse();
+      assertThat(Disposer.findRegisteredObject(parent, child2)).isNotNull();
+
+      Disposer.dispose(parent);
+      assertThat(Disposer.isDisposed(parent)).isTrue();
+      assertThat(Disposer.findRegisteredObject(parent, child2)).isNull();
+    }
+    finally {
+      Disposer.dispose(grand1);
+      Disposer.dispose(child1);
+      Disposer.dispose(child2);
       Disposer.dispose(parent);
     }
   }
