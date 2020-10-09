@@ -14,6 +14,7 @@ import com.intellij.util.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -38,6 +39,7 @@ public class ReferenceFilter extends FilterAction {
     if (variable == null) {
       return;
     }
+    variable.setReferenceConstraintName("");
     variable.setReferenceConstraint("");
     variable.setInvertReference(false);
   }
@@ -54,8 +56,12 @@ public class ReferenceFilter extends FilterAction {
     if (constraint == null) {
       return;
     }
-    final String value = constraint.isInvertReference() ? "!" + constraint.getReferenceConstraint() : constraint.getReferenceConstraint();
-    component.append(SSRBundle.message("reference.0.label", value));
+    final Configuration referencedConfiguration =
+      ConfigurationManager.getInstance(myTable.getProject()).findConfigurationByName(constraint.getReferenceConstraint());
+    if (referencedConfiguration != null) {
+      component
+        .append(SSRBundle.message("reference.0.label", (constraint.isInvertReference() ? "!" : "") + referencedConfiguration.getName()));
+    }
   }
 
   @Override
@@ -74,11 +80,13 @@ public class ReferenceFilter extends FilterAction {
       };
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text"));
       private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("reference.filter.invert.template"), this, "inverseTemplate");
-      private boolean inverseTemplate = false;
+      public boolean inverseTemplate = myConstraint.isInvertReference();
 
       @Override
       protected void layoutComponents() {
         myComboBox.setRenderer(renderer);
+        myComboBox.setPreferredSize(new Dimension(160, 28));
+        ComboboxSpeedSearch.installSpeedSearch(myComboBox, configuration -> configuration.getName());
 
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
@@ -89,25 +97,28 @@ public class ReferenceFilter extends FilterAction {
             .addGroup(layout.createSequentialGroup()
                         .addComponent(myLabel)
                         .addComponent(myComboBox)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
                         .addComponent(myHelpLabel))
             .addGroup(layout.createSequentialGroup()
                         .addComponent(myCheckBox))
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
-          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                      .addComponent(myLabel)
-                      .addComponent(myComboBox)
-                      .addComponent(myHelpLabel))
-          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                      .addComponent(myCheckBox))
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(myLabel)
+                        .addComponent(myComboBox)
+                        .addComponent(myHelpLabel))
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(myCheckBox))
         );
       }
 
       @Override
       protected void loadValues() {
         inverseTemplate = myConstraint.isInvertReference();
-        var referencedTemplate = ConfigurationManager.getInstance(myTable.getProject()).findConfigurationByName(myConstraint.getReferenceConstraint());
+        myCheckBox.setSelected(inverseTemplate);
+        var referencedTemplate =
+          ConfigurationManager.getInstance(myTable.getProject()).findConfigurationByName(myConstraint.getReferenceConstraint());
         if (referencedTemplate != null) {
           myComboBox.setSelectedItem(referencedTemplate);
         }
@@ -118,6 +129,7 @@ public class ReferenceFilter extends FilterAction {
         final Configuration item = myComboBox.getItem();
         if (item != null) {
           myConstraint.setReferenceConstraint(item.getRefName());
+          myConstraint.setReferenceConstraintName(item.getName());
           myConstraint.setInvertReference(inverseTemplate);
         }
       }
