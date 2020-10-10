@@ -13,7 +13,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
-internal class ChangesViewCommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : BorderLayoutPanel(), InclusionListener {
+class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : BorderLayoutPanel(), InclusionListener {
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator).apply {
     component.myBorder = empty(0, 1)

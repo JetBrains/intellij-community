@@ -71,7 +71,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       isShowCheckboxes = true
     }
     changesViewHost.statusComponent =
-      ChangesViewCommitStatusPanel(this).apply {
+      CommitStatusPanel(this).apply {
         border = emptyRight(6)
         background = changesView.background
 

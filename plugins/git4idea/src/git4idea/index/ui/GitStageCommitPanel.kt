@@ -11,8 +11,10 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
 import com.intellij.vcs.commit.CommitProgressUi
 import com.intellij.vcs.commit.NonModalCommitPanel
+import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
+import git4idea.index.createChange
 import kotlin.properties.Delegates.observable
 
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
@@ -20,6 +22,9 @@ private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
 
 private fun GitStageTracker.RootState.getStaged(): Set<GitFileStatus> =
   statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null }
+
+private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
+  getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
 class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val progressPanel = CommitProgressPanel()
@@ -50,7 +55,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun refreshData() = Unit
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
-  override fun getIncludedChanges(): List<Change> = emptyList()
+  override fun getIncludedChanges(): List<Change> = state.rootStates.values.flatMap { it.getStagedChanges(project) }
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 

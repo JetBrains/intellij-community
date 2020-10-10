@@ -24,8 +24,9 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI.Borders.emptyLeft
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
@@ -93,11 +94,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
 
     PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
-    val toolbarPanel = simplePanel(commitPanel.toolbar.component).apply {
-      border = emptyLeft(1)
+    val statusPanel = CommitStatusPanel(commitPanel).apply {
+      border = empty(0, 1, 0, 6)
       background = tree.background
+
+      addToLeft(commitPanel.toolbar.component)
     }
-    val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(toolbarPanel)
+    val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
     treeMessageSplitter.firstComponent = progressStripe
