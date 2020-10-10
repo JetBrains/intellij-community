@@ -240,8 +240,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return fileElement;
   }
 
-  @Nullable
-  Ref<JPanel> restoreEditors() {
+  @Nullable Ref<JPanel> restoreEditors() {
     Element element = mySplittersElement;
     if (element == null) {
       return null;
@@ -942,8 +941,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             .withReopeningEditorsOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-            Document document =
-              ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+            Document document = ReadAction.compute(() -> {
+              return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+            });
 
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 

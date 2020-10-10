@@ -68,6 +68,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -804,7 +805,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
 
     if (!options.isReopeningEditorsOnStartup()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> compositeRef.set(window.findFileComposite(file)));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.findFileComposite(file)));
     }
 
     FileEditorProvider[] newProviders;
@@ -851,7 +852,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     EditorWithProviderComposite composite = compositeRef.get();
     return new Pair<>(composite == null ? FileEditor.EMPTY_ARRAY : composite.getEditors(),
-                              composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
+                      composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
   }
 
   private void openFileImpl4Edt(@NotNull EditorWindow window,

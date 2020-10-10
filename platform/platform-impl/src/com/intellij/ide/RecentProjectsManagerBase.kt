@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -741,11 +742,16 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiF
     frame.dispose()
   }
 
-  override fun projectOpened() {
+  override fun projectOpened(project: Project) {
+    // allow to grab focus only after fully opened
     val ref = WeakReference(frame)
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      ref.get()?.isAutoRequestFocus = true
-    }, ModalityState.NON_MODAL)
+    StartupManager.getInstance(project).runAfterOpened(Runnable {
+      if (ref.get() != null) {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          ref.get()?.isAutoRequestFocus = true
+        }, ModalityState.NON_MODAL, project.disposed)
+      }
+    })
   }
 }
 
@@ -792,7 +798,7 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
     }
   }
 
-  override fun projectOpened() {
+  override fun projectOpened(project: Project) {
     // override default impl of MyProjectUiFrameManager - for active window we don't force setting
     // isAutoRequestFocus to false, so, no need to set it to true on project open
   }

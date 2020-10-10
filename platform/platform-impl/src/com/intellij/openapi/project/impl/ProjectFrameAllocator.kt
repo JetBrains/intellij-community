@@ -173,7 +173,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override fun projectOpened(project: Project) {
-    frameManager!!.projectOpened()
+    frameManager!!.projectOpened(project)
   }
 }
 
@@ -234,7 +234,7 @@ internal interface ProjectUiFrameManager {
   fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
   }
 
-  fun projectOpened() {
+  fun projectOpened(project: Project) {
   }
 }
 
