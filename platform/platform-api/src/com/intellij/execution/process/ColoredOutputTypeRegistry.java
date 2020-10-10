@@ -2,7 +2,8 @@
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -22,12 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author yole
- */
-public class ColoredOutputTypeRegistry {
+@Service
+public final class ColoredOutputTypeRegistry {
   public static ColoredOutputTypeRegistry getInstance() {
-    return ServiceManager.getService(ColoredOutputTypeRegistry.class);
+    return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);
   }
 
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();

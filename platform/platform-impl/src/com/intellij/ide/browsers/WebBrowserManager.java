@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
-public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
+public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users

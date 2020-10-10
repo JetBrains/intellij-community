@@ -15,8 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @State(name = "OSFileAssociationPreferences", storages =  @Storage("osFileIdePreferences.xml"))
-public class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
-
+public final class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
   public List<String> fileTypeNames = new ArrayList<>();
 
   public static OSFileAssociationPreferences getInstance() {

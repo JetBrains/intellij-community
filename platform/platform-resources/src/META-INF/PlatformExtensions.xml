@@ -285,7 +285,6 @@
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.TypedAction"
@@ -296,7 +295,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
-    <applicationService serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManager"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
 
@@ -306,7 +304,6 @@
                         serviceImplementation="com.intellij.reporting.FreezeLoggerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
                         serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
-    <applicationService serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
 
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
@@ -324,7 +321,6 @@
                              bundle="messages.CredentialStoreBundle"
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
-    <applicationService serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
@@ -350,7 +346,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.FeatureUsageUiEventsImpl"/>
@@ -725,7 +720,6 @@
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
-    <projectService serviceImplementation="com.intellij.ide.ui.ProjectTopHitCache"/>
 
     <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
@@ -801,8 +795,6 @@
 
     <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
 
-    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
-    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectConfigurable groupId="tools" provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
                          bundle="messages.ExecutionBundle"
                          key="configurable.ProjectStartupConfigurable.display.name"
