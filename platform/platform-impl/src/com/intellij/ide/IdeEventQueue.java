@@ -219,6 +219,7 @@ public final class IdeEventQueue extends EventQueue {
       addDispatcher(new WindowsUpMaximizer(), null);
     }
     addDispatcher(new EditingCanceller(), null);
+    //addDispatcher(new UIMouseTracker(), null);
 
     abracadabraDaberBoreh();
 
