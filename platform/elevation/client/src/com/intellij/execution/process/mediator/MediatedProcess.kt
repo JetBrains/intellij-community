@@ -14,7 +14,8 @@ import java.lang.ref.Cleaner
 
 private val CLEANER = Cleaner.create()
 
-internal class MediatedProcess private constructor(private val handle: MediatedProcessHandle) : Process(), CoroutineScope by handle {
+internal class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
+                                                   pipeStdin: Boolean) : Process(), CoroutineScope by handle {
   companion object {
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {
@@ -37,14 +38,15 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
       errFile: File?,
     ): MediatedProcess {
       val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile)
-      return MediatedProcess(handle).also { process ->
+      return MediatedProcess(handle,
+                             pipeStdin = (inFile == null)).also { process ->
         val cleanable = CLEANER.register(process, handle::close)
         processMediatorClient.registerCleanup(cleanable::clean)
       }
     }
   }
 
-  private val stdin: OutputStream = if (handle.inFile != null) OutputStream.nullOutputStream() else createOutputStream(0)
+  private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else OutputStream.nullOutputStream()
   private val stdout: InputStream = createInputStream(1)
   private val stderr: InputStream = createInputStream(2)
 
@@ -141,7 +143,7 @@ private class MediatedProcessHandle(
   command: List<String>,
   workingDir: File,
   environVars: Map<String, String>,
-  val inFile: File?,
+  inFile: File?,
   outFile: File?,
   errFile: File?,
 ) : CoroutineScope by processMediatorClient.childSupervisorScope(),
