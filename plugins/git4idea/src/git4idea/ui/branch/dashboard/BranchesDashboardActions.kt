@@ -215,14 +215,10 @@ internal object BranchesDashboardActions {
         presentation.description = message("action.Git.Update.Selected.description.already.running")
         return
       }
-      if (branches.any(BranchInfo::isCurrent)) {
-        presentation.isEnabled = false
-        presentation.description = message("action.Git.Update.Selected.description.select.non.current")
-        return
-      }
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchNames = branches.map(BranchInfo::branchName)
-      presentation.description = message("action.Git.Update.Selected.description", branches.size, branches.size)
+      val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.toLowerCase()
+      presentation.description = message("action.Git.Update.Selected.description", branches.size, updateMethodName)
       val trackingInfosExist = isTrackingInfosExist(branchNames, repositories)
       presentation.isEnabled = trackingInfosExist
       if (!trackingInfosExist) {

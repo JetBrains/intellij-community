@@ -444,7 +444,7 @@ public class GitBranchPopupActions {
         new Separator(),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new UpdateCurrentBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
+        new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
         new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
         new Separator(),
         new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
@@ -871,7 +871,9 @@ public class GitBranchPopupActions {
         return;
       }
       String branchPresentation = getBranchPresentation(myBranchName);
-      String description = GitBundle.message("branches.fetch.remote.and.fast.forward", branchPresentation, myBranchName);
+      String description = GitBundle.message("action.Git.Update.Selected.description",
+                                             myBranchNameList.size(),
+                                             GitVcsSettings.getInstance(project).getUpdateMethod().getName().toLowerCase(Locale.ROOT));
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);
@@ -895,43 +897,6 @@ public class GitBranchPopupActions {
     @Override
     public Icon getRightIcon() {
       return myHasIncoming ? DvcsImplIcons.Incoming : null;
-    }
-  }
-
-  private static class UpdateCurrentBranchAction extends UpdateSelectedBranchAction {
-
-    UpdateCurrentBranchAction(@NotNull Project project,
-                              @NotNull List<? extends GitRepository> repositories,
-                              @NotNull String branchName,
-                              boolean hasIncoming) {
-      super(project, repositories, branchName, hasIncoming);
-    }
-
-    private static Map<GitRepository, GitBranchPair> calculateTracking(List<? extends GitRepository> repositories) {
-
-      Map<GitRepository, GitBranchPair> map = new HashMap<>();
-
-      for (GitRepository repo : repositories) {
-        GitLocalBranch currentBranch = repo.getCurrentBranch();
-        if (currentBranch != null) {
-          GitRemoteBranch trackedBranch = currentBranch.findTrackedBranch(repo);
-          if (trackedBranch != null) {
-            map.put(repo, new GitBranchPair(currentBranch, trackedBranch));
-          }
-        }
-      }
-
-      return map;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-
-      new GitUpdateExecutionProcess(myProject,
-                                    myRepositories,
-                                    calculateTracking(myRepositories),
-                                    GitVcsSettings.getInstance(myProject).getUpdateMethod(), false)
-        .execute();
     }
   }
 

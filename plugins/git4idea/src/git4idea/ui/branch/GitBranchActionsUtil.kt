@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.branch.GitBranchPair
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
@@ -24,7 +25,9 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.update.GitUpdateExecutionProcess
 import org.jetbrains.annotations.Nls
+import java.util.*
 import javax.swing.Icon
 
 object L {
@@ -150,19 +153,38 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun run(indicator: ProgressIndicator) {
       val fetchSupport = GitFetchSupport.fetchSupport(project)
+      val currentBranchesMap: MutableMap<GitRepository, GitBranchPair> = HashMap()
+
       for ((repo, trackingInfos) in repoToTrackingInfos) {
+        val currentBranch = repo.currentBranch
         for (trackingInfo in trackingInfos) {
-          val localBranchName = trackingInfo.localBranch.name
-          val remoteBranchName = trackingInfo.remoteBranch.nameForRemoteOperations
-          val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
-          try {
-            fetchResult.throwExceptionIfFailed()
-            successfullyUpdated.add(localBranchName)
+          val localBranch = trackingInfo.localBranch
+          val remoteBranch = trackingInfo.remoteBranch
+          if (localBranch == currentBranch) {
+            currentBranchesMap[repo] = GitBranchPair(currentBranch, remoteBranch)
           }
-          catch (ignored: VcsException) {
-            fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+          else {
+            // Fast-forward all non-current branches in the selection
+            val localBranchName = localBranch.name
+            val remoteBranchName = remoteBranch.nameForRemoteOperations
+            val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
+            try {
+              fetchResult.throwExceptionIfFailed()
+              successfullyUpdated.add(localBranchName)
+            }
+            catch (ignored: VcsException) {
+              fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+            }
           }
         }
+      }
+      // Update all current branches in the selection
+      if (currentBranchesMap.isNotEmpty()) {
+        GitUpdateExecutionProcess(myProject,
+                                  repositories,
+                                  currentBranchesMap,
+                                  GitVcsSettings.getInstance(myProject).updateMethod,
+                                  false).execute()
       }
     }
 
@@ -170,7 +192,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
       if (successfullyUpdated.isNotEmpty()) {
         VcsNotifier.getInstance(myProject).notifySuccess("git.branches.update.successful", "",
                                                          GitBundle.message("branches.selected.branches.updated.title",
-                                                                                                                            successfullyUpdated.size,
+                                                                           successfullyUpdated.size,
                                                                            successfullyUpdated.joinToString("\n")))
       }
     }
