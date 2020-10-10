@@ -2,6 +2,7 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
@@ -25,6 +26,7 @@ import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
+import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.isRemoteBranchProtected
@@ -177,7 +179,7 @@ internal object BranchesDashboardActions {
       }
 
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
-      com.intellij.dvcs.ui.NewBranchAction.checkIfAnyRepositoryIsFresh(e, repositories)
+      disableActionIfAnyRepositoryIsFresh(e, repositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"))
     }
 
     override fun actionPerformed(e: AnActionEvent) {

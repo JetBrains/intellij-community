@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh;
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
@@ -203,11 +204,7 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean isFresh = and(myRepositories, repository -> repository.isFresh());
-      if (isFresh) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription(GitBundle.message("branches.checkout.is.not.possible.before.the.first.commit"));
-      }
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.checkout"));
     }
   }
 
@@ -355,6 +352,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.push"));
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitLocalBranch localBranch = myRepositories.get(0).getBranches().findLocalBranch(myBranchName);
         assert localBranch != null;
@@ -401,10 +403,7 @@ public class GitBranchPopupActions {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        if (myRepositories.stream().anyMatch(Repository::isFresh)) {
-          e.getPresentation().setEnabled(false);
-          e.getPresentation().setDescription(GitBundle.message("branches.renaming.branch.is.not.possible.before.the.first.commit"));
-        }
+        disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.rename.branch"));
       }
     }
 
@@ -677,6 +676,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       createOrCheckoutNewBranch(myProject, myRepositories, myBranchName + "^0",
                                 GitBundle.message("action.Git.New.Branch.dialog.title", myBranchName));
@@ -737,6 +741,7 @@ public class GitBranchPopupActions {
       e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
       String description = GitBundle.message("branches.compare.the.current.working.tree.with", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.show.diff"));
     }
   }
 
