@@ -52,10 +52,11 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
 
   private val termination: Deferred<Int> = async {
     handle.rpc {
-      processMediatorClient.awaitTermination(pid.await())
+      awaitTermination(getPid())
     }
   }
 
+  private suspend fun getPid(): Long = handle.pid.await()
   override fun pid(): Long = handle.pid.blockingGet()
 
   override fun getOutputStream(): OutputStream = stdin
@@ -71,7 +72,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
         try {
           // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
           //       and cancelling it makes the coroutine die in a horrible way leaving the remote call in a broken state.
-          processMediatorClient.writeStream(pid.await(), fd, channel.receiveAsFlow())
+          writeStream(getPid(), fd, channel.receiveAsFlow())
             .onCompletion { ackFlow.value = null }
             .fold(0L) { l, _ ->
               (l + 1).also {
@@ -93,7 +94,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
     val channel = produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
-          processMediatorClient.readStream(pid.await(), fd).collect(channel::send)
+          readStream(getPid(), fd).collect(channel::send)
         }
         catch (e: IOException) {
           channel.close(e)
@@ -128,7 +129,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   private fun destroy(force: Boolean) {
     launch {
       handle.rpc {
-        processMediatorClient.destroyProcess(pid.await(), force)
+        destroyProcess(getPid(), force)
       }
     }
   }
@@ -139,30 +140,30 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
  * and the whole process lifecycle is contained within its coroutine scope.
  */
 private class MediatedProcessHandle(
-  val processMediatorClient: ProcessMediatorClient,
+  private val client: ProcessMediatorClient,
   command: List<String>,
   workingDir: File,
   environVars: Map<String, String>,
   inFile: File?,
   outFile: File?,
   errFile: File?,
-) : CoroutineScope by processMediatorClient.childSupervisorScope(),
+) : CoroutineScope by client.childSupervisorScope(),
     AutoCloseable {
 
   val pid: Deferred<Long> = async {
-    processMediatorClient.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
+    client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
   }
 
   private val cleanupJob = launch(start = CoroutineStart.LAZY) {
     // must be called exactly once;
     // once invoked, the pid is no more valid, and the process must be assumed reaped
-    processMediatorClient.release(pid.await())
+    client.release(pid.await())
   }
 
   /** Controls all operations except CreateProcess() and Release(). */
   private val rpcAwaitingJob = SupervisorJob(coroutineContext[Job])
 
-  suspend fun <R> rpc(block: suspend MediatedProcessHandle.() -> R): R {
+  suspend fun <R> rpc(block: suspend ProcessMediatorClient.() -> R): R {
     // This might require a bit of explanation.
     //
     // We want to ensure the Release() rpc is not started until any other RPC finishes.
@@ -182,7 +183,7 @@ private class MediatedProcessHandle(
     val originalJob = currentCoroutineContext()[Job]!!
     return withContext(rpcAwaitingJob) {
       withContext(coroutineContext + originalJob) {
-        block()
+        client.block()
       }
     }
   }
