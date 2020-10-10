@@ -981,11 +981,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
-    val entry = doRegisterToolWindow(task,
-                                     toolWindowPane = toolWindowPane ?: init(
-                                       (WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project)))
+    val toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
+    val entry = doRegisterToolWindow(task, toolWindowPane = toolWindowPane)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
-    val toolWindowPane = toolWindowPane!!
     toolWindowPane.getStripeFor(entry.toolWindow.anchor).revalidate()
     toolWindowPane.validate()
     toolWindowPane.repaint()

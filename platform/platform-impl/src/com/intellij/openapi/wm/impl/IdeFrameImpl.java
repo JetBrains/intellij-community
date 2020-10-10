@@ -54,7 +54,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     void dispose();
 
-    void setTitle(String title);
+    void setTitle(@Nullable String title);
 
     void updateView();
 
@@ -89,7 +89,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   @Override
-  public void setTitle(String title) {
+  public void setTitle(@Nullable String title) {
     if (myFrameHelper == null) {
       super.setTitle(title);
     }

@@ -3,7 +3,6 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -27,7 +26,6 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val showWelcomeScreen: Boolean = true,
                            @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
                            var callback: ProjectOpenedCallback? = null,
-                           internal val frameInfo: FrameInfo? = null,
                            internal val frameManager: Any? = null,
                            val line: Int = -1,
                            val column: Int = -1,

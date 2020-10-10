@@ -527,7 +527,7 @@ public final class UIUtil {
    * @return {@code true} if the property of the specified component is set to {@code true}
    */
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return Boolean.TRUE.equals(getClientProperty(component, key));
+    return Boolean.TRUE.equals(component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null);
   }
 
   /**

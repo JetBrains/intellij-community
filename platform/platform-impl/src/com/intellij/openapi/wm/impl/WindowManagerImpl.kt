@@ -24,8 +24,6 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
-import com.intellij.util.EventDispatcher
-import com.intellij.util.ui.UIUtil
 import com.sun.jna.platform.WindowUtils
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -54,7 +52,6 @@ private const val FRAME_ELEMENT = "frame"
 )
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
-  private val eventDispatcher = EventDispatcher.create(WindowManagerListener::class.java)
   internal val windowWatcher = WindowWatcher()
 
   // default layout
@@ -78,15 +75,17 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     private fun update(e: ComponentEvent) {
       val frame = e.component as IdeFrameImpl
       val rootPane = frame.rootPane
-      if (rootPane != null && (UIUtil.isClientPropertyTrue(rootPane, ScreenUtil.DISPOSE_TEMPORARY)
-          || UIUtil.isClientPropertyTrue(rootPane, IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS))) {
+      if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true
+          || rootPane.getClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS) == true)) {
         return
       }
+
       val extendedState = frame.extendedState
       val bounds = frame.bounds
       if (extendedState == Frame.NORMAL && rootPane != null) {
         rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
       }
+
       val frameHelper = ProjectFrameHelper.getFrameHelper(frame) ?: return
       val project = frameHelper.project
       if (project == null) {
@@ -119,14 +118,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()
-
-  override fun addListener(listener: WindowManagerListener) {
-    eventDispatcher.addListener(listener)
-  }
-
-  override fun removeListener(listener: WindowManagerListener) {
-    eventDispatcher.removeListener(listener)
-  }
 
   override fun getScreenBounds() = ScreenUtil.getAllScreensRectangle()
 
@@ -166,7 +157,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun setWindowMask(window: Window, mask: Shape?) {
     try {
-      if (GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT)) {
+      if (GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.isWindowTranslucencySupported(
+          GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT)) {
         window.shape = mask
       }
       else {
@@ -294,7 +286,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
     LOG.assertTrue(!projectToFrame.containsKey(project))
     projectToFrame.put(project, frameHelper)
-    frameHelper.project = project
+    frameHelper.setProject(project)
     val frame = frameHelper.frame!!
     // set only if not previously set (we remember previous project name and set it on frame creation)
     //if (Strings.isEmpty(frame.title)) {
@@ -309,7 +301,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
                     }): ProjectFrameHelper {
     var frame = getFrameHelper(project)
     if (frame != null) {
-      eventDispatcher.multicaster.frameCreated(frame)
       return frame
     }
 
@@ -319,10 +310,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       allocateNewFrame(project, frame)
     }
     else {
-      frame.project = project
+      frame.setProject(project)
       projectToFrame.put(project, frame)
     }
-    eventDispatcher.multicaster.frameCreated(frame)
     return frame
   }
 
@@ -351,7 +341,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
     }
 
-    frame.project = project
+    frame.setProject(project)
     projectToFrame.put(project, frame)
     val uiFrame = frame.frame!!
     if (frameInfo != null) {
@@ -367,12 +357,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {
-    eventDispatcher.multicaster.beforeFrameReleased(frameHelper)
-    val frame: JFrame = frameHelper.frame!!
     val project = frameHelper.project!!
-    frameHelper.project = null
-    frame.title = null
-    frameHelper.setFileTitle(null, null)
+    frameHelper.frameReleased()
     projectToFrame.remove(project)
     if (projectToFrame.isEmpty() && project !is LightEditCompatible) {
       projectToFrame.put(null, frameHelper)
@@ -515,7 +501,8 @@ private fun setAlphaMode(window: Window, ratio: Float) {
           }
         }
       }
-      GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT) -> {
+      GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.isWindowTranslucencySupported(
+        GraphicsDevice.WindowTranslucency.TRANSLUCENT) -> {
         window.opacity = 1.0f - ratio
       }
       else -> {

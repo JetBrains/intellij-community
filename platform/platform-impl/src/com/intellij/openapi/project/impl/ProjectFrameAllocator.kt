@@ -113,25 +113,25 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   private fun createFrameManager(): ProjectUiFrameManager {
-    options.frameManager?.let {
-      return it as ProjectUiFrameManager
+    if (options.frameManager is ProjectUiFrameManager) {
+      return options.frameManager
     }
 
     return invokeAndWaitIfNeeded {
       val freeRootFrame = (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()
       if (freeRootFrame != null) {
-        return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(isFrameBoundsRestored = false,
-                                                                  frame = freeRootFrame.frame!!,
-                                                                  frameHelper = freeRootFrame)
+        return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
       }
 
       runMainActivity("create a frame") {
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
-          DefaultProjectUiFrameManager(isFrameBoundsRestored = options.frameInfo?.bounds != null,
-                                       frame = createNewProjectFrame(forceDisableAutoRequestFocus = false,
-                                                                     frameInfo = options.frameInfo),
-                                       frameHelper = null)
+          if (options.frameManager is FrameInfo) {
+            SingleProjectUiFrameManager(options.frameManager, createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = options.frameManager))
+          }
+          else {
+            DefaultProjectUiFrameManager(frame = createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), frameHelper = null)
+          }
         }
         else {
           SplashProjectUiFrameManager(preAllocated)
@@ -178,18 +178,15 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 }
 
 private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo) {
-  val deviceBounds = frameInfo.bounds
-  val bounds = if (deviceBounds == null) null else FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
-  val state = frameInfo.extendedState
-  val isMaximized = FrameInfoHelper.isMaximized(state)
+  val bounds = frameInfo.bounds?.let { FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it) }
   val frame = frameHelper.frame!!
-  if (bounds != null && isMaximized && frame.extendedState == Frame.NORMAL) {
+  if (bounds != null && FrameInfoHelper.isMaximized(frameInfo.extendedState) && frame.extendedState == Frame.NORMAL) {
     frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
   }
   if (bounds != null) {
     frame.bounds = bounds
   }
-  frame.extendedState = state
+  frame.extendedState = frameInfo.extendedState
 
   if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
     frameHelper.toggleFullScreen(true)
@@ -197,7 +194,7 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
 }
 
 @ApiStatus.Internal
-fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean, frameInfo: FrameInfo?): IdeFrameImpl {
+internal fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean, frameInfo: FrameInfo?): IdeFrameImpl {
   val frame = IdeFrameImpl()
   SplashManager.hideBeforeShow(frame)
 
@@ -234,7 +231,8 @@ internal interface ProjectUiFrameManager {
 
   fun getComponent(): JComponent
 
-  fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project)
+  fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
+  }
 
   fun projectOpened() {
   }
@@ -264,23 +262,13 @@ private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : Pro
       }
     }
   }
-
-  override fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-    // update to ensure that project stores correct frame bounds
-    val frame = frameHelper.frame!!
-    ProjectFrameBounds.getInstance(project).markDirty(if (FrameInfoHelper.isMaximized(frame.extendedState)) null else frame.bounds)
-  }
 }
 
-private class DefaultProjectUiFrameManager(private val isFrameBoundsRestored: Boolean,
-                                           private val frame: IdeFrameImpl,
-                                           frameHelper: ProjectFrameHelper?) : ProjectUiFrameManager {
+private class DefaultProjectUiFrameManager(private val frame: IdeFrameImpl, frameHelper: ProjectFrameHelper?) : ProjectUiFrameManager {
   override var frameHelper: ProjectFrameHelper? = frameHelper
     private set
 
   override fun getComponent(): JComponent = frame.rootPane
-
-  private var isFrameBoundsCorrect = isFrameBoundsRestored
 
   override fun init(allocator: ProjectUiFrameAllocator) {
     if (frameHelper != null) {
@@ -299,68 +287,69 @@ private class DefaultProjectUiFrameManager(private val isFrameBoundsRestored: Bo
   }
 
   private fun doInit(allocator: ProjectUiFrameAllocator) {
-    val options = allocator.options
-    var frameInfo = options.frameInfo
-    val bounds = frameInfo?.bounds
-    var projectWorkspaceId = options.projectWorkspaceId
-    if (bounds == null) {
-      val info = (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.getProjectMetaInfo(allocator.projectStoreBaseDir)
-      if (info != null) {
-        projectWorkspaceId = info.projectWorkspaceId
-        frameInfo = info.frame
-      }
-    }
+    val info = (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.getProjectMetaInfo(allocator.projectStoreBaseDir)
+    val frameInfo = info?.frame
 
-    var projectSelfie: Image? = null
-    if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
-      try {
-        projectSelfie = ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId!!, ScaleContext.create(frame))
-      }
-      catch (e: Throwable) {
-        if (e.cause !is EOFException) {
-          logger<ProjectFrameAllocator>().warn(e)
-        }
-      }
-    }
-
-    val frameHelper = ProjectFrameHelper(frame, projectSelfie)
+    val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(info?.projectWorkspaceId, frame))
 
     // must be after preInit (frame decorator is required to set full screen mode)
     if (frameInfo?.bounds == null) {
-      isFrameBoundsCorrect = false
       (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info?.let {
         restoreFrameState(frameHelper, it)
       }
     }
     else {
-      isFrameBoundsCorrect = true
-      if (isFrameBoundsRestored) {
-        if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-          frameHelper.toggleFullScreen(true)
-        }
-      }
-      else {
-        restoreFrameState(frameHelper, frameInfo)
-      }
+      restoreFrameState(frameHelper, frameInfo)
     }
 
     frame.isVisible = true
     frameHelper.init()
     this.frameHelper = frameHelper
   }
+}
 
-  override fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-    val projectFrameBounds = ProjectFrameBounds.getInstance(project)
-    if (isFrameBoundsCorrect) {
-      // update to ensure that project stores correct frame bounds
-      val frame = frameHelper.frame!!
-      projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.extendedState)) null else frame.bounds)
-    }
-    else {
-      val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
-      if (frameInfo?.bounds != null) {
-        restoreFrameState(frameHelper, frameInfo)
+private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, private val frame: IdeFrameImpl) : ProjectUiFrameManager {
+  override var frameHelper: ProjectFrameHelper? = null
+    private set
+
+  override fun getComponent(): JComponent = frame.rootPane
+
+  override fun init(allocator: ProjectUiFrameAllocator) {
+    ApplicationManager.getApplication().invokeLater {
+      if (allocator.cancelled) {
+        return@invokeLater
+      }
+
+      runActivity("project frame initialization") {
+        doInit(allocator)
       }
     }
   }
+
+  private fun doInit(allocator: ProjectUiFrameAllocator) {
+    val options = allocator.options
+    val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(options.projectWorkspaceId, frame))
+
+    if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+      frameHelper.toggleFullScreen(true)
+    }
+
+    frame.isVisible = true
+    frameHelper.init()
+    this.frameHelper = frameHelper
+  }
+}
+
+private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl): Image? {
+  if (projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
+    try {
+      return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, ScaleContext.create(frame))
+    }
+    catch (e: Throwable) {
+      if (e.cause !is EOFException) {
+        logger<ProjectFrameAllocator>().warn(e)
+      }
+    }
+  }
+  return null
 }

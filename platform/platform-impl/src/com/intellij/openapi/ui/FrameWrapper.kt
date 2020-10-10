@@ -16,12 +16,14 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
+import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
@@ -157,7 +159,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
     else {
       // unwrap the image before setting as frame's icon
-      frame.setIconImages(images.map { ImageUtil.toBufferedImage(it) })
+      frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
     }
 
     val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
@@ -352,7 +354,15 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     private fun updateTitle() {
-      ProjectFrameHelper.updateTitle(this, frameTitle, fileTitle, file, null, null)
+      if (Registry.`is`("ide.show.fileType.icon.in.titleBar")) {
+        // this property requires java.io.File
+        rootPane.putClientProperty("Window.documentFile", file?.toFile())
+      }
+
+      val builder = StringBuilder()
+      appendTitlePart(builder, frameTitle)
+      appendTitlePart(builder, fileTitle)
+      title = builder.toString()
     }
 
     override fun dispose() {

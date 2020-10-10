@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -166,12 +165,6 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
-
-  @Override
-  public void addListener(@NotNull WindowManagerListener listener) { }
-
-  @Override
-  public void removeListener(final WindowManagerListener listener) { }
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {

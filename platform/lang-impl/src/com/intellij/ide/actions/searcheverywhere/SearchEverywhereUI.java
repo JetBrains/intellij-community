@@ -561,7 +561,8 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
         });
       }
     });
-    busConnection.subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw, () -> myResultsList.repaint()));
+    (myProject == null ? busConnection : ApplicationManager.getApplication().getMessageBus().connect(this))
+      .subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw, () -> myResultsList.repaint()));
 
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override

@@ -708,8 +708,6 @@
                 icon="AllIcons.Toolwindows.NoEvents"
                 factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
-
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 
