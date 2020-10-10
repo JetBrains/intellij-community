@@ -76,7 +76,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     tree = MyChangesTree(project)
 
     commitPanel = GitStageCommitPanel(project)
-    commitPanel.commitActionsPanel.isCommitButtonDefault = { IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null }
+    commitPanel.commitActionsPanel.isCommitButtonDefault = {
+      !commitPanel.commitProgressUi.isDumbMode &&
+      IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
+    }
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
     commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
     Disposer.register(this, commitPanel)

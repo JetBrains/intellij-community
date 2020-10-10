@@ -4,8 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -27,7 +25,6 @@ internal class ChangesViewCommitWorkflowHandler(
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
     CommitAuthorListener,
-    DumbService.DumbModeListener,
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
@@ -72,9 +69,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
     ui.setCompletionContext(changeListManager.changeLists)
 
-    if (isDumb(project)) enteredDumbMode()
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
-
+    setupDumbModeTracking()
     ProjectManager.TOPIC.subscribe(this, this)
     setupCommitHandlersTracking()
 
@@ -91,14 +86,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override fun commitOptionsCreated() {
     currentChangeList?.let { commitOptions.changeListChanged(it) }
-  }
-
-  override fun enteredDumbMode() {
-    ui.commitProgressUi.isDumbMode = true
-  }
-
-  override fun exitDumbMode() {
-    ui.commitProgressUi.isDumbMode = false
   }
 
   override fun executionEnded() {

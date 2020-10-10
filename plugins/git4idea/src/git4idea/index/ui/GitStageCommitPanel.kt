@@ -4,6 +4,7 @@ package git4idea.index.ui
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -29,13 +30,16 @@ private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<C
 class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val progressPanel = CommitProgressPanel()
 
-  private var oldStaged: Set<GitFileStatus> = emptySet()
+  private var staged: Set<GitFileStatus> = emptySet()
+  private val stagedChanges = ClearableLazyValue.create { state.rootStates.values.flatMap { it.getStagedChanges(project) } }
 
   var state: GitStageTracker.State by observable(GitStageTracker.State.EMPTY) { _, _, newValue ->
     val newStaged = newValue.getStaged()
+    if (staged == newStaged) return@observable
 
-    if (oldStaged != newStaged) fireInclusionChanged()
-    oldStaged = newStaged
+    staged = newStaged
+    stagedChanges.drop()
+    fireInclusionChanged()
   }
 
   init {
@@ -55,7 +59,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun refreshData() = Unit
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
-  override fun getIncludedChanges(): List<Change> = state.rootStates.values.flatMap { it.getStagedChanges(project) }
+  override fun getIncludedChanges(): List<Change> = stagedChanges.value
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 

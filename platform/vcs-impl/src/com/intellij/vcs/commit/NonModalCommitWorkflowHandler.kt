@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -14,7 +16,8 @@ import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
 abstract class NonModalCommitWorkflowHandler<W : AbstractCommitWorkflow, U : NonModalCommitWorkflowUi> :
-  AbstractCommitWorkflowHandler<W, U>() {
+  AbstractCommitWorkflowHandler<W, U>(),
+  DumbService.DumbModeListener {
 
   private var areCommitOptionsCreated = false
 
@@ -39,6 +42,19 @@ abstract class NonModalCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Non
     updateDefaultCommitActionEnabled()
     ui.defaultCommitActionName = getCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
+  }
+
+  protected fun setupDumbModeTracking() {
+    if (isDumb(project)) enteredDumbMode()
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
+  }
+
+  override fun enteredDumbMode() {
+    ui.commitProgressUi.isDumbMode = true
+  }
+
+  override fun exitDumbMode() {
+    ui.commitProgressUi.isDumbMode = false
   }
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()

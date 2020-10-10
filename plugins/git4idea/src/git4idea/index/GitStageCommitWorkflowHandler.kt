@@ -25,6 +25,7 @@ class GitStageCommitWorkflowHandler(
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
 
+    setupDumbModeTracking()
     setupCommitHandlersTracking()
     vcsesChanged()
   }

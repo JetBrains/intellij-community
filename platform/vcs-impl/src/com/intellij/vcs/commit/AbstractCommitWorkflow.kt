@@ -183,7 +183,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return result
   }
 
-  protected open fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
+  private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null
 
     var checks = Runnable {
