@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
-import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
@@ -20,11 +20,11 @@ import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Borders.emptyLeft
+import com.intellij.util.ui.JBUI.Borders.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
@@ -34,7 +34,7 @@ internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1
 class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
   NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi {
 
-  private val changesView get() = changesViewHost.changesView
+  val changesView get() = changesViewHost.changesView
 
   private val toolbarPanel = simplePanel().apply {
     isOpaque = false
@@ -71,7 +71,13 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       isShowCheckboxes = true
     }
     changesViewHost.statusComponent =
-      ChangesViewCommitStatusPanel(changesView, this).apply { addToLeft(toolbarPanel) }
+      ChangesViewCommitStatusPanel(this).apply {
+        border = emptyRight(6)
+        background = changesView.background
+
+        addToLeft(toolbarPanel)
+      }
+    ChangesViewCommitTabTitleUpdater(this).start()
 
     commitActionsPanel.setupShortcuts(rootComponent, this)
     commitActionsPanel.isCommitButtonDefault = {
@@ -237,5 +243,31 @@ private class ChangesViewCommitProgressPanel(
 
     if (oldInclusion != newInclusion) super.inclusionChanged()
     oldInclusion = newInclusion
+  }
+}
+
+private class ChangesViewCommitTabTitleUpdater(private val commitPanel: ChangesViewCommitPanel) :
+  CommitTabTitleUpdater(commitPanel.changesView, LOCAL_CHANGES, { message("local.changes.tab") }),
+  ChangesViewContentManagerListener {
+
+  init {
+    Disposer.register(commitPanel, this)
+
+    pathsProvider = {
+      val singleRoot = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.singleOrNull()
+      if (singleRoot != null) listOf(getFilePath(singleRoot)) else commitPanel.getDisplayedPaths()
+    }
+  }
+
+  override fun start() {
+    super.start()
+    project.messageBus.connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this)
+  }
+
+  override fun toolWindowMappingChanged() = updateTab()
+
+  override fun updateTab() {
+    if (!project.isCommitToolWindow) return
+    super.updateTab()
   }
 }
