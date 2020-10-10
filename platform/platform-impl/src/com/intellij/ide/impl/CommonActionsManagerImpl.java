@@ -24,12 +24,12 @@ final class CommonActionsManagerImpl extends CommonActionsManager {
 
   @Override
   public AnAction createExpandAllAction(TreeExpander expander) {
-    return new ExpandAllAction(context -> expander);
+    return new ExpandAllAction(event -> expander);
   }
 
   @Override
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
-    ExpandAllAction expandAllToolbarAction = new ExpandAllAction(context -> expander);
+    ExpandAllAction expandAllToolbarAction = new ExpandAllAction(event -> expander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
     return expandAllToolbarAction;
   }
@@ -48,12 +48,12 @@ final class CommonActionsManagerImpl extends CommonActionsManager {
 
   @Override
   public AnAction createCollapseAllAction(TreeExpander expander) {
-    return new CollapseAllAction(context -> expander);
+    return new CollapseAllAction(event -> expander);
   }
 
   @Override
   public AnAction createCollapseAllAction(TreeExpander expander, JComponent component) {
-    CollapseAllAction collapseAllToolbarAction = new CollapseAllAction(context -> expander);
+    CollapseAllAction collapseAllToolbarAction = new CollapseAllAction(event -> expander);
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), component);
     return collapseAllToolbarAction;
   }
