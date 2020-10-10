@@ -423,27 +423,3 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
 )
-
-# managed by go/iml_to_build
-java_library(
-    name = "studio-proto",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/bazel:studio-proto"],
-    runtime_deps = ["//tools/base/bazel:studio-proto"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "studio-grpc",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/bazel:studio-grpc"],
-    runtime_deps = ["//tools/base/bazel:studio-grpc"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "transport-proto",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/transport/proto:transport_java_proto"],
-    runtime_deps = ["//tools/base/transport/proto:transport_java_proto"],
-)
