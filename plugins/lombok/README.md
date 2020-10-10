@@ -186,7 +186,7 @@ YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/j
 
 License
 -------
-Copyright (c) 2011-2020 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
+Copyright (c) 2011-2020 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (Apache 2.0).
 
 [badge-gitter-img]:       https://badges.gitter.im/mplushnikov/lombok-intellij-plugin.svg
 [badge-gitter]:           https://gitter.im/mplushnikov/lombok-intellij-plugin
