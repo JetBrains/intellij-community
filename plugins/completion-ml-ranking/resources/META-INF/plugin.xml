@@ -74,7 +74,7 @@
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1" restartRequired="true"
+    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1"
                  description="Set experiment bucket number. If value is negative, will be skipped."/>
 
     <registryKey key="completion.ml.path.to.zip.model" defaultValue="no path"
