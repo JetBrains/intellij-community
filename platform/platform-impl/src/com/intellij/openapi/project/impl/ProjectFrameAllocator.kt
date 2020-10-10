@@ -159,7 +159,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     cancelled = true
 
     ApplicationManager.getApplication().invokeLater {
-      val frame = frameManager!!.frameHelper
+      val frame = frameManager?.frameHelper
       frameManager = null
 
       if (error != null) {
