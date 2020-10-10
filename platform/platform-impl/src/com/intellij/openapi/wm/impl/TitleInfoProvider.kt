@@ -7,7 +7,7 @@ import java.util.function.Consumer
 
 interface TitleInfoProvider {
   companion object {
-    val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
+    private val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
 
     @JvmStatic
     fun getProviders(project: Project, listener: Consumer<TitleInfoProvider>): List<TitleInfoProvider> {
@@ -19,7 +19,7 @@ interface TitleInfoProvider {
     }
 
     @JvmStatic
-    fun getProviders(project: Project): List<TitleInfoProvider> = EP.getExtensionList(project)
+    fun getProviders(): List<TitleInfoProvider> = EP.extensionList
   }
 
   fun isActive(project: Project): Boolean

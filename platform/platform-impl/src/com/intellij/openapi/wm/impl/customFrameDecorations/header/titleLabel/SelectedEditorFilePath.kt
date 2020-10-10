@@ -178,7 +178,7 @@ open class SelectedEditorFilePath {
       })
       Registry.get(classKey).addListener(registryListener, disp)
 
-      simpleExtensions = getProviders(project)
+      simpleExtensions = getProviders()
       simplePaths = simpleExtensions?.map { ex ->
         val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
         ex.addUpdateListener(project) {
@@ -191,7 +191,7 @@ open class SelectedEditorFilePath {
       }
 
       val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
-      simplePaths?.let { sp -> shrinkingPaths.addAll(sp) }
+      simplePaths?.let { shrinkingPaths.addAll(it) }
       components = shrinkingPaths
       updateTitlePaths()
 
