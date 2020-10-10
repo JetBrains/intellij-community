@@ -73,7 +73,9 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
     val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
-          processMediatorClient.writeStream(pid.await(), fd, channel.consumeAsFlow())
+          // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
+          //       and cancelling it makes the coroutine die in a horrible way leaving the remote call in a broken state.
+          processMediatorClient.writeStream(pid.await(), fd, channel.receiveAsFlow())
             .onCompletion { ackFlow.value = null }
             .fold(0L) { l, _ ->
               (l + 1).also {
