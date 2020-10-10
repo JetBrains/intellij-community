@@ -1177,6 +1177,12 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
 
+    <group id="ProjectViewToolbar">
+      <reference ref="SelectInProjectView"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>

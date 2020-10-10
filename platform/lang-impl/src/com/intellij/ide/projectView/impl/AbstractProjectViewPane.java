@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.PsiCopyPasteManager;
-import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
@@ -88,6 +85,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   private AbstractTreeBuilder myTreeBuilder;
+  private TreeExpander myTreeExpander;
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
@@ -353,6 +351,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(@NotNull String dataId) {
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
+
     if (myTreeStructure instanceof AbstractTreeStructureBase) {
       @SuppressWarnings("unchecked")
       List<AbstractTreeNode<?>> nodes = (List)getSelectedNodes(AbstractTreeNode.class);
@@ -555,6 +555,36 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       TreeUtil.promiseSelectFirst(myTree);
     }
   }
+
+
+  private @NotNull TreeExpander getTreeExpander() {
+    TreeExpander expander = myTreeExpander;
+    if (expander == null) {
+      expander = createTreeExpander();
+      myTreeExpander = expander;
+    }
+    return expander;
+  }
+
+  protected @NotNull TreeExpander createTreeExpander() {
+    return new DefaultTreeExpander(this::getTree) {
+      @Override
+      public boolean isExpandAllVisible() {
+        return getAsyncSupport() != null && Registry.is("ide.project.view.expand.all.action.visible");
+      }
+
+      @Override
+      public boolean canExpand() {
+        return getAsyncSupport() != null && super.canExpand();
+      }
+
+      @Override
+      protected void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
+        super.collapseAll(tree, false, keepSelectionLevel);
+      }
+    };
+  }
+
 
   protected @NotNull Comparator<NodeDescriptor<?>> createComparator() {
     return new GroupByTypeComparator(myProject, getId());

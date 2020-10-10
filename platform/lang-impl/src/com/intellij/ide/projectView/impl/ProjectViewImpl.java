@@ -1019,25 +1019,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
-    AnAction action = ActionManager.getInstance().getAction("SelectInProjectView");
+    AnAction action = ActionManager.getInstance().getAction("ProjectViewToolbar");
     if (action != null) titleActions.add(action);
-
-    DefaultTreeExpander expander = new DefaultTreeExpander(() -> {
-      AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      return pane == null ? null : pane.myTree;
-    }) {
-      @Override
-      public boolean isExpandAllVisible() {
-        return Registry.is("ide.project.view.expand.all.action.visible");
-      }
-
-      @Override
-      protected void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
-        super.collapseAll(tree, false, keepSelectionLevel);
-      }
-    };
-    titleActions.add(CommonActionsManager.getInstance().createExpandAllAction(expander, getComponent()));
-    titleActions.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, getComponent()));
   }
 
   protected boolean isShowMembersOptionSupported() {
