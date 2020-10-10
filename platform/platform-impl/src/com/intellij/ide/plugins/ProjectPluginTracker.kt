@@ -10,28 +10,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.startup.StartupManager
+import org.jetbrains.annotations.Nullable
 
 @Service
-@State(
-  name = "ProjectPluginTracker",
-  storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
-)
-class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Companion.State> {
-
+@State(name = "ProjectPluginTracker", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+internal class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Companion.State> {
   companion object {
-
     @JvmStatic
-    fun getInstance(project: Project): ProjectPluginTracker =
-      project.getService(ProjectPluginTracker::class.java)
+    fun getInstance(project: Project): ProjectPluginTracker = project.service()
 
     class State {
-
       var enabledPlugins = mutableSetOf<String>()
       var disabledPlugins = mutableSetOf<String>()
 
-      fun register(id: PluginId,
-                   enable: Boolean) {
+      fun register(id: PluginId, enable: Boolean) {
         val setToRemoveFrom = if (enable) disabledPlugins else enabledPlugins
         val setToAddTo = if (enable) enabledPlugins else disabledPlugins
 
@@ -49,8 +41,7 @@ class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Compa
       }
     }
 
-    class EnableDisablePluginsActivity : StartupActivity {
-
+    internal class EnableDisablePluginsActivity : StartupActivity.DumbAware {
       init {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           throw ExtensionNotApplicableException.INSTANCE
@@ -63,14 +54,11 @@ class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Compa
        * @param project a project to enable/disable plugins for
        */
       override fun runActivity(project: Project) {
-        StartupManager.getInstance(project).runAfterOpened {
-          EnableDisablePluginsListener.projectOpened(project)
-        }
+        EnableDisablePluginsListener.projectOpened(project)
       }
     }
 
     private object EnableDisablePluginsListener : ProjectManagerListener {
-
       override fun projectOpened(project: Project) {
         val pluginTracker = getInstance(project)
 
@@ -144,9 +132,11 @@ class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Compa
     .findPluginById()
 }
 
-private fun Set<String>.containsPluginId(descriptor: IdeaPluginDescriptor) =
-  contains(descriptor.pluginId.idString)
+private fun Set<String>.containsPluginId(descriptor: IdeaPluginDescriptor): Boolean {
+  return contains(descriptor.pluginId.idString)
+}
 
-private fun Set<String>.findPluginById() =
-  mapNotNull { PluginId.findId(it) }
+private fun Set<String>.findPluginById(): List<@Nullable IdeaPluginDescriptor> {
+  return mapNotNull { PluginId.findId(it) }
     .mapNotNull { PluginManagerCore.getPlugin(it) }
+}
