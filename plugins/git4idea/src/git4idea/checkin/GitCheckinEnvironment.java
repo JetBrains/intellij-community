@@ -311,12 +311,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + getLogStringGitDiffChanges(rootPath, stagedChanges));
       Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
+      Collection<FilePath> excludedStagedAdditions = new ArrayList<>();
       processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
         if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
+        if (before == null && after != null) excludedStagedAdditions.add(after);
       });
 
-      // Find unstaged deletions, we might not be able to restore them after
-      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      // Find files with 'AD' status, we will not be able to restore them after using 'git add' command,
+      // getting "pathspec 'file.txt' did not match any files" error (and preventing us from adding other files).
+      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, excludedStagedAdditions, false);
       LOG.debug("Found unstaged changes: " + getLogStringGitDiffChanges(rootPath, unstagedChanges));
       Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
       processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
