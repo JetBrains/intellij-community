@@ -31,7 +31,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class LocalArchivedTemplate extends ArchivedProjectTemplate {
+public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
   public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
   static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
   static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
@@ -40,13 +40,12 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
-  private final ModuleType myModuleType;
+  private final ModuleType<?> myModuleType;
   @Nullable private final List<RootDescription> myModuleDescriptions;
   private boolean myEscaped = true;
   private Icon myIcon;
 
-  public LocalArchivedTemplate(@NotNull URL archivePath,
-                               @NotNull ClassLoader classLoader) {
+  public LocalArchivedTemplate(@NotNull URL archivePath, @NotNull ClassLoader classLoader) {
     super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
@@ -135,7 +134,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Nullable
   String readEntry(@NotNull final String endsWith) {
     try {
-      return processStream(new StreamProcessor<String>() {
+      return processStream(new StreamProcessor<>() {
         @Override
         public String consume(@NotNull ZipInputStream stream) throws IOException {
           ZipEntry entry;

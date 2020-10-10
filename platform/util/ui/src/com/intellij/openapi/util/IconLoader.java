@@ -281,7 +281,7 @@ public final class IconLoader {
     return path.regionMatches(dotIndex - suffixLength, "Icons", 0, suffixLength);
   }
 
-  public static @Nullable Icon findIcon(URL url) {
+  public static @Nullable Icon findIcon(@Nullable URL url) {
     return findIcon(url, true);
   }
 
@@ -324,9 +324,16 @@ public final class IconLoader {
         cachedIcon = iconCache.computeIfAbsent(key, k -> {
           @SuppressWarnings("unchecked")
           ClassLoader classLoader1 = (ClassLoader)((Pair<String, Object>)k).getSecond();
-          ImageDataResolverImpl resolver = new ImageDataResolverImpl(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
-          if (!deferUrlResolve && resolver.getURL() == null) {
-            return null;
+          ImageDataLoader resolver;
+          if (deferUrlResolve) {
+            resolver = new ImageDataResolverImpl(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
+          }
+          else {
+            URL url = doResolve(originalPath, classLoader1, null, HandleNotFound.IGNORE);
+            if (url == null) {
+              return null;
+            }
+            resolver = new ResolvedImageDataResolver(url, classLoader1);
           }
           return new CachedImageIcon(originalPath, resolver, null, null);
         });
@@ -348,8 +355,7 @@ public final class IconLoader {
     return icon;
   }
 
-  @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+  public static @Nullable Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     return findIcon(path, null, classLoader, HandleNotFound.IGNORE, false);
   }
 
@@ -1003,12 +1009,69 @@ public final class IconLoader {
 
     @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform);
 
-    boolean isMyClassLoader(@NotNull ClassLoader loader);
+    boolean isMyClassLoader(@NotNull ClassLoader classLoader);
   }
 
-  /**
-   * Used to defer URL resolve.
-   */
+  private static final class ResolvedImageDataResolver implements ImageDataLoader {
+    private final URL url;
+    private final ClassLoader classLoader;
+
+    ResolvedImageDataResolver(@NotNull URL url, @Nullable ClassLoader classLoader) {
+      this.classLoader = classLoader;
+      this.url = url;
+    }
+
+    @Override
+    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
+      if (isDark) {
+        flags |= ImageLoader.USE_DARK;
+      }
+
+      String path = url.toString();
+      return ImageLoader.load(path, filters, null, null, flags, scaleContext, !path.endsWith(".svg"));
+    }
+
+    @Override
+    public @NotNull URL getURL() {
+      return this.url;
+    }
+
+    @Override
+    public final @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+      Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
+      if (patchedPath == null) {
+        return null;
+      }
+
+      ClassLoader classLoader = patchedPath.second == null ? null : patchedPath.second;
+      String path = patchedPath.first;
+      // This use case for temp themes only. Here we want immediately replace existing icon to a local one
+      if (path != null && path.startsWith("file:/")) {
+        try {
+          ImageDataResolverImpl resolver = new ImageDataResolverImpl(new URL(path), path.substring(1), classLoader, true);
+          resolver.resolve();
+          return resolver;
+        }
+        catch (MalformedURLException ignore) {
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public final boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
+      return classLoader == this.classLoader;
+    }
+
+    @Override
+    public final String toString() {
+      return "ResolvedImageDataResolver{" +
+             ", url=" + url +
+             '}';
+    }
+  }
+
   private static class ImageDataResolverImpl implements ImageDataLoader {
     private static final URL UNRESOLVED_URL;
 
@@ -1092,29 +1155,6 @@ public final class IconLoader {
       getURL();
     }
 
-    private static @Nullable URL doResolve(@Nullable String overriddenPath,
-                                           @Nullable ClassLoader classLoader,
-                                           @Nullable Class<?> ownerClass,
-                                           @NotNull HandleNotFound handleNotFound) {
-      String path = overriddenPath;
-      URL url = null;
-      if (path != null) {
-        if (classLoader != null) {
-          // paths in ClassLoader getResource must not start with "/"
-          path = path.charAt(0) == '/' ? path.substring(1) : path;
-          url = findUrl(path, classLoader::getResource);
-        }
-        if (url == null && ownerClass != null) {
-          // some plugins use findIcon("icon.png",IconContainer.class)
-          url = findUrl(path, ownerClass::getResource);
-        }
-      }
-      if (url == null) {
-        handleNotFound.handle("Can't find icon in '" + path + "' near " + classLoader);
-      }
-      return url;
-    }
-
     @Override
     public final @Nullable URL getURL() {
       URL result = this.url;
@@ -1159,32 +1199,9 @@ public final class IconLoader {
       return null;
     }
 
-    @SuppressWarnings("DuplicateExpressions")
-    private static @Nullable URL findUrl(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
-      URL url = urlProvider.apply(path);
-      if (url != null) {
-        return url;
-      }
-
-      // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
-      // which will load proper icon version depending on the context - UI theme, DPI.
-      // SVG version, when present, has more priority than PNG.
-      // See for details: com.intellij.util.ImageLoader.ImageDescList#create
-      if (path.endsWith(".png")) {
-        path = path.substring(0, path.length() - 4) + ".svg";
-      }
-      else if (path.endsWith(".svg")) {
-        path = path.substring(0, path.length() - 4) + ".png";
-      }
-      else {
-        LOG.debug("unexpected path: ", path);
-      }
-      return urlProvider.apply(path);
-    }
-
     @Override
-    public final boolean isMyClassLoader(@NotNull ClassLoader loader) {
-      return classLoader == loader;
+    public final boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
+      return this.classLoader == classLoader;
     }
 
     @Override
@@ -1197,6 +1214,52 @@ public final class IconLoader {
              ", useCacheOnLoad=" + useCacheOnLoad +
              '}';
     }
+  }
+
+  static @Nullable URL doResolve(@Nullable String overriddenPath,
+                                 @Nullable ClassLoader classLoader,
+                                 @Nullable Class<?> ownerClass,
+                                 @NotNull HandleNotFound handleNotFound) {
+    String path = overriddenPath;
+    URL url = null;
+    if (path != null) {
+      if (classLoader != null) {
+        // paths in ClassLoader getResource must not start with "/"
+        path = path.charAt(0) == '/' ? path.substring(1) : path;
+        url = findUrl(path, classLoader::getResource);
+      }
+      if (url == null && ownerClass != null) {
+        // some plugins use findIcon("icon.png",IconContainer.class)
+        url = findUrl(path, ownerClass::getResource);
+      }
+    }
+    if (url == null) {
+      handleNotFound.handle("Can't find icon in '" + path + "' near " + classLoader);
+    }
+    return url;
+  }
+
+  @SuppressWarnings("DuplicateExpressions")
+  private static @Nullable URL findUrl(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
+    URL url = urlProvider.apply(path);
+    if (url != null) {
+      return url;
+    }
+
+    // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
+    // which will load proper icon version depending on the context - UI theme, DPI.
+    // SVG version, when present, has more priority than PNG.
+    // See for details: com.intellij.util.ImageLoader.ImageDescList#create
+    if (path.endsWith(".png")) {
+      path = path.substring(0, path.length() - 4) + ".svg";
+    }
+    else if (path.endsWith(".svg")) {
+      path = path.substring(0, path.length() - 4) + ".png";
+    }
+    else {
+      LOG.debug("unexpected path: ", path);
+    }
+    return urlProvider.apply(path);
   }
 
   @NotNull
