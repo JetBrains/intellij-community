@@ -64,12 +64,6 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
     val ackFlow = MutableStateFlow<Long?>(0L)
 
-    // actor { ... } is technically equivalent to the following code:
-    //
-    // val channel = Channel().also { receiveChannel: ReceiveChannel ->
-    //   launch { ... }
-    //     .invokeOnCompletion { receiveChannel.cancel() }
-    // }
     val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
@@ -94,12 +88,6 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
-    // produce { ... } is technically equivalent to the following code:
-    //
-    // val channel = Channel().also { sendChannel: SendChannel ->
-    //   launch { ... }
-    //     .invokeOnCompletion { sendChannel.close() }
-    // }
     val channel = handle.produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
