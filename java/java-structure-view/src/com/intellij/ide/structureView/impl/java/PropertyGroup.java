@@ -28,9 +28,9 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   @NotNull private final String myPropertyName;
   @NotNull private final String myTypeText;
 
-  private SmartPsiElementPointer myFieldPointer;
-  private SmartPsiElementPointer myGetterPointer;
-  private SmartPsiElementPointer mySetterPointer;
+  private SmartPsiElementPointer<?> myFieldPointer;
+  private SmartPsiElementPointer<?> myGetterPointer;
+  private SmartPsiElementPointer<?> mySetterPointer;
   private boolean myIsStatic;
   public static final Icon PROPERTY_READ_ICON = loadIcon("/nodes/propertyRead.png");
   public static final Icon PROPERTY_READ_STATIC_ICON = loadIcon("/nodes/propertyReadStatic.png");
