@@ -14,7 +14,7 @@ import java.lang.ref.Cleaner
 
 private val CLEANER = Cleaner.create()
 
-internal class MediatedProcess private constructor(private val handle: MediatedProcessHandle) : Process() {
+internal class MediatedProcess private constructor(private val handle: MediatedProcessHandle) : Process(), CoroutineScope by handle {
   companion object {
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {
@@ -48,7 +48,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   private val stdout: InputStream = createInputStream(1)
   private val stderr: InputStream = createInputStream(2)
 
-  private val termination: Deferred<Int> = handle.async {
+  private val termination: Deferred<Int> = async {
     handle.rpc {
       processMediatorClient.awaitTermination(pid.await())
     }
@@ -64,7 +64,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
     val ackFlow = MutableStateFlow<Long?>(0L)
 
-    val channel = handle.actor<ByteString>(capacity = Channel.BUFFERED) {
+    val channel = actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
           // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
@@ -88,7 +88,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
-    val channel = handle.produce<ByteString>(capacity = Channel.BUFFERED) {
+    val channel = produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
           processMediatorClient.readStream(pid.await(), fd).collect(channel::send)
@@ -124,7 +124,7 @@ internal class MediatedProcess private constructor(private val handle: MediatedP
   }
 
   private fun destroy(force: Boolean) {
-    handle.launch {
+    launch {
       handle.rpc {
         processMediatorClient.destroyProcess(pid.await(), force)
       }
