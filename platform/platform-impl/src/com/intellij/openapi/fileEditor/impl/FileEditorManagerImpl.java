@@ -941,17 +941,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     composite.getSelectedEditor().selectNotify();
 
-    // Transfer focus into editor
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (options.isFocusEditor()) {
-        //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
-        window.setAsCurrentWindow(true);
-        Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
-        if (windowAncestor != null &&
-            windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
-          EditorsSplitters.focusDefaultComponentInSplittersIfPresent(myProject);
-          IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
-        }
+    // transfer focus into editor
+    if (!ApplicationManager.getApplication().isUnitTestMode() && options.isFocusEditor()) {
+      //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
+      window.setAsCurrentWindow(true);
+      Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
+      if (windowAncestor != null &&
+          windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
+        EditorsSplitters.focusDefaultComponentInSplittersIfPresent(myProject);
+        IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
       }
     }
 

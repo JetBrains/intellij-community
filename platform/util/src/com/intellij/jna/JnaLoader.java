@@ -4,11 +4,12 @@ package com.intellij.jna;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NotNull;
 
 public final class JnaLoader {
   private static Boolean ourJnaLoaded = null;
 
-  public static synchronized void load(Logger logger) {
+  public static synchronized void load(@NotNull Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
       try {

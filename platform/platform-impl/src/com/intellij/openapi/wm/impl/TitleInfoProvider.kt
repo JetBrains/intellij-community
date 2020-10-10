@@ -3,16 +3,17 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import java.util.function.Consumer
 
 interface TitleInfoProvider {
   companion object {
     val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
 
     @JvmStatic
-    fun getProviders(project: Project, listener: (provider: TitleInfoProvider) -> Unit): List<TitleInfoProvider> {
+    fun getProviders(project: Project, listener: Consumer<TitleInfoProvider>): List<TitleInfoProvider> {
       val list = EP.extensionList
       for (it in list) {
-        it.addUpdateListener(project, listener)
+        it.addUpdateListener(project) { listener.accept(it) }
       }
       return list
     }

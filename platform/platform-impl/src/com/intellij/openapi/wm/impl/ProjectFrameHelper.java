@@ -34,7 +34,6 @@ import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -378,7 +377,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   protected void initTitleInfoProviders(@NotNull Project project) {
     titleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
       updateTitle();
-      return Unit.INSTANCE;
     });
   }
 

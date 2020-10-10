@@ -1282,7 +1282,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> disposeRootDisposable(),
       () -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()),
       () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
-      () -> myLegacyBridgeTestFilePointersTracker.disposePointersCreatedInTest(),
+      () -> {
+        LegacyBridgeTestFilePointersTracker tracker = myLegacyBridgeTestFilePointersTracker;
+        if (tracker != null) {
+          tracker.disposePointersCreatedInTest();
+        }
+      },
       () -> super.tearDown(),
       () -> {
         if (myVirtualFilePointerTracker != null) {
