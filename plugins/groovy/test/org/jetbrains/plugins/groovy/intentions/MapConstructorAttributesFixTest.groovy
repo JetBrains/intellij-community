@@ -67,7 +67,7 @@ class Rr {
 static void main(String[] args) {
     def x = new Rr(actio<caret>nType: "")
 }
-"""
+""",GroovyConstructorNamedArgumentsInspection
   }
 
   void 'test no fix 2'() {
@@ -83,7 +83,7 @@ class Rr extends Nn {
 static void main(String[] args) {
     def x = new Rr(fo<caret>o: "")
 }
-"""
+""", GroovyConstructorNamedArgumentsInspection
   }
 
   void 'test two labels'() {
