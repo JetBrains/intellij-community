@@ -44,7 +44,8 @@ class HTMLFileEditor(url: String? = null, html: String? = null,
   init {
     htmlPanelComponent.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: CefRequest.TransitionType?) {
-        alarm.addRequest({ htmlPanelComponent.setHtml(timeoutCallback!!) }, Registry.intValue("html.editor.timeout", 10000))
+        alarm.addRequest({ htmlPanelComponent.setHtml(timeoutCallback!!); htmlPanelComponent.cefBrowser.stopLoad() },
+                         Registry.intValue("html.editor.timeout", 10000))
       }
 
       override fun onLoadEnd(browser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
