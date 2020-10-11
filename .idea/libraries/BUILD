@@ -66,66 +66,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "Ant",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/idea/lib/ant/lib:ant-antlr",
-        "//tools/idea/lib/ant/lib:ant-apache-bcel",
-        "//tools/idea/lib/ant/lib:ant-apache-bsf",
-        "//tools/idea/lib/ant/lib:ant-apache-log4j",
-        "//tools/idea/lib/ant/lib:ant-apache-oro",
-        "//tools/idea/lib/ant/lib:ant-apache-regexp",
-        "//tools/idea/lib/ant/lib:ant-apache-resolver",
-        "//tools/idea/lib/ant/lib:ant-apache-xalan2",
-        "//tools/idea/lib/ant/lib:ant-commons-logging",
-        "//tools/idea/lib/ant/lib:ant-commons-net",
-        "//tools/idea/lib/ant/lib:ant-jai",
-        "//tools/idea/lib/ant/lib:ant-javamail",
-        "//tools/idea/lib/ant/lib:ant-jdepend",
-        "//tools/idea/lib/ant/lib:ant-jmf",
-        "//tools/idea/lib/ant/lib:ant-jsch",
-        "//tools/idea/lib/ant/lib:ant-junit",
-        "//tools/idea/lib/ant/lib:ant-junit4",
-        "//tools/idea/lib/ant/lib:ant-junitlauncher",
-        "//tools/idea/lib/ant/lib:ant-launcher",
-        "//tools/idea/lib/ant/lib:ant-netrexx",
-        "//tools/idea/lib/ant/lib:ant-swing",
-        "//tools/idea/lib/ant/lib:ant-testutil",
-        "//tools/idea/lib/ant/lib:ant-xz",
-        "//tools/idea/lib/ant/lib:ant",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/lib/ant/lib:ant-antlr",
-        "//tools/idea/lib/ant/lib:ant-apache-bcel",
-        "//tools/idea/lib/ant/lib:ant-apache-bsf",
-        "//tools/idea/lib/ant/lib:ant-apache-log4j",
-        "//tools/idea/lib/ant/lib:ant-apache-oro",
-        "//tools/idea/lib/ant/lib:ant-apache-regexp",
-        "//tools/idea/lib/ant/lib:ant-apache-resolver",
-        "//tools/idea/lib/ant/lib:ant-apache-xalan2",
-        "//tools/idea/lib/ant/lib:ant-commons-logging",
-        "//tools/idea/lib/ant/lib:ant-commons-net",
-        "//tools/idea/lib/ant/lib:ant-jai",
-        "//tools/idea/lib/ant/lib:ant-javamail",
-        "//tools/idea/lib/ant/lib:ant-jdepend",
-        "//tools/idea/lib/ant/lib:ant-jmf",
-        "//tools/idea/lib/ant/lib:ant-jsch",
-        "//tools/idea/lib/ant/lib:ant-junit",
-        "//tools/idea/lib/ant/lib:ant-junit4",
-        "//tools/idea/lib/ant/lib:ant-junitlauncher",
-        "//tools/idea/lib/ant/lib:ant-launcher",
-        "//tools/idea/lib/ant/lib:ant-netrexx",
-        "//tools/idea/lib/ant/lib:ant-swing",
-        "//tools/idea/lib/ant/lib:ant-testutil",
-        "//tools/idea/lib/ant/lib:ant-xz",
-        "//tools/idea/lib/ant/lib:ant",
-    ],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "Guava",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -178,14 +118,6 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
     # do not sort: must match IML order
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "org.codehaus.groovy_groovy",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy/2.5.11:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy/2.5.11:jar"],
 )
 
 # managed by go/iml_to_build
