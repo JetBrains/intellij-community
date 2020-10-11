@@ -52,7 +52,7 @@ fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String)
  * This function prevents evaluation of constant expressions inside attributes,
  * because this evaluation may trigger a recursion within the `TransformationContext`
  */
-private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String): List<String>? =
+private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String): List<String> =
   anno.findAttributeValue(attributeName)?.getArrayValue(GrAnnotationUtil::getString) ?: emptyList()
 
 
@@ -91,7 +91,8 @@ data class AffectedMembersCache internal constructor(private val order: List<Psi
 
 fun getAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache = CachedValuesManager.getCachedValue(annotation) {
   val cache = computeAffectedMembersCache(annotation)
-  CachedValueProvider.Result(cache, annotation)
+  val affectedMembers = cache.getAllAffectedMembers()
+  CachedValueProvider.Result(cache, annotation, *affectedMembers.toTypedArray())
 }
 
 private fun computeAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache {
