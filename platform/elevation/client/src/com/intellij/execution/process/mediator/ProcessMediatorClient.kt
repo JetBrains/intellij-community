@@ -10,7 +10,10 @@ import com.intellij.execution.process.mediator.util.childSupervisorScope
 import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -86,20 +89,20 @@ class ProcessMediatorClient(
       .setPid(pid)
       .setFd(fd)
       .build()
-    val requests = flow {
-      val handleRequest = WriteStreamRequest.newBuilder()
-        .setHandle(handle)
-        .build()
-      emit(handleRequest)
+    val handleRequest = WriteStreamRequest.newBuilder()
+      .setHandle(handle)
+      .build()
 
-      emitAll(chunkFlow.map { buffer ->
-        val chunk = DataChunk.newBuilder()
-          .setBuffer(buffer)
-          .build()
-        WriteStreamRequest.newBuilder()
-          .setChunk(chunk)
-          .build()
-      })
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    val requests = chunkFlow.map { buffer ->
+      val chunk = DataChunk.newBuilder()
+        .setBuffer(buffer)
+        .build()
+      WriteStreamRequest.newBuilder()
+        .setChunk(chunk)
+        .build()
+    }.onStart {
+      emit(handleRequest)
     }
     return ExceptionAsStatus.unwrap {
       stub.writeStream(requests)
