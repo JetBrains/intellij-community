@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -39,8 +40,11 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -49,9 +53,11 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 
@@ -544,13 +550,31 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     ProcessTerminatedListener.attach(processHandler)
     consoleView.attachToProcess(processHandler)
 
-    val contentManager = BuildContentManager.getInstance(environment.project)
-    contentManager.addTabbedContent(consoleView.component,
-                                    ExecutionBundle.message("tab.group.id.targets"),
-                                    ExecutionBundle.message("tab.title.prepare.environment", targetName,
-                                                            environment.runProfile.name),
-                                    environment.runProfile.icon, consoleView)
-    contentManager.orCreateToolWindow.activate(null)
+    val component = TargetPrepareComponent(consoleView)
+    val buildContentManager = BuildContentManager.getInstance(environment.project)
+    val contentName = ExecutionBundle.message("tab.title.prepare.environment", targetName, environment.runProfile.name)
+    val toolWindow = buildContentManager.orCreateToolWindow
+    val contentManager: ContentManager = toolWindow.contentManager
+    val contentImpl = ContentImpl(component, contentName, true)
+    contentImpl.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
+    contentImpl.icon = environment.runProfile.icon
+
+    for (content in contentManager.contents) {
+      if (contentName != content.displayName) continue
+      if (content.isPinned) continue
+
+      val contentComponent = content.component
+      if (contentComponent !is TargetPrepareComponent) continue
+
+
+      if (contentComponent.isPreparationFinished()) {
+        contentManager.removeContent(content, true)
+      }
+    }
+
+    contentManager.addContent(contentImpl)
+    contentManager.setSelectedContent(contentImpl)
+    toolWindow.activate(null)
 
     val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -575,6 +599,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       finally {
         val exitCode = if (promise.isSucceeded) 0 else -1
         processHandler.notifyProcessTerminated(exitCode)
+        component.setPreparationFinished()
       }
     }
     return promise
@@ -857,4 +882,19 @@ private class ProcessExecutionListener(private val project: Project,
 
 private data class InProgressEntry(val executorId: String, val runnerId: String)
 
-private data class RunningConfigurationEntry(val descriptor: RunContentDescriptor, val settings: RunnerAndConfigurationSettings?, val executor: Executor)
+private data class RunningConfigurationEntry(val descriptor: RunContentDescriptor,
+                                             val settings: RunnerAndConfigurationSettings?,
+                                             val executor: Executor)
+
+private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()) {
+  init {
+    add(console.component, BorderLayout.CENTER)
+  }
+
+  @Volatile
+  private var finished = false
+  fun isPreparationFinished() = finished
+  fun setPreparationFinished() {
+    finished = true
+  }
+}
