@@ -92,24 +92,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "hamcrest",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
-    # do not sort: must match IML order
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "sqlite",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.21.0.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.21.0.1:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "jetbrains-annotations-java5",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/19.0.0:jar"],
