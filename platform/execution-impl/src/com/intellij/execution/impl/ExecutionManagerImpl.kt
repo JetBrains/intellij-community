@@ -550,6 +550,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                                     ExecutionBundle.message("tab.title.prepare.environment", targetName,
                                                             environment.runProfile.name),
                                     environment.runProfile.icon, consoleView)
+    contentManager.orCreateToolWindow.activate(null)
 
     val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
