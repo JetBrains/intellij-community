@@ -84,26 +84,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "kotlin-stdlib-jdk8",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.4.10:jar",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.4.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.4.10:jar",
-    ],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "ASM",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/8.0.1:jar"],
