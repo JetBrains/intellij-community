@@ -5,10 +5,7 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.codeInsight.actions.ReaderMode.*
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -65,7 +62,7 @@ enum class ReaderMode {
   LIBRARIES, READ_ONLY, LIBRARIES_AND_READ_ONLY
 }
 
-@State(name = "ReaderModeSettings", storages = [Storage("editor.xml")])
+@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
   companion object {
     @JvmStatic
