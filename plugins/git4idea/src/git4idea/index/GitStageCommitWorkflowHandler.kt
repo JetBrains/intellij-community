@@ -41,6 +41,7 @@ class GitStageCommitWorkflowHandler(
     }
 
   override fun updateWorkflow() {
+    workflow.trackerState = state
     workflow.commitState = GitStageCommitState(state.stagedRoots, getCommitMessage())
   }
 

@@ -3,6 +3,7 @@ package git4idea.index
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,11 +16,16 @@ import git4idea.checkin.GitRepositoryCommitter
 import git4idea.checkin.isPushAfterCommit
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepository
+import git4idea.util.GitFileUtils.addPaths
 
 internal class GitStageCommitState(val roots: Collection<VirtualFile>, val commitMessage: String)
 
-internal class GitStageCommitter(project: Project, private val commitState: GitStageCommitState, commitContext: CommitContext) :
-  AbstractCommitter(project, emptyList(), commitState.commitMessage, commitContext) {
+internal class GitStageCommitter(
+  project: Project,
+  private val commitState: GitStageCommitState,
+  private val toStage: Map<VirtualFile, Collection<FilePath>>,
+  commitContext: CommitContext
+) : AbstractCommitter(project, emptyList(), commitState.commitMessage, commitContext) {
 
   val successfulRepositories = mutableSetOf<GitRepository>()
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
@@ -27,8 +33,12 @@ internal class GitStageCommitter(project: Project, private val commitState: GitS
   override fun commit() {
     for (root in commitState.roots) {
       try {
-        val repository = getRepositoryForFile(project, root)
+        val toStageInRoot = toStage[root]
+        if (toStageInRoot?.isNotEmpty() == true) {
+          addPaths(project, root, toStageInRoot)
+        }
 
+        val repository = getRepositoryForFile(project, root)
         commitRepository(repository)
         successfulRepositories.add(repository)
       }
