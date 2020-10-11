@@ -301,8 +301,7 @@ public final class FoldingUpdate {
     if (range1.equals(range2)) return true;
     if (range1.contains(range2) || range2.contains(range1)) return false;
 
-    TextRange intersection = range1.intersection(range2);
-    return intersection != null && !intersection.isEmpty();
+    return range1.intersectsStrict(range2);
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,
