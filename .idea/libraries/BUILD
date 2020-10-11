@@ -63,11 +63,3 @@ java_library(
         "//prebuilts/tools/common/m2/repository/com/google/j2objc/j2objc-annotations/1.3:jar",
     ],
 )
-
-# managed by go/iml_to_build
-java_library(
-    name = "javax.activation",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/sun/activation/javax.activation/1.2.0:jar"],
-)
