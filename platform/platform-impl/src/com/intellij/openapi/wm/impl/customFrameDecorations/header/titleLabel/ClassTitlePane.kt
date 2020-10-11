@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import java.awt.Component
 
-class ClassTitlePane : ClippingTitle() {
+internal class ClassTitlePane : ClippingTitle() {
   var fullPath: Boolean = true
   var project: Project? = null
   var classPath: String = ""

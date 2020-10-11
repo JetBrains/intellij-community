@@ -102,9 +102,16 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   init {
-    val application = ApplicationManager.getApplication()
-    if (!application.isUnitTestMode) {
-      Disposer.register(application, Disposable { disposeRootFrame() })
+    val app = ApplicationManager.getApplication()
+    if (!app.isUnitTestMode) {
+      Disposer.register(app, Disposable { disposeRootFrame() })
+      app.messageBus.connect().subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
+        override fun configurationChanged() {
+          for (frameHelper in projectToFrame.values) {
+            frameHelper.updateTitle()
+          }
+        }
+      })
     }
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
   }

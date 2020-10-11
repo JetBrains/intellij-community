@@ -75,8 +75,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   private IdeFrameImpl frame;
 
-  private List<TitleInfoProvider> titleInfoExtensions;
-
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     this.frame = frame;
     this.selfie = selfie;
@@ -107,8 +105,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void preInit() {
-    updateTitle();
-
     myRootPane = createIdeRootPane();
     frame.setRootPane(myRootPane);
     // NB!: the root pane must be set before decorator,
@@ -269,7 +265,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myRootPane.findByName(key);
   }
 
-  private void updateTitle() {
+  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
+    return TitleInfoProvider.EP.getExtensionList();
+  }
+
+  void updateTitle() {
     if (isUpdatingTitle) {
       return;
     }
@@ -277,16 +277,17 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     isUpdatingTitle = true;
     try {
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
-        File ioFile = currentFile != null ? currentFile.toFile() : null;
+        File ioFile = currentFile == null ? null : currentFile.toFile();
         frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
       StringBuilder builder = new StringBuilder();
       appendTitlePart(builder, myTitle);
       appendTitlePart(builder, fileTitle);
-      if (titleInfoExtensions != null && !titleInfoExtensions.isEmpty()) {
+      List<TitleInfoProvider> titleInfoProviders = getTitleInfoProviders();
+      if (!titleInfoProviders.isEmpty()) {
         assert project != null;
-        for (TitleInfoProvider extension : titleInfoExtensions) {
+        for (TitleInfoProvider extension : titleInfoProviders) {
           if (extension.isActive(project)) {
             String it = extension.getValue(project);
             if (!it.isEmpty()) {
@@ -369,18 +370,12 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     installDefaultProjectStatusBarWidgets(project);
-    initTitleInfoProviders(project);
+    updateTitle();
     if (selfie != null) {
       StartupManager.getInstance(project).runAfterOpened(() -> {
         selfie = null;
       });
     }
-  }
-
-  protected void initTitleInfoProviders(@NotNull Project project) {
-    titleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
-      updateTitle();
-    });
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {

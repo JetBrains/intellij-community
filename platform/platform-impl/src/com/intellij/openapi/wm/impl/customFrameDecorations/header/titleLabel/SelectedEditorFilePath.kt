@@ -40,7 +40,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
-open class SelectedEditorFilePath {
+internal open class SelectedEditorFilePath {
   var onBoundsChanged: (() -> Unit)? = null
   private val classKey = "ide.borderless.tab.caption.in.title"
   private val projectTitle = ProjectTitlePane()
@@ -157,64 +157,62 @@ open class SelectedEditorFilePath {
   private var simpleExtensions: List<TitleInfoProvider>? = null
 
   protected open fun installListeners() {
-    project ?: return
+    val project = project ?: return
 
     if (disposable != null) {
       unInstallListeners()
     }
 
-    project?.let { project ->
-      val disp = Disposable {
-        disposable = null
-        HelpTooltip.dispose(label)
-      }
-
-      Disposer.register(project, disp)
-      disposable = disp
-
-      val busConnection = project.messageBus.connect(disp)
-      busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
-        updateProjectPath()
-      })
-      Registry.get(classKey).addListener(registryListener, disp)
-
-      simpleExtensions = getProviders()
-      simplePaths = simpleExtensions?.map { ex ->
-        val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
-        ex.addUpdateListener(project) {
-          partTitle.active = it.isActive(project)
-          partTitle.longText = it.getValue(project)
-
-          update()
-        }
-        partTitle
-      }
-
-      val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
-      simplePaths?.let { shrinkingPaths.addAll(it) }
-      components = shrinkingPaths
-      updateTitlePaths()
-
-      busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          updatePathLater()
-        }
-
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          updatePathLater()
-        }
-
-        override fun selectionChanged(event: FileEditorManagerEvent) {
-          updatePathLater()
-        }
-      })
-
-      busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: List<VFileEvent>) {
-          updatePathLater()
-        }
-      })
+    val disp = Disposable {
+      disposable = null
+      HelpTooltip.dispose(label)
     }
+
+    Disposer.register(project, disp)
+    disposable = disp
+
+    val busConnection = project.messageBus.connect(disp)
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      updateProjectPath()
+    })
+    Registry.get(classKey).addListener(registryListener, disp)
+
+    simpleExtensions = getProviders()
+    simplePaths = simpleExtensions?.map { titleInfoProvider ->
+      val partTitle = DefaultPartTitle(titleInfoProvider.borderlessPrefix, titleInfoProvider.borderlessSuffix)
+      titleInfoProvider.addUpdateListener(project) {
+        partTitle.active = it.isActive(project)
+        partTitle.longText = it.getValue(project)
+
+        update()
+      }
+      partTitle
+    }
+
+    val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
+    simplePaths?.let { shrinkingPaths.addAll(it) }
+    components = shrinkingPaths
+    updateTitlePaths()
+
+    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        updatePathLater()
+      }
+
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        updatePathLater()
+      }
+
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        updatePathLater()
+      }
+    })
+
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        updatePathLater()
+      }
+    })
 
     updateProject()
     updatePath()

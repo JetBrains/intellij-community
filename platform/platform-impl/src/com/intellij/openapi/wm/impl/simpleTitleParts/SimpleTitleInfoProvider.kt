@@ -27,6 +27,7 @@ abstract class SimpleTitleInfoProvider(val option: TitleInfoOption) : TitleInfoP
 
   private fun updateNotify() {
     updateListeners.forEach { it(this) }
+    TitleInfoProvider.fireConfigurationChanged()
   }
 
   override fun isActive(project: Project) = isEnabled()

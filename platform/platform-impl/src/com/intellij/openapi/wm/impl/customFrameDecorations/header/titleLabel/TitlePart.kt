@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
-interface TitlePart {
+internal interface TitlePart {
   enum class State {
     LONG,
     MIDDLE,
@@ -26,11 +26,11 @@ interface TitlePart {
   fun getShort(): String
 }
 
-interface BaseTitlePart : TitlePart {
+internal interface BaseTitlePart : TitlePart {
   var longText: String
   var shortText: String
 }
 
-interface ShrinkingTitlePart : TitlePart {
+internal interface ShrinkingTitlePart : TitlePart {
   fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String
 }

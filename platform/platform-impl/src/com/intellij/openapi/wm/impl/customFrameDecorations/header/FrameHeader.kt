@@ -20,7 +20,7 @@ import javax.swing.JFrame
 import javax.swing.JPopupMenu
 import javax.swing.JSeparator
 
-open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
+internal open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"), AllIcons.Windows.MinimizeSmall) { iconify() }
     private val myRestoreAction: Action = CustomFrameAction(CommonBundle.message("button.without.mnemonic.restore"), AllIcons.Windows.RestoreSmall) { restore() }
     private val myMaximizeAction: Action = CustomFrameAction(IdeBundle.message("action.maximize.text"), AllIcons.Windows.MaximizeSmall) { maximize() }

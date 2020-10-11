@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
@@ -15,7 +15,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class CustomDecorationTitle(val frame: JFrame): CustomHeaderTitle {
+internal class CustomDecorationTitle(val frame: JFrame): CustomHeaderTitle {
   override var onBoundsChanged: (() -> Unit)? = null
   private var mySelectedEditorFilePath: CustomDecorationPath? = null
   private var active = false

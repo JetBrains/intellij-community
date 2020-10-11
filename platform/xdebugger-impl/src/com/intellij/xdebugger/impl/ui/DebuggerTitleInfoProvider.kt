@@ -23,6 +23,7 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
       ProjectManager.getInstance().openProjects.forEach {
         updateSubscriptions(it)
       }
+      updateNotify()
     }
   }
 
@@ -34,6 +35,7 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
   override fun addUpdateListener(project: Project, value: (provider: TitleInfoProvider) -> Unit) {
     updateListeners.add(value)
     updateSubscriptions(project)
+    updateNotify()
   }
 
   private fun isEnabled(): Boolean {
@@ -42,6 +44,7 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
 
   private fun updateNotify() {
     updateListeners.forEach { it(this) }
+    TitleInfoProvider.fireConfigurationChanged()
   }
 
   override fun isActive(project: Project): Boolean {
@@ -67,8 +70,6 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
     else if (disposable == null) {
       helper.subscriptionDisposable = helper.addSubscription(this)
     }
-
-    updateNotify()
   }
 
   @Service

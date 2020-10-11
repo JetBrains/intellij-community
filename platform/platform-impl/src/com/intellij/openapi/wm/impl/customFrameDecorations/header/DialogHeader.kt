@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
@@ -6,12 +6,14 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
-import java.awt.*
+import java.awt.Dialog
+import java.awt.Window
 import java.beans.PropertyChangeListener
-import java.util.ArrayList
-import javax.swing.*
+import java.util.*
+import javax.swing.JLabel
+import javax.swing.UIManager
 
-class DialogHeader(val window: Window) : CustomHeader(window) {
+internal class DialogHeader(val window: Window) : CustomHeader(window) {
     private val titleLabel = JLabel().apply {
         border = LABEL_BORDER
     }
