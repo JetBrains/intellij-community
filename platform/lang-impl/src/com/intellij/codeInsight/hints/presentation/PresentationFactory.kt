@@ -41,10 +41,6 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
   }
-  private val offsetFromHalfTopProvider = object : InsetValueProvider {
-    override val top: Int
-      get() = textMetricsStorage.getFontMetrics(true).offsetFromTop() / 2
-  }
 
   @Contract(pure = true)
   override fun smallText(text: String): InlayPresentation {
@@ -117,28 +113,31 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
 
-  /**
-   * Adds inlay background and rounding with insets.
-   * Intended to be used with Rider's [icon] or seq of [icon] and [smallText])
-   */
   @Contract(pure = true)
-  fun roundWithBackgroundForIcon(base: InlayPresentation): InlayPresentation {
+  fun roundWithBackgroundAndSmallInset(base: InlayPresentation): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
       InsetPresentation(
         base,
-        left = 4,
-        right = 4,
+        left = 3,
+        right = 3,
         top = 0,
         down = 0
       ),
       8,
       8
     ))
-    return DynamicInsetPresentation(rounding, offsetFromHalfTopProvider)
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
 
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
+
+  @Contract(pure = true)
+  override fun smallScaledIcon(icon: Icon): InlayPresentation
+  {
+    val iconWithoutBox = InsetPresentation(ScaledIconPresentation(textMetricsStorage, true, icon, editor.component), top = 1, down = 1)
+    return withInlayAttributes(iconWithoutBox)
+  }
 
   @Contract(pure = true)
   fun folding(placeholder: InlayPresentation, unwrapAction: () -> InlayPresentation): InlayPresentation {

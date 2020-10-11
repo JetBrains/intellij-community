@@ -77,4 +77,7 @@ interface InlayPresentationFactory {
     val arcWidth: Int,
     val arcHeight: Int
   )
+
+  @Contract(pure = true)
+  fun smallScaledIcon(icon: Icon): InlayPresentation
 }
