@@ -432,8 +432,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     // convert report
     if (reportConverter != null) {
       try {
+        List<File> results = ContainerUtil.map2List(inspectionsResults, path -> path.toFile());
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
-                                ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
+                                results);
+        InspectResultsConsumer.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
 
