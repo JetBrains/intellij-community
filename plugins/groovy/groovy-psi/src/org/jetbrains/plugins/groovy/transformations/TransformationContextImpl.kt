@@ -7,6 +7,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
 import it.unimi.dsi.fastutil.Hash
@@ -15,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl
@@ -58,20 +60,59 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     result
   }
 
-  companion object {
-    @Suppress("ClassName")
-    private object AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY : Hash.Strategy<MethodSignature> {
-      override fun equals(a: MethodSignature?, b: MethodSignature?): Boolean = METHOD_PARAMETERS_ERASURE_EQUALITY.equals(a, b)
-
-      override fun hashCode(signature: MethodSignature?): Int {
-        // Modifiers should be processed with care in transformation context to avoid recursion issues.
-        // Standard hashCode() for MethodSignature contains computation of types' erasures,
-        // that sometimes queries modifiers of various PsiElements.
-        // The code which does that is buried deep in java packages, so to make everything simpler, hashCode here is weakened.
-        // It will increase number of collisions in case of different methods with equal names, but it is still consistent with equals().
-        return signature?.name?.hashCode() ?: 0
-      }
+  @Suppress("ClassName")
+  // Modifiers should be processed with care in transformation context to avoid recursion issues.
+  // This code re-creates erasures computation to properly handle modifier querying
+  private val AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY: Hash.Strategy<MethodSignature> = object : Hash.Strategy<MethodSignature> {
+    override fun equals(a: MethodSignature?, b: MethodSignature?): Boolean {
+      if (a === b) return true
+      return (a != null && b != null && a.parameterTypes.map { erase(it) } == b.parameterTypes.map { erase(it) })
     }
+
+    override fun hashCode(signature: MethodSignature?): Int {
+      return signature?.name?.hashCode() ?: 0
+    }
+  }
+
+  private fun erase(type: PsiType): PsiType? = type.accept(object : PsiTypeVisitor<PsiType?>() {
+
+    override fun visitType(type: PsiType): PsiType = type
+
+    override fun visitArrayType(arrayType: PsiArrayType): PsiType? = arrayType.componentType.accept(this)?.createArrayType()
+
+    override fun visitClassType(classType: PsiClassType): PsiType = eraseClassType(classType)
+
+    override fun visitDisjunctionType(disjunctionType: PsiDisjunctionType): PsiType? {
+      val lub = PsiTypesUtil.getLowestUpperBoundClassType(disjunctionType)
+      return lub?.run { eraseClassType(this) } ?: lub
+    }
+  })
+
+  private fun eraseClassType(type: PsiClassType): PsiClassType {
+    val factory = JavaPsiFacade.getElementFactory(project)
+
+    val clazz: PsiClass? = type.resolve()
+    return if (clazz != null) {
+      val erasureSubstitutor = PsiSubstitutor.createSubstitutor(typeParameters(clazz).map { it to null }.toMap())
+      factory.createType(clazz, erasureSubstitutor, type.languageLevel)
+    }
+    else {
+      return type
+    }
+  }
+
+  private fun typeParameters(owner: PsiTypeParameterListOwner): List<PsiTypeParameter?> {
+    val result: MutableList<PsiTypeParameter?> = mutableListOf()
+    var currentOwner: PsiTypeParameterListOwner? = owner
+    while (currentOwner != null) {
+      val typeParameters = currentOwner.typeParameters
+      result.addAll(typeParameters)
+      val modifierList = currentOwner.modifierList
+      if (modifierList is GrModifierList && hasModifierProperty(modifierList, PsiModifier.STATIC)) break
+      else if (modifierList != null && hasCodeModifierProperty(currentOwner, PsiModifier.STATIC)) break
+      currentOwner = currentOwner.containingClass
+    }
+    return result
   }
 
   override fun getCodeClass(): GrTypeDefinition = myCodeClass
