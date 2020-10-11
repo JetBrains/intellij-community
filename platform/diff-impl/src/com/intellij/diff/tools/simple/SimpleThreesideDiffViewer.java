@@ -313,6 +313,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected boolean isVisible(@NotNull ThreeSide side) {
+      if (side != myModifiedSide && side != mySourceSide) return false;
       if (!isEditable(myModifiedSide)) return false;
       return !isBothEditable() || side == mySourceSide;
     }
