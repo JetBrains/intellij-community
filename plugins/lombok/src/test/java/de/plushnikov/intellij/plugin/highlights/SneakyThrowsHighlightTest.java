@@ -6,8 +6,8 @@ package de.plushnikov.intellij.plugin.highlights;
 public class SneakyThrowsHighlightTest extends AbstractLombokHighlightsTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/sneakyThrows";
+  protected String getBasePath() {
+    return super.getBasePath() + "/sneakyThrows";
   }
 
   public void testSneakThrowsDoesntCatchCaughtException() {

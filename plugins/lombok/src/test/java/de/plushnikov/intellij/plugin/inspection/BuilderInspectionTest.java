@@ -8,8 +8,8 @@ import com.intellij.openapi.util.RecursionManager;
 public class BuilderInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/builder";
+  protected String getBasePath() {
+    return super.getBasePath() + "/"  + TEST_DATA_INSPECTION_DIRECTORY + "/builder";
   }
 
   @Override

@@ -4,8 +4,8 @@ import com.intellij.psi.PsiVariable;
 
 public class ReplaceVarWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
 
-  public ReplaceVarWithExplicitTypeIntentionAction() {
-    super(lombok.var.class);
+  public ReplaceVarWithExplicitTypeIntentionAction() throws ClassNotFoundException {
+    super(Class.forName("lombok.var"));
   }
 
   @Override

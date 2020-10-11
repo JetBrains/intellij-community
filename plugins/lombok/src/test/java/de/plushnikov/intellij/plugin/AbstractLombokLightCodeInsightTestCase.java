@@ -15,19 +15,14 @@ import java.io.IOException;
 public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
-  protected String getTestDataPath() {
-    return ".";
-  }
-
-  @Override
   protected String getBasePath() {
-    return "testData";
+    return "/plugins/lombok/testData";
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.getProjectDescriptor();
+    return LombokTestUtil.LOMBOK_DESCRIPTOR;
   }
 
   @Override
@@ -38,12 +33,12 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCo
   }
 
   protected void loadLombokLibrary() {
-    LombokTestUtil.loadLombokLibrary(myFixture.getProjectDisposable(), getModule());
+    myFixture.getProjectDisposable();
+    getModule();
   }
 
   protected PsiFile loadToPsiFile(String fileName) {
-    final String sourceFilePath = getBasePath() + "/" + fileName;
-    VirtualFile virtualFile = myFixture.copyFileToProject(sourceFilePath, fileName);
+    VirtualFile virtualFile = myFixture.copyFileToProject(fileName, fileName);
     myFixture.configureFromExistingVirtualFile(virtualFile);
     return myFixture.getFile();
   }

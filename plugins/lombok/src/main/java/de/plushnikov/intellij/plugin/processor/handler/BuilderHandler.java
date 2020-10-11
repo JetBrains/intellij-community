@@ -104,7 +104,7 @@ public class BuilderHandler {
       }
     );
 
-    return !anyBuilderDefaultAndSingulars.isPresent() || !anyBuilderDefaultWithoutInitializer.isPresent();
+    return anyBuilderDefaultAndSingulars.isEmpty() || anyBuilderDefaultWithoutInitializer.isEmpty();
   }
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
@@ -437,7 +437,7 @@ public class BuilderHandler {
 
   public Optional<PsiClass> createBuilderClassIfNotExist(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     PsiClass builderClass = null;
-    if (!getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).isPresent()) {
+    if (getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).isEmpty()) {
       builderClass = createBuilderClass(psiClass, psiMethod, psiAnnotation);
     }
     return Optional.ofNullable(builderClass);
@@ -525,7 +525,7 @@ public class BuilderHandler {
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
 
     Optional<PsiMethod> definedConstructor = Optional.ofNullable(psiMethod);
-    if (!definedConstructor.isPresent()) {
+    if (definedConstructor.isEmpty()) {
       final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
       definedConstructor = classConstructors.stream()
         .filter(m -> sameParameters(m.getParameterList().getParameters(), builderInfos))

@@ -6,8 +6,8 @@ import com.siyeh.ig.style.FieldMayBeFinalInspection;
 public class FieldMayBeFinalInspectionTest extends LombokInspectionTest {
 
   @Override
-  protected String getTestDataPath() {
-    return TEST_DATA_INSPECTION_DIRECTORY + "/canBeFinalInspection";
+  protected String getBasePath() {
+    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/canBeFinalInspection";
   }
 
   @Override

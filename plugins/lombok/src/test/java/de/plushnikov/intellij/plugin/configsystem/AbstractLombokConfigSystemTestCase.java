@@ -11,7 +11,7 @@ public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokP
     final String subPath = fullFileName.substring(0, lastIndexOf);
     final String fileName = fullFileName.substring(lastIndexOf + 1);
 
-    myFixture.copyFileToProject(getBasePath() + "/" + subPath + "/before/lombok.config", subPath + "/before/lombok.config");
+    myFixture.copyFileToProject(subPath + "/before/lombok.config", subPath + "/before/lombok.config");
 
     doTest(subPath + "/before/" + fileName, subPath + "/after/" + fileName);
   }

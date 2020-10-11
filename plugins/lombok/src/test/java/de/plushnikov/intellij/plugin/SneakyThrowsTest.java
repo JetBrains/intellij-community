@@ -1,18 +1,13 @@
 package de.plushnikov.intellij.plugin;
 
-import java.util.List;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 
 /**
@@ -140,10 +135,7 @@ public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
     assertEquals("Test.MyException", exceptions.get(0).getCanonicalText());
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdk.getInstance().createJdk("java 1.8", "lib/mockJDK-1.8", false);
-  }
+
 
   private PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createTestFile(body);

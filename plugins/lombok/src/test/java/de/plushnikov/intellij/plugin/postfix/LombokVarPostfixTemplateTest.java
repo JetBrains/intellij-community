@@ -21,8 +21,8 @@ public class LombokVarPostfixTemplateTest extends AbstractLombokLightCodeInsight
   }
 
   protected void doTest(String pathSuffix) {
-    myFixture.configureByFile(getBasePath() + pathSuffix + getTestName(true) + ".java");
+    myFixture.configureByFile( pathSuffix + getTestName(true) + ".java");
     myFixture.type('\t');
-    myFixture.checkResultByFile(getBasePath() + pathSuffix + getTestName(true) + "_after.java", true);
+    myFixture.checkResultByFile(pathSuffix + getTestName(true) + "_after.java", true);
   }
 }
