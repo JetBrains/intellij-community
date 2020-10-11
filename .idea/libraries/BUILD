@@ -102,14 +102,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "auto-value-annotations",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6.2:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6.2:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "sqlite",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.21.0.1:jar"],
