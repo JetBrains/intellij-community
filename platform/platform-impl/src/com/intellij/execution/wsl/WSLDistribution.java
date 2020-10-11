@@ -20,21 +20,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 
@@ -49,6 +47,7 @@ public class WSLDistribution {
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   public static final String UNC_PREFIX = "\\\\wsl$\\";
+  private static final String WSLENV = "WSLENV";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -226,8 +225,8 @@ public class WSLDistribution {
                                                            @NotNull WSLCommandLineOptions options) {
     logCommandLineBefore(commandLine, options);
     Path wslExe = findWslExe(options);
-    Function<String, String> quote = wslExe == null ? CommandLineUtil::posixQuote : Functions.id();
-    List<String> linuxCommand = buildLinuxCommand(commandLine, quote);
+    boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
+    List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
     if (options.isSudo()) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
@@ -260,28 +259,42 @@ public class WSLDistribution {
       });
     }
 
-    if (StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
-      prependCommand(linuxCommand, "cd", quote.fun(options.getRemoteWorkingDirectory()), "&&");
+    if (executeCommandInShell && StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
+      prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
+    }
+    if (executeCommandInShell) {
+      commandLine.getEnvironment().forEach((key, val) -> {
+        prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
+      });
+      commandLine.getEnvironment().clear();
+    }
+    else {
+      setWSLENV(commandLine);
     }
 
-    commandLine.getEnvironment().forEach((key, val) -> {
-      prependCommand(linuxCommand, "export", key + "=" + quote.fun(val), "&&");
-    });
-    commandLine.getEnvironment().clear();
-
     commandLine.getParametersList().clearAll();
+    String linuxCommandStr = StringUtil.join(linuxCommand, " ");
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
-      if (!options.isExecuteCommandInShell()) {
-        commandLine.addParameter("--exec");
+      if (options.isExecuteCommandInShell()) {
+        String scriptLinuxPath = createScriptAndGetLinuxPath(linuxCommandStr);
+        if (scriptLinuxPath != null) {
+          commandLine.addParameters("$SHELL", "-c", scriptLinuxPath);
+        }
+        else {
+          commandLine.addParameters("--exec", "/bin/bash", "-c", linuxCommandStr);
+        }
       }
-      commandLine.addParameters(linuxCommand);
+      else {
+        commandLine.addParameter("--exec");
+        commandLine.addParameters(linuxCommand);
+      }
     }
     else {
       commandLine.setExePath(getExecutablePath().toString());
       commandLine.addParameter(getRunCommandLineParameter());
-      commandLine.addParameter(StringUtil.join(linuxCommand, " "));
+      commandLine.addParameter(linuxCommandStr);
     }
 
     logCommandLineAfter(commandLine);
@@ -295,8 +308,7 @@ public class WSLDistribution {
                 commandLine.getCommandLineString() +
                 "; options: " +
                 options +
-                "; envs: " +
-                commandLine.getEnvironment().entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(", "))
+                "; envs: " + commandLine.getEnvironment()
       );
     }
   }
@@ -315,14 +327,41 @@ public class WSLDistribution {
     return null;
   }
 
-  private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, @NotNull Function<String, String> quote) {
-    List<String> command = ContainerUtil.prepend(commandLine.getParametersList().getList(), commandLine.getExePath());
-    // avoiding double wrapping into bash -c; may cause problems with escaping
-    if (command.size() == 3 && "bash".equals(command.get(0)) && "-c".equals(command.get(1))) {
-      command = ParametersListUtil.parse(command.get(2), true);
+  private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
+    List<String> command = ContainerUtil.concat(Collections.singletonList(commandLine.getExePath()), commandLine.getParametersList().getList());
+    return new ArrayList<>(ContainerUtil.map(command, executeCommandInShell ? CommandLineUtil::posixQuote : Functions.identity()));
+  }
+
+  private @Nullable String createScriptAndGetLinuxPath(@NotNull String scriptContent) {
+    File file;
+    try {
+      file = FileUtil.createTempFile("intellij-wsl-", ".sh", true);
+      FileUtil.writeToFile(file, scriptContent);
     }
-    command = ContainerUtil.map(command, quote);
-    return new ArrayList<>(command);
+    catch (IOException e) {
+      LOG.info("Cannot create script for WSL command", e);
+      return null;
+    }
+    return Objects.requireNonNull(getWslPath(file.getAbsolutePath()));
+  }
+
+  // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
+  private static void setWSLENV(@NotNull GeneralCommandLine commandLine) {
+    StringBuilder builder = new StringBuilder();
+    for (String envName : commandLine.getEnvironment().keySet()) {
+      if (StringUtil.isNotEmpty(envName)) {
+        if (builder.length() > 0) {
+          builder.append(":");
+        }
+        builder.append(envName).append("/u");
+      }
+    }
+    if (builder.length() > 0) {
+      String prevValue = commandLine.getParentEnvironment().get(WSLENV);
+      String value = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + builder
+                                       : builder.toString();
+      commandLine.getEnvironment().put(WSLENV, value);
+    }
   }
 
   protected @NotNull @NlsSafe String getRunCommandLineParameter() {
