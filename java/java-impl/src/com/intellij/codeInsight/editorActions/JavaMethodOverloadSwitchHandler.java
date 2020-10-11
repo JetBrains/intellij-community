@@ -4,7 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,7 +37,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION || 
-        !ParameterInfoController.existsForEditor(editor)) return false;
+        !ParameterInfoControllerBase.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -48,21 +48,21 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     if (exprList == null) return false;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
+    ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset);
     return controller != null && controller.isHintShown(false);
   }
 
   @Nullable
   private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return file != null ? ParameterInfoController.findArgumentList(file, offset, -1) : null;
+    return file != null ? ParameterInfoControllerBase.findArgumentList(file, offset, -1) : null;
   }
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
-        ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
+        ParameterInfoControllerBase.existsWithVisibleHintForEditor(editor, false)) {
       doSwitch(editor, caret == null ? editor.getCaretModel().getPrimaryCaret() : caret, project);
     }
   }
@@ -76,7 +76,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     PsiElement call = exprList.getParent();
     if (!(call instanceof PsiCall)) return;
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
+    ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset);
     if (controller == null || !controller.isHintShown(false)) return;
 
     Object[] objects = controller.getObjects();

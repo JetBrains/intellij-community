@@ -12,7 +12,7 @@ public interface ParameterInfoListener {
    * This method is invoked when parameter info hint content is updated (including first time show) and there are some signatures to show
    * @param result model describing signatures shown and current context
    */
-  void hintUpdated(@NotNull ParameterInfoController.Model result);
+  void hintUpdated(@NotNull ParameterInfoControllerBase.Model result);
 
   /**
    * This method is invoked when parameter info hint is hidden due to closing the hint, leaving parameters range area or because there are

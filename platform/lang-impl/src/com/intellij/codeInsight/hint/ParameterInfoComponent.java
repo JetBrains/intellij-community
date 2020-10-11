@@ -48,12 +48,6 @@ import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 @VisibleForTesting
 public class ParameterInfoComponent extends JPanel {
-  private Object[] myObjects;
-  private int myCurrentParameterIndex;
-
-  private PsiElement myParameterOwner;
-  private Object myHighlighted;
-  @NotNull private final ParameterInfoHandler myHandler;
 
   private final JPanel myMainPanel;
   private OneElementComponent[] myPanels;
@@ -82,6 +76,8 @@ public class ParameterInfoComponent extends JPanel {
     int endResult = Integer.compare(o2.getEndOffset(), o1.getEndOffset());
     return endResult == 0 ? Integer.compare(o1.getStartOffset(), o2.getStartOffset()) : endResult;
   };
+
+  private final ParameterInfoControllerData myParameterInfoControllerData;
   private final Editor myEditor;
   private final boolean myRequestFocus;
 
@@ -92,19 +88,23 @@ public class ParameterInfoComponent extends JPanel {
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
-    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
-    infoComponent.setCurrentParameterIndex(currentParameterIndex);
-    infoComponent.setParameterOwner(parameterOwner);
+    @SuppressWarnings("unchecked")
+    ParameterInfoControllerData dataObject = new ParameterInfoControllerData(handler);
+    dataObject.setDescriptors(objects);
+    dataObject.setCurrentParameterIndex(currentParameterIndex);
+    dataObject.setParameterOwner(parameterOwner);
+    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(dataObject, editor);
     return infoComponent.new MyParameterContext(false);
   }
 
-  private ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
-    this(objects, editor, handler, false, false);
+  private ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, Editor editor) {
+    this(parameterInfoControllerData, editor, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler,
+  ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, Editor editor,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
+    myParameterInfoControllerData = parameterInfoControllerData;
     myEditor = editor;
     myRequestFocus = requestFocus;
 
@@ -123,11 +123,8 @@ public class ParameterInfoComponent extends JPanel {
                 ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
                 : NORMAL_FONT.deriveFont(Font.BOLD);
 
-    myObjects = objects;
-
     setBackground(BACKGROUND);
 
-    myHandler = handler;
     myMainPanel = new JPanel(new GridBagLayout());
     setPanels();
 
@@ -145,13 +142,12 @@ public class ParameterInfoComponent extends JPanel {
 
     myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
     setShortcutLabel();
-    myCurrentParameterIndex = -1;
   }
 
   private void setPanels() {
     myMainPanel.removeAll();
-    myPanels = new OneElementComponent[myObjects.length];
-    for (int i = 0; i < myObjects.length; i++) {
+    myPanels = new OneElementComponent[myParameterInfoControllerData.getDescriptors().length];
+    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
       myPanels[i] = new OneElementComponent();
       myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
                                                           GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
@@ -164,7 +160,9 @@ public class ParameterInfoComponent extends JPanel {
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
     String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
-    if (!myAllowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() ||
+    if (!myAllowSwitchLabel ||
+        myParameterInfoControllerData.getDescriptors().length <= 1 ||
+        !myParameterInfoControllerData.getHandler().supportsOverloadSwitching() ||
         upShortcut.isEmpty() && downShortcut.isEmpty()) {
       myShortcutLabel = null;
     }
@@ -181,8 +179,7 @@ public class ParameterInfoComponent extends JPanel {
     }
   }
 
-  void setDescriptors(Object[] descriptors) {
-    myObjects = descriptors;
+  void fireDescriptorsWereSet() {
     setPanels();
     setShortcutLabel();
   }
@@ -207,15 +204,11 @@ public class ParameterInfoComponent extends JPanel {
       .collect(Collectors.joining("\n"));
   }
 
-  Object getHighlighted() {
-    return myHighlighted;
-  }
-
   class MyParameterContext implements ParameterInfoUIContextEx {
     private final boolean mySingleParameterInfo;
     private int i;
     private Function<? super String, String> myEscapeFunction;
-    private final ParameterInfoController.Model result = new ParameterInfoController.Model();
+    private final ParameterInfoControllerBase.Model result = new ParameterInfoControllerBase.Model();
 
     MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
@@ -248,8 +241,8 @@ public class ParameterInfoComponent extends JPanel {
           result.current = j;
         }
       }
-      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem(plainLine.toString(), strikeout, isDisabled,
-                                                                                             startOffsets, endOffsets);
+      ParameterInfoControllerBase.SignatureItem item = new ParameterInfoControllerBase.SignatureItem(plainLine.toString(), strikeout, isDisabled,
+                                                                                                     startOffsets, endOffsets);
       result.signatures.add(item);
 
       final String resultedText =
@@ -260,7 +253,7 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public void setupRawUIComponentPresentation(@NlsContexts.Label String htmlText) {
-      ParameterInfoController.RawSignatureItem item = new ParameterInfoController.RawSignatureItem(htmlText);
+      ParameterInfoControllerBase.RawSignatureItem item = new ParameterInfoControllerBase.RawSignatureItem(htmlText);
 
       result.current = getCurrentParameterIndex();
       result.signatures.add(item);
@@ -297,12 +290,12 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public int getCurrentParameterIndex() {
-      return myCurrentParameterIndex;
+      return myParameterInfoControllerData.getCurrentParameterIndex();
     }
 
     @Override
     public PsiElement getParameterOwner() {
-      return myParameterOwner;
+      return myParameterInfoControllerData.getParameterOwner();
     }
 
     @Override
@@ -316,7 +309,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private boolean isHighlighted() {
-      return myObjects[i].equals(myHighlighted);
+      return myParameterInfoControllerData.getDescriptors()[i].equals(myParameterInfoControllerData.getHighlighted());
     }
 
     @Override
@@ -325,25 +318,25 @@ public class ParameterInfoComponent extends JPanel {
     }
   }
 
-  ParameterInfoController.Model update(boolean singleParameterInfo) {
+  ParameterInfoControllerBase.Model update(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
-    for (int i = 0; i < myObjects.length; i++) {
+    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
       context.i = i;
-      final Object o = myObjects[i];
+      final Object o = myParameterInfoControllerData.getDescriptors()[i];
 
-      boolean isHighlighted = myObjects[i].equals(myHighlighted);
+      boolean isHighlighted = myParameterInfoControllerData.getDescriptors()[i].equals(myParameterInfoControllerData.getHighlighted());
       if (isHighlighted) {
         context.result.highlightedSignature = i;
       }
-      if (singleParameterInfo && myObjects.length > 1 && !context.isHighlighted()) {
+      if (singleParameterInfo && myParameterInfoControllerData.getDescriptors().length > 1 && !context.isHighlighted()) {
         setVisible(i, false);
       }
       else {
         setVisible(i, true);
-        //noinspection unchecked
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> myHandler.updateUI(o, context), DumbModeAccessType.RELIABLE_DATA_ONLY);
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context),
+                                                    DumbModeAccessType.RELIABLE_DATA_ONLY);
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {
@@ -365,10 +358,6 @@ public class ParameterInfoComponent extends JPanel {
     return context.result;
   }
 
-  Object[] getObjects() {
-    return myObjects;
-  }
-
   void setEnabled(int index, boolean enabled) {
     myPanels[index].setEnabled(enabled);
   }
@@ -379,26 +368,6 @@ public class ParameterInfoComponent extends JPanel {
 
   boolean isEnabled(int index) {
     return myPanels[index].isEnabled();
-  }
-
-  void setCurrentParameterIndex(int currentParameterIndex) {
-    myCurrentParameterIndex = currentParameterIndex;
-  }
-
-  int getCurrentParameterIndex() {
-    return myCurrentParameterIndex;
-  }
-
-  void setParameterOwner(PsiElement element) {
-    myParameterOwner = element;
-  }
-
-  PsiElement getParameterOwner() {
-    return myParameterOwner;
-  }
-
-  void setHighlightedParameter(Object element) {
-    myHighlighted = element;
   }
 
   private class OneElementComponent extends JPanel {
@@ -484,7 +453,7 @@ public class ParameterInfoComponent extends JPanel {
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
-    public @NlsContexts.Label String setup(final ParameterInfoController.Model result,
+    public @NlsContexts.Label String setup(final ParameterInfoControllerBase.Model result,
                         final String @NlsContexts.Label [] texts,
                         Function<? super String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
@@ -529,8 +498,8 @@ public class ParameterInfoComponent extends JPanel {
           line = new StringBuilder();
         }
       }
-      ParameterInfoController.SignatureItem item = new ParameterInfoController.SignatureItem(fullLine.toString(), false, false,
-                                                                                             startOffsets, endOffsets);
+      ParameterInfoControllerBase.SignatureItem item = new ParameterInfoControllerBase.SignatureItem(fullLine.toString(), false, false,
+                                                                                                     startOffsets, endOffsets);
       result.signatures.add(item);
       OneLineComponent component = getOneLineComponent(index);
       buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));

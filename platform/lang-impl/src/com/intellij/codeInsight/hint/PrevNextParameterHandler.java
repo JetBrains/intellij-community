@@ -42,7 +42,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (!ParameterInfoController.existsForEditor(editor)) return false;
+    if (!ParameterInfoControllerBase.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -51,8 +51,8 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     if (exprList == null) return false;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    return ParameterInfoController.findControllerAtOffset(editor, lbraceOffset) != null &&
-           ParameterInfoController.hasPrevOrNextParameter(editor, lbraceOffset, myIsNextParameterHandler);
+    return ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset) != null &&
+           ParameterInfoControllerBase.hasPrevOrNextParameter(editor, lbraceOffset, myIsNextParameterHandler);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     PsiElement exprList = getExpressionList(editor, offset, dataContext);
     if (exprList != null) {
       int listOffset = exprList.getTextRange().getStartOffset();
-      ParameterInfoController.prevOrNextParameter(editor, listOffset, myIsNextParameterHandler);
+      ParameterInfoControllerBase.prevOrNextParameter(editor, listOffset, myIsNextParameterHandler);
     }
   }
 
@@ -74,12 +74,12 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   @Nullable
   private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return file != null ? ParameterInfoController.findArgumentList(file, offset, -1) : null;
+    return file != null ? ParameterInfoControllerBase.findArgumentList(file, offset, -1) : null;
   }
 
   public static void commitDocumentsIfNeeded(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null && ParameterInfoController.existsForEditor(editor)) {
+    if (editor != null && ParameterInfoControllerBase.existsForEditor(editor)) {
       CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     }
   }

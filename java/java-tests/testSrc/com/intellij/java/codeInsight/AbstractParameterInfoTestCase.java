@@ -6,7 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -91,7 +91,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   }
 
   private void waitForParameterInfoUpdate() throws TimeoutException {
-    ParameterInfoController.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
+    ParameterInfoControllerBase.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
     waitForParameterInfo();
   }
 

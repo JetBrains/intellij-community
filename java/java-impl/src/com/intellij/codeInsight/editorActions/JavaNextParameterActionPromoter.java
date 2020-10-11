@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,16 +27,16 @@ public class JavaNextParameterActionPromoter implements ActionPromoter {
     Project project = context.getData(CommonDataKeys.PROJECT);
     Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return null;
-    if (!ParameterInfoController.existsForEditor(editor)) return null;
+    if (!ParameterInfoControllerBase.existsForEditor(editor)) return null;
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
     int caretOffset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiElement argumentList = ParameterInfoController.findArgumentList(file, caretOffset, -1);
+    PsiElement argumentList = ParameterInfoControllerBase.findArgumentList(file, caretOffset, -1);
     if (argumentList == null) return null;
     int lbraceOffset = argumentList.getTextRange().getStartOffset();
-    if (ParameterInfoController.findControllerAtOffset(editor, lbraceOffset) == null) return null;
+    if (ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset) == null) return null;
     int rbraceOffset = argumentList.getTextRange().getEndOffset() - 1;
     if (caretOffset > rbraceOffset ||
         !CharArrayUtil.containsOnlyWhiteSpaces(document.getImmutableCharSequence().subSequence(caretOffset, rbraceOffset))) return null;
