@@ -335,7 +335,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     @NotNull
     @Override
     protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.diff.accept.text");
+      return SimpleThreesideDiffChange.getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
     }
 
     @Nullable

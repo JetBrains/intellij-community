@@ -24,7 +24,6 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -744,9 +743,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")));
-      getTemplatePresentation().setText(focusedSide.select(DiffBundle.message("action.presentation.diff.revert.text"),
-                                                           DiffBundle.message("action.presentation.diff.accept.text")));
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Revert, AllIcons.Actions.Checked));
+      getTemplatePresentation().setText(UnifiedDiffChangeUi.getApplyActionText(UnifiedDiffViewer.this, focusedSide));
+      getTemplatePresentation().setIcon(UnifiedDiffChangeUi.getApplyIcon(focusedSide));
     }
 
     @Override

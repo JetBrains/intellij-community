@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
@@ -117,4 +118,11 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<@Nls String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
   Key<@Nls String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
   Key<@Nls String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
+
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT = Key.create("Diff.Accept.Left.Base.Action.Text");
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Base.Left.Action.Text");
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT = Key.create("Diff.Accept.Right.Base.Action.Text");
+  Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Base.Right.Action.Text");
 }
