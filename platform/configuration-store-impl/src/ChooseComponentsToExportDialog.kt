@@ -66,7 +66,7 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String, onFileChosen: (VirtualFile) -> Unit) {
+fun chooseSettingsFile(initialPath: String?, parent: Component?, title: String, description: String, onFileChosen: (VirtualFile) -> Unit) {
   val chooserDescriptor = object: FileChooserDescriptor(true, true, true, true, false, false) {
     override fun isFileSelectable(file: VirtualFile?): Boolean {
       if (file?.isDirectory == true) {
@@ -80,18 +80,18 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   chooserDescriptor.title = title
   chooserDescriptor.withFileFilter { ConfigImportHelper.isSettingsFile(it) }
 
-  var initialDir: VirtualFile?
-  if (oldPath != null) {
-    val oldFile = File(oldPath)
-    initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
-    if (initialDir == null && oldFile.parentFile != null) {
-      initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile.parentFile)
+  FileChooser.chooseFile(chooserDescriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
+}
+
+private fun getFileOrParent(path: String?): VirtualFile? {
+  if (path != null) {
+    val oldFile = File(path)
+    val initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
+    return initialDir ?: oldFile.parentFile?.let {
+      LocalFileSystem.getInstance().findFileByIoFile(it)
     }
   }
-  else {
-    initialDir = null
-  }
-  FileChooser.chooseFile(chooserDescriptor, null, parent, initialDir, onFileChosen)
+  return null
 }
 
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
