@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
-
-  private val projectEntities: WorkspaceEntityStorageBuilder
-
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
 
@@ -35,41 +32,43 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
     log.debug { "Loading workspace model" }
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    when {
-      initialContent != null -> projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
+    val projectEntities = when {
+      initialContent != null -> initialContent
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
         val previousStorage: WorkspaceEntityStorage?
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()
         }
-        projectEntities = if (previousStorage != null) {
+        val storage = if (previousStorage != null) {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
-          WorkspaceEntityStorageBuilder.from(previousStorage)
+          previousStorage
         }
         else WorkspaceEntityStorageBuilder.create()
         activity.end()
+        storage
       }
-      else -> projectEntities = WorkspaceEntityStorageBuilder.create()
+      else -> WorkspaceEntityStorageBuilder.create()
     }
 
-    entityStorage = VersionedEntityStorageImpl(projectEntities.toStorage())
+    entityStorage = VersionedEntityStorageImpl((projectEntities as? WorkspaceEntityStorageBuilder)?.toStorage() ?: projectEntities)
   }
 
   override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    val before = projectEntities.toStorage()
-    val result = updater(projectEntities)
-    val changes = projectEntities.collectChanges(before)
-    projectEntities.resetChanges()
-    entityStorage.replace(projectEntities.toStorage(), changes, this::onBeforeChanged, this::onChanged)
+    val before = entityStorage.current
+    val builder = WorkspaceEntityStorageBuilder.from(before)
+    val result = updater(builder)
+    val changes = builder.collectChanges(before)
+    entityStorage.replace(builder.toStorage(), changes, this::onBeforeChanged, this::onChanged)
     return result
   }
 
   override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
-    val result = updater(projectEntities)
-    entityStorage.replaceSilently(projectEntities.toStorage())
+    val builder = WorkspaceEntityStorageBuilder.from(entityStorage.current)
+    val result = updater(builder)
+    entityStorage.replaceSilently(builder.toStorage())
     return result
   }
 
