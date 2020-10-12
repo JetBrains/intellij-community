@@ -128,8 +128,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
         catch (e: Throwable) {
           LOG.error("Unable to store project name", e)
         }
-
-        project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC).duringSave(project)
       }
     }
   }
