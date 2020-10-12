@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Date: 15.12.13 Time: 23:09
@@ -18,7 +19,7 @@ public abstract class BaseRefactorAction extends AnAction {
   protected abstract BaseRefactorHandler initHandler(Project project, DataContext dataContext);
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     boolean visible = isActionAvailable(e);
