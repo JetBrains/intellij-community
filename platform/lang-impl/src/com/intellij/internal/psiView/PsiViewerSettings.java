@@ -2,10 +2,7 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 @State(name = "PsiViewerSettings", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+@Service
 public final class PsiViewerSettings implements PersistentStateComponent<PsiViewerSettings> {
   public boolean showWhiteSpaces = true;
   public boolean showTreeNodes = true;
