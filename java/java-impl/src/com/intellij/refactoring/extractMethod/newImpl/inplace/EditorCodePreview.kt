@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
@@ -106,7 +107,7 @@ class EditorCodePreview(val editor: Editor): Disposable {
 
   private fun findLinesArea(editor: Editor, lines: IntRange): Rectangle {
     val visibleArea = editor.scrollingModel.visibleArea
-    val y = editor.visualLineToY(lines.first)
+    val y = editor.logicalPositionToXY(LogicalPosition(lines.first, 0)).y
     val height = lines.length * editor.lineHeight
     return Rectangle(visibleArea.x, y, visibleArea.width, height)
   }
