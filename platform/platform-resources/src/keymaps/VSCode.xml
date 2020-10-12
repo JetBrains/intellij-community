@@ -97,6 +97,7 @@
   <action id="CopyElement" />
   <action id="CopyPaths">
     <keyboard-shortcut first-keystroke="shift alt c" />
+    <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="p" />
   </action>
   <action id="DSM.ZoomIn">
     <keyboard-shortcut first-keystroke="ctrl add" />
@@ -498,7 +499,7 @@
   <action id="TagDocumentationNavigation" />
   <action id="TodoViewGroupByShowPackages" />
   <action id="ToggleBookmark" />
-  <action id="ToggleDistractionFreeMode">
+  <action id="ToggleZenMode">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="z" />
   </action>
   <action id="ToggleLineBreakpoint">
