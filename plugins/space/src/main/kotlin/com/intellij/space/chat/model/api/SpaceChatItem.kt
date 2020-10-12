@@ -3,12 +3,16 @@ package com.intellij.space.chat.model.api
 
 import circlet.client.api.CPrincipal
 import circlet.client.api.M2ItemContentDetails
+import circlet.m2.M2MessageEditingVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.KDateTime
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.codereview.timeline.TimelineItem
+import runtime.reactive.MutableProperty
 
 interface SpaceChatItem : TimelineItem {
+  val chat: M2ChannelVm
+
   val author: CPrincipal
 
   val text: @NlsSafe String
@@ -24,6 +28,18 @@ interface SpaceChatItem : TimelineItem {
   val link: String?
 
   val canDelete: Boolean
+
+  val isEdited: Boolean
+
+  val editingVm: MutableProperty<M2MessageEditingVm?>
+
+  val isEditing: MutableProperty<Boolean>
+
+  val canEdit: Boolean
+
+  fun startEditing()
+
+  fun stopEditing()
 
   suspend fun delete()
 }

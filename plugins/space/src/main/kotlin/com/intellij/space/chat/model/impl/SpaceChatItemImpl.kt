@@ -20,6 +20,7 @@ internal class SpaceChatItemImpl private constructor(
   override val thread: M2ChannelVm? = null
 ) : SpaceChatItem {
   private val record = messageVm.message
+  override val chat = messageVm.channelVm
   override val author: CPrincipal = record.author
   override val created: circlet.platform.api.KDateTime = record.created
   override val details: M2ItemContentDetails? = record.details
@@ -27,6 +28,21 @@ internal class SpaceChatItemImpl private constructor(
   override val canDelete: Boolean = messageVm.canDelete
 
   override val text: @NlsSafe String = record.text
+
+  override val editingVm = messageVm.editingVm
+  override val isEditing = messageVm.isEditing
+
+  override val canEdit = messageVm.canEdit
+
+  override val isEdited = record.edited != null
+
+  override fun startEditing() {
+    messageVm.startEditing()
+  }
+
+  override fun stopEditing() {
+    messageVm.stopEditing()
+  }
 
   override suspend fun delete() {
     messageVm.delete()

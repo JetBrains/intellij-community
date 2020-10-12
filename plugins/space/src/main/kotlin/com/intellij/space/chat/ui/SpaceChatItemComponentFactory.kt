@@ -13,6 +13,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
@@ -34,8 +35,12 @@ import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.util.ui.codereview.SingleValueModelImpl
+import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import icons.VcsCodeReviewIcons
@@ -99,7 +104,7 @@ internal class SpaceChatItemComponentFactory(
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
       titleSupplier = { parent -> createMessageTitle(parent, item) },
-      component
+      createEditableContent(component, item)
     )
   }
 
@@ -162,6 +167,49 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
+  private fun createEditableContent(content: JComponent, message: SpaceChatItem): JComponent {
+    val editingStateModel = SingleValueModelImpl(false)
+    message.isEditing.forEach(lifetime) { state ->
+      editingStateModel.value = state
+    }
+    val submittableModel = object : SubmittableTextFieldModelBase(message.text) {
+      override fun submit() {
+        val editingVm = message.editingVm.value
+        val newText = document.text
+        message.stopEditing()
+        if (editingVm != null) {
+          val id = editingVm.message.id
+          val chat = message.chat
+          if (newText.isBlank()) {
+            chat.deleteMessage(id)
+          }
+          else {
+            chat.alterMessage(id, newText)
+          }
+        }
+      }
+    }
+    return ToggleableContainer.create(editingStateModel, { content }, {
+      SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = {
+        message.stopEditing()
+        runWriteAction {
+          submittableModel.document.setText(message.text)
+        }
+      })
+    })
+  }
+
+  private fun createEditButton(message: SpaceChatItem): JComponent? {
+    if (!message.canEdit) {
+      return null
+    }
+    return InlineIconButton(AllIcons.General.Inline_edit, AllIcons.General.Inline_edit_hovered).apply {
+      actionListener = ActionListener {
+        message.startEditing()
+      }
+    }
+  }
+
   private fun createMessageTitle(parent: JComponent, message: SpaceChatItem): JComponent {
     val authorPanel = HtmlEditorPane().apply {
       setBody(createMessageAuthorChunk(message.author).bold().toString())
@@ -170,8 +218,14 @@ internal class SpaceChatItemComponentFactory(
       foreground = UIUtil.getContextHelpForeground()
       setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
     }
+    val editedPanel = JBLabel(" ${SpaceBundle.message("chat.message.edited.text")} ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+      isOpaque = true
+    }
     val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
       isOpaque = false
+      createEditButton(message)?.let { add(it) }
       createDeleteButton(message)?.let { add(it) }
     }
     makeVisibleOnHover(actionsPanel, parent)
@@ -179,6 +233,9 @@ internal class SpaceChatItemComponentFactory(
       isOpaque = false
       add(authorPanel)
       add(timePanel)
+      if (message.isEdited) {
+        add(editedPanel)
+      }
       add(actionsPanel)
       launch(lifetime, Ui) {
         delay(2000)
