@@ -25,6 +25,26 @@ public class StatementParser {
 
   private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
 
+  private static final TokenSet YIELD_EXPR_INDICATOR_TOKENS = TokenSet.create(
+    JavaTokenType.DOT, JavaTokenType.DOUBLE_COLON,
+    JavaTokenType.EQ, JavaTokenType.NE,
+    JavaTokenType.GT, JavaTokenType.GE, JavaTokenType.LT, JavaTokenType.LE,
+    // + and - may be prefix in yield, so they are not here
+    JavaTokenType.PLUSEQ,
+    JavaTokenType.MINUSEQ,
+    JavaTokenType.ASTERISK, JavaTokenType.ASTERISKEQ,
+    JavaTokenType.DIV, JavaTokenType.DIVEQ,
+    JavaTokenType.PERC, JavaTokenType.PERCEQ,
+    JavaTokenType.XOR, JavaTokenType.XOREQ,
+    JavaTokenType.OR, JavaTokenType.OREQ,
+    JavaTokenType.AND, JavaTokenType.ANDEQ,
+    JavaTokenType.LTLT, JavaTokenType.LTLTEQ,
+    JavaTokenType.GTGT, JavaTokenType.GTGTEQ,
+    JavaTokenType.GTGTGT, JavaTokenType.GTGTGTEQ,
+    JavaTokenType.QUEST,
+    JavaTokenType.LBRACKET
+  );
+
   private final JavaParser myParser;
 
   public StatementParser(@NotNull JavaParser javaParser) {
@@ -118,9 +138,7 @@ public class StatementParser {
     else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
       return parseBreakStatement(builder);
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER &&
-             PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14)) {
+    else if (isStmtYieldToken(builder, tokenType)) {
       return parseYieldStatement(builder);
     }
     else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
@@ -242,6 +260,19 @@ public class StatementParser {
     }
 
     return null;
+  }
+
+
+  private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
+    if (!(tokenType == JavaTokenType.IDENTIFIER &&
+        PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14))) {
+      return false;
+    }
+    IElementType next = builder.lookAhead(1);
+    if (YIELD_EXPR_INDICATOR_TOKENS.contains(next)) return false;
+    return !JavaTokenType.PLUSPLUS.equals(next) && !JavaTokenType.MINUSMINUS.equals(next) ||
+           !JavaTokenType.SEMICOLON.equals(builder.lookAhead(2));
   }
 
   private static void skipQualifiedName(PsiBuilder builder) {
