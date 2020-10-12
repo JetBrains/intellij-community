@@ -174,7 +174,7 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.generic.casts"), "generic casts",
                                 "( '_Type <'_GenericArgument+> ) '_Expr",
                                 getGenericsType(), JavaFileType.INSTANCE),
-      createLegacyConfiguration(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.type.var.substitutions.in.instanceof.with.generic.types"),
                                 "type var substitutions in intanceof with generic types",
                                 "'_Expr instanceof '_Type <'Substitutions+> ",
                                 getGenericsType(), JavaFileType.INSTANCE),
