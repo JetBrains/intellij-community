@@ -82,5 +82,7 @@ public abstract class SpeedSearchSupply {
    */
   public abstract void findAndSelectElement(@NotNull String searchQuery);
 
-  public abstract boolean isObjectFilteredOut(Object o);
+  public boolean isObjectFilteredOut(Object o) {
+    return false;
+  }
 }

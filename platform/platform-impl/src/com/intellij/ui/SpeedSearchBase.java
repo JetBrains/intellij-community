@@ -731,9 +731,4 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
     }
   }
-
-  @Override
-  public boolean isObjectFilteredOut(Object o) {
-    return false;
-  }
 }
