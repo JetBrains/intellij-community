@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
@@ -110,21 +111,18 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       text = GithubBundle.message("pull.request.info")
       sideComponent = createReturnToListSideComponent()
     }
+    val filesTabInfo = TabInfo(createFilesComponent()).apply {
+      text = GithubBundle.message("pull.request.files")
+      sideComponent = createReturnToListSideComponent()
+    }.also {
+      installFilesTabTitleUpdater(it)
+    }
     val commitsTabInfo = TabInfo(createCommitsComponent()).apply {
       text = GithubBundle.message("pull.request.commits")
       sideComponent = createReturnToListSideComponent()
+    }.also {
+      installCommitsTabTitleUpdater(it)
     }
-
-    val commitsTabTitleListener = object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        val commits = if (commitsLoadingModel.resultAvailable) commitsLoadingModel.result!! else null
-        val commitsCount = commits?.size
-        commitsTabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
-        else GithubBundle.message("pull.request.commits.count", commitsCount)
-      }
-    }
-    commitsLoadingModel.addStateChangeListener(commitsTabTitleListener)
-    commitsTabTitleListener.onLoadingCompleted()
 
     return object : SingleHeightTabs(project, uiDisposable) {
       override fun adjust(each: TabInfo?) {}
@@ -138,15 +136,16 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         }
       }
       addTab(infoTabInfo)
+      addTab(filesTabInfo)
       addTab(commitsTabInfo)
     }.also {
-      val controller = Controller(it, infoTabInfo, commitsTabInfo)
+      val controller = Controller(it, filesTabInfo, commitsTabInfo)
       UIUtil.putClientProperty(it, GHPRViewComponentController.KEY, controller)
     }
   }
 
   private inner class Controller(private val tabs: JBTabs,
-                                 private val infoTab: TabInfo,
+                                 private val filesTab: TabInfo,
                                  private val commitsTab: TabInfo) : GHPRViewComponentController {
     private val selectedChangesUpdater = SelectedChangesUpdater(dataProvider.diffController)
 
@@ -184,8 +183,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      tabs.select(infoTab, false)
-      val tree = ComponentUtil.getClientProperty(infoTab.component, CHANGES_TREE_KEY) ?: return
+      tabs.select(filesTab, false)
+      val tree = ComponentUtil.getClientProperty(filesTab.component, CHANGES_TREE_KEY) ?: return
       GHUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
@@ -203,25 +202,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun ChangesTree.selectChange(toSelect: Change) {
-    val rowInTree = findRowContainingChange(root, toSelect)
-    if (rowInTree == -1) return
-    setSelectionRow(rowInTree)
-    TreeUtil.showRowCentered(this, rowInTree, false)
-  }
-
-  private fun ChangesTree.findRowContainingChange(root: TreeNode, toSelect: Change): Int {
-    val targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find { node ->
-      node is DefaultMutableTreeNode && node.userObject?.let {
-        it is Change &&
-        it == toSelect &&
-        it.beforeRevision == toSelect.beforeRevision &&
-        it.afterRevision == toSelect.afterRevision
-      } ?: false
-    }
-    return if (targetNode != null) TreeUtil.getRowForNode(this, targetNode as DefaultMutableTreeNode) else -1
-  }
-
   private fun createReturnToListSideComponent(): JComponent {
     return ReturnToListComponent.createReturnToListSideComponent(GithubBundle.message("pull.request.back.to.list")) {
       viewController.viewList()
@@ -229,11 +209,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private fun createInfoComponent(): JComponent {
-    val splitter = OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
-      isOpaque = true
-      background = UIUtil.getListBackground()
-    }
-
     val detailsLoadingPanel = GHLoadingPanelFactory(detailsLoadingModel,
                                                     null, GithubBundle.message("cannot.load.details"),
                                                     detailsLoadingErrorHandler).createWithUpdatesStripe(uiDisposable) { _, model ->
@@ -250,27 +225,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }
-
-    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel, null,
-                                                    GithubBundle.message("cannot.load.changes"),
-                                                    changesLoadingErrorHandler)
-      .withContentListener {
-        val changesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
-        ComponentUtil.putClientProperty(splitter, CHANGES_TREE_KEY, changesTree)
-      }
-      .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"))
-      }.apply {
-        border = IdeBorderFactory.createBorder(SideBorder.TOP)
-      }
-    val toolbar = createChangesBrowserToolbar(changesLoadingPanel)
-    val changesBrowser = BorderLayoutPanel().andTransparent()
-      .addToTop(toolbar)
-      .addToCenter(changesLoadingPanel)
-
-    return splitter.apply {
-      firstComponent = detailsLoadingPanel
-      secondComponent = changesBrowser
+    return Wrapper(detailsLoadingPanel).apply {
+      isOpaque = true
+      background = UIUtil.getListBackground()
     }
   }
 
@@ -320,6 +277,50 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       firstComponent = commitsLoadingPanel
       secondComponent = changesBrowser
     }
+  }
+
+  private fun installCommitsTabTitleUpdater(tabInfo: TabInfo) {
+    val loadingListener = object : GHLoadingModel.StateChangeListener {
+      override fun onLoadingCompleted() {
+        val commits = if (commitsLoadingModel.resultAvailable) commitsLoadingModel.result!! else null
+        val commitsCount = commits?.size
+        tabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
+        else GithubBundle.message("pull.request.commits.count", commitsCount)
+      }
+    }
+    commitsLoadingModel.addStateChangeListener(loadingListener)
+    loadingListener.onLoadingCompleted()
+  }
+
+  private fun createFilesComponent(): JComponent {
+    val panel = BorderLayoutPanel().withBackground(UIUtil.getListBackground())
+    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel, null,
+                                                    GithubBundle.message("cannot.load.changes"),
+                                                    changesLoadingErrorHandler)
+      .withContentListener {
+        val changesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
+        ComponentUtil.putClientProperty(panel, CHANGES_TREE_KEY, changesTree)
+      }
+      .createWithUpdatesStripe(uiDisposable) { parent, model ->
+        createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"))
+      }.apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+      }
+    val toolbar = createChangesBrowserToolbar(changesLoadingPanel)
+    return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
+  }
+
+  private fun installFilesTabTitleUpdater(tabInfo: TabInfo) {
+    val loadingListener = object : GHLoadingModel.StateChangeListener {
+      override fun onLoadingCompleted() {
+        val changesProvider = if (changesLoadingModel.resultAvailable) changesLoadingModel.result!! else null
+        val changesCount = changesProvider?.changes?.size
+        tabInfo.text = if (changesCount == null) GithubBundle.message("pull.request.files")
+        else GithubBundle.message("pull.request.files.count", changesCount)
+      }
+    }
+    changesLoadingModel.addStateChangeListener(loadingListener)
+    loadingListener.onLoadingCompleted()
   }
 
   private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
@@ -422,5 +423,24 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   companion object {
     private val CHANGES_TREE_KEY = Key.create<ChangesTree>("CHANGES_TREE")
+
+    private fun ChangesTree.selectChange(toSelect: Change) {
+      val rowInTree = findRowContainingChange(root, toSelect)
+      if (rowInTree == -1) return
+      setSelectionRow(rowInTree)
+      TreeUtil.showRowCentered(this, rowInTree, false)
+    }
+
+    private fun ChangesTree.findRowContainingChange(root: TreeNode, toSelect: Change): Int {
+      val targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find { node ->
+        node is DefaultMutableTreeNode && node.userObject?.let {
+          it is Change &&
+          it == toSelect &&
+          it.beforeRevision == toSelect.beforeRevision &&
+          it.afterRevision == toSelect.afterRevision
+        } ?: false
+      }
+      return if (targetNode != null) TreeUtil.getRowForNode(this, targetNode as DefaultMutableTreeNode) else -1
+    }
   }
 }
