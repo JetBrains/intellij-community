@@ -5,6 +5,9 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import java.net.InetAddress
 import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import kotlin.system.exitProcess
 
 open class ProcessMediatorServerDaemon private constructor(private val server: Server) : ProcessMediatorDaemon {
@@ -12,12 +15,12 @@ open class ProcessMediatorServerDaemon private constructor(private val server: S
 
   init {
     server.start()
-    println("Started server on port $port")
+    System.err.println("Started server on port $port")
     Runtime.getRuntime().addShutdownHook(
       Thread {
-        println("*** shutting down gRPC server since JVM is shutting down")
+        System.err.println("*** shutting down gRPC server since JVM is shutting down")
         this@ProcessMediatorServerDaemon.stop()
-        println("*** server shut down")
+        System.err.println("*** server shut down")
       }
     )
   }
@@ -52,16 +55,26 @@ fun main(args: Array<String>) {
   if (args.size != 2) {
     die("Expected exactly two arguments")
   }
-  val host = args[0]
-  val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
 
   val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
+  val daemonPort = daemon.port.toString()
 
-  Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
-    socket.getOutputStream().writer(Charsets.UTF_8).use { writer ->
-      writer.write(daemon.port.toString())
-      writer.write("\n")
-      writer.flush()
+  when (args[0]) {
+    "--hello-port" -> {
+      val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
+      Socket(InetAddress.getLoopbackAddress(), port).getOutputStream().writer(Charsets.UTF_8).use { writer ->
+        writer.write(daemonPort)
+        writer.write("\n")
+        writer.flush()
+      }
+    }
+    "--hello-file" -> {
+      val helloFilePath = Path.of(args[1])
+      Files.newOutputStream(helloFilePath, StandardOpenOption.WRITE).writer(Charsets.UTF_8).use { writer ->
+        writer.write(daemonPort)
+        writer.write("\n")
+        writer.flush()
+      }
     }
   }
 

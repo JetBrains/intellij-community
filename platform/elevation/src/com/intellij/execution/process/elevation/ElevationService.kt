@@ -8,13 +8,12 @@ import com.intellij.execution.process.mediator.ProcessMediatorClient
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.BaseOutputReader
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
-
-private val LOG = logger<ElevationService>()
 
 @Service
 class ElevationService : Disposable {
@@ -25,7 +24,9 @@ class ElevationService : Disposable {
 
   private val elevatorClientLazy = SynchronizedClearableLazy {
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    val daemon = ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
+    val daemon = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+      ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
+    }, "Starting elevation daemon", true, null)
     val channel = daemon.createChannel()
     ProcessMediatorClient(coroutineScope, channel)
   }
@@ -38,7 +39,7 @@ class ElevationService : Disposable {
 
   fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
     val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).also {
-      LOG.debug("Created process PID ${it.pid()}")
+      ElevationLogger.LOG.debug("Created process PID ${it.pid()}")
     }
     return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
       override fun readerOptions(): BaseOutputReader.Options {

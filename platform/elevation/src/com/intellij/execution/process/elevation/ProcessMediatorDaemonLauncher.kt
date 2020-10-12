@@ -7,22 +7,16 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
-import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.progress.runSuspendingAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import java.io.File
-import java.io.IOException
 import java.net.InetAddress
-import java.net.ServerSocket
 import java.util.*
 
 private typealias Port = Int
@@ -31,46 +25,33 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 object ProcessMediatorDaemonLauncher {
-  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
-    val (idePort, daemonPortDeferred) = initCommunication()
-    val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-      .withParameters(LOOPBACK_IP, idePort.toString()).let {
-        if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
-      }
-    val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
-      addProcessListener(object : ProcessAdapter() {
-        override fun processTerminated(event: ProcessEvent) {
-          println("Daemon exited with code ${event.exitCode}")
+  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon = runSuspendingAction {
+    UnixFifoDaemonHelloIpc.create(this).use { helloIpc ->
+      val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+        .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+        .let(helloIpc::patchDaemonCommandLine)
+        .let {
+          if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
         }
 
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          print("Daemon [$outputType]: ${event.text}")
-        }
-      })
-    }
-    daemonProcessHandler.startNotify()
-    return ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonPortDeferred.blockingGet())
-  }
+      val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
+        addProcessListener(helloIpc)
+        addProcessListener(object : ProcessAdapter() {
+          override fun processTerminated(event: ProcessEvent) {
+            println("Daemon exited with code ${event.exitCode}")
+          }
 
-  private fun initCommunication(): Pair<Port, Deferred<Port>> {
-    val serverSocket = ServerSocket(0)
-    val daemonPortDeferred = GlobalScope.async(Dispatchers.IO) {
-      serverSocket.accept().use { socket ->
-        Scanner(socket.getInputStream().reader(Charsets.UTF_8)).use { scanner ->
-          try {
-            scanner.nextInt()
+          override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+            print("Daemon [$outputType]: ${event.text}")
           }
-          catch (e: NoSuchElementException) {
-            throw IOException(e)
-          }
-        }
+        })
       }
+      daemonProcessHandler.startNotify()
+
+      val daemonHello = helloIpc.consumeDaemonHello()
+
+      ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonHello.port)
     }
-    daemonPortDeferred.invokeOnCompletion {
-      serverSocket.close()
-    }
-    return serverSocket.localPort to daemonPortDeferred
   }
 }
 
