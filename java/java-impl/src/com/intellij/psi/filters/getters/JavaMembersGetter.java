@@ -67,7 +67,8 @@ public class JavaMembersGetter extends MembersGetter {
         JavaPsiFacade.getInstance(file.getProject()).findClass("java.nio.charset.StandardCharsets", file.getResolveScope());
       if (charsetsClass != null) {
         for (PsiField field : charsetsClass.getFields()) {
-          if (field.hasModifierProperty(PsiModifier.STATIC) && field.getType().equals(myExpectedType)) {
+          if (field.hasModifierProperty(PsiModifier.STATIC) &&
+              field.hasModifierProperty(PsiModifier.PUBLIC) && field.getType().equals(myExpectedType)) {
             LookupElement element = createFieldElement(field);
             if (element != null && field.getName().equals("UTF_8")) {
               element = PrioritizedLookupElement.withPriority(element, 1.0);
