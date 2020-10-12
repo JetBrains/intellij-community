@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -637,7 +638,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         leftConstraint = rightRange.plus(appliedRange, isLong);
         rightConstraint = leftRange.minus(appliedRange, isLong);
         break;
-      case REM:
+      case MOD:
         Long value = rightRange.getConstantValue();
         if (value != null) {
           leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
@@ -762,17 +763,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
     if (left instanceof DfaBinOpValue) {
       DfaBinOpValue sum = (DfaBinOpValue)left;
-      DfaBinOpValue.BinOp op = sum.getOperation();
-      if (op != DfaBinOpValue.BinOp.PLUS && op != DfaBinOpValue.BinOp.MINUS) return true;
+      LongRangeBinOp op = sum.getOperation();
+      if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
       LongRangeSet leftRange = DfLongType.extractRange(getDfType(sum.getLeft()));
       LongRangeSet rightRange = DfLongType.extractRange(getDfType(sum.getRight()));
       boolean isLong = PsiType.LONG.equals(sum.getType());
       LongRangeSet rightNegated = rightRange.negate(isLong);
-      LongRangeSet rightCorrected = op == DfaBinOpValue.BinOp.MINUS ? rightNegated : rightRange;
+      LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
       LongRangeSet resultRange = DfLongType.extractRange(getDfType(right));
       RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
-      if (op == DfaBinOpValue.BinOp.MINUS) {
+      if (op == LongRangeBinOp.MINUS) {
         long min = resultRange.min();
         long max = resultRange.max();
         if (min == 0 && max == 0) {
@@ -792,7 +793,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
         }
       }
-      if (op == DfaBinOpValue.BinOp.PLUS && RelationType.EQ == type &&
+      if (op == LongRangeBinOp.PLUS && RelationType.EQ == type &&
           !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
         // a+b == odd => a != b
         if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
@@ -800,16 +801,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ?
+          RelationType finalRelation = op == LongRangeBinOp.MINUS ?
                                        Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(sum.getRight().cond(finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0
-        if (op == DfaBinOpValue.BinOp.PLUS && areEqual(sum.getRight(), right)) {
+        if (op == LongRangeBinOp.PLUS && areEqual(sum.getRight(), right)) {
           if (!applyCondition(sum.getLeft().cond(correctedRelation, myFactory.getInt(0)))) return false;
         }
 
-        if (!leftRange.subtractionMayOverflow(op == DfaBinOpValue.BinOp.MINUS ? rightRange : rightNegated, isLong)) {
+        if (!leftRange.subtractionMayOverflow(op == LongRangeBinOp.MINUS ? rightRange : rightNegated, isLong)) {
           // a-positiveNumber >= b => a > b
           if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
             if (!applyLessThanRelation(right, sum.getLeft())) return false;
@@ -1121,8 +1122,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     LongRangeSet left = DfLongType.extractRange(getDfType(binOp.getLeft()));
     LongRangeSet right = DfLongType.extractRange(getDfType(binOp.getRight()));
     boolean isLong = PsiType.LONG.equals(binOp.getType());
-    LongRangeSet result = left.binOpFromToken(binOp.getTokenType(), right, isLong);
-    if (result != null && binOp.getOperation() == DfaBinOpValue.BinOp.MINUS) {
+    LongRangeBinOp op = binOp.getOperation();
+    LongRangeSet result = op.eval(left, right, isLong);
+    if (op == LongRangeBinOp.MINUS) {
       RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
         return result.without(0);
@@ -1136,7 +1138,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    if (binOp.getOperation() == DfaBinOpValue.BinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
+    if (op == LongRangeBinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
       return LongRangeSet.point(2).mul(left, isLong);
     }
     return result;

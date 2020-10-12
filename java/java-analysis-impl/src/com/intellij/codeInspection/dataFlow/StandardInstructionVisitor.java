@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -849,10 +850,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (instruction.isWidened()) {
         LongRangeSet leftRange = DfLongType.extractRange(memState.getDfType(dfaLeft));
         LongRangeSet rightRange = DfLongType.extractRange(memState.getDfType(dfaRight));
-        LongRangeSet range = leftRange.wideBinOpFromToken(opSign, rightRange, isLong);
-        if (range == null) {
-          range = LongRangeSet.all();
-        }
+        LongRangeBinOp op = LongRangeBinOp.fromToken(opSign);
+        LongRangeSet range = op == null ? LongRangeSet.all() : op.evalWide(leftRange, rightRange, isLong);
         result = runner.getFactory().fromDfType(rangeClamped(range, isLong));
       }
       else {

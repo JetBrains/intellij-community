@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
@@ -16,22 +16,38 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
- * Represents a value like "variable+var/const", "variable-var/const".
+ * Represents a value like "variable+var/const", "variable-var/const", or "variable % const".
  * Stored on the stack only (don't participate in equivalences)
  */
 public final class DfaBinOpValue extends DfaValue {
   private final @NotNull DfaVariableValue myLeft;
   private final @NotNull DfaValue myRight;
   private final boolean myLong;
-  private final BinOp myOp;
+  private final @NotNull LongRangeBinOp myOp;
 
-  private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, BinOp op) {
+  private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, @NotNull LongRangeBinOp op) {
     super(left.getFactory());
-    assert (right.getDfType() instanceof DfConstantType && op != BinOp.MINUS) ||
-           (right instanceof DfaVariableValue && op != BinOp.REM);
+    switch (op) {
+      case PLUS:
+        if (!(right.getDfType() instanceof DfConstantType) && !(right instanceof DfaVariableValue)) {
+          throw new IllegalArgumentException("RHO must be constant or variable for plus");
+        }
+        break;
+      case MINUS:
+        if (!(right instanceof DfaVariableValue)) {
+          throw new IllegalArgumentException("RHO must be variable for minus");
+        }
+        break;
+      case MOD:
+        if (!(right.getDfType() instanceof DfConstantType)) {
+          throw new IllegalArgumentException("RHO must be constant for mod");
+        }
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported op: " + op);
+    }
     myLeft = left;
     myRight = right;
     myLong = isLong;
@@ -48,9 +64,8 @@ public final class DfaBinOpValue extends DfaValue {
     return myRight;
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myLong ? PsiType.LONG : PsiType.INT;
   }
 
@@ -65,14 +80,14 @@ public final class DfaBinOpValue extends DfaValue {
     return myLeft.dependsOn(other) || myRight.dependsOn(other);
   }
 
-  public BinOp getOperation() {
+  public @NotNull LongRangeBinOp getOperation() {
     return myOp;
   }
 
   @Override
   public String toString() {
     String delimiter = myOp.toString();
-    if (myOp == BinOp.PLUS && myRight instanceof DfaTypeValue) {
+    if (myOp == LongRangeBinOp.PLUS && myRight instanceof DfaTypeValue) {
       long value = extractLong((DfaTypeValue)myRight);
       if (value < 0) {
         delimiter = "";
@@ -84,11 +99,11 @@ public final class DfaBinOpValue extends DfaValue {
   @NotNull
   public DfaValue tryReduceOnCast(DfaMemoryState state, PsiPrimitiveType type) {
     if (!TypeConversionUtil.isIntegralNumberType(type)) return this;
-    if ((myOp == BinOp.PLUS || myOp == BinOp.MINUS) &&
+    if ((myOp == LongRangeBinOp.PLUS || myOp == LongRangeBinOp.MINUS) &&
         DfLongType.extractRange(state.getDfType(myRight)).castTo(type).equals(LongRangeSet.point(0))) {
       return myLeft;
     }
-    if (myOp == BinOp.PLUS &&
+    if (myOp == LongRangeBinOp.PLUS &&
         DfLongType.extractRange(state.getDfType(myLeft)).castTo(type).equals(LongRangeSet.point(0))) {
       return myRight;
     }
@@ -99,46 +114,40 @@ public final class DfaBinOpValue extends DfaValue {
     return ((Number)((DfConstantType<?>)right.getDfType()).getValue()).longValue();
   }
 
-  @NotNull
-  public IElementType getTokenType() {
-    return myOp.getTokenType();
-  }
-
   public static class Factory {
     private final DfaValueFactory myFactory;
-    private final Map<Pair<Long, BinOp>, DfaBinOpValue> myValues = new HashMap<>();
+    private final Map<Pair<Long, LongRangeBinOp>, DfaBinOpValue> myValues = new HashMap<>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
     }
 
     public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, IElementType tokenType) {
-      if (tokenType == null) return myFactory.getUnknown();
-      BinOp op = BinOp.fromTokenType(tokenType);
-      if (op != null) {
-        DfaValue value = doCreate(left, right, state, isLong, op);
-        if (value != null) {
-          return value;
-        }
+      LongRangeBinOp op = LongRangeBinOp.fromToken(tokenType);
+      if (op == null) return myFactory.getUnknown();
+      DfaValue value = doCreate(left, right, state, isLong, op);
+      if (value != null) {
+        return value;
       }
       LongRangeSet leftRange = DfLongType.extractRange(state.getDfType(left));
       LongRangeSet rightRange = DfLongType.extractRange(state.getDfType(right));
-      if (tokenType.equals(JavaTokenType.ASTERISK)) {
+      if (op == LongRangeBinOp.MUL) {
         if (LongRangeSet.point(1).equals(leftRange)) return right;
         if (LongRangeSet.point(1).equals(rightRange)) return left;
       }
-      if (tokenType.equals(JavaTokenType.DIV)) {
+      if (op == LongRangeBinOp.DIV) {
         if (LongRangeSet.point(1).equals(rightRange)) return left;
       }
-      if (ExpressionParser.SHIFT_OPS.contains(tokenType)) {
+      if (op == LongRangeBinOp.SHL || op == LongRangeBinOp.SHR || op == LongRangeBinOp.USHR) {
         if (LongRangeSet.point(0).equals(rightRange)) return left;
       }
-      LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(tokenType, rightRange, isLong));
+      LongRangeSet result = op.eval(leftRange, rightRange, isLong);
       return myFactory.fromDfType(DfTypes.rangeClamped(result, isLong));
     }
 
     @Nullable
-    private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, BinOp op) {
+    private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, LongRangeBinOp op) {
+      if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS && op != LongRangeBinOp.MOD) return null;
       DfType leftDfType = state.getDfType(left);
       Number leftConst = DfConstantType.getConstantOfType(leftDfType, Number.class);
       if (leftConst != null) {
@@ -149,10 +158,10 @@ public final class DfaBinOpValue extends DfaValue {
       if (rightConst != null) {
         right = right.getFactory().fromDfType(rightDfType);
       }
-      if (op == BinOp.MINUS && state.areEqual(left, right)) {
+      if (op == LongRangeBinOp.MINUS && state.areEqual(left, right)) {
         return myFactory.getInt(0);
       }
-      if (op == BinOp.REM) {
+      if (op == LongRangeBinOp.MOD) {
         if (left instanceof DfaVariableValue && rightConst != null) {
           long divisor = rightConst.longValue();
           if (divisor > 1 && divisor <= Long.SIZE) {
@@ -161,12 +170,12 @@ public final class DfaBinOpValue extends DfaValue {
         }
         return null;
       }
-      if (leftConst != null && (right instanceof DfaVariableValue || right instanceof DfaBinOpValue) && op == BinOp.PLUS) {
+      if (leftConst != null && (right instanceof DfaVariableValue || right instanceof DfaBinOpValue) && op == LongRangeBinOp.PLUS) {
         return doCreate(right, left, state, isLong, op);
       }
       if (left instanceof DfaVariableValue) {
         if (right instanceof DfaVariableValue) {
-          if (op == BinOp.PLUS && right.getID() > left.getID()) {
+          if (op == LongRangeBinOp.PLUS && right.getID() > left.getID()) {
             return doCreate((DfaVariableValue)right, left, isLong, op);
           }
           return doCreate((DfaVariableValue)left, right, isLong, op);
@@ -174,20 +183,20 @@ public final class DfaBinOpValue extends DfaValue {
         if (rightConst != null) {
           long value = rightConst.longValue();
           if (value == 0) return left;
-          if (op == BinOp.MINUS) {
+          if (op == LongRangeBinOp.MINUS) {
             right = myFactory.fromDfType(isLong ? DfTypes.longValue(-value) : DfTypes.intValue(-(int)value));
           }
-          return doCreate((DfaVariableValue)left, right, isLong, BinOp.PLUS);
+          return doCreate((DfaVariableValue)left, right, isLong, LongRangeBinOp.PLUS);
         }
       }
       if (left instanceof DfaBinOpValue) {
         DfaBinOpValue sumValue = (DfaBinOpValue)left;
-        if (sumValue.getOperation() != BinOp.PLUS && sumValue.getOperation() != BinOp.MINUS) return null;
+        if (sumValue.getOperation() != LongRangeBinOp.PLUS && sumValue.getOperation() != LongRangeBinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {
             long value1 = extractLong((DfaTypeValue)sumValue.getRight());
             long value2 = rightConst.longValue();
-            if (op == BinOp.MINUS) {
+            if (op == LongRangeBinOp.MINUS) {
               value2 = -value2;
             }
             long res = value1 + value2;
@@ -195,7 +204,7 @@ public final class DfaBinOpValue extends DfaValue {
             return create(sumValue.getLeft(), right, state, isLong, JavaTokenType.PLUS);
           }
         }
-        if (op == BinOp.MINUS && sumValue.getOperation() == BinOp.PLUS) {
+        if (op == LongRangeBinOp.MINUS && sumValue.getOperation() == LongRangeBinOp.PLUS) {
           // a+b-a => b; a+b-b => a
           if (state.areEqual(right, sumValue.getLeft())) {
             return sumValue.getRight();
@@ -209,39 +218,10 @@ public final class DfaBinOpValue extends DfaValue {
     }
 
     @NotNull
-    private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, boolean isLong, BinOp op) {
+    private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, boolean isLong, LongRangeBinOp op) {
       long hash = ((isLong ? 1L : 0L) << 63) | ((long)left.getID() << 32) | right.getID();
-      Pair<Long, BinOp> key = Pair.create(hash, op);
+      Pair<Long, LongRangeBinOp> key = Pair.create(hash, op);
       return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, isLong, op));
-    }
-  }
-
-  public enum BinOp {
-    PLUS("+", JavaTokenType.PLUS), MINUS("-", JavaTokenType.MINUS), REM("%", JavaTokenType.PERC);
-
-    private final String mySign;
-    private final IElementType myTokenType;
-
-    BinOp(String sign, IElementType tokenType) {
-      mySign = sign;
-      myTokenType = tokenType;
-    }
-
-    IElementType getTokenType() {
-      return myTokenType;
-    }
-
-    @Nullable
-    public static BinOp fromTokenType(IElementType tokenType) {
-      if (PLUS.getTokenType() == tokenType) return PLUS;
-      if (MINUS.getTokenType() == tokenType) return MINUS;
-      if (REM.getTokenType() == tokenType) return REM;
-      return null;
-    }
-
-    @Override
-    public String toString() {
-      return mySign;
     }
   }
 }
