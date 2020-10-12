@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
@@ -274,7 +275,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
     void update(String group) {
       myGroup = group;
-      HtmlBuilder titleHtml = new HtmlBuilder().append(body().child(tag("h2").attr("style", "text-align:left;").addText(group)));
+      Element titleHtml = HtmlChunk.text(group).bold().wrapWith(HtmlChunk.html());
       myTitleLabel.setText(titleHtml.toString());
       myContentPanel.removeAll();
       List<IdSet> idSets = myPluginGroups.getSets(group);
