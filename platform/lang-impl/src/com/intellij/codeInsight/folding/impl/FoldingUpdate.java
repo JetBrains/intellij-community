@@ -251,7 +251,8 @@ public final class FoldingUpdate {
     Comparator<Language> preferBaseLanguage = Comparator.comparing((Language l) -> l != viewProvider.getBaseLanguage());
     List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
 
-    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+    boolean slashR = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
+    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence(), slashR, true) : null;
     List<RangeMarker> hardRefToRangeMarkers = new ArrayList<>();
 
     for (Language language : languages) {
