@@ -230,6 +230,8 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   }
 
   public void testExecutableEscaping() throws IOException {
+    assumeWSLAvailable();
+
     List<String> params = Arrays.asList("hello", "\\$(", "&", "`", "'test", "\"test\"");
     assertEchoOutput(createEchoScriptAndGetLinuxPath("my-echo"), params);
     assertEchoOutput(createEchoScriptAndGetLinuxPath("echo (1)"), params);
