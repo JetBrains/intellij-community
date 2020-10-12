@@ -10,9 +10,9 @@ import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.findAnnotationInstance
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
@@ -59,9 +59,7 @@ abstract class AnnotationTestFixtureBase(
             /* runAnnotators = */ true,
             /* batchMode = */ true
         ) as HighlightVisitor
-        // BACKCOMPAT: 2020.1. Use com.intellij.testFramework.ExtensionTestUtil.maskExtensions and drop suppress annotation
-        val ep = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getPoint(project) as ExtensionPointImpl<HighlightVisitor>
-        ep.maskAll(listOf(visitor), testRootDisposable, true)
+        ExtensionTestUtil.maskExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, listOf(visitor), testRootDisposable, true, project)
     }
 
     protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")
@@ -198,8 +196,6 @@ abstract class AnnotationTestFixtureBase(
 
     fun registerSeverities(severities: List<HighlightSeverity>) {
         val testSeverityProvider = TestSeverityProvider(severities)
-        // BACKCOMPAT: 2020.1
-        @Suppress("DEPRECATION")
-        SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(testSeverityProvider, testRootDisposable)
+        SeveritiesProvider.EP_NAME.point.registerExtension(testSeverityProvider, testRootDisposable)
     }
 }
