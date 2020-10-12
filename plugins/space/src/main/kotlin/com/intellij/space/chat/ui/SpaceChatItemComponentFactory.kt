@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
+import com.intellij.space.components.space
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
@@ -47,6 +48,7 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import org.jetbrains.annotations.Nls
 import runtime.Ui
+import runtime.reactive.awaitLoaded
 import java.awt.*
 import javax.swing.*
 
@@ -155,34 +157,40 @@ internal class SpaceChatItemComponentFactory(
   }
 
   private fun createEditableContent(content: JComponent, message: SpaceChatItem): JComponent {
-    val editingStateModel = SingleValueModelImpl(false)
-    message.isEditing.forEach(lifetime) { state ->
-      editingStateModel.value = state
-    }
-    val submittableModel = object : SubmittableTextFieldModelBase(message.text) {
+    val submittableModel = object : SubmittableTextFieldModelBase("") {
       override fun submit() {
         val editingVm = message.editingVm.value
         val newText = document.text
-        message.stopEditing()
         if (editingVm != null) {
           val id = editingVm.message.id
-          val chat = message.chat
-          if (newText.isBlank()) {
-            chat.deleteMessage(id)
-          }
-          else {
-            chat.alterMessage(id, newText)
+          launch(lifetime, Ui) {
+            val chat = editingVm.channel.awaitLoaded(lifetime)
+            if (newText.isBlank()) {
+              chat?.deleteMessage(id)
+            }
+            else {
+              chat?.alterMessage(id, newText)
+            }
           }
         }
+        message.stopEditing()
       }
     }
+
+    val editingStateModel = SingleValueModelImpl(false)
+    message.editingVm.forEach(lifetime) { editingVm ->
+      if (editingVm == null) {
+        editingStateModel.value = false
+        return@forEach
+      }
+      val workspace = space.workspace.value ?: return@forEach
+      runWriteAction {
+        submittableModel.document.setText(workspace.completion.editable(editingVm.message.text))
+      }
+      editingStateModel.value = true
+    }
     return ToggleableContainer.create(editingStateModel, { content }, {
-      SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = {
-        message.stopEditing()
-        runWriteAction {
-          submittableModel.document.setText(message.text)
-        }
-      })
+      SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = { message.stopEditing() })
     })
   }
 
