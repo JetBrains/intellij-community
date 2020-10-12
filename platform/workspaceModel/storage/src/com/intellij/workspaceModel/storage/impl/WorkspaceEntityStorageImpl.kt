@@ -670,6 +670,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
+    if (this === diff) LOG.error("Trying to apply diff to itself")
     diff as WorkspaceEntityStorageBuilderImpl
     val initialStorage = this.toStorage()
     val initialChangeLogSize = this.changeLog.size
