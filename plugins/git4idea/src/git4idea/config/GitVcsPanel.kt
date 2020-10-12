@@ -33,6 +33,7 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
+import com.intellij.vcs.commit.CommitWorkflowManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
@@ -42,6 +43,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
+import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.index.isStagingAreaEnabled
 import git4idea.repo.GitRepositoryManager
@@ -279,7 +281,18 @@ internal class GitVcsPanel(private val project: Project) :
   override fun createPanel(): DialogPanel = panel {
     gitExecutableRow()
     row {
-      checkBox(cdEnableStagingArea)
+      checkBox(cdEnableStagingArea).enableIf(object : ComponentPredicate() {
+        override fun addListener(listener: (Boolean) -> Unit) {
+          val connection = project.messageBus.connect(this@GitVcsPanel.disposable!!)
+          connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
+            override fun settingsChanged() {
+              listener(invoke())
+            }
+          })
+        }
+
+        override fun invoke(): Boolean = canEnableStagingArea()
+      })
     }
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {

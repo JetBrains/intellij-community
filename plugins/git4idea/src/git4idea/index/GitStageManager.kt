@@ -12,19 +12,23 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.util.messages.Topic
+import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
 class GitStageManager(val project: Project) : Disposable {
 
   fun installListeners() {
-    project.messageBus.connect(this).subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
       override fun settingsChanged() {
-        if (isStageAvailable(project)) {
-          GitStageTracker.getInstance(project).scheduleUpdateAll()
-        }
+        onAvailabilityChanged()
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+      }
+    })
+    connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
+      override fun settingsChanged() {
+        onAvailabilityChanged()
       }
     })
     stageLocalChangesRegistryOption().addListener(object : RegistryValueListener {
@@ -38,6 +42,13 @@ class GitStageManager(val project: Project) : Disposable {
         ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
       }
     }, this)
+  }
+
+  private fun onAvailabilityChanged() {
+    if (isStageAvailable(project)) {
+      GitStageTracker.getInstance(project).scheduleUpdateAll()
+    }
+    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
   }
 
   override fun dispose() {
@@ -80,7 +91,10 @@ fun enableStagingArea(enabled: Boolean) {
   ApplicationManager.getApplication().messageBus.syncPublisher(GitStagingAreaSettingsListener.TOPIC).settingsChanged()
 }
 
+fun canEnableStagingArea() = CommitWorkflowManager.isNonModalInSettings()
+
+fun isStagingAreaAvailable() = isStagingAreaEnabled() && canEnableStagingArea()
 fun isStageAvailable(project: Project): Boolean {
-  return isStagingAreaEnabled() &&
+  return isStagingAreaAvailable() &&
          ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
 }
