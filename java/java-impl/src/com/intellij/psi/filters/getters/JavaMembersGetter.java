@@ -40,7 +40,7 @@ public class JavaMembersGetter extends MembersGetter {
       return;
     }
 
-    addUtf8Charset(results);
+    addStandardCharsets(results);
 
     addConstantsFromTargetClass(results, searchInheritors);
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
@@ -59,16 +59,21 @@ public class JavaMembersGetter extends MembersGetter {
     }
   }
 
-  private void addUtf8Charset(Consumer<? super LookupElement> results) {
+  private void addStandardCharsets(Consumer<? super LookupElement> results) {
     PsiFile file = myParameters.getOriginalFile();
     if (TypeUtils.typeEquals("java.nio.charset.Charset", myExpectedType) &&
         PsiUtil.isLanguageLevel7OrHigher(file)) {
       PsiClass charsetsClass =
         JavaPsiFacade.getInstance(file.getProject()).findClass("java.nio.charset.StandardCharsets", file.getResolveScope());
       if (charsetsClass != null) {
-        PsiField field = charsetsClass.findFieldByName("UTF_8", false);
-        if (field != null) {
-          results.consume(createFieldElement(field));
+        for (PsiField field : charsetsClass.getFields()) {
+          if (field.hasModifierProperty(PsiModifier.STATIC) && field.getType().equals(myExpectedType)) {
+            LookupElement element = createFieldElement(field);
+            if (element != null && field.getName().equals("UTF_8")) {
+              element = PrioritizedLookupElement.withPriority(element, 1.0);
+            }
+            results.consume(element);
+          }
         }
       }
     }

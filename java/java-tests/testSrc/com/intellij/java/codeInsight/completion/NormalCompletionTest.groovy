@@ -2272,7 +2272,8 @@ class Abc {
   void "test suggest UTF8 Charset"() {
     myFixture.configureByText("a.java", "import java.nio.charset.Charset; class X { Charset test() {return U<caret>;}}")
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems(0, "StandardCharsets.UTF_8")
+    myFixture.assertPreferredCompletionItems(0, "StandardCharsets.UTF_8", "StandardCharsets.US_ASCII",
+                                             "StandardCharsets.UTF_16", "StandardCharsets.UTF_16BE", "StandardCharsets.UTF_16LE")
     myFixture.type('\n')
     myFixture.checkResult("import java.nio.charset.Charset;\n" +
                           "import java.nio.charset.StandardCharsets;\n" +
