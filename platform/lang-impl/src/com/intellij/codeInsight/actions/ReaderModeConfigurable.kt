@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import com.intellij.util.PlatformUtils
 
 class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
   private val settings get() = ReaderModeSettings.instance(project)
@@ -34,9 +35,6 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
           checkBox(cdRenderedDocs).enableIf(enabled.selected)
         }
         row {
-          checkBox(cdInlays).enableIf(enabled.selected)
-        }
-        row {
           checkBox(cdBreadcrumbs).enableIf(enabled.selected)
         }
         row {
@@ -47,6 +45,9 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
         }
         row {
           checkBox(cdLineSpacing).enableIf(enabled.selected)
+        }
+        row {
+          checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
         }
       }.enableIf(enabled.selected)
     }
