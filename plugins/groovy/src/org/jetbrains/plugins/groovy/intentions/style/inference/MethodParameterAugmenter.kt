@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
@@ -26,23 +27,24 @@ class MethodParameterAugmenter : TypeAugmenter() {
       if (!Registry.`is`(GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE, false)) {
         return null
       }
-      val scope = getFileScope(method) ?: return null
-      return computeInferredMethod(method, scope)
+      val (scope, originalFile) = getFileScope(method) ?: return null
+      return computeInferredMethod(method, scope, originalFile)
     }
 
-    private fun computeInferredMethod(method: GrMethod, scope : SearchScope): InferenceResult? =
+    private fun computeInferredMethod(method: GrMethod, scope: SearchScope, originalFile: VirtualFile?): InferenceResult? =
       CachedValuesManager.getCachedValue(method) {
         RecursionManager.doPreventingRecursion(method, true) {
           val options = SignatureInferenceOptions(scope, true, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
           val typedMethod = runInferenceProcess(method, options)
           val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
-          CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
+          val dependencies = if (originalFile != null) arrayOf(method, originalFile) else arrayOf(method)
+          CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), *dependencies)
         }
       }
 
-    private fun getFileScope(method: GrMethod): SearchScope? {
+    private fun getFileScope(method: GrMethod): Pair<SearchScope, VirtualFile?>? {
       val originalMethod = getOriginalMethod(method)
-      return originalMethod.containingFile?.run {GlobalSearchScope.fileScope(this)}
+      return originalMethod.containingFile?.run { GlobalSearchScope.fileScope(this) to this.virtualFile }
     }
 
   }
