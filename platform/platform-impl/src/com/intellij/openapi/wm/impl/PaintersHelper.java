@@ -9,26 +9,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
-import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 final class PaintersHelper implements Painter.Listener {
@@ -467,23 +472,52 @@ final class PaintersHelper implements Painter.Listener {
         return;
       }
 
-      try {
-        URL url = filePath.contains("://") ? new URL(filePath) :
-                  (FileUtil.isAbsolutePlatformIndependent(filePath)
-                   ? new File(filePath)
-                   : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-        ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-        boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
-        boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
+      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
+      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          InputStream stream;
+          boolean isSvg = filePath.endsWith(".svg");
+          if (filePath.contains("://") && !filePath.startsWith("http")) {
+            stream = new URL(filePath).openStream();
+          }
+          else {
+            Path path = Paths.get(filePath);
+            if (!path.isAbsolute()) {
+              path = PathManager.getConfigDir().resolve(path);
+            }
+            path.normalize();
+            stream = Files.newInputStream(path.normalize());
+          }
+          Image image;
+          try (stream) {
+            if (isSvg) {
+              image = SVGLoader.load(stream, 1);
+            }
+            else {
+              image = ImageIO.read(new MemoryCacheImageInputStream(stream));
+            }
+          }
+
           BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-          Image m = ImageLoader.loadFromUrl(url.toString(), null, ImageLoader.ALLOW_FLOAT_SCALING, Collections.singletonList(flipFilter), ScaleContext.create());
-          ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
-        });
-      }
-      catch (Exception e) {
-        resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
-      }
+          Image finalImage = ImageLoader.convertImage(image,
+                                                      flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
+                                                      ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+                                                      true,
+                                                      !isSvg, 1,
+                                                      isSvg,
+                                                      new ImageLoader.Dimension2DDouble(image.getWidth(null), image.getHeight(null)));
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
+          }, modalityState);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
+        }
+      });
     }
   }
 }

@@ -378,15 +378,15 @@ public final class ImageLoader {
 
   // originalUserSize - The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
   // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
-  private static @Nullable Image convertImage(@NotNull Image image,
-                                              @Nullable List<ImageFilter> filters,
-                                              @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                              ScaleContext scaleContext,
-                                              boolean isUpScaleNeeded,
-                                              boolean isHiDpiNeeded,
-                                              double imageScale,
-                                              boolean isSvg,
-                                              @NotNull ImageLoader.Dimension2DDouble originalUserSize) {
+  public static @Nullable Image convertImage(@NotNull Image image,
+                                             @Nullable List<ImageFilter> filters,
+                                             @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
+                                             ScaleContext scaleContext,
+                                             boolean isUpScaleNeeded,
+                                             boolean isHiDpiNeeded,
+                                             double imageScale,
+                                             boolean isSvg,
+                                             @NotNull ImageLoader.Dimension2DDouble originalUserSize) {
     if (isUpScaleNeeded && !isSvg) {
       double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE));
       if (imageScale > 1) {
@@ -407,7 +407,8 @@ public final class ImageLoader {
 
     if (isHiDpiNeeded) {
       double userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE);
-      image = new JBHiDPIScaledImage(image, originalUserSize.getWidth() * userScale, originalUserSize.getHeight() * userScale, BufferedImage.TYPE_INT_ARGB);
+      image = new JBHiDPIScaledImage(image, originalUserSize.getWidth() * userScale, originalUserSize.getHeight() * userScale,
+                                     BufferedImage.TYPE_INT_ARGB);
     }
     return image;
   }
