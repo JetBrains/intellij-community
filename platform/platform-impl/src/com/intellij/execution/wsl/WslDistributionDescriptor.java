@@ -124,7 +124,8 @@ final class WslDistributionDescriptor {
     }
     ProcessOutput pwdOutput;
     try {
-      pwdOutput = distribution.executeOnWsl(-1, null, Collections.singletonList("pwd"), new WSLCommandLineOptions().setExecuteCommandInShell(false));
+      WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
+      pwdOutput = distribution.executeOnWsl(Collections.singletonList("pwd"), options, -1, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Error reading pwd output for " + getId(), e);

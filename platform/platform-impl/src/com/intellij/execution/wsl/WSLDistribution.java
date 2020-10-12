@@ -113,7 +113,7 @@ public class WSLDistribution {
   public ProcessOutput executeOnWsl(int timeout,
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     String @NotNull ... args) throws ExecutionException {
-    return executeOnWsl(timeout, processHandlerConsumer, Arrays.asList(args), new WSLCommandLineOptions());
+    return executeOnWsl(Arrays.asList(args), new WSLCommandLineOptions(), timeout, processHandlerConsumer);
   }
 
   /**
@@ -123,10 +123,10 @@ public class WSLDistribution {
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    * @param command                linux command, eg {@code gem env}
    */
-  public ProcessOutput executeOnWsl(int timeout,
-                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
-                                    @NotNull List<String> command,
-                                    @NotNull WSLCommandLineOptions options) throws ExecutionException {
+  public ProcessOutput executeOnWsl(@NotNull List<String> command,
+                                    @NotNull WSLCommandLineOptions options,
+                                    int timeout,
+                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
     GeneralCommandLine commandLine = patchCommandLine(new GeneralCommandLine(command), null, options);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
     if (processHandlerConsumer != null) {
@@ -180,20 +180,9 @@ public class WSLDistribution {
   }
 
   /**
-   * Patches passed command line to make it runnable in WSL context, e.g changes {@code date} to {@code ubuntu run "date"}.<p/>
-   * <p>
-   * Environment variables and working directory are mapped to the chain calls: working dir using {@code cd} and environment variables using {@code export},
-   * e.g {@code bash -c "export var1=val1 && export var2=val2 && cd /some/working/dir && date"}.<p/>
-   * <p>
-   * Method should properly handle quotation and escaping of the environment variables.<p/>
-   *
-   * @param commandLine      command line to patch
-   * @param project          current project
-   * @param remoteWorkingDir path to WSL working directory
-   * @param askForSudo       true if we need to ask for sudo. To make this work, process handler, created from this command line should be patched using {@link #patchProcessHandler(GeneralCommandLine, ProcessHandler)}
-   * @param <T>              GeneralCommandLine or descendant
-   * @return original {@code commandLine}, prepared to run in WSL context
+   * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
+  @Deprecated
   @NotNull
   public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
@@ -320,11 +309,8 @@ public class WSLDistribution {
   }
 
   private static @Nullable Path findWslExe(@NotNull WSLCommandLineOptions options) {
-    if (options.isLaunchWithWslExe()) {
-      File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
-      return file != null ? file.toPath() : null;
-    }
-    return null;
+    File file = options.isLaunchWithWslExe() ? PathEnvironmentVariableUtil.findInPath("wsl.exe") : null;
+    return file != null ? file.toPath() : null;
   }
 
   private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
