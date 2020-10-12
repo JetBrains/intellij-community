@@ -3,6 +3,8 @@ package com.intellij.space.chat.ui
 
 import circlet.client.api.M2ChannelRecord
 import circlet.client.api.Navigator
+import circlet.client.api.TD_MemberProfile
+import circlet.client.api.fullName
 import circlet.m2.ChannelsVm
 import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
@@ -11,13 +13,16 @@ import circlet.platform.api.isTemporary
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
 import com.intellij.space.ui.SpaceAvatarProvider
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -30,9 +35,12 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.reactive.awaitTrue
 import java.awt.BorderLayout
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
@@ -44,6 +52,7 @@ internal class SpaceChatPanel(
   private val chatRecord: Ref<M2ChannelRecord>
 ) : BorderLayoutPanel() {
   private val server = channelsVm.client.server
+  private var lastHoveredMessagePanel: HoverableJPanel? = null
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), parent).apply {
     startLoading()
@@ -61,6 +70,18 @@ internal class SpaceChatPanel(
     val chatVM = loadChatVM()
     val itemsListModel = SpaceChatItemListModel()
     val contentPanel = createContentPanel(itemsListModel, chatVM)
+    contentPanel.addMouseMotionListener(object : MouseMotionAdapter() {
+      override fun mouseMoved(e: MouseEvent?) {
+        e ?: return
+        val component = UIUtil.getDeepestComponentAt(contentPanel, e.x, e.y) ?: return
+        val messageComponent = ComponentUtil.getParentOfType(HoverableJPanel::class.java, component)
+        if (messageComponent != lastHoveredMessagePanel) {
+          lastHoveredMessagePanel?.hoverStateChanged(false)
+          lastHoveredMessagePanel = messageComponent
+          messageComponent?.hoverStateChanged(true)
+        }
+      }
+    })
     chatVM.mvms.forEach(lifetime) { messagesViewModel ->
       launch(lifetime, Ui) {
         val chatItems = messagesViewModel.messages.map { messageViewModel ->
@@ -84,7 +105,7 @@ internal class SpaceChatPanel(
     val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
     val avatarProvider = SpaceAvatarProvider(lifetime, this, avatarSize)
     val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-    val timeline = TimelineComponent(model, itemComponentFactory).apply {
+    val timeline = TimelineComponent(model, itemComponentFactory, offset = 0).apply {
       border = JBUI.Borders.empty(16, 0)
     }
 
@@ -139,3 +160,7 @@ internal fun M2MessageVm.getLink(hostUrl: String): String? =
   else {
     null
   }
+
+@Nls
+internal fun TD_MemberProfile.link(server: String): HtmlChunk =
+  HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS

@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
-import circlet.client.api.*
+import circlet.client.api.M2TextItemContent
+import circlet.client.api.Navigator
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
-import circlet.platform.api.format
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveAll
 import circlet.principals.asUser
@@ -15,14 +15,13 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
+import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
@@ -34,7 +33,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
@@ -43,17 +41,11 @@ import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
-import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import org.jetbrains.annotations.Nls
 import runtime.Ui
-import runtime.date.DateFormat
 import java.awt.*
-import java.awt.event.ActionListener
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
@@ -62,7 +54,13 @@ internal class SpaceChatItemComponentFactory(
   private val server: String,
   private val avatarProvider: SpaceAvatarProvider
 ) : TimelineItemComponentFactory<SpaceChatItem> {
-  override fun createComponent(item: SpaceChatItem): JComponent {
+
+  /**
+   * Method should return [HoverableJPanel] because it is used to implement hovering properly
+   *
+   * @see SpaceChatPanel
+   */
+  override fun createComponent(item: SpaceChatItem): HoverableJPanel {
     val component =
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent -> {
@@ -92,7 +90,7 @@ internal class SpaceChatItemComponentFactory(
         }
         is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessagePanel(item))
         is ReviewerChangedEvent -> {
-          val user = details.uid.resolve().link()
+          val user = details.uid.resolve().link(server)
           val text = when (details.changeType) {
             ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
             ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
@@ -103,7 +101,7 @@ internal class SpaceChatItemComponentFactory(
       }
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
-      titleSupplier = { parent -> createMessageTitle(parent, item) },
+      MessageTitleComponent(lifetime, item, server),
       createEditableContent(component, item)
     )
   }
@@ -154,19 +152,6 @@ internal class SpaceChatItemComponentFactory(
     return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
   }
 
-  private fun createDeleteButton(message: SpaceChatItem): JComponent? {
-    if (!message.canDelete) {
-      return null
-    }
-    return InlineIconButton(VcsCodeReviewIcons.Delete, VcsCodeReviewIcons.DeleteHovered).apply {
-      actionListener = ActionListener {
-        launch(lifetime, Ui) {
-          message.delete()
-        }
-      }
-    }
-  }
-
   private fun createEditableContent(content: JComponent, message: SpaceChatItem): JComponent {
     val editingStateModel = SingleValueModelImpl(false)
     message.isEditing.forEach(lifetime) { state ->
@@ -199,77 +184,8 @@ internal class SpaceChatItemComponentFactory(
     })
   }
 
-  private fun createEditButton(message: SpaceChatItem): JComponent? {
-    if (!message.canEdit) {
-      return null
-    }
-    return InlineIconButton(AllIcons.General.Inline_edit, AllIcons.General.Inline_edit_hovered).apply {
-      actionListener = ActionListener {
-        message.startEditing()
-      }
-    }
-  }
-
-  private fun createMessageTitle(parent: JComponent, message: SpaceChatItem): JComponent {
-    val authorPanel = HtmlEditorPane().apply {
-      setBody(createMessageAuthorChunk(message.author).bold().toString())
-    }
-    val timePanel = HtmlEditorPane().apply {
-      foreground = UIUtil.getContextHelpForeground()
-      setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
-    }
-    val editedPanel = JBLabel(" ${SpaceBundle.message("chat.message.edited.text")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-      isOpaque = true
-    }
-    val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
-      isOpaque = false
-      createEditButton(message)?.let { add(it) }
-      createDeleteButton(message)?.let { add(it) }
-    }
-    makeVisibleOnHover(actionsPanel, parent)
-    return JPanel(HorizontalLayout(JBUI.scale(5))).apply {
-      isOpaque = false
-      add(authorPanel)
-      add(timePanel)
-      if (message.isEdited) {
-        add(editedPanel)
-      }
-      add(actionsPanel)
-      launch(lifetime, Ui) {
-        delay(2000)
-        if (!message.delivered) {
-          add(JBLabel(AnimatedIcon.Default.INSTANCE))
-          revalidate()
-          repaint()
-        }
-      }
-    }
-  }
-
-  private fun createMessageAuthorChunk(author: CPrincipal): HtmlChunk =
-    when (val details = author.details) {
-      is CUserPrincipalDetails -> {
-        val user = details.user.resolve()
-        user.link()
-      }
-      is CExternalServicePrincipalDetails -> {
-        val service = details.service.resolve()
-        val location = Navigator.manage.oauthServices.service(service)
-        HtmlChunk.link(location.href, service.name) // NON-NLS
-      }
-      else -> {
-        HtmlChunk.text(author.name) // NON-NLS
-      }
-    }
-
-  @Nls
-  private fun TD_MemberProfile.link(): HtmlChunk =
-    HtmlChunk.link(Navigator.m.member(username).absoluteHref(server), name.fullName()) // NON-NLS
-
   private fun JComponent.withThread(lifetime: Lifetime, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
-    return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
+    return JPanel(VerticalLayout(0)).also { panel ->
       panel.isOpaque = false
 
       val threadAvatarSize = JBValue.UIInteger("space.chat.thread.avatar.size", 20)
@@ -277,7 +193,9 @@ internal class SpaceChatItemComponentFactory(
 
       val itemsListModel = SpaceChatItemListModel()
       val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory)
+      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory, offset = 0).apply {
+        border = JBUI.Borders.empty(10, 0)
+      }
 
       val replyComponent = createReplyComponent(thread).apply {
         border = JBUI.Borders.empty()
@@ -361,38 +279,6 @@ internal class SpaceChatItemComponentFactory(
     setBody(MentionConverter.html(text, server)) // NON-NLS
   }
 
-  private fun JComponent.addOnHoverListener(listener: (isInside: Boolean) -> Unit) {
-    var currentState = false
-    fun updateCurrentState(newState: Boolean) {
-      if (currentState != newState) {
-        currentState = newState
-        listener(newState)
-      }
-    }
-
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseEntered(e: MouseEvent?) {
-        updateCurrentState(true)
-      }
-
-      override fun mouseExited(e: MouseEvent?) {
-        // TODO: such solution doesn't work for case like parent-> child -> exit
-        if (e != null && !this@addOnHoverListener.contains(e.point)) {
-          updateCurrentState(false)
-        }
-      }
-    })
-  }
-
-  private fun makeVisibleOnHover(component: JComponent, parent: JComponent) {
-    component.isVisible = false
-    parent.addOnHoverListener { isInside ->
-      component.isVisible = isInside
-      parent.revalidate()
-      parent.repaint()
-    }
-  }
-
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
     private val lineColor = Color(22, 125, 255, 51)
 
@@ -423,13 +309,14 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private class Item(avatar: Icon, titleSupplier: (parent: JComponent) -> JComponent, content: JComponent) : BorderLayoutPanel() {
+  private class Item(avatar: Icon, private val title: MessageTitleComponent, content: JComponent) : HoverableJPanel() {
     companion object {
       val AVATAR_GAP: Int
         get() = UI.scale(8)
     }
 
     init {
+      layout = BorderLayout()
       val avatarPanel = BorderLayoutPanel().apply {
         isOpaque = false
         border = JBUI.Borders.empty()
@@ -438,15 +325,22 @@ internal class SpaceChatItemComponentFactory(
       val rightPart = JPanel(VerticalLayout(JBUI.scale(5))).apply {
         isOpaque = false
         border = JBUI.Borders.emptyLeft(AVATAR_GAP)
-        add(titleSupplier(this@Item), VerticalLayout.FILL_HORIZONTAL)
+        add(title, VerticalLayout.FILL_HORIZONTAL)
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
 
       isOpaque = false
-      addToLeft(avatarPanel)
-      addToCenter(rightPart)
+      border = JBUI.Borders.empty(10)
+      add(avatarPanel, BorderLayout.WEST)
+      add(rightPart, BorderLayout.CENTER)
     }
 
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
+
+    override fun hoverStateChanged(isHovered: Boolean) {
+      title.actionsPanel.isVisible = isHovered
+      title.revalidate()
+      title.repaint()
+    }
   }
 }
