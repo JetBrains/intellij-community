@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
   private val OS_GROUP = EventLogGroup("system.os", 4)
-  private val INITIAL_DELAY = 0
+  private val INITIAL_DELAY = 5
   private val PERIOD_DELAY = 24 * 60
 
   override fun initialize() {
@@ -42,12 +42,13 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     val currentZoneOffset = OffsetDateTime.now().offset
     val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
     osEvents.add(newMetric("os.timezone", currentZoneOffsetFeatureUsageData))
-    val machineId = MachineIdManager.getMachineId() ?: "unknown"
+    val machineId = MachineIdManager.getMachineId()
     osEvents.add(newMetric("machine.id", FeatureUsageData().addData("value", anonymizeMachineId(machineId))))
     return FUStateUsagesLogger.logStateEventsAsync(OS_GROUP, osEvents)
   }
 
-  private fun anonymizeMachineId(machineId: String): String {
+  private fun anonymizeMachineId(machineId: String?): String {
+    if (machineId == null) return "unknown"
     val username = System.getProperty("user.name")
     return EventLogConfiguration.hashSha256(username.toByteArray(), machineId)
   }

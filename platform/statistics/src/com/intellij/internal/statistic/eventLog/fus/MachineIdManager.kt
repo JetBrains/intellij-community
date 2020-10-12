@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
 import java.io.IOException
@@ -13,7 +13,7 @@ import java.nio.file.Paths
 import java.util.regex.Pattern
 
 object MachineIdManager {
-  private const val IOREG_COMMAND_TIMEOUT_MS = 5000
+  private const val IOREG_COMMAND_TIMEOUT_MS = 2000
   private val macMachineIdPattern = Pattern.compile("\"IOPlatformUUID\"\\s*=\\s*\"(?<machineId>.*)\"")
   private val linuxMachineIdPaths = listOf("/etc/machine-id", "/var/lib/dbus/machine-id")
 
@@ -65,7 +65,7 @@ object MachineIdManager {
     val commandLine = GeneralCommandLine("ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
     val processOutput = ExecUtil.execAndGetOutput(commandLine, IOREG_COMMAND_TIMEOUT_MS)
     if (processOutput.exitCode == 0) {
-      val matcher = macMachineIdPattern.matcher(processOutput.stdout)
+      val matcher = macMachineIdPattern.matcher(StringUtil.newBombedCharSequence(processOutput.stdout, 1000))
       if (matcher.find()) {
         return matcher.group("machineId")
       }
