@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.intellij.openapi.application.Experiments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ public class WSLCommandLineOptions {
   private String myRemoteWorkingDirectory;
 
   public boolean isLaunchWithWslExe() {
-    return myLaunchWithWslExe;
+    return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
   }
 
   public @NotNull WSLCommandLineOptions setLaunchWithWslExe(boolean launchWithWslExe) {

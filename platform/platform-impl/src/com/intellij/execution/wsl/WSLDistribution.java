@@ -320,7 +320,7 @@ public class WSLDistribution {
   }
 
   private static @Nullable Path findWslExe(@NotNull WSLCommandLineOptions options) {
-    if (options.isLaunchWithWslExe() && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe")) {
+    if (options.isLaunchWithWslExe()) {
       File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
       return file != null ? file.toPath() : null;
     }
