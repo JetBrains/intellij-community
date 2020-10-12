@@ -285,29 +285,35 @@ public final class PsiCopyPasteManager {
   public static List<File> asFileList(final PsiElement[] elements) {
     final List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
-      final PsiFileSystemItem psiFile;
-      if (element instanceof PsiFileSystemItem) {
-        psiFile = (PsiFileSystemItem)element;
-      }
-      else if (element instanceof PsiDirectoryContainer) {
-        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
-        if (directories.length == 0) {
-          LOG.error("No directories for " + element + " of " + element.getClass());
-          return null;
-        }
-        psiFile = directories[0];
-      }
-      else {
-        psiFile = element.getContainingFile();
-      }
-      if (psiFile != null) {
-        VirtualFile vFile = psiFile.getVirtualFile();
-        if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
-          result.add(new File(vFile.getPath()));
-        }
+      VirtualFile vFile = asVirtualFile(element);
+      if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+        result.add(new File(vFile.getPath()));
       }
     }
     return result.isEmpty() ? null : result;
+  }
+
+  @Nullable
+  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
+    PsiFileSystemItem psiFile = null;
+    if (element instanceof PsiFileSystemItem) {
+      psiFile = (PsiFileSystemItem)element;
+    }
+    else if (element instanceof PsiDirectoryContainer) {
+      final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+      if (directories.length == 0) {
+        LOG.error("No directories for " + element + " of " + element.getClass());
+        return null;
+      }
+      psiFile = directories[0];
+    }
+    else if (element != null) {
+      psiFile = element.getContainingFile();
+    }
+    if (psiFile != null) {
+      return psiFile.getVirtualFile();
+    }
+    return null;
   }
 
   public static final class EscapeHandler extends KeyAdapter {

@@ -12,7 +12,6 @@ import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,10 +20,12 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,7 +38,9 @@ import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
@@ -46,7 +49,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -55,6 +61,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -869,22 +876,71 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       final TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
 
-      final int count = paths.length;
+      List<Trinity<@Nls String, Icon, @Nullable VirtualFile>> toRender = new ArrayList<>();
+      for (TreePath path : getSelectionPaths()) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
+        toRender.add(Trinity.create(iconAndText.second, iconAndText.first,
+                                    PsiCopyPasteManager.asVirtualFile(ContainerUtil.getFirstItem(getElementsFromNode(node)))));
+      }
 
-      JLabel label = new JLabel(LangBundle.message("dragged.item.count", count));
-      label.setOpaque(true);
-      label.setForeground(RenderingUtil.getForeground(myTree));
-      label.setBackground(RenderingUtil.getBackground(myTree));
-      label.setFont(myTree.getFont());
-      label.setSize(label.getPreferredSize());
-      final BufferedImage image = ImageUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      int count = 0;
+      JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
+      int maxItemsToShow = toRender.size() < 20 ? toRender.size() : 10;
+      for (Trinity<@Nls String, Icon, @Nullable VirtualFile> trinity : toRender) {
+        JLabel fileLabel = new DragImageLabel(trinity.first, trinity.second, trinity.third);
+        panel.add(fileLabel);
+        count++;
+        if (count > maxItemsToShow) {
+          panel.add(new DragImageLabel(IdeBundle.message("label.more.files", paths.length - maxItemsToShow), EmptyIcon.ICON_16, null));
+          break;
+        }
+      }
+      panel.setSize(panel.getPreferredSize());
+      panel.doLayout();
 
+      BufferedImage image = ImageUtil.createImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = (Graphics2D)image.getGraphics();
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-      label.paint(g2);
+      panel.paint(g2);
       g2.dispose();
 
-      return new Pair<>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+      return new Pair<>(image, new Point());
+    }
+
+    @NotNull
+    private Pair<Icon, @Nls String> getIconAndText(TreePath path) {
+      Object object = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+      Component component = getTree().getCellRenderer()
+        .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
+      Icon[] icon = new Icon[1];
+      String[] text = new String[1];
+      ObjectUtils.consumeIfCast(component, ProjectViewRenderer.class, renderer -> icon[0] = renderer.getIcon());
+      ObjectUtils.consumeIfCast(component, SimpleColoredComponent.class, renderer -> text[0] = renderer.getCharSequence(true).toString());
+      return Pair.create(icon[0], text[0]);
+    }
+  }
+
+  private class DragImageLabel extends JLabel {
+    private DragImageLabel(@Nls String text, Icon icon, @Nullable VirtualFile file) {
+      super(text, icon, SwingConstants.LEADING);
+      setFont(UIUtil.getTreeFont());
+      setOpaque(true);
+      if (file != null) {
+        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, null));
+        setForeground(EditorTabPresentationUtil.getFileForegroundColor(myProject, file));
+      } else {
+        setForeground(RenderingUtil.getForeground(getTree(), true));
+        setBackground(RenderingUtil.getBackground(getTree(), true));
+      }
+      setBorder(new EmptyBorder(JBUI.insets(UIManager.getInsets("EditorTabs.tabInsets"))));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT);
+      return size;
     }
   }
 
