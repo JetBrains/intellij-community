@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 final class FileBasedIndexPluginListener implements DynamicPluginListener {
   private final @NotNull FileBasedIndexSwitcher mySwitcher;
 
-  FileBasedIndexPluginListener(@NotNull FileBasedIndexImpl index) {
-    mySwitcher = new FileBasedIndexSwitcher(index);
+  FileBasedIndexPluginListener() {
+    mySwitcher = new FileBasedIndexSwitcher((FileBasedIndexImpl)FileBasedIndex.getInstance());
   }
 
   @Override
