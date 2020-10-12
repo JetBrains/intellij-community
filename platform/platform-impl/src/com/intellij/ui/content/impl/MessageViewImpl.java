@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.*;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,9 @@ final class MessageViewImpl implements MessageView {
 
   public MessageViewImpl(@NotNull Project project) {
     StartupManager.getInstance(project).runAfterOpened(() -> {
-      myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closable(ToolWindowId.MESSAGES_WINDOW, AllIcons.Toolwindows.ToolWindowMessages, ToolWindowAnchor.BOTTOM));
+      myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closable(
+        ToolWindowId.MESSAGES_WINDOW, UIBundle.messagePointer("tool.window.name.messages"), 
+        AllIcons.Toolwindows.ToolWindowMessages, ToolWindowAnchor.BOTTOM));
       ContentManagerWatcher.watchContentManager(myToolWindow, getContentManager());
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();

@@ -131,7 +131,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return toolWindow.contentManager
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(id = toolWindowId, icon = executor.toolWindowIcon))
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       private var insideGetData = 0

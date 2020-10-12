@@ -44,7 +44,8 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(ToolWindowId.FIND, AllIcons.Toolwindows.ToolWindowFind));
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
+      ToolWindowId.FIND, UIBundle.messagePointer("tool.window.name.find"), AllIcons.Toolwindows.ToolWindowFind));
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
