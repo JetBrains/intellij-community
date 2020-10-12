@@ -227,6 +227,10 @@
       "description": "Background for the selected tab"
     },
     {
+      "key": "EditorTabs.tabInsets",
+      "description": "Inner insets around each editor tab"
+    },
+    {
       "key": "FileColor.Blue",
       "description": "Settings | Appearance & Behavior | File colors"
     },

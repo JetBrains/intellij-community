@@ -601,7 +601,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
       myWindow = window;
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), parentDisposable);
-      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(UIManager.getInsets("EditorTabs.tabInsets"))));
+      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
         @Override

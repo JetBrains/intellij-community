@@ -49,10 +49,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -933,7 +930,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         setForeground(RenderingUtil.getForeground(getTree(), true));
         setBackground(RenderingUtil.getBackground(getTree(), true));
       }
-      setBorder(new EmptyBorder(JBUI.insets(UIManager.getInsets("EditorTabs.tabInsets"))));
+      setBorder(new EmptyBorder(JBUI.CurrentTheme.EditorTabs.tabInsets()));
     }
 
     @Override

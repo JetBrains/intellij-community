@@ -535,6 +535,10 @@ public class JBUI {
         return UIManager.getColor("EditorTabs.underlinedTabBackground");
       }
 
+      public static Insets tabInsets() {
+        return insets("EditorTabs.tabInsets", insets(0, 8));
+      }
+
       @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
