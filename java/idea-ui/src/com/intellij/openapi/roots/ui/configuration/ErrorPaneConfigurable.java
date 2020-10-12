@@ -208,7 +208,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     if (!(error instanceof ProjectConfigurationProblem)) return error.getDescription();
 
     final ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
-    if (problemDescription.getDescription() != null) return problemDescription.getDescription();
+    if (!problemDescription.getDescription().isEmpty()) return problemDescription.getDescription();
 
     if (!problemDescription.canShowPlace()) return HtmlChunk.raw(problemDescription.getMessage());
 

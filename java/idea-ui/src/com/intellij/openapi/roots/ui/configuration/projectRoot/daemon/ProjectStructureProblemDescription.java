@@ -111,7 +111,7 @@ public class ProjectStructureProblemDescription {
     return myCanShowPlace;
   }
 
-  public HtmlChunk getDescription() {
+  public @NotNull HtmlChunk getDescription() {
     return myDescription;
   }
 
