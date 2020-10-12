@@ -388,6 +388,8 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">

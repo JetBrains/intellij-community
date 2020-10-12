@@ -5,12 +5,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -22,11 +26,14 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Component
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.AncestorEvent
@@ -40,7 +47,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var header : String = ""
 
   @NlsSafe
-  private var shortcut: String = ""
+  private var shortcut: Shortcut? = null
 
   @Nls
   private var buttonLabel: String = IdeBundle.message("got.it.button.name")
@@ -50,6 +57,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var link : LinkLabel<Unit>? = null
   private var linkAction : () -> Unit = {}
   private var maxWidth = MAX_WIDTH
+  private var showCloseShortcut = false
 
   private var canShow : (String) -> Boolean = { !PropertiesComponent.getInstance().isTrueValue(PROPERTY_PREFIX + it) }
   private var onGotIt : (String) -> Unit = { PropertiesComponent.getInstance().setValue(PROPERTY_PREFIX + it, true) }
@@ -61,7 +69,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     return this
   }
 
-  fun withShortcut(@NonNls shortcut: String) : GotItTooltip {
+  fun withShortcut(shortcut: Shortcut) : GotItTooltip {
     this.shortcut = shortcut
     return this
   }
@@ -108,14 +116,19 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     return this
   }
 
-  fun showFor(component: JComponent, positionProvider: (AncestorEvent) -> PointPosition) {
+  fun andShowCloseShortcut() : GotItTooltip {
+    showCloseShortcut = true
+    return this
+  }
+
+  fun showFor(component: JComponent, positionProvider: (Component) -> PointPosition) {
     var balloon : Balloon? = null
 
     component.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
-        event?.let {
-          val pointPosition = positionProvider(event)
-          checkAndShow(pointPosition.point, pointPosition.position)
+        if (canShow(id) && event != null) {
+          val pointPosition = positionProvider(event.component)
+          balloon = createAndShow(pointPosition.point, pointPosition.position)
         }
       }
 
@@ -124,26 +137,36 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         balloon = null
       }
     })
-
-    HelpTooltip.setMasterPopupOpenCondition(component) {
-      balloon?.isDisposed ?: true
-    }
   }
 
-  fun checkAndShow(point: RelativePoint,
-                           position: Balloon.Position) {
-    if (canShow(id)) {
-      createBalloon().also {
-        it.addListener(object : JBPopupListener {
-          override fun onClosed(event: LightweightWindowEvent) {
-            onGotIt(id)
-          }
-        })
+  fun showAt(point: RelativePoint, position: Balloon.Position) : Balloon? = if (canShow(id)) createAndShow(point, position) else null
 
-        it.show(point, position)
+  private fun createAndShow(point: RelativePoint, position: Balloon.Position) : Balloon = createBalloon().also {
+      val dispatcherDisposable = Disposer.newDisposable()
+      Disposer.register(disposable, dispatcherDisposable)
+
+      it.addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+          onGotIt(id)
+          HelpTooltip.setMasterPopupOpenCondition(point.component, null)
+          Disposer.dispose(dispatcherDisposable)
+        }
+      })
+
+      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
+        if (e is KeyEvent && KeymapUtil.isEventForAction(e, CLOSE_ACTION_NAME)) {
+          it.hide()
+          true
+        }
+        else false
+      }, dispatcherDisposable)
+
+      HelpTooltip.setMasterPopupOpenCondition(point.component) {
+        it.isDisposed
       }
+
+      it.show(point, position)
     }
-  }
 
   private fun createBalloon() : Balloon {
     var button : JButton? = null
@@ -190,15 +213,15 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     if (header.isNotEmpty()) {
       if (icon == null) gc.nextLine()
 
-      panel.add(JBLabel(HtmlChunk.text(header).bold().wrapWith(HtmlChunk.html()).toString()),
+      panel.add(JBLabel(HtmlChunk.raw(header).bold().wrapWith(HtmlChunk.html()).toString()),
                 gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
     }
 
     val builder = HtmlBuilder()
-    builder.append(HtmlChunk.text(text))
-    if (shortcut.isNotEmpty()) {
+    builder.append(HtmlChunk.raw(text))
+    shortcut?.let {
       builder.append(HtmlChunk.nbsp()).append(HtmlChunk.nbsp()).
-              append(HtmlChunk.text(shortcut).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(SHORTCUT_COLOR))))
+              append(HtmlChunk.text(KeymapUtil.getShortcutText(it)).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(SHORTCUT_COLOR))))
     }
 
     panel.add(LimitedWidthLabel(builder, maxWidth),
@@ -215,7 +238,22 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         putClientProperty("styleBorderless", true)
       }
       buttonSupplier(button)
-      panel.add(button, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
+
+      if (showCloseShortcut) {
+        val buttonPanel = JPanel().apply{ isOpaque = false }
+        buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
+        buttonPanel.add(button)
+        buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(UIUtil.DEFAULT_HGAP)))
+
+        @Suppress("HardCodedStringLiteral")
+        val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply { foreground = SHORTCUT_COLOR }
+        buttonPanel.add(closeShortcut)
+
+        panel.add(buttonPanel, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
+      }
+      else {
+        panel.add(button, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
+      }
     }
 
     panel.background = BACKGROUND_COLOR
@@ -226,6 +264,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   companion object {
     const val DEFAULT_TIMEOUT = 5000 // milliseconds
     const val PROPERTY_PREFIX = "GotItTooltip."
+    const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
 
     val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
     val MAX_WIDTH   = JBUIScale.scale(280)

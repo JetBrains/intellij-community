@@ -162,10 +162,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
     if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isInitiallyVisible(mySettings)) {
       JComponent component = fragment.getEditorComponent();
-      new GotItTooltip("fragment.hidden.gotIt." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()), fragment).
-        withHeader(ExecutionBundle.message("gotIt.popup.title")).checkAndShow(
-          new RelativePoint(component, new Point(GotItTooltip.Companion.getARROW_SHIFT(), component.getHeight())),
-        Balloon.Position.below);
+      new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()), fragment).
+        withHeader(ExecutionBundle.message("gotIt.popup.title")).
+        showAt(new RelativePoint(component, new Point(GotItTooltip.Companion.getARROW_SHIFT(), component.getHeight())),
+                Balloon.Position.below);
     }
   }
 }

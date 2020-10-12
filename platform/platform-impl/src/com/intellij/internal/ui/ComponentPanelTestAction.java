@@ -268,7 +268,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       //try {
-        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project);
+        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).andShowCloseShortcut();
 
           //withTimeout();
           //withIcon(AllIcons.General.BalloonInformation).
@@ -276,8 +276,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           //withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
           //withShortcut("Ctrl+Alt+D");
 
-        gotItTooltip.showFor(button, e -> new PointPosition(
-          new RelativePoint(e.getComponent(), new Point(e.getComponent().getWidth() / 2, e.getComponent().getHeight())),
+        gotItTooltip.showFor(button, c -> new PointPosition(new RelativePoint(c, new Point(c.getWidth() / 2, c.getHeight())),
                                                             Balloon.Position.below));
       //} catch (MalformedURLException ex) {}
 

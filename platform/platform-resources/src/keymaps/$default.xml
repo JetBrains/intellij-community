@@ -86,6 +86,9 @@
   <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
+  <action id="CloseGotItTooltip">
+    <keyboard-shortcut first-keystroke="ESCAPE"/>
+  </action>
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
