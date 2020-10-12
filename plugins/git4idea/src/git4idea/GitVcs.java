@@ -348,7 +348,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean arePartialChangelistsSupported() {
-    return !GitStageManagerKt.stageRegistryOption().asBoolean() ||
+    return !GitStageManagerKt.isStagingAreaEnabled() ||
            !GitStageManagerKt.stageLineStatusTrackerRegistryOption().asBoolean();
   }
 
@@ -369,7 +369,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean isWithCustomLocalChanges() {
-    return GitStageManagerKt.stageRegistryOption().asBoolean() &&
+    return GitStageManagerKt.isStagingAreaEnabled() &&
            GitStageManagerKt.stageLocalChangesRegistryOption().asBoolean();
   }
 
