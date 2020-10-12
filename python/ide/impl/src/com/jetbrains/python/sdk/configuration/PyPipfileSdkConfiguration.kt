@@ -20,6 +20,9 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.PipEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
 import com.jetbrains.python.sdk.pipenv.*
 import java.awt.BorderLayout
 import java.awt.Insets
@@ -32,24 +35,24 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override fun isApplicable(module: Module): Boolean = module.pipFile != null
 
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, false)
+  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
 
   override fun getIntentionName(module: Module): String {
     return PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", module.pipFile?.name)
   }
 
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, true)
+  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, Source.INSPECTION)
 
-  private fun createAndAddSDk(module: Module, force: Boolean): Sdk? {
-    val pipEnvExecutable = askForEnvData(module, force) ?: return null
+  private fun createAndAddSDk(module: Module, source: Source): Sdk? {
+    val pipEnvExecutable = askForEnvData(module, source) ?: return null
     PropertiesComponent.getInstance().pipEnvPath = pipEnvExecutable.pipEnvPath
     return createPipEnv(module)
   }
 
-  private fun askForEnvData(module: Module, force: Boolean): PyAddNewPipEnvFromFilePanel.Data? {
+  private fun askForEnvData(module: Module, source: Source): PyAddNewPipEnvFromFilePanel.Data? {
     val pipEnvExecutable = getPipEnvExecutable()?.absolutePath
 
-    if (force && validatePipEnvExecutable(pipEnvExecutable) == null) {
+    if (source == Source.INSPECTION && validatePipEnvExecutable(pipEnvExecutable) == null) {
       return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable!!)
     }
 
@@ -65,6 +68,12 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       LOGGER.debug("Dialog exit code: ${dialog.exitCode}, $permitted")
     }
 
+    PySdkConfigurationCollector.logPipEnvDialog(
+      module.project,
+      permitted,
+      source,
+      if (pipEnvExecutable.isNullOrBlank()) InputData.NOT_FILLED else InputData.SPECIFIED
+    )
     return if (permitted) envData else null
   }
 
@@ -77,6 +86,7 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       setupPipEnv(FileUtil.toSystemDependentName(basePath), null, true)
     }
     catch (e: ExecutionException) {
+      PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
       LOGGER.warn("Exception during creating pipenv environment", e)
       showSdkExecutionException(null, e, PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.exception.dialog.title"))
       return null
@@ -84,15 +94,19 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
     val path = PythonSdkUtil.getPythonExecutable(pipEnv).also {
       if (it == null) {
+        PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.NO_EXECUTABLE)
         LOGGER.warn("Python executable is not found: $pipEnv")
       }
     } ?: return null
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path).also {
       if (it == null) {
+        PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.NO_EXECUTABLE_FILE)
         LOGGER.warn("Python executable file is not found: $path")
       }
     } ?: return null
+
+    PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
 
     LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
     val sdk = SdkConfigurationUtil.setupSdk(
