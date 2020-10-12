@@ -86,7 +86,7 @@ public class ReferenceFilter extends FilterAction {
       protected void layoutComponents() {
         myComboBox.setRenderer(renderer);
         myComboBox.setPreferredSize(new Dimension(160, 28));
-        ComboboxSpeedSearch.installSpeedSearch(myComboBox, configuration -> configuration.getName());
+        myComboBox.setSwingPopup(false);
 
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
