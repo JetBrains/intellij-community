@@ -5,7 +5,10 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -18,9 +21,11 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.IconUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import git4idea.*
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
@@ -40,6 +45,8 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
 import java.awt.event.KeyEvent
+import java.util.*
+import java.util.Collections.synchronizedMap
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -59,7 +66,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private val localBranches = mutableListOf<GitBranch>()
   private val remoteBranches = mutableListOf<GitBranch>()
-  private val tags = mutableListOf<GitTag>()
+  private val tags = synchronizedMap(HashMap<VirtualFile, List<GitTag>>())
 
   private var currentBranch: GitBranch? = null
 
@@ -85,6 +92,8 @@ internal class GitRebaseDialog(private val project: Project,
   private val rebaseMergesAvailable = REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion)
 
   init {
+    loadTagsInBackground()
+
     title = GitBundle.message("rebase.dialog.title")
     setOKButtonText(GitBundle.message("rebase.dialog.start.rebase"))
 
@@ -172,8 +181,10 @@ internal class GitRebaseDialog(private val project: Project,
     val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName }
     return localBranches.find(predicate)
            ?: remoteBranches.find(predicate)
-           ?: tags.find(predicate)
+           ?: getTags().find(predicate)
   }
+
+  private fun getTags() = tags[getSelectedRepo().root] ?: emptyList()
 
   private fun validateUpstream(): ValidationInfo? {
     val upstream = upstreamField.getText()
@@ -241,7 +252,6 @@ internal class GitRebaseDialog(private val project: Project,
   private fun loadRefs() {
     localBranches.clear()
     remoteBranches.clear()
-    tags.clear()
 
     val repository = getSelectedRepo()
 
@@ -249,16 +259,43 @@ internal class GitRebaseDialog(private val project: Project,
 
     localBranches += GitBranchUtil.sortBranchesByName(repository.branches.localBranches)
     remoteBranches += GitBranchUtil.sortBranchesByName(repository.branches.remoteBranches)
-
-    tags += loadTags(gitRoot())
   }
 
+  private fun loadTagsInBackground() {
+    ProgressManager.getInstance().run(
+      object : Task.Backgroundable(project, GitBundle.message("rebase.dialog.progress.loading.tags"), true) {
+        override fun run(indicator: ProgressIndicator) {
+          val sortedRoots = LinkedHashSet<VirtualFile>(roots.size).apply {
+            if (defaultRoot != null) {
+              add(defaultRoot)
+            }
+            addAll(roots)
+          }
+
+          sortedRoots.forEach { root ->
+            val tagsInRepo = loadTags(root)
+
+            tags[root] = tagsInRepo
+
+            if (getSelectedRepo().root == root) {
+              UIUtil.invokeLaterIfNeeded {
+                addRefsToOntoAndFrom(tagsInRepo)
+              }
+            }
+          }
+        }
+      })
+  }
+
+  @RequiresBackgroundThread
   private fun loadTags(root: VirtualFile): List<GitTag> {
-    val task = ThrowableComputable<List<GitTag>, VcsException> {
-      GitBranchUtil.getAllTags(project, root).map { GitTag(it) }
+    try {
+      return GitBranchUtil.getAllTags(project, root).map { GitTag(it) }
     }
-    return ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(task, GitBundle.message("rebase.dialog.progress.loading.tags"), true, project)
+    catch (e: VcsException) {
+      LOG.warn("Failed to load tags for root: ${root.presentableUrl}", e)
+    }
+    return emptyList()
   }
 
   private fun updateBranches() {
@@ -280,7 +317,7 @@ internal class GitRebaseDialog(private val project: Project,
 
     addRefsToOntoAndFrom(localBranches)
     addRefsToOntoAndFrom(remoteBranches)
-    addRefsToOntoAndFrom(tags)
+    addRefsToOntoAndFrom(getTags())
 
     upstreamField.item = upstream
     ontoField.item = onto
@@ -619,7 +656,9 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   companion object {
-    val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
+    private val LOG = logger<GitRebaseDialog>()
+
+    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)
