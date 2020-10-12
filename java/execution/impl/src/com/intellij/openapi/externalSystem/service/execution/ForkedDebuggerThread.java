@@ -51,6 +51,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 import static com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUNTIME_MODULE_DIR_KEY;
 
@@ -107,6 +108,9 @@ class ForkedDebuggerThread extends Thread {
         handleForkedProcessSignal(mySocket.accept());
       }
       catch (EOFException ignored) {
+      }
+      catch (SocketException e) {
+        ExternalSystemTaskDebugRunner.LOG.debug(e);
       }
       catch (IOException e) {
         ExternalSystemTaskDebugRunner.LOG.warn(e);
