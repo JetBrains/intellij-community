@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +170,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     setSelected(selected);
     if (selected) {
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
-      IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
     }
   }
 
@@ -179,7 +177,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myEditorGetter = editorGetter;
   }
 
-  @NotNull
   public JComponent getEditorComponent() {
     JComponent component = component();
     if (myEditorGetter != null) return myEditorGetter.apply(component());

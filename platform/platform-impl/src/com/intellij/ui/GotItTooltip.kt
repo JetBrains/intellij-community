@@ -114,18 +114,8 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     component.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
         event?.let {
-          if (canShow(id)) {
-            val provider = positionProvider(event)
-            balloon = createBalloon().also {
-              it.addListener(object : JBPopupListener {
-                override fun onClosed(event: LightweightWindowEvent) {
-                  onGotIt(id)
-                }
-              })
-
-              it.show(provider.point, provider.position)
-            }
-          }
+          val pointPosition = positionProvider(event)
+          checkAndShow(pointPosition.point, pointPosition.position)
         }
       }
 
@@ -137,6 +127,22 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
 
     HelpTooltip.setMasterPopupOpenCondition(component) {
       balloon?.isDisposed ?: true
+    }
+  }
+
+  fun checkAndShow(point: RelativePoint,
+                           position: Balloon.Position) {
+    if (canShow(id)) {
+      createBalloon().also {
+        it.addListener(object : JBPopupListener {
+          override fun onClosed(event: LightweightWindowEvent) {
+            if (event.isOk)
+              onGotIt(id)
+          }
+        })
+
+        it.show(point, position)
+      }
     }
   }
 

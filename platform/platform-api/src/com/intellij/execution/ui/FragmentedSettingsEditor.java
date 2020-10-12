@@ -18,7 +18,17 @@ import java.util.stream.Stream;
 public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettings> extends CompositeSettingsEditor<Settings> {
 
   private final NotNullLazyValue<Collection<SettingsEditorFragment<Settings, ?>>> myFragments =
-    NotNullLazyValue.createValue(() -> createFragments());
+    NotNullLazyValue.createValue(() -> {
+      Collection<SettingsEditorFragment<Settings, ?>> fragments = createFragments();
+      initFragments(fragments);
+      return fragments;
+    });
+
+  protected final Settings mySettings;
+
+  protected FragmentedSettingsEditor(Settings settings) {
+    mySettings = settings;
+  }
 
   protected boolean isDefaultSettings() {
     return false;
@@ -69,5 +79,8 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   public void installWatcher(JComponent c) {
     super.installWatcher(c);
     addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> UIUtil.setupEnclosingDialogBounds(c)));
+  }
+
+  protected void initFragments(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
   }
 }

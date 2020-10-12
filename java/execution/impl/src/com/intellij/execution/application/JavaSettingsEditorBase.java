@@ -109,7 +109,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
     if (fragment != null) {
       if (((JrePathEditor)fragment.component()).updateModel(targetName)) {
-        fragment.resetFrom(getRunConfiguration());
+        fragment.resetFrom(mySettings);
       }
     }
   }
