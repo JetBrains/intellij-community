@@ -22,4 +22,8 @@ interface SpaceChatItem : TimelineItem {
   val delivered: Boolean
 
   val link: String?
+
+  val canDelete: Boolean
+
+  suspend fun delete()
 }

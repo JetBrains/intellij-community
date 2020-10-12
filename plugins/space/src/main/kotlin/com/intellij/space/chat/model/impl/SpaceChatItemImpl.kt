@@ -15,7 +15,7 @@ import com.intellij.space.chat.ui.awaitFullLoad
 import libraries.coroutines.extra.Lifetime
 
 internal class SpaceChatItemImpl private constructor(
-  messageVm: M2MessageVm,
+  private val messageVm: M2MessageVm,
   override val link: String?,
   override val thread: M2ChannelVm? = null
 ) : SpaceChatItem {
@@ -24,8 +24,13 @@ internal class SpaceChatItemImpl private constructor(
   override val created: circlet.platform.api.KDateTime = record.created
   override val details: M2ItemContentDetails? = record.details
   override val delivered: Boolean = messageVm.delivered
+  override val canDelete: Boolean = messageVm.canDelete
 
   override val text: @NlsSafe String = record.text
+
+  override suspend fun delete() {
+    messageVm.delete()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {

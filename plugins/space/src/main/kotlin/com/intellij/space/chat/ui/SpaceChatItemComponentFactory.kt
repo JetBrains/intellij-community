@@ -4,7 +4,6 @@ package com.intellij.space.chat.ui
 import circlet.client.api.*
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
-import circlet.m2.M2MessagesVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.format
 import circlet.platform.client.resolve
@@ -34,10 +33,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
+import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
@@ -45,6 +46,9 @@ import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.date.DateFormat
 import java.awt.*
+import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
@@ -94,7 +98,7 @@ internal class SpaceChatItemComponentFactory(
       }
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
-      createMessageTitle(item),
+      titleSupplier = { parent -> createMessageTitle(parent, item) },
       component
     )
   }
@@ -145,7 +149,20 @@ internal class SpaceChatItemComponentFactory(
     return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
   }
 
-  private fun createMessageTitle(message: SpaceChatItem): JComponent {
+  private fun createDeleteButton(message: SpaceChatItem): JComponent? {
+    if (!message.canDelete) {
+      return null
+    }
+    return InlineIconButton(VcsCodeReviewIcons.Delete, VcsCodeReviewIcons.DeleteHovered).apply {
+      actionListener = ActionListener {
+        launch(lifetime, Ui) {
+          message.delete()
+        }
+      }
+    }
+  }
+
+  private fun createMessageTitle(parent: JComponent, message: SpaceChatItem): JComponent {
     val authorPanel = HtmlEditorPane().apply {
       setBody(createMessageAuthorChunk(message.author).bold().toString())
     }
@@ -153,10 +170,16 @@ internal class SpaceChatItemComponentFactory(
       foreground = UIUtil.getContextHelpForeground()
       setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
     }
+    val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
+      isOpaque = false
+      createDeleteButton(message)?.let { add(it) }
+    }
+    makeVisibleOnHover(actionsPanel, parent)
     return JPanel(HorizontalLayout(JBUI.scale(5))).apply {
       isOpaque = false
       add(authorPanel)
       add(timePanel)
+      add(actionsPanel)
       launch(lifetime, Ui) {
         delay(2000)
         if (!message.delivered) {
@@ -281,6 +304,38 @@ internal class SpaceChatItemComponentFactory(
     setBody(MentionConverter.html(text, server)) // NON-NLS
   }
 
+  private fun JComponent.addOnHoverListener(listener: (isInside: Boolean) -> Unit) {
+    var currentState = false
+    fun updateCurrentState(newState: Boolean) {
+      if (currentState != newState) {
+        currentState = newState
+        listener(newState)
+      }
+    }
+
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent?) {
+        updateCurrentState(true)
+      }
+
+      override fun mouseExited(e: MouseEvent?) {
+        // TODO: such solution doesn't work for case like parent-> child -> exit
+        if (e != null && !this@addOnHoverListener.contains(e.point)) {
+          updateCurrentState(false)
+        }
+      }
+    })
+  }
+
+  private fun makeVisibleOnHover(component: JComponent, parent: JComponent) {
+    component.isVisible = false
+    parent.addOnHoverListener { isInside ->
+      component.isVisible = isInside
+      parent.revalidate()
+      parent.repaint()
+    }
+  }
+
   private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
     private val lineColor = Color(22, 125, 255, 51)
 
@@ -311,7 +366,7 @@ internal class SpaceChatItemComponentFactory(
     }
   }
 
-  private class Item(avatar: Icon, title: JComponent, content: JComponent) : BorderLayoutPanel() {
+  private class Item(avatar: Icon, titleSupplier: (parent: JComponent) -> JComponent, content: JComponent) : BorderLayoutPanel() {
     companion object {
       val AVATAR_GAP: Int
         get() = UI.scale(8)
@@ -323,16 +378,15 @@ internal class SpaceChatItemComponentFactory(
         border = JBUI.Borders.empty()
         addToTop(userAvatar(avatar))
       }
-      isOpaque = false
-      addToLeft(avatarPanel)
-
       val rightPart = JPanel(VerticalLayout(JBUI.scale(5))).apply {
         isOpaque = false
         border = JBUI.Borders.emptyLeft(AVATAR_GAP)
-        add(title, VerticalLayout.FILL_HORIZONTAL)
+        add(titleSupplier(this@Item), VerticalLayout.FILL_HORIZONTAL)
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
 
+      isOpaque = false
+      addToLeft(avatarPanel)
       addToCenter(rightPart)
     }
 
