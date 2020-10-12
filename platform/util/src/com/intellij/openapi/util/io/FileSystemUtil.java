@@ -488,8 +488,10 @@ public final class FileSystemUtil {
       }
     }
 
+    // when native queries failed, fallback to the Java File IO:
+    // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (parent == null) {
-      String probe = findCaseSensitiveSiblingName(anyChild);
+      String probe = findCaseToggleableChild(anyChild);
       if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
       parent = anyChild;
       anyChild = new File(parent, probe);
@@ -499,7 +501,7 @@ public final class FileSystemUtil {
     String altName = toggleCase(name);
     if (altName.equals(name)) {
       // we have a bad case of "123" file
-      name = findCaseSensitiveSiblingName(parent);
+      name = findCaseToggleableChild(parent);
       if (name == null) {
         // we can't find any file with toggleable case.
         return FileAttributes.CaseSensitivity.UNKNOWN;
@@ -541,7 +543,9 @@ public final class FileSystemUtil {
     return !toggleCase(name).equals(name);
   }
 
-  private static String findCaseSensitiveSiblingName(@NotNull File dir) {
+  // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
+  // or null if there are none (e.g there's only one child "123.456").
+  private static String findCaseToggleableChild(@NotNull File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
@@ -555,7 +559,8 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
     try {
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
 
@@ -639,7 +644,8 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(@NotNull String path) {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
@@ -650,9 +656,7 @@ public final class FileSystemUtil {
           boolean value = new CoreFoundation.CFBooleanRef(result.getValue()).booleanValue();
           return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
         }
-        else {
-          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
-        }
+        LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
       }
       finally {
         url.release();
@@ -688,7 +692,8 @@ public final class FileSystemUtil {
     return null;
   }
 
-  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
+  @NotNull
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
     if (predefinedLinuxCaseSensitivity != null) return predefinedLinuxCaseSensitivity;
     try {
       Memory buf = new Memory(256);
