@@ -72,7 +72,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control MINUS",            "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "OpenInRightSplit", "NotebookRunCellSelectBelowAction", "RConsoleNextLineAction"},
+    { "shift ENTER",              "CollapseExpandableComponent", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
     { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
@@ -239,6 +239,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
     { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
@@ -331,6 +332,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "shift control M",          "RInsertPipeAction", "ShowBookmarks"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit", "ToggleFindInSelection"},
+    { "shift ctrl BACK_SLASH",    "GotoUrlAction", "SmartTypeCompletion"},
     });
     put("Eclipse (Mac OS X)", new String[][] {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
@@ -381,7 +383,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl V",                   "EditorPasteSimple", "Terminal.Paste"},
     { "ctrl alt DOWN",            "Console.TableResult.NextPage", "EditorCloneCaretBelow"},
     { "ctrl alt UP",              "Console.TableResult.PreviousPage", "EditorCloneCaretAbove"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
+    { "shift ENTER",              "CollapseExpandableComponent", "DatabaseView.PropertiesAction", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
     { "shift INSERT",             "EditorPasteSimple", "Terminal.Paste"},
     { "shift ctrl D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift ctrl M",             "EditorSelectWord", "RInsertPipeAction"},
@@ -406,7 +408,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta V",                   "EditorPasteSimple", "Terminal.Paste"},
     { "meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
     { "meta alt G",               "DatabaseView.SqlGenerator", "FindWordAtCaret", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
+    { "shift ENTER",              "CollapseExpandableComponent", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
     { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore",  "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
