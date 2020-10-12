@@ -15,8 +15,8 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -54,7 +54,7 @@ internal object GHPRDetailsComponent {
     val panel = JPanel(VerticalLayout(JBUIScale.scale(8))).apply {
       isOpaque = false
     }
-    val directionPanel = GHPRDirectionPanel()
+    val directionPanel = GHPRBranchesPanel()
     val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
     val timelineLink = ActionLink(GithubBundle.message("pull.request.view.conversations.action")) {
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink

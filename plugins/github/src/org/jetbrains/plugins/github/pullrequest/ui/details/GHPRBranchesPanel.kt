@@ -31,7 +31,7 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal class GHPRDirectionPanel : NonOpaquePanel() {
+internal class GHPRBranchesPanel : NonOpaquePanel() {
   private val branchesTooltipFactory = GHPRBranchesTooltipFactory()
   private val from = createLabel().also(branchesTooltipFactory::installTooltip)
   private val to = createLabel()
