@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +31,6 @@ public final class ExtensionInstantiationException extends RuntimeException {
   public @NonNls String getMessage() {
     String message = super.getMessage();
     PluginId pluginId = getExtensionOwnerId();
-    return pluginId != null ? StringUtil.notNullize(message) + " [Plugin " + pluginId + "]" : message;
+    return pluginId != null ? Strings.notNullize(message) + " [Plugin " + pluginId + "]" : message;
   }
 }

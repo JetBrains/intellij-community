@@ -1,15 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Gregory.Shrago
@@ -37,7 +38,7 @@ public class PsiReferenceServiceImpl extends PsiReferenceService {
     return Arrays.asList(element.getReferences());
   }
 
-  private static final Set<String> ourReportedReferenceClasses = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourReportedReferenceClasses = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private static void assertReferencesHaveSameElement(@NotNull PsiElement element, @NotNull List<PsiReference> references) {
     for (PsiReference reference : references) {

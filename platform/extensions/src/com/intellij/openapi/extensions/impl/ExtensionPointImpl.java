@@ -687,8 +687,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    */
   final synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
                                                   boolean stopAfterFirstMatch,
-                                                  @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                                  @NotNull List<? super Runnable> listenerCallbacks) {
+                                                  @NotNull List<Runnable> priorityListenerCallbacks,
+                                                  @NotNull List<Runnable> listenerCallbacks) {
     boolean found = false;
     ExtensionPointListener<T>[] listeners = myListeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
@@ -744,12 +744,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<? extends Element> elements,
-                                     @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                     @NotNull List<? super Runnable> listenerCallbacks);
+                                     @NotNull List<Element> elements,
+                                     @NotNull List<Runnable> priorityListenerCallbacks,
+                                     @NotNull List<Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
-                               @NotNull List<? extends ExtensionComponentAdapter> adapters,
+                               @NotNull List<ExtensionComponentAdapter> adapters,
                                @NotNull ExtensionPointListener<T> @NotNull [] listeners) {
     for (ExtensionPointListener<T> listener : listeners) {
       if (listener instanceof ExtensionPointAdapter) {
@@ -1055,7 +1055,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     List<? extends T> extensionsCache = myExtensionsCache;
     if (extensionsCache == null) {
       for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
-        Object classOrName = adapter.myImplementationClassOrName;
+        Object classOrName = adapter.implementationClassOrName;
         if (classOrName instanceof String ? classOrName.equals(aClass.getName()) : classOrName == aClass) {
           return processAdapter(adapter);
         }

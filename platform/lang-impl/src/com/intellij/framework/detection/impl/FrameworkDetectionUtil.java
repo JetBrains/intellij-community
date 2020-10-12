@@ -23,7 +23,7 @@ public final class FrameworkDetectionUtil {
 
   @Nullable
   public static FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       if (detector instanceof FacetBasedFrameworkDetector<?, ?> &&
           ((FacetBasedFrameworkDetector)detector).getFacetType().equals(facetType)) {
         return detector.getFrameworkType();

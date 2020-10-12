@@ -3,30 +3,32 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-data class PluginAdvertiserExtensionsData(
+internal data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
   val extensionOrFileName: String,
   val plugins: Set<PluginsAdvertiser.Plugin>
 )
 
 @State(name = "PluginAdvertiserExtensions", storages = [Storage("pluginAdvertiser.xml")])
-class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
+internal class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
   companion object {
     @JvmStatic
     fun getInstance(): PluginAdvertiserExtensionsStateService = service()
@@ -65,14 +67,14 @@ class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAd
   }
 }
 
-class PluginAdvertiserExtensionsState(private val project: Project, private val service: PluginAdvertiserExtensionsStateService) {
-
+internal class PluginAdvertiserExtensionsState(private val project: Project, private val service: PluginAdvertiserExtensionsStateService) {
   companion object {
-    private val LOG = Logger.getInstance(PluginsAdvertiser::class.java)
+    private val LOG = logger<PluginsAdvertiser>()
 
     @JvmStatic
-    fun getInstance(project: Project): PluginAdvertiserExtensionsState =
-      PluginAdvertiserExtensionsState(project, PluginAdvertiserExtensionsStateService.getInstance())
+    fun getInstance(project: Project): PluginAdvertiserExtensionsState {
+      return PluginAdvertiserExtensionsState(project, PluginAdvertiserExtensionsStateService.getInstance())
+    }
   }
 
   fun ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
@@ -81,7 +83,7 @@ class PluginAdvertiserExtensionsState(private val project: Project, private val 
 
   }
 
-  private val enabledExtensionOrFileNames = ContainerUtil.newConcurrentSet<String>()
+  private val enabledExtensionOrFileNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
   fun addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
     enabledExtensionOrFileNames += extensionOrFileName
@@ -194,10 +196,12 @@ class PluginAdvertiserExtensionsState(private val project: Project, private val 
     return null
   }
 
-  private fun isIgnored(extensionOrFileName: String): Boolean =
-    enabledExtensionOrFileNames.contains(extensionOrFileName)
-    || UnknownFeaturesCollector.getInstance(project).isIgnored(createUnknownExtensionFeature(extensionOrFileName))
+  private fun isIgnored(extensionOrFileName: String): Boolean {
+    return (enabledExtensionOrFileNames.contains(extensionOrFileName)
+            || UnknownFeaturesCollector.getInstance(project).isIgnored(createUnknownExtensionFeature(extensionOrFileName)))
+  }
 
-  private fun createUnknownExtensionFeature(extensionOrFileName: String): UnknownFeature? =
-    UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.name, "File Type", extensionOrFileName, extensionOrFileName)
+  private fun createUnknownExtensionFeature(extensionOrFileName: String): UnknownFeature {
+    return UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.name, "File Type", extensionOrFileName, extensionOrFileName)
+  }
 }

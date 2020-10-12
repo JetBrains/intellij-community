@@ -2407,7 +2407,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   public abstract static class MyRecordingAnnotator implements Annotator {
-    static final Set<Class<?>> done = ContainerUtil.newConcurrentSet();
+    static final Set<Class<?>> done = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     protected void iDidIt() {
       done.add(getClass());
     }

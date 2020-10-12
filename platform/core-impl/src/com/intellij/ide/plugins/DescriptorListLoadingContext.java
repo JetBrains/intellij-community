@@ -198,7 +198,7 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
                                                                   XmlReader.APPLICATION_SERVICE,
                                                                   XmlReader.PROJECT_SERVICE,
                                                                   XmlReader.MODULE_SERVICE);
-
+  @SuppressWarnings("SSBasedInspection")
   private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);

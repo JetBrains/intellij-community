@@ -43,7 +43,6 @@ private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*
 private const val MAX_SSH_CONNECTIONS = 10 // by default SSH server has a limit of 10 multiplexed ssh connection
 
 internal class GitFetchSupportImpl(private val project: Project) : GitFetchSupport {
-
   private val git get() = Git.getInstance() as GitImpl
   private val progressManager get() = ProgressManager.getInstance()
 

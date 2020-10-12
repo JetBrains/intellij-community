@@ -17,13 +17,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.DisposableWrapperList
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-@State(name = "UnlinkedProjectNotification", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "UnlinkedProjectNotification", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class UnlinkedProjectNotificationAware(private val project: Project) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
-
-  private val disabledNotifications = ContainerUtil.newConcurrentSet<String>()
+  private val disabledNotifications = Collections.newSetFromMap<String>(ConcurrentHashMap())
   private val notifiedNotifications = DisposableWrapperList<String>()
 
   fun notify(unlinkedProjectAware: ExternalSystemUnlinkedProjectAware, externalProjectPath: String) {

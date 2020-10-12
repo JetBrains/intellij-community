@@ -14,10 +14,10 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-public final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
+final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
   private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
 
-  public ProjectFileBasedIndexStartupActivity() {
+  ProjectFileBasedIndexStartupActivity() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {

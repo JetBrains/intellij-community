@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.assertions
 
 import com.intellij.openapi.util.SystemInfo
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.readChars
 import com.intellij.util.io.write
 import org.assertj.core.api.ListAssert
@@ -18,13 +17,15 @@ import org.yaml.snakeyaml.representer.Represent
 import org.yaml.snakeyaml.representer.Representer
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
 internal interface SnapshotFileUsageListener {
   fun beforeMatch(file: Path)
 }
 
-internal val snapshotFileUsageListeners = ContainerUtil.newConcurrentSet<SnapshotFileUsageListener>()
+internal val snapshotFileUsageListeners = Collections.newSetFromMap<SnapshotFileUsageListener>(ConcurrentHashMap())
 
 class ListAssertEx<ELEMENT>(actual: List<ELEMENT>?) : ListAssert<ELEMENT>(actual) {
   fun toMatchSnapshot(snapshotFile: Path) {

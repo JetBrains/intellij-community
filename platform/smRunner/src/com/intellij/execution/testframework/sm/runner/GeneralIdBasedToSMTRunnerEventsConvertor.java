@@ -8,10 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -22,8 +22,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final Map<String, Node> myNodeByIdMap = new ConcurrentHashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningTestNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Node> myRunningSuiteNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;

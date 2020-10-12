@@ -449,7 +449,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private class ProgressWatcher implements Runnable {
 
     private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
+    private final Set<AbstractViewManager.BuildInfo> myBuilds = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Override
     public void run() {

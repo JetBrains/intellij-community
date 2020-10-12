@@ -40,9 +40,8 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,8 +60,7 @@ import java.util.*;
 public class ConsoleHistoryController implements Disposable {
   private static final Logger LOG = Logger.getInstance(ConsoleHistoryController.class);
 
-  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers = CollectionFactory.createConcurrentWeakIdentityMap();
 
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
@@ -243,7 +241,7 @@ public class ConsoleHistoryController implements Disposable {
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = ObjectUtils.chooseNotNull(command.getText(), "");
+      CharSequence text = Objects.requireNonNullElse(command.getText(), "");
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -348,7 +346,7 @@ public class ConsoleHistoryController implements Disposable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       String title = LangBundle.message("dialog.title.history", myConsole.getTitle());
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
+      final ContentChooser<String> chooser = new ContentChooser<>(myConsole.getProject(), title, true, true) {
         {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
           setOKButtonMnemonic('P');

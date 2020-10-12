@@ -111,16 +111,16 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", out.toByteArray())
       Paths.get(it.path)
     }) { project ->
-      val store = project.stateStore
-      assertThat(store.nameFile).doesNotExist()
+      val store = project.stateStore as ProjectStoreBase
+      assertThat(store.getNameFile()).doesNotExist()
       val newName = "Foo"
       val oldName = project.name
       (project as ProjectEx).setProjectName(newName)
       project.stateStore.save()
-      assertThat(store.nameFile).hasContent(newName)
+      assertThat(store.getNameFile()).hasContent(newName)
 
       project.setProjectName("clear-read-only")
-      File(store.nameFile.toUri()).setReadOnly()
+      File(store.getNameFile().toUri()).setReadOnly()
 
       val handler = ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl
       try {
@@ -130,11 +130,11 @@ internal class ProjectStoreTest {
       finally {
         handler.setClearReadOnlyInTests(false)
       }
-      assertThat(store.nameFile).hasContent("clear-read-only")
+      assertThat(store.getNameFile()).hasContent("clear-read-only")
 
       project.setProjectName(oldName)
       project.stateStore.save()
-      assertThat(store.nameFile).doesNotExist()
+      assertThat(store.getNameFile()).doesNotExist()
     }
   }
 
@@ -147,23 +147,23 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
       it.toNioPath()
     }) { project ->
-      val store = project.stateStore
-      assertThat(store.nameFile).hasContent(name)
+      val store = project.stateStore as ProjectStoreBase
+      assertThat(store.getNameFile()).hasContent(name)
 
       project.stateStore.save()
-      assertThat(store.nameFile).hasContent(name)
+      assertThat(store.getNameFile()).hasContent(name)
 
       (project as ProjectEx).setProjectName(name)
       project.stateStore.save()
-      assertThat(store.nameFile).hasContent(name)
+      assertThat(store.getNameFile()).hasContent(name)
 
       project.setProjectName("foo")
       project.stateStore.save()
-      assertThat(store.nameFile).hasContent("foo")
+      assertThat(store.getNameFile()).hasContent("foo")
 
       project.setProjectName(name)
       project.stateStore.save()
-      assertThat(store.nameFile).doesNotExist()
+      assertThat(store.getNameFile()).doesNotExist()
     }
   }
 

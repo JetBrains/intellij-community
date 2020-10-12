@@ -40,7 +40,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -50,10 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -79,9 +75,9 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(final @NotNull Project project) {
     myProject = project;
-    myNotifications = ContainerUtil.newConcurrentSet();
+    myNotifications = Collections.newSetFromMap(new ConcurrentHashMap<>());
     myUniqueNotifications = new ConcurrentHashMap<>();
-    initializedExternalSystem = ContainerUtil.newConcurrentSet();
+    initializedExternalSystem = Collections.newSetFromMap(new ConcurrentHashMap<>());
     myMessageCounter = new MessageCounter();
     myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
   }

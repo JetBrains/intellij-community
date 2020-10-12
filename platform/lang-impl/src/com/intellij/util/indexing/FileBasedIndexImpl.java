@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -104,7 +105,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
 
-  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   private final boolean myIsUnitTestMode;
@@ -114,7 +115,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
-  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
+  private final Set<Project> myProjectsBeingUpdated = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private final Lock myReadLock;
   final Lock myWriteLock;

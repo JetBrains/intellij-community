@@ -46,7 +46,6 @@ import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -68,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -978,7 +978,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() {
-    Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
+    Set<Thread> detectThreads = Collections.newSetFromMap(new ConcurrentHashMap<>());
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
       private MyFT() {
         super(new Language("my") {

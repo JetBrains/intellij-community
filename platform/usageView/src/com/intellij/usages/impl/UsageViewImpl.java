@@ -171,7 +171,8 @@ public class UsageViewImpl implements UsageViewEx {
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
-  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses = ContainerUtil.newConcurrentSet();
+  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
+    Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,

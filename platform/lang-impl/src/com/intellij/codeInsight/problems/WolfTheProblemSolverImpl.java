@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.problems;
 
@@ -164,7 +164,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
+    private final Collection<Problem> problems = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -455,7 +455,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 

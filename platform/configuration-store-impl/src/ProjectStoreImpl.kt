@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -31,9 +30,6 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
-
-internal val IProjectStore.nameFile: Path
-  get() = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
@@ -90,10 +86,10 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     fun doSave() {
       if (currentProjectName == basePath.fileName.toString()) {
         // name equals to base path name - just remove name
-        nameFile.delete()
+        getNameFile().delete()
       }
       else if (basePath.isDirectory()) {
-        nameFile.write(currentProjectName.toByteArray())
+        getNameFile().write(currentProjectName.toByteArray())
       }
     }
 
@@ -101,7 +97,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       doSave()
     }
     catch (e: AccessDeniedException) {
-      val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
+      val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getNameFile())!!))
       if (status.hasReadonlyFiles()) {
         throw e
       }

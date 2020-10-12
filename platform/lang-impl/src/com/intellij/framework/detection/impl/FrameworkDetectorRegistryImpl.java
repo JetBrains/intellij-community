@@ -44,7 +44,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
     myDetectorsByFileType = new MultiMap<>();
     myDetectorsMap = new MultiMap<>();
 
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       myDetectorById.put(detector.getDetectorId(), detector);
       myDetectorsByFileType.putValue(detector.getFileType(), detector.getDetectorId());
 
@@ -88,11 +88,10 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends FrameworkType> getFrameworkTypes() {
+  public @NotNull List<? extends FrameworkType> getFrameworkTypes() {
     List<FrameworkType> types = new ArrayList<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       types.add(detector.getFrameworkType());
     }
     return types;

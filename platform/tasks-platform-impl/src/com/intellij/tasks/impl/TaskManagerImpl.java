@@ -54,6 +54,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -104,7 +105,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
+  private final Set<TaskRepository> myBadRepositories = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public TaskManagerImpl(@NotNull Project project) {
     myProject = project;

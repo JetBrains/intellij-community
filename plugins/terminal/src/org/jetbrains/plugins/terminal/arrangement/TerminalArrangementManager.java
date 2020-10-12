@@ -21,8 +21,10 @@ import org.jetbrains.plugins.terminal.TerminalView;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "TerminalArrangementManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)
@@ -34,7 +36,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
   private ToolWindow myTerminalToolWindow;
   private TerminalArrangementState myState;
-  private final Set<String> myTrackingCommandHistoryFileNames = ContainerUtil.newConcurrentSet();
+  private final Set<String> myTrackingCommandHistoryFileNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public TerminalArrangementManager() {
     myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();

@@ -21,7 +21,7 @@ final class FileTree {
 
   FileTree() {
     myDirectory2Children = new ConcurrentHashMap<>();
-    myFiles = ContainerUtil.newConcurrentSet();
+    myFiles = Collections.newSetFromMap(new ConcurrentHashMap<>());
     myStrictDirectory2Children = new ConcurrentHashMap<>();
   }
 

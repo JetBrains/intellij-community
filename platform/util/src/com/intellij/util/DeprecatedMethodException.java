@@ -2,14 +2,15 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class DeprecatedMethodException extends RuntimeException {
-  private static final Set<String> BEAT_DEAD_HORSE = ContainerUtil.newConcurrentSet();
+  private static final Set<String> BEAT_DEAD_HORSE = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final Logger LOG = Logger.getInstance(DeprecatedMethodException.class);
   private DeprecatedMethodException(@NotNull String message) {
     super(message);

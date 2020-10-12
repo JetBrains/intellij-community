@@ -1541,7 +1541,7 @@ public final class IncProjectBuilder {
   private static CompileContext createContextWrapper(final CompileContext delegate) {
     final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
-    final Set<Object> deletedKeysSet = ContainerUtil.newConcurrentSet();
+    final Set<Object> deletedKeysSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
     final Class<UserDataHolder> dataHolderInterface = UserDataHolder.class;
     final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
     return (CompileContext)Proxy.newProxyInstance(loader, new Class[]{CompileContext.class}, new InvocationHandler() {

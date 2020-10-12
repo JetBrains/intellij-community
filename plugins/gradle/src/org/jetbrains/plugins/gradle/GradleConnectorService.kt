@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil.getDeclaredField
 import com.intellij.util.ReflectionUtil.getField
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.JavaVersion
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.internal.classpath.ClassPath
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.loader.rt.MarkerRt
 import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
@@ -45,8 +45,7 @@ import java.util.function.Function
  */
 @ApiStatus.Internal
 @Service
-class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : Disposable {
-
+internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : Disposable {
   private val connectorsMap = ConcurrentHashMap<String, GradleProjectConnection>()
 
   override fun dispose() {
@@ -139,7 +138,7 @@ class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : D
     /** disable stop IDLE Gradle daemons on IDE project close. Applicable for Gradle versions w/o disconnect support (older than 6.5). */
     private val DISABLE_STOP_OLD_IDLE_DAEMONS = java.lang.Boolean.getBoolean("idea.gradle.disableStopIdleDaemonsOnProjectClose")
 
-    private val REPORTED_JAVA11_ISSUE = ContainerUtil.newConcurrentSet<String>()
+    private val REPORTED_JAVA11_ISSUE = Collections.newSetFromMap<String>(ConcurrentHashMap())
 
     @JvmStatic
     private fun getInstance(projectPath: String, taskId: ExternalSystemTaskId?): GradleConnectorService? {

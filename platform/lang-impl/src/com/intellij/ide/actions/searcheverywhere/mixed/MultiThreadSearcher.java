@@ -241,7 +241,7 @@ class MultiThreadSearcher implements SESearcher {
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
-    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
+    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 

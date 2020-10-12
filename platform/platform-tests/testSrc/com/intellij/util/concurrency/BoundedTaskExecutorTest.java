@@ -360,7 +360,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       LOG.debug("nMaxThreads = " + nMaxThreads);
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),nMaxThreads);
       int N = 1000000;
-      Set<Thread> workers = ContainerUtil.newConcurrentSet();
+      Set<Thread> workers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
       CountDownLatch allStarted = new CountDownLatch(1);
       List<Future<?>> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> executor.submit(new Runnable() {

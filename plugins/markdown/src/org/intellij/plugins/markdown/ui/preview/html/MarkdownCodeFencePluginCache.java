@@ -21,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ArrayUtilRt.EMPTY_FILE_ARRAY;
@@ -31,8 +33,9 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
-  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches = ContainerUtil.newConcurrentSet();
-  @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
+  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
+    Collections.newSetFromMap(new ConcurrentHashMap<>());
+  @NotNull private final Collection<File> myAdditionalCacheToDelete = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public static MarkdownCodeFencePluginCache getInstance() {
     return ServiceManager.getService(MarkdownCodeFencePluginCache.class);

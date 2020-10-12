@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -103,7 +103,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   private Collection<Runnable> getCallbacks(@NotNull EventType eventType) {
     Collection<Runnable> result = myCallbacks.get(eventType);
     if (result == null) {
-      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = ContainerUtil.newConcurrentSet());
+      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = Collections.newSetFromMap(new ConcurrentHashMap<>()));
       if (candidate != null) {
         result = candidate;
       }

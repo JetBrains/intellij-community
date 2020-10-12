@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("WeakerAccess")
@@ -58,7 +59,8 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
-  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+  private final Set<String> myCompilationAffectedModules = Collections.newSetFromMap(new ConcurrentHashMap<>()); // used outside myLock
+
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
