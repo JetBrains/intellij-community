@@ -18,12 +18,7 @@ public class ReplaceExplicitTypeWithVarIntentionActionTest extends LombokIntenti
 
   @Override
   public IntentionAction getIntentionAction() {
-    try {
-      return new ReplaceExplicitTypeWithVarIntentionAction();
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return new ReplaceExplicitTypeWithVarIntentionAction();
   }
 
   @Override

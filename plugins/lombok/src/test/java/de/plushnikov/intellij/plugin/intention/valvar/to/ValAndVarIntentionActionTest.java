@@ -14,7 +14,7 @@ public class ValAndVarIntentionActionTest extends AbstractLombokLightCodeInsight
     return EXPLICIT_TO_VAL_VAR_DIRECTORY;
   }
 
-  public void testValAndVar() throws ClassNotFoundException {
+  public void testValAndVar() {
     loadToPsiFile(getTestName(false) + ".java");
     IntentionAction replaceExplicitTypeWithValIntentionAction = new ReplaceExplicitTypeWithValIntentionAction();
     IntentionAction replaceExplicitTypeWithVarIntentionAction = new ReplaceExplicitTypeWithVarIntentionAction();

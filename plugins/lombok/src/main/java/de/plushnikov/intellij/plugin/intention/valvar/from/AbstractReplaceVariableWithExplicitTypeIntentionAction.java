@@ -11,33 +11,34 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction extends AbstractValVarIntentionAction {
 
-  private final Class<?> variableClass;
+  private final String variableClassName;
+  private final String variableClassSimpleName;
+
+  public AbstractReplaceVariableWithExplicitTypeIntentionAction(String variableClassName, String variableClassSimpleName) {
+    this.variableClassName = variableClassName;
+    this.variableClassSimpleName = variableClassSimpleName;
+  }
 
   public AbstractReplaceVariableWithExplicitTypeIntentionAction(Class<?> variableClass) {
-    this.variableClass = variableClass;
+    this(variableClass.getName(), variableClass.getSimpleName());
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace '" + variableClass.getSimpleName() + "' with explicit type (Lombok)";
+    return "Replace '" + variableClassSimpleName + "' with explicit type (Lombok)";
   }
 
   @Override
   public boolean isAvailableOnVariable(PsiVariable psiVariable) {
-    try {
-      if (variableClass == lombok.val.class) {
-        return ValProcessor.isVal(psiVariable);
-      }
-      if (variableClass == Class.forName("lombok.var")) {
-        return ValProcessor.isVar(psiVariable);
-      }
-      return false;
+    if (variableClassName == "lombok.val") {
+      return ValProcessor.isVal(psiVariable);
     }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+    if (variableClassName == "lombok.var") {
+      return ValProcessor.isVar(psiVariable);
     }
+    return false;
   }
 
   @Override

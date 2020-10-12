@@ -11,17 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction extends AbstractValVarIntentionAction {
 
-  private final Class<?> variableClass;
+  private final String variableClassName;
+  private final String variableClassSimpleName;
+
+  public AbstractReplaceExplicitTypeWithVariableIntentionAction(String variableClassName, String variableClassSimpleName) {
+    this.variableClassName = variableClassName;
+    this.variableClassSimpleName = variableClassSimpleName;
+  }
 
   public AbstractReplaceExplicitTypeWithVariableIntentionAction(Class<?> variableClass) {
-    this.variableClass = variableClass;
+    this(variableClass.getName(), variableClass.getSimpleName());
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace explicit type with '" + variableClass.getSimpleName() + "' (Lombok)";
+    return "Replace explicit type with '" + variableClassSimpleName + "' (Lombok)";
   }
 
   @Override
@@ -68,11 +74,11 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    PsiClass variablePsiClass = JavaPsiFacade.getInstance(project).findClass(variableClass.getName(), psiVariable.getResolveScope());
+    PsiClass variablePsiClass = JavaPsiFacade.getInstance(project).findClass(variableClassName, psiVariable.getResolveScope());
     if (variablePsiClass == null) {
       return;
     }
-    PsiJavaCodeReferenceElement referenceElementByFQClassName = elementFactory.createReferenceElementByFQClassName(variableClass.getName(), psiVariable.getResolveScope());
+    PsiJavaCodeReferenceElement referenceElementByFQClassName = elementFactory.createReferenceElementByFQClassName(variableClassName, psiVariable.getResolveScope());
     typeElement = (PsiTypeElement) IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, typeElement);
     typeElement.deleteChildRange(typeElement.getFirstChild(), typeElement.getLastChild());
     typeElement.add(referenceElementByFQClassName);

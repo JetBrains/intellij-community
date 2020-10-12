@@ -7,8 +7,8 @@ import static com.intellij.psi.PsiModifier.FINAL;
 
 public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceExplicitTypeWithVariableIntentionAction {
 
-  public ReplaceExplicitTypeWithVarIntentionAction() throws ClassNotFoundException {
-    super(Class.forName("lombok.var"));
+  public ReplaceExplicitTypeWithVarIntentionAction() {
+    super("lombok.var", "var");
   }
 
   @Override
