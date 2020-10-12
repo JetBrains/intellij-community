@@ -1,27 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.compiled;
+package com.intellij.psi.impl.cache;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
+import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
-import org.jetbrains.org.objectweb.asm.TypePath;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +47,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forArrayElement() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(TypeAnnotationEntry.ARRAY_ELEMENT));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.ARRAY_ELEMENT));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -59,7 +57,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forEnclosingClass() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(TypeAnnotationEntry.ENCLOSING_CLASS));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.ENCLOSING_CLASS));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -69,7 +67,7 @@ public class TypeAnnotationContainer {
    */
   public @NotNull TypeAnnotationContainer forBound() {
     if (isEmpty()) return this;
-    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(TypeAnnotationEntry.WILDCARD_BOUND));
+    List<TypeAnnotationEntry> list = ContainerUtil.mapNotNull(myList, entry -> entry.forPathElement(Builder.WILDCARD_BOUND));
     return list.isEmpty() ? EMPTY : new TypeAnnotationContainer(list);
   }
 
@@ -165,29 +163,25 @@ public class TypeAnnotationContainer {
   public String toString() {
     return StringUtil.join(myList, "\n");
   }
-
-  static class Builder {
+  
+  public static class Builder {
+    public static final byte ARRAY_ELEMENT = 0;
+    public static final byte ENCLOSING_CLASS = 1;
+    public static final byte WILDCARD_BOUND = 2;
+    public static final byte TYPE_ARGUMENT = 3;
+    
     private final @NotNull ArrayList<TypeAnnotationEntry> myList = new ArrayList<>();
-    private final @NotNull TypeInfo myTypeInfo;
-    private final @NotNull FirstPassData myFirstPassData;
+    protected final @NotNull TypeInfo myTypeInfo;
 
-    Builder(@NotNull TypeInfo info, @NotNull FirstPassData classInfo) {
+    public Builder(@NotNull TypeInfo info) {
       myTypeInfo = info;
-      myFirstPassData = classInfo;
+    }
+    
+    public void add(byte @NotNull [] path, @NotNull String text) {
+      myList.add(new TypeAnnotationEntry(path, text));
     }
 
-    void add(TypePath path, String text) {
-      byte[] translated = translatePath(path);
-      if (translated != null) {
-        myList.add(new TypeAnnotationEntry(translated, text));
-      }
-    }
-
-    AnnotationVisitor collect(@Nullable TypePath path, @Nullable String desc) {
-      return new AnnotationTextCollector(desc, myFirstPassData, text -> add(path, text));
-    }
-
-    void build() {
+    public void build() {
       if (myList.isEmpty()) {
         myTypeInfo.setTypeAnnotations(EMPTY);
       }
@@ -196,91 +190,9 @@ public class TypeAnnotationContainer {
         myTypeInfo.setTypeAnnotations(new TypeAnnotationContainer(myList));
       }
     }
-
-    /**
-     * Translate annotation path. The most non-trivial thing here is converting inner-to-outer traversal
-     * into outer-to-inner. E.g. consider {@code @A Outer.@B Inner} (assuming that Inner is non-static). 
-     * Class-file stores empty path for {@code @A} and INNER_TYPE path for {@code @A}. We need the reverse,
-     * as when we build the PSI we don't know how many non-static components we have. So we translate path
-     * for {@code @A} to ENCLOSING_CLASS and path for {@code @B} to empty.
-     * 
-     * @param path TypePath
-     * @return translated path in the form of byte array
-     */
-    private byte[] translatePath(@Nullable TypePath path) {
-      String typeText = myTypeInfo.text;
-      int arrayLevel = myTypeInfo.arrayCount + (myTypeInfo.isEllipsis ? 1 : 0);
-      String qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
-      int depth = myFirstPassData.getInnerDepth(qualifiedName);
-      boolean atWildcard = false;
-      if (path == null) {
-        if (depth == 0 || arrayLevel > 0) {
-          return ArrayUtil.EMPTY_BYTE_ARRAY;
-        }
-        byte[] result = new byte[depth];
-        Arrays.fill(result, TypeAnnotationEntry.ENCLOSING_CLASS);
-        return result;
-      }
-      ByteArrayOutputStream result = new ByteArrayOutputStream();
-      int length = path.getLength();
-      for (int i = 0; i < length; i++) {
-        byte step = (byte)path.getStep(i);
-        switch (step) {
-          case TypePath.INNER_TYPE:
-            if (depth == 0) return null;
-            depth--;
-            break;
-          case TypePath.ARRAY_ELEMENT:
-            if (arrayLevel <= 0 || atWildcard) return null;
-            arrayLevel--;
-            result.write(TypeAnnotationEntry.ARRAY_ELEMENT);
-            break;
-          case TypePath.WILDCARD_BOUND:
-            if (!atWildcard) return null;
-            atWildcard = false;
-            result.write(TypeAnnotationEntry.WILDCARD_BOUND);
-            break;
-          case TypePath.TYPE_ARGUMENT:
-            if (atWildcard || arrayLevel > 0) return null;
-            while (depth-- > 0) {
-              result.write(TypeAnnotationEntry.ENCLOSING_CLASS);
-              typeText = PsiNameHelper.getOuterClassReference(typeText);
-            }
-            int argumentIndex = path.getStepArgument(i);
-            String[] arguments = PsiNameHelper.getClassParametersText(typeText);
-            if (argumentIndex >= arguments.length) return null;
-            TypeInfo argument = TypeInfo.fromString(arguments[argumentIndex], false);
-            arrayLevel = argument.arrayCount;
-            typeText = argument.text;
-            if (typeText.startsWith("? extends ")) {
-              typeText = typeText.substring("? extends ".length());
-              atWildcard = true;
-            }
-            else if (typeText.startsWith("? super ")) {
-              typeText = typeText.substring("? super ".length());
-              atWildcard = true;
-            }
-            qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
-            depth = myFirstPassData.getInnerDepth(qualifiedName);
-            result.write(TypeAnnotationEntry.TYPE_ARGUMENT);
-            result.write(argumentIndex);
-            break;
-        }
-      }
-      if (!atWildcard && arrayLevel == 0) {
-        while (depth-- > 0) {
-          result.write(TypeAnnotationEntry.ENCLOSING_CLASS);
-        }
-      }
-      return result.toByteArray();
-    }
   }
 
   private static class TypeAnnotationEntry {
-    private static final byte ARRAY_ELEMENT = 0;
-    private static final byte ENCLOSING_CLASS = 1;
-    private static final byte WILDCARD_BOUND = 2;
-    private static final byte TYPE_ARGUMENT = 3;
     /**
      * path is stored as the sequence of ARRAY_ELEMENT, ENCLOSING_CLASS, WILDCARD_BOUND and TYPE_ARGUMENT bytes.
      * The TYPE_ARGUMENT byte is followed by the type argument index byte.
@@ -301,7 +213,7 @@ public class TypeAnnotationContainer {
     }
 
     public TypeAnnotationEntry forTypeArgument(int index) {
-      if (myPath.length > 1 && myPath[0] == TYPE_ARGUMENT && myPath[1] == index) {
+      if (myPath.length > 1 && myPath[0] == Builder.TYPE_ARGUMENT && myPath[1] == index) {
         return new TypeAnnotationEntry(Arrays.copyOfRange(myPath, 2, myPath.length), myText);
       }
       return null;
@@ -313,16 +225,16 @@ public class TypeAnnotationContainer {
       int pos = 0;
       while (pos < myPath.length) {
         switch (myPath[pos]) {
-          case ARRAY_ELEMENT:
+          case Builder.ARRAY_ELEMENT:
             result.append('[');
             break;
-          case ENCLOSING_CLASS:
+          case Builder.ENCLOSING_CLASS:
             result.append('.');
             break;
-          case WILDCARD_BOUND:
+          case Builder.WILDCARD_BOUND:
             result.append('*');
             break;
-          case TYPE_ARGUMENT:
+          case Builder.TYPE_ARGUMENT:
             result.append(myPath[++pos]).append(';');
             break;
         }
@@ -390,7 +302,7 @@ public class TypeAnnotationContainer {
 
     @Override
     public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable String attributeName, @Nullable T value) {
-      throw cannotModifyException(this);
+      throw new UnsupportedOperationException();
     }
 
     @Override
