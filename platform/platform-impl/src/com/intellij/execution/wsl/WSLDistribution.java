@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,34 +94,22 @@ public class WSLDistribution {
   }
 
   /**
-   * @return creates and patches command line from args. e.g:
+   * @return creates and patches command line, e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}
    */
-  @NotNull
-  public GeneralCommandLine createWslCommandLine(String @NotNull ... args) {
-    return patchCommandLine(new GeneralCommandLine(args), null, null, false);
+  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) {
+    return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
   }
 
   /**
    * Creates a patched command line, executes it on wsl distribution and returns output
    *
-   * @param timeout                timeout in ms
-   * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
-   * @param args                   linux args, eg {@code gem env}
-   */
-  public ProcessOutput executeOnWsl(int timeout,
-                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
-                                    String @NotNull ... args) throws ExecutionException {
-    return executeOnWsl(Arrays.asList(args), new WSLCommandLineOptions(), timeout, processHandlerConsumer);
-  }
-
-  /**
-   * Creates a patched command line, executes it on wsl distribution and returns output
-   *
-   * @param timeout                timeout in ms
-   * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    * @param command                linux command, eg {@code gem env}
+   * @param options                {@link WSLCommandLineOptions} instance
+   * @param timeout                timeout in ms
+   * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
+  @NotNull
   public ProcessOutput executeOnWsl(@NotNull List<String> command,
                                     @NotNull WSLCommandLineOptions options,
                                     int timeout,
@@ -136,13 +123,8 @@ public class WSLDistribution {
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
-  public ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... args) throws ExecutionException {
-    return executeOnWsl(timeout, null, args);
-  }
-
-  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NonNls String @NotNull ... args)
-    throws ExecutionException {
-    return executeOnWsl(-1, processHandlerConsumer, args);
+  public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
+    return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }
 
   /**
@@ -176,19 +158,19 @@ public class WSLDistribution {
       throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
-    return executeOnWsl(handlerConsumer, ArrayUtilRt.toStringArray(command));
+    return executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
   }
 
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
                                                            @Nullable String remoteWorkingDir,
-                                                           boolean askForSudo
-  ) {
+                                                           boolean askForSudo) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setRemoteWorkingDirectory(remoteWorkingDir)
       .setSudo(askForSudo);
@@ -205,6 +187,7 @@ public class WSLDistribution {
    *
    * @param commandLine      command line to patch
    * @param project          current project
+   * @param options          {@link WSLCommandLineOptions} instance
    * @param <T>              GeneralCommandLine or descendant
    * @return original {@code commandLine}, prepared to run in WSL context
    */
