@@ -326,7 +326,10 @@ public class WSLDistribution {
       }
     }
     if (builder.length() > 0) {
-      String prevValue = commandLine.getParentEnvironment().get(WSLENV);
+      String prevValue = commandLine.getEnvironment().get(WSLENV);
+      if (prevValue == null) {
+        prevValue = commandLine.getParentEnvironment().get(WSLENV);
+      }
       String value = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + builder
                                        : builder.toString();
       commandLine.getEnvironment().put(WSLENV, value);
