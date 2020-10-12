@@ -11,10 +11,13 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListUtil;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +46,12 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     myMoveToFailedCommitChangeList.setRenderer(
       SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
+
+    ChangeListUtil.onChangeListAvailabilityChanged(myProject, this, true, () -> {
+      boolean changeListsEnabled = ChangeListManager.getInstance(myProject).areChangeListsEnabled();
+      myMoveToFailedCommitChangeList.setEnabled(changeListsEnabled);
+      myMoveUncommittedToAnotherChangeList.setEnabled(changeListsEnabled);
+    });
   }
 
   @NotNull
