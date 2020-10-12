@@ -79,6 +79,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
+    myFileTypePanel.myAssociatePanel.setBorder(JBUI.Borders.emptyTop(16));
     myFileTypePanel.myAssociateButton.setText(
       FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
     myFileTypePanel.myAssociateButton.addActionListener(new ActionListener() {
