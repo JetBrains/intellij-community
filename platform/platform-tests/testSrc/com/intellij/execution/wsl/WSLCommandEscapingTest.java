@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.CommandLineUtil;
@@ -133,8 +131,12 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
   }
 
   private void assertEchoOutput(@NotNull List<String> echoParams) {
+    assertEchoOutput("/bin/echo", echoParams);
+  }
+
+  private void assertEchoOutput(@NotNull String echoExecutableLinuxPath, @NotNull List<String> echoParams) {
     String expectedOut = StringUtil.join(echoParams, " ") + "\n";
-    List<String> command = ContainerUtil.concat(Collections.singletonList("echo"), echoParams);
+    List<String> command = ContainerUtil.concat(Collections.singletonList(echoExecutableLinuxPath), echoParams);
     assertWslCommandOutput(expectedOut, (String)null, Collections.emptyMap(), command);
   }
 
@@ -225,6 +227,19 @@ public class WSLCommandEscapingTest extends HeavyPlatformTestCase {
     finally {
       FileUtil.delete(dir);
     }
+  }
+
+  public void testExecutableEscaping() throws IOException {
+    List<String> params = Arrays.asList("hello", "\\$(", "&", "`", "'test", "\"test\"");
+    assertEchoOutput(createEchoScriptAndGetLinuxPath("my-echo"), params);
+    assertEchoOutput(createEchoScriptAndGetLinuxPath("echo (1)"), params);
+    assertEchoOutput(createEchoScriptAndGetLinuxPath("echo'`"), params);
+  }
+
+  private @NotNull String createEchoScriptAndGetLinuxPath(@NotNull String executableName) throws IOException {
+    File file = FileUtil.createTempFile(executableName, ".sh", true);
+    FileUtil.writeToFile(file, "#!/bin/sh\necho \"$@\"");
+    return Objects.requireNonNull(myWSL.getWslPath(file.getAbsolutePath()));
   }
 
   private void assertWslCommandOutput(@NotNull String expectedOut,
