@@ -609,6 +609,7 @@ object DynamicPlugins {
 
       if (classLoaderUnloaded) {
         LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (classloader unload checked=$checkClassLoaderUnload)")
+        classloadersFromUnloadedPlugins.remove(pluginDescriptor.pluginId)
       }
       else {
         InstalledPluginsState.getInstance().isRestartRequired = true
