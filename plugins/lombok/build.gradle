@@ -39,7 +39,7 @@ tasks.withType(JavaCompile) {
 
 sourceSets {
   main {
-    java.srcDirs 'src/main/java', 'generated/src', 'generated/lang/src'
+    java.srcDirs 'src/main/java', 'generated/src', 'lang/src'
     resources.srcDirs 'src/main/resources', 'generated/resources'
   }
   test {
