@@ -36,7 +36,7 @@ public abstract class Configuration implements JDOMExternalizable {
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
-  private @NotNull @Nls String name;
+  private @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name;
   private String category;
   private boolean predefined;
   private long created;

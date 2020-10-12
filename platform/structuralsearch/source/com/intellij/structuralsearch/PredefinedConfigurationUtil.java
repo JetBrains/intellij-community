@@ -60,7 +60,7 @@ public final class PredefinedConfigurationUtil {
   }
 
   @NotNull
-  public static Configuration createConfiguration(@NotNull @Nls String name,
+  public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,
@@ -69,7 +69,7 @@ public final class PredefinedConfigurationUtil {
   }
 
   @NotNull
-  public static Configuration createLegacyConfiguration(@NotNull @Nls String name,
+  public static Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,
@@ -83,7 +83,7 @@ public final class PredefinedConfigurationUtil {
    * @param refName unique identifier of the template used by the reference filter
    */
   @NotNull
-  public static Configuration createConfiguration(@NotNull @Nls String name,
+  public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,
@@ -100,7 +100,7 @@ public final class PredefinedConfigurationUtil {
    * {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
   @NotNull
-  public static Configuration createLegacyConfiguration(@NotNull @Nls String name,
+  public static Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,
@@ -125,7 +125,7 @@ public final class PredefinedConfigurationUtil {
   }
 
   @NotNull
-  public static Configuration createNonRecursiveConfiguration(@NotNull @Nls String name,
+  public static Configuration createNonRecursiveConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                               @NotNull @NonNls String refName,
                                                               @NotNull @NonNls String criteria,
                                                               @NotNull String category,
@@ -137,7 +137,7 @@ public final class PredefinedConfigurationUtil {
   }
 
   @NotNull
-  public static Configuration createLegacyNonRecursiveConfiguration(@NotNull @Nls String name,
+  public static Configuration createLegacyNonRecursiveConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                                     @NotNull @NonNls String refName,
                                                                     @NotNull @NonNls String criteria,
                                                                     @NotNull String category,
