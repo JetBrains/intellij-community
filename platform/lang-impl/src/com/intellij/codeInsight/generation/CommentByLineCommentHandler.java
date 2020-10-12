@@ -86,7 +86,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     while (true) {
       int firstLineStart = DocumentUtil.getLineStartOffset(startOffset, document);
       FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(firstLineStart - 1);
-      if (collapsedAt == null) break;
+      if (collapsedAt == null || isInvisibleRegionAtLineStart(collapsedAt) /* rendered doc case */) break;
       int regionStartOffset = collapsedAt.getStartOffset();
       if (regionStartOffset >= startOffset) break;
       startOffset = regionStartOffset;
@@ -134,7 +134,13 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     currentBlock.caretUpdate = startingNewLineComment ? CaretUpdate.PUT_AT_COMMENT_START :
                                !hasSelection ? CaretUpdate.SHIFT_DOWN :
                                wholeLinesSelected ? CaretUpdate.RESTORE_SELECTION : null;
-    }
+  }
+
+  private static boolean isInvisibleRegionAtLineStart(@NotNull FoldRegion region) {
+    if (!region.getPlaceholderText().isEmpty()) return false;
+    int startOffset = region.getStartOffset();
+    return startOffset == DocumentUtil.getLineStartOffset(startOffset, region.getDocument());
+  }
 
   private static boolean shouldCommentInHostFile(@NotNull PsiFile file, @NotNull PsiElement context) {
     if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
