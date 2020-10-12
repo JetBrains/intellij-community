@@ -136,8 +136,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
       createBalloon().also {
         it.addListener(object : JBPopupListener {
           override fun onClosed(event: LightweightWindowEvent) {
-            if (event.isOk)
-              onGotIt(id)
+            onGotIt(id)
           }
         })
 
