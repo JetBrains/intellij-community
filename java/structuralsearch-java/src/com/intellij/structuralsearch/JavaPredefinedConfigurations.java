@@ -13,7 +13,7 @@ import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLe
  */
 final class JavaPredefinedConfigurations {
   @NotNull
-  public static Configuration[] createPredefinedTemplates() {
+  public static Configuration @NotNull [] createPredefinedTemplates() {
     return new Configuration[]{
       // Expression patterns
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.method.calls"), "method calls",
