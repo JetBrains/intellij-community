@@ -26,6 +26,7 @@ import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -36,6 +37,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
@@ -249,7 +251,7 @@ internal class SpaceChatItemComponentFactory(
     val snapshotComponent = JPanel(VerticalLayout(0)).apply {
       isOpaque = true
       background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      border = IdeBorderFactory.createRoundedBorder()
+      border = RoundedLineBorder(CONTRAST_BORDER_COLOR, IdeBorderFactory.BORDER_ROUNDNESS)
       add(fileNameComponent)
       add(diffEditorComponent, VerticalLayout.FILL_HORIZONTAL)
     }
