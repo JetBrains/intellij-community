@@ -23,6 +23,23 @@ object ExtensionTestUtil {
     (pointName.getPoint(areaInstance) as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
   }
 
+  /**
+   * Takes current extensions for the extension point,
+   * adds a given extensions and masks the extension point
+   * with the resulting list of extensions.
+   *
+   * @see ExtensionPointImpl.maskAll
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun <T> addExtensions(pointName: ExtensionPointName<T>,
+                        extensionsToAdd: List<T>,
+                        parentDisposable: Disposable,
+                        fireEvents: Boolean = true,
+                        areaInstance: AreaInstance? = null) {
+    maskExtensions(pointName, pointName.extensionList + extensionsToAdd, parentDisposable, fireEvents, areaInstance)
+  }
+
   @JvmStatic
   fun <T, BEAN_TYPE : KeyedLazyInstance<T>, KeyT> addExtension(area: ExtensionsAreaImpl, collector: KeyedExtensionCollector<T, KeyT>, bean: BEAN_TYPE) {
     val point = area.getExtensionPoint<BEAN_TYPE>(collector.name)
