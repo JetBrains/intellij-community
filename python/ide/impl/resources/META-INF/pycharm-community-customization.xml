@@ -76,6 +76,8 @@
     <notificationGroup id="Packaging" displayType="BALLOON"/>
 
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
