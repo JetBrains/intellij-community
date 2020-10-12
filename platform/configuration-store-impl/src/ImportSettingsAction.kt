@@ -39,7 +39,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
     chooseSettingsFile(PathManager.getConfigPath(), component, ConfigurationStoreBundle.message("title.import.file.location"), ConfigurationStoreBundle.message("prompt.choose.import.file.path"))
-      .onSuccess {
+      {
         val saveFile = Paths.get(it.path)
         try {
           doImport(saveFile)

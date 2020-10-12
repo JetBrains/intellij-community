@@ -16,8 +16,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
 import com.intellij.util.containers.CollectionFactory
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.io.File
@@ -68,7 +66,7 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<VirtualFile> {
+fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String, onFileChosen: (VirtualFile) -> Unit) {
   val chooserDescriptor = object: FileChooserDescriptor(true, true, true, true, false, false) {
     override fun isFileSelectable(file: VirtualFile?): Boolean {
       if (file?.isDirectory == true) {
@@ -93,18 +91,7 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   else {
     initialDir = null
   }
-  val result = AsyncPromise<VirtualFile>()
-  FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, object : FileChooser.FileChooserConsumer {
-    override fun consume(files: List<VirtualFile>) {
-      val file = files[0]
-      result.setResult(file)
-    }
-
-    override fun cancelled() {
-      result.setError("")
-    }
-  })
-  return result
+  FileChooser.chooseFile(chooserDescriptor, null, parent, initialDir, onFileChosen)
 }
 
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
@@ -157,7 +144,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   private fun browse() {
     chooseSettingsFile(pathPanel.text, window, ConfigurationStoreBundle.message("title.export.file.location"),
                        ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
-      .onSuccess { file ->
+      { file ->
         val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
         pathPanel.text = FileUtil.toSystemDependentName(path)
       }
