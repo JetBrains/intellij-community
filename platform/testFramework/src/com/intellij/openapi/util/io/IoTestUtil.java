@@ -37,6 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 public final class IoTestUtil {
   @ReviseWhenPortedToJDK("13")
@@ -129,6 +130,9 @@ public final class IoTestUtil {
 
   public static void assumeWindows() throws AssumptionViolatedException {
     Assume.assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME, SystemInfo.isWindows);
+  }
+  public static void assumeMacOS() throws AssumptionViolatedException {
+    assumeTrue("Need macOS, can't run on " + SystemInfo.OS_NAME, SystemInfo.isMac);
   }
 
   public static void assumeUnix() throws AssumptionViolatedException {
