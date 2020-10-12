@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
@@ -181,12 +182,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     JComponent component = component();
     if (myEditorGetter != null) return myEditorGetter.apply(component());
     if (component instanceof LabeledComponent) {
-      return ((LabeledComponent<?>)component).getComponent();
+      component = ((LabeledComponent<?>)component).getComponent();
     }
     else if (component instanceof  TagButton) {
       return ((TagButton)component).myButton;
     }
-    return component;
+    return component instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)component).getChildComponent() : component;
   }
 
   public int getCommandLinePosition() {
