@@ -38,6 +38,8 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
 
+  private static final FileAttributes.CaseSensitivity predefinedLinuxCaseSensitivity = getPredefinedLinuxCaseSensitivity();
+
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
   interface Mediator {
@@ -674,7 +676,20 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
+  @Nullable
+  private static FileAttributes.CaseSensitivity getPredefinedLinuxCaseSensitivity() {
+    String sensitivity = System.getProperty("idea.linux.case.sensitivity");
+    if ("sensitive".equals(sensitivity)) {
+      return FileAttributes.CaseSensitivity.SENSITIVE;
+    }
+    else if ("insensitive".equals(sensitivity)) {
+      return FileAttributes.CaseSensitivity.INSENSITIVE;
+    }
+    return null;
+  }
+
   private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
+    if (predefinedLinuxCaseSensitivity != null) return predefinedLinuxCaseSensitivity;
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
