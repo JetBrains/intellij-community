@@ -43,7 +43,7 @@ class GitStageContentPreloader : ChangesViewContentProvider.Preloader {
 }
 
 class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project) = isStageAvailable(project)
+  override fun `fun`(project: Project) = isStagingAreaAvailable(project)
 }
 
 class GitStageDisplayNameSupplier : Supplier<String> {

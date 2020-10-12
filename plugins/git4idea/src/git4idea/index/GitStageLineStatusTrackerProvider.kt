@@ -30,7 +30,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem) return false
-    if (!isStageAvailable(project)) return false
+    if (!isStagingAreaAvailable(project)) return false
     if (!stageLineStatusTrackerRegistryOption().asBoolean()) return false
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file)

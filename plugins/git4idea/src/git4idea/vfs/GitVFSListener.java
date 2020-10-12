@@ -254,7 +254,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   private boolean isStageEnabled() {
-    return GitStageManagerKt.isStageAvailable(myProject);
+    return GitStageManagerKt.isStagingAreaAvailable(myProject);
   }
 
   @Override

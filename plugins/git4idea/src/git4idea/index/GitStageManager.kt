@@ -47,7 +47,7 @@ class GitStageManager(val project: Project) : Disposable {
   }
 
   private fun onAvailabilityChanged() {
-    if (isStageAvailable(project)) {
+    if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
@@ -64,7 +64,7 @@ class GitStageManager(val project: Project) : Disposable {
 
 class GitStageStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    if (isStageAvailable(project)) {
+    if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
     }
     GitStageManager.getInstance(project).installListeners()
@@ -96,7 +96,7 @@ fun enableStagingArea(enabled: Boolean) {
 fun canEnableStagingArea() = CommitWorkflowManager.isNonModalInSettings()
 
 fun isStagingAreaAvailable() = isStagingAreaEnabled() && canEnableStagingArea()
-fun isStageAvailable(project: Project): Boolean {
+fun isStagingAreaAvailable(project: Project): Boolean {
   return isStagingAreaAvailable() &&
          ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
 }
