@@ -32,7 +32,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   private static final Color PASSED_COLOR = JBColor.namedColor("ProgressBar.passedColor", new JBColor(0x34b171, 0x008f50));
   private static final Color PASSED_END_COLOR = JBColor.namedColor("ProgressBar.passedEndColor", new JBColor(0x7ee8a5, 0x5dc48f));
 
-  private static final int CYCLE_TIME_DEFAULT = 800;
+  private static final int CYCLE_TIME_DEFAULT = 4000;
   private static final int REPAINT_INTERVAL_DEFAULT = 50;
 
   private static final int CYCLE_TIME_SIMPLIFIED = 1000;
