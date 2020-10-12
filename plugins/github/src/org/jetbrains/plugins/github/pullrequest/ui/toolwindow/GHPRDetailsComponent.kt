@@ -54,7 +54,6 @@ internal object GHPRDetailsComponent {
     val panel = JPanel(VerticalLayout(JBUIScale.scale(8))).apply {
       isOpaque = false
     }
-    val directionPanel = GHPRBranchesPanel()
     val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
     val timelineLink = ActionLink(GithubBundle.message("pull.request.view.conversations.action")) {
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink
@@ -63,14 +62,9 @@ internal object GHPRDetailsComponent {
 
     with(panel) {
       add(GHPRTitleComponent.create(detailsModel))
-      add(directionPanel)
+      add(GHPRBranchesPanel.create(branchesModel))
       add(metadataPanel, VerticalLayout.FILL_HORIZONTAL)
       add(timelineLink)
-    }
-
-    branchesModel.addAndInvokeChangeListener {
-      directionPanel.updateBranchActionsToolbar(branchesModel)
-      directionPanel.updateBranchLabels(branchesModel)
     }
 
     return panel

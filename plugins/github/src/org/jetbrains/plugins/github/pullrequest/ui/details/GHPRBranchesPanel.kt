@@ -31,67 +31,95 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal class GHPRBranchesPanel : NonOpaquePanel() {
-  private val branchesTooltipFactory = GHPRBranchesTooltipFactory()
-  private val from = createLabel().also(branchesTooltipFactory::installTooltip)
-  private val to = createLabel()
-  private val branchActionsToolbar = BranchActionsToolbar()
+internal object GHPRBranchesPanel {
 
-  init {
-    layout = MigLayout(LC()
-                         .fillX()
-                         .gridGap("0", "0")
-                         .insets("0", "0", "0", "0"))
+  fun create(model: GHPRBranchesModel): JComponent {
+    val from = createLabel()
+    val to = createLabel()
+    val branchActionsToolbar = BranchActionsToolbar()
+
+    Controller(model, from, to, branchActionsToolbar)
+
+    return NonOpaquePanel().apply {
+      layout = MigLayout(LC()
+                           .fillX()
+                           .gridGap("0", "0")
+                           .insets("0", "0", "0", "0"))
 
     add(to, CC().minWidth("${JBUIScale.scale(30)}"))
-    add(JLabel(" ${UIUtil.leftArrow()} ").apply {
-      foreground = CurrentBranchComponent.TEXT_COLOR
-      border = JBUI.Borders.empty(0, 5)
-    })
+      add(JLabel(" ${UIUtil.leftArrow()} ").apply {
+        foreground = CurrentBranchComponent.TEXT_COLOR
+        border = JBUI.Borders.empty(0, 5)
+      })
     add(from, CC().minWidth("${JBUIScale.scale(30)}"))
-    add(branchActionsToolbar)
+      add(branchActionsToolbar)
+    }
   }
 
-  fun updateBranchActionsToolbar(model: GHPRBranchesModel) {
-    val prRemote = model.prRemote
-    if (prRemote == null) {
-      branchActionsToolbar.showCheckoutAction()
-      return
+  private fun createLabel() = JBLabel(GithubIcons.Branch).also {
+    GHUIUtil.overrideUIDependentProperty(it) {
+      foreground = CurrentBranchComponent.TEXT_COLOR
+      background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
     }
+  }.andOpaque()
 
-    val localBranch = model.localBranch
+  private class Controller(private val model: GHPRBranchesModel,
+                           private val from: JBLabel,
+                           private val to: JBLabel,
+                           private val branchActionsToolbar: BranchActionsToolbar) {
 
-    val updateActionExist = localBranch != null
-    val multipleActionsExist = updateActionExist && model.localRepository.currentBranchName != localBranch
+    val branchesTooltipFactory = GHPRBranchesTooltipFactory()
 
-    with(branchActionsToolbar) {
-      when {
-        multipleActionsExist -> showMultiple()
-        updateActionExist -> showUpdateAction()
-        else -> showCheckoutAction()
+    init {
+      branchesTooltipFactory.installTooltip(from)
+
+      model.addAndInvokeChangeListener {
+        updateBranchActionsToolbar()
+        updateBranchLabels()
       }
     }
-  }
 
-  fun updateBranchLabels(model: GHPRBranchesModel) {
-    val localRepository = model.localRepository
-    val localBranch = with(localRepository.branches) { model.localBranch?.run(::findLocalBranch) }
-    val remoteBranch = localBranch?.findTrackedBranch(localRepository)
-    val currentBranchCheckedOut = localRepository.currentBranchName == localBranch?.name
+    private fun updateBranchLabels() {
+      val localRepository = model.localRepository
+      val localBranch = with(localRepository.branches) { model.localBranch?.run(::findLocalBranch) }
+      val remoteBranch = localBranch?.findTrackedBranch(localRepository)
+      val currentBranchCheckedOut = localRepository.currentBranchName == localBranch?.name
 
-    to.text = model.baseBranch
-    from.text = model.headBranch
-    from.icon = when {
-      currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
-      localBranch != null -> GithubIcons.LocalBranch
-      else -> GithubIcons.Branch
+      to.text = model.baseBranch
+      from.text = model.headBranch
+      from.icon = when {
+        currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
+        localBranch != null -> GithubIcons.LocalBranch
+        else -> GithubIcons.Branch
+      }
+
+      branchesTooltipFactory.apply {
+        isOnCurrentBranch = currentBranchCheckedOut
+        prBranchName = model.headBranch
+        localBranchName = localBranch?.name
+        remoteBranchName = remoteBranch?.name
+      }
     }
 
-    branchesTooltipFactory.apply {
-      isOnCurrentBranch = currentBranchCheckedOut
-      prBranchName = model.headBranch
-      localBranchName = localBranch?.name
-      remoteBranchName = remoteBranch?.name
+    private fun updateBranchActionsToolbar() {
+      val prRemote = model.prRemote
+      if (prRemote == null) {
+        branchActionsToolbar.showCheckoutAction()
+        return
+      }
+
+      val localBranch = model.localBranch
+
+      val updateActionExist = localBranch != null
+      val multipleActionsExist = updateActionExist && model.localRepository.currentBranchName != localBranch
+
+      with(branchActionsToolbar) {
+        when {
+          multipleActionsExist -> showMultiple()
+          updateActionExist -> showUpdateAction()
+          else -> showCheckoutAction()
+        }
+      }
     }
   }
 
@@ -109,15 +137,15 @@ internal class GHPRBranchesPanel : NonOpaquePanel() {
       override fun toString(): String = text
     }
 
-    fun showCheckoutAction(){
+    fun showCheckoutAction() {
       select(State.CHECKOUT_ACTION, true)
     }
 
-    fun showUpdateAction(){
+    fun showUpdateAction() {
       select(State.UPDATE_ACTION, true)
     }
 
-    fun showMultiple(){
+    fun showMultiple() {
       select(State.MULTIPLE_ACTIONS, true)
     }
 
@@ -169,14 +197,14 @@ internal class GHPRBranchesPanel : NonOpaquePanel() {
     override fun create(ui: StateUi): JComponent = ui.createUi()
   }
 
-  private inner class GHPRBranchesTooltipFactory(var isOnCurrentBranch: Boolean = false,
-                                                 var prBranchName: String = "",
-                                                 var localBranchName: String? = null,
-                                                 var remoteBranchName: String? = null) {
+  private class GHPRBranchesTooltipFactory(var isOnCurrentBranch: Boolean = false,
+                                           var prBranchName: String = "",
+                                           var localBranchName: String? = null,
+                                           var remoteBranchName: String? = null) {
     fun installTooltip(label: JBLabel) {
       label.addMouseMotionListener(object : MouseAdapter() {
         override fun mouseMoved(e: MouseEvent) {
-          branchesTooltipFactory.showTooltip(e)
+          showTooltip(e)
         }
       })
     }
@@ -187,8 +215,7 @@ internal class GHPRBranchesPanel : NonOpaquePanel() {
         IdeTooltipManager.getInstance().hideCurrent(e)
       }
 
-      val tooltip =
-        IdeTooltip(e.component, point, Wrapper(branchesTooltipFactory.createTooltip())).setPreferredPosition(Balloon.Position.below)
+      val tooltip = IdeTooltip(e.component, point, Wrapper(createTooltip())).setPreferredPosition(Balloon.Position.below)
       IdeTooltipManager.getInstance().show(tooltip, false)
     }
 
@@ -203,14 +230,5 @@ internal class GHPRBranchesPanel : NonOpaquePanel() {
           add(BranchTooltipDescriptor.prBranch(prBranchName))
         }
       })
-  }
-
-  companion object {
-    private fun createLabel() = JBLabel(GithubIcons.Branch).also {
-      GHUIUtil.overrideUIDependentProperty(it) {
-        foreground = CurrentBranchComponent.TEXT_COLOR
-        background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
-      }
-    }.andOpaque()
   }
 }
