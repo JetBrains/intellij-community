@@ -3080,8 +3080,9 @@ public final class UIUtil {
 
   public static void setCursor(@NotNull Component component, Cursor cursor) {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
-    if(component.isCursorSet() && component.getCursor() == cursor) return;
-    component.setCursor(cursor);
+    if (!component.isCursorSet() || component.getCursor() != cursor) {
+      component.setCursor(cursor);
+    }
   }
 
   public static boolean haveCommonOwner(Component c1, Component c2) {
