@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputMethodEvent;
+import java.text.AttributedString;
 import java.util.Collections;
 
 public class EditorImplTest extends AbstractEditorTest {
@@ -717,5 +719,15 @@ public class EditorImplTest extends AbstractEditorTest {
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
     mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 12).release();
     checkResultByText("((<selection>some (text)<caret></selection>))");
+  }
+
+  public void testSurrogatePairInputInOverwriteMode() {
+    initText("ab<caret>cd");
+    ((EditorEx)getEditor()).setInsertMode(false);
+    JComponent component = getEditor().getContentComponent();
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\uD83D\uDE00" /* 'GRINNING FACE' emoji (U+1F600) */).getIterator(),
+                                                 2, null, null));
+    checkResultByText("ab\uD83D\uDE00d");
   }
 }
