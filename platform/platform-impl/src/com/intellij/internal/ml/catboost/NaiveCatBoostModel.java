@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.completion.ml.ranker.cb.jvm;
+package com.intellij.internal.ml.catboost;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -150,7 +150,7 @@ public class NaiveCatBoostModel {
   private static <T> ArrayList<T> readArrayList(DataInputStream stream, Function<DataInputStream, T> readElement) throws IOException {
     int size = stream.readInt();
     assert size > 0;
-    ArrayList<T> list = new ArrayList<T>(size);
+    ArrayList<T> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       T element = readElement.apply(stream);
       list.add(element);

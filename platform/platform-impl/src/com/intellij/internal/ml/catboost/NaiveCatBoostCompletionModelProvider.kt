@@ -1,4 +1,5 @@
-package com.jetbrains.completion.ml.ranker.cb
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.ml.catboost
 
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
@@ -10,23 +11,17 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
-abstract class JarCatBoostCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
-                                                  @NonNls private val resourceDirectory: String,
-                                                  @NonNls private val modelDirectory: String) : RankingModelProvider {
+abstract class NaiveCatBoostJarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
+                                                       @NonNls private val resourceDirectory: String,
+                                                       @NonNls private val modelDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {
-    val metadataReader = CatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
+    val metadataReader = NaiveCatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
     val metadata = FeaturesInfo.buildInfo(metadataReader)
     val model = metadataReader.loadModel()
     return@lazy object : CompletionRankingModelBase(metadata) {
       override fun predict(features: DoubleArray): Double {
-
-        val floatArray = FloatArray(features.size)
-        for (i in features.indices) {
-          floatArray[i] = features[i].toFloat()
-        }
-
         try {
-          return model.predict(floatArray, emptyArray<String>()).get(0, 0)
+          return model.makePredict(features)
         } catch (t: Throwable) {
           LOG.error(t)
           return 0.0
@@ -61,6 +56,6 @@ abstract class JarCatBoostCompletionModelProvider(@Nls(capitalization = Nls.Capi
   }
 
   companion object {
-    private val LOG = logger<JarCatBoostCompletionModelProvider>()
+    private val LOG = logger<NaiveCatBoostJarCompletionModelProvider>()
   }
 }
