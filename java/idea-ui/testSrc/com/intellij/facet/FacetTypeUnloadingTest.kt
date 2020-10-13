@@ -8,6 +8,7 @@ import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -136,5 +137,6 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     super.setUp()
     //initialize facet types and register listeners
     FacetTypeRegistry.getInstance().facetTypes
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, testRootDisposable)
   }
 }
