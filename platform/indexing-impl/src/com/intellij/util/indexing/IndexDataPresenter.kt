@@ -36,9 +36,9 @@ object IndexDataPresenter {
       }
 
       appendLine("Stub tree forward index:")
-      for ((stubIndexKey, stubIndexValues) in stubIndicesValueMap) {
+      for ((stubIndexKey, stubIndexValues) in stubIndicesValueMap.entries.sortedBy { it.key.name }) {
         appendLine("    ${stubIndexKey.name}")
-        for ((key, stubIdList) in stubIndexValues) {
+        for ((key, stubIdList) in stubIndexValues.entries.sortedBy { it.key.toString() }) {
           val stubIds = (0 until stubIdList.size()).map { stubIdList[it] }
           appendLine("        $key -> " + stubIds.joinToString())
         }
