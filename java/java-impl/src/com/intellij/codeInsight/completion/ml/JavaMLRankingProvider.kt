@@ -10,4 +10,8 @@ class JavaMLRankingProvider : CatBoostJarCompletionModelProvider(JavaBundle.mess
                                                                  "java_features2", "java_model2") {
 
   override fun isLanguageSupported(language: Language): Boolean = JavaLanguage.INSTANCE == language
+
+  override fun isEnabledByDefault(): Boolean {
+    return true
+  }
 }
