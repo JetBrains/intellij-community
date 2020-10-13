@@ -1121,7 +1121,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private String formatDisposeTrace() {
-    return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
+    return ExceptionUtil.getThrowableText(disposeTrace != null ? disposeTrace : Disposer.getDisposalTrace(this)) + "\n============";
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
