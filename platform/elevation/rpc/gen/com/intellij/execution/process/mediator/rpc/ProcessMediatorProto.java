@@ -107,25 +107,25 @@ public final class ProcessMediatorProto {
       "r.rpc.CommandLine.EnvironEntry\032.\n\014Enviro" +
       "nEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\0012D" +
       "\n\006Daemon\022:\n\010Shutdown\022\026.google.protobuf.E" +
-      "mpty\032\026.google.protobuf.Empty2\211\005\n\017Process" +
-      "Mediator\022w\n\rCreateProcess\0223.intellij.pro" +
-      "cess.mediator.rpc.CreateProcessRequest\0321" +
-      ".intellij.process.mediator.rpc.CreatePro" +
-      "cessReply\022^\n\016DestroyProcess\0224.intellij.p" +
-      "rocess.mediator.rpc.DestroyProcessReques" +
-      "t\032\026.google.protobuf.Empty\022\200\001\n\020AwaitTermi" +
-      "nation\0226.intellij.process.mediator.rpc.A" +
-      "waitTerminationRequest\0324.intellij.proces" +
-      "s.mediator.rpc.AwaitTerminationReply\022\\\n\013" +
-      "WriteStream\0221.intellij.process.mediator." +
-      "rpc.WriteStreamRequest\032\026.google.protobuf" +
-      ".Empty(\0010\001\022j\n\nReadStream\0220.intellij.proc" +
-      "ess.mediator.rpc.ReadStreamRequest\032(.int" +
-      "ellij.process.mediator.rpc.DataChunk0\001\022P" +
-      "\n\007Release\022-.intellij.process.mediator.rp" +
-      "c.ReleaseRequest\032\026.google.protobuf.Empty" +
-      "BE\n+com.intellij.execution.process.media" +
-      "tor.rpcB\024ProcessMediatorProtoP\001b\006proto3"
+      "mpty\032\026.google.protobuf.Empty2\210\005\n\016Process" +
+      "Manager\022w\n\rCreateProcess\0223.intellij.proc" +
+      "ess.mediator.rpc.CreateProcessRequest\0321." +
+      "intellij.process.mediator.rpc.CreateProc" +
+      "essReply\022^\n\016DestroyProcess\0224.intellij.pr" +
+      "ocess.mediator.rpc.DestroyProcessRequest" +
+      "\032\026.google.protobuf.Empty\022\200\001\n\020AwaitTermin" +
+      "ation\0226.intellij.process.mediator.rpc.Aw" +
+      "aitTerminationRequest\0324.intellij.process" +
+      ".mediator.rpc.AwaitTerminationReply\022\\\n\013W" +
+      "riteStream\0221.intellij.process.mediator.r" +
+      "pc.WriteStreamRequest\032\026.google.protobuf." +
+      "Empty(\0010\001\022j\n\nReadStream\0220.intellij.proce" +
+      "ss.mediator.rpc.ReadStreamRequest\032(.inte" +
+      "llij.process.mediator.rpc.DataChunk0\001\022P\n" +
+      "\007Release\022-.intellij.process.mediator.rpc" +
+      ".ReleaseRequest\032\026.google.protobuf.EmptyB" +
+      "E\n+com.intellij.execution.process.mediat" +
+      "or.rpcB\024ProcessMediatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

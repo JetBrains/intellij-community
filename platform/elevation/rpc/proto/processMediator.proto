@@ -12,7 +12,7 @@ service Daemon {
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
-service ProcessMediator {
+service ProcessManager {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
 
   rpc DestroyProcess (DestroyProcessRequest) returns (google.protobuf.Empty);

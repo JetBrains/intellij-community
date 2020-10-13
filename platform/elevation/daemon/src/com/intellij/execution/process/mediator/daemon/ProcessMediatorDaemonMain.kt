@@ -40,7 +40,7 @@ open class ProcessMediatorServerDaemon private constructor(private val server: S
   companion object {
     private fun buildServer(builder: ServerBuilder<*>): Server {
       return builder
-        .addService(ProcessMediatorServerService.createServiceDefinition())
+        .addService(ProcessManagerServerService.createServiceDefinition())
         .addService(DaemonService)
         .build()
     }

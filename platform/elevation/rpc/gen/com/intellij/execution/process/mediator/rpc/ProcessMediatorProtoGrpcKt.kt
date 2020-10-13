@@ -105,48 +105,48 @@ object DaemonGrpcKt {
 
 /**
  * Holder for Kotlin coroutine-based client and server APIs for
- * intellij.process.mediator.rpc.ProcessMediator.
+ * intellij.process.mediator.rpc.ProcessManager.
  */
-object ProcessMediatorGrpcKt {
+object ProcessManagerGrpcKt {
   @JvmStatic
   val serviceDescriptor: ServiceDescriptor
-    get() = ProcessMediatorGrpc.getServiceDescriptor()
+    get() = ProcessManagerGrpc.getServiceDescriptor()
 
   val createProcessMethod: MethodDescriptor<CreateProcessRequest, CreateProcessReply>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getCreateProcessMethod()
+    get() = ProcessManagerGrpc.getCreateProcessMethod()
 
   val destroyProcessMethod: MethodDescriptor<DestroyProcessRequest, Empty>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getDestroyProcessMethod()
+    get() = ProcessManagerGrpc.getDestroyProcessMethod()
 
   val awaitTerminationMethod: MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getAwaitTerminationMethod()
+    get() = ProcessManagerGrpc.getAwaitTerminationMethod()
 
   val writeStreamMethod: MethodDescriptor<WriteStreamRequest, Empty>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getWriteStreamMethod()
+    get() = ProcessManagerGrpc.getWriteStreamMethod()
 
   val readStreamMethod: MethodDescriptor<ReadStreamRequest, DataChunk>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getReadStreamMethod()
+    get() = ProcessManagerGrpc.getReadStreamMethod()
 
   val releaseMethod: MethodDescriptor<ReleaseRequest, Empty>
     @JvmStatic
-    get() = ProcessMediatorGrpc.getReleaseMethod()
+    get() = ProcessManagerGrpc.getReleaseMethod()
 
   /**
-   * A stub for issuing RPCs to a(n) intellij.process.mediator.rpc.ProcessMediator service as
+   * A stub for issuing RPCs to a(n) intellij.process.mediator.rpc.ProcessManager service as
    * suspending coroutines.
    */
-  @StubFor(ProcessMediatorGrpc::class)
-  class ProcessMediatorCoroutineStub @JvmOverloads constructor(
+  @StubFor(ProcessManagerGrpc::class)
+  class ProcessManagerCoroutineStub @JvmOverloads constructor(
     channel: Channel,
     callOptions: CallOptions = DEFAULT
-  ) : AbstractCoroutineStub<ProcessMediatorCoroutineStub>(channel, callOptions) {
-    override fun build(channel: Channel, callOptions: CallOptions): ProcessMediatorCoroutineStub =
-        ProcessMediatorCoroutineStub(channel, callOptions)
+  ) : AbstractCoroutineStub<ProcessManagerCoroutineStub>(channel, callOptions) {
+    override fun build(channel: Channel, callOptions: CallOptions): ProcessManagerCoroutineStub =
+        ProcessManagerCoroutineStub(channel, callOptions)
 
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
@@ -160,7 +160,7 @@ object ProcessMediatorGrpcKt {
      */
     suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = unaryRpc(
       channel,
-      ProcessMediatorGrpc.getCreateProcessMethod(),
+      ProcessManagerGrpc.getCreateProcessMethod(),
       request,
       callOptions,
       Metadata()
@@ -177,7 +177,7 @@ object ProcessMediatorGrpcKt {
      */
     suspend fun destroyProcess(request: DestroyProcessRequest): Empty = unaryRpc(
       channel,
-      ProcessMediatorGrpc.getDestroyProcessMethod(),
+      ProcessManagerGrpc.getDestroyProcessMethod(),
       request,
       callOptions,
       Metadata()
@@ -195,7 +195,7 @@ object ProcessMediatorGrpcKt {
     suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
         unaryRpc(
       channel,
-      ProcessMediatorGrpc.getAwaitTerminationMethod(),
+      ProcessManagerGrpc.getAwaitTerminationMethod(),
       request,
       callOptions,
       Metadata()
@@ -220,7 +220,7 @@ object ProcessMediatorGrpcKt {
      */
     fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = bidiStreamingRpc(
       channel,
-      ProcessMediatorGrpc.getWriteStreamMethod(),
+      ProcessManagerGrpc.getWriteStreamMethod(),
       requests,
       callOptions,
       Metadata()
@@ -238,7 +238,7 @@ object ProcessMediatorGrpcKt {
      */
     fun readStream(request: ReadStreamRequest): Flow<DataChunk> = serverStreamingRpc(
       channel,
-      ProcessMediatorGrpc.getReadStreamMethod(),
+      ProcessManagerGrpc.getReadStreamMethod(),
       request,
       callOptions,
       Metadata()
@@ -255,22 +255,22 @@ object ProcessMediatorGrpcKt {
      */
     suspend fun release(request: ReleaseRequest): Empty = unaryRpc(
       channel,
-      ProcessMediatorGrpc.getReleaseMethod(),
+      ProcessManagerGrpc.getReleaseMethod(),
       request,
       callOptions,
       Metadata()
     )}
 
   /**
-   * Skeletal implementation of the intellij.process.mediator.rpc.ProcessMediator service based on
+   * Skeletal implementation of the intellij.process.mediator.rpc.ProcessManager service based on
    * Kotlin coroutines.
    */
-  abstract class ProcessMediatorCoroutineImplBase(
+  abstract class ProcessManagerCoroutineImplBase(
     coroutineContext: CoroutineContext = EmptyCoroutineContext
   ) : AbstractCoroutineServerImpl(coroutineContext) {
     /**
      * Returns the response to an RPC for
-     * intellij.process.mediator.rpc.ProcessMediator.CreateProcess.
+     * intellij.process.mediator.rpc.ProcessManager.CreateProcess.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -281,11 +281,11 @@ object ProcessMediatorGrpcKt {
      * @param request The request from the client.
      */
     open suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.CreateProcess is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.CreateProcess is unimplemented"))
 
     /**
      * Returns the response to an RPC for
-     * intellij.process.mediator.rpc.ProcessMediator.DestroyProcess.
+     * intellij.process.mediator.rpc.ProcessManager.DestroyProcess.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -296,11 +296,11 @@ object ProcessMediatorGrpcKt {
      * @param request The request from the client.
      */
     open suspend fun destroyProcess(request: DestroyProcessRequest): Empty = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.DestroyProcess is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.DestroyProcess is unimplemented"))
 
     /**
      * Returns the response to an RPC for
-     * intellij.process.mediator.rpc.ProcessMediator.AwaitTermination.
+     * intellij.process.mediator.rpc.ProcessManager.AwaitTermination.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -312,11 +312,11 @@ object ProcessMediatorGrpcKt {
      */
     open suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
         throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.AwaitTermination is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.AwaitTermination is unimplemented"))
 
     /**
      * Returns a [Flow] of responses to an RPC for
-     * intellij.process.mediator.rpc.ProcessMediator.WriteStream.
+     * intellij.process.mediator.rpc.ProcessManager.WriteStream.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
      * will fail with the corresponding [Status].  If it fails with a
@@ -331,11 +331,11 @@ object ProcessMediatorGrpcKt {
      *        it more than once.
      */
     open fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.WriteStream is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.WriteStream is unimplemented"))
 
     /**
      * Returns a [Flow] of responses to an RPC for
-     * intellij.process.mediator.rpc.ProcessMediator.ReadStream.
+     * intellij.process.mediator.rpc.ProcessManager.ReadStream.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
      * will fail with the corresponding [Status].  If it fails with a
@@ -347,10 +347,10 @@ object ProcessMediatorGrpcKt {
      * @param request The request from the client.
      */
     open fun readStream(request: ReadStreamRequest): Flow<DataChunk> = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.ReadStream is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.ReadStream is unimplemented"))
 
     /**
-     * Returns the response to an RPC for intellij.process.mediator.rpc.ProcessMediator.Release.
+     * Returns the response to an RPC for intellij.process.mediator.rpc.ProcessManager.Release.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -361,38 +361,38 @@ object ProcessMediatorGrpcKt {
      * @param request The request from the client.
      */
     open suspend fun release(request: ReleaseRequest): Empty = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.Release is unimplemented"))
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.Release is unimplemented"))
 
     final override fun bindService(): ServerServiceDefinition =
-        builder(ProcessMediatorGrpc.getServiceDescriptor())
+        builder(ProcessManagerGrpc.getServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getCreateProcessMethod(),
+      descriptor = ProcessManagerGrpc.getCreateProcessMethod(),
       implementation = ::createProcess
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getDestroyProcessMethod(),
+      descriptor = ProcessManagerGrpc.getDestroyProcessMethod(),
       implementation = ::destroyProcess
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getAwaitTerminationMethod(),
+      descriptor = ProcessManagerGrpc.getAwaitTerminationMethod(),
       implementation = ::awaitTermination
     ))
       .addMethod(bidiStreamingServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getWriteStreamMethod(),
+      descriptor = ProcessManagerGrpc.getWriteStreamMethod(),
       implementation = ::writeStream
     ))
       .addMethod(serverStreamingServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getReadStreamMethod(),
+      descriptor = ProcessManagerGrpc.getReadStreamMethod(),
       implementation = ::readStream
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ProcessMediatorGrpc.getReleaseMethod(),
+      descriptor = ProcessManagerGrpc.getReleaseMethod(),
       implementation = ::release
     )).build()
   }

@@ -25,7 +25,8 @@ class ProcessMediatorClient(
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
     Closeable {
   private val loggingChannel = ClientInterceptors.intercept(channel, LoggingClientInterceptor)
-  private val stub = ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub(loggingChannel)
+
+  private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(loggingChannel)
   private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(loggingChannel)
 
   private val cleanupJob = childSupervisorJob()
@@ -44,7 +45,7 @@ class ProcessMediatorClient(
       .build()
     val request = CreateProcessRequest.newBuilder().setCommandLine(commandLine).build()
     val response = ExceptionAsStatus.unwrap {
-      stub.createProcess(request)
+      processManagerStub.createProcess(request)
     }
     return response.pid
   }
@@ -55,7 +56,7 @@ class ProcessMediatorClient(
       .setForce(force)
       .build()
     ExceptionAsStatus.unwrap {
-      stub.destroyProcess(request)
+      processManagerStub.destroyProcess(request)
     }
   }
 
@@ -64,7 +65,7 @@ class ProcessMediatorClient(
       .setPid(pid)
       .build()
     val reply = ExceptionAsStatus.unwrap {
-      stub.awaitTermination(request)
+      processManagerStub.awaitTermination(request)
     }
     return reply.exitCode
   }
@@ -78,7 +79,7 @@ class ProcessMediatorClient(
       .setHandle(handle)
       .build()
     val chunkFlow = ExceptionAsStatus.unwrap {
-      stub.readStream(request)
+      processManagerStub.readStream(request)
     }
     return chunkFlow.map { chunk ->
       chunk.buffer
@@ -108,7 +109,7 @@ class ProcessMediatorClient(
       emit(handleRequest)
     }
     return ExceptionAsStatus.unwrap {
-      stub.writeStream(requests)
+      processManagerStub.writeStream(requests)
     }.map {}.catch { cause ->
       ExceptionAsStatus.unwrap { throw cause }
     }
@@ -118,7 +119,7 @@ class ProcessMediatorClient(
     val request = ReleaseRequest.newBuilder()
       .setPid(pid)
       .build()
-    ExceptionAsStatus.unwrap { stub.release(request) }
+    ExceptionAsStatus.unwrap { processManagerStub.release(request) }
   }
 
   private suspend fun shutdown() {

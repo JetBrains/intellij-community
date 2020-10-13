@@ -20,11 +20,11 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 @javax.annotation.Generated(
     value = "by gRPC proto compiler (version 1.31.1)",
     comments = "Source: processMediator.proto")
-public final class ProcessMediatorGrpc {
+public final class ProcessManagerGrpc {
 
-  private ProcessMediatorGrpc() {}
+  private ProcessManagerGrpc() {}
 
-  public static final String SERVICE_NAME = "intellij.process.mediator.rpc.ProcessMediator";
+  public static final String SERVICE_NAME = "intellij.process.mediator.rpc.ProcessManager";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.CreateProcessRequest,
@@ -38,10 +38,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.CreateProcessRequest,
       com.intellij.execution.process.mediator.rpc.CreateProcessReply> getCreateProcessMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.CreateProcessRequest, com.intellij.execution.process.mediator.rpc.CreateProcessReply> getCreateProcessMethod;
-    if ((getCreateProcessMethod = ProcessMediatorGrpc.getCreateProcessMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getCreateProcessMethod = ProcessMediatorGrpc.getCreateProcessMethod) == null) {
-          ProcessMediatorGrpc.getCreateProcessMethod = getCreateProcessMethod =
+    if ((getCreateProcessMethod = ProcessManagerGrpc.getCreateProcessMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getCreateProcessMethod = ProcessManagerGrpc.getCreateProcessMethod) == null) {
+          ProcessManagerGrpc.getCreateProcessMethod = getCreateProcessMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.CreateProcessRequest, com.intellij.execution.process.mediator.rpc.CreateProcessReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CreateProcess"))
@@ -50,7 +50,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.CreateProcessRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.CreateProcessReply.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("CreateProcess"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("CreateProcess"))
               .build();
         }
       }
@@ -69,10 +69,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.DestroyProcessRequest,
       com.google.protobuf.Empty> getDestroyProcessMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.DestroyProcessRequest, com.google.protobuf.Empty> getDestroyProcessMethod;
-    if ((getDestroyProcessMethod = ProcessMediatorGrpc.getDestroyProcessMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getDestroyProcessMethod = ProcessMediatorGrpc.getDestroyProcessMethod) == null) {
-          ProcessMediatorGrpc.getDestroyProcessMethod = getDestroyProcessMethod =
+    if ((getDestroyProcessMethod = ProcessManagerGrpc.getDestroyProcessMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getDestroyProcessMethod = ProcessManagerGrpc.getDestroyProcessMethod) == null) {
+          ProcessManagerGrpc.getDestroyProcessMethod = getDestroyProcessMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.DestroyProcessRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "DestroyProcess"))
@@ -81,7 +81,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.DestroyProcessRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("DestroyProcess"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("DestroyProcess"))
               .build();
         }
       }
@@ -100,10 +100,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest,
       com.intellij.execution.process.mediator.rpc.AwaitTerminationReply> getAwaitTerminationMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest, com.intellij.execution.process.mediator.rpc.AwaitTerminationReply> getAwaitTerminationMethod;
-    if ((getAwaitTerminationMethod = ProcessMediatorGrpc.getAwaitTerminationMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getAwaitTerminationMethod = ProcessMediatorGrpc.getAwaitTerminationMethod) == null) {
-          ProcessMediatorGrpc.getAwaitTerminationMethod = getAwaitTerminationMethod =
+    if ((getAwaitTerminationMethod = ProcessManagerGrpc.getAwaitTerminationMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getAwaitTerminationMethod = ProcessManagerGrpc.getAwaitTerminationMethod) == null) {
+          ProcessManagerGrpc.getAwaitTerminationMethod = getAwaitTerminationMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest, com.intellij.execution.process.mediator.rpc.AwaitTerminationReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "AwaitTermination"))
@@ -112,7 +112,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.AwaitTerminationReply.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("AwaitTermination"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("AwaitTermination"))
               .build();
         }
       }
@@ -131,10 +131,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.WriteStreamRequest,
       com.google.protobuf.Empty> getWriteStreamMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.WriteStreamRequest, com.google.protobuf.Empty> getWriteStreamMethod;
-    if ((getWriteStreamMethod = ProcessMediatorGrpc.getWriteStreamMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getWriteStreamMethod = ProcessMediatorGrpc.getWriteStreamMethod) == null) {
-          ProcessMediatorGrpc.getWriteStreamMethod = getWriteStreamMethod =
+    if ((getWriteStreamMethod = ProcessManagerGrpc.getWriteStreamMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getWriteStreamMethod = ProcessManagerGrpc.getWriteStreamMethod) == null) {
+          ProcessManagerGrpc.getWriteStreamMethod = getWriteStreamMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.WriteStreamRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "WriteStream"))
@@ -143,7 +143,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.WriteStreamRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("WriteStream"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("WriteStream"))
               .build();
         }
       }
@@ -162,10 +162,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReadStreamRequest,
       com.intellij.execution.process.mediator.rpc.DataChunk> getReadStreamMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReadStreamRequest, com.intellij.execution.process.mediator.rpc.DataChunk> getReadStreamMethod;
-    if ((getReadStreamMethod = ProcessMediatorGrpc.getReadStreamMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getReadStreamMethod = ProcessMediatorGrpc.getReadStreamMethod) == null) {
-          ProcessMediatorGrpc.getReadStreamMethod = getReadStreamMethod =
+    if ((getReadStreamMethod = ProcessManagerGrpc.getReadStreamMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getReadStreamMethod = ProcessManagerGrpc.getReadStreamMethod) == null) {
+          ProcessManagerGrpc.getReadStreamMethod = getReadStreamMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.ReadStreamRequest, com.intellij.execution.process.mediator.rpc.DataChunk>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ReadStream"))
@@ -174,7 +174,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.ReadStreamRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.DataChunk.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("ReadStream"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("ReadStream"))
               .build();
         }
       }
@@ -193,10 +193,10 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReleaseRequest,
       com.google.protobuf.Empty> getReleaseMethod() {
     io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReleaseRequest, com.google.protobuf.Empty> getReleaseMethod;
-    if ((getReleaseMethod = ProcessMediatorGrpc.getReleaseMethod) == null) {
-      synchronized (ProcessMediatorGrpc.class) {
-        if ((getReleaseMethod = ProcessMediatorGrpc.getReleaseMethod) == null) {
-          ProcessMediatorGrpc.getReleaseMethod = getReleaseMethod =
+    if ((getReleaseMethod = ProcessManagerGrpc.getReleaseMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getReleaseMethod = ProcessManagerGrpc.getReleaseMethod) == null) {
+          ProcessManagerGrpc.getReleaseMethod = getReleaseMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.ReleaseRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Release"))
@@ -205,7 +205,7 @@ public final class ProcessMediatorGrpc {
                   com.intellij.execution.process.mediator.rpc.ReleaseRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessMediatorMethodDescriptorSupplier("Release"))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("Release"))
               .build();
         }
       }
@@ -216,50 +216,50 @@ public final class ProcessMediatorGrpc {
   /**
    * Creates a new async stub that supports all call types for the service
    */
-  public static ProcessMediatorStub newStub(io.grpc.Channel channel) {
-    io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorStub> factory =
-      new io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorStub>() {
+  public static ProcessManagerStub newStub(io.grpc.Channel channel) {
+    io.grpc.stub.AbstractStub.StubFactory<ProcessManagerStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerStub>() {
         @java.lang.Override
-        public ProcessMediatorStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-          return new ProcessMediatorStub(channel, callOptions);
+        public ProcessManagerStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new ProcessManagerStub(channel, callOptions);
         }
       };
-    return ProcessMediatorStub.newStub(factory, channel);
+    return ProcessManagerStub.newStub(factory, channel);
   }
 
   /**
    * Creates a new blocking-style stub that supports unary and streaming output calls on the service
    */
-  public static ProcessMediatorBlockingStub newBlockingStub(
+  public static ProcessManagerBlockingStub newBlockingStub(
       io.grpc.Channel channel) {
-    io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorBlockingStub> factory =
-      new io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorBlockingStub>() {
+    io.grpc.stub.AbstractStub.StubFactory<ProcessManagerBlockingStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerBlockingStub>() {
         @java.lang.Override
-        public ProcessMediatorBlockingStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-          return new ProcessMediatorBlockingStub(channel, callOptions);
+        public ProcessManagerBlockingStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new ProcessManagerBlockingStub(channel, callOptions);
         }
       };
-    return ProcessMediatorBlockingStub.newStub(factory, channel);
+    return ProcessManagerBlockingStub.newStub(factory, channel);
   }
 
   /**
    * Creates a new ListenableFuture-style stub that supports unary calls on the service
    */
-  public static ProcessMediatorFutureStub newFutureStub(
+  public static ProcessManagerFutureStub newFutureStub(
       io.grpc.Channel channel) {
-    io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorFutureStub> factory =
-      new io.grpc.stub.AbstractStub.StubFactory<ProcessMediatorFutureStub>() {
+    io.grpc.stub.AbstractStub.StubFactory<ProcessManagerFutureStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerFutureStub>() {
         @java.lang.Override
-        public ProcessMediatorFutureStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-          return new ProcessMediatorFutureStub(channel, callOptions);
+        public ProcessManagerFutureStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new ProcessManagerFutureStub(channel, callOptions);
         }
       };
-    return ProcessMediatorFutureStub.newStub(factory, channel);
+    return ProcessManagerFutureStub.newStub(factory, channel);
   }
 
   /**
    */
-  public static abstract class ProcessMediatorImplBase implements io.grpc.BindableService {
+  public static abstract class ProcessManagerImplBase implements io.grpc.BindableService {
 
     /**
      */
@@ -353,16 +353,16 @@ public final class ProcessMediatorGrpc {
 
   /**
    */
-  public static final class ProcessMediatorStub extends io.grpc.stub.AbstractAsyncStub<ProcessMediatorStub> {
-    private ProcessMediatorStub(
+  public static final class ProcessManagerStub extends io.grpc.stub.AbstractAsyncStub<ProcessManagerStub> {
+    private ProcessManagerStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
     }
 
     @java.lang.Override
-    protected ProcessMediatorStub build(
+    protected ProcessManagerStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-      return new ProcessMediatorStub(channel, callOptions);
+      return new ProcessManagerStub(channel, callOptions);
     }
 
     /**
@@ -416,16 +416,16 @@ public final class ProcessMediatorGrpc {
 
   /**
    */
-  public static final class ProcessMediatorBlockingStub extends io.grpc.stub.AbstractBlockingStub<ProcessMediatorBlockingStub> {
-    private ProcessMediatorBlockingStub(
+  public static final class ProcessManagerBlockingStub extends io.grpc.stub.AbstractBlockingStub<ProcessManagerBlockingStub> {
+    private ProcessManagerBlockingStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
     }
 
     @java.lang.Override
-    protected ProcessMediatorBlockingStub build(
+    protected ProcessManagerBlockingStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-      return new ProcessMediatorBlockingStub(channel, callOptions);
+      return new ProcessManagerBlockingStub(channel, callOptions);
     }
 
     /**
@@ -467,16 +467,16 @@ public final class ProcessMediatorGrpc {
 
   /**
    */
-  public static final class ProcessMediatorFutureStub extends io.grpc.stub.AbstractFutureStub<ProcessMediatorFutureStub> {
-    private ProcessMediatorFutureStub(
+  public static final class ProcessManagerFutureStub extends io.grpc.stub.AbstractFutureStub<ProcessManagerFutureStub> {
+    private ProcessManagerFutureStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
     }
 
     @java.lang.Override
-    protected ProcessMediatorFutureStub build(
+    protected ProcessManagerFutureStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
-      return new ProcessMediatorFutureStub(channel, callOptions);
+      return new ProcessManagerFutureStub(channel, callOptions);
     }
 
     /**
@@ -524,10 +524,10 @@ public final class ProcessMediatorGrpc {
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
-    private final ProcessMediatorImplBase serviceImpl;
+    private final ProcessManagerImplBase serviceImpl;
     private final int methodId;
 
-    MethodHandlers(ProcessMediatorImplBase serviceImpl, int methodId) {
+    MethodHandlers(ProcessManagerImplBase serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }
@@ -575,9 +575,9 @@ public final class ProcessMediatorGrpc {
     }
   }
 
-  private static abstract class ProcessMediatorBaseDescriptorSupplier
+  private static abstract class ProcessManagerBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoFileDescriptorSupplier, io.grpc.protobuf.ProtoServiceDescriptorSupplier {
-    ProcessMediatorBaseDescriptorSupplier() {}
+    ProcessManagerBaseDescriptorSupplier() {}
 
     @java.lang.Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
@@ -586,21 +586,21 @@ public final class ProcessMediatorGrpc {
 
     @java.lang.Override
     public com.google.protobuf.Descriptors.ServiceDescriptor getServiceDescriptor() {
-      return getFileDescriptor().findServiceByName("ProcessMediator");
+      return getFileDescriptor().findServiceByName("ProcessManager");
     }
   }
 
-  private static final class ProcessMediatorFileDescriptorSupplier
-      extends ProcessMediatorBaseDescriptorSupplier {
-    ProcessMediatorFileDescriptorSupplier() {}
+  private static final class ProcessManagerFileDescriptorSupplier
+      extends ProcessManagerBaseDescriptorSupplier {
+    ProcessManagerFileDescriptorSupplier() {}
   }
 
-  private static final class ProcessMediatorMethodDescriptorSupplier
-      extends ProcessMediatorBaseDescriptorSupplier
+  private static final class ProcessManagerMethodDescriptorSupplier
+      extends ProcessManagerBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoMethodDescriptorSupplier {
     private final String methodName;
 
-    ProcessMediatorMethodDescriptorSupplier(String methodName) {
+    ProcessManagerMethodDescriptorSupplier(String methodName) {
       this.methodName = methodName;
     }
 
@@ -615,11 +615,11 @@ public final class ProcessMediatorGrpc {
   public static io.grpc.ServiceDescriptor getServiceDescriptor() {
     io.grpc.ServiceDescriptor result = serviceDescriptor;
     if (result == null) {
-      synchronized (ProcessMediatorGrpc.class) {
+      synchronized (ProcessManagerGrpc.class) {
         result = serviceDescriptor;
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
-              .setSchemaDescriptor(new ProcessMediatorFileDescriptorSupplier())
+              .setSchemaDescriptor(new ProcessManagerFileDescriptorSupplier())
               .addMethod(getCreateProcessMethod())
               .addMethod(getDestroyProcessMethod())
               .addMethod(getAwaitTerminationMethod())
