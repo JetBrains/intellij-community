@@ -67,7 +67,7 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
           projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
 
           JPanel northPanel =
-            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(JBColor.border(), JBUI.insetsBottom(1)) {
+            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
               @Override
               public Insets getBorderInsets(Component c) {
                 return JBUI.insetsBottom(12);
