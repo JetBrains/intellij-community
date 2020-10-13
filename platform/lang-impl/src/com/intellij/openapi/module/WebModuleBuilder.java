@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,10 +77,9 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
   private void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
-    VirtualFile dir = ProjectUtil.guessProjectDir(module.getProject());
-    if (dir == null && contentRoots.length > 0 && contentRoots[0] != null) {
-      dir = contentRoots[0];
+    VirtualFile dir = ProjectUtil.guessModuleDir(module);
+    if (dir == null) {
+      dir = ArrayUtil.getFirstElement(moduleRootManager.getContentRoots());
     }
     assert dir != null : module.getProject();
     template.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
