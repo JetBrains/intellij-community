@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -171,17 +172,19 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
-    for ((module, p) in sourceFoldersToChange) {
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        for ((eventFile, sourceFolders) in p) {
-          val (_, url, type, packagePrefix, generated) = sourceFolders
-          val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                             ?: model.addContentEntry(url)
-          val sourceFolder = contentEntry.addSourceFolder(url, type)
-          if (packagePrefix != null && packagePrefix.isNotEmpty()) {
-            sourceFolder.packagePrefix = packagePrefix
+    ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
+      for ((module, p) in sourceFoldersToChange) {
+        ModuleRootModificationUtil.updateModel(module) { model ->
+          for ((eventFile, sourceFolders) in p) {
+            val (_, url, type, packagePrefix, generated) = sourceFolders
+            val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
+                               ?: model.addContentEntry(url)
+            val sourceFolder = contentEntry.addSourceFolder(url, type)
+            if (packagePrefix != null && packagePrefix.isNotEmpty()) {
+              sourceFolder.packagePrefix = packagePrefix
+            }
+            setForGeneratedSources(sourceFolder, generated)
           }
-          setForGeneratedSources(sourceFolder, generated)
         }
       }
     }
