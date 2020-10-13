@@ -4,6 +4,7 @@ package com.intellij.facet.impl;
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.facet.*;
+import com.intellij.facet.impl.invalid.InvalidFacetConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -79,6 +80,9 @@ public class FacetUtil {
         Element result = XmlSerializer.serialize(state);
         return result == null ? new Element(JpsFacetSerializer.CONFIGURATION_TAG) : result;
       }
+    }
+    else if (configuration instanceof InvalidFacetConfiguration) {
+      return ((InvalidFacetConfiguration)configuration).getFacetState().getConfiguration();
     }
     else {
       final Element config = new Element(JpsFacetSerializer.CONFIGURATION_TAG);
