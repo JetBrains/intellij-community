@@ -504,6 +504,12 @@ public class JBUI {
       public static Color underlinedTabForeground() {
         return JBColor.namedColor("DefaultTabs.underlinedTabForeground", UIUtil.getLabelForeground());
       }
+
+      @NotNull
+      public static Color inactiveColoredTabBackground() {
+        return JBColor.namedColor("DefaultTabs.inactiveColoredTabBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                                                                          ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+      }
     }
 
     public static final class DebuggerTabs {
@@ -556,8 +562,7 @@ public class JBUI {
 
       @NotNull
       public static Color inactiveColoredFileBackground() {
-        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", DefaultTabs.inactiveColoredTabBackground());
       }
 
       @NotNull

@@ -28,6 +28,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_COMPONENT = "component";
   String IS_CLOSABLE = "isClosable";
   String PROP_ALERT = "alerting";
+  String PROP_TAB_COLOR = "tabColor";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
@@ -124,4 +125,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   default void setHelpId(String helpId) { }
   default @Nullable String getHelpId() { return null; }
+
+  default void setTabColor(@Nullable Color color) {}
+  default @Nullable Color getTabColor() { return null; }
 }

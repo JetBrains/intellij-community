@@ -189,7 +189,8 @@ public final class GridCellImpl implements GridCell {
       setText(content.getDisplayName()).
       setTooltipText(content.getDescription()).
       setActionsContextComponent(content.getActionsContextComponent()).
-      setActions(content.getActions(), content.getPlace());
+      setActions(content.getActions(), content.getPlace()).
+      setTabColor(content.getTabColor());
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {

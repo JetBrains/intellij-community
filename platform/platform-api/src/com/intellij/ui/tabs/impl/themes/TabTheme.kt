@@ -20,6 +20,7 @@ interface TabTheme {
   val hoverInactiveBackground: Color?
   val underlinedTabInactiveBackground: Color?
   val underlinedTabInactiveForeground: Color?
+  val inactiveColoredTabBackground: Color?
 }
 
 open class DefaultTabTheme : TabTheme {
@@ -37,13 +38,15 @@ open class DefaultTabTheme : TabTheme {
     get() = underlinedTabBackground
   override val underlinedTabInactiveForeground: Color
     get() = underlinedTabForeground
+  override val inactiveColoredTabBackground: Color
+    get() = JBUI.CurrentTheme.DefaultTabs.inactiveColoredTabBackground()
 }
 
 class EditorTabTheme : TabTheme {
   val globalScheme: EditorColorsScheme
     get() = EditorColorsManager.getInstance().globalScheme
 
-  override val background: Color?
+  override val background: Color
     get() = JBUI.CurrentTheme.EditorTabs.background()
   override val borderColor: Color
     get() = JBUI.CurrentTheme.EditorTabs.borderColor()
@@ -65,7 +68,7 @@ class EditorTabTheme : TabTheme {
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
 
-  override val hoverInactiveBackground: Color?
+  override val hoverInactiveBackground: Color
     get() = hoverBackground
 
   override val underlinedTabInactiveBackground: Color?
@@ -74,7 +77,7 @@ class EditorTabTheme : TabTheme {
   override val underlinedTabInactiveForeground: Color
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED_INACTIVE).foregroundColor?: underlinedTabForeground
 
-  val inactiveColoredFileBackground: Color?
+  override val inactiveColoredTabBackground: Color
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 }
 

@@ -49,6 +49,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Icon myPopupIcon;
   private long myExecutionId;
   private String myHelpId;
+  private Color myColor;
 
   private static final NotNullLazyValue<Icon> emptyPinIcon = AtomicNotNullLazyValue.createValue(() -> {
     Icon icon = AllIcons.Nodes.TabPin;
@@ -376,5 +377,17 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public @Nullable String getHelpId() {
     return myHelpId;
+  }
+
+  @Override
+  public void setTabColor(@Nullable Color color) {
+    Color oldColor = myColor;
+    myColor = color;
+    myChangeSupport.firePropertyChange(PROP_TAB_COLOR, oldColor, myColor);
+  }
+
+  @Override
+  public @Nullable Color getTabColor() {
+    return myColor;
   }
 }

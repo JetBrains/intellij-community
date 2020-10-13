@@ -12,21 +12,7 @@ import java.awt.Rectangle
 class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     updatedRect(position, rect, borderThickness)
-
-    tabColor?.let {
-      g.fill2DRect(rect, it)
-
-      if(theme is EditorTabTheme)
-      theme.inactiveColoredFileBackground?.let { inactive ->
-        g.fill2DRect(rect, inactive)
-      }
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
-        g.fill2DRect(rect, it)
-      }
-    }
+    super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 
   private fun updatedRect(position: JBTabsPosition, rect: Rectangle, borderThickness: Int): Rectangle {
@@ -47,18 +33,7 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
                                 hovered: Boolean) {
 
     updatedRect(position, rect, borderThickness)
-
-    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
-
-    color?.let {
-      g.fill2DRect(rect, it)
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
-        g.fill2DRect(rect, it)
-      }
-    }
+    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 
 

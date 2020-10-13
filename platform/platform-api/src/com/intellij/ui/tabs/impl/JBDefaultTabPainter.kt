@@ -28,6 +28,10 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     tabColor?.let {
       g.fill2DRect(rect, it)
+
+      theme.inactiveColoredTabBackground?.let { inactive ->
+        g.fill2DRect(rect, inactive)
+      }
     }
 
     if(hovered) {
