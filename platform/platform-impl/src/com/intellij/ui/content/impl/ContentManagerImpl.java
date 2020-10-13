@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -634,5 +635,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public boolean isSingleSelection() {
     return myUI.isSingleSelection();
+  }
+
+  public void rebuildContentUi() {
+    if (myUI instanceof ToolWindowContentUi) {
+      ToolWindowContentUi contentUi = (ToolWindowContentUi)myUI;
+      contentUi.rebuild();
+    }
   }
 }

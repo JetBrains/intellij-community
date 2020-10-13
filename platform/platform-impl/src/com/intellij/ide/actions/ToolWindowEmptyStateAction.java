@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
     if (emptyText != null) {
       setupEmptyText(project, emptyText);
     }
+    ContentManagerImpl manager = (ContentManagerImpl) toolWindow.getContentManager();
+    manager.rebuildContentUi();
     toolWindow.show();
   }
 
