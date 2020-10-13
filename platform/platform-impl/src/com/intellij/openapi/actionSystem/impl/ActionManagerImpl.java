@@ -40,6 +40,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -1478,12 +1479,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-    final Language language = file != null ? file.getLanguage() : null;
     final List<EventPair<?>> customData = new ArrayList<>();
-    customData.add(EventFields.CurrentFile.with(language));
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    customData.add(EventFields.Language.with(getHostFileLanguage(dataContext, project)));
+    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
+    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
+    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      final Language language = file != null ? file.getLanguage() : null;
+      customData.add(EventFields.Language.with(language));
+    }
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
