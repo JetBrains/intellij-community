@@ -3,6 +3,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +14,11 @@ public class DomImplementationClassEP extends AbstractExtensionPointBean {
   static final ExtensionPointName<DomImplementationClassEP> EP_NAME = new ExtensionPointName<>("com.intellij.dom.implementation");
   static final ExtensionPointName<DomImplementationClassEP> CONVERTER_EP_NAME = new ExtensionPointName<>("com.intellij.dom.converter");
 
+  @RequiredElement
   @Attribute("interfaceClass")
   public String interfaceName;
 
+  @RequiredElement
   @Attribute("implementationClass")
   public String implementationName;
 
