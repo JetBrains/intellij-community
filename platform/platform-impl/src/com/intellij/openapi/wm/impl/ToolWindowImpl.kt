@@ -38,6 +38,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.Color
 import java.awt.Component
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -555,6 +556,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   override fun getEmptyText(): StatusText? {
     val component = contentManager.value.component
     return (component as? ComponentWithEmptyText)?.emptyText
+  }
+
+  fun setEmptyStateBackground(color: Color) {
+    decorator?.background = color
   }
 
   private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
