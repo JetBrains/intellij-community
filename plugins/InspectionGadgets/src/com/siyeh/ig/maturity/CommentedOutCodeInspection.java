@@ -156,8 +156,12 @@ public class CommentedOutCodeInspection extends BaseInspection {
           if (lines < minLines) {
             return;
           }
-          if (isCode(text, comment)) {
+          final Code code = isCode(text, comment);
+          if (code == Code.YES) {
             registerErrorAtOffset(comment, 0, 2, lines);
+            return;
+          }
+          else if (code == Code.NO) {
             return;
           }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
@@ -169,7 +173,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || !isCode(text, comment)) {
+        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != Code.YES) {
           return;
         }
         registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
@@ -177,9 +181,13 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
   }
 
-  static boolean isCode(String text, PsiElement context) {
+  enum Code {
+    YES, NO, MAYBE
+  }
+
+  static Code isCode(String text, PsiElement context) {
     if (text.isEmpty()) {
-      return false;
+      return Code.NO;
     }
     final Project project = context.getProject();
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
@@ -210,7 +218,13 @@ public class CommentedOutCodeInspection extends BaseInspection {
       fragment = factory.createCodeBlockCodeFragment(text, context, false);
     }
     final boolean allowDanglingElse = PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class) instanceof PsiIfStatement;
-    return !isInvalidCode(fragment, allowDanglingElse);
+    if (!isInvalidCode(fragment, allowDanglingElse)) {
+      return Code.YES;
+    }
+    else if (PsiTreeUtil.getDeepestLast(fragment) instanceof PsiErrorElement) {
+      return Code.NO;
+    }
+    return Code.MAYBE;
   }
 
   static String getCommentText(PsiComment comment) {
