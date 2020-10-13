@@ -3,6 +3,7 @@ package com.intellij.space.chat.ui
 
 import circlet.client.api.M2TextItemContent
 import circlet.client.api.Navigator
+import circlet.client.api.mc.MCMessage
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
@@ -16,6 +17,8 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
@@ -103,6 +106,25 @@ internal class SpaceChatItemComponentFactory(
           }
           EventMessagePanel(createSimpleMessagePanel(text))
         }
+        is MergeRequestMergedEvent -> EventMessagePanel(
+          createSimpleMessagePanel(
+            HtmlChunk.raw(
+              SpaceBundle.message(
+                "chat.review.merged",
+                HtmlChunk.text(details.sourceBranch).bold(), // NON-NLS
+                HtmlChunk.text(details.targetBranch).bold() // NON-NLS
+              )
+            ).wrapWith(html()).toString()
+          )
+        )
+        is MergeRequestBranchDeletedEvent -> EventMessagePanel(
+          createSimpleMessagePanel(
+            HtmlChunk.raw(
+              SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
+            ).wrapWith(html()).toString()
+          )
+        )
+        is MCMessage -> EventMessagePanel(createSimpleMessagePanel(item.text))
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
