@@ -40,6 +40,11 @@ class CommentedOutCode /* extends Object */ {
    */
   void x(String s, String... ss) {}
 
+  void x() {
+    // file://C:/Windows/System32/Config
+    <warning descr="Commented out code (1 line)">//</warning> System.out.println();
+  }
+
   void k() {
     //noinspection unchecked
     l(new ArrayList());

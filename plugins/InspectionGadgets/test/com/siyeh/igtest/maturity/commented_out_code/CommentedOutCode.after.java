@@ -30,6 +30,10 @@ class CommentedOutCode /* extends Object */ {
      */
   void x(String s, String... ss) {}
 
+  void x() {
+    // file://C:/Windows/System32/Config
+  }
+
   void k() {
     //noinspection unchecked
     l(new ArrayList());

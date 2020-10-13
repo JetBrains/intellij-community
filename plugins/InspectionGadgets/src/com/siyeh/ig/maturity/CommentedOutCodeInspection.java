@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -20,7 +21,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.JavaCommentUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,11 +303,19 @@ public class CommentedOutCodeInspection extends BaseInspection {
     @Override
     public void visitLabeledStatement(PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
-      @NonNls final String name = statement.getName();
-      if (statement.getStatement() == null || name.equals("https") || name.equals("http")) {
+      if (isProbablyUrl(statement)) {
         invalidCode = true;
         stopWalking();
       }
+    }
+
+    private static boolean isProbablyUrl(PsiLabeledStatement statement) {
+      if (statement.getStatement() == null) {
+        return true;
+      }
+      final PsiIdentifier identifier = statement.getLabelIdentifier();
+      final PsiElement sibling = identifier.getNextSibling();
+      return PsiUtil.isJavaToken(sibling, JavaTokenType.COLON) && JavaCommentUtil.isEndOfLineComment(sibling.getNextSibling());
     }
 
     @Override
