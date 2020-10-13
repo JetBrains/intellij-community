@@ -593,7 +593,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }
       catch (t: Throwable) {
-        promise.setError(t)
+        LOG.warn(t)
+        promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
         processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
       }
       finally {
