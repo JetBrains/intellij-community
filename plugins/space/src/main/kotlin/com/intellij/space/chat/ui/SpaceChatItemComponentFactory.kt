@@ -40,10 +40,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
-import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
+import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
@@ -204,8 +204,22 @@ internal class SpaceChatItemComponentFactory(
       val avatarProvider = SpaceAvatarProvider(lifetime, panel, threadAvatarSize)
 
       val itemsListModel = SpaceChatItemListModel()
+
+      // TODO: don't subscribe on thread changes in factory
+      thread.mvms.forEach(lifetime) { messageList ->
+        itemsListModel.messageListUpdated(
+          messageList.messages
+            .drop(if (withFirst) 0 else 1)
+            .map { it.convertToChatItem(it.getLink(server)) }
+        )
+      }
+
       val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory, offset = 0).apply {
+      val threadTimeline = TimelineThreadCommentsPanel(
+        itemsListModel,
+        commentComponentFactory = itemComponentFactory::createComponent,
+        offset = 0
+      ).apply {
         border = JBUI.Borders.empty(10, 0)
       }
 
@@ -213,16 +227,6 @@ internal class SpaceChatItemComponentFactory(
         border = JBUI.Borders.empty()
       }
 
-      // TODO: don't subscribe on thread changes in factory
-      thread.mvms.forEach(lifetime) { messageList ->
-        launch(lifetime, Ui) {
-          itemsListModel.messageListUpdated(
-            messageList.messages
-              .drop(if (withFirst) 0 else 1)
-              .map { it.convertToChatItem(it.getLink(server)) }
-          )
-        }
-      }
       panel.add(this, VerticalLayout.FILL_HORIZONTAL)
       panel.add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
       panel.add(replyComponent, VerticalLayout.FILL_HORIZONTAL)
