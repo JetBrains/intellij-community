@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.util.messages.Topic
@@ -23,6 +24,7 @@ class GitStageManager(val project: Project) : Disposable {
     connection.subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
       override fun settingsChanged() {
         onAvailabilityChanged()
+        ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
       }
     })
