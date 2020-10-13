@@ -61,6 +61,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public abstract class BatchSession<Change> {
     private final boolean myFileTypes;
     private int myBatchLevel;
+    private int myPendingRootsChanged;
     private boolean myChanged;
     private Change myChanges;
 
@@ -84,11 +85,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
           if (myChanges == null) {
             myChanges = getGenericChange();
           }
+          myPendingRootsChanged--;
           WriteAction.run(() -> fireRootsChanged(myChanges));
         }
         finally {
-          myChanged = false;
-          myChanges = null;
+          if (myPendingRootsChanged == 0) {
+            myChanged = false;
+            myChanges = null;
+          }
         }
       }
     }
@@ -96,6 +100,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     public void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
         fireBeforeRootsChanged(myFileTypes);
+        myPendingRootsChanged++;
         myChanged = true;
       }
     }
@@ -104,7 +109,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myChanges = myChanges == null ? change : accumulate(myChanges, change);
 
       if (myBatchLevel == 0 && myChanged) {
-        if (fireRootsChanged(myChanges)) {
+        myPendingRootsChanged--;
+        if (fireRootsChanged(myChanges) && myPendingRootsChanged == 0) {
           myChanged = false;
           myChanges = null;
         }
