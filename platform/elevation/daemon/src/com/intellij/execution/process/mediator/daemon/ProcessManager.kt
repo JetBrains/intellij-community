@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 typealias Pid = Long
 
-internal class ProcessMediatorProcessManager {
+internal class ProcessManager {
   private val processMap = ConcurrentHashMap<Pid, Process>()
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,

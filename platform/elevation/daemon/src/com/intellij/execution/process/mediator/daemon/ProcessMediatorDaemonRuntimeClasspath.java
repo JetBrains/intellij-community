@@ -3,7 +3,7 @@ package com.intellij.execution.process.mediator.daemon;
 
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.Message;
-import com.intellij.execution.process.mediator.rpc.ProcessMediatorGrpcKt;
+import com.intellij.execution.process.mediator.rpc.ProcessMediatorProto;
 import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.internal.ServerImpl;
@@ -29,7 +29,7 @@ public class ProcessMediatorDaemonRuntimeClasspath {
 
   private static final Class<?>[] CLASSPATH_CLASSES = {
     ProcessMediatorDaemonMainKt.class,
-    ProcessMediatorGrpcKt.class,
+    ProcessMediatorProto.class,
 
     KotlinVersion.class, // kotlin-stdlib
     CoroutineScope.class, // kotlinx-coroutines-core
