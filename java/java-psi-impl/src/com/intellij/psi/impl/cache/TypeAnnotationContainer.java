@@ -123,6 +123,24 @@ public class TypeAnnotationContainer {
   }
 
   /**
+   * @param type type
+   * @param context context PsiElement
+   * @return type annotated with annotations from this container
+   */
+  public PsiType applyTo(PsiType type, PsiElement context) {
+    if (isEmpty()) return type;
+    if (type instanceof PsiArrayType) {
+      PsiType componentType = ((PsiArrayType)type).getComponentType();
+      PsiType modifiedComponentType = forArrayElement().applyTo(componentType, context);
+      if (componentType != modifiedComponentType) {
+        type = type instanceof PsiEllipsisType ? new PsiEllipsisType(modifiedComponentType) : modifiedComponentType.createArrayType();
+      }
+    }
+    // TODO: support generics, bounds and enclosing classes
+    return type.annotate(getProvider(context));
+  }
+
+  /**
    * Serializes TypeAnnotationContainer into the supplied stream.
    * 
    * @param dataStream stream to write to

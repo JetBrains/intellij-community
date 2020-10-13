@@ -467,4 +467,43 @@ public class Foo {
     assert PsiFieldImpl.getDetachedInitializer(clazz.fields[0]) == null
     assert !((PsiFileImpl) file).contentsLoaded
   }
+
+  void "test array type use annotation stubbing"() {
+    myFixture.addClass(
+      """
+import java.lang.annotation.*;
+@Target(ElementType.TYPE_USE)
+@interface Anno {int value();}
+""");
+    PsiClass clazz = myFixture.addClass("class Foo {" +
+                                        "  <T> @Anno(0) String @Anno(1) [] @Anno(2) [] foo(@Anno(3) byte @Anno(4)[] data) {} " +
+                                        "  List<String> @Anno(5) [] field;" +
+                                        "}");
+    def method = clazz.methods[0]
+    def field = clazz.fields[0]
+    def parameter = method.parameterList.parameters[0]
+    def parameterAnnotations = parameter.type.annotations
+    def parameterComponentAnnotations = ((PsiArrayType)parameter.type).componentType.annotations
+    def methodAnnotations = method.returnType.annotations
+    def methodComponentAnnotations = ((PsiArrayType)method.returnType).componentType.annotations
+    def methodDeepComponentAnnotations = method.returnType.deepComponentType.annotations
+    def fieldAnnotations = field.type.annotations
+    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
+    assert methodDeepComponentAnnotations.size() == 1
+    assert methodDeepComponentAnnotations[0].findAttributeValue("value").text == "0"
+    assert methodAnnotations.size() == 1
+    assert methodAnnotations[0].findAttributeValue("value").text == "1"
+    assert methodComponentAnnotations.size() == 1
+    assert methodComponentAnnotations[0].findAttributeValue("value").text == "2"
+    assert parameterComponentAnnotations.size() == 1
+    assert parameterComponentAnnotations[0].findAttributeValue("value").text == "3"
+    assert parameterAnnotations.size() == 1
+    assert parameterAnnotations[0].findAttributeValue("value").text == "4"
+    assert fieldAnnotations.size() == 1
+    assert fieldAnnotations[0].findAttributeValue("value").text == "5"
+    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
+
+    assert clazz.node // load AST
+    assert parameter.type.annotations.size() == 1
+  }
 }

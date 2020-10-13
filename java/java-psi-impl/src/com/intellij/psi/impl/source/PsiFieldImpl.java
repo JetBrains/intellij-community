@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -113,10 +112,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType(false));
         myCachedType = new SoftReference<>(type);
       }
       return type;

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -122,11 +123,13 @@ public class TypeInfo {
     byte arrayCount = 0;
     boolean isEllipsis = false;
 
+    boolean hasAnnotation = false;
+    LighterASTNode typeElement = null;
+
     if (element.getTokenType() == JavaElementType.ENUM_CONSTANT) {
-      text = ((PsiClassStub)parentStub).getName();
+      text = ((PsiClassStub<?>)parentStub).getName();
     }
     else {
-      LighterASTNode typeElement = null;
 
       for (final LighterASTNode child : tree.getChildren(element)) {
         IElementType type = child.getTokenType();
@@ -163,14 +166,40 @@ public class TypeInfo {
             arrayCount++;
             isEllipsis = true;
           }
+          else if (tokenType == JavaElementType.ANNOTATION) {
+            hasAnnotation = true;
+          }
         }
-        typeElement = nested;
+        text = LightTreeUtil.toFilteredString(tree, nested, null);
+      } else {
+        text = LightTreeUtil.toFilteredString(tree, typeElement, null);
       }
-
-      text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    return new TypeInfo(text, arrayCount, isEllipsis);
+    TypeInfo info = new TypeInfo(text, arrayCount, isEllipsis);
+    if (hasAnnotation) {
+      // TODO: support bounds, generics and enclosing types
+      TypeAnnotationContainer.Builder builder = new TypeAnnotationContainer.Builder(info);
+      int nestingLevel = arrayCount;
+      for (LighterASTNode child : tree.getChildren(typeElement)) {
+        IElementType tokenType = child.getTokenType();
+        if (tokenType == JavaElementType.TYPE) {
+          nestingLevel = 0;
+        }
+        else if (tokenType == JavaTokenType.LBRACKET) {
+          nestingLevel++;
+        }
+        else if (tokenType == JavaElementType.ANNOTATION) {
+          String anno = LightTreeUtil.toFilteredString(tree, child, null);
+          byte[] typePath = new byte[nestingLevel];
+          Arrays.fill(typePath, TypeAnnotationContainer.Builder.ARRAY_ELEMENT);
+          builder.add(typePath, anno);
+        }
+      }
+      
+      builder.build();
+    }
+    return info;
   }
 
   @NotNull

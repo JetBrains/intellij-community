@@ -11,7 +11,6 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.light.LightCompactConstructorParameter;
@@ -177,10 +176,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
-        assert typeText != null : stub;
-        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getReturnTypeText(false));
         myCachedType = new SoftReference<>(type);
       }
       return type;
