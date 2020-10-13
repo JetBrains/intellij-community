@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -70,18 +71,31 @@ internal class ProjectPluginTracker(project: Project) : PersistentStateComponent
     }
 
     private fun updatePluginEnabledState(project: Project, enable: Boolean) {
-      getInstance(project).state
-        .updatePluginEnabledState(project, enable)
+      val pluginTracker = getInstance(project)
+      if (pluginTracker.applicationShuttingDown) return
+
+      pluginTracker.state.updatePluginEnabledState(project, enable)
     }
   }
 
   private var state = State()
+  private var applicationShuttingDown = false
 
   init {
-    getApplication().messageBus.connect(project).subscribe(
+    val connection = getApplication().messageBus.connect(project)
+    connection.subscribe(
       ProjectManager.TOPIC,
       object : ProjectManagerListener {
         override fun projectClosing(project: Project) = updatePluginEnabledState(project, false)
+      }
+    )
+
+    connection.subscribe(
+      AppLifecycleListener.TOPIC,
+      object : AppLifecycleListener {
+        override fun appWillBeClosed(isRestart: Boolean) {
+          applicationShuttingDown = true
+        }
       }
     )
   }
