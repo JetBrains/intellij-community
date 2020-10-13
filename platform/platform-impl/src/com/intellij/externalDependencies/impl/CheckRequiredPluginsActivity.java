@@ -54,16 +54,19 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final List<PluginId> notInstalled = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
+    ProjectPluginTracker pluginTracker = ProjectPluginTracker.getInstance(project);
+
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
       if (plugin == null) {
-        errorMessages.add(IdeBundle.message("error.plugin.required.for.project.not.installed", dependency.getPluginId(), project.getName()));
+        errorMessages
+          .add(IdeBundle.message("error.plugin.required.for.project.not.installed", dependency.getPluginId(), project.getName()));
         notInstalled.add(pluginId);
         continue;
       }
 
-      if (!plugin.isEnabled()) {
+      if (!plugin.isEnabled() || pluginTracker.isDisabled(plugin)) {
         boolean canEnableWithoutRestart = false;
         if (Registry.is("ide.plugins.load.automatically")) {
           IdeaPluginDescriptorImpl fullDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)plugin);
@@ -112,8 +115,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       LOG.info("Automatically enabling plugins required for this project: " +
                StringUtil.join(pluginsToEnableWithoutRestart, (plugin) -> plugin.getPluginId().toString(), ", "));
       for (IdeaPluginDescriptor descriptor : pluginsToEnableWithoutRestart) {
-        ProjectPluginTracker.getInstance(project)
-          .changeEnableDisable(descriptor, PluginEnabledState.ENABLED_FOR_PROJECT);
+        pluginTracker.changeEnableDisable(descriptor, PluginEnabledState.ENABLED_FOR_PROJECT);
       }
       ApplicationManager.getApplication().invokeLater(() -> PluginEnabler.enablePlugins(project, pluginsToEnableWithoutRestart, true));
     }
