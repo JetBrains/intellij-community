@@ -24,23 +24,23 @@ object IndexDataPresenter {
 
   fun getPresentableSerializedStubTree(value: SerializedStubTree): String =
     buildString {
-      appendln("Stub tree:")
-      appendln(getPresentableStub(value.stub, "  "))
+      appendLine("Stub tree:")
+      appendLine(getPresentableStub(value.stub, "  "))
 
       val stubIndicesValueMap: Map<StubIndexKey<*, *>, Map<Any, StubIdList>> = try {
         value.stubIndicesValueMap
       }
       catch (e: Exception) {
-        appendln("Failed-to-read stub tree forward index: (message = ${e.message}) (exception class = ${e.javaClass.simpleName})")
+        appendLine("Failed-to-read stub tree forward index: (message = ${e.message}) (exception class = ${e.javaClass.simpleName})")
         return@buildString
       }
 
-      appendln("Stub tree forward index:")
+      appendLine("Stub tree forward index:")
       for ((stubIndexKey, stubIndexValues) in stubIndicesValueMap) {
-        appendln("    ${stubIndexKey.name}")
+        appendLine("    ${stubIndexKey.name}")
         for ((key, stubIdList) in stubIndexValues) {
           val stubIds = (0 until stubIdList.size()).map { stubIdList[it] }
-          appendln("        $key -> " + stubIds.joinToString())
+          appendLine("        $key -> " + stubIds.joinToString())
         }
       }
     }
@@ -51,8 +51,8 @@ object IndexDataPresenter {
     }
     return buildString {
       for ((key, value) in keyValueMap) {
-        appendln(getPresentableIndexKey(key))
-        appendln(getPresentableIndexValue(value).withIndent("  "))
+        appendLine(getPresentableIndexKey(key))
+        appendLine(getPresentableIndexValue(value).withIndent("  "))
       }
     }
   }
@@ -71,7 +71,7 @@ object IndexDataPresenter {
         append(" (id = ").append(node.stubId).append(")")
       }
       for (child in node.childrenStubs) {
-        appendln(getPresentableStub(child, "$indent  "))
+        appendLine(getPresentableStub(child, "$indent  "))
       }
     }
 
