@@ -53,7 +53,8 @@ public interface TargetEnvironmentFactory {
 
   /**
    * Prepares the actual environment.
-   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link TargetEnvironmentAwareRunProfileState.TargetProgressIndicator}
+   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link TargetEnvironmentAwareRunProfileState.TargetProgressIndicator}.
+   * Throw localised exception to notify that preparation failed, and execution should not be proceeded.
    */
   @NotNull
   TargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request,

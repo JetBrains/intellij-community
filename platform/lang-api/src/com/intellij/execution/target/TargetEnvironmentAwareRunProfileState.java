@@ -15,6 +15,9 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
                                        @Nullable TargetEnvironmentConfiguration configuration,
                                        @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException;
 
+  /**
+   * @throws ExecutionException to notify that preparation failed, and execution should not be proceeded. Should be localised.
+   */
   void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
                                       @NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException;
