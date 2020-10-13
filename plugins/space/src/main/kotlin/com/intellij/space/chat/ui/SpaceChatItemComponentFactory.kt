@@ -28,7 +28,6 @@ import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
@@ -368,7 +367,6 @@ internal class SpaceChatItemComponentFactory(
         add(title, VerticalLayout.FILL_HORIZONTAL)
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
-      background = JBColor.namedColor("Space.Chat.Message.hoverBackground", 0xF5F5F5, 0x343739)
       isOpaque = false
       border = JBUI.Borders.empty(10)
       add(avatarPanel, BorderLayout.WEST)
@@ -378,10 +376,9 @@ internal class SpaceChatItemComponentFactory(
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
 
     override fun hoverStateChanged(isHovered: Boolean) {
-      isOpaque = isHovered
       title.actionsPanel.isVisible = isHovered
       title.revalidate()
-      repaint()
+      title.repaint()
     }
   }
 }
