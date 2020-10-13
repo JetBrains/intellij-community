@@ -13,11 +13,9 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
@@ -35,7 +33,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
   public InspectionManagerEx(final Project project) {
     super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
+      myContentManager = new NotNullLazyValue<>() {
         @NotNull
         @Override
         protected ContentManager compute() {
@@ -46,14 +44,15 @@ public class InspectionManagerEx extends InspectionManagerBase {
       };
     }
     else {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
+      myContentManager = new NotNullLazyValue<>() {
         @NotNull
         @Override
         protected ContentManager compute() {
           ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
+          ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+            RegisterToolWindowTask.closable(ToolWindowId.INSPECTION, UIBundle.messagePointer("tool.window.name.inspection"),
+                                            AllIcons.Toolwindows.ToolWindowInspection, ToolWindowAnchor.BOTTOM));
           ContentManager contentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
           return contentManager;
         }
