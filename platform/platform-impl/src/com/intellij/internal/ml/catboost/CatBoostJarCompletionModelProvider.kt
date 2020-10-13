@@ -11,11 +11,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
-abstract class NaiveCatBoostJarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
-                                                       @NonNls private val resourceDirectory: String,
-                                                       @NonNls private val modelDirectory: String) : RankingModelProvider {
+abstract class CatBoostJarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
+                                                  @NonNls private val resourceDirectory: String,
+                                                  @NonNls private val modelDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {
-    val metadataReader = NaiveCatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
+    val metadataReader = CatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
     val metadata = FeaturesInfo.buildInfo(metadataReader)
     val model = metadataReader.loadModel()
     return@lazy object : CompletionRankingModelBase(metadata) {
@@ -56,6 +56,6 @@ abstract class NaiveCatBoostJarCompletionModelProvider(@Nls(capitalization = Nls
   }
 
   companion object {
-    private val LOG = logger<NaiveCatBoostJarCompletionModelProvider>()
+    private val LOG = logger<CatBoostJarCompletionModelProvider>()
   }
 }

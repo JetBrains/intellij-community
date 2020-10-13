@@ -95,7 +95,7 @@
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
 
-    <preloadingActivity implementation="com.intellij.completion.ml.ranker.PreloadNaiveCatBoostModel" />
+    <preloadingActivity implementation="com.intellij.completion.ml.ranker.PreloadCatBoostModel" />
   </extensions>
 
   <projectListeners>
