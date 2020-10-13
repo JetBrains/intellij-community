@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -9,12 +10,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadAr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 open class ListLiteralType(val expressions: List<GrExpression>, private val context: PsiElement) : GrTupleType(context) {
 
   constructor(literal: GrListOrMap) : this(literal.initializers.toList(), literal)
 
   override fun isValid(): Boolean = context.isValid
+
+  override fun getJavaClassName(): String {
+    return if (PsiUtil.isCompileStatic(context)) {
+      CommonClassNames.JAVA_UTIL_LIST
+    }
+    else {
+      CommonClassNames.JAVA_UTIL_ARRAY_LIST
+    }
+  }
 
   override fun inferComponents(): List<PsiType?> = myComponentTypes
 

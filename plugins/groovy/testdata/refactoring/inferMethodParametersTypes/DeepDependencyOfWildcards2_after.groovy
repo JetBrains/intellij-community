@@ -1,4 +1,4 @@
-def <T> Object foo(List<? extends List<? extends List<T>>> a, T b) {
+def <T> Object foo(ArrayList<? extends ArrayList<? extends ArrayList<T>>> a, T b) {
   a.get(0).get(0).add(b)
 }
 

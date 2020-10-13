@@ -2,7 +2,7 @@ class A<T> {
 
   List<T> x
 
-    Object fo<caret>o(List<T> a) {
+    Object fo<caret>o(ArrayList<T> a) {
     x = a
   }
 }
