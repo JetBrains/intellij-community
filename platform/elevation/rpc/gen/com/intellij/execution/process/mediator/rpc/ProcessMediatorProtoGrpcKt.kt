@@ -1,7 +1,7 @@
 package com.intellij.execution.process.mediator.rpc
 
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.rpc.ProcessMediatorGrpc.getServiceDescriptor
+import com.intellij.execution.process.mediator.rpc.DaemonGrpc.getServiceDescriptor
 import io.grpc.CallOptions
 import io.grpc.CallOptions.DEFAULT
 import io.grpc.Channel
@@ -29,6 +29,79 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlinx.coroutines.flow.Flow
+
+/**
+ * Holder for Kotlin coroutine-based client and server APIs for
+ * intellij.process.mediator.rpc.Daemon.
+ */
+object DaemonGrpcKt {
+  @JvmStatic
+  val serviceDescriptor: ServiceDescriptor
+    get() = DaemonGrpc.getServiceDescriptor()
+
+  val shutdownMethod: MethodDescriptor<Empty, Empty>
+    @JvmStatic
+    get() = DaemonGrpc.getShutdownMethod()
+
+  /**
+   * A stub for issuing RPCs to a(n) intellij.process.mediator.rpc.Daemon service as suspending
+   * coroutines.
+   */
+  @StubFor(DaemonGrpc::class)
+  class DaemonCoroutineStub @JvmOverloads constructor(
+    channel: Channel,
+    callOptions: CallOptions = DEFAULT
+  ) : AbstractCoroutineStub<DaemonCoroutineStub>(channel, callOptions) {
+    override fun build(channel: Channel, callOptions: CallOptions): DaemonCoroutineStub =
+        DaemonCoroutineStub(channel, callOptions)
+
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return The single response from the server.
+     */
+    suspend fun shutdown(request: Empty): Empty = unaryRpc(
+      channel,
+      DaemonGrpc.getShutdownMethod(),
+      request,
+      callOptions,
+      Metadata()
+    )}
+
+  /**
+   * Skeletal implementation of the intellij.process.mediator.rpc.Daemon service based on Kotlin
+   * coroutines.
+   */
+  abstract class DaemonCoroutineImplBase(
+    coroutineContext: CoroutineContext = EmptyCoroutineContext
+  ) : AbstractCoroutineServerImpl(coroutineContext) {
+    /**
+     * Returns the response to an RPC for intellij.process.mediator.rpc.Daemon.Shutdown.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open suspend fun shutdown(request: Empty): Empty = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.Shutdown is unimplemented"))
+
+    final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = DaemonGrpc.getShutdownMethod(),
+      implementation = ::shutdown
+    )).build()
+  }
+}
 
 /**
  * Holder for Kotlin coroutine-based client and server APIs for
@@ -290,7 +363,8 @@ object ProcessMediatorGrpcKt {
     open suspend fun release(request: ReleaseRequest): Empty = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessMediator.Release is unimplemented"))
 
-    final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
+    final override fun bindService(): ServerServiceDefinition =
+        builder(ProcessMediatorGrpc.getServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
       descriptor = ProcessMediatorGrpc.getCreateProcessMethod(),
