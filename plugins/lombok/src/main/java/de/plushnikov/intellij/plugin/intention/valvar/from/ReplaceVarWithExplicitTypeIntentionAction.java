@@ -5,7 +5,7 @@ import com.intellij.psi.PsiVariable;
 public class ReplaceVarWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
 
   public ReplaceVarWithExplicitTypeIntentionAction() {
-    super("lombok.var", "var");
+    super("lombok.var");
   }
 
   @Override
