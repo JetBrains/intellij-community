@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WSLCommandLineOptions {
 
-  private boolean myLaunchWithWslExe = false;
+  private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;

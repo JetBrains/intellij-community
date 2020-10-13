@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -250,13 +249,7 @@ public class WSLDistribution {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
-        String scriptLinuxPath = createScriptAndGetLinuxPath(linuxCommandStr);
-        if (scriptLinuxPath != null) {
-          commandLine.addParameters("$SHELL", "-c", scriptLinuxPath);
-        }
-        else {
-          commandLine.addParameters("--exec", "/bin/bash", "-c", linuxCommandStr);
-        }
+        commandLine.addParameters("--exec", "/bin/sh", "-c", linuxCommandStr);
       }
       else {
         commandLine.addParameter("--exec");
@@ -299,19 +292,6 @@ public class WSLDistribution {
   private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
     List<String> command = ContainerUtil.concat(Collections.singletonList(commandLine.getExePath()), commandLine.getParametersList().getList());
     return new ArrayList<>(ContainerUtil.map(command, executeCommandInShell ? CommandLineUtil::posixQuote : Functions.identity()));
-  }
-
-  private @Nullable String createScriptAndGetLinuxPath(@NotNull String scriptContent) {
-    File file;
-    try {
-      file = FileUtil.createTempFile("intellij-wsl-", ".sh", true);
-      FileUtil.writeToFile(file, scriptContent);
-    }
-    catch (IOException e) {
-      LOG.info("Cannot create script for WSL command", e);
-      return null;
-    }
-    return Objects.requireNonNull(getWslPath(file.getAbsolutePath()));
   }
 
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
