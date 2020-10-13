@@ -8,7 +8,7 @@ import static com.intellij.psi.PsiModifier.FINAL;
 public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceExplicitTypeWithVariableIntentionAction {
 
   public ReplaceExplicitTypeWithVarIntentionAction() {
-    super("lombok.var", "var");
+    super("lombok.var");
   }
 
   @Override
