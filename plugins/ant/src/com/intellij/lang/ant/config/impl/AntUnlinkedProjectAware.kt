@@ -50,8 +50,9 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       }
 
       override fun buildFileRemoved(buildFile: AntBuildFile) {
-        val virtualFile = buildFile.virtualFile ?: return
-        listener.onProjectUnlinked(PathUtil.getParentPath(virtualFile.path))
+        // `buildFileRemoved` has false positive unlink events when ant configuration is reloading from `ant.xml`
+        //val virtualFile = buildFile.virtualFile ?: return
+        //listener.onProjectUnlinked(PathUtil.getParentPath(virtualFile.path))
       }
     })
   }
