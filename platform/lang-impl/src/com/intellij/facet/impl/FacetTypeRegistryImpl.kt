@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.*
 
@@ -79,6 +80,11 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
         model.replaceFacet(facet, invalidFacet)
       }
       model.commit()
+    }
+    if (modulesWithFacets.isNotEmpty()) {
+      /* this is needed to recompute RootIndex, otherwise its DirectoryInfoImpl instances will keep references to SourceFolderBridges,
+         which will keep references to Facet instances from unloaded plugin via WorkspaceEntityStorage making it impossible to unload plugins without restart */
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, false, true)
     }
   }
 
