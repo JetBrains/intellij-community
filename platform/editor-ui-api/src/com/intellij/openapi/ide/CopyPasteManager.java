@@ -17,6 +17,7 @@ package com.intellij.openapi.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +68,11 @@ public abstract class CopyPasteManager {
    * @see KillRingTransferable
    */
   public abstract void stopKillRings();
+
+  /**
+   * Same as {@link #stopKillRings()}, but stops the 'kill rings' only if latest kill ring content came from the provided document.
+   */
+  public abstract void stopKillRings(@NotNull Document document);
 
   public interface ContentChangedListener extends EventListener {
     void contentChanged(@Nullable final Transferable oldTransferable, final Transferable newTransferable);

@@ -93,6 +93,23 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     if (LOG.isDebugEnabled()) {
       LOG.debug("Kill ring reset", new Throwable());
     }
+    doStopKillRings();
+  }
+
+  @Override
+  public void stopKillRings(@NotNull Document document) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Kill ring reset for " + document, new Throwable());
+    }
+    if (!myData.isEmpty()) {
+      Transferable top = myData.get(0);
+      if (top instanceof KillRingTransferable && document == ((KillRingTransferable)top).getDocument()) {
+        doStopKillRings();
+      }
+    }
+  }
+
+  private void doStopKillRings() {
     for (Transferable data : myData) {
       if (data instanceof KillRingTransferable) {
         ((KillRingTransferable)data).setReadyToCombine(false);
