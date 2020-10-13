@@ -83,8 +83,6 @@ public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFac
         return null;
       }
     }
-    MockFacetConfiguration configuration = new MockFacetConfiguration();
-    configuration.setData(fileName);
-    return configuration;
+    return new MockFacetConfiguration(fileName);
   }
 }

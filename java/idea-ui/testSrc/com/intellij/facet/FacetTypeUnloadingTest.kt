@@ -19,11 +19,8 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     val facetManager = FacetManager.getInstance(module)
     val addedFacet = runWithRegisteredFacetTypes(MockFacetType()) {
       runWriteAction {
-        val configuration = MockFacetConfiguration().apply {
-          data = "my data"
-        }
         val model = facetManager.createModifiableModel()
-        val facet = MockFacet(module, "mock", configuration)
+        val facet = MockFacet(module, "mock", MockFacetConfiguration("my data"))
         model.addFacet(facet)
         model.commit()
         assertTrue(facet.isInitialized)
