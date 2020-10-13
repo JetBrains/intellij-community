@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
-public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
+public class PinActiveTabAction extends DumbAwareAction {
 
   public static abstract class Handler {
     public final boolean isPinned;

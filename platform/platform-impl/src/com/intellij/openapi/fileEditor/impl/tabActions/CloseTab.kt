@@ -44,7 +44,10 @@ class CloseTab(c: JComponent,
   private fun isPinned() = editorWindow.isFilePinned(file)
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (isPinned() && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) return
+    if (isPinned()) {
+      if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) editorWindow.setFilePinned(file, false)
+      return
+    }
     val mgr = FileEditorManagerEx.getInstanceEx(project)
     val window: EditorWindow?
     if (ActionPlaces.EDITOR_TAB == e.place) {
