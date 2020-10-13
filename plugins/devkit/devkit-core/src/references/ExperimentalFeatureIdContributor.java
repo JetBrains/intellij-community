@@ -52,11 +52,6 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       return ExperimentalFeatureImpl.class.getName();
     }
 
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
-    }
-
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {

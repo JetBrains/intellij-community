@@ -78,6 +78,11 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return getAttribute(extension, "key");
     }
 
+    @Override
+    protected boolean hasCustomNameElement() {
+      return true;
+    }
+
     @Nullable
     @Override
     public PsiElement resolve() {

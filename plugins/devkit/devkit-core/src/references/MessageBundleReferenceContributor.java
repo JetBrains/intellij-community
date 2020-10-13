@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
@@ -257,11 +256,6 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     @Override
     protected String getExtensionPointClassname() {
       return ToolWindowEP.class.getName();
-    }
-
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
     }
 
     @Override

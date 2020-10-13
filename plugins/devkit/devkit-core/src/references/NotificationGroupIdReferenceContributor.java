@@ -15,7 +15,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
@@ -65,11 +64,6 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
     @Override
     protected String getExtensionPointClassname() {
       return NotificationGroupEP.class.getName();
-    }
-
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
     }
 
     @Override
