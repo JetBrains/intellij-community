@@ -43,7 +43,7 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
   }
 
   @Override
-  public Mode getFileIdeAssociationMode() {
-    return Mode.ChooseExtensions;
+  public ExtensionMode getExtensionsMode() {
+    return ExtensionMode.Selected;
   }
 }

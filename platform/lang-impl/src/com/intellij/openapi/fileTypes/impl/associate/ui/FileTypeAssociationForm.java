@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 
 public class FileTypeAssociationForm {
 
+  private final static int DEFAULT_EXTENSION_SPLIT_THRESHOLD = 5;
+
   private JPanel               myTopPanel;
   private JBScrollPane         myScrollPane;
   private JBLabel              myDescLabel;
@@ -139,9 +141,14 @@ public class FileTypeAssociationForm {
   }
 
   private static boolean splitExtensions(@NotNull FileType fileType, int extCount) {
-    return extCount > 1 &&
-           fileType instanceof OSFileIdeAssociation &&
-           ((OSFileIdeAssociation)fileType).getFileIdeAssociationMode().equals(OSFileIdeAssociation.Mode.ChooseExtensions);
+    if (fileType instanceof OSFileIdeAssociation) {
+      OSFileIdeAssociation.ExtensionMode explicitMode = ((OSFileIdeAssociation)fileType).getExtensionsMode();
+      switch (explicitMode) {
+        case Selected: return true;
+        case All: return false;
+      }
+    }
+    return extCount > DEFAULT_EXTENSION_SPLIT_THRESHOLD;
   }
 
   private static boolean isSupported(@NotNull FileType fileType) {
@@ -149,7 +156,7 @@ public class FileTypeAssociationForm {
            !(fileType instanceof UserBinaryFileType) &&
            !(fileType instanceof ArchiveFileType) &&
            (!(fileType instanceof OSFileIdeAssociation) ||
-            !((OSFileIdeAssociation)fileType).getFileIdeAssociationMode().equals(OSFileIdeAssociation.Mode.Unsupported));
+            ((OSFileIdeAssociation)fileType).isFileAssociationAllowed());
   }
 
   private void onItemStateChange(@NotNull MyFileTypeItem currItem, boolean isSelected) {
