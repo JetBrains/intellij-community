@@ -44,7 +44,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
-import com.intellij.ui.Graphics2DLog;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
@@ -119,7 +118,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @DirtyUI
   @Override
   public void paint(@NotNull Graphics g) {
-    g = new Graphics2DLog(g);
     if (!isEnabled()) {
       g = new Grayer((Graphics2D)g, getBackground());
     }
