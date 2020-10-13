@@ -91,6 +91,18 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
                            parentNodeId);
   }
 
+  /**
+   * Populates the test result tree by nodes in "no run" state.
+   * The node type can be suite or test. The node type, name, and location cannot be changes by
+   * followed onSuiteStarted/onTestStarted calls.
+   *
+   * @param isSuite      the node type: true for suite, false for test
+   * @param testName     the presentable test name visible to the user
+   * @param locationHint the location info that is used for navigation to the suite/test source code
+   * @param metaInfo     additional information of any type
+   * @param id           the node identifier in the test result tree
+   * @param parentNodeId the parent node identifier in the test result tree
+   */
   public void onSuiteTreeNodeAdded(final boolean isSuite,
                                    final String testName,
                                    final String locationHint,
