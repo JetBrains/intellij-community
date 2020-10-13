@@ -857,20 +857,20 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         if (getOrientation()) {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(clamp(myPoint.y, size, myFirstComponent, myLastSize));
+              setFirstSize(clamp(myPoint.y, size, myFirstComponent, getLastSize()));
             }
             else {
-              setLastSize(clamp(size - myPoint.y - getDividerWidth(), size, myLastComponent, myFirstSize));
+              setLastSize(clamp(size - myPoint.y - getDividerWidth(), size, myLastComponent, getFirstSize()));
             }
           }
         }
         else {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(clamp(myPoint.x, size, myFirstComponent, myLastSize));
+              setFirstSize(clamp(myPoint.x, size, myFirstComponent, getLastSize()));
             }
             else {
-              setLastSize(clamp(size - myPoint.x - getDividerWidth(), size, myLastComponent, myFirstSize));
+              setLastSize(clamp(size - myPoint.x - getDividerWidth(), size, myLastComponent, getFirstSize()));
             }
           }
         }
