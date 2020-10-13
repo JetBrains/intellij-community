@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -268,13 +269,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
+    // can be performance critical, better to use cycle instead of streams
     // avoid missing files when events are processed concurrently
-    return Stream.concat(getChangedFilesCollector().getEventMerger().getChangedFiles(),
-                         getChangedFilesCollector().getFilesToUpdate())
-      .filter(filesToBeIndexedForProjectCondition(project))
-      .distinct()
-      .mapToInt(f -> processor.process(f) ? 1 : 0)
-      .allMatch(success -> success == 1);
+    Iterator<VirtualFile> iterator = Iterators.concat(
+      getChangedFilesCollector().getEventMerger().getChangedFiles().iterator(),
+      getChangedFilesCollector().getFilesToUpdate().iterator()
+    );
+
+    HashSet<VirtualFile> checkedFiles = new HashSet<>();
+    Predicate<VirtualFile> filterPredicate = filesToBeIndexedForProjectCondition(project);
+
+    while (iterator.hasNext()) {
+      VirtualFile virtualFile = iterator.next();
+      if (filterPredicate.test(virtualFile) && !checkedFiles.contains(virtualFile)) {
+        checkedFiles.add(virtualFile);
+        if (!processor.process(virtualFile)) return false;
+      }
+    }
+
+    return true;
   }
 
   RegisteredIndexes getRegisteredIndexes() {
