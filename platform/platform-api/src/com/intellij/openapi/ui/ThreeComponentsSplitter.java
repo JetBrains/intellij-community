@@ -857,24 +857,20 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         if (getOrientation()) {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(MathUtil.clamp(myPoint.y, getMinSize(myFirstComponent),
-                                          size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
+              setFirstSize(clamp(myPoint.y, size, myFirstComponent, myLastSize));
             }
             else {
-              setLastSize(MathUtil.clamp(size - myPoint.y - getDividerWidth(), getMinSize(myLastComponent), 
-                                         size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
+              setLastSize(clamp(size - myPoint.y - getDividerWidth(), size, myLastComponent, myFirstSize));
             }
           }
         }
         else {
           if (size > 0 || myDividerZone > 0) {
             if (myIsFirst) {
-              setFirstSize(MathUtil.clamp(myPoint.x, getMinSize(myFirstComponent), 
-                                          size - myLastSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
+              setFirstSize(clamp(myPoint.x, size, myFirstComponent, myLastSize));
             }
             else {
-              setLastSize(MathUtil.clamp(size - myPoint.x - getDividerWidth(), getMinSize(myLastComponent), 
-                                         size - myFirstSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount()));
+              setLastSize(clamp(size - myPoint.x - getDividerWidth(), size, myLastComponent, myFirstSize));
             }
           }
         }
@@ -895,6 +891,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       if (myWasPressedOnMe) {
         e.consume();
       }
+    }
+
+    private int clamp(int pos, int size, JComponent component, int componentSize) {
+      int minSize = getMinSize(component);
+      int maxSize = size - componentSize - getMinSize(myInnerComponent) - getDividerWidth() * visibleDividersCount();
+      return minSize <= maxSize ? MathUtil.clamp(pos, minSize, maxSize) : pos;
     }
 
     @Override
