@@ -9,6 +9,7 @@ import circlet.platform.api.format
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.link
@@ -94,8 +95,15 @@ internal class MessageTitleComponent(
     }
     return InlineIconButton(VcsCodeReviewIcons.Delete, VcsCodeReviewIcons.DeleteHovered).apply {
       actionListener = ActionListener {
-        launch(lifetime, Ui) {
-          message.delete()
+        if (
+          MessageDialogBuilder.yesNo(
+            SpaceBundle.message("chat.message.delete.dialog.title"),
+            SpaceBundle.message("chat.message.delete.dialog.message")
+          ).ask(this)
+        ) {
+          launch(lifetime, Ui) {
+            message.delete()
+          }
         }
       }
     }
