@@ -340,16 +340,13 @@ public class Patch {
     try {
       File _backupDir = backupDir;
       forEach(actionsToApply, "Applying patch...", ui, action -> {
-        if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+        File parent = new File(toDir, action.getPath()).getParentFile();
+        if (!parent.exists()) {
+          Runner.logger().info("Creating missing parent directory: " + parent.getAbsolutePath());
+          Files.createDirectories(parent.toPath());
         }
-        else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
-        }
-        else {
-          appliedActions.add(action);
-          action.apply(patchFile, _backupDir, toDir);
-        }
+        appliedActions.add(action);
+        action.apply(patchFile, _backupDir, toDir);
       });
     }
     catch (OperationCancelledException e) {
