@@ -10,12 +10,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.copy
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -38,18 +40,32 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
-    chooseSettingsFile(PathManager.getConfigPath(), component, ConfigurationStoreBundle.message("title.import.file.location"), ConfigurationStoreBundle.message("prompt.choose.import.file.path"))
-      {
-        val saveFile = Paths.get(it.path)
-        try {
-          doImport(saveFile)
+
+    val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
+      override fun isFileSelectable(file: VirtualFile?): Boolean {
+        if (file?.isDirectory == true) {
+          return file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
         }
-        catch (e1: ZipException) {
-          Messages.showErrorDialog(
-              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message),
-              ConfigurationStoreBundle.message("title.invalid.file"))
-        }
-        catch (e1: IOException) {
+        return super.isFileSelectable(file)
+      }
+    }.apply {
+      title = ConfigurationStoreBundle.message("title.import.file.location")
+      description = ConfigurationStoreBundle.message("prompt.choose.import.file.path")
+      isHideIgnored = false
+      withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+    }
+
+    chooseSettingsFile(descriptor, PathManager.getConfigPath(), component) {
+      val saveFile = Paths.get(it.path)
+      try {
+        doImport(saveFile)
+      }
+      catch (e1: ZipException) {
+        Messages.showErrorDialog(
+          ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message),
+          ConfigurationStoreBundle.message("title.invalid.file"))
+      }
+      catch (e1: IOException) {
           Messages.showErrorDialog(ConfigurationStoreBundle.message("error.reading.settings.file.2", saveFile, e1.message),
                                    IdeBundle.message("title.error.reading.file"))
         }

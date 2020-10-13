@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
@@ -66,21 +67,11 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-fun chooseSettingsFile(initialPath: String?, parent: Component?, title: String, description: String, onFileChosen: (VirtualFile) -> Unit) {
-  val chooserDescriptor = object: FileChooserDescriptor(true, true, true, true, false, false) {
-    override fun isFileSelectable(file: VirtualFile?): Boolean {
-      if (file?.isDirectory == true) {
-        return file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
-      }
-      return super.isFileSelectable(file)
-    }
-  }
-  chooserDescriptor.description = description
-  chooserDescriptor.isHideIgnored = false
-  chooserDescriptor.title = title
-  chooserDescriptor.withFileFilter { ConfigImportHelper.isSettingsFile(it) }
-
-  FileChooser.chooseFile(chooserDescriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
+internal fun chooseSettingsFile(descriptor: FileChooserDescriptor,
+                                initialPath: String?,
+                                parent: Component?,
+                                onFileChosen: (VirtualFile) -> Unit) {
+  FileChooser.chooseFile(descriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
 }
 
 private fun getFileOrParent(path: String?): VirtualFile? {
@@ -142,12 +133,16 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   }
 
   private fun browse() {
-    chooseSettingsFile(pathPanel.text, window, ConfigurationStoreBundle.message("title.export.file.location"),
-                       ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
-      { file ->
-        val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
-        pathPanel.text = FileUtil.toSystemDependentName(path)
-      }
+    val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().apply {
+      title = ConfigurationStoreBundle.message("title.export.file.location")
+      description = ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path")
+      isHideIgnored = false
+      withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+    }
+    chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
+      val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
+      pathPanel.text = FileUtil.toSystemDependentName(path)
+    }
   }
 
   private fun updateControls() {
