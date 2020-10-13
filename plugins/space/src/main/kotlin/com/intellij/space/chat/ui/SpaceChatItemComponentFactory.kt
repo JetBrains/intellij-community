@@ -273,7 +273,7 @@ internal class SpaceChatItemComponentFactory(
   private fun createFileNameComponent(filePath: String): JComponent {
     val name = PathUtil.getFileName(filePath)
     val parentPath = PathUtil.getParentPath(filePath)
-    val nameLabel = JLabel(name, null, SwingConstants.LEFT)
+    val nameLabel = JBLabel(name, null, SwingConstants.LEFT).setCopyable(true)
 
     return NonOpaquePanel(HorizontalLayout(JBUI.scale(5))).apply {
       add(nameLabel)
@@ -281,6 +281,7 @@ internal class SpaceChatItemComponentFactory(
       if (parentPath.isNotBlank()) {
         add(JBLabel(parentPath).apply {
           foreground = UIUtil.getContextHelpForeground()
+          setCopyable(true)
         })
       }
     }
