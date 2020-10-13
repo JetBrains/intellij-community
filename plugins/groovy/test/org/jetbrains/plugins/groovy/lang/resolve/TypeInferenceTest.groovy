@@ -994,7 +994,7 @@ def foo() {
 
   void 'test recursive literal types'() {
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
+    doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.lang.Object>"
     doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
     doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
     doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()',

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.RecursionManager
@@ -16,9 +16,11 @@ open class ListLiteralType(val expressions: List<GrExpression>, private val cont
 
   override fun isValid(): Boolean = context.isValid
 
-  override fun inferComponents(): List<PsiType?> {
-    return expressions.flatMap {
-      doGetComponentTypes(it) ?: return emptyList()
+  override fun inferComponents(): List<PsiType?> = myComponentTypes
+
+  private val myComponentTypes: List<PsiType?> = run {
+    expressions.flatMap {
+      doGetComponentTypes(it) ?: return@run emptyList()
     }
   }
 
