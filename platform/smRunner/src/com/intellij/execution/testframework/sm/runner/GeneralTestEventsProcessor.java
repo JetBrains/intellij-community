@@ -83,9 +83,25 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
 
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint, final String metaInfo, String id, String parentNodeId) {
+      onSuiteTreeNodeAdded(false,
+                           testName,
+                           locationHint,
+                           metaInfo,
+                           id,
+                           parentNodeId);
+  }
+
+  public void onSuiteTreeNodeAdded(final boolean isSuite,
+                                   final String testName,
+                                   final String locationHint,
+                                   final String metaInfo,
+                                   String id,
+                                   String parentNodeId) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy testProxy = createProxy(testName, locationHint, metaInfo, id, parentNodeId);
+      final SMTestProxy testProxy = isSuite
+                                    ? createSuite(testName, locationHint, metaInfo, id, parentNodeId)
+                                    : createProxy(testName, locationHint, metaInfo, id, parentNodeId);
       testProxy.setTreeBuildBeforeStart();
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
