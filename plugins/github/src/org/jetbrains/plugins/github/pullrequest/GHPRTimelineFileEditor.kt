@@ -32,8 +32,6 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
   val detailsData = dataProvider.detailsData
-  val stateData = dataProvider.stateData
-  val changesData = dataProvider.changesData
   val reviewData = dataProvider.reviewData
   val commentsData = dataProvider.commentsData
 

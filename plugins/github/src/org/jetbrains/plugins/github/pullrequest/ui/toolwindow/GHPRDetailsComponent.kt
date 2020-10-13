@@ -1,72 +1,93 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesPanel
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
+import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.details.*
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object GHPRDetailsComponent {
 
-  fun create(detailsModel: GHPRDetailsModel,
-             branchesModel: GHPRBranchesModel,
-             avatarIconsProvider: GHAvatarIconsProvider): JComponent {
-
-    val metaPanel = createPanel(detailsModel, branchesModel, avatarIconsProvider).apply {
-      border = JBUI.Borders.empty(8)
-    }
-
-    val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
-      isOpaque = false
-      add(metaPanel)
-    }
+  fun create(securityService: GHPRSecurityService,
+             avatarIconsProvider: GHAvatarIconsProvider,
+             branchesModel: GHPRBranchesModel, detailsModel: GHPRDetailsModel, stateModel: GHPRStateModel): JComponent {
     val actionManager = ActionManager.getInstance()
 
-    return ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
-      viewport.isOpaque = false
-      isOpaque = false
-    }.also {
-      val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
-      PopupHandler.installPopupHandler(it, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    val branches = GHPRBranchesPanel.create(branchesModel)
+    val title = GHPRTitleComponent.create(detailsModel)
+    val description = HtmlEditorPane().apply {
+      detailsModel.addAndInvokeDetailsChangedListener {
+        setBody(detailsModel.description)
+      }
     }
-  }
-
-  private fun createPanel(detailsModel: GHPRDetailsModel,
-                          branchesModel: GHPRBranchesModel,
-                          avatarIconsProvider: GHAvatarIconsProvider): JComponent {
-    val panel = JPanel(VerticalLayout(JBUIScale.scale(8))).apply {
-      isOpaque = false
-    }
-    val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
     val timelineLink = ActionLink(GithubBundle.message("pull.request.view.conversations.action")) {
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink
       ActionUtil.invokeAction(action, it.source as ActionLink, ActionPlaces.UNKNOWN, null, null)
     }
-
-    with(panel) {
-      add(GHPRTitleComponent.create(detailsModel))
-      add(GHPRBranchesPanel.create(branchesModel))
-      add(metadataPanel, VerticalLayout.FILL_HORIZONTAL)
-      add(timelineLink)
+    val metadata = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
+    val state = GHPRStatePanel(securityService, stateModel).also {
+      detailsModel.addAndInvokeDetailsChangedListener {
+        it.select(detailsModel.state, true)
+      }
+      PopupHandler.installPopupHandler(it, DefaultActionGroup(GHPRReloadStateAction()), ActionPlaces.UNKNOWN, actionManager)
     }
 
-    return panel
+    metadata.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                         JBUI.Borders.empty(8))
+
+    state.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                      JBUI.Borders.empty(8))
+
+    val detailsSection = JPanel(MigLayout(LC().insets("0", "0", "0", "0")
+                                            .gridGap("0", "0")
+                                            .fill().flowY())).apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(8)
+
+      add(branches, CC().gapBottom("${UI.scale(8)}"))
+      add(title, CC().gapBottom("${UI.scale(8)}"))
+      add(description, CC().grow().push().minHeight("0"))
+      add(timelineLink, CC().gapBottom("push"))
+    }
+
+    val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
+    PopupHandler.installPopupHandler(detailsSection, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    PopupHandler.installPopupHandler(description, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    PopupHandler.installPopupHandler(metadata, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+
+    return JPanel(MigLayout(LC().insets("0", "0", "0", "0")
+                              .gridGap("0", "0")
+                              .fill().flowY())).apply {
+      isOpaque = false
+
+      add(detailsSection, CC().grow().push().minHeight("0"))
+      add(metadata, CC().growX().pushX())
+      add(Wrapper(state).apply {
+        isOpaque = true
+        background = UIUtil.getPanelBackground()
+      }, CC().growX().pushX().minHeight("pref"))
+    }
   }
 }

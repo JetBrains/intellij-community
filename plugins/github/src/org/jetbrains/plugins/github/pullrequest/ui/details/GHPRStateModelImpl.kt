@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture
 class GHPRStateModelImpl(private val project: Project,
                          private val stateData: GHPRStateDataProvider,
                          private val changesData: GHPRChangesDataProvider,
-                         private val detailsModel: SingleValueModel<GHPullRequestShort>,
+                         private val detailsModel: SingleValueModel<out GHPullRequestShort>,
                          disposable: Disposable) : GHPRStateModel {
 
   private val mergeabilityEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
