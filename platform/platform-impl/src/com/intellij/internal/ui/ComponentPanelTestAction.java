@@ -268,16 +268,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       //try {
-        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).andShowCloseShortcut();
+        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+          andShowCloseShortcut().
+          withShowCount(3).
+          //withHeader(GOT_IT_HEADER).
+          withIcon(AllIcons.General.BalloonInformation);
 
           //withTimeout();
           //withIcon(AllIcons.General.BalloonInformation).
-          //withHeader(GOT_IT_HEADER).
           //withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
           //withShortcut("Ctrl+Alt+D");
 
-        gotItTooltip.showFor(button, c -> new PointPosition(new RelativePoint(c, new Point(c.getWidth() / 2, c.getHeight())),
-                                                            Balloon.Position.below));
+        gotItTooltip.showDynamic(Balloon.Position.below, () -> new RelativePoint(button, new Point(button.getWidth() / 2, button.getHeight())));
       //} catch (MalformedURLException ex) {}
 
       // Combobox with comment

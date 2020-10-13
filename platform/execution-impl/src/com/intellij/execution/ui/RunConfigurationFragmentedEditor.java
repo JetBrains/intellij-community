@@ -164,8 +164,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       JComponent component = fragment.getEditorComponent();
       new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()), fragment).
         withHeader(ExecutionBundle.message("gotIt.popup.title")).
-        showAt(new RelativePoint(component, new Point(GotItTooltip.Companion.getARROW_SHIFT(), component.getHeight())),
-                Balloon.Position.below);
+        showAt(Balloon.Position.below, new RelativePoint(component, new Point(GotItTooltip.ARROW_SHIFT, component.getHeight())));
     }
   }
 }
