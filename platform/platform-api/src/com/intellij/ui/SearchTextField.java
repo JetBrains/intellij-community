@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -31,6 +29,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchTextField extends JPanel {
+  private class SearchHistoryAction extends AnAction{
+    private final String name;
+    private final boolean enabled;
+    public SearchHistoryAction(String name, boolean enabled){
+      this.name = name;
+      this.enabled = enabled;
+      getTemplatePresentation().setText(name);
+      getTemplatePresentation().setEnabled(enabled);
+      setEnabled(enabled);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setText(name);
+      e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myTextField.setText(getTemplatePresentation().getText());
+      addCurrentTextToHistory();
+      historyItemChosen(getTemplatePresentation().getText());
+    }
+  }
+
   public static final DataKey<SearchTextField> KEY = DataKey.create("search.text.field");
   public static final KeyStroke SHOW_HISTORY_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
   public static final CustomShortcutSet SHOW_HISTORY_SHORTCUT = new CustomShortcutSet(SHOW_HISTORY_KEYSTROKE);
@@ -43,8 +67,9 @@ public class SearchTextField extends JPanel {
   private final TextFieldWithProcessing myTextField;
 
   private JBPopup myPopup;
-  private JPopupMenu myNativeSearchPopup;
-  private JMenuItem myNoItems;
+  private ActionPopupMenu myNativeSearchPopup;
+  private DefaultActionGroup myHistoryPopupActionGroup = new DefaultActionGroup();
+  private SearchHistoryAction noItemsSearchHistoryAction = new SearchHistoryAction(IdeBundle.message("no.recent.searches"), false);
   private String myHistoryPropertyName;
 
   public SearchTextField() {
@@ -111,7 +136,7 @@ public class SearchTextField extends JPanel {
     if (historyPopupEnabled) {
       DumbAwareAction.create(event -> {
         if (myNativeSearchPopup != null) {
-          myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
+          myNativeSearchPopup.getComponent().show(myTextField, 5, myTextField.getHeight());
         } else if (myPopup == null || !myPopup.isVisible()) {
           showPopup();
         }
@@ -149,12 +174,11 @@ public class SearchTextField extends JPanel {
     });
 
     if (historyPopupEnabled) {
-      myNativeSearchPopup = new JBPopupMenu();
-      myNoItems = new JBMenuItem(IdeBundle.message("no.recent.searches"));
-      myNoItems.setEnabled(false);
-
+      myHistoryPopupActionGroup = new DefaultActionGroup();
+      myNativeSearchPopup = ActionManager.getInstance()
+              .createActionPopupMenu(ActionPlaces.PROJECT_VIEW_TOOLBAR, myHistoryPopupActionGroup);
       updateMenu();
-      myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
+      myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup.getComponent());
     }
   }
 
@@ -186,10 +210,10 @@ public class SearchTextField extends JPanel {
 
   private void updateMenu() {
     if (myNativeSearchPopup != null) {
-      myNativeSearchPopup.removeAll();
+      myHistoryPopupActionGroup.removeAll();
       final int itemsCount = myModel.getSize();
       if (itemsCount == 0) {
-        myNativeSearchPopup.add(myNoItems);
+        myHistoryPopupActionGroup.add(noItemsSearchHistoryAction);
       }
       else {
         for (int i = 0; i < itemsCount; i++) {
@@ -273,14 +297,8 @@ public class SearchTextField extends JPanel {
 
   private void addMenuItem(@NlsSafe String item) {
     if (myNativeSearchPopup != null) {
-      myNativeSearchPopup.remove(myNoItems);
-      final JMenuItem menuItem = new JBMenuItem(item);
-      myNativeSearchPopup.add(menuItem);
-      menuItem.addActionListener(e -> {
-        myTextField.setText(item);
-        addCurrentTextToHistory();
-        historyItemChosen(item);
-      });
+      myHistoryPopupActionGroup.remove(noItemsSearchHistoryAction);
+      myHistoryPopupActionGroup.add(new SearchHistoryAction(item, true));
     }
   }
 
