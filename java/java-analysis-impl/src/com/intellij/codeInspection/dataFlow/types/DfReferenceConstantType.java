@@ -7,8 +7,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
@@ -84,7 +84,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Override
   public DfType tryNegate() {
-    return new DfGenericObjectType(Collections.singleton(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
+    return new DfGenericObjectType(Set.of(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
                                    null, BOTTOM, false);
   }
 
@@ -110,6 +110,6 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     boolean locality = isLocal() && type.isLocal();
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
-    return new DfGenericObjectType(Collections.emptySet(), constraint, nullability, mutability, sf, sfType, locality);
+    return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }
 }
