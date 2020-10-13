@@ -9,6 +9,23 @@ class CommentedOutCode /* extends Object */ {
   //// VARIABLE STATE \\\\
   private String s;
 
+  <warning descr="Commented out code (1 line)">//</warning> void x() {}
+  private String field;
+
+
+  private static int danglingElse(int i) {
+    if (i == 3) {
+      System.out.println(i);
+    }
+    <warning descr="Commented out code (3 lines)">//</warning>else if (i == 4) {
+    //  System.exit(-1);
+    //}
+    return i;
+    //else if (i == 4) {
+    //  System.exit(-1);
+    //}
+  }
+
   int x(int i) {
     new Object() {
 

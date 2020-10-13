@@ -8,6 +8,19 @@ class CommentedOutCode /* extends Object */ {
   //// VARIABLE STATE \\\\
   private String s;
 
+  private String field;
+
+
+  private static int danglingElse(int i) {
+    if (i == 3) {
+      System.out.println(i);
+    }
+      return i;
+    //else if (i == 4) {
+    //  System.exit(-1);
+    //}
+  }
+
   int x(int i) {
     new Object() {
 

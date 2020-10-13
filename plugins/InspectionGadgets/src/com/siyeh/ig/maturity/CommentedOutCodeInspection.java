@@ -4,6 +4,7 @@ package com.siyeh.ig.maturity;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -190,6 +191,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
         parent = method.getParent();
       }
     }
+    else if (parent instanceof PsiField) {
+      parent = parent.getParent();
+    }
     else if (parent instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)parent;
       if (!ClassUtils.isInsideClassBody(context, aClass)) {
@@ -205,7 +209,8 @@ public class CommentedOutCodeInspection extends BaseInspection {
     else {
       fragment = factory.createCodeBlockCodeFragment(text, context, false);
     }
-    return !isInvalidCode(fragment);
+    final boolean allowDanglingElse = PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class) instanceof PsiIfStatement;
+    return !isInvalidCode(fragment, allowDanglingElse);
   }
 
   static String getCommentText(PsiComment comment) {
@@ -232,7 +237,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 
-  static boolean isInvalidCode(PsiElement element) {
+  static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
     final PsiElement firstChild = element.getFirstChild();
     final PsiElement lastChild = element.getLastChild();
     final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
@@ -245,18 +250,20 @@ public class CommentedOutCodeInspection extends BaseInspection {
         return true;
       }
     }
-    final CodeVisitor visitor = new CodeVisitor(strict);
+    final CodeVisitor visitor = new CodeVisitor(strict, allowDanglingElse);
     element.accept(visitor);
     return visitor.isInvalidCode();
   }
 
   private static class CodeVisitor extends JavaRecursiveElementWalkingVisitor {
     private final boolean myStrict;
+    private final boolean myAllowDanglingElse;
     private boolean invalidCode = false;
     private boolean codeFound = false;
 
-    private CodeVisitor(boolean strict) {
+    private CodeVisitor(boolean strict, boolean allowDanglingElse) {
       myStrict = strict;
+      myAllowDanglingElse = allowDanglingElse;
     }
 
     @Override
@@ -275,6 +282,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
     @Override
     public void visitErrorElement(@NotNull PsiErrorElement element) {
+      if (myAllowDanglingElse && !codeFound && JavaPsiBundle.message("else.without.if").equals(element.getErrorDescription())) {
+        return;
+      }
       invalidCode = true;
       stopWalking();
     }
