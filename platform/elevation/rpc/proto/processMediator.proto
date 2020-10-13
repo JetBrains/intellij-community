@@ -8,6 +8,10 @@ option java_multiple_files = true;
 option java_package = "com.intellij.execution.process.mediator.rpc";
 option java_outer_classname = "ProcessMediatorProto";
 
+service Daemon {
+  rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
 service ProcessMediator {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
 

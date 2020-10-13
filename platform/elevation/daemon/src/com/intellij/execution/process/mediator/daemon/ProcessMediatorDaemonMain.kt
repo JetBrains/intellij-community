@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator.daemon
 
+import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import java.net.InetAddress
@@ -39,8 +41,18 @@ open class ProcessMediatorServerDaemon private constructor(private val server: S
     private fun buildServer(builder: ServerBuilder<*>): Server {
       return builder
         .addService(ProcessMediatorServerService.createServiceDefinition())
+        .addService(DaemonService)
         .build()
     }
+  }
+}
+
+object DaemonService: DaemonGrpcKt.DaemonCoroutineImplBase() {
+  override suspend fun shutdown(request: Empty): Empty {
+    // TODO think about
+    // - should we destroy running processes
+    // - how to stop server
+    return Empty.getDefaultInstance()
   }
 }
 

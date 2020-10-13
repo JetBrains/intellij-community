@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
+import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
@@ -20,10 +21,12 @@ import java.util.concurrent.TimeUnit
 
 class ProcessMediatorClient(
   coroutineScope: CoroutineScope,
-  private val channel: ManagedChannel
+  private val channel: ManagedChannel // TODO
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
     Closeable {
-  private val stub = ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
+  private val loggingChannel = ClientInterceptors.intercept(channel, LoggingClientInterceptor)
+  private val stub = ProcessMediatorGrpcKt.ProcessMediatorCoroutineStub(loggingChannel)
+  private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(loggingChannel)
 
   private val cleanupJob = childSupervisorJob()
 
@@ -118,12 +121,17 @@ class ProcessMediatorClient(
     ExceptionAsStatus.unwrap { stub.release(request) }
   }
 
+  private suspend fun shutdown() {
+    daemonStub.shutdown(Empty.getDefaultInstance())
+  }
+
   override fun close() {
     try {
       runBlocking {
         cleanupJob.complete()  // don't accept new cleanup tasks anymore
         cleanupJob.children.forEach { it.start() }
         cleanupJob.join()  // wait all the cleanup tasks to finish
+        shutdown()
       }
     }
     finally {
