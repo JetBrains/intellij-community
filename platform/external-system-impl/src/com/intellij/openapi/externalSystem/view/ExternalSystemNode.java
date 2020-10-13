@@ -197,7 +197,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
-    List<? extends ExternalSystemNode<?>> newChildrenCandidates = doBuildChildren();
+    List<? extends ExternalSystemNode<?>> newChildrenCandidates = new ArrayList<ExternalSystemNode<?>>(doBuildChildren());
     if (newChildrenCandidates.isEmpty()) return NO_CHILDREN;
 
     addAll(newChildrenCandidates, true);
