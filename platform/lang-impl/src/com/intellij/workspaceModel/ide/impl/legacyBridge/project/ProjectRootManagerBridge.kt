@@ -56,7 +56,6 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       }
     })
 
-    // TODO It's also possible not to fire roots change event if JDK is not used
     bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
   }
 
