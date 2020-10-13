@@ -8,6 +8,7 @@ import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
@@ -49,6 +50,8 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
   }
 
   override fun problemsDisappeared(file: VirtualFile) {
+    // Sometimes it is called by WolfTheProblemSolver unexpectedly. See WEB-45668
+    if (Registry.`is`("ide.ProblemsView.does.not.trust.WolfTheProblemSolver")) return
     val watcher = synchronized(watchers) { watchers.remove(file) } ?: return
     Disposer.dispose(watcher) // removes a markup model listener
   }
