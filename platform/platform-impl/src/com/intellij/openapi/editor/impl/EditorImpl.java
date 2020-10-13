@@ -4047,7 +4047,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (moveCaret) {
-        if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
+        if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown()) {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
             if (caretOffset < mySavedSelectionStart) {
               mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
