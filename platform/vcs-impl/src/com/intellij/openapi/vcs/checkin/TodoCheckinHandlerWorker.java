@@ -11,9 +11,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,12 +37,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.search.LightIndexPatternSearch;
-import com.intellij.psi.impl.search.TodoItemsCreator;
-import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -93,9 +87,7 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
-        List<TodoItem> newTodoItems = ContainerUtil.newArrayList(searchHelper.findTodoItems(afterPsiFile));
-        applyFilterAndRemoveDuplicatesAndSort(newTodoItems, myTodoFilter);
+        List<TodoItem> newTodoItems = collectTodoItems(afterPsiFile, false);
 
         if (change.getBeforeRevision() == null) {
           // take just all todos
@@ -152,8 +144,18 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private static void applyFilterAndRemoveDuplicatesAndSort(final List<TodoItem> todoItems, final TodoFilter filter) {
+  @NotNull
+  private List<TodoItem> collectTodoItems(@NotNull PsiFile psiFile, boolean isLight) {
+    PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+    TodoItem[] todoItems = isLight ? searchHelper.findTodoItemsLight(psiFile)
+                                   : searchHelper.findTodoItems(psiFile);
+    return applyFilterAndRemoveDuplicatesAndSort(todoItems, myTodoFilter);
+  }
+
+  private static List<TodoItem> applyFilterAndRemoveDuplicatesAndSort(TodoItem @NotNull [] items, @Nullable TodoFilter filter) {
+    List<TodoItem> todoItems = ContainerUtil.newArrayList(items);
     todoItems.sort(TodoItem.BY_START_OFFSET);
+
     TodoItem previous = null;
     for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
       final TodoItem next = iterator.next();
@@ -167,6 +169,7 @@ public class TodoCheckinHandlerWorker {
       }
       previous = next;
     }
+    return todoItems;
   }
 
   private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {
@@ -245,29 +248,17 @@ public class TodoCheckinHandlerWorker {
 
       if (changedTodoItems.isEmpty()) return;
 
-      final PsiFile beforePsiFile = ReadAction.compute(() -> PsiFileFactory.getInstance(myProject)
-                                                                           .createFileFromText("old" + myAfterFile.getName(),
-                                                                                               myAfterFile.getFileType(), myBeforeContent));
+      PsiFile beforePsiFile = ReadAction.compute(
+        () -> PsiFileFactory.getInstance(myProject).createFileFromText("old" + myAfterFile.getName(),
+                                                                       myAfterFile.getFileType(), myBeforeContent));
+      final List<TodoItem> oldTodoItems = collectTodoItems(beforePsiFile, true);
 
-      final IndexPatternSearch.SearchParameters searchParameters =
-        new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider.getInstance(),
-                                                TodoConfiguration.getInstance().isMultiLine());
-      final Collection<IndexPatternOccurrence> patternOccurrences = LightIndexPatternSearch.SEARCH.createQuery(searchParameters).findAll();
-
-      if (patternOccurrences.isEmpty()) {
+      if (oldTodoItems.isEmpty()) {
         for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
           myAddedOrEditedTodos.add(pair.first);
         }
         return;
       }
-
-      final List<TodoItem> oldTodoItems = new ArrayList<>();
-      final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-      for (IndexPatternOccurrence occurrence : patternOccurrences) {
-        oldTodoItems.add(todoItemsCreator.createTodo(occurrence));
-      }
-      applyFilterAndRemoveDuplicatesAndSort(oldTodoItems, myTodoFilter);
-
 
       LineFragment lastLineFragment = null;
       HashSet<String> oldTodoTexts = new HashSet<>();
