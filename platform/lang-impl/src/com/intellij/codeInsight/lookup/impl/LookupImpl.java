@@ -1121,7 +1121,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private String formatDisposeTrace() {
-    return ExceptionUtil.getThrowableText(disposeTrace != null ? disposeTrace : Disposer.getDisposalTrace(this)) + "\n============";
+    return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
@@ -1158,7 +1158,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean isLookupDisposed() {
-    return Disposer.isDisposed(this);
+    return disposeTrace != null;
   }
 
   public void checkValid() {
