@@ -32,7 +32,7 @@ public final class BinaryPatchWriter {
     String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
     for (FilePatch patch : patches) {
       BinaryFilePatch filePatch = (BinaryFilePatch)patch;
-      writeGitHeader(writer, basePath, filePatch);
+      writeGitHeader(writer, basePath, filePatch, lineSeparator);
       byte[] afterContent = filePatch.getAfterContent();
       writer.write(getIndexHeader(filePatch.isNewFile() ? NOT_COMMITTED_HASH : getSha1ForContent(filePatch.getBeforeContent()),
                                   filePatch.isDeletedFile() ? NOT_COMMITTED_HASH : getSha1ForContent(afterContent)));

@@ -117,7 +117,7 @@ public final class UnifiedDiffWriter {
       }
     }
     for (FilePatch patch : noContentPatches) {
-      GitPatchWriter.writeGitHeader(writer, basePath, patch);
+      GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
     }
   }
 
