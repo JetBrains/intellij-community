@@ -75,6 +75,9 @@ public interface TransformationContext {
   @Nullable
   PsiAnnotation getAnnotation(@NotNull String fqn);
 
+  @NotNull
+  PsiClassType eraseClassType(@NotNull PsiClassType classType);
+
   default boolean isInheritor(@NotNull String fqn) {
     PsiClass baseClass = getPsiFacade().findClass(fqn, getResolveScope());
     return baseClass != null && isInheritor(baseClass);

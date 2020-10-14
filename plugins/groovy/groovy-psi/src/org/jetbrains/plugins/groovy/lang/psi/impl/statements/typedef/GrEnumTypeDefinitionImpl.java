@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -80,10 +81,10 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   @ApiStatus.Internal
-  public List<PsiMethod> getDefEnumMethods() {
+  public List<PsiMethod> getDefEnumMethods(@NotNull TransformationContext context) {
     PsiManagerEx manager = getManager();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiClassType thisType = factory.createType(this, PsiSubstitutor.EMPTY);
+    PsiClassType thisType = context.eraseClassType(factory.createType(this, PsiSubstitutor.EMPTY));
     List<PsiMethod> result = Arrays.asList(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
         .setMethodReturnType(new PsiArrayType(thisType))

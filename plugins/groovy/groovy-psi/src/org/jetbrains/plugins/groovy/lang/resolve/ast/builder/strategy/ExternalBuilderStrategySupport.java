@@ -32,12 +32,12 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
     if (constructedClass instanceof GrTypeDefinition) {
       PsiField[] fields = getFields((GrTypeDefinition)constructedClass, includeSuper, context);
       for (PsiField field : fields) {
-        context.addMethod(DefaultBuilderStrategySupport.createFieldSetter(context.getCodeClass(), field, annotation));
+        context.addMethod(DefaultBuilderStrategySupport.createFieldSetter(context.getCodeClass(), field, annotation, context));
       }
     } else {
       Collection<PsiMethod> properties = PropertyUtilBase.getAllProperties(constructedClass, true, false, includeSuper).values();
       for (PsiMethod setter : properties) {
-        final PsiMethod builderSetter = createFieldSetter(context.getCodeClass(), setter, annotation);
+        final PsiMethod builderSetter = createFieldSetter(context, setter, annotation);
         if (builderSetter != null) context.addMethod(builderSetter);
       }
     }
@@ -45,12 +45,13 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
   }
 
   @Nullable
-  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
+  public static LightMethodBuilder createFieldSetter(@NotNull TransformationContext context,
                                                      @NotNull PsiMethod setter,
                                                      @NotNull PsiAnnotation annotation) {
+    PsiClass builderClass = context.getCodeClass();
     final String name = PropertyUtilBase.getPropertyNameBySetter(setter);
     final PsiType type = PropertyUtilBase.getPropertyType(setter);
     if (type == null) return null;
-    return DefaultBuilderStrategySupport.createFieldSetter(builderClass, name, type, annotation, setter);
+    return DefaultBuilderStrategySupport.createFieldSetter(builderClass, name, type, annotation, setter, context);
   }
 }
