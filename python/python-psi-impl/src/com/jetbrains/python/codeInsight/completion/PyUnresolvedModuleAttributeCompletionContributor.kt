@@ -104,7 +104,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val suggestedQualifiedNames = HashSet<String>()
 
         ProgressManager.checkCanceled()
-        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifierString, attribute))
+        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifier.append(attribute)))
         PyModuleNameIndex.find(qualifier.lastComponent!!, project, true).asSequence()
           .filter { QualifiedNameFinder.findShortestImportableQName(it) == qualifier }
           .flatMap { it.iterateNames().asSequence() }
@@ -128,7 +128,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         }
         val scope = PySearchUtilBase.excludeSdkTestsScope(project)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          qualifierString, attribute, parameters.originalFile, scope,
+          qualifier, attribute, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
