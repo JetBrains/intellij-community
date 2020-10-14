@@ -142,7 +142,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return result;
   }
 
-  void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
+  protected void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
     myOptions.copyFrom(template.myOptions);
     myOptions.resetModificationCount();
     myOptions.setAllowRunningInParallel(template.isAllowRunningInParallel());
