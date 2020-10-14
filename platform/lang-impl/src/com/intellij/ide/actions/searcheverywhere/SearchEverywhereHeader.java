@@ -55,7 +55,7 @@ public class SearchEverywhereHeader {
   public SearchEverywhereHeader(@Nullable Project project,
                                 Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
                                 @NotNull Runnable scopeChangedCallback, Function<String, String> shortcutSupplier,
-                                AnAction showInFindToolWindowAction, SearchEverywhereUIBase ui) {
+                                AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
@@ -149,7 +149,7 @@ public class SearchEverywhereHeader {
     if (myProject != null && !projectContributors.isEmpty()) {
       List<AnAction> projectActions = Arrays.asList(
         new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
-        new SearchEverywhereUIBase.FiltersAction(createContributorsFilter(myProject, projectContributors), myScopeChangedCallback)
+        new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, projectContributors), myScopeChangedCallback)
       );
       res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"), projectContributors,
                         projectActions));
@@ -176,7 +176,7 @@ public class SearchEverywhereHeader {
             myScopeChangedCallback.run();
           }
         },
-        new SearchEverywhereUIBase.FiltersAction(createContributorsFilter(myProject, ideContributors), myScopeChangedCallback)
+        new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, ideContributors), myScopeChangedCallback)
       );
       res.add(createTab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
                         ideContributors, ideActions));
@@ -211,7 +211,7 @@ public class SearchEverywhereHeader {
           });
           onChanged.run();
         }
-      }, new SearchEverywhereUIBase.FiltersAction(createContributorsFilter(myProject, contributors), onChanged));
+      }, new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, contributors), onChanged));
       SETab allTab = createTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                                IdeBundle.message("searcheverywhere.allelements.tab.name"),
                                contributors, actions);

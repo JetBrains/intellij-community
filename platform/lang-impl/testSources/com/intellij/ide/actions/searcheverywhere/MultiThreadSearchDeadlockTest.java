@@ -45,7 +45,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
@@ -73,7 +73,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
@@ -105,7 +105,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {

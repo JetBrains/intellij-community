@@ -13,9 +13,8 @@ interface SESearcher {
                            @NotNull String pattern);
 
   ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
-                                  @NotNull String pattern,
-                                  @NotNull SearchEverywhereContributor<?> contributor,
-                                  int newLimit);
+                                  @NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                  @NotNull String pattern);
 
   /**
    * Search process listener interface

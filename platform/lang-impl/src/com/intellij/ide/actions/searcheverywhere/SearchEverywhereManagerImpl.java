@@ -3,13 +3,11 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
-import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedResults;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -52,7 +50,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private final Project myProject;
 
   private JBPopup myBalloon;
-  private SearchEverywhereUIBase mySearchEverywhereUI;
+  private SearchEverywhereUI mySearchEverywhereUI;
   private Dimension myBalloonFullSize;
 
   private final SearchHistoryList myHistoryList = new SearchHistoryList();
@@ -256,14 +254,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
-  private SearchEverywhereUIBase createView(Project project,
+  private SearchEverywhereUI createView(Project project,
                                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUIBase view = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                                  ? new SearchEverywhereUIMixedResults(project, contributors, myTabsShortcutsMap::get)
-                                  : new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {

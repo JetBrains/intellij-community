@@ -25,9 +25,9 @@ import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvide
 /**
  * @author msokolov
  */
-class MultiThreadSearcher implements SESearcher {
+class GroupedResultsSearcher implements SESearcher {
 
-  private static final Logger LOG = Logger.getInstance(MultiThreadSearcher.class);
+  private static final Logger LOG = Logger.getInstance(GroupedResultsSearcher.class);
 
   @NotNull private final Listener myListener;
   @NotNull private final Executor myNotificationExecutor;
@@ -40,9 +40,9 @@ class MultiThreadSearcher implements SESearcher {
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MultiThreadSearcher(@NotNull Listener listener,
-                      @NotNull Executor notificationExecutor,
-                      @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
+  GroupedResultsSearcher(@NotNull Listener listener,
+                         @NotNull Executor notificationExecutor,
+                         @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
     myEqualityProvider = SEResultsEqualityProvider.composite(equalityProviders);
@@ -98,9 +98,16 @@ class MultiThreadSearcher implements SESearcher {
 
   @Override
   public ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
-                                         @NotNull String pattern,
-                                         @NotNull SearchEverywhereContributor<?> contributor,
-                                         int newLimit) {
+                                         @NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                         @NotNull String pattern) {
+    if (contributorsAndLimits.size() > 1)
+      throw new IllegalArgumentException("Multiple contributors are not allowed for grouped list");
+
+    Map.Entry<? extends SearchEverywhereContributor<?>, Integer> entry = contributorsAndLimits.entrySet().stream().findFirst()
+      .orElseThrow(() -> new IllegalArgumentException("Empty contributors map is not allowed"));
+    SearchEverywhereContributor<?> contributor = entry.getKey();
+    int newLimit = entry.getValue();
+
     ProgressIndicator indicator = new ProgressIndicatorBase();
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributor, newLimit,
                                                                     myListener, myNotificationExecutor, indicator);
@@ -223,7 +230,7 @@ class MultiThreadSearcher implements SESearcher {
 
   private static abstract class ResultsAccumulator {
     protected final Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> sections;
-    protected final MultiThreadSearcher.Listener myListener;
+    protected final SESearcher.Listener myListener;
     protected final Executor myNotificationExecutor;
     protected final SEResultsEqualityProvider myEqualityProvider;
     protected final ProgressIndicator myProgressIndicator;

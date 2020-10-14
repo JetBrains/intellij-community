@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.tests.community.focus
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUIBase
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
@@ -58,7 +58,7 @@ object FocusIssuesUtil {
   }
 
   private fun findSearchEverywhereUI(): Container {
-    return GuiRobotHolder.robot.finder().find { it is SearchEverywhereUIBase } as SearchEverywhereUIBase
+    return GuiRobotHolder.robot.finder().find { it is SearchEverywhereUI } as SearchEverywhereUI
   }
 
 }

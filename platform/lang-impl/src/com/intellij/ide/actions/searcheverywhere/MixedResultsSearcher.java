@@ -1,11 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions.searcheverywhere.mixed;
+package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo;
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -29,9 +25,9 @@ import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvide
 /**
  * @author msokolov
  */
-class MultiThreadSearcher implements SESearcher {
+class MixedResultsSearcher implements SESearcher {
 
-  private static final Logger LOG = Logger.getInstance(MultiThreadSearcher.class);
+  private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
   @NotNull private final Listener myListener;
   @NotNull private final Executor myNotificationExecutor;
@@ -44,9 +40,9 @@ class MultiThreadSearcher implements SESearcher {
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MultiThreadSearcher(@NotNull Listener listener,
-                      @NotNull Executor notificationExecutor,
-                      @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
+  MixedResultsSearcher(@NotNull Listener listener,
+                       @NotNull Executor notificationExecutor,
+                       @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
     myEqualityProvider = SEResultsEqualityProvider.composite(equalityProviders);
