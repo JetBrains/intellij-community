@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -27,11 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
+/**
+ * Index of EPs via {@link ExtensionPoint#getEffectiveQualifiedName}.
+ */
 public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointIndex");
@@ -45,12 +47,7 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
   @Override
   protected Map<String, Integer> performIndexing(IdeaPlugin plugin) {
     Map<String, Integer> result = new HashMap<>();
-    for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
-      for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
-        ExtensionPoint extensionPoint = (ExtensionPoint)point;
-        result.put(extensionPoint.getEffectiveQualifiedName(), extensionPoint.getXmlTag().getTextOffset());
-      }
-    }
+    indexExtensionPoints(plugin, point -> result.put(point.getEffectiveQualifiedName(), point.getXmlTag().getTextOffset()));
     return result;
   }
 
@@ -107,10 +104,10 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
   }
 
   @Nullable
-  private static ExtensionPoint getExtensionPointDom(PsiManager psiManager,
-                                                     DomManager domManager,
-                                                     VirtualFile file,
-                                                     int offset) {
+  static ExtensionPoint getExtensionPointDom(PsiManager psiManager,
+                                             DomManager domManager,
+                                             VirtualFile file,
+                                             int offset) {
     PsiFile psiFile = psiManager.findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
 
@@ -118,5 +115,14 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
     XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
     final DomElement domElement = domManager.getDomElement(xmlTag);
     return ObjectUtils.tryCast(domElement, ExtensionPoint.class);
+  }
+
+  static void indexExtensionPoints(IdeaPlugin plugin, Consumer<? super ExtensionPoint> consumer) {
+    for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
+      for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
+        ExtensionPoint extensionPoint = (ExtensionPoint)point;
+        consumer.consume(extensionPoint);
+      }
+    }
   }
 }

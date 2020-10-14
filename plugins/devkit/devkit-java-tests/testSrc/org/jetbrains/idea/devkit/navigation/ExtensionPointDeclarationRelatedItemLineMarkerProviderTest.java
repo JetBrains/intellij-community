@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -33,34 +34,42 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   public void testMyStringEP() {
-    assertSingleEPDeclaration("MyStringEP.java");
+    assertStringEP("MyStringEP.java");
   }
 
   public void testMyStringEPViaConstant() {
-    assertSingleEPDeclaration("MyStringEPViaConstant.java");
+    assertStringEP("MyStringEPViaConstant.java");
   }
 
   public void testMyStringEPConstructor() {
-    assertSingleEPDeclaration("MyStringEPConstructor.java");
+    assertStringEP("MyStringEPConstructor.java");
   }
 
   public void testMyStringProjectEP() {
-    assertSingleEPDeclaration("MyStringProjectEP.java");
+    assertStringEP("MyStringProjectEP.java");
   }
 
   public void testMyStringKeyedLazyInstanceEP() {
-    assertSingleEPDeclaration("MyStringKeyedLazyInstanceEP.java");
+    assertStringEP("MyStringKeyedLazyInstanceEP.java");
   }
 
-  private void assertSingleEPDeclaration(String filePath) {
+  public void testMyBeanClassStringEP() {
+    assertSingleEPDeclaration("MyBeanClassStringEP.java", "com.intellij.myBeanClassStringEP");
+  }
+
+  private void assertStringEP(String filePath) {
+    assertSingleEPDeclaration(filePath, "com.intellij.myStringEP");
+  }
+
+  private void assertSingleEPDeclaration(String filePath, String epFqn) {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assertNotNull(module);
     String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
+    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"" + StringUtil.substringAfterLast(epFqn, ".") + "\"");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">com.intellij.myStringEP</a> EP declaration in plugin.xml " +
+                             + ":" + expectedTagPosition + "\">" + epFqn + "</a> EP declaration in plugin.xml " +
                              "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
