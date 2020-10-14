@@ -50,8 +50,6 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
   }
 
   override fun problemsDisappeared(file: VirtualFile) {
-    // Sometimes it is called by WolfTheProblemSolver unexpectedly. See WEB-45668
-    if (Registry.`is`("ide.ProblemsView.does.not.trust.WolfTheProblemSolver")) return
     val watcher = synchronized(watchers) { watchers.remove(file) } ?: return
     Disposer.dispose(watcher) // removes a markup model listener
   }
