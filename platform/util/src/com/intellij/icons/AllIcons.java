@@ -858,12 +858,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("/plugins/disabled.svg", 1549974329331083409L, 0);
     /** 12x12 */ public static final @NotNull Icon Downloads = load("/plugins/downloads.svg", -5558854271072714700L, 2);
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("/plugins/modifierInvalid.svg", -890103319846480834L, 2);
-    /** 14x14 */ public static final @NotNull Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg", 2890608732317108833L, 2);
-    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg", 5988091152524049042L, 0);
-    /** 40x40 */ public static final @NotNull Icon PluginLogo_40 = load("/plugins/pluginLogo_40.png", 0L, 1);
-    /** 80x80 */ public static final @NotNull Icon PluginLogo_80 = load("/plugins/pluginLogo_80.png", 0L, 1);
-    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled_40 = load("/plugins/pluginLogoDisabled_40.png", 0L, 1);
-    /** 80x80 */ public static final @NotNull Icon PluginLogoDisabled_80 = load("/plugins/pluginLogoDisabled_80.png", 0L, 1);
+    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg", -2573304417147877076L, 0);
+    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("/plugins/pluginLogoDisabled.svg", -2275977522792971499L, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("/plugins/rating.svg", -9106209893098497806L, 2);
     /** 12x12 */ public static final @NotNull Icon Updated = load("/plugins/updated.svg", -5532394946450969676L, 2);
   }

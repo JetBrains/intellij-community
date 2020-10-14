@@ -1098,12 +1098,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Map<String, Icon> myIcons = new HashMap<>(); // local cache for PluginLogo WeakValueMap
 
   @NotNull
-  public Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean jb, boolean error, boolean disabled) {
-    String key = descriptor.getPluginId().getIdString() + big + jb + error + disabled;
+  public Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
+    String key = descriptor.getPluginId().getIdString() + big + error + disabled;
     Icon icon = myIcons.get(key);
     if (icon == null) {
-      icon = PluginLogo.getIcon(descriptor, big, jb, error, disabled);
-      if (icon != PluginLogo.getDefault().getIcon(big, jb, error, disabled)) {
+      icon = PluginLogo.getIcon(descriptor, big, error, disabled);
+      if (icon != PluginLogo.getDefault().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }

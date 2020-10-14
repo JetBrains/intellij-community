@@ -215,7 +215,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     Font font = editorPane.getFont();
     if (font != null) {
-      editorPane.setFont(font.deriveFont(Font.BOLD, 25));
+      editorPane.setFont(font.deriveFont(Font.BOLD, 18));
     }
 
     editorPane.setText("<html><span>Foo</span></html>");
@@ -273,12 +273,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     centerPanel.add(panel1);
     if (myMarketplace) {
       myDownloads =
-        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, true);
 
       myRating =
-        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, true);
     }
-    myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
+    myVendor = new LinkPanel(panel1, false, true, null, TextHorizontalLayout.FIX_LABEL);
 
     myEnabledForProject = new JLabel();
     myEnabledForProject.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -332,7 +332,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
 
     if (myMarketplace) {
-      myHomePage = new LinkPanel(bottomPanel);
+      myHomePage = new LinkPanel(bottomPanel, false);
       bottomPanel.add(new JLabel());
     }
 
@@ -353,7 +353,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       bottomPanel.add(mySize = new JLabel());
     }
     else {
-      myHomePage = new LinkPanel(bottomPanel);
+      myHomePage = new LinkPanel(bottomPanel, false);
     }
   }
 
@@ -709,8 +709,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
 
     myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, false, errors, false));
-    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, false, errors, true));
+    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, errors, false));
+    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, errors, true));
   }
 
   private void updateErrors() {
