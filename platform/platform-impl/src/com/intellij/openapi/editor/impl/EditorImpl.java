@@ -386,9 +386,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ErrorStripeMarkersModel errorStripeMarkersModel = myMarkupModel.getErrorStripeMarkersModel();
-    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(true));
-    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(false));
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
       public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
