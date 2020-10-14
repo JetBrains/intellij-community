@@ -517,7 +517,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }, project);
 
-    DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
+     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<>() {
       @Override
       public @NotNull Collection<String> getNodes() {
         return dependencies.keySet();
