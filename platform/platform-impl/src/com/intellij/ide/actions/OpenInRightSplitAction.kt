@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -56,6 +57,12 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
+
+      val providers = FileEditorProviderManager.getInstance().getProviders(project, file)
+      if (providers.isEmpty()) {
+        element?.navigate(true)
+        return null
+      }
 
       val editorWindow = splitters.openInRightSplit(file)
       if (editorWindow == null) {
