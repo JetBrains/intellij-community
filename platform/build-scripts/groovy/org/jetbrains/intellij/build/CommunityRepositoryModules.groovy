@@ -266,7 +266,10 @@ class CommunityRepositoryModules {
         }
       }, "lib")
     },
-    plugin("intellij.gauge")
+    plugin("intellij.gauge"),
+    plugin("intellij.lombok") {
+      withModule("intellij.lombok.generated")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
