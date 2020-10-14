@@ -84,7 +84,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt A",              "NotebookInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
     { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
-    { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
@@ -259,7 +258,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 5",                "Refresh", "Rerun"},
     { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
-    { "shift alt L",              "ReformatCode", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    { "shift alt L",              "ReformatCode", "context.load"},
     });
     put("Eclipse", new String[][] {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue"},
@@ -282,7 +281,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt RIGHT",        "Diff.PrevChange", "PreviousTab"},
     { "shift alt D",              "hg4idea.QFold", "Debug"},
     { "shift alt G",              "RerunTests", "hg4idea.QGotoFromPatches"},
-    { "shift alt L",              "IntroduceVariable", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    { "shift alt L",              "IntroduceVariable", "context.load"},
     { "shift alt P",              "hg4idea.QPushAction", "ImplementMethods"},
     { "shift alt R",              "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift alt S",              "ShowPopupMenu", "context.save"},
