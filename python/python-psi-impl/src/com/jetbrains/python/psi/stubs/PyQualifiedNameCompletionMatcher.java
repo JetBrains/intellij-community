@@ -212,7 +212,8 @@ public class PyQualifiedNameCompletionMatcher {
       VirtualFile closestRoot = findClosestRoot(nameAnchor, projectFileIndex);
       if (closestRoot == null) return null;
       String relativePath = VfsUtilCore.getRelativePath(nameAnchor, closestRoot);
-      if (relativePath == null) return null;
+      // A relative path can be empty in case of __init__.py directly inside a root.
+      if (relativePath == null || relativePath.isEmpty()) return null;
       return convertPathToImportableQualifiedName(relativePath);
     }
 
