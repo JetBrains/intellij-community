@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -48,8 +47,8 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ExperimentalFeatureImpl.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.experimentalFeature";
     }
 
     @NotNull

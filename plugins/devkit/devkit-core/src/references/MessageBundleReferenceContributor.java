@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
@@ -254,8 +253,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ToolWindowEP.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.toolWindow";
     }
 
     @Override

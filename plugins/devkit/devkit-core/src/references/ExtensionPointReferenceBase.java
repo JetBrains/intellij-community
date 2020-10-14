@@ -5,16 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
@@ -24,7 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.util.*;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
+import org.jetbrains.idea.devkit.util.ExtensionCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
+import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 
 import java.util.List;
 
@@ -39,11 +37,9 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   }
 
   /**
-   * Returns FQN of extension.
-   *
-   * @return FQN.
+   * @see ExtensionPoint#getEffectiveQualifiedName()
    */
-  protected abstract String getExtensionPointClassname();
+  protected abstract String getExtensionPointFqn();
 
   /**
    * Returns the name attribute for resolving.
@@ -120,30 +116,20 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
                                  @Nullable String extensionPointId) {
     final Project project = myElement.getProject();
 
-    // underlying EP beanClass might not be resolvable from here in IDEA project
-    GlobalSearchScope scope =
-      PsiUtil.isIdeaProject(project) ? GlobalSearchScopesCore.projectProductionScope(project) : myElement.getResolveScope();
-    final PsiClass extensionPointClass = JavaPsiFacade.getInstance(project).findClass(getExtensionPointClassname(), scope);
-    if (extensionPointClass == null) return;
-
-    final ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(extensionPointClass);
-    final ExtensionPointCandidate extensionPointCandidate = ContainerUtil.getFirstItem(extensionPointLocator.findDirectCandidates());
-    if (extensionPointCandidate == null) return;
-
-    final DomManager manager = DomManager.getDomManager(project);
-    final DomElement extensionPointDomElement = manager.getDomElement(extensionPointCandidate.pointer.getElement());
-    if (!(extensionPointDomElement instanceof ExtensionPoint)) return;
+    final ExtensionPoint extensionPointDomElement =
+      ExtensionPointIndex.findExtensionPoint(project, PluginRelatedLocatorsUtils.getCandidatesScope(project), getExtensionPointFqn());
+    if (extensionPointDomElement == null) return;
 
     final List<ExtensionCandidate> candidates;
     if (extensionPointId == null) {
-      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPoint((ExtensionPoint)extensionPointDomElement);
+      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPoint(extensionPointDomElement);
     }
     else {
-      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPointAndId((ExtensionPoint)extensionPointDomElement,
-                                                                            extensionPointId)
+      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPointAndId(extensionPointDomElement, extensionPointId)
         .findCandidates();
     }
 
+    final DomManager manager = DomManager.getDomManager(project);
     for (ExtensionCandidate candidate : candidates) {
       final XmlTag element = candidate.pointer.getElement();
       final DomElement domElement = manager.getDomElement(element);

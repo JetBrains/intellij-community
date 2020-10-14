@@ -70,15 +70,19 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   @Nullable
   public static ExtensionPoint findExtensionPoint(Module module, String fqn) {
+    return findExtensionPoint(module.getProject(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false), fqn);
+  }
+
+  @Nullable
+  public static ExtensionPoint findExtensionPoint(Project project,GlobalSearchScope scope, String fqn) {
     Ref<ExtensionPoint> result = Ref.create();
     FileBasedIndex.getInstance().processValues(NAME, fqn, null, (file, value) -> {
-      Project project = module.getProject();
       final PsiManager psiManager = PsiManager.getInstance(project);
       final DomManager domManager = DomManager.getDomManager(project);
 
       result.set(getExtensionPointDom(psiManager, domManager, file, value));
       return false;
-    }, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false));
+    }, scope);
     return result.get();
   }
 

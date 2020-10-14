@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -55,8 +54,8 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return NotificationGroupEP.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.notificationGroup";
     }
 
     @Override
