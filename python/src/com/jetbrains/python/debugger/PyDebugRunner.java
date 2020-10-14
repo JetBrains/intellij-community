@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -9,7 +10,7 @@ import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.GenericProgramRunner;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.HostPort;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -17,6 +18,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
@@ -25,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugProcess;
@@ -41,9 +44,12 @@ import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
 import java.net.ServerSocket;
@@ -55,7 +61,7 @@ import java.util.function.Function;
 /**
  * @author yole
  */
-public class PyDebugRunner extends GenericProgramRunner {
+public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String PY_DEBUG_RUNNER = "PyDebugRunner";
 
   public static final @NonNls String DEBUGGER_MAIN = "pydev/pydevd.py";
@@ -113,32 +119,49 @@ public class PyDebugRunner extends GenericProgramRunner {
     return false;
   }
 
+  protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
+    return AppUIExecutor.onUiThread()
+      .submit(FileDocumentManager.getInstance()::saveAllDocuments)
+      .thenAsync(ignored ->
+                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")
+                   ? createSessionUsingTargetsApi(state, environment)
+                   : createSessionLegacy(state, environment));
+  }
 
-  protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
-    throws ExecutionException {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    if (!Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
-      return createSessionLegacy(state, environment);
-    }
-
+  @NotNull
+  private Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
-
     RunProfile profile = environment.getRunProfile();
+    return Promises
+      .runAsync(() -> {
+        try {
+          ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
+          int serverLocalPort = serverSocket.getLocalPort();
+          PythonDebuggerScriptTargetedCommandLineBuilder debuggerScriptCommandLineBuilder =
+            new PythonDebuggerScriptTargetedCommandLineBuilder(environment.getProject(), pyState, profile, serverLocalPort);
+          ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
+          return Pair.create(serverSocket, result);
+        }
+        catch (ExecutionException err) {
+          throw new RuntimeException(err.getMessage(), err);
+        }
+      })
+      .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
+        ServerSocket serverSocket = pair.getFirst();
+        ExecutionResult result = pair.getSecond();
+        return createXDebugSession(environment, pyState, serverSocket, result);
+      }));
+  }
 
-    ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
-    int serverLocalPort = serverSocket.getLocalPort();
-    PythonDebuggerScriptTargetedCommandLineBuilder debuggerScriptCommandLineBuilder =
-      new PythonDebuggerScriptTargetedCommandLineBuilder(environment.getProject(), pyState, profile, serverLocalPort);
-    ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
-
+  private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
+                                                              PythonCommandLineState pyState,
+                                                              ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
     return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
-        public XDebugProcess start(@NotNull XDebugSession session) {
-          PyDebugProcess pyDebugProcess =
-            createDebugProcess(session, serverSocket, result, pyState);
+        public XDebugProcess start(@NotNull final XDebugSession session) {
+          PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
           return pyDebugProcess;
@@ -151,34 +174,35 @@ public class PyDebugRunner extends GenericProgramRunner {
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  protected XDebugSession createSessionLegacy(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
-    throws ExecutionException {
+  @NotNull
+  private Promise<XDebugSession> createSessionLegacy(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
+    final RunProfile profile = environment.getRunProfile();
 
     Sdk sdk = pyState.getSdk();
     PyDebugSessionFactory sessionCreator = PyDebugSessionFactory.findExtension(sdk);
     if (sessionCreator != null) {
-      return sessionCreator.createSession(pyState, environment);
+      return AppUIExecutor.onWriteThread().submit(() -> sessionCreator.createSession(pyState, environment));
     }
 
-    final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
-    final int serverLocalPort = serverSocket.getLocalPort();
-    RunProfile profile = environment.getRunProfile();
-    final ExecutionResult result =
-      pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
-
-    return XDebuggerManager.getInstance(environment.getProject()).
-      startSession(environment, new XDebugProcessStarter() {
-        @Override
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
-          PyDebugProcess pyDebugProcess =
-            createDebugProcess(session, serverSocket, result, pyState);
-
-          createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
-          return pyDebugProcess;
+    return Promises
+      .runAsync(() -> {
+        try {
+          final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
+          final int serverLocalPort = serverSocket.getLocalPort();
+          final ExecutionResult result = pyState
+            .execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
+          return Pair.create(serverSocket, result);
         }
-      });
+        catch (ExecutionException err) {
+          throw new RuntimeException(err.getMessage(), err);
+        }
+      })
+      .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
+        ServerSocket serverSocket = pair.getFirst();
+        ExecutionResult result = pair.getSecond();
+        return createXDebugSession(environment, pyState, serverSocket, result);
+      }));
   }
 
   @NotNull
@@ -190,12 +214,90 @@ public class PyDebugRunner extends GenericProgramRunner {
                               pyState.isMultiprocessDebug());
   }
 
-  @Override
+  /**
+   * Calling this method with an SSH interpreter would lead to an error, because this method is expected to be executed from EDT,
+   * and therefore it would try to create an SSH connection in EDT.
+   *
+   * @deprecated Override {@link #execute(ExecutionEnvironment, RunProfileState)} instead.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  @NotNull
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
-    XDebugSession session = createSession(state, environment);
+    // The PyDebugRunner class might inherit AsyncProgramRunner, but some magic is added for backward compatibility
+    // with GenericProgramRunner. Consider changing the base class when doExecute method is deleted.
+    // Now the logic here is the same as in execute() except the fact that everything is called in EDT.
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    final PythonCommandLineState pyState = (PythonCommandLineState)state;
+    Sdk sdk = pyState.getSdk();
+    PyDebugSessionFactory sessionCreator = PyDebugSessionFactory.findExtension(sdk);
+    final XDebugSession session;
+    if (sessionCreator != null) {
+      session = sessionCreator.createSession(pyState, environment);
+    }
+    else {
+      final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
+      final int serverLocalPort = serverSocket.getLocalPort();
+      RunProfile profile = environment.getRunProfile();
+      final ExecutionResult result =
+        pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
+
+      session = createXDebugSession(environment, pyState, serverSocket, result);
+    }
     initSession(session, state, environment.getExecutor());
     return session.getRunContentDescriptor();
+  }
+
+  /**
+   * The same signature and the same meaning as in
+   * {@link com.intellij.execution.runners.AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)}.
+   */
+  @NotNull
+  protected Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
+    throws ExecutionException {
+    return createSession(state, environment)
+      .thenAsync(session -> AppUIExecutor.onUiThread().submit(() -> {
+        initSession(session, state, environment.getExecutor());
+        return session.getRunContentDescriptor();
+      }));
+  }
+
+  @Override
+  public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    var state = environment.getState();
+    if (state != null) {
+      ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, () -> {
+        try {
+          return executeWithLegacyWorkaround(environment, state);
+        }
+        catch (ExecutionException e) {
+          throw new RuntimeException(e.getMessage(), e);
+        }
+      });
+    }
+  }
+
+  @NotNull
+  private Promise<@Nullable RunContentDescriptor> executeWithLegacyWorkaround(
+    @NotNull ExecutionEnvironment environment,
+    @NotNull RunProfileState state
+  ) throws ExecutionException {
+    boolean callExecute = true;
+    try {
+      callExecute = getClass()
+        .getDeclaredMethod("doExecute", RunProfileState.class, ExecutionEnvironment.class)
+        .getDeclaringClass()
+        .equals(PyDebugRunner.class);
+    }
+    catch (NoSuchMethodException e) {
+      // It's not supposed to happen, but if it happens, asynchronous execute is called.
+    }
+    if (callExecute) {
+      return execute(environment, state);
+    }
+    return AppUIExecutor.onUiThread().submit(() -> doExecute(state, environment));
   }
 
   protected void initSession(XDebugSession session, RunProfileState state, Executor executor) {
