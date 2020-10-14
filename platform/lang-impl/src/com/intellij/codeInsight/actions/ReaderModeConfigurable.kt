@@ -28,28 +28,30 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
     return panel {
       lateinit var enabled: CellBuilder<JBCheckBox>
       row {
-        enabled = checkBox(cdEnabled).comment(LangBundle.message("checkbox.reader.mode.toggle.comment"))
+        enabled = checkBox(cdEnabled).comment("")
+          .comment(LangBundle.message("checkbox.reader.mode.toggle.comment"))
+
+        row(LangBundle.message("titled.border.reader.mode.settings")) {
+          row {
+            checkBox(cdRenderedDocs).enableIf(enabled.selected)
+          }
+          row {
+            checkBox(cdBreadcrumbs).enableIf(enabled.selected)
+          }
+          row {
+            checkBox(cdWarnings).enableIf(enabled.selected)
+          }
+          row {
+            checkBox(cdLigatures).enableIf(enabled.selected)
+          }
+          row {
+            checkBox(cdLineSpacing).enableIf(enabled.selected)
+          }
+          row {
+            checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
+          }
+        }.enableIf(enabled.selected)
       }
-      row(LangBundle.message("titled.border.reader.mode.settings")) {
-        row {
-          checkBox(cdRenderedDocs).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdBreadcrumbs).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdWarnings).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdLigatures).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdLineSpacing).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
-        }
-      }.enableIf(enabled.selected)
     }
   }
 
