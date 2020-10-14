@@ -13,7 +13,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
   override val displayName: String
     get() = "WSL"
 
-  override val icon: Icon = AllIcons.Debugger.Frame
+  override val icon: Icon = AllIcons.RunConfigurations.Wsl
 
   override fun createSerializer(config: WslTargetEnvironmentConfiguration) = config
 
