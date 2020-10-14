@@ -47,6 +47,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
@@ -730,23 +731,42 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     return false;
   }
 
+  /**
+   * Hardcoded known deprecated EPs with corresponding replacement.
+   */
+  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
+    .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
+    .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
+    .build();
+
   private static void annotateExtension(Extension extension,
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
+    final Module module = extension.getModule();
 
     final PsiClass extensionPointClass = extensionPoint.getEffectiveClass();
+    final String effectiveQualifiedName = extensionPoint.getEffectiveQualifiedName();
     if (extensionPointClass != null && extensionPointClass.isDeprecated()) {
       highlightDeprecated(
-        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
+        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
         holder, false, false);
     }
     else if (extensionPointClass != null && extensionPointClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
       highlightExperimental(extension, holder);
     }
 
-    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
+    final String knownReplacementEp = ADDITIONAL_DEPRECATED_EP.get(effectiveQualifiedName);
+    if (knownReplacementEp != null &&
+        module != null &&
+        ExtensionPointIndex.findExtensionPoint(extension.getModule(), knownReplacementEp) != null) {
+      highlightDeprecated(
+        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep.use.replacement", effectiveQualifiedName, knownReplacementEp),
+        holder, false, false);
+    }
+
+    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName) && extension.exists()) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
@@ -759,7 +779,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
           }
           else {
-            Module module = plugin.getModule();
             boolean inPlatformCode = module != null && module.getName().startsWith("intellij.platform.");
             if (!inPlatformCode) {
               highlightRedundant(extension,
@@ -814,7 +833,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-    Module module = extension.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForExtension(extension);
     }
