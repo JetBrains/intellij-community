@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.JBLabel
@@ -84,9 +85,11 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX())
+      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}"))
     }
   }
+
+  private fun getMaxWidth() = GithubUIUtil.getPRTimelineWidth() - GithubUIUtil.avatarSize.get() + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,

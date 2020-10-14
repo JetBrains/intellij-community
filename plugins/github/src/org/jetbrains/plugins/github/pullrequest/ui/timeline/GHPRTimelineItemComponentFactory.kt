@@ -42,6 +42,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
+import java.awt.Dimension
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
@@ -190,7 +191,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
       PENDING -> GithubIcons.Review
     }
 
-    return Item(icon, titlePanel, contentPanel)
+    return Item(icon, titlePanel, contentPanel, NOT_DEFINED_SIZE)
   }
 
   private fun userAvatar(user: GHActor?): JLabel {
@@ -203,10 +204,10 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     })
   }
 
-  class Item(val marker: JLabel, title: JComponent, content: JComponent? = null) : JPanel() {
+  class Item(val marker: JLabel, title: JComponent, content: JComponent? = null, size: Dimension = getDefaultSize()) : JPanel() {
 
-    constructor(markerIcon: Icon, title: JComponent, content: JComponent? = null)
-      : this(createMarkerLabel(markerIcon), title, content)
+    constructor(markerIcon: Icon, title: JComponent, content: JComponent? = null, size: Dimension = getDefaultSize())
+      : this(createMarkerLabel(markerIcon), title, content, size)
 
     init {
       isOpaque = false
@@ -218,10 +219,12 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
 
       add(marker, CC().pushY())
       add(title, CC().pushX())
-      if (content != null) add(content, CC().newline().skip().grow().push())
+      if (content != null) add(content, CC().newline().skip().grow().push().maxWidth(size))
     }
 
     companion object {
+      private fun CC.maxWidth(dimension: Dimension) = if (dimension.width > 0) this.maxWidth("${dimension.width}") else this
+
       private fun createMarkerLabel(markerIcon: Icon) =
         JLabel(markerIcon).apply {
           val verticalGap = if (markerIcon.iconHeight < 20) (20f - markerIcon.iconHeight) / 2 else 0f
@@ -233,6 +236,10 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
   }
 
   companion object {
+    private val NOT_DEFINED_SIZE = Dimension(-1, -1)
+
+    fun getDefaultSize() = Dimension(GithubUIUtil.getPRTimelineWidth(), -1)
+
     fun userAvatar(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): JLabel {
       return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl), LinkListener { _, _ ->
         user?.url?.let { BrowserUtil.browse(it) }
