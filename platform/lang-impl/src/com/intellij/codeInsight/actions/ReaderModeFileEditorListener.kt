@@ -57,7 +57,7 @@ class ReaderModeEditorFactoryListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project
-    if (project == null || !instance(project).enabled) return
+    if (project == null || !project.isInitialized || project.isDefault || !instance(project).enabled) return
     if (editor !is EditorImpl) return
 
     applyReaderMode(project, editor, FileDocumentManager.getInstance().getFile(editor.document))
