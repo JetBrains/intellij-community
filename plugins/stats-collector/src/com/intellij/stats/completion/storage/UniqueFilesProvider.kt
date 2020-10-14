@@ -31,7 +31,8 @@ import java.nio.file.Files
  */
 open class UniqueFilesProvider(private val baseFileName: String,
                                private val rootDirectoryPath: String,
-                               private val logsDirectoryName: String) : FilePathProvider() {
+                               private val logsDirectoryName: String,
+                               private val storageSizeLimit: Int = MAX_ALLOWED_SEND_SIZE) : FilePathProvider() {
     private companion object {
         const val MAX_ALLOWED_SEND_SIZE = 30 * 1024 * 1024
     }
@@ -39,10 +40,10 @@ open class UniqueFilesProvider(private val baseFileName: String,
     override fun cleanupOldFiles() {
         val files = getDataFiles()
         val sizeToSend = files.fold(0L, { totalSize, file -> totalSize + file.length() })
-        if (sizeToSend > MAX_ALLOWED_SEND_SIZE) {
+        if (sizeToSend > storageSizeLimit) {
             var currentSize = sizeToSend
             val iterator = files.iterator()
-            while (iterator.hasNext() && currentSize > MAX_ALLOWED_SEND_SIZE) {
+            while (iterator.hasNext() && currentSize > storageSizeLimit) {
                 val file = iterator.next()
                 val fileSize = file.length()
                 Files.delete(file.toPath())
