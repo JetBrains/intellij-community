@@ -69,7 +69,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
     String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
     int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"" + StringUtil.substringAfterLast(epFqn, ".") + "\"");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">" + epFqn + "</a> EP declaration in plugin.xml " +
+                             + ":" + expectedTagPosition + "\">" + epFqn + "</a> extension point declaration in plugin.xml " +
                              "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);

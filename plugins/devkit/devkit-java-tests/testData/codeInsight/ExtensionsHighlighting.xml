@@ -34,13 +34,13 @@
         <<error descr="'className' child tag should be defined">myPlugin.intentionAction</error>/>
 
         <myPlugin.ext implementation="<error descr="Interface is not allowed">java.lang.Runnable</error>"/>
-        <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Enum is not allowed"><error descr="Abstract class is not allowed">java.util.concurrent.TimeUnit</error></error></error>"/>
+        <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Abstract class is not allowed"><error descr="Enum is not allowed">java.util.concurrent.TimeUnit</error></error></error>"/>
         <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
 
-        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl" order="<error descr="Invalid 'order' attribute value">INVALID_VALUE</error>"/>
-        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedBeanClassEP'">myPlugin.deprecatedBeanClassEP</error>/>
+        <<error descr="Deprecated extension point 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl" order="<error descr="Invalid 'order' attribute value">INVALID_VALUE</error>"/>
+        <<error descr="Deprecated extension point 'com.intellij.myPlugin.deprecatedBeanClassEP'">myPlugin.deprecatedBeanClassEP</error>/>
 
-        <<error descr="Deprecated EP 'com.intellij.definitionsSearch', use 'com.intellij.definitionsScopedSearch' instead">definitionsSearch</error> implementation="foo.MyRunnable"/>
+        <<error descr="Deprecated extension point 'com.intellij.definitionsSearch', use 'com.intellij.definitionsScopedSearch' instead">definitionsSearch</error> implementation="foo.MyRunnable"/>
 
         <!-- no replacement EP 'com.intellij.dom.fileMetaData' defined -->
         <dom.fileDescription implementation="foo.MyRunnable"/>
