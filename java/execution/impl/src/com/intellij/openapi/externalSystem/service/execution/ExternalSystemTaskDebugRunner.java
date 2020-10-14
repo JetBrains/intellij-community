@@ -47,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 
+import static com.intellij.execution.configurations.RemoteConnection.*;
+
 /**
  * @author Denis Zhdanov
  */
@@ -128,7 +130,8 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   private XDebugProcess jvmProcessToDebug(@NotNull XDebugSession session,
                                           ExternalSystemRunnableState state,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(state.getDebugPort()), true);
+    ConnectionMode connectionMode = state.isDebugServerProcess() ? ConnectionMode.SERVER : ConnectionMode.FAKE_SERVER;
+    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(state.getDebugPort()), connectionMode);
     DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, DebugEnvironment.LOCAL_START_TIMEOUT);
 
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);

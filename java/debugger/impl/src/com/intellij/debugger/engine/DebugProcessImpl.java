@@ -91,6 +91,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static com.intellij.execution.configurations.RemoteConnection.*;
+
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
 
@@ -2063,15 +2065,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
-          switch (type) {
-            case SEQUENCE:
-              closeProcess(false);
-              break;
-            case STASH:
-              stashProcess(false);
-              break;
-            case UNSTASH:
-              break;
+          if (!myConnection.getConnectionMode().equals(ConnectionMode.FAKE_SERVER)) {
+            switch (type) {
+              case SEQUENCE:
+                closeProcess(false);
+                break;
+              case STASH:
+                stashProcess(false);
+                break;
+              case UNSTASH:
+                break;
+            }
           }
           getManagerThread().processRemaining();
           doReattach();
@@ -2107,8 +2111,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myConnection = environment.getRemoteConnection();
 
     // in client mode start target process before the debugger to reduce polling
-    boolean serverMode = myConnection.isServerMode();
-    if (serverMode) {
+    ConnectionMode connectionMode = myConnection.getConnectionMode();
+    if (connectionMode.equals(ConnectionMode.SERVER)) {
       createVirtualMachine(environment);
     }
 
@@ -2136,7 +2140,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (!serverMode) {
+    if (connectionMode.equals(ConnectionMode.CLIENT)) {
       createVirtualMachine(environment);
     }
 
