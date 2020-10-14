@@ -89,6 +89,8 @@ class AsciiMessageStorageTest {
     }
 }
 
+private const val MAX_STORAGE_SIZE = 2 * 1024 * 1024
+
 class FileLoggerTest : HeavyPlatformTestCase() {
     private lateinit var fileLogger: LogFileManager
     private lateinit var filesProvider: UniqueFilesProvider
@@ -97,7 +99,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     override fun setUp() {
         super.setUp()
         tempDirectory = createTempDirectory()
-        filesProvider = UniqueFilesProvider("chunk", tempDirectory.absolutePath, "logs-data")
+        filesProvider = UniqueFilesProvider("chunk", tempDirectory.absolutePath, "logs-data", MAX_STORAGE_SIZE)
         fileLogger = LogFileManager(filesProvider)
     }
 
@@ -130,11 +132,11 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     }
 
     fun `test delete old stuff`() {
-        writeKb(4096)
+        writeKb((MAX_STORAGE_SIZE / 1024) * 2)
 
         val files = filesProvider.getDataFiles()
         val totalSizeAfterCleanup = files.fold(0L) { total, file -> total + file.length() }
-        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue
+        assertThat(totalSizeAfterCleanup < MAX_STORAGE_SIZE).isTrue
 
         val firstAfter = files.map { it.name.substringAfter('_').toInt() }.minOrNull()
         
