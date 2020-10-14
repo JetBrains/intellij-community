@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -13,20 +12,22 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction extends AbstractValVarIntentionAction {
 
   private final String variableClassName;
+  private final String variableClassSimpleName;
 
-  public AbstractReplaceExplicitTypeWithVariableIntentionAction(String variableClassName) {
+  public AbstractReplaceExplicitTypeWithVariableIntentionAction(String variableClassName, String variableClassSimpleName) {
     this.variableClassName = variableClassName;
+    this.variableClassSimpleName = variableClassSimpleName;
   }
 
   public AbstractReplaceExplicitTypeWithVariableIntentionAction(Class<?> variableClass) {
-    this(variableClass.getName());
+    this(variableClass.getName(), variableClass.getSimpleName());
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace explicit type with '" + StringUtil.getShortName(variableClassName) + "' (Lombok)";
+    return "Replace explicit type with '" + variableClassSimpleName + "' (Lombok)";
   }
 
   @Override
