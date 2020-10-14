@@ -95,10 +95,19 @@ public final class PluginEnabler {
 
   private static @NotNull String getLogMessage(@NotNull List<? extends IdeaPluginDescriptor> pluginsToEnable,
                                                boolean enable) {
-    StringBuilder buffer = new StringBuilder("Plugins to ")
-      .append(enable ? "enable" : "disable")
+    return getLogMessage(
+      "Plugins to " + (enable ? "enable" : "disable"),
+      pluginsToEnable
+    );
+  }
+
+  public static @NotNull String getLogMessage(@NotNull String message,
+                                              @NotNull List<? extends IdeaPluginDescriptor> pluginsToEnable) {
+    StringBuilder buffer = new StringBuilder(message)
+      .append(':')
       .append(' ')
       .append('[');
+
     join(
       pluginsToEnable,
       descriptor -> descriptor.getPluginId().getIdString(),
