@@ -116,7 +116,9 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
                     }
                     if (!tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId)) {
                       shouldIndexFile.set(true);
-                      break;
+                      // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+                      // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+                      // for all indexes that became invalid. See IDEA-252846 for more details.
                     }
                   }
                 }
