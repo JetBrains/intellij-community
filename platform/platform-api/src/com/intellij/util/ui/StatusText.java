@@ -236,7 +236,17 @@ public abstract class StatusText {
   }
 
   public StatusText appendText(boolean isPrimaryColumn, int row, @NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
+    return appendText(isPrimaryColumn, row, null, text, attrs, listener);
+  }
+
+  public StatusText appendText(boolean isPrimaryColumn,
+                               int row,
+                               @Nullable Icon icon,
+                               @NlsContexts.StatusText String text,
+                               SimpleTextAttributes attrs,
+                               ActionListener listener) {
     Fragment fragment = getOrCreateFragment(isPrimaryColumn, row);
+    fragment.myComponent.setIcon(icon);
     fragment.myComponent.append(text, attrs);
     fragment.myClickListeners.add(listener);
     myHasActiveClickListeners |= listener != null;
@@ -296,8 +306,17 @@ public abstract class StatusText {
     return appendLine(text, DEFAULT_ATTRIBUTES, null);
   }
 
-  public StatusText appendLine(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
-    return appendText(true, myPrimaryColumn.fragments.size(), text, attrs, listener);
+  public StatusText appendLine(@NotNull @NlsContexts.StatusText String text,
+                               @NotNull SimpleTextAttributes attrs,
+                               @Nullable ActionListener listener) {
+    return appendLine(null, text, attrs, listener);
+  }
+
+  public StatusText appendLine(@Nullable Icon icon,
+                               @NotNull @NlsContexts.StatusText String text,
+                               @NotNull SimpleTextAttributes attrs,
+                               @Nullable ActionListener listener) {
+    return appendText(true, myPrimaryColumn.fragments.size(), icon, text, attrs, listener);
   }
 
   public void paint(Component owner, Graphics g) {

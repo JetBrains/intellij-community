@@ -1421,5 +1421,9 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
+    <action class="com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction" id="ActivateHierarchyToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
   </actions>
 </idea-plugin>
