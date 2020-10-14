@@ -759,6 +759,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertFalse(regions[1].isExpanded());
   }
 
+  public void testClearPrintConsoleSizeConsistency() {
+    withCycleConsoleNoFolding(1000, consoleView -> {
+      String text = "long text";
+      consoleView.print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+      consoleView.waitAllRequests();
+      //editor contains `text`
+      assertEquals(text.length(), consoleView.getEditor().getDocument().getTextLength());
+      consoleView.clear();
+      consoleView.print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+      //assert console's editor text which is about to be cleared is not added
+      assertEquals(text.length(), consoleView.getContentSize());
+    });
+  }
+
   public void testSubsequentExpandedNonAttachedFoldsAreCombined() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
       @Override
