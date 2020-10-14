@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<idea-plugin>
+<idea-plugin url="https://github.com/mplushnikov/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
   <name>Lombok</name>
-  <vendor>JetBrains</vendor>
-  <description><![CDATA[A plugin that adds first-class support for Project Lombok]]></description>
+  <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail
+    Plushnikov
+  </vendor>
+  <version>XXX</version>
+
+  <idea-version since-build="201.00"/>
+
+  <description><![CDATA[ Description will be added by gradle build]]></description>
   <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
@@ -191,7 +197,7 @@
       shortName="RedundantSlf4jDefinition"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"/>
-
+    
     <localInspection
       displayName="Unnecessary final before 'val'"
       groupPath="Lombok"
@@ -330,4 +336,6 @@
 
   <!--TODO @Builder requires specifying 'builderClassName' if used on methods with a type parameter as return type.-->
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
+  <change-notes><![CDATA[	Change notes will be filled by gradle build ]]>
+  </change-notes>
 </idea-plugin>
