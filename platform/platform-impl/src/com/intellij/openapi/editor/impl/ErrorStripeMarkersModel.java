@@ -120,17 +120,24 @@ class ErrorStripeMarkersModel {
   }
 
   private void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter);
+    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter, false);
     if (errorStripeMarker != null) {
       removeErrorStripeMarker(errorStripeMarker);
     }
-    else {
-      LOG.assertTrue(!isAvailable(highlighter, documentMarkupModel));
+    else if (isAvailable(highlighter, documentMarkupModel)) {
+      errorStripeMarker = findErrorStripeMarker(highlighter, true);
+      if (errorStripeMarker == null) {
+        LOG.error("Missing " + highlighter);
+      }
+      else {
+        LOG.error("Full scan performed for " + highlighter);
+        removeErrorStripeMarker(errorStripeMarker);
+      }
     }
   }
 
   public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter);
+    ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter, false);
     boolean hasErrorStripe = isAvailable(highlighter, documentMarkupModel);
 
     if (existingErrorStripeMarker == null) {
@@ -177,10 +184,11 @@ class ErrorStripeMarkersModel {
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
   }
 
-  private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
+  private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter, boolean lookEverywhere) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int offset = highlighter.getStartOffset();
-    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(new TextRangeInterval(offset, offset), null);
+    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(
+      new TextRangeInterval(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset), null);
     try {
       return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
     }
