@@ -88,53 +88,49 @@ dependencies {
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.7.0")
 }
 
-task generateLombok {
-  doLast {
 // Tasks
-    copy {
-      includeEmptyDirs = false
-      from({ zipTree(configurations.lombok.singleFile) }) {
-        include 'lombok/extern/**'
-        include 'lombok/experimental/**'
-        include 'lombok/Builder.java'
-        include 'lombok/AccessLevel.java'
-        include 'lombok/*ArgsConstructor.java'
-        include 'lombok/Cleanup.java'
-        include 'lombok/CustomLog.java'
-        include 'lombok/Data.java'
-        include 'lombok/Delegate.java'
-        include 'lombok/Getter.java'
-        include 'lombok/Setter.java'
-        include 'lombok/EqualsAndHashCode.java'
-        include 'lombok/NonNull.java'
-        include 'lombok/Synchronized.java'
-        include 'lombok/ToString.java'
-        include 'lombok/SneakyThrows.java'
-        include 'lombok/Value.java'
-        include 'lombok/With.java'
-        include 'lombok/val.java'
-        include 'lombok/var.java'
-        include 'lombok/Singular.java'
-        include 'lombok/core/handlers/Singulars.java'
-      }
-      into("generated/src")
-    }
-
-    copy {
-      includeEmptyDirs = false
-      from({ zipTree(configurations.lombok.singleFile) }) {
-        include '**/*.txt'
-      }
-      into("generated/resources")
-    }
+copy {
+  includeEmptyDirs = false
+  from({ zipTree(configurations.lombok.singleFile) }) {
+    include 'lombok/extern/**'
+    include 'lombok/experimental/**'
+    include 'lombok/Builder.java'
+    include 'lombok/AccessLevel.java'
+    include 'lombok/*ArgsConstructor.java'
+    include 'lombok/Cleanup.java'
+    include 'lombok/CustomLog.java'
+    include 'lombok/Data.java'
+    include 'lombok/Delegate.java'
+    include 'lombok/Getter.java'
+    include 'lombok/Setter.java'
+    include 'lombok/EqualsAndHashCode.java'
+    include 'lombok/NonNull.java'
+    include 'lombok/Synchronized.java'
+    include 'lombok/ToString.java'
+    include 'lombok/SneakyThrows.java'
+    include 'lombok/Value.java'
+    include 'lombok/With.java'
+    include 'lombok/val.java'
+    include 'lombok/var.java'
+    include 'lombok/Singular.java'
+    include 'lombok/core/handlers/Singulars.java'
   }
+  into("generated/src")
+}
+
+copy {
+  includeEmptyDirs = false
+  from({ zipTree(configurations.lombok.singleFile) }) {
+    include '**/*.txt'
+  }
+  into("generated/resources")
 }
 
 task generateLombokConfigParser(type: org.jetbrains.grammarkit.tasks.GenerateParser) {
   println "Generating Parser for GrammerKit: ${grammarKit.grammarKitRelease}"
 
   source "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
-  targetRoot = "lang/src"
+  targetRoot = "generated/src"
   pathToParser "/de/plushnikov/intellij/plugin/language/parser/LombokConfigParser.java"
   pathToPsiRoot "/de/plushnikov/intellij/plugin/language/psi"
 }
@@ -144,17 +140,15 @@ task generateLombokConfigLexer(type: org.jetbrains.grammarkit.tasks.GenerateLexe
   println "Generating Lexer for JFlexRelease: ${grammarKit.jflexRelease}"
 
   source = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex"
-  targetDir = "lang/src/de/plushnikov/intellij/plugin/language"
+  targetDir = "generated/src/de/plushnikov/intellij/plugin/language"
   targetClass = "LombokConfigLexer"
 }
 
 clean.doFirst {
-  delete 'generated', 'out',
-         // FIXME: API from newer IntelliJ is used
-         'lang/src/icons'
+  delete 'generated', 'out'
 }
 
-compileJava.dependsOn generateLombokConfigLexer, generateLombok
+compileJava.dependsOn generateLombokConfigLexer
 check.dependsOn jacocoTestReport
 
 test {
