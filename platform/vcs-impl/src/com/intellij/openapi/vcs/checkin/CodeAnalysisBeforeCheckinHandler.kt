@@ -1,198 +1,167 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.checkin
 
-package com.intellij.openapi.vcs.checkin;
+import com.intellij.CommonBundle
+import com.intellij.codeInsight.CodeSmellInfo
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.CodeSmellDetector
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.PairConsumer
+import com.intellij.util.ui.UIUtil
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeSmellInfo;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.CodeSmellDetector;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
-import java.util.List;
-import java.util.Set;
+class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
+    CodeAnalysisBeforeCheckinHandler(panel.project, panel)
+}
 
 /**
  * The check-in handler which performs code analysis before check-in. Source code for this class
- * is provided as a sample of using the {@link CheckinHandler} API.
+ * is provided as a sample of using the [CheckinHandler] API.
  *
  * @author lesya
  */
-public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler implements CommitCheck {
+class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
+                                       private val myCheckinPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+  override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
-  private final Project myProject;
-  private final CheckinProjectPanel myCheckinPanel;
-  private static final Logger LOG = Logger.getInstance(CodeAnalysisBeforeCheckinHandler.class);
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
+    BooleanCommitOption(myCheckinPanel, VcsBundle.message("before.checkin.standard.options.check.smells"), true,
+                        settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT)
 
-  public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
-    myProject = project;
-    myCheckinPanel = panel;
-  }
+  private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(myProject)
 
-  @Override
-  public boolean isEnabled() {
-    return getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT;
-  }
-
-  @Override
-  @Nullable
-  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    return new BooleanCommitOption(myCheckinPanel, VcsBundle.message("before.checkin.standard.options.check.smells"), true,
-                                   () -> getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT,
-                                   value -> getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = value);
-  }
-
-  private VcsConfiguration getSettings() {
-    return VcsConfiguration.getInstance(myProject);
-  }
-
-  private ReturnResult processFoundCodeSmells(final List<CodeSmellInfo> codeSmells, @Nullable CommitExecutor executor) {
-    int errorCount = collectErrors(codeSmells);
-    int warningCount = codeSmells.size() - errorCount;
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    Set<VirtualFile> virtualFiles = ContainerUtil.map2Set(codeSmells, (smell) -> fileDocumentManager.getFile(smell.getDocument()));
-    String commitButtonText = executor != null ? executor.getActionText() : myCheckinPanel.getCommitActionName();
-    commitButtonText = StringUtil.trimEnd(commitButtonText, "...");
-
-    String message = virtualFiles.size() == 1
-      ? VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text",
-                          FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(virtualFiles.iterator().next().getPath())), errorCount, warningCount)
-      : VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
-                          virtualFiles.size(), errorCount, warningCount);
-
-    final int answer = Messages.showYesNoCancelDialog(myProject,
-                                                      message,
-                                                      VcsBundle.message("code.smells.error.messages.tab.name"),
-                                                      VcsBundle.message("code.smells.review.button"),
-                                                      commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
+  private fun processFoundCodeSmells(codeSmells: List<CodeSmellInfo>, executor: CommitExecutor?): ReturnResult {
+    val errorCount = collectErrors(codeSmells)
+    val warningCount = codeSmells.size - errorCount
+    val virtualFiles = codeSmells.mapTo(mutableSetOf()) { FileDocumentManager.getInstance().getFile(it.document) }
+    var commitButtonText = executor?.actionText ?: myCheckinPanel.commitActionName
+    commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
+    val message = if (virtualFiles.size == 1) VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text",
+                                                                FileUtil.toSystemDependentName(
+                                                                  FileUtil.getLocationRelativeToUserHome(
+                                                                    virtualFiles.first()!!.path)), errorCount, warningCount)
+    else VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
+                           virtualFiles.size, errorCount, warningCount)
+    val answer = Messages.showYesNoCancelDialog(myProject,
+                                                message,
+                                                VcsBundle.message("code.smells.error.messages.tab.name"),
+                                                VcsBundle.message("code.smells.review.button"),
+                                                commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon())
     if (answer == Messages.YES) {
-      CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
-      return ReturnResult.CLOSE_WINDOW;
+      CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells)
+      return ReturnResult.CLOSE_WINDOW
     }
-    if (answer == Messages.CANCEL) {
-      return ReturnResult.CANCEL;
+    return if (answer == Messages.CANCEL) {
+      ReturnResult.CANCEL
     }
-    return ReturnResult.COMMIT;
+    else ReturnResult.COMMIT
   }
 
-  private static int collectErrors(final List<CodeSmellInfo> codeSmells) {
-    int result = 0;
-    for (CodeSmellInfo codeSmellInfo : codeSmells) {
-      if (codeSmellInfo.getSeverity() == HighlightSeverity.ERROR) result++;
-    }
-    return result;
-  }
-
-  @Override
-  public ReturnResult beforeCheckin(CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (!isEnabled()) return ReturnResult.COMMIT;
-
-    if (DumbService.getInstance(myProject).isDumb()) {
-      if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
-                                                                   ApplicationNamesInfo.getInstance().getProductName()),
-                                      VcsBundle.message("code.smells.error.indexing"),
-                                      VcsBundle.message("checkin.wait"), VcsBundle.message("checkin.commit"), null) == Messages.OK) {
-        return ReturnResult.CANCEL;
+  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
+    if (!isEnabled()) return ReturnResult.COMMIT
+    if (DumbService.getInstance(myProject).isDumb) {
+      return if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
+                                                                          ApplicationNamesInfo.getInstance().productName),
+                                             VcsBundle.message("code.smells.error.indexing"),
+                                             VcsBundle.message("checkin.wait"), VcsBundle.message("checkin.commit"), null) == Messages.OK) {
+        ReturnResult.CANCEL
       }
-      return ReturnResult.COMMIT;
+      else ReturnResult.COMMIT
     }
 
-    try {
-      return runCodeAnalysis(executor);
+    return try {
+      runCodeAnalysis(executor)
     }
-    catch (ProcessCanceledException e) {
-      return ReturnResult.CANCEL;
+    catch (e: ProcessCanceledException) {
+      ReturnResult.CANCEL
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (e: Exception) {
+      LOG.error(e)
       if (Messages.showOkCancelDialog(myProject,
-                                      VcsBundle
-                                        .message("checkin.code.analysis.failed.with.exception.name.message", e.getClass().getName(),
-                                                 e.getMessage()),
+                                      VcsBundle.message("checkin.code.analysis.failed.with.exception.name.message", e.javaClass.name,
+                                                        e.message),
                                       VcsBundle.message("checkin.code.analysis.failed"), VcsBundle.message("checkin.commit"),
                                       VcsBundle.message("checkin.cancel"), null) == Messages.OK) {
-        return ReturnResult.COMMIT;
+        ReturnResult.COMMIT
       }
-      return ReturnResult.CANCEL;
+      else ReturnResult.CANCEL
     }
   }
 
-  @NotNull
-  private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
-    final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
-    if (files.size() <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
-      return runCodeAnalysisNew(commitExecutor, files);
+  private fun runCodeAnalysis(commitExecutor: CommitExecutor?): ReturnResult {
+    val files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.virtualFiles, myProject)
+    return if (files.size <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
+      runCodeAnalysisNew(commitExecutor, files)
     }
-    return runCodeAnalysisOld(commitExecutor, files);
+    else runCodeAnalysisOld(commitExecutor, files)
   }
 
-  @NotNull
-  private ReturnResult runCodeAnalysisNew(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<? extends VirtualFile> files) {
-    Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
-    Ref<Exception> exception = Ref.create();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+  private fun runCodeAnalysisNew(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
+    val codeSmells = Ref.create<List<CodeSmellInfo>>()
+    val exception = Ref.create<Exception>()
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    ProgressManager.getInstance().run(object : Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+      override fun run(indicator: ProgressIndicator) {
         try {
-          assert myProject != null;
-          indicator.setIndeterminate(true);
-          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
-          indicator.setText(VcsBundle.getString("before.checkin.waiting.for.smart.mode"));
-          DumbService.getInstance(myProject).waitForSmartMode();
-        } catch (ProcessCanceledException e) {
-          LOG.info("Code analysis canceled", e);
-          exception.set(e);
+          assert(myProject != null)
+          indicator.isIndeterminate = true
+          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator))
+          indicator.text = VcsBundle.getString("before.checkin.waiting.for.smart.mode")
+          DumbService.getInstance(myProject).waitForSmartMode()
         }
-        catch (Exception e) {
-          LOG.error(e);
-          exception.set(e);
+        catch (e: ProcessCanceledException) {
+          LOG.info("Code analysis canceled", e)
+          exception.set(e)
+        }
+        catch (e: Exception) {
+          LOG.error(e)
+          exception.set(e)
         }
       }
-    });
-    if (!exception.isNull()) {
-      ExceptionUtil.rethrowAllAsUnchecked(exception.get());
+    })
+    if (!exception.isNull) {
+      ExceptionUtil.rethrowAllAsUnchecked(exception.get())
     }
-    if (!codeSmells.get().isEmpty()) {
-      return processFoundCodeSmells(codeSmells.get(), commitExecutor);
-    }
-    return ReturnResult.COMMIT;
+    return if (codeSmells.get().isNotEmpty()) processFoundCodeSmells(codeSmells.get(), commitExecutor) else ReturnResult.COMMIT
   }
 
-  @NotNull
-  private ReturnResult runCodeAnalysisOld(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<? extends VirtualFile> files) {
-    final List<CodeSmellInfo> codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
-    if (!codeSmells.isEmpty()) {
-      return processFoundCodeSmells(codeSmells, commitExecutor);
+  private fun runCodeAnalysisOld(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
+    val codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files)
+    return if (codeSmells.isNotEmpty()) processFoundCodeSmells(codeSmells, commitExecutor) else ReturnResult.COMMIT
+  }
+
+  companion object {
+    private fun collectErrors(codeSmells: List<CodeSmellInfo>): Int {
+      var result = 0
+      for (codeSmellInfo in codeSmells) {
+        if (codeSmellInfo.severity === HighlightSeverity.ERROR) result++
+      }
+      return result
     }
-    return ReturnResult.COMMIT;
   }
 }
