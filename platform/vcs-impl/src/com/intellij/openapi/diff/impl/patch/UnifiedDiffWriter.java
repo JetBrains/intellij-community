@@ -37,8 +37,8 @@ public final class UnifiedDiffWriter {
 
   public static void write(@Nullable Project project,
                            @NotNull Collection<? extends FilePatch> patches,
-                           Writer writer,
-                           String lineSeparator,
+                           @NotNull Writer writer,
+                           @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext) throws IOException {
     write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator,
           commitContext, null);
@@ -59,11 +59,11 @@ public final class UnifiedDiffWriter {
   public static void write(@Nullable Project project,
                            @Nullable Path basePath,
                            @NotNull Collection<? extends FilePatch> patches,
-                           Writer writer,
-                           String lineSeparator,
+                           @NotNull Writer writer,
+                           @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext,
                            @Nullable List<PatchEP> patchEpExtensions) throws IOException {
-    //write the patch files without content modifications strictly after the files with content modifications,
+    // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
     List<FilePatch> noContentPatches = new ArrayList<>();
     for (FilePatch filePatch : patches) {
@@ -73,9 +73,8 @@ public final class UnifiedDiffWriter {
         noContentPatches.add(patch);
         continue;
       }
-      @Nullable String t = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-      String path = Objects.requireNonNull(t);
-      String pathRelatedToProjectDir = project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath == null ? null : basePath.toString(), path);
+      String path = ObjectUtils.chooseNotNull(patch.getAfterName(), patch.getBeforeName());
+      String pathRelatedToProjectDir = getPathRelatedToProjectDir(project, basePath, path);
       Map<String, CharSequence> additionalMap = new HashMap<>();
       if (project != null) {
         for (PatchEP extension : (patchEpExtensions == null ? PatchEP.EP_NAME.getExtensionList() : patchEpExtensions)) {
@@ -88,10 +87,10 @@ public final class UnifiedDiffWriter {
       String fileContentLineSeparator =
         shouldUseDefaultSeparator(project) ? "\n" : ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
       writeFileHeading(patch, writer, lineSeparator, additionalMap);
-      for(PatchHunk hunk: patch.getHunks()) {
+      for (PatchHunk hunk : patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
                        lineSeparator);
-        for(PatchLine line: hunk.getLines()) {
+        for (PatchLine line : hunk.getLines()) {
           char prefixChar = ' ';
           switch (line.getType()) {
             case ADD:
@@ -108,6 +107,7 @@ public final class UnifiedDiffWriter {
           text = StringUtil.trimEnd(text, "\n");
           writeLine(writer, text, prefixChar);
           if (line.isSuppressNewLine()) {
+            // do not use fileContentLineSeparator here, as this line has no own separator
             writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);
           }
           else {
@@ -121,13 +121,13 @@ public final class UnifiedDiffWriter {
     }
   }
 
-  @NotNull
-  private static String getPathRelatedToDir(@NotNull String newBaseDir, @Nullable String basePath, @NotNull String path) {
-    if (basePath == null) {
-      return path;
-    }
-    String result = FileUtil.getRelativePath(new File(newBaseDir), new File(basePath, path));
-    return result == null ? path : result;
+  private static String getPathRelatedToProjectDir(@Nullable Project project, @Nullable Path patchBasePath, @NotNull String filePath) {
+    if (project == null || patchBasePath == null) return filePath;
+    String newBaseDir = project.getBasePath();
+    if (newBaseDir == null) return filePath;
+    String relativePath = FileUtil.getRelativePath(new File(newBaseDir), new File(patchBasePath.toString(), filePath));
+    if (relativePath == null) return filePath;
+    return relativePath;
   }
 
   private static void writeFileHeading(final FilePatch patch,
@@ -135,7 +135,7 @@ public final class UnifiedDiffWriter {
                                        final String lineSeparator,
                                        Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
-    if (additionalMap != null && ! additionalMap.isEmpty()) {
+    if (additionalMap != null && !additionalMap.isEmpty()) {
       writer.write(ADDITIONAL_PREFIX);
       writer.write(lineSeparator);
       for (Map.Entry<String, CharSequence> entry : additionalMap.entrySet()) {
@@ -180,16 +180,15 @@ public final class UnifiedDiffWriter {
     writer.write(lineSeparator);
   }
 
-  private static void writeHunkStart(Appendable writer, int startLine1, int endLine1, int startLine2, int endLine2,
-                                     final String lineSeparator)
-    throws IOException {
-    StringBuilder builder = new StringBuilder("@@ -");
-    builder.append(startLine1+1).append(",").append(endLine1-startLine1);
-    builder.append(" +").append(startLine2+1).append(",").append(endLine2-startLine2).append(" @@").append(lineSeparator);
-    writer.append(builder.toString());
+  private static void writeHunkStart(@NotNull Writer writer, int startLine1, int endLine1, int startLine2, int endLine2,
+                                     @NotNull String lineSeparator) throws IOException {
+    writer.append(String.format("@@ -%s,%s +%s,%s @@",
+                                startLine1 + 1, endLine1 - startLine1,
+                                startLine2 + 1, endLine2 - startLine2));
+    writer.append(lineSeparator);
   }
 
-  private static void writeLine(final Writer writer, final String line, final char prefix) throws IOException {
+  private static void writeLine(@NotNull Writer writer, @NotNull String line, char prefix) throws IOException {
     writer.write(prefix);
     writer.write(line);
   }
