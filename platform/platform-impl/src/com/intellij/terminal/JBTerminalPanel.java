@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
@@ -114,6 +115,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     mySettingsProvider.addListener(this);
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) {
+      return super.getMinimumSize();
+    }
+    return JBUI.emptySize();
   }
 
   private boolean skipKeyEvent(@NotNull KeyEvent e) {
