@@ -176,7 +176,7 @@ public class SearchTextField extends JPanel {
     if (historyPopupEnabled) {
       myHistoryPopupActionGroup = new DefaultActionGroup();
       myNativeSearchPopup = ActionManager.getInstance()
-              .createActionPopupMenu(ActionPlaces.PROJECT_VIEW_TOOLBAR, myHistoryPopupActionGroup);
+              .createActionPopupMenu(ActionPlaces.UNKNOWN, myHistoryPopupActionGroup);
       updateMenu();
       myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup.getComponent());
     }
