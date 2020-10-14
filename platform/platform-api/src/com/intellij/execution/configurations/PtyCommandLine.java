@@ -139,7 +139,7 @@ public class PtyCommandLine extends GeneralCommandLine {
    * @see PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
    */
   @NotNull
-  PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
+  public PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
     myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
     return this;
   }
