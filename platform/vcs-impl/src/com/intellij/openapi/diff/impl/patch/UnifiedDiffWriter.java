@@ -135,6 +135,17 @@ public final class UnifiedDiffWriter {
                                        final String lineSeparator,
                                        Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
+    writeAdditionalInfo(writer, lineSeparator, additionalMap);
+    writer.write(HEADER_SEPARATOR + lineSeparator);
+    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
+                         patch.getBeforeVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
+                         patch.getAfterVersionId(), lineSeparator);
+  }
+
+  private static void writeAdditionalInfo(@NotNull Writer writer,
+                                          @NotNull String lineSeparator,
+                                          @Nullable Map<String, CharSequence> additionalMap) throws IOException {
     if (additionalMap != null && !additionalMap.isEmpty()) {
       writer.write(ADDITIONAL_PREFIX);
       writer.write(lineSeparator);
@@ -150,11 +161,6 @@ public final class UnifiedDiffWriter {
         }
       }
     }
-    writer.write(HEADER_SEPARATOR + lineSeparator);
-    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
-                         patch.getBeforeVersionId(), lineSeparator);
-    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
-                         patch.getAfterVersionId(), lineSeparator);
   }
 
   @NonNls
