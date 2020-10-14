@@ -44,6 +44,18 @@ public final class UnifiedDiffWriter {
           commitContext, null);
   }
 
+  /**
+   * Write patch in a unified diff format with specified lineSeparator.
+   * <p>
+   * For distributed version control (a.e. git, hg) '\n' lineSeparator should be used always;
+   * otherwise dvcs wouldn't accept this patch by default;
+   * <p>
+   * In other cases (a.e svn style) system line separator should be used to support the same format as native 'svn diff' produces.
+   * Moreover, svn keeps existing line separator inside content modification chunks, that's why we have to use another
+   * fileContent line separator; NO_NEWLINE_SIGNATURE for svn-like patch keeps system line separator
+   *
+   * @see <a href=https://youtrack.jetbrains.com/issue/IDEA-40539>IDEA-40539</a>
+   */
   public static void write(@Nullable Project project,
                            @Nullable Path basePath,
                            @NotNull Collection<? extends FilePatch> patches,
