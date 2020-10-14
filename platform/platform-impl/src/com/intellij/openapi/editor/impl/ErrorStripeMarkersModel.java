@@ -68,9 +68,7 @@ class ErrorStripeMarkersModel {
 
   public void afterAdded(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     if (isAvailable(highlighter, documentMarkupModel)) {
-      if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-        createErrorStripeMarker(highlighter);
-      }
+      createErrorStripeMarker(highlighter);
     }
   }
 
