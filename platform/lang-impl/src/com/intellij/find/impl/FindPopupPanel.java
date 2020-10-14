@@ -103,6 +103,7 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.render.RenderingUtil.PAINT_HOVERED_BACKGROUND;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
@@ -666,6 +667,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myResultsPreviewTable.setShowGrid(false);
     myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
+    myResultsPreviewTable.putClientProperty(PAINT_HOVERED_BACKGROUND, false);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
