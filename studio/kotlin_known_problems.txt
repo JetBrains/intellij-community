@@ -1,3 +1,0 @@
-org.jetbrains.kotlin::Package 'io.ktor' is not found
-org.jetbrains.kotlin::Package 'kotlinx.coroutines.io' is not found
-org.jetbrains.kotlin::Package 'kotlinx.io' is not found
