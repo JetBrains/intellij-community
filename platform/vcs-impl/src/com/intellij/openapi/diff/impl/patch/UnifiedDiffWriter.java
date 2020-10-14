@@ -86,7 +86,7 @@ public final class UnifiedDiffWriter {
       }
       String fileContentLineSeparator =
         shouldUseDefaultSeparator(project) ? "\n" : ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
-      writeFileHeading(patch, writer, lineSeparator, additionalMap);
+      writeFileHeading(writer, patch, lineSeparator, additionalMap);
       for (PatchHunk hunk : patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
                        lineSeparator);
@@ -130,8 +130,7 @@ public final class UnifiedDiffWriter {
     return relativePath;
   }
 
-  private static void writeFileHeading(final FilePatch patch,
-                                       final Writer writer,
+  private static void writeFileHeading(final Writer writer, final FilePatch patch,
                                        final String lineSeparator,
                                        Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
