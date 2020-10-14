@@ -474,7 +474,7 @@ public final class FileSystemUtil {
     if (JnaLoader.isLoaded()) {
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
       FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
-      if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+      if (SystemInfo.isWin10OrNewer && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
         detected = getNtfsCaseSensitivity(path);
       }
       else if (SystemInfo.isMac) {
