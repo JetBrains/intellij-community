@@ -86,7 +86,7 @@ public final class UnifiedDiffWriter {
       }
       String fileContentLineSeparator =
         shouldUseDefaultSeparator(project) ? "\n" : ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
-      writeFileHeading(writer, patch, lineSeparator, additionalMap);
+      writeFileHeading(writer, basePath, patch, lineSeparator, additionalMap);
       for (PatchHunk hunk : patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
                        lineSeparator);
@@ -130,12 +130,15 @@ public final class UnifiedDiffWriter {
     return relativePath;
   }
 
-  private static void writeFileHeading(final Writer writer, final FilePatch patch,
-                                       final String lineSeparator,
-                                       Map<String, CharSequence> additionalMap) throws IOException {
+  private static void writeFileHeading(@NotNull final Writer writer,
+                                       @Nullable Path basePath,
+                                       @NotNull final FilePatch patch,
+                                       @NotNull final String lineSeparator,
+                                       @Nullable Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
     writeAdditionalInfo(writer, lineSeparator, additionalMap);
     writer.write(HEADER_SEPARATOR + lineSeparator);
+    GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
     writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
                          patch.getBeforeVersionId(), lineSeparator);
     writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
