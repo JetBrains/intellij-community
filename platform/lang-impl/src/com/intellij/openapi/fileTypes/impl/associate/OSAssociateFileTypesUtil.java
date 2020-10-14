@@ -46,6 +46,7 @@ public class OSAssociateFileTypesUtil {
                 callback.beforeStart();
                 associator.associateFileTypes(fileTypes);
                 OSFileAssociationPreferences.getInstance().updateFileTypes(fileTypes);
+                OSFileAssociationFeatureUsagesUtil.logFilesAssociated(fileTypes);
                 callback.onSuccess(associator.isOsRestartRequired());
               }
               catch (OSFileAssociationException exception) {
@@ -114,6 +115,12 @@ public class OSAssociateFileTypesUtil {
   public static @Nullable FileNameMatcher getSubtypeMatcher(@NotNull FileType fileType) {
     return fileType instanceof MyFileSubtype ? ((MyFileSubtype)fileType).getMatcher() : null;
   }
+
+
+  static @NotNull FileType getOriginalType(@NotNull FileType fileType) {
+    return fileType instanceof MyFileSubtype ? ((MyFileSubtype)fileType).myOriginalType : fileType;
+  }
+
 
   private static class MyFileSubtype implements FileType {
     private final          FileType        myOriginalType;
