@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,18 +36,16 @@ public class PyQualifiedNameCompletionMatcher {
   private PyQualifiedNameCompletionMatcher() {
   }
 
-  public static void processMatchingExportedNames(@NotNull String qualifierPattern,
-                                                  @NotNull String attributePattern,
+  public static void processMatchingExportedNames(@NotNull QualifiedName qualifiedNamePattern,
                                                   @NotNull PsiFile currentFile,
                                                   @NotNull GlobalSearchScope scope,
                                                   @NotNull Processor<? super ExportedName> processor) {
-    if (attributePattern.isEmpty() || qualifierPattern.isEmpty()) return;
-    PrefixMatcher attributeMatcher = createNameMatcher(attributePattern);
-    PrefixMatcher qualifierMatcher = createQualifierMatcher(qualifierPattern);
+    if (qualifiedNamePattern.getComponentCount() < 2) return;
+    QualifiedNameMatcher matcher = new QualifiedNameMatcher(qualifiedNamePattern);
     StubIndex stubIndex = StubIndex.getInstance();
     Project project = Objects.requireNonNull(scope.getProject());
 
-    GlobalSearchScope moduleMatchingScope = new ModuleQualifiedNameMatchingScope(scope, qualifierMatcher, project);
+    GlobalSearchScope moduleMatchingScope = new ModuleQualifiedNameMatchingScope(scope, matcher, project);
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
     IndexLookupStats stats = new IndexLookupStats();
     try {
@@ -56,7 +53,7 @@ public class PyQualifiedNameCompletionMatcher {
       stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
         ProgressManager.checkCanceled();
         stats.scannedKeys++;
-        if (!attributeMatcher.isStartMatch(attributeName)) return true;
+        if (!matcher.attributeMatches(attributeName)) return true;
         stats.matchingKeys++;
         return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
                                          attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
@@ -66,7 +63,7 @@ public class PyQualifiedNameCompletionMatcher {
             assert moduleQualifiedName != null : vFile;
             QualifiedName canonicalImportPath = findCanonicalImportPath(element, moduleQualifiedName, currentFile);
             QualifiedName importPath;
-            if (canonicalImportPath != null && qualifierMatcher.prefixMatches(canonicalImportPath.toString())) {
+            if (canonicalImportPath != null && matcher.qualifierMatches(canonicalImportPath)) {
               importPath = canonicalImportPath;
             }
             else {
@@ -88,7 +85,6 @@ public class PyQualifiedNameCompletionMatcher {
     }
     finally {
       if (LOG.isDebugEnabled()) {
-        String qualifiedNamePattern = qualifierPattern + "." + attributePattern;
         LOG.debug("Index lookup stats for '" + qualifiedNamePattern + "':\n" +
                   "Scanned keys: " + stats.scannedKeys + "\n" +
                   "Matched keys: " + stats.matchingKeys + "\n" +
@@ -106,16 +102,6 @@ public class PyQualifiedNameCompletionMatcher {
     long getDuration() {
       return TimeoutUtil.getDurationMillis(startNanoTime);
     }
-  }
-
-  @NotNull
-  private static CamelHumpMatcher createQualifierMatcher(@NotNull String pattern) {
-    return new CamelHumpMatcher(pattern, false);
-  }
-
-  @NotNull
-  private static PrefixMatcher createNameMatcher(@NotNull String pattern) {
-    return new CamelHumpMatcher(pattern, false);
   }
 
   @Nullable
@@ -153,43 +139,54 @@ public class PyQualifiedNameCompletionMatcher {
   }
 
   public static final class QualifiedNameMatcher extends PrefixMatcher {
-    final PrefixMatcher myLastNameMatcher;
-    final PrefixMatcher myQualifierMatcher;
+    private final PrefixMatcher myQualifierFirstComponentMatcher;
+    private final PrefixMatcher myQualifierRemainderMatcher;
+    private final PrefixMatcher myLastComponentMatcher;
 
-    public QualifiedNameMatcher(@NotNull String qualifierPattern, @NotNull String namePattern) {
-      super(qualifierPattern + "." + namePattern);
-      myLastNameMatcher = createNameMatcher(namePattern);
-      myQualifierMatcher = createQualifierMatcher(qualifierPattern);
+    public QualifiedNameMatcher(@NotNull QualifiedName qualifiedName) {
+      super(qualifiedName.toString());
+      if (qualifiedName.getComponentCount() < 2) {
+        throw new IllegalArgumentException("Qualified name should have at least two components, but was '" + qualifiedName + "'");
+      }
+      myLastComponentMatcher = new CamelHumpMatcher(qualifiedName.getLastComponent(), false);
+      QualifiedName qualifier = qualifiedName.removeLastComponent();
+      myQualifierFirstComponentMatcher = new CamelHumpMatcher(qualifier.getFirstComponent(), false);
+      myQualifierRemainderMatcher = new CamelHumpMatcher(qualifier.removeHead(1).toString(), false);
     }
 
     @Override
-    public boolean prefixMatches(@NotNull String qualifiedName) {
-      Couple<String> qualifierAndName = splitByLastDot(qualifiedName);
-      return myQualifierMatcher.prefixMatches(qualifierAndName.getFirst()) && myLastNameMatcher.prefixMatches(qualifierAndName.getSecond());
+    public boolean prefixMatches(@NotNull String name) {
+      QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
+      if (qualifiedName.getComponentCount() == 0) return false;
+      if (!attributeMatches(qualifiedName.getLastComponent())) return false;
+      if (!qualifierMatches(qualifiedName.removeLastComponent())) return false;
+      return true;
+    }
+
+    private boolean attributeMatches(@Nullable String attribute) {
+      return myLastComponentMatcher.isStartMatch(attribute);
+    }
+
+    private boolean qualifierMatches(@NotNull QualifiedName qualifier) {
+      String firstComponent = Objects.requireNonNullElse(qualifier.getFirstComponent(), "");
+      if (!myQualifierFirstComponentMatcher.prefixMatches(firstComponent)) return false;
+      String remainder = qualifier.getComponentCount() == 0 ? "" : qualifier.removeHead(1).toString();
+      if (!myQualifierRemainderMatcher.prefixMatches(remainder)) return false;
+      return true;
     }
 
     @Override
     public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
-      Couple<String> qualifierAndName = splitByLastDot(prefix);
-      return new QualifiedNameMatcher(qualifierAndName.getFirst(), qualifierAndName.getSecond());
-    }
-
-    @NotNull
-    private static Couple<String> splitByLastDot(@NotNull String qualifiedName) {
-      int lastDotIndex = qualifiedName.lastIndexOf(".");
-      if (lastDotIndex < 0) {
-        return Couple.of("", qualifiedName);
-      }
-      return Couple.of(qualifiedName.substring(0, lastDotIndex), qualifiedName.substring(lastDotIndex + 1));
+      return new QualifiedNameMatcher(QualifiedName.fromDottedString(prefix));
     }
   }
 
   private static class ModuleQualifiedNameMatchingScope extends DelegatingGlobalSearchScope {
-    private final PrefixMatcher myQualifiedNameMatcher;
+    private final QualifiedNameMatcher myQualifiedNameMatcher;
     private final Project myProject;
 
     ModuleQualifiedNameMatchingScope(@NotNull GlobalSearchScope baseScope,
-                                     @NotNull PrefixMatcher qualifiedNameMatcher,
+                                     @NotNull QualifiedNameMatcher qualifiedNameMatcher,
                                      @NotNull Project project) {
       super(baseScope);
       myQualifiedNameMatcher = qualifiedNameMatcher;
@@ -201,7 +198,7 @@ public class PyQualifiedNameCompletionMatcher {
       if (!super.contains(file)) return false;
       QualifiedName qualifiedName = restoreModuleQualifiedName(file, myProject);
       if (qualifiedName == null) return false;
-      return myQualifiedNameMatcher.prefixMatches(qualifiedName.toString());
+      return myQualifiedNameMatcher.qualifierMatches(qualifiedName);
     }
 
     @Nullable
