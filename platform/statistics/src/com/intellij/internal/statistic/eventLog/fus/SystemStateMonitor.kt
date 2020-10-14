@@ -49,8 +49,8 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
 
   private fun anonymizeMachineId(machineId: String?): String {
     if (machineId == null) return "unknown"
-    val username = System.getProperty("user.name")
-    return EventLogConfiguration.hashSha256(username.toByteArray(), machineId)
+    val salt = System.getProperty("user.name") + "JetBrainsFUS"
+    return EventLogConfiguration.hashSha256(salt.toByteArray(), machineId)
   }
 
   private fun newDataWithOsVersion(): FeatureUsageData {
