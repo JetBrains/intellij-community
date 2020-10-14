@@ -1050,6 +1050,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("/toolwindows/noEvents.svg", -5504420985643137627L, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("/toolwindows/problems.svg", -226223461307188800L, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("/toolwindows/problemsEmpty.svg", 8743835617958897286L, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("/toolwindows/toolWindowAnalyzeDataflow.svg", -4551741696608876948L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("/toolwindows/toolWindowAnt.svg", -1371233028234801963L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("/toolwindows/toolWindowBuild.svg", 3713223205308650376L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("/toolwindows/toolWindowChanges.svg", -499947355073527402L, 2);
