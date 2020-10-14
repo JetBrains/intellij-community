@@ -13,10 +13,12 @@ import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.reference.SoftReference
 import com.intellij.util.Processor
+import org.jetbrains.annotations.Nullable
 
 /**
  * @author yole
@@ -33,7 +35,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       val editor = CommonDataKeys.EDITOR.getData(dataContext)
       if (psiFile == null || editor == null) return null
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
-      if (psiElement?.language === language) {
+      if (isAcceptableLanguage(psiElement)) {
         buildStructureViewModel(psiFile, editor)?.let { model ->
           return (model.currentEditorElement as? PsiElement)?.originalElement
         }
@@ -42,12 +44,14 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
+  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?) = psiElement?.language == language
+
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
                                processor: Processor<Any>): Boolean {
     if (UISettings.instance.showMembersInNavigationBar) {
       (`object` as? PsiElement)?.let { psiElement ->
-        if (psiElement.language == language) {
+        if (isAcceptableLanguage(psiElement)) {
           buildStructureViewModel(psiElement.containingFile)?.let { model ->
             return processStructureViewChildren(model.root, `object`, processor)
           }
@@ -58,8 +62,8 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   }
 
   override fun getParent(psiElement: PsiElement?): PsiElement? {
-    if (psiElement?.language == language) {
-      val file = psiElement.containingFile ?: return null
+    if (isAcceptableLanguage(psiElement)) {
+      val file = psiElement?.containingFile ?: return null
       val model = buildStructureViewModel(file)
       if (model != null) {
         val parentInModel = findParentInModel(model.root, psiElement)
@@ -87,7 +91,13 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
 
   private fun buildStructureViewModel(file: PsiFile, editor: Editor? = null): StructureViewModel? {
     if (currentFile?.get() == file && currentFileModCount == file.modificationStamp) {
-      currentFileStructure?.get()?.let { return it }
+      if (editor == null) {
+        currentFileStructure?.get()?.let { return it }
+      }
+      else {
+        val editorStructure = editor.getUserData(MODEL)
+        editorStructure?.get()?.let { return it }
+      }
     }
 
     val builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file)
@@ -96,6 +106,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       currentFile = SoftReference(file)
       currentFileStructure = SoftReference(model)
       currentFileModCount = file.modificationStamp
+      editor?.putUserData(MODEL, currentFileStructure)
     }
     return model
   }
@@ -122,4 +133,8 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun normalizeChildren() = false
 
   protected open val applicableNodeProviders: List<NodeProvider<*>> = emptyList()
+  
+  companion object {
+    val MODEL: Key<SoftReference<StructureViewModel>?> = Key.create("editor.structure.model")
+  }
 }
