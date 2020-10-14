@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
@@ -63,6 +64,7 @@ class TempDirectory : ExternalResource() {
     myVirtualFileRoot = null
     myRoot = null
     myName = null
+    JarFileSystemImpl.cleanupForNextTest()
 
     RunAll(
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
