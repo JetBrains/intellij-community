@@ -33,6 +33,7 @@ import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2Map;
+import static git4idea.i18n.GitBundle.message;
 
 public final class GitVFSListener extends VcsVFSListener {
 
@@ -50,13 +51,13 @@ public final class GitVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getAddTitle() {
-    return GitBundle.getString("vfs.listener.add.title");
+    return message("vfs.listener.add.title");
   }
 
   @NotNull
   @Override
   protected String getSingleFileAddTitle() {
-    return GitBundle.getString("vfs.listener.add.single.title");
+    return message("vfs.listener.add.single.title");
   }
 
   @NotNull
@@ -77,7 +78,7 @@ public final class GitVFSListener extends VcsVFSListener {
                                           @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
+    progressManager.run(new Task.Backgroundable(myProject, message("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         // Filter added files before further processing
@@ -118,7 +119,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   private void performAdding(Collection<? extends FilePath> filesToAdd) {
-    performBackgroundOperation(filesToAdd, GitBundle.getString("add.adding"), new LongOperationPerRootExecutor() {
+    performBackgroundOperation(filesToAdd, message("add.adding"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
         executeAdding(root, files);
@@ -137,12 +138,12 @@ public final class GitVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getDeleteTitle() {
-    return GitBundle.getString("vfs.listener.delete.title");
+    return message("vfs.listener.delete.title");
   }
 
   @Override
   protected String getSingleFileDeleteTitle() {
-    return GitBundle.getString("vfs.listener.delete.single.title");
+    return message("vfs.listener.delete.single.title");
   }
 
   @Override
@@ -152,7 +153,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
-    performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
+    performBackgroundOperation(filesToDelete, message("remove.removing"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
         executeDeletion(root, files);
@@ -197,7 +198,7 @@ public final class GitVFSListener extends VcsVFSListener {
     }
 
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
-    GitVcs.runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("progress.title.moving.files")) {
+    GitVcs.runInBackground(new Task.Backgroundable(myProject, message("progress.title.moving.files")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
