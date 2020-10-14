@@ -290,7 +290,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   private static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
-    if (context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) {
+    if ((context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) || 
+        (context instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)context).isQualified())) {
       PsiVariable target = JavaPsiFacade.getInstance(context.getElement().getProject()).getResolveHelper()
         .resolveReferencedVariable(field.getName(), (PsiElement)context);
       return !field.getManager().areElementsEquivalent(target, field) &&

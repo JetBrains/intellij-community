@@ -27,6 +27,8 @@ import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+import java.util.stream.Collectors
+
 @CompileStatic
 class NormalCompletionTest extends NormalCompletionTestCase {
 
@@ -2279,5 +2281,20 @@ class Abc {
                           "import java.nio.charset.StandardCharsets;\n" +
                           "\n" +
                           "class X { Charset test() {return StandardCharsets.UTF_8;}}")
+  }
+
+  void "test qualified outer class name"() {
+    myFixture.configureByText("a.java", "class A {\n" +
+                                        "    private static final long sss = 0L;\n" +
+                                        "    static class B {\n" +
+                                        "        private static final long sss = 0L;\n" +
+                                        "        {\n" +
+                                        "            <caret>int i = 0;\n" +
+                                        "        }\n" +
+                                        "    }\n" +
+                                        "}\n")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings().stream().filter({ it.contains("sss") }).collect(Collectors.toList()) == 
+           ["A.sss", "sss"]
   }
 }
