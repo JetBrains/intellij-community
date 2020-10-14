@@ -48,13 +48,6 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                   }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-   private static class Inner extends PsiReferenceContributor {
-
-    @Override
-    public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-
-    }
-  }
   private static class NotificationGroupIdReference extends ExtensionPointReferenceBase {
 
     private NotificationGroupIdReference(PsiElement element) {
