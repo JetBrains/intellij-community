@@ -316,6 +316,10 @@ public abstract class StatusText {
                                @NotNull @NlsContexts.StatusText String text,
                                @NotNull SimpleTextAttributes attrs,
                                @Nullable ActionListener listener) {
+    if (myIsDefaultText) {
+      clear();
+      myIsDefaultText = false;
+    }
     return appendText(true, myPrimaryColumn.fragments.size(), icon, text, attrs, listener);
   }
 

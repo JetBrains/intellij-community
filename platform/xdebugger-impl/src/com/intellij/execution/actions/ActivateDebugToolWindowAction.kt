@@ -7,6 +7,8 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
+import com.intellij.lang.LangBundle
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
@@ -20,10 +22,15 @@ class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DE
   }
 
   override fun setupEmptyText(project: Project, text: StatusText) {
-    text.appendText(XDebuggerBundle.message("debug.toolwindow.empty.text.1") + " ")
-    text.appendText(XDebuggerBundle.message("debug.toolwindow.empty.text.2"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+    text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.1"))
+    text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.2"))
+    text.appendLine(LangBundle.message("run.toolwindow.empty.text.3") + " ")
+    text.appendText(LangBundle.message("run.toolwindow.empty.text.4"), SimpleTextAttributes.LINK_ATTRIBUTES) {
       EditConfigurationsDialog(project).show()
     }
-    text.appendText(" " + XDebuggerBundle.message("debug.toolwindow.empty.text.3"))
+    text.appendLine("")
+    text.appendLine(AllIcons.General.ContextHelp, XDebuggerBundle.message("debug.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+      HelpManager.getInstance().invokeHelp("procedures.debugging")
+    }
   }
 }
