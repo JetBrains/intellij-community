@@ -38,6 +38,8 @@ public interface FileBasedIndexInfrastructureExtension {
 
     /**
      * Processes up to date file for given content-dependent index while "scanning files to index" in progress.
+     * @return true if the up-to-date file has been reviewed and it its indexing must be skipped,
+     * false if the up-to-date file must be re-indexed because previously associated data is not valid anymore.
      */
     boolean processUpToDateFile(@NotNull IndexedFile file, int inputId, @NotNull ID<?, ?> indexId);
 
