@@ -309,7 +309,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     JPanel statusPanel = new NonOpaquePanel();
     statusPanel.setVisible(!myEditor.isOneLineMode());
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
-    statusPanel.add(statusToolbar.getComponent());
+    statusPanel.add(toolbar);
     statusPanel.add(smallIconLabel);
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
@@ -399,8 +399,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     InspectionWidgetActionProvider.EP_NAME.getExtensionList().
       forEach(extension -> {
         AnAction action = extension.createAction(myEditor);
-        extensionActions.put(extension, action);
-        epActions.add(action);
+        if (action != null) {
+          extensionActions.put(extension, action);
+          epActions.add(action);
+        }
       });
 
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
