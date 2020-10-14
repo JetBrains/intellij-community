@@ -3,6 +3,7 @@ package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
+import com.intellij.execution.process.mediator.rpc.DaemonHello
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import java.net.InetAddress
@@ -69,23 +70,23 @@ fun main(args: Array<String>) {
   }
 
   val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
-  val daemonPort = daemon.port.toString()
+  val daemonHello = DaemonHello.newBuilder()
+    .setPort(daemon.port)
+    .build()
 
   when (args[0]) {
     "--hello-port" -> {
       val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
-      Socket(InetAddress.getLoopbackAddress(), port).getOutputStream().writer(Charsets.UTF_8).use { writer ->
-        writer.write(daemonPort)
-        writer.write("\n")
-        writer.flush()
+      Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
+        socket.getOutputStream().use { stream ->
+          daemonHello.writeDelimitedTo(stream)
+        }
       }
     }
     "--hello-file" -> {
       val helloFilePath = Path.of(args[1])
-      Files.newOutputStream(helloFilePath, StandardOpenOption.WRITE).writer(Charsets.UTF_8).use { writer ->
-        writer.write(daemonPort)
-        writer.write("\n")
-        writer.flush()
+      Files.newOutputStream(helloFilePath, StandardOpenOption.WRITE).use { stream ->
+        daemonHello.writeDelimitedTo(stream)
       }
     }
   }

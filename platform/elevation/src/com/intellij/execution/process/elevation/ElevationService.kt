@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.BaseOutputReader
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
@@ -22,22 +21,20 @@ class ElevationService : Disposable {
     fun getInstance() = service<ElevationService>()
   }
 
-  private val elevatorClientLazy = SynchronizedClearableLazy {
+  //private val elevatorClient: ProcessMediatorClient by elevatorClientLazy
+
+  override fun dispose() {
+    //elevatorClientLazy.drop()?.close()
+  }
+
+  fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val daemon = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
     }, "Starting elevation daemon", true, null)
     val channel = daemon.createChannel()
-    ProcessMediatorClient(coroutineScope, channel)
-  }
+    val elevatorClient = ProcessMediatorClient(coroutineScope, channel)
 
-  private val elevatorClient: ProcessMediatorClient by elevatorClientLazy
-
-  override fun dispose() {
-    elevatorClientLazy.drop()?.close()
-  }
-
-  fun createProcess(commandLine: GeneralCommandLine): OSProcessHandler {
     val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).also {
       ElevationLogger.LOG.debug("Created process PID ${it.pid()}")
     }

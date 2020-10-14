@@ -2,15 +2,11 @@
 package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.runSuspendingAction
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import io.grpc.ManagedChannel
@@ -34,19 +30,9 @@ object ProcessMediatorDaemonLauncher {
           if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
         }
 
-      val daemonProcessHandler = OSProcessHandler.Silent(daemonCommandLine).apply {
-        addProcessListener(helloIpc)
-        addProcessListener(object : ProcessAdapter() {
-          override fun processTerminated(event: ProcessEvent) {
-            println("Daemon exited with code ${event.exitCode}")
-          }
-
-          override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-            print("Daemon [$outputType]: ${event.text}")
-          }
-        })
+      val daemonProcessHandler = helloIpc.createDaemonProcessHandler(daemonCommandLine).also {
+        it.startNotify()
       }
-      daemonProcessHandler.startNotify()
 
       val daemonHello = helloIpc.consumeDaemonHello()
 

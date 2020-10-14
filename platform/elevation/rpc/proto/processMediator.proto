@@ -12,6 +12,11 @@ service Daemon {
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
+// exchanged on startup before gRPC is up and running
+message DaemonHello {
+  uint32 port = 1;
+}
+
 service ProcessManager {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
 
