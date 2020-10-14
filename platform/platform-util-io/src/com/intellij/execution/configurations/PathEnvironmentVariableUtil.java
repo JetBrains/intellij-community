@@ -165,7 +165,7 @@ public final class PathEnvironmentVariableUtil {
   /**
    * Workaround for the problem with environment variables of macOS apps launched via GUI
    *
-   * @see EnvironmentUtil#getEnvironmentMap Javadoc for more info
+   * @see EnvironmentUtil#getEnvironmentMap
    */
   public static @NotNull String clarifyExePath(@NotNull String exePath) {
     if (SystemInfoRt.isMac && exePath.indexOf(File.separatorChar) == -1) {
