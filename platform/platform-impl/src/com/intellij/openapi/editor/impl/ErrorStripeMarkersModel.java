@@ -37,6 +37,11 @@ class ErrorStripeMarkersModel {
     myTreeForLines = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
   }
 
+  void dispose() {
+    myTree.dispose(myEditor.getDocument());
+    myTreeForLines.dispose(myEditor.getDocument());
+  }
+
   void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
     ContainerUtil.add(listener, myListeners, parent);
   }

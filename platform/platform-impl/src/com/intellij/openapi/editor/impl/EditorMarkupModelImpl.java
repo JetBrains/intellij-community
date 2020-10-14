@@ -793,6 +793,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void dispose() {
+    myErrorStripeMarkersModel.dispose();
     disposeErrorPanel();
 
     if (myErrorStripeRenderer instanceof Disposable) {
