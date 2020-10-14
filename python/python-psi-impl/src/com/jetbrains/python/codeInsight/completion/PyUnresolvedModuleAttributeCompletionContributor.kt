@@ -100,11 +100,11 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val project = parameters.position.project
         val attribute = result.prefixMatcher.prefix
         val qualifier = context.get(REFERENCE_QUALIFIER)
-        val qualifierString = qualifier.toString()
         val suggestedQualifiedNames = HashSet<String>()
 
         ProgressManager.checkCanceled()
-        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifier.append(attribute)))
+        val qualifiedName = qualifier.append(attribute)
+        val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
         PyModuleNameIndex.find(qualifier.lastComponent!!, project, true).asSequence()
           .filter { QualifiedNameFinder.findShortestImportableQName(it) == qualifier }
           .flatMap { it.iterateNames().asSequence() }
@@ -112,7 +112,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           .filterNot { it.name == null || it.name!!.startsWith('_') }
           .filter { attribute.isEmpty() || result.prefixMatcher.prefixMatches(it.name!!) }
           .mapNotNull {
-            val qualifiedNameToSuggest = "$qualifierString.${it.name}"
+            val qualifiedNameToSuggest = "$qualifier.${it.name}"
             if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
               LookupElementBuilder.create(it, qualifiedNameToSuggest)
                 .withIcon(it.getIcon(0))
@@ -128,7 +128,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         }
         val scope = PySearchUtilBase.excludeSdkTestsScope(project)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          qualifier, attribute, parameters.originalFile, scope,
+          qualifiedName, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {

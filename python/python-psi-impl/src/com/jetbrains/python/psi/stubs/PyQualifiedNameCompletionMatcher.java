@@ -36,13 +36,12 @@ public class PyQualifiedNameCompletionMatcher {
   private PyQualifiedNameCompletionMatcher() {
   }
 
-  public static void processMatchingExportedNames(@NotNull QualifiedName qualifierPattern,
-                                                  @NotNull String attributePattern,
+  public static void processMatchingExportedNames(@NotNull QualifiedName qualifiedNamePattern,
                                                   @NotNull PsiFile currentFile,
                                                   @NotNull GlobalSearchScope scope,
                                                   @NotNull Processor<? super ExportedName> processor) {
-    if (attributePattern.isEmpty() || qualifierPattern.getComponentCount() == 0) return;
-    QualifiedNameMatcher matcher = new QualifiedNameMatcher(qualifierPattern.append(attributePattern));
+    if (qualifiedNamePattern.getComponentCount() < 2) return;
+    QualifiedNameMatcher matcher = new QualifiedNameMatcher(qualifiedNamePattern);
     StubIndex stubIndex = StubIndex.getInstance();
     Project project = Objects.requireNonNull(scope.getProject());
 
@@ -86,7 +85,6 @@ public class PyQualifiedNameCompletionMatcher {
     }
     finally {
       if (LOG.isDebugEnabled()) {
-        String qualifiedNamePattern = qualifierPattern + "." + attributePattern;
         LOG.debug("Index lookup stats for '" + qualifiedNamePattern + "':\n" +
                   "Scanned keys: " + stats.scannedKeys + "\n" +
                   "Matched keys: " + stats.matchingKeys + "\n" +
