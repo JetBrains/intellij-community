@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
@@ -154,11 +153,9 @@ public final class GitVFSListener extends VcsVFSListener {
   @Override
   protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      final Set<File> filesToRefresh = new HashSet<>();
-
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
-        filesToRefresh.addAll(executeDeletion(root, files));
+        executeDeletion(root, files);
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
@@ -166,7 +163,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
       @Override
       public Collection<File> getFilesToRefresh() {
-        return filesToRefresh;
+        return Collections.emptySet();
       }
     });
   }
@@ -215,7 +212,7 @@ public final class GitVFSListener extends VcsVFSListener {
           //perform deletion
           for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
-            toRefresh.addAll(executeDeletion(toRemoveEntry.getKey(), paths));
+            executeDeletion(toRemoveEntry.getKey(), paths);
             dirtyPaths.addAll(paths);
           }
           //perform force move if needed
@@ -243,18 +240,9 @@ public final class GitVFSListener extends VcsVFSListener {
     GitFileUtils.addPaths(myProject, root, files, false, false);
   }
 
-  private Set<File> executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
+  private void executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
     throws VcsException {
     GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached", "-r");
-    Set<File> filesToRefresh = new HashSet<>();
-    File rootFile = new File(root.getPath());
-    for (FilePath p : files) {
-      for (File f = p.getIOFile(); f != null && !FileUtil.filesEqual(f, rootFile); f = f.getParentFile()) {
-        filesToRefresh.add(f);
-      }
-    }
-
-    return filesToRefresh;
   }
 
   private Set<File> executeForceMove(@NotNull VirtualFile root,
