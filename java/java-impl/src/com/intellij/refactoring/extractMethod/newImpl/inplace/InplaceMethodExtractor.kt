@@ -94,7 +94,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     Disposer.register(preview, Disposable { callNavigatableRange.dispose() })
     preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
 
-    val methodLines = findLines(document, method.textRange).trimTail(4)
+    val methodLines = findLines(document, method.textRange).trimToLength(4)
     val methodNavigatableRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
     Disposer.register(preview, Disposable { methodNavigatableRange.dispose() })
     preview.addPreview(methodLines) { navigate(project, file, methodNavigatableRange.endOffset) }
@@ -199,7 +199,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private fun enclosingTextRangeOf(start: PsiElement, end: PsiElement): TextRange = start.textRange.union(end.textRange)
 
-  private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
+  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
   private fun navigate(project: Project, file: VirtualFile, offset: Int) {
     val descriptor = OpenFileDescriptor(project, file, offset)

@@ -123,7 +123,8 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
   private fun findLinesArea(editor: Editor, lines: IntRange): Rectangle {
     val visibleArea = editor.scrollingModel.visibleArea
     val y = editor.logicalPositionToXY(LogicalPosition(lines.first, 0)).y
-    val height = lines.length * editor.lineHeight
+    val lineNumber = lines.last - lines.first + 1
+    val height = lineNumber * editor.lineHeight
     return Rectangle(visibleArea.x, y, visibleArea.width, height)
   }
 
