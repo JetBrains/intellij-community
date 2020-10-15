@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
-import com.intellij.CommonBundle
+import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -13,14 +13,21 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.YesNoCancelResult
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
+import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.CodeSmellDetector
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
@@ -30,7 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PairConsumer
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getWarningIcon
 
 private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
@@ -50,28 +57,16 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(myCheckinPanel, VcsBundle.message("before.checkin.standard.options.check.smells"), true,
+    BooleanCommitOption(myCheckinPanel, message("before.checkin.standard.options.check.smells"), true,
                         settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT)
 
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(myProject)
 
   private fun processFoundCodeSmells(codeSmells: List<CodeSmellInfo>, executor: CommitExecutor?): ReturnResult {
-    val errorCount = collectErrors(codeSmells)
-    val warningCount = codeSmells.size - errorCount
-    val virtualFiles = codeSmells.mapTo(mutableSetOf()) { FileDocumentManager.getInstance().getFile(it.document) }
     var commitButtonText = executor?.actionText ?: myCheckinPanel.commitActionName
     commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
-    val message = if (virtualFiles.size == 1) VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text",
-                                                                FileUtil.toSystemDependentName(
-                                                                  FileUtil.getLocationRelativeToUserHome(
-                                                                    virtualFiles.first()!!.path)), errorCount, warningCount)
-    else VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
-                           virtualFiles.size, errorCount, warningCount)
-    val answer = Messages.showYesNoCancelDialog(myProject,
-                                                message,
-                                                VcsBundle.message("code.smells.error.messages.tab.name"),
-                                                VcsBundle.message("code.smells.review.button"),
-                                                commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon())
+
+    val answer = askReviewCommitCancel(myProject, codeSmells, commitButtonText)
     if (answer == Messages.YES) {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells)
       return ReturnResult.CLOSE_WINDOW
@@ -85,13 +80,7 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
     if (DumbService.getInstance(myProject).isDumb) {
-      return if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
-                                                                          ApplicationNamesInfo.getInstance().productName),
-                                             VcsBundle.message("code.smells.error.indexing"),
-                                             VcsBundle.message("checkin.wait"), VcsBundle.message("checkin.commit"), null) == Messages.OK) {
-        ReturnResult.CANCEL
-      }
-      else ReturnResult.COMMIT
+      return if (confirmCommitInDumbMode(myProject)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
 
     return try {
@@ -102,14 +91,7 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
     }
     catch (e: Exception) {
       LOG.error(e)
-      if (Messages.showOkCancelDialog(myProject,
-                                      VcsBundle.message("checkin.code.analysis.failed.with.exception.name.message", e.javaClass.name,
-                                                        e.message),
-                                      VcsBundle.message("checkin.code.analysis.failed"), VcsBundle.message("checkin.commit"),
-                                      VcsBundle.message("checkin.cancel"), null) == Messages.OK) {
-        ReturnResult.COMMIT
-      }
-      else ReturnResult.CANCEL
+      if (confirmCommitWithCodeAnalysisFailure(myProject, e)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
   }
 
@@ -125,7 +107,7 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
     val codeSmells = Ref.create<List<CodeSmellInfo>>()
     val exception = Ref.create<Exception>()
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-    ProgressManager.getInstance().run(object : Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+    ProgressManager.getInstance().run(object : Task.Modal(myProject, message("checking.code.smells.progress.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         try {
           assert(myProject != null)
@@ -154,14 +136,43 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
     val codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files)
     return if (codeSmells.isNotEmpty()) processFoundCodeSmells(codeSmells, commitExecutor) else ReturnResult.COMMIT
   }
+}
 
-  companion object {
-    private fun collectErrors(codeSmells: List<CodeSmellInfo>): Int {
-      var result = 0
-      for (codeSmellInfo in codeSmells) {
-        if (codeSmellInfo.severity === HighlightSeverity.ERROR) result++
-      }
-      return result
-    }
+private fun confirmCommitInDumbMode(project: Project) =
+  !yesNo(message("code.smells.error.indexing"),
+         message("code.smells.error.indexing.message", ApplicationNamesInfo.getInstance().productName))
+    .icon(null)
+    .yesText(message("checkin.wait"))
+    .noText(message("checkin.commit"))
+    .ask(project)
+
+private fun confirmCommitWithCodeAnalysisFailure(project: Project, e: Exception) =
+  yesNo(message("checkin.code.analysis.failed"),
+        message("checkin.code.analysis.failed.with.exception.name.message", e.javaClass.name, e.message))
+    .icon(null)
+    .yesText(message("checkin.commit"))
+    .noText(message("checkin.cancel"))
+    .ask(project)
+
+@YesNoCancelResult
+private fun askReviewCommitCancel(project: Project, codeSmells: List<CodeSmellInfo>, @NlsContexts.Button commitActionText: String): Int =
+  yesNoCancel(message("code.smells.error.messages.tab.name"), getDescription(codeSmells))
+    .icon(getWarningIcon())
+    .yesText(message("code.smells.review.button"))
+    .noText(commitActionText)
+    .cancelText(getCancelButtonText())
+    .show(project)
+
+@DialogMessage
+private fun getDescription(codeSmells: List<CodeSmellInfo>): String {
+  val errorCount = codeSmells.count { it.severity == HighlightSeverity.ERROR }
+  val warningCount = codeSmells.size - errorCount
+  val virtualFiles = codeSmells.mapTo(mutableSetOf()) { FileDocumentManager.getInstance().getFile(it.document) }
+
+  if (virtualFiles.size == 1) {
+    val path = toSystemDependentName(getLocationRelativeToUserHome(virtualFiles.first()!!.path))
+    return message("before.commit.file.contains.code.smells.edit.them.confirm.text", path, errorCount, warningCount)
   }
+
+  return message("before.commit.files.contain.code.smells.edit.them.confirm.text", virtualFiles.size, errorCount, warningCount)
 }
