@@ -132,11 +132,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       MyEditorFactoryListener().install(this)
       onEverythingChanged()
 
-      val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
-      if (states.isNotEmpty()) {
-        ChangeListManager.getInstance(project).invokeAfterUpdate({ restoreTrackersForPartiallyChangedFiles(states) },
-                                                                 InvokeAfterUpdateMode.SILENT, null, null)
-      }
+      PartialLineStatusTrackerManagerState.restoreState(project)
     }
   }
 
@@ -777,8 +773,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
 
     override fun changeListAvailabilityChanged() {
-      updatePartialChangeListsAvailability()
-      updateTrackingSettings()
+      runInEdt(ModalityState.any()) {
+        updatePartialChangeListsAvailability()
+        updateTrackingSettings()
+      }
     }
   }
 
@@ -915,9 +913,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @RequiresEdt
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -934,7 +931,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   @RequiresEdt
-  private fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
+  internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
     runWriteAction {
       synchronized(LOCK) {
         if (isDisposed) return@runWriteAction

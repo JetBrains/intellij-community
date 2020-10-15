@@ -42,9 +42,10 @@ internal class GitStageManager(private val project: Project) : Disposable {
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
     }
-    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
     project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+    // Notify LSTM after CLM to let it save current partial changelists state
+    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
   }
 
   override fun dispose() {
