@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ide.CopyPasteManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink.CODE_OF_CONDUCT
@@ -14,6 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageO
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchToolWindowModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.asList
+import icons.PackageSearchIcons
 import java.awt.datatransfer.StringSelection
 import javax.swing.JPopupMenu
 
@@ -84,8 +84,8 @@ class PackagesSmartItemPopup(viewModel: PackageSearchToolWindowModel, private va
         // Encourage using Package Search website!
         links.remove(README)
         links.remove(CODE_OF_CONDUCT)
-        add(RiderUI.menuItem(PackageSearchBundle.message("packagesearch.ui.popup.show.online"), PackageSearchPluginIcons.Artifact) {
-            BrowserUtil.browse(PackageSearchBundle.message("packagesearch.wellknown.url.jb.packagesearch.details", meta.identifier))
+        add(RiderUI.menuItem(PackageSearchBundle.message("packagesearch.ui.popup.show.online"), PackageSearchIcons.Artifact) {
+          BrowserUtil.browse(PackageSearchBundle.message("packagesearch.wellknown.url.jb.packagesearch.details", meta.identifier))
         })
         addSeparator()
 

@@ -3,7 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Scm
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink
 
-internal fun extractScmUrl(scm: StandardV2Scm?): ScmUrl? {
+fun extractScmUrl(scm: StandardV2Scm?): ScmUrl? {
     if (scm == null) return null
 
     val (type, url) = when {
@@ -27,7 +27,7 @@ internal fun extractScmUrl(scm: StandardV2Scm?): ScmUrl? {
     return ScmUrl(url, type)
 }
 
-internal data class ScmUrl(val url: String, val type: Type) {
+data class ScmUrl(val url: String, val type: Type) {
 
     enum class Type(val linkKey: InfoLink) {
         GENERIC(InfoLink.SCM),

@@ -6,7 +6,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StackOverflowTag
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Author
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2GitHub
@@ -16,6 +15,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InfoLink.GITHUB
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import icons.PackageSearchIcons
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -140,11 +140,11 @@ class PackagesChosenInfoView {
         if (tags.isEmpty()) return
 
         linkComponents.addAll(tags.map {
-            createHyperlinkLabel(
-                PackageSearchBundle.message("packagesearch.ui.toolwindow.stackover.tagWithCount", it.tag, it.count),
-                PackageSearchBundle.message("packagesearch.wellknown.url.stackoverflow", it.tag),
-                PackageSearchPluginIcons.StackOverflow
-            )
+          createHyperlinkLabel(
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.stackover.tagWithCount", it.tag, it.count),
+            PackageSearchBundle.message("packagesearch.wellknown.url.stackoverflow", it.tag),
+            PackageSearchIcons.StackOverflow
+          )
         })
     }
 

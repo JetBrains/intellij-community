@@ -19,43 +19,36 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/pkgs-tests" />
       <excludeFolder url="file://$MODULE_DIR$/http_specs" />
+      <excludeFolder url="file://$MODULE_DIR$/pkgs-tests" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
+      <library name="arrow-annotations" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.arrow-kt:arrow-annotations:0.11.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="arrow-core-data" type="repository">
-        <properties maven-id="io.arrow-kt:arrow-core-data:0.11.0" />
+        <properties include-transitive-deps="false" maven-id="io.arrow-kt:arrow-core-data:0.11.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kindedj/kindedj/1.1.0/kindedj-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.4.0/kotlin-stdlib-jdk8-1.4.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.0/kotlin-stdlib-1.4.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.0/kotlin-stdlib-common-1.4.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.4.0/kotlin-stdlib-jdk7-1.4.0.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kindedj/kindedj/1.1.0/kindedj-1.1.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.4.0/kotlin-stdlib-jdk8-1.4.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.0/kotlin-stdlib-1.4.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.0/kotlin-stdlib-common-1.4.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.4.0/kotlin-stdlib-jdk7-1.4.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kindedj/kindedj/1.1.0/kindedj-1.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.4.0/kotlin-stdlib-jdk8-1.4.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.0/kotlin-stdlib-1.4.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.0/kotlin-stdlib-common-1.4.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.4.0/kotlin-stdlib-jdk7-1.4.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -67,7 +60,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
-    <orderEntry type="library" name="KotlinPlugin" level="project" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
