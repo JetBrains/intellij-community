@@ -366,13 +366,15 @@ public final class PsiLiteralUtil {
   }
 
   private static int parseEscapedBackSlash(@NotNull String str, int idx) {
-    do {
-      idx++;
-    } while (idx < str.length() && str.charAt(idx) == 'u');
-    if (idx + 3 >= str.length()) return -1;
+    int next = idx + 1;
+    if (next >= str.length() || str.charAt(next) != 'u') return -1;
+    while (str.charAt(next) == 'u') {
+      next++;
+    }
+    if (next + 3 >= str.length()) return -1;
     try {
-      int code = Integer.parseInt(str.substring(idx, idx + 4), 16);
-      if (code == '\\') return idx + 4;
+      int code = Integer.parseInt(str.substring(next, next + 4), 16);
+      if (code == '\\') return next + 4;
     }
     catch (NumberFormatException ignored) {
     }
@@ -536,11 +538,9 @@ public final class PsiLiteralUtil {
       return -1;
     }
     if (s.charAt(index - 4) != 'u') return -1;
-    index -= 4;
+    index -= 5;
     // 'u' can appear multiple times
-    do {
-      index--;
-    } while (index >= 0 && s.charAt(index) == 'u');
+    while (index >= 0 && s.charAt(index) == 'u') index--;
     if (index < 0 || s.charAt(index) != '\\') return -1;
     return index;
   }
@@ -600,10 +600,7 @@ public final class PsiLiteralUtil {
       // like \u0020
       char c1 = line.charAt(i++);
       if (c1 == 'u') {
-        do {
-          i++;
-        }
-        while (i < line.length() && line.charAt(i) == 'u');
+        while (i < line.length() && line.charAt(i) == 'u') i++;
         i += 4;
       } else if (c1 >= '0' && c1 <= '7') { // octal escape
         char c2 = i < line.length() ? line.charAt(i) : 0;
