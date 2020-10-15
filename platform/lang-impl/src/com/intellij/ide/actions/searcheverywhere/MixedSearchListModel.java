@@ -127,6 +127,8 @@ class MixedSearchListModel extends SearchListModel {
         return;
       }
     }
+
+    if (myMaxFrozenIndex >= getSize()) myMaxFrozenIndex = getSize() - 1;
   }
 
   @Override
@@ -158,5 +160,11 @@ class MixedSearchListModel extends SearchListModel {
     hasMoreContributors.clear();
     myMaxFrozenIndex = -1;
     super.clear();
+  }
+
+  @Override
+  public void expireResults() {
+    super.expireResults();
+    myMaxFrozenIndex = -1;
   }
 }
