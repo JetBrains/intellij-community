@@ -757,7 +757,7 @@
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
