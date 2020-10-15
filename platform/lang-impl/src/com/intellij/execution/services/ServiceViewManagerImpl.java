@@ -405,6 +405,16 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return result;
   }
 
+  @Override
+  public @NotNull Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () ->
+      promiseFindView(contributorClass, result,
+                      serviceView -> serviceView.extract(service, contributorClass),
+                      null)));
+    return result;
+  }
+
   @NotNull
   Promise<Void> select(@NotNull VirtualFile virtualFile) {
     AsyncPromise<Void> result = new AsyncPromise<>();
