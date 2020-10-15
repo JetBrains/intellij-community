@@ -56,7 +56,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   private volatile List<TextRange> myRanges = Collections.emptyList();
   private volatile List<IndentGuideDescriptor> myDescriptors = Collections.emptyList();
 
-  private static final CustomHighlighterRenderer RENDERER = (editor, highlighter, g) -> {
+  public static final CustomHighlighterRenderer RENDERER = (editor, highlighter, g) -> {
     int startOffset = highlighter.getStartOffset();
     final Document doc = highlighter.getDocument();
     if (startOffset >= doc.getTextLength()) return;
