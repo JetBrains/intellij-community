@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -46,6 +46,7 @@ public class JBZipFile implements Closeable {
   private static final int HASH_SIZE = 509;
   private static final int NIBLET_MASK = 0x0f;
   private static final int BYTE_SHIFT = 8;
+  private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * A list of entries in the file.
@@ -71,6 +72,7 @@ public class JBZipFile implements Closeable {
 
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
+  private final boolean myIsReadonly;
 
   /**
    * Opens the given file for reading, assuming the platform's
@@ -80,7 +82,7 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, StandardCharsets.UTF_8);
+    this(f, DEFAULT_CHARSET);
   }
 
   /**
@@ -91,7 +93,19 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), StandardCharsets.UTF_8);
+    this(new File(name), DEFAULT_CHARSET);
+  }
+
+  /**
+   * Opens the given file for reading, assuming the platform's
+   * native encoding for file names.
+   *
+   * @param f        file of the archive.
+   * @param readonly true to open file as readonly
+   * @throws IOException if an error occurs while reading the file.
+   */
+  public JBZipFile(@NotNull File f, boolean readonly) throws IOException {
+    this(f, DEFAULT_CHARSET, readonly);
   }
 
   /**
@@ -118,9 +132,31 @@ public class JBZipFile implements Closeable {
     this(f, Charset.forName(encoding));
   }
 
+  /**
+   * Opens the given file for reading, assuming the specified
+   * encoding for file names.
+   *
+   * @param f        the archive.
+   * @param encoding the encoding to use for file names
+   * @throws IOException if an error occurs while reading the file.
+   */
   public JBZipFile(File f, @NotNull Charset encoding) throws IOException {
+    this(f, encoding, false);
+  }
+
+  /**
+   * Opens the given file for reading, assuming the specified
+   * encoding for file names.
+   *
+   * @param f        the archive.
+   * @param encoding the encoding to use for file names
+   * @param readonly true to open file as readonly
+   * @throws IOException if an error occurs while reading the file.
+   */
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
     this.encoding = encoding;
-    archive = new RandomAccessFile(f, "rw");
+    myIsReadonly = readonly;
+    archive = new RandomAccessFile(f, readonly ? "r" : "rw");
     try {
       if (archive.length() > 0) {
         populateFromCentralDirectory();
@@ -129,7 +165,7 @@ public class JBZipFile implements Closeable {
         getOutputStream(); // Ensure we'll write central directory when closed even if no single entry created.
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       try {
         archive.close();
       }
@@ -138,6 +174,13 @@ public class JBZipFile implements Closeable {
       }
       throw e;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "JBZipFile{" +
+           "readonly=" + myIsReadonly +
+           '}';
   }
 
   /**
@@ -459,6 +502,8 @@ public class JBZipFile implements Closeable {
   }
 
   JBZipOutputStream getOutputStream() throws IOException {
+    if (myIsReadonly) throw new IOException("Archive " + this + " is an empty file");
+
     if (myOutputStream == null) {
       myOutputStream = new JBZipOutputStream(this, currentCfdOffset);
     }
