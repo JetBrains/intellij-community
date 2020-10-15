@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -13,6 +12,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
+import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
@@ -20,19 +21,6 @@ import git4idea.config.GitVcsApplicationSettings
 
 internal class GitStageManager(private val project: Project) : Disposable {
   fun installListeners() {
-    val connection = project.messageBus.connect(this)
-    connection.subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
-      override fun settingsChanged() {
-        onAvailabilityChanged()
-        ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    })
-    connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
-      override fun settingsChanged() {
-        onAvailabilityChanged()
-      }
-    })
     stageLocalChangesRegistryOption().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
@@ -51,6 +39,8 @@ internal class GitStageManager(private val project: Project) : Disposable {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
   }
 
   override fun dispose() {
@@ -60,14 +50,28 @@ internal class GitStageManager(private val project: Project) : Disposable {
     @JvmStatic
     fun getInstance(project: Project): GitStageManager = project.service()
   }
-}
 
-internal class GitStageStartupActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    if (isStagingAreaAvailable(project)) {
-      GitStageTracker.getInstance(project).scheduleUpdateAll()
+  internal class GitStageStartupActivity : VcsStartupActivity {
+    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
+
+    override fun runActivity(project: Project) {
+      if (isStagingAreaAvailable(project)) {
+        GitStageTracker.getInstance(project).scheduleUpdateAll()
+      }
+      getInstance(project).installListeners()
     }
-    GitStageManager.getInstance(project).installListeners()
+  }
+
+  class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
+    override fun settingsChanged() {
+      getInstance(project).onAvailabilityChanged()
+    }
+  }
+
+  class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
+    override fun settingsChanged() {
+      getInstance(project).onAvailabilityChanged()
+    }
   }
 }
 
