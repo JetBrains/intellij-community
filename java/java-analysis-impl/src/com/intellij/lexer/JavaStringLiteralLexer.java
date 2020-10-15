@@ -51,7 +51,7 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
       }
     }
     else if (c == '\\' && i + 1 < myBufferEnd && myBuffer.charAt(i + 1) == 'u') {
-      i++;
+      i += 2;
       while (i < myBufferEnd && myBuffer.charAt(i) == 'u') i++;
       return parseUnicodeDigits(i);
     }
