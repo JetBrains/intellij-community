@@ -38,8 +38,6 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
 
-  private static final FileAttributes.CaseSensitivity predefinedLinuxCaseSensitivity = getPredefinedLinuxCaseSensitivity();
-
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
   interface Mediator {
@@ -680,21 +678,8 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  @Nullable
-  private static FileAttributes.CaseSensitivity getPredefinedLinuxCaseSensitivity() {
-    String sensitivity = System.getProperty("idea.linux.case.sensitivity");
-    if ("sensitive".equals(sensitivity)) {
-      return FileAttributes.CaseSensitivity.SENSITIVE;
-    }
-    else if ("insensitive".equals(sensitivity)) {
-      return FileAttributes.CaseSensitivity.INSENSITIVE;
-    }
-    return null;
-  }
-
   @NotNull
   private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
-    if (predefinedLinuxCaseSensitivity != null) return predefinedLinuxCaseSensitivity;
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
@@ -711,7 +696,7 @@ public final class FileSystemUtil {
           return FileAttributes.CaseSensitivity.INSENSITIVE;
         }
         // Ext*, F2FS
-        if (fs == 0xef53 || fs == 0xf2f52010) {
+        if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
           if (E2P.INSTANCE.fgetflags(path, flags) == 0) {
             if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
@@ -721,6 +706,10 @@ public final class FileSystemUtil {
           }
         }
       }
+    }
+    catch (UnsatisfiedLinkError e) {
+      ourLibExt2FsPresent = false;
+      LOG.warn(e);
     }
     catch (Throwable t) {
       LOG.warn("path: " + path, t);
@@ -734,6 +723,8 @@ public final class FileSystemUtil {
 
     int statfs(String path, Memory buf);
   }
+
+  private static volatile boolean ourLibExt2FsPresent = true;
 
   interface E2P extends Library {
     E2P INSTANCE = Native.load("e2p", E2P.class);
