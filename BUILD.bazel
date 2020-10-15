@@ -1,9 +1,0 @@
-filegroup(
-    name = "licenses",
-    srcs = glob([
-        "license/**",
-        "LICENSE.txt",
-        "NOTICE.txt",
-    ]),
-    visibility = ["//visibility:public"],
-)
