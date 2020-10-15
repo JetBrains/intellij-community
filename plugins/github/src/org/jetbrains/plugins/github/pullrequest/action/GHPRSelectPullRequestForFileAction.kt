@@ -12,9 +12,9 @@ import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import java.util.function.Supplier
 
-class GHPRViewFilePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.select.action"),
-                                                      Supplier<String?> { null },
-                                                      AllIcons.General.Locate) {
+class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.select.action"),
+                                                           Supplier<String?> { null },
+                                                           AllIcons.General.Locate) {
 
   override fun update(e: AnActionEvent) {
     val project = e.project

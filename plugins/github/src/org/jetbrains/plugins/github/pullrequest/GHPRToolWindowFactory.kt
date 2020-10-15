@@ -12,8 +12,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
-import org.jetbrains.plugins.github.pullrequest.action.GHPRViewFilePullRequestAction
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
@@ -21,10 +21,11 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabC
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import javax.swing.JPanel
 
+
 class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
-    setTitleActions(listOf(GHPRViewFilePullRequestAction()))
+    setTitleActions(listOf(GHPRSelectPullRequestForFileAction()))
     setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
     component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     with(contentManager) {
