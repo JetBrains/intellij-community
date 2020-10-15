@@ -4,4 +4,4 @@
 # ------------------------------------------------------
 
 IDE_BIN_HOME="$(dirname "$(realpath "$0")")"
-exec "$IDE_BIN_HOME/idea.sh" -e "$@"
+exec "$IDE_BIN_HOME/__script_name__" -e "$@"
