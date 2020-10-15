@@ -53,6 +53,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
   private var maxWidth = MAX_WIDTH
   private var showCloseShortcut = false
   private var showCount = 1
+  private var chainFunction: () -> Unit = {}
 
   var canShow : (String) -> Boolean = { PropertiesComponent.getInstance().getInt(it, showCount) > 0 }
   var onGotIt : (String) -> Unit = {
@@ -168,6 +169,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
             balloon = createAndShow(position, point())
             it.component.putClientProperty(PROPERTY_PREFIX, balloon)
           }
+          else {
+            chainFunction()
+          }
         }
       }
 
@@ -183,7 +187,14 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     val balloon = (point.component as JComponent).getClientProperty(PROPERTY_PREFIX)
     return if (balloon == null && canShow("$PROPERTY_PREFIX.$id"))
       createAndShow(position, point).also { (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, it) }
-    else null
+    else {
+      chainFunction()
+      null
+    }
+  }
+
+  fun showAfter(tooltip: GotItTooltip, position: Balloon.Position, point: () -> RelativePoint) {
+    tooltip.chainFunction = { showAt(position, point()) }
   }
 
   private fun createAndShow(position: Balloon.Position, point: RelativePoint) : Balloon = createBalloon().also {
@@ -196,6 +207,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
           HelpTooltip.setMasterPopupOpenCondition(point.component, null)
           (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
           Disposer.dispose(dispatcherDisposable)
+          chainFunction()
         }
       })
 
