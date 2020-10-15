@@ -562,7 +562,8 @@ public abstract class VcsVFSListener implements Disposable {
     ApplicationManager.getApplication()
       .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
                                                                    singleFilePromptTemplate, option)));
-    return ref.get();
+    Collection<FilePath> selectedFilePaths = ref.get();
+    return selectedFilePaths != null ? selectedFilePaths : emptyList();
   }
 
   protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
