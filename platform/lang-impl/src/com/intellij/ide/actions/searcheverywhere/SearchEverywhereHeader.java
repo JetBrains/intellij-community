@@ -147,16 +147,18 @@ public class SearchEverywhereHeader {
     List<SETab> res = new ArrayList<>();
 
     if (myProject != null && !projectContributors.isEmpty()) {
+      PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(myProject, projectContributors);
       List<AnAction> projectActions = Arrays.asList(
         new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
-        new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, projectContributors), myScopeChangedCallback)
+        new SearchEverywhereUI.FiltersAction(projectContributorsFilter, myScopeChangedCallback)
       );
-      res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"), projectContributors,
-                        projectActions));
+      res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"),
+                        projectContributors, projectActions, projectContributorsFilter));
 
     }
 
     if (!ideContributors.isEmpty()) {
+      PersistentSearchEverywhereContributorFilter<String> ideContributorsFilter = createContributorsFilter(myProject, ideContributors);
       List<AnAction> ideActions = Arrays.asList(
         new CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
           private boolean everywhere;
@@ -176,10 +178,10 @@ public class SearchEverywhereHeader {
             myScopeChangedCallback.run();
           }
         },
-        new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, ideContributors), myScopeChangedCallback)
+        new SearchEverywhereUI.FiltersAction(ideContributorsFilter, myScopeChangedCallback)
       );
       res.add(createTab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
-                        ideContributors, ideActions));
+                        ideContributors, ideActions, ideContributorsFilter));
     }
 
     return res;
@@ -194,6 +196,7 @@ public class SearchEverywhereHeader {
         myScopeChangedCallback.run();
       };
       String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
+      PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(myProject, contributors);
       List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
         final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
         @Override
@@ -211,10 +214,10 @@ public class SearchEverywhereHeader {
           });
           onChanged.run();
         }
-      }, new SearchEverywhereUI.FiltersAction(createContributorsFilter(myProject, contributors), onChanged));
+      }, new SearchEverywhereUI.FiltersAction(filter, onChanged));
       SETab allTab = createTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                                IdeBundle.message("searcheverywhere.allelements.tab.name"),
-                               contributors, actions);
+                               contributors, actions, filter);
       res.add(allTab);
     }
 
@@ -308,8 +311,10 @@ public class SearchEverywhereHeader {
   }
 
   private SETab createTab(@NonNls @NotNull String id, @NlsContexts.Label @NotNull String name,
-                             @NotNull List<? extends SearchEverywhereContributor<?>> contributors, List<AnAction> actions) {
-    SETab tab = new SETab(id, name, contributors, actions);
+                          @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
+                          List<AnAction> actions,
+                          @Nullable PersistentSearchEverywhereContributorFilter<String> filter) {
+    SETab tab = new SETab(id, name, contributors, actions, filter);
 
     @NlsSafe String shortcut = myShortcutSupplier.apply(tab.getID());
     if (shortcut != null) {
@@ -331,8 +336,8 @@ public class SearchEverywhereHeader {
   }
 
   private SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
-    return createTab(contributor.getSearchProviderId(), contributor.getGroupName(),
-                  Collections.singletonList(contributor), contributor.getActions(onChanged));
+    return createTab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
+                     contributor.getActions(onChanged), null);
   }
 
   public static class SETab extends JLabel {
@@ -340,12 +345,17 @@ public class SearchEverywhereHeader {
     private final @NotNull List<SearchEverywhereContributor<?>> contributors;
     private final List<AnAction> actions;
     private final SearchEverywhereToggleAction everywhereAction;
+    private final @Nullable PersistentSearchEverywhereContributorFilter<String> myContributorsFilter;
 
     private boolean isSelected = false;
 
-    public SETab(@NonNls @NotNull String id, @NlsContexts.Label @NotNull String name,
-                  @NotNull List<? extends SearchEverywhereContributor<?>> contributors, List<AnAction> actions) {
+    public SETab(@NonNls @NotNull String id,
+                 @NlsContexts.Label @NotNull String name,
+                 @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
+                 List<AnAction> actions,
+                 @Nullable PersistentSearchEverywhereContributorFilter<String> filter) {
       super(name);
+      myContributorsFilter = filter;
       Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
       setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
 
@@ -376,7 +386,9 @@ public class SearchEverywhereHeader {
 
     @NotNull
     public List<SearchEverywhereContributor<?>> getContributors() {
-      return contributors;
+      if (myContributorsFilter == null) return contributors;
+
+      return ContainerUtil.filter(contributors, contributor -> myContributorsFilter.isSelected(contributor.getSearchProviderId()));
     }
 
     @Override
