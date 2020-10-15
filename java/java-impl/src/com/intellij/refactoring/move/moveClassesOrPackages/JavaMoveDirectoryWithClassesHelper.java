@@ -3,7 +3,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -114,28 +113,26 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
         PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(moveDirUsage.getSourceDirectory());
         if (moduleDescriptor == null) continue;
 
-        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(moveDirUsage.getSourceDirectory().getProject());
-        String oldPackageName = fileIndex.getPackageNameByDirectory(moveDirUsage.getSourceDirectory().getVirtualFile());
-        if (oldPackageName == null) continue;
-        String newPackageName = fileIndex.getPackageNameByDirectory(moveDirUsage.getTargetDirectory().getVirtualFile());
-        if (newPackageName == null) continue;
+        JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
+        PsiPackage oldPackage = directoryService.getPackage(moveDirUsage.getSourceDirectory());
+        if (oldPackage == null) continue;
+        PsiPackage newPackage = directoryService.getPackage(moveDirUsage.getTargetDirectory());
+        if (newPackage == null) continue;
 
-        renamePackageStatements(moduleDescriptor.getExports(), moveDirUsage.getTargetDirectory().getProject(), oldPackageName, newPackageName);
-        renamePackageStatements(moduleDescriptor.getOpens(), moveDirUsage.getTargetDirectory().getProject(), oldPackageName, newPackageName);
+        renamePackageStatements(moduleDescriptor.getExports(), oldPackage, newPackage);
+        renamePackageStatements(moduleDescriptor.getOpens(), oldPackage, newPackage);
       }
     }
   }
 
   private static void renamePackageStatements(@NotNull Iterable<PsiPackageAccessibilityStatement> packageStatements,
-                                              @NotNull Project project,
-                                              @NotNull String oldPackageName,
-                                              @NotNull String newPackageName) {
-    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
+                                              @NotNull PsiPackage oldPackage,
+                                              @NotNull PsiPackage newPackage) {
     for (PsiPackageAccessibilityStatement exportStatement : packageStatements) {
-      if (!oldPackageName.equals(exportStatement.getPackageName())) continue;
       PsiJavaCodeReferenceElement packageReference = exportStatement.getPackageReference();
       if (packageReference == null) continue;
-      packageReference.replace(parserFacade.createReferenceFromText(newPackageName, exportStatement));
+      if (!oldPackage.equals(packageReference.resolve())) continue;
+      packageReference.bindToElement(newPackage);
       break;
     }
   }
