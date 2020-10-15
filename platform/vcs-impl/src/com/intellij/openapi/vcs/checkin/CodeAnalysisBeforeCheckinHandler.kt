@@ -43,7 +43,7 @@ private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    CodeAnalysisBeforeCheckinHandler(panel.project, panel)
+    CodeAnalysisBeforeCheckinHandler(panel)
 }
 
 /**
@@ -52,35 +52,20 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
  *
  * @author lesya
  */
-class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
-                                       private val myCheckinPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+  private val project: Project get() = commitPanel.project
+  private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
+
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(myCheckinPanel, message("before.checkin.standard.options.check.smells"), true,
+    BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
                         settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT)
-
-  private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(myProject)
-
-  private fun processFoundCodeSmells(codeSmells: List<CodeSmellInfo>, executor: CommitExecutor?): ReturnResult {
-    var commitButtonText = executor?.actionText ?: myCheckinPanel.commitActionName
-    commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
-
-    val answer = askReviewCommitCancel(myProject, codeSmells, commitButtonText)
-    if (answer == Messages.YES) {
-      CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells)
-      return ReturnResult.CLOSE_WINDOW
-    }
-    return if (answer == Messages.CANCEL) {
-      ReturnResult.CANCEL
-    }
-    else ReturnResult.COMMIT
-  }
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
-    if (DumbService.getInstance(myProject).isDumb) {
-      return if (confirmCommitInDumbMode(myProject)) ReturnResult.COMMIT else ReturnResult.CANCEL
+    if (DumbService.getInstance(project).isDumb) {
+      return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
 
     return try {
@@ -91,23 +76,38 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
     }
     catch (e: Exception) {
       LOG.error(e)
-      if (confirmCommitWithCodeAnalysisFailure(myProject, e)) ReturnResult.COMMIT else ReturnResult.CANCEL
+      if (confirmCommitWithCodeAnalysisFailure(project, e)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
   }
 
   private fun runCodeAnalysis(commitExecutor: CommitExecutor?): ReturnResult {
-    val files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.virtualFiles, myProject)
+    val files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
     return if (files.size <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
       runCodeAnalysisNew(commitExecutor, files)
     }
     else runCodeAnalysisOld(commitExecutor, files)
   }
 
+  private fun processFoundCodeSmells(codeSmells: List<CodeSmellInfo>, executor: CommitExecutor?): ReturnResult {
+    var commitButtonText = executor?.actionText ?: commitPanel.commitActionName
+    commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
+
+    val answer = askReviewCommitCancel(project, codeSmells, commitButtonText)
+    if (answer == Messages.YES) {
+      CodeSmellDetector.getInstance(project).showCodeSmellErrors(codeSmells)
+      return ReturnResult.CLOSE_WINDOW
+    }
+    return if (answer == Messages.CANCEL) {
+      ReturnResult.CANCEL
+    }
+    else ReturnResult.COMMIT
+  }
+
   private fun runCodeAnalysisNew(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
     val codeSmells = Ref.create<List<CodeSmellInfo>>()
     val exception = Ref.create<Exception>()
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-    ProgressManager.getInstance().run(object : Task.Modal(myProject, message("checking.code.smells.progress.title"), true) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    ProgressManager.getInstance().run(object : Task.Modal(project, message("checking.code.smells.progress.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         try {
           assert(myProject != null)
@@ -133,7 +133,7 @@ class CodeAnalysisBeforeCheckinHandler(private val myProject: Project,
   }
 
   private fun runCodeAnalysisOld(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
-    val codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files)
+    val codeSmells = CodeSmellDetector.getInstance(project).findCodeSmells(files)
     return if (codeSmells.isNotEmpty()) processFoundCodeSmells(codeSmells, commitExecutor) else ReturnResult.COMMIT
   }
 }
