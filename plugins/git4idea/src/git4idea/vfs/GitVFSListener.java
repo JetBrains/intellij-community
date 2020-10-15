@@ -127,11 +127,6 @@ public final class GitVFSListener extends VcsVFSListener {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
       }
-
-      @Override
-      public Collection<File> getFilesToRefresh() {
-        return Collections.emptyList();
-      }
     });
   }
 
@@ -160,11 +155,6 @@ public final class GitVFSListener extends VcsVFSListener {
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
-      }
-
-      @Override
-      public Collection<File> getFilesToRefresh() {
-        return Collections.emptySet();
       }
     });
   }
@@ -307,14 +297,12 @@ public final class GitVFSListener extends VcsVFSListener {
             GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
           }
         }
-        RefreshVFsSynchronously.refreshFiles(executor.getFilesToRefresh());
       }
     });
   }
 
   private interface LongOperationPerRootExecutor {
     void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException;
-    Collection<File> getFilesToRefresh();
   }
 
   @TestOnly
