@@ -74,7 +74,8 @@ public class VcsGeneralConfigurationConfigurable implements SearchableConfigurab
 
   @Override
   public void disposeUIResources() {
-    Disposer.dispose(myPanel);
+    if (myPanel != null) Disposer.dispose(myPanel);
+
     myPanel = null;
   }
 
