@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -29,7 +30,9 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   @Override
   protected synchronized void onError() {
     super.onError();
+    MavenLog.LOG.debug("MavenIndexerWrapper on error:");
     for (int each : myDataMap.keys()) {
+      MavenLog.LOG.debug("clear remote id for " + each);
       myDataMap.get(each).remoteId = -1;
     }
   }
@@ -41,6 +44,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
                                       @NotNull final File indexDir) throws MavenServerIndexerException {
     IndexData data = new IndexData(indexId, repositoryId, file, url, indexDir);
     final int localId = System.identityHashCode(data);
+    MavenLog.LOG.debug("addIndex " + localId);
     myDataMap.put(localId, data);
 
     perform(() -> getRemoteId(localId));
@@ -49,6 +53,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   public synchronized void releaseIndex(int localId) throws MavenServerIndexerException {
+    MavenLog.LOG.debug("releaseIndex " + localId);
     IndexData data = myDataMap.remove(localId);
     if (data == null) {
       MavenLog.LOG.warn("index " + localId + " not found");
@@ -122,7 +127,10 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
     IndexData result = myDataMap.get(localId);
-    MavenLog.LOG.assertTrue(result != null, "index " + localId + " not found");
+    if(result == null) {
+      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + Arrays.asList(myDataMap.keys()));
+    }
+
 
     if (result.remoteId == -1) {
       result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir,
