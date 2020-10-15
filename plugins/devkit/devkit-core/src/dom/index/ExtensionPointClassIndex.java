@@ -27,6 +27,7 @@ import org.jetbrains.idea.devkit.dom.With;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -115,12 +116,13 @@ public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList
   }
 
   public static List<ExtensionPoint> getExtensionPointsByClass(Project project, PsiClass psiClass, GlobalSearchScope scope) {
+    final String key = ClassUtil.getJVMClassName(psiClass);
+    if (key == null) return Collections.emptyList();
+
     List<ExtensionPoint> result = new SmartList<>();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final DomManager domManager = DomManager.getDomManager(project);
 
-    final String key = ClassUtil.getJVMClassName(psiClass);
-    assert key != null : psiClass;
     FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
       for (Integer integer : value) {
         result.add(ExtensionPointIndex.getExtensionPointDom(psiManager, domManager, file, integer));
