@@ -599,45 +599,34 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
-def _series_to_str(s, max_items, show_index=True):
+def _series_to_str(s, max_items):
     res = []
-    i = 0
+    s = s[:max_items]
     for item in s.iteritems():
         # item: (index, value)
-        if show_index:
-            res.append(str(item))
-        else:
-            res.append(str(item[1]))
-        i += 1
-        if i > max_items:
-            break
+        res.append(str(item))
     return ' '.join(res)
 
 
-def _df_to_str(df, max_items, rows_sep=', '):
+def _df_to_str(value):
+    # Avoid using df.iteritems() or df.values[i], because it works very slow for large data frames
+    # df.__str__() is already optimised and works fast enough
     res = []
-    for c in df.columns:
-        res.append(str(c))
-    rows = []
-    i = 0
-    for item in df.iterrows():
-        # item: (index, Series)
-        ind = "[%s: " % item[0]
-        values = _series_to_str(item[1], max_items, show_index=False)
-        rows.append(ind + values + "]")
-        i += item[1].size
-        if i > max_items:
-            break
-    res.append(rows_sep.join(rows))
+    rows = value.split('\n')
+    for (i, r) in enumerate(rows):
+        if i == 0:
+            res.append(r.strip())
+        else:
+            res.append(f"[{r}]")
     return ' '.join(res)
 
 
-def pandas_to_str(df, type_name, max_items):
+def pandas_to_str(df, type_name, str_value, max_items):
     try:
         if type_name == "Series":
             return _series_to_str(df, max_items)
         elif type_name == "DataFrame":
-            return _df_to_str(df, max_items)
+            return _df_to_str(str_value)
         else:
             return str(df)
     except Exception as e:

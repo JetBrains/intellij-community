@@ -334,7 +334,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
         pass
 
     if is_pandas_container(type_qualifier, typeName, v):
-        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+        value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
     try:
