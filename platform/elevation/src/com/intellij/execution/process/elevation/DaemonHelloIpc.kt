@@ -2,7 +2,10 @@
 package com.intellij.execution.process.elevation
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.*
+import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Key
@@ -17,7 +20,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.WRITE
-import java.util.concurrent.CopyOnWriteArrayList
 
 internal interface DaemonHelloIpc : Closeable {
   fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine): GeneralCommandLine
@@ -36,9 +38,7 @@ internal interface DaemonHelloIpc : Closeable {
   override fun close()
 }
 
-internal abstract class AbstractInputStreamDaemonHelloIpc : DaemonHelloIpc, ProcessAdapter() {
-
-  private val cleanupList = CopyOnWriteArrayList<Closeable>()
+internal abstract class AbstractInputStreamDaemonHelloIpc : MultiCloseable(), DaemonHelloIpc, ProcessListener {
 
   final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return createProcessHandler(daemonCommandLine).also {
@@ -60,31 +60,17 @@ internal abstract class AbstractInputStreamDaemonHelloIpc : DaemonHelloIpc, Proc
 
   protected abstract fun <R> readAndClose(doRead: (InputStream) -> R): R
 
+  override fun startNotified(event: ProcessEvent) = Unit
+
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
     ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text}")
   }
 
+  override fun processWillTerminate(event: ProcessEvent, willBeDestroyed: Boolean) = Unit
+
   override fun processTerminated(event: ProcessEvent) {
     ElevationLogger.LOG.info("Daemon process terminated with exit code ${event.exitCode}")
     close()
-  }
-
-  protected fun registerCloseable(closeable: Closeable) {
-    cleanupList += closeable
-  }
-
-  override fun close() {
-    var exception: Exception? = null
-    for (closeable in cleanupList.reversed()) {
-      try {
-        closeable.close()
-      }
-      catch (e: Exception) {
-        exception?.let { e.addSuppressed(it) }
-        exception = e
-      }
-    }
-    exception?.let { throw it }
   }
 }
 
