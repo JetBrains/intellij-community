@@ -19,8 +19,7 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   }
 
   protected open fun expandAll(tree: JTree) {
-    TreeUtil.expandAll(tree)
-    showSelectionCentered(tree)
+    TreeUtil.promiseExpandAll(tree).onSuccess { showSelectionCentered(tree) }
   }
 
 
