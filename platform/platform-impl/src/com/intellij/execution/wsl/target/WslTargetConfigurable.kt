@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.layout.*
@@ -19,15 +20,12 @@ class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration) :
 
   override fun createPanel(): DialogPanel = panel {
     row(label = IdeBundle.message("wsl.linux.distribution.label")) {
-      val model = CollectionComboBoxModel(ArrayList(WSLUtil.getAvailableDistributions()))
-      val comboBox: ComboBox<WSLDistribution?> = ComboBox<WSLDistribution?>()
-      comboBox.model = model
-      comboBox.selectedItem
-      comboBox.renderer = WslDistributionRenderer()
-      comboBox.selectedItem = config.distribution
+      val comboBox: ComboBox<Ref<WSLDistribution?>> = createComboBox()
       comboBox().withBinding(
-        { c -> c.selectedItem as? WSLDistribution },
-        { c, v -> c.selectedItem = v },
+        { c ->
+          (c.selectedItem as? Ref<*>)?.get() as? WSLDistribution
+        },
+        { c, v -> c.selectedItem = Ref.create(v) },
         PropertyBinding(
           { config.distribution },
           { config.distribution = it }
@@ -36,13 +34,23 @@ class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration) :
     }
   }
 
-  private class WslDistributionRenderer : ColoredListCellRenderer<WSLDistribution>() {
-    override fun customizeCellRenderer(list: JList<out WSLDistribution?>,
-                                       value: WSLDistribution?,
+  private fun createComboBox(): ComboBox<Ref<WSLDistribution?>> {
+    val model = CollectionComboBoxModel(ArrayList(WSLUtil.getAvailableDistributions().map { Ref.create(it) }))
+    val comboBox: ComboBox<Ref<WSLDistribution?>> = ComboBox()
+    comboBox.model = model
+    comboBox.renderer = WslDistributionRenderer()
+    comboBox.selectedItem = Ref.create(config.distribution)
+    comboBox.prototypeDisplayValue = Ref.create()
+    return comboBox
+  }
+
+  private class WslDistributionRenderer : ColoredListCellRenderer<Ref<WSLDistribution?>>() {
+    override fun customizeCellRenderer(list: JList<out Ref<WSLDistribution?>>,
+                                       value: Ref<WSLDistribution?>?,
                                        index: Int,
                                        selected: Boolean,
                                        hasFocus: Boolean) {
-      append(value?.presentableName ?: IdeBundle.message("wsl.no.available.distributions"))
+      append(value?.get()?.presentableName ?: IdeBundle.message("wsl.no.available.distributions"))
     }
   }
 }
