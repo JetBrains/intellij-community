@@ -1425,5 +1425,8 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
+    <action class="com.intellij.codeInspection.ui.actions.ActivateInspectionResultsToolWindowAction" id="ActivateInspectionResultsToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
   </actions>
 </idea-plugin>
