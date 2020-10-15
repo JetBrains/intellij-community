@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
@@ -11,9 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -31,7 +28,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.util.PsiNavigateUtil
-import com.intellij.util.SmartList
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -129,12 +125,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
         editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
       }
     }
-  }
-
-  private fun HighlightManager.addHighlight(editor: Editor, range: TextRange, attributes: TextAttributesKey): RangeHighlighter {
-    val out = SmartList<RangeHighlighter>()
-    this.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, attributes, 0, out)
-    return out.first()
   }
 
   override fun afterTemplateStart() {
