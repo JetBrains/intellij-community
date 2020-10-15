@@ -21,6 +21,23 @@ class CommentedOutCode /* extends Object */ {
     //}
   }
 
+  private void danglingElse2(int i) {
+    if (i == 3) {
+      System.out.println(i);
+    } else {
+
+    }
+    //else if (i == 4) {
+    //  System.exit(-1);
+    //}
+
+    if (i == 3) {
+      System.out.println(i);
+    } else if (i == 0) {
+
+    }
+  }
+
   int x(int i) {
     new Object() {
 

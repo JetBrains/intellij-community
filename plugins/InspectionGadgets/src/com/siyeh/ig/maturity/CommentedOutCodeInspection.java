@@ -55,7 +55,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
 
-    DeleteCommentedOutCodeFix() {}
+    private DeleteCommentedOutCodeFix() {}
 
     @Override
     @NotNull
@@ -88,7 +88,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private static class UncommentCodeFix extends InspectionGadgetsFix {
 
-    UncommentCodeFix() {}
+    private UncommentCodeFix() {}
 
     @Override
     @NotNull
@@ -137,7 +137,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
 
   private class CommentedOutCodeVisitor extends BaseInspectionVisitor {
 
-    CommentedOutCodeVisitor() {}
+    private CommentedOutCodeVisitor() {}
 
     @Override
     public void visitComment(@NotNull PsiComment comment) {
@@ -181,11 +181,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
   }
 
-  enum Code {
+  private enum Code {
     YES, NO, MAYBE
   }
 
-  static Code isCode(String text, PsiElement context) {
+  private static Code isCode(String text, PsiElement context) {
     if (text.isEmpty()) {
       return Code.NO;
     }
@@ -217,7 +217,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     else {
       fragment = factory.createCodeBlockCodeFragment(text, context, false);
     }
-    final boolean allowDanglingElse = PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class) instanceof PsiIfStatement;
+    final boolean allowDanglingElse = isIfStatementWithoutElse(PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class));
     if (!isInvalidCode(fragment, allowDanglingElse)) {
       return Code.YES;
     }
@@ -227,7 +227,16 @@ public class CommentedOutCodeInspection extends BaseInspection {
     return Code.MAYBE;
   }
 
-  static String getCommentText(PsiComment comment) {
+  private static boolean isIfStatementWithoutElse(PsiStatement statement) {
+    if (!(statement instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    return elseBranch == null || isIfStatementWithoutElse(elseBranch);
+  }
+
+  private static String getCommentText(PsiComment comment) {
     String lineText = getEndOfLineCommentText(comment);
     if (lineText != null) {
       final StringBuilder result = new StringBuilder();
@@ -247,11 +256,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   @Nullable
-  static String getEndOfLineCommentText(PsiComment comment) {
+  private static String getEndOfLineCommentText(PsiComment comment) {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 
-  static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
+  private static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
     final PsiElement firstChild = element.getFirstChild();
     final PsiElement lastChild = element.getLastChild();
     final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
