@@ -769,8 +769,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
             continue;
           }
 
-          T extension = adapter.createInstance(componentManager);
           try {
+            T extension = adapter.createInstance(componentManager);
             if (isRemoved) {
               listener.extensionRemoved(extension, adapter.getPluginDescriptor());
             }
@@ -780,6 +780,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
           }
           catch (ProcessCanceledException e) {
             throw e;
+          }
+          catch (ExtensionNotApplicableException ignore) {
           }
           catch (Throwable e) {
             LOG.error(e);
