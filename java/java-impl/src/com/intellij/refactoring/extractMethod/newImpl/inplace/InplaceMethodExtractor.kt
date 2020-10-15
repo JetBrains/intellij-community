@@ -100,14 +100,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     preview.addPreview(methodLines) { navigate(project, file, methodNavigatableRange.endOffset) }
   }
 
-  private fun navigate(project: Project, file: VirtualFile, offset: Int) {
-    val descriptor = OpenFileDescriptor(project, file, offset)
-    descriptor.navigate(true)
-    descriptor.dispose()
-  }
-
-  private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
-
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
     return super.performInplaceRefactoring(nameSuggestions)
@@ -148,10 +140,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     setActiveExtractor(editor, this)
 
     Disposer.register(templateState, preview)
-  }
-
-  private fun findLines(document: Document, range: TextRange): IntRange {
-    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
   fun restartInDialog() {
@@ -210,4 +198,16 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun enclosingTextRangeOf(start: PsiElement, end: PsiElement): TextRange = start.textRange.union(end.textRange)
+
+  private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
+
+  private fun navigate(project: Project, file: VirtualFile, offset: Int) {
+    val descriptor = OpenFileDescriptor(project, file, offset)
+    descriptor.navigate(true)
+    descriptor.dispose()
+  }
+
+  private fun findLines(document: Document, range: TextRange): IntRange {
+    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+  }
 }
