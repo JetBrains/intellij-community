@@ -48,12 +48,20 @@ public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList
 
   private static final ID<String, IntList> NAME = ID.create("devkit.ExtensionPointClassIndex");
 
+  /**
+   * for n > 1: list of offsets
+   * for n = 1: -offset (most common case)
+   */
   private final DataExternalizer<IntList> myValueExternalizer = new DataExternalizer<>() {
     @Override
     public void save(@NotNull final DataOutput out, final IntList values) throws IOException {
       final int size = values.size();
-      DataInputOutputUtil.writeINT(out, size);
+      if (size == 1) {
+        DataInputOutputUtil.writeINT(out, -values.getInt(0));
+        return;
+      }
 
+      DataInputOutputUtil.writeINT(out, size);
       for (int i = 0; i < size; ++i) {
         DataInputOutputUtil.writeINT(out, values.getInt(i));
       }
@@ -62,6 +70,10 @@ public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList
     @Override
     public IntList read(@NotNull final DataInput in) throws IOException {
       int count = DataInputOutputUtil.readINT(in);
+      if (count < 0) {
+        return new IntArrayList(new int[]{-count});
+      }
+
       IntList result = new IntArrayList(count);
       for (int i = 0; i < count; i++) {
         result.add(DataInputOutputUtil.readINT(in));
@@ -112,7 +124,7 @@ public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   public static List<ExtensionPoint> getExtensionPointsByClass(Project project, PsiClass psiClass, GlobalSearchScope scope) {
