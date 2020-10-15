@@ -86,7 +86,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     setElementToRename(method)
 
-    preview = EditorCodePreview(editor)
+    preview = EditorCodePreview.create(editor)
 
     val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
     val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
