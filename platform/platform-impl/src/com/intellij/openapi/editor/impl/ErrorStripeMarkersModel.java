@@ -74,14 +74,16 @@ class ErrorStripeMarkersModel {
     clear();
 
     int textLength = myEditor.getDocument().getTextLength();
-    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      afterAdded(ex, false);
-      return true;
-    });
-    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      afterAdded(ex, true);
-      return true;
-    });
+    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(
+      0, textLength, ex -> {
+        afterAdded(ex, false);
+        return true;
+      });
+    ((EditorFilteringMarkupModelEx)myEditor.getFilteredDocumentMarkupModel()).getDelegate().processRangeHighlightersOverlappingWith(
+      0, textLength, ex -> {
+        afterAdded(ex, true);
+        return true;
+      });
   }
 
   void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
