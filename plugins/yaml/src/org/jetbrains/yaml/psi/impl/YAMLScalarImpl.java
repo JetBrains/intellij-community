@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
@@ -131,7 +132,9 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     @Override
     public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
       final String text = myHost.getText();
-      final List<TextRange> contentRanges = myHost.getContentRanges();
+      final List<TextRange> contentRanges = StreamEx.of(myHost.getContentRanges())
+        .map(cr -> rangeInsideHost.intersection(cr)).nonNull()
+        .toList();
 
       int currentOffsetInDecoded = 0;
 
