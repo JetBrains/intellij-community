@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.*
@@ -45,6 +46,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     private fun setActiveExtractor(editor: Editor, extractor: InplaceMethodExtractor) {
       TemplateManagerImpl.getTemplateState(editor)?.properties?.put(INPLACE_METHOD_EXTRACTOR, extractor)
     }
+  }
+
+  init {
+    setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"))
   }
 
   private val fragmentsToRevert = mutableListOf<FragmentState>()
