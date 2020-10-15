@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,14 +14,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class LineExtensionInfo {
-  @NotNull private final String myText;
+  @NotNull private final @Nls String myText;
   @Nullable private final Color myColor;
   @Nullable private final EffectType myEffectType;
   @Nullable private final Color myEffectColor;
   @Nullable private final Color myBgColor;
   @JdkConstants.FontStyle private final int myFontType;
 
-  public LineExtensionInfo(@NotNull String text,
+  public LineExtensionInfo(@NotNull @Nls String text,
                               @Nullable Color color,
                               @Nullable EffectType effectType,
                               @Nullable Color effectColor,
@@ -32,7 +33,7 @@ public class LineExtensionInfo {
     myFontType = fontType;
     myBgColor = null;
   }
-  public LineExtensionInfo(@NotNull String text, @NotNull TextAttributes attr) {
+  public LineExtensionInfo(@NotNull @Nls String text, @NotNull TextAttributes attr) {
     myText = text;
     myColor = attr.getForegroundColor();
     myEffectType = attr.getEffectType();
@@ -42,7 +43,7 @@ public class LineExtensionInfo {
   }
 
   @NotNull
-  public String getText() {
+  public @Nls String getText() {
     return myText;
   }
 
