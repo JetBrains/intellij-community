@@ -2,16 +2,21 @@
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
@@ -21,6 +26,19 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   private val OS_GROUP = EventLogGroup("system.os", 4)
   private val INITIAL_DELAY = 5
   private val PERIOD_DELAY = 24 * 60
+
+  private val SESSION_GROUP = EventLogGroup("event.log.session", 1)
+  private val DEBUG = SESSION_GROUP.registerEvent("debug.mode", EventFields.Boolean("debug_agent"))
+  private val REPORT = SESSION_GROUP.registerEvent(
+    "reporting", EventFields.Boolean("suppress_report"), EventFields.Boolean("only_local")
+  )
+  private val TEST = SESSION_GROUP.registerEvent(
+    "test.mode",
+    EventFields.Boolean("fus_test"), EventFields.Boolean("internal"), EventFields.Boolean("teamcity")
+  )
+  private val HEADLESS = SESSION_GROUP.registerEvent(
+    "headless", EventFields.Boolean("headless"), EventFields.Boolean("command_line")
+  )
 
   override fun initialize() {
     if (!FeatureUsageLogger.isEnabled()) {
@@ -34,6 +52,8 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   override fun reportNow(): CompletableFuture<Void> {
+    reportSessionInfo()
+
     val osEvents: MutableList<MetricEvent> = ArrayList()
 
     /** Record OS name in both old and new format to have a smooth transition on the server **/
@@ -48,6 +68,16 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     val machineId = MachineIdManager.getMachineId()
     osEvents.add(newMetric("machine.id", FeatureUsageData().addData("value", anonymizeMachineId(machineId))))
     return FUStateUsagesLogger.logStateEventsAsync(OS_GROUP, osEvents)
+  }
+
+  private fun reportSessionInfo() {
+    val events: MutableList<MetricEvent> = ArrayList()
+    val app = ApplicationManager.getApplication()
+    events.add(DEBUG.metric(DebugAttachDetector.isDebugEnabled()))
+    events.add(REPORT.metric(isSuppressStatisticsReport(), isLocalStatisticsWithoutReport()))
+    events.add(TEST.metric(TestModeValidationRule.isTestModeEnabled(), app.isInternal, isTeamcityDetected()))
+    events.add(HEADLESS.metric(app.isHeadlessEnvironment, app.isCommandLine))
+    FUStateUsagesLogger.logStateEventsAsync(SESSION_GROUP, events)
   }
 
   private fun anonymizeMachineId(machineId: String?): String {
