@@ -47,7 +47,7 @@ fun loadExtensionWithText(
 internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
   val descriptor = preparePluginDescriptor(pluginBuilder.text(), fs).second
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
-  PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
+  setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
   try {
     loadPlugin(descriptor)
   }
@@ -65,9 +65,19 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
 }
 
 private fun preparePluginDescriptor(pluginXml: String, fs: FileSystem): Pair<Path, IdeaPluginDescriptorImpl> {
-  val directory = if (fs == FileSystems.getDefault()) FileUtil.createTempDirectory("test", "test", true).toPath() else fs.getPath("/").resolve(Ksuid.generate())
+  val directory = if (fs == FileSystems.getDefault()) FileUtil.createTempDirectory("test", "test", true).toPath() else fs.getPath("/").resolve(
+    Ksuid.generate())
   val plugin = directory.resolve("plugin/META-INF/plugin.xml")
   plugin.write(pluginXml)
   val descriptor = loadDescriptorInTest(plugin.parent.parent)
   return Pair(plugin, descriptor)
+}
+
+internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
+  rootDescriptor.classLoader = classLoader
+  for (dependency in rootDescriptor.getPluginDependencies()) {
+    if (dependency.subDescriptor != null) {
+      dependency.subDescriptor!!.classLoader = classLoader
+    }
+  }
 }

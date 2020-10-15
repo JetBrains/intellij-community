@@ -494,7 +494,7 @@ public final class PluginDescriptorLoader {
     }
 
     if (context != null) {
-      PathBasedJdomXIncluder.PathResolver<Path> resolver = PluginManagerCore.createPluginJarsPathResolver(descriptor.getPluginPath(), context);
+      PathBasedJdomXIncluder.PathResolver<Path> resolver = createPluginJarsPathResolver(descriptor.getPluginPath(), context);
       if (resolver != null) {
         return resolver;
       }
@@ -510,5 +510,14 @@ public final class PluginDescriptorLoader {
       fullDescriptor = descriptor;
     }
     return fullDescriptor;
+  }
+
+  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+    List<Path> pluginJarFiles = new ArrayList<>();
+    List<Path> dirs = new ArrayList<>();
+    if (!collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) {
+      return null;
+    }
+    return new PluginXmlPathResolver(pluginJarFiles, context);
   }
 }

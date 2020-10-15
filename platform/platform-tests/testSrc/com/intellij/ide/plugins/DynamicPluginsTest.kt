@@ -78,7 +78,7 @@ class DynamicPluginsTest {
       <listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
     """.trimIndent()).build(path)
     val descriptor = loadDescriptorInTest(path)
-    PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
+    setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
@@ -103,7 +103,7 @@ class DynamicPluginsTest {
 
     DisabledPluginsState.saveDisabledPlugins(arrayListOf(), false)
     val newDescriptor = loadDescriptorInTest(path)
-    PluginManagerCore.initClassLoader(newDescriptor)
+    PluginManagerCore.initClassLoaderForDynamicPlugin(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)
     try {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
@@ -515,7 +515,7 @@ class DynamicPluginsTest {
         directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
         directory.resolve("plugin.xml").write(mainDescriptor.text())
         val descriptor = loadDescriptorInTest(directory.parent)
-        PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
+        setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")
       }
@@ -545,7 +545,7 @@ class DynamicPluginsTest {
         directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
         directory.resolve("plugin.xml").write(mainDescriptor.text())
         val descriptor = loadDescriptorInTest(directory.parent)
-        PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
+        setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
         DynamicPlugins.loadPlugin(descriptor)
@@ -585,7 +585,7 @@ class DynamicPluginsTest {
       directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
       directory.resolve("plugin.xml").write(mainDescriptor.text())
       val descriptor = loadDescriptorInTest(directory.parent)
-      PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
+      setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
       assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
       DynamicPlugins.loadPlugin(descriptor)
@@ -616,7 +616,7 @@ class DynamicPluginsTest {
     directory.resolve("bar.xml").write(optionalDependencyDescriptor.text(requireId = false))
 
     val descriptor = loadDescriptorInTest(plugin.parent.parent)
-    PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
+    setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
     DynamicPlugins.loadPlugin(descriptor)

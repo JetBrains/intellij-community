@@ -833,6 +833,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDeleted = deleted;
   }
 
+  @Nullable ClassLoader getClassLoader() {
+    return classLoader;
+  }
+
   void setClassLoader(@Nullable ClassLoader classLoader) {
     this.classLoader = classLoader;
   }
@@ -854,7 +858,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  public ClassLoader getPluginClassLoader() {
+  public @NotNull ClassLoader getPluginClassLoader() {
     return classLoader == null ? getClass().getClassLoader() : classLoader;
   }
 

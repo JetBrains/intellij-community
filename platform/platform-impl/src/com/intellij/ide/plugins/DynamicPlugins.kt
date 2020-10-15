@@ -724,7 +724,7 @@ object DynamicPlugins {
     val loadStartTime = System.currentTimeMillis()
     val app = ApplicationManager.getApplication() as ApplicationImpl
     if (!app.isUnitTestMode) {
-      PluginManagerCore.initClassLoader(pluginDescriptor)
+      PluginManagerCore.initClassLoaderForDynamicPlugin(pluginDescriptor)
     }
 
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
