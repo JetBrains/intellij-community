@@ -91,7 +91,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.intellij.execution.configurations.RemoteConnection.*;
+import static com.intellij.execution.configurations.RemoteConnection.ConnectionMode;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -928,12 +928,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
     }
-  }
-
-  protected void stashProcess(boolean closedByUser) {
-    detachProcess(closedByUser, vmData -> {
-      myStashedVirtualMachines.addFirst(vmData);
-    });
   }
 
   protected void closeProcess(boolean closedByUser) {
@@ -2024,27 +2018,32 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) {
-    reattach(environment, () -> {});
+    reattach(environment, false, () -> {});
   }
 
-  public void reattach(final DebugEnvironment environment, Runnable vmReadyCallback) {
-    reattach(environment, ReattachType.SEQUENCE, vmReadyCallback);
-  }
-
-  public void stashAndReattach(final DebugEnvironment environment, Runnable vmReadyCallback) {
-    reattach(environment, ReattachType.STASH, vmReadyCallback);
+  public void reattach(final DebugEnvironment environment, boolean keepCurrentVM, Runnable vmReadyCallback) {
+    reattach(environment, () -> {
+      if (keepCurrentVM) {
+        detachProcess(false, vmData -> {
+          myStashedVirtualMachines.addFirst(vmData);
+        });
+      } else {
+        closeProcess(false);
+      }
+    }, vmReadyCallback);
   }
 
   private void unstashAndReattach() {
     VirtualMachineData vmData = myStashedVirtualMachines.pollFirst();
     if (vmData != null && vmData.vm != null) {
-      reattach(vmData.connection, ReattachType.UNSTASH, () -> {
+      reattach(vmData.connection, () -> {}, () -> {
         afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             try {
               commitVM(vmData.vm.getVirtualMachine());
-            } catch (VMDisconnectedException e) {
+            }
+            catch (VMDisconnectedException e) {
               fail();
             }
           }
@@ -2053,29 +2052,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private void reattach(DebugEnvironment environment, ReattachType type, Runnable vmReadyCallback) {
-    reattach(environment.getRemoteConnection(), type, () -> {
+  private void reattach(DebugEnvironment environment, Runnable detachVm, Runnable vmReadyCallback) {
+    reattach(environment.getRemoteConnection(), detachVm, () -> {
       createVirtualMachine(environment);
       vmReadyCallback.run();
     });
   }
 
-  private void reattach(RemoteConnection connection, ReattachType type, Runnable attachVm) {
+  private void reattach(RemoteConnection connection, Runnable detachVm, Runnable attachVm) {
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
-          if (!myConnection.getConnectionMode().equals(ConnectionMode.FAKE_SERVER)) {
-            switch (type) {
-              case SEQUENCE:
-                closeProcess(false);
-                break;
-              case STASH:
-                stashProcess(false);
-                break;
-              case UNSTASH:
-                break;
-            }
+          ConnectionMode connectionMode = myConnection.getConnectionMode();
+          if (!ConnectionMode.FAKE_SERVER.equals(connectionMode)) {
+            detachVm.run();
           }
           getManagerThread().processRemaining();
           doReattach();
@@ -2451,10 +2442,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.disable();
     }
-  }
-
-  private enum ReattachType {
-    SEQUENCE, STASH, UNSTASH
   }
 
   private static class VirtualMachineData {

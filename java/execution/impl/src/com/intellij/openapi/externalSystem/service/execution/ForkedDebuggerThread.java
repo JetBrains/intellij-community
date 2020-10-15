@@ -213,7 +213,7 @@ class ForkedDebuggerThread extends Thread {
       RemoteConnection connection = runConfiguration.createRemoteConnection();
       DebugEnvironment environment = new DefaultDebugEnvironment(myMainExecutionEnvironment, myMainRunnableState, connection, true);
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        ((DebugProcessImpl)debugProcess).stashAndReattach(environment, () -> callback.accept(debugProcess));
+        ((DebugProcessImpl)debugProcess).reattach(environment, true, () -> callback.accept(debugProcess));
       });
     }
   }
