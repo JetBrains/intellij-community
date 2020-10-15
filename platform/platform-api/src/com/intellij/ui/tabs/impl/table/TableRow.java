@@ -16,10 +16,9 @@ class TableRow {
     myData = data;
   }
 
-  void add(TabInfo info) {
+  void add(TabInfo info, int width) {
     myColumns.add(info);
-    width += myData.myTabs.myInfo2Label.get(info).getPreferredSize().width;
+    this.width += width;
     myData.myInfo2Row.put(info, this);
   }
-
 }
