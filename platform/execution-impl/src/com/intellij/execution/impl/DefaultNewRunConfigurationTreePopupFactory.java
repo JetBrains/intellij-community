@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.VirtualConfigurationType;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurationTreePopupFactory {
   private NodeDescriptor<?> root;
@@ -42,8 +44,10 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
                              NodeDescriptor.DEFAULT_WEIGHT + 1);
     myTypesToShow = new ArrayList<>(
       RunConfigurable.Companion.configurationTypeSorted(project, true,
-                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
-    myOtherTypes = new ArrayList<>(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
+                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), true));
+    myOtherTypes = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList().stream()
+            .filter(configurationType -> !(configurationType instanceof VirtualConfigurationType))
+            .collect(Collectors.toList());
     myOtherTypes.sort((o1, o2) -> RunConfigurationListManagerHelperKt.compareTypesForUi(o1, o2));
     myOtherTypes.removeAll(myTypesToShow);
     myGroups = createGroups(project, myTypesToShow);

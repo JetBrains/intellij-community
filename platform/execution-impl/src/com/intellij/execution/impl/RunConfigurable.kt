@@ -131,19 +131,30 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
+    fun isVirtualConfiguration(node: DefaultMutableTreeNode?) = when (node?.userObject) {
+      is SingleConfigurationConfigurable<*>, is RunnerAndConfigurationSettings -> {
+        getSettings(node)?.type is VirtualConfigurationType
+      }
+      is VirtualConfigurationType -> true
+      else -> false
+    }
+
     fun configurationTypeSorted(project: Project,
                                 showApplicableTypesOnly: Boolean,
-                                allTypes: List<ConfigurationType>): List<ConfigurationType> =
-      getTypesToShow(project, showApplicableTypesOnly, allTypes).sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+                                allTypes: List<ConfigurationType>,
+                                hideVirtualConfigurations : Boolean = false): List<ConfigurationType> =
+      getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
+        .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
-    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
+    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
+      val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
+        val applicableTypes = allVisibleTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
         if (applicableTypes.isNotEmpty() && applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
       }
-      return allTypes
+      return allVisibleTypes
     }
   }
 
@@ -192,7 +203,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES_NODE_USER_OBJECT)
-    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filter { it !is VirtualConfigurationType }) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -984,7 +995,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
       if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-      val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes).toMutableList()
+      val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(NewRunConfigurationPopup.HIDDEN_ITEMS_STUB)
@@ -1030,7 +1041,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val node = each.lastPathComponent as DefaultMutableTreeNode
         val parent = node.parent as DefaultMutableTreeNode
         val kind = getKind(node)
-        if (!kind.isConfiguration && kind != FOLDER)
+        if (!kind.isConfiguration && kind != FOLDER || isVirtualConfiguration(node))
           continue
 
         if (node.userObject is SingleConfigurationConfigurable<*>) {
@@ -1125,8 +1136,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val selections = tree.selectionPaths
       if (selections != null) {
         for (each in selections) {
-          val kind = getKind(each.lastPathComponent as DefaultMutableTreeNode)
-          if (kind.isConfiguration || kind == FOLDER) {
+          val node = each.lastPathComponent as DefaultMutableTreeNode
+          val kind = getKind(node)
+          if ((kind.isConfiguration || kind == FOLDER) && !isVirtualConfiguration(node)) {
             enabled = true
             break
           }
@@ -1270,6 +1282,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val path = tree.selectionPath
       if (path != null) {
         var o = path.lastPathComponent
+        if (o is DefaultMutableTreeNode && isVirtualConfiguration(o)) {
+          isEnabled = false
+        }
         if (o is DefaultMutableTreeNode && o.userObject == TEMPLATES_NODE_USER_OBJECT) {
           isEnabled = false
         }
