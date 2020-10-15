@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 
 public class RemoteConnection {
   private boolean myUseSockets;
-  private ConnectionMode myConnectionMode;
+  private boolean myServerMode;
 
   private String myApplicationHostName;
   private String myApplicationAddress;
@@ -21,12 +21,8 @@ public class RemoteConnection {
   public static final String ONUNCAUGHT = ",onuncaught=<y/n>";
 
   public RemoteConnection(boolean useSockets, String hostName, String address, boolean serverMode) {
-    this(useSockets, hostName, address, serverMode ? ConnectionMode.SERVER : ConnectionMode.CLIENT);
-  }
-
-  public RemoteConnection(boolean useSockets, String hostName, String address, ConnectionMode connectionMode) {
     myUseSockets = useSockets;
-    myConnectionMode = connectionMode;
+    myServerMode = serverMode;
     myApplicationHostName = hostName;
     myDebuggerHostName = hostName;
     myApplicationAddress = address;
@@ -37,13 +33,8 @@ public class RemoteConnection {
     return myUseSockets;
   }
 
-  public ConnectionMode getConnectionMode() {
-    return myConnectionMode;
-  }
-
   public boolean isServerMode() {
-    return myConnectionMode.equals(ConnectionMode.SERVER)
-      || myConnectionMode.equals(ConnectionMode.FAKE_SERVER);
+    return myServerMode;
   }
 
   public void setUseSockets(boolean useSockets) {
@@ -51,7 +42,7 @@ public class RemoteConnection {
   }
 
   public void setServerMode(boolean serverMode) {
-    myConnectionMode = serverMode ? ConnectionMode.SERVER : ConnectionMode.CLIENT;
+    myServerMode = serverMode;
   }
 
   /**
@@ -163,6 +154,4 @@ public class RemoteConnection {
     }
     return result;
   }
-
-  public enum ConnectionMode {SERVER, FAKE_SERVER, CLIENT}
 }

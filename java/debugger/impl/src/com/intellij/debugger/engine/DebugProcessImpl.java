@@ -91,8 +91,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.intellij.execution.configurations.RemoteConnection.ConnectionMode;
-
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
 
@@ -912,19 +910,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         getManagerThread().close();
       }
       finally {
-        VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection);
-        myVirtualMachineProxy = null;
-        myPositionManager = CompoundPositionManager.EMPTY;
-        myReturnValueWatcher = null;
-        myNodeRenderersMap.clear();
-        myRenderers.clear();
-        DebuggerUtils.cleanupAfterProcessFinish(this);
-        myState.compareAndSet(State.DETACHING, State.DETACHED);
-        try {
-          myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
-        }
-        finally {
-          callback.accept(vmData);
+        if (!(myConnection instanceof RemoteConnectionStub)) {
+          VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection);
+          myVirtualMachineProxy = null;
+          myPositionManager = CompoundPositionManager.EMPTY;
+          myReturnValueWatcher = null;
+          myNodeRenderersMap.clear();
+          myRenderers.clear();
+          DebuggerUtils.cleanupAfterProcessFinish(this);
+          myState.compareAndSet(State.DETACHING, State.DETACHED);
+          try {
+            myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
+          }
+          finally {
+            callback.accept(vmData);
+          }
         }
       }
     }
@@ -2064,10 +2064,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
-          ConnectionMode connectionMode = myConnection.getConnectionMode();
-          if (!ConnectionMode.FAKE_SERVER.equals(connectionMode)) {
-            detachVm.run();
-          }
+          detachVm.run();
           getManagerThread().processRemaining();
           doReattach();
         }
@@ -2102,8 +2099,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myConnection = environment.getRemoteConnection();
 
     // in client mode start target process before the debugger to reduce polling
-    ConnectionMode connectionMode = myConnection.getConnectionMode();
-    if (connectionMode.equals(ConnectionMode.SERVER)) {
+    if (!(myConnection instanceof RemoteConnectionStub) && myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
@@ -2131,7 +2127,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (connectionMode.equals(ConnectionMode.CLIENT)) {
+    if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 

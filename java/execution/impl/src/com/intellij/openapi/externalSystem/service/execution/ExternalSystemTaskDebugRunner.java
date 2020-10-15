@@ -21,6 +21,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.RemoteConnectionStub;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.DefaultExecutionResult;
@@ -34,7 +35,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.ui.EditorOptionsTopHitProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.xdebugger.XDebugProcess;
@@ -46,8 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
-
-import static com.intellij.execution.configurations.RemoteConnection.*;
 
 /**
  * @author Denis Zhdanov
@@ -130,8 +128,10 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   private XDebugProcess jvmProcessToDebug(@NotNull XDebugSession session,
                                           ExternalSystemRunnableState state,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-    ConnectionMode connectionMode = state.isDebugServerProcess() ? ConnectionMode.SERVER : ConnectionMode.FAKE_SERVER;
-    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(state.getDebugPort()), connectionMode);
+    String debugPort = String.valueOf(state.getDebugPort());
+    RemoteConnection connection = state.isDebugServerProcess()
+                                  ? new RemoteConnection(true, "127.0.0.1", debugPort, true)
+                                  : new RemoteConnectionStub(true, "127.0.0.1", debugPort, true);
     DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, DebugEnvironment.LOCAL_START_TIMEOUT);
 
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);

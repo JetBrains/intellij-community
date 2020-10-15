@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.CommandLineWrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
@@ -241,7 +242,16 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return defaultValue;
   }
 
-  public static String getConnectionDisplayName(RemoteConnection connection) {
+  public static @NlsContexts.Label String getConnectionWaitStatus(@NotNull RemoteConnection connection) {
+    String connectionName = ObjectUtils.doIfNotNull(connection, DebuggerUtilsImpl::getConnectionDisplayName);
+    return connection instanceof RemoteConnectionStub
+           ? JavaDebuggerBundle.message("status.waiting.attach")
+           : connection.isServerMode()
+             ? JavaDebuggerBundle.message("status.listening", connectionName)
+             : JavaDebuggerBundle.message("status.connecting", connectionName);
+  }
+
+  public static String getConnectionDisplayName(@NotNull RemoteConnection connection) {
     if (connection instanceof PidRemoteConnection) {
       return "pid " + ((PidRemoteConnection)connection).getPid();
     }
