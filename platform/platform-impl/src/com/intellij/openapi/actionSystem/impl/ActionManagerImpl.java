@@ -12,6 +12,7 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDependency;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -171,9 +172,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      registerPluginActions(plugin, plugin.getActionDescriptionElements(), true);
-    }
+    registerActions(PluginManagerCore.getLoadedPlugins(null), true);
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
@@ -189,6 +188,27 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }, this);
     EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
+  }
+
+  @ApiStatus.Internal
+  public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins, boolean initialStartup) {
+    for (IdeaPluginDescriptorImpl plugin : plugins) {
+      registerPluginActions(plugin, initialStartup);
+      for (PluginDependency pluginDependency : plugin.getPluginDependencies()) {
+        IdeaPluginDescriptorImpl subPlugin = pluginDependency.isDisabledOrBroken ? null : pluginDependency.subDescriptor;
+        if (subPlugin == null) {
+          continue;
+        }
+
+        registerPluginActions(subPlugin, initialStartup);
+        for (PluginDependency subPluginDependency : subPlugin.getPluginDependencies()) {
+          IdeaPluginDescriptorImpl subSubPlugin = subPluginDependency.isDisabledOrBroken ? null : subPluginDependency.subDescriptor;
+          if (subSubPlugin != null) {
+            registerPluginActions(subSubPlugin, initialStartup);
+          }
+        }
+      }
+    }
   }
 
   @NotNull
@@ -268,9 +288,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin, @Nullable String bundleName) {
-    String resBundleName = bundleName != null ? bundleName :
-                           plugin.getPluginId() != PluginManagerCore.CORE_ID ? plugin.getResourceBundleBaseName() :
-                           ACTIONS_BUNDLE;
+    String resBundleName;
+    if (bundleName == null) {
+      resBundleName = plugin.getPluginId() == PluginManagerCore.CORE_ID ? ACTIONS_BUNDLE : plugin.getResourceBundleBaseName();
+    }
+    else {
+      resBundleName = bundleName;
+    }
     return resBundleName == null ? null : DynamicBundle.INSTANCE.getResourceBundle(resBundleName, plugin.getPluginClassLoader());
   }
 
@@ -481,16 +505,36 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
   }
 
-  public void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable List<Element> actionDescriptionElements, boolean initialStartup) {
-    if (actionDescriptionElements == null) {
+  private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, boolean initialStartup) {
+    List<Element> elements = plugin.getActionDescriptionElements();
+    if (elements == null) {
       return;
     }
 
     long startTime = StartUpMeasurer.getCurrentTime();
-    for (Element e : actionDescriptionElements) {
-      Element parent = e.getParentElement();
-      String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
-      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName));
+    for (Element element : elements) {
+      Element parent = element.getParentElement();
+      ResourceBundle bundle = getActionsResourceBundle(plugin, parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME));
+      switch (element.getName()) {
+        case ACTION_ELEMENT_NAME:
+          processActionElement(element, plugin, bundle);
+          break;
+        case GROUP_ELEMENT_NAME:
+          processGroupElement(element, plugin, bundle);
+          break;
+        case SEPARATOR_ELEMENT_NAME:
+          processSeparatorNode(null, element, plugin.getPluginId(), bundle);
+          break;
+        case REFERENCE_ELEMENT_NAME:
+          processReferenceNode(element, plugin.getPluginId(), bundle);
+          break;
+        case UNREGISTER_ELEMENT_NAME:
+          processUnregisterNode(element, plugin.getPluginId());
+          break;
+        default:
+          reportActionError(plugin.getPluginId(), "unexpected name of element \"" + element.getName() + "\n");
+          break;
+      }
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
@@ -589,10 +633,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
-  @Nullable
-  private AnAction processActionElement(@NotNull Element element,
-                                        @NotNull IdeaPluginDescriptorImpl plugin,
-                                        @Nullable ResourceBundle bundle) {
+  private @Nullable AnAction processActionElement(@NotNull Element element,
+                                                  @NotNull IdeaPluginDescriptorImpl plugin,
+                                                  @Nullable ResourceBundle bundle) {
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.isEmpty()) {
       reportActionError(plugin.getPluginId(), "action element should have specified \"class\" attribute");
@@ -1090,32 +1133,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       ref = element.getAttributeValue(ID_ATTR_NAME);
     }
     return ref;
-  }
-
-  private void processActionsChildElement(@NotNull Element child,
-                                          @NotNull IdeaPluginDescriptorImpl plugin,
-                                          @Nullable ResourceBundle bundle) {
-    String name = child.getName();
-    switch (name) {
-      case ACTION_ELEMENT_NAME:
-        processActionElement(child, plugin, bundle);
-        break;
-      case GROUP_ELEMENT_NAME:
-        processGroupElement(child, plugin, bundle);
-        break;
-      case SEPARATOR_ELEMENT_NAME:
-        processSeparatorNode(null, child, plugin.getPluginId(), bundle);
-        break;
-      case REFERENCE_ELEMENT_NAME:
-        processReferenceNode(child, plugin.getPluginId(), bundle);
-        break;
-      case UNREGISTER_ELEMENT_NAME:
-        processUnregisterNode(child, plugin.getPluginId());
-        break;
-      default:
-        reportActionError(plugin.getPluginId(), "unexpected name of element \"" + name + "\n");
-        break;
-    }
   }
 
   @ApiStatus.Internal

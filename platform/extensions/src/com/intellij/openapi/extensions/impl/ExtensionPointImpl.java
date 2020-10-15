@@ -671,7 +671,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                             boolean stopAfterFirstMatch) {
     List<Runnable> listenerCallbacks = new ArrayList<>();
     List<Runnable> priorityListenerCallbacks = new ArrayList<>();
-    boolean result = unregisterExtensions(extensionClassFilter, stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks);
+    boolean result = unregisterExtensions(adapter -> extensionClassFilter.test(adapter.getAssignableToClassName(), adapter), stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks);
     for (Runnable callback : priorityListenerCallbacks) {
       callback.run();
     }
@@ -685,21 +685,19 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
    * so that listeners can be called later.
    */
-  final synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+  final synchronized boolean unregisterExtensions(@NotNull Predicate<? super ExtensionComponentAdapter> extensionClassFilter,
                                                   boolean stopAfterFirstMatch,
                                                   @NotNull List<Runnable> priorityListenerCallbacks,
                                                   @NotNull List<Runnable> listenerCallbacks) {
-    boolean found = false;
     ExtensionPointListener<T>[] listeners = myListeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = myAdapters;
     for (int i = adapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = adapters.get(i);
-      if (extensionClassFilter.test(adapter.getAssignableToClassName(), adapter)) {
+      if (extensionClassFilter.test(adapter)) {
         continue;
       }
 
-      clearCache();
       if (adapters == myAdapters) {
         adapters = new ArrayList<>(adapters);
       }
@@ -712,34 +710,43 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         removedAdapters.add(adapter);
       }
 
-      found = true;
       if (stopAfterFirstMatch) {
         break;
       }
     }
 
+    if (adapters == myAdapters) {
+      return false;
+    }
+
+    clearCache();
     myAdapters = adapters;
 
-    if (removedAdapters != null) {
-      List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
-
-      List<ExtensionPointListener<T>> priorityListeners =
-        ContainerUtil.filter(listeners, listener -> listener instanceof ExtensionPointPriorityListener);
-      List<ExtensionPointListener<T>> regularListeners =
-        ContainerUtil.filter(listeners, listener -> !(listener instanceof ExtensionPointPriorityListener));
-
-      if (!priorityListeners.isEmpty()) {
-        Runnable runnable = () -> notifyListeners(true, finalRemovedAdapters,
-                                                priorityListeners.toArray(new ExtensionPointListener[0]));
-        priorityListenerCallbacks.add(runnable);
-      }
-      if (!regularListeners.isEmpty()) {
-        Runnable runnable = () -> notifyListeners(true, finalRemovedAdapters,
-                                                regularListeners.toArray(new ExtensionPointListener[0]));
-        listenerCallbacks.add(runnable);
-      }
+    if (removedAdapters == null) {
+      return true;
     }
-    return found;
+
+    List<ExtensionPointListener<T>> priorityListeners = ContainerUtil.filter(listeners, listener -> {
+      return listener instanceof ExtensionPointPriorityListener;
+    });
+    List<ExtensionPointListener<T>> regularListeners = ContainerUtil.filter(listeners, listener -> {
+      return !(listener instanceof ExtensionPointPriorityListener);
+    });
+
+    List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
+    if (!priorityListeners.isEmpty()) {
+      priorityListenerCallbacks.add(() -> {
+        //noinspection unchecked
+        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(new ExtensionPointListener[0]));
+      });
+    }
+    if (!regularListeners.isEmpty()) {
+      listenerCallbacks.add(() -> {
+        //noinspection unchecked
+        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(new ExtensionPointListener[0]));
+      });
+    }
+    return true;
   }
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,

@@ -349,7 +349,9 @@ public class MessageBusImpl implements MessageBus {
   protected <L> void doComputeSubscribers(@NotNull Topic<L> topic, @NotNull List<? super L> result, boolean subscribeLazyListeners) {
     // todo check that handler implements method (not a default implementation)
     for (MessageHandlerHolder subscriber : subscribers) {
-      subscriber.collectHandlers(topic, result);
+      if (!subscriber.isDisposed()) {
+        subscriber.collectHandlers(topic, result);
+      }
     }
   }
 

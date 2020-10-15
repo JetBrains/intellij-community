@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.io.Ksuid
 import com.intellij.util.io.write
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -44,11 +45,9 @@ fun loadExtensionWithText(
 }
 
 internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
-  val pair = preparePluginDescriptor(pluginBuilder.text(), fs)
-  val plugin = pair.first
-  var descriptor = pair.second
+  val descriptor = preparePluginDescriptor(pluginBuilder.text(), fs).second
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
-  descriptor.setLoader(loader)
+  PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
   try {
     loadPlugin(descriptor)
   }
@@ -58,7 +57,6 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   }
 
   return Disposable {
-    descriptor = loadDescriptorInTest(plugin.parent.parent)
     val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
     unloadPlugin(descriptor)
 
@@ -67,7 +65,7 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
 }
 
 private fun preparePluginDescriptor(pluginXml: String, fs: FileSystem): Pair<Path, IdeaPluginDescriptorImpl> {
-  val directory = if (fs == FileSystems.getDefault()) FileUtil.createTempDirectory("test", "test", true).toPath() else Files.createTempDirectory(fs.getPath("/"), null)
+  val directory = if (fs == FileSystems.getDefault()) FileUtil.createTempDirectory("test", "test", true).toPath() else fs.getPath("/").resolve(Ksuid.generate())
   val plugin = directory.resolve("plugin/META-INF/plugin.xml")
   plugin.write(pluginXml)
   val descriptor = loadDescriptorInTest(plugin.parent.parent)

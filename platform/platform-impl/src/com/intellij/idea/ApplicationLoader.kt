@@ -105,7 +105,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
                           app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture.thenApply {
     runMainActivity("app component registration") {
-      app.registerComponents(it)
+      app.registerComponents(it, null)
     }
     it
   }

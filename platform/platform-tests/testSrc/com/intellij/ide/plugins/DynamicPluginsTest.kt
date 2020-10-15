@@ -1,6 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
-
 package com.intellij.ide.plugins
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -34,6 +33,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
+import com.intellij.util.io.Ksuid
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -62,7 +62,9 @@ class DynamicPluginsTest {
   @JvmField
   val runInEdt = EdtRule()
 
-  private fun loadPluginWithText(pluginBuilder: PluginBuilder) = loadPluginWithText(pluginBuilder, DynamicPluginsTest::class.java.classLoader, inMemoryFs.fs)
+  private fun loadPluginWithText(pluginBuilder: PluginBuilder): Disposable {
+    return loadPluginWithText(pluginBuilder, DynamicPluginsTest::class.java.classLoader, inMemoryFs.fs)
+  }
 
   @Test
   fun testLoadListeners() {
@@ -76,7 +78,7 @@ class DynamicPluginsTest {
       <listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
     """.trimIndent()).build(path)
     val descriptor = loadDescriptorInTest(path)
-    descriptor.setLoader(DynamicPlugins::class.java.classLoader)
+    PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
@@ -253,8 +255,8 @@ class DynamicPluginsTest {
   @Test
   fun loadOptionalDependencyOwnExtension() {
     val barBuilder = PluginBuilder().randomId("bar")
-    val fooBuilder = PluginBuilder().randomId("foo").extensionPoints(
-      """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
+    val fooBuilder = PluginBuilder().randomId("foo")
+      .extensionPoints("""<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
     val plugin1Disposable = loadPluginWithOptionalDependency(
       fooBuilder,
       PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo"),
@@ -286,7 +288,9 @@ class DynamicPluginsTest {
     val app = ApplicationManager.getApplication()
     try {
       assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
-      val pluginTwoDisposable = loadPluginWithOptionalDependency(PluginBuilder().randomId("optionalDependencyDescriptor-two"),
+      val pluginTwoId = "optionalDependencyDescriptor-two_${Ksuid.generate()}"
+      val pluginTwoDisposable = loadPluginWithOptionalDependency(
+        PluginBuilder().id(pluginTwoId),
         PluginBuilder().extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>"""),
         pluginOneBuilder
       )
@@ -296,6 +300,7 @@ class DynamicPluginsTest {
       finally {
         Disposer.dispose(pluginTwoDisposable)
       }
+      assertThat(PluginManagerCore.getPlugin(PluginId.getId(pluginTwoId))).isNull()
       assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
     }
     finally {
@@ -394,33 +399,33 @@ class DynamicPluginsTest {
       "<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
       DynamicPlugins::class.java.classLoader)
     try {
-      assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name }).isTrue()
+      assertThat(InspectionEP.GLOBAL_INSPECTION.extensionList.any { it.implementationClass == MyInspectionTool::class.java.name }).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
     }
-    assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name }).isFalse()
+    assertThat(InspectionEP.GLOBAL_INSPECTION.extensionList.any { it.implementationClass == MyInspectionTool::class.java.name }).isFalse()
   }
 
   @Test
   fun unloadEPWithTags() {
     val disposable = loadExtensionWithText(
       """
-          <intentionAction>
-            <bundleName>messages.CommonBundle</bundleName>
-            <categoryKey>button.add</categoryKey>
-            <className>${MyIntentionAction::class.java.name}</className>
-          </intentionAction>""",
+        <intentionAction>
+          <bundleName>messages.CommonBundle</bundleName>
+          <categoryKey>button.add</categoryKey>
+          <className>${MyIntentionAction::class.java.name}</className>
+        </intentionAction>""",
       DynamicPlugins::class.java.classLoader)
     try {
-      val intention = IntentionManagerImpl.EP_INTENTION_ACTIONS.extensions.find { it.className == MyIntentionAction::class.java.name }
+      val intention = IntentionManagerImpl.EP_INTENTION_ACTIONS.extensionList.find { it.className == MyIntentionAction::class.java.name }
       assertThat(intention).isNotNull
       intention!!.categories
     }
     finally {
       Disposer.dispose(disposable)
     }
-    assertThat(IntentionManagerImpl.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isFalse()
+    assertThat(IntentionManagerImpl.EP_INTENTION_ACTIONS.extensionList).allMatch { it.className != MyIntentionAction::class.java.name }
   }
 
   @Test
@@ -510,7 +515,7 @@ class DynamicPluginsTest {
         directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
         directory.resolve("plugin.xml").write(mainDescriptor.text())
         val descriptor = loadDescriptorInTest(directory.parent)
-        descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
+        PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")
       }
@@ -540,7 +545,7 @@ class DynamicPluginsTest {
         directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
         directory.resolve("plugin.xml").write(mainDescriptor.text())
         val descriptor = loadDescriptorInTest(directory.parent)
-        descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
+        PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
         DynamicPlugins.loadPlugin(descriptor)
@@ -580,7 +585,7 @@ class DynamicPluginsTest {
       directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
       directory.resolve("plugin.xml").write(mainDescriptor.text())
       val descriptor = loadDescriptorInTest(directory.parent)
-      descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
+      PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
       assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
       DynamicPlugins.loadPlugin(descriptor)
@@ -604,14 +609,14 @@ class DynamicPluginsTest {
   private fun loadPluginWithOptionalDependency(pluginDescriptor: PluginBuilder,
                                                optionalDependencyDescriptor: PluginBuilder,
                                                dependsOn: PluginBuilder): Disposable {
-    val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin/META-INF")
+    val directory = inMemoryFs.fs.getPath("/").resolve(Ksuid.generate()).resolve("plugin/META-INF")
     val plugin = directory.resolve("plugin.xml")
     pluginDescriptor.depends(dependsOn.id, "bar.xml")
     plugin.write(pluginDescriptor.text().trimIndent())
     directory.resolve("bar.xml").write(optionalDependencyDescriptor.text(requireId = false))
 
     val descriptor = loadDescriptorInTest(plugin.parent.parent)
-    descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
+    PluginManagerCore.setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
     DynamicPlugins.loadPlugin(descriptor)
@@ -643,9 +648,7 @@ private data class MyPersistentState(@Attribute var stateData: String? = "")
 private class MyPersistentComponent : PersistentStateComponent<MyPersistentState> {
   var myState = MyPersistentState("")
 
-  override fun getState(): MyPersistentState? {
-    return myState
-  }
+  override fun getState() = myState
 
   override fun loadState(state: MyPersistentState) {
     myState = state

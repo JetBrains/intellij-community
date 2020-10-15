@@ -854,79 +854,6 @@ public final class PluginManagerCore {
     return new PluginLoadingResult(getBrokenPluginVersions(), () -> buildNumber == null ? getBuildNumber() : buildNumber);
   }
 
-  private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,
-                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    if (isRunningFromSources()) {
-      // fix optional configs
-      for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
-        if (!descriptor.isUseCoreClassLoader() || descriptor.pluginDependencies == null) {
-          continue;
-        }
-
-        for (PluginDependency dependency : descriptor.pluginDependencies) {
-          if (dependency.subDescriptor == null) {
-            continue;
-          }
-
-          IdeaPluginDescriptorImpl dependent = idMap.get(dependency.id);
-          if (dependent != null && !dependent.isUseCoreClassLoader()) {
-            // for what?
-            dependency.subDescriptor = null;
-          }
-        }
-      }
-    }
-
-    for (IdeaPluginDescriptorImpl mainDescriptor : enabledPlugins) {
-      List<PluginDependency> pluginDependencies = mainDescriptor.pluginDependencies;
-      if (pluginDependencies != null) {
-        mergeOptionalDescriptors(mainDescriptor, pluginDependencies, idMap);
-      }
-    }
-  }
-
-  private static void mergeOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl mergedDescriptor,
-                                               @NotNull List<PluginDependency> pluginDependencies,
-                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    loop:
-    for (PluginDependency dependency : pluginDependencies) {
-      IdeaPluginDescriptorImpl subDescriptor = dependency.subDescriptor;
-      dependency.subDescriptor = null;
-
-      if (subDescriptor == null || dependency.isDisabledOrBroken) {
-        continue;
-      }
-
-      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
-      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
-        continue;
-      }
-
-      // check that plugin doesn't depend on unavailable plugin
-      if (subDescriptor.pluginDependencies != null) {
-        for (PluginDependency pluginDependency : subDescriptor.pluginDependencies) {
-          // ignore if optional
-          if (!pluginDependency.isOptional) {
-            if (pluginDependency.isDisabledOrBroken) {
-              continue loop;
-            }
-
-            IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(pluginDependency.id);
-            if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
-              continue loop;
-            }
-          }
-        }
-      }
-
-      mergedDescriptor.mergeOptionalConfig(subDescriptor);
-      List<PluginDependency> childDependencies = subDescriptor.pluginDependencies;
-      if (childDependencies != null) {
-        mergeOptionalDescriptors(mergedDescriptor, childDependencies, idMap);
-      }
-    }
-  }
-
   private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
     Path fileWithLayout = usePluginClassLoader
                           ? Paths.get(PathManager.getSystemPath(), PlatformUtils.getPlatformPrefix() + ".txt")
@@ -979,7 +906,17 @@ public final class PluginManagerCore {
     ClassLoader[] array = loaders.isEmpty()
                           ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()}
                           : loaders.toArray(new ClassLoader[0]);
-    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder(), PluginManagerCore.class.getClassLoader(), ourAdditionalLayoutMap));
+    ClassLoader classLoader = createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder(), PluginManagerCore.class.getClassLoader(), ourAdditionalLayoutMap);
+    setPluginClassLoaderForMainAndSubPlugins(rootDescriptor, classLoader);
+  }
+
+  public static void setPluginClassLoaderForMainAndSubPlugins(@NotNull IdeaPluginDescriptorImpl rootDescriptor, ClassLoader classLoader) {
+    rootDescriptor.setClassLoader(classLoader);
+    for (PluginDependency dependency : rootDescriptor.getPluginDependencies()) {
+      if (dependency.subDescriptor != null) {
+        dependency.subDescriptor.setClassLoader(classLoader);
+      }
+    }
   }
 
   private static @NotNull UrlClassLoader.Builder createUrlClassLoaderBuilder() {
@@ -1212,7 +1149,11 @@ public final class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(sortedAll);
 
-    mergeOptionalConfigs(enabledPlugins, idMap);
+    for (IdeaPluginDescriptorImpl plugin : enabledPlugins) {
+      if (plugin.pluginDependencies != null) {
+        checkOptionalDescriptors(plugin.pluginDependencies, idMap);
+      }
+    }
     Map<String, String[]> additionalLayoutMap = loadAdditionalLayoutMap();
     ourAdditionalLayoutMap = additionalLayoutMap;
     configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins, additionalLayoutMap, context.usePluginClassLoader);
@@ -1223,6 +1164,59 @@ public final class PluginManagerCore {
 
     Set<PluginId> effectiveDisabledIds = disabledIds.isEmpty() ? Collections.emptySet() : new HashSet<>(disabledIds.keySet());
     return new PluginManagerState(sortedAll, enabledPlugins, disabledRequiredIds, effectiveDisabledIds, idMap);
+  }
+
+  private static void checkOptionalDescriptors(@NotNull List<PluginDependency> pluginDependencies,
+                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    for (PluginDependency dependency : pluginDependencies) {
+      IdeaPluginDescriptorImpl subDescriptor = dependency.subDescriptor;
+      if (subDescriptor == null || dependency.isDisabledOrBroken) {
+        continue;
+      }
+
+      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
+      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
+        dependency.isDisabledOrBroken = true;
+        continue;
+      }
+
+      // check that plugin doesn't depend on unavailable plugin
+      List<PluginDependency> childDependencies = subDescriptor.pluginDependencies;
+      if (childDependencies != null && !checkChildDeps(childDependencies, idMap)) {
+        dependency.isDisabledOrBroken = true;
+      }
+    }
+  }
+
+  // multiple dependency condition is not supported, so,
+  // jsp-javaee.xml depends on com.intellij.javaee.web, and included file in turn define jsp-css.xml that depends on com.intellij.css
+  // that's why nesting level is more than one
+  private static boolean checkChildDeps(@NotNull List<PluginDependency> childDependencies, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    for (PluginDependency dependency : childDependencies) {
+      // ignore if optional
+      if (dependency.isOptional) {
+        continue;
+      }
+
+      if (dependency.isDisabledOrBroken) {
+        return false;
+      }
+
+      IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(dependency.id);
+      if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
+        dependency.isDisabledOrBroken = true;
+        return false;
+      }
+
+      if (dependency.subDescriptor != null) {
+        List<PluginDependency> list = dependency.subDescriptor.pluginDependencies;
+        if (list != null && !checkChildDeps(list, idMap)) {
+          dependency.isDisabledOrBroken = true;
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static void configureClassLoaders(@NotNull ClassLoader coreLoader,
@@ -1236,12 +1230,12 @@ public final class PluginManagerCore {
     UrlClassLoader.Builder urlClassLoaderBuilder = createUrlClassLoaderBuilder();
     for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
       if (rootDescriptor == coreDescriptor || rootDescriptor.isUseCoreClassLoader()) {
-        rootDescriptor.setLoader(coreLoader);
+        setPluginClassLoaderForMainAndSubPlugins(rootDescriptor, coreLoader);
         continue;
       }
 
       if (!usePluginClassLoader) {
-        rootDescriptor.setLoader(null);
+        setPluginClassLoaderForMainAndSubPlugins(rootDescriptor, null);
         continue;
       }
 
@@ -1257,8 +1251,8 @@ public final class PluginManagerCore {
         for (IdeaPluginDescriptorImpl descriptor : dependencies) {
           ClassLoader loader = descriptor.getPluginClassLoader();
           if (loader == null) {
-            getLogger().error(PluginLoadingError
-                                .formatErrorMessage(rootDescriptor, "requires missing class loader for '" + descriptor.getName() + "'"));
+            getLogger().error(PluginLoadingError.formatErrorMessage(rootDescriptor,
+                                                                    "requires missing class loader for '" + descriptor.getName() + "'"));
           }
           else {
             loaders.add(loader);
@@ -1267,7 +1261,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder, coreLoader, additionalLayoutMap));
+      setPluginClassLoaderForMainAndSubPlugins(rootDescriptor, createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder, coreLoader, additionalLayoutMap));
     }
   }
 
@@ -1366,7 +1360,7 @@ public final class PluginManagerCore {
 
     boolean result = true;
 
-    for (PluginId incompatibleId : ContainerUtil.notNullize(descriptor.incompatibilities)) {
+    for (PluginId incompatibleId : (descriptor.incompatibilities == null ? Collections.<PluginId>emptyList() : descriptor.incompatibilities)) {
       if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
         continue;
       }
@@ -1450,7 +1444,7 @@ public final class PluginManagerCore {
     if (extensionPoints != null) {
       ((ExtensionsAreaImpl)area).registerExtensionPoints(extensionPoints, false);
     }
-    descriptor.registerExtensions((ExtensionsAreaImpl)area, descriptor, descriptor.appContainerDescriptor, null);
+    descriptor.registerExtensions((ExtensionsAreaImpl)area, descriptor.appContainerDescriptor, null);
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")

@@ -13,9 +13,8 @@ public final class PluginDependency implements IdeaPluginDependency {
 
   public String configFile;
 
-  transient final boolean isDisabledOrBroken;
-  // cleared as part of mergeOptionalDescriptors
-  @Nullable transient IdeaPluginDescriptorImpl subDescriptor;
+  public transient boolean isDisabledOrBroken;
+  public @Nullable transient IdeaPluginDescriptorImpl subDescriptor;
 
   PluginDependency(@NotNull PluginId id, @Nullable String configFile, boolean isDisabledOrBroken) {
     this.id = id;

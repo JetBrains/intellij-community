@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.newui.Tags
+import com.intellij.openapi.extensions.PluginId
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -45,9 +46,7 @@ data class IntellijUpdateMetadata(
   val size: Int = 0
 ) {
   fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode()
-    pluginNode.setId(id)
-    pluginNode.name = name
+    val pluginNode = PluginNode(PluginId.getId(id), name, size.toString())
     pluginNode.description = description
     pluginNode.vendor = vendor
     pluginNode.tags = tags
@@ -57,7 +56,6 @@ data class IntellijUpdateMetadata(
     pluginNode.productCode = productCode
     pluginNode.version = version
     pluginNode.url = url
-    pluginNode.size = size.toString()
     for (dep in dependencies) {
       pluginNode.addDepends(dep, false)
     }
@@ -87,8 +85,7 @@ internal class MarketplaceSearchPluginData(
   val downloads: String = ""
 ) {
   fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode()
-    pluginNode.setId(id)
+    val pluginNode = PluginNode(PluginId.getId(id))
     pluginNode.name = name
     pluginNode.rating = String.format("%.2f", rating)
     pluginNode.downloads = downloads

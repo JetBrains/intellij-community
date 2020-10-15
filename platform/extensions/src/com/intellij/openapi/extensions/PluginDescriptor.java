@@ -9,9 +9,6 @@ import java.nio.file.Path;
 import java.util.Date;
 
 public interface PluginDescriptor {
-  /**
-   * @return plugin id or null if the descriptor is the nested (optional dependency) descriptor
-   */
   PluginId getPluginId();
 
   ClassLoader getPluginClassLoader();

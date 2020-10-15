@@ -122,9 +122,9 @@ private fun writeServiceStats(writer: JsonGenerator) {
     service.project += plugin.project.services.size
     service.module += plugin.module.services.size
 
-    component.app += plugin.app.components.size
-    component.project += plugin.project.components.size
-    component.module += plugin.module.components.size
+    component.app += plugin.app.components?.size ?: 0
+    component.project += plugin.project.components?.size ?: 0
+    component.module += plugin.module.components?.size ?: 0
   }
 
   writer.obj("stats") {

@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -224,14 +223,14 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return c;
   }
 
-  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
-    "kotlin.sequences.Sequence",
-    "kotlin.Lazy", "kotlin.Unit",
-    "kotlin.Pair", "kotlin.Triple",
-    "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
-    "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty");
+  @SuppressWarnings("SSBasedInspection")
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList("kotlin.sequences.Sequence",
+                                                                                                          "kotlin.Lazy", "kotlin.Unit",
+                                                                                                          "kotlin.Pair", "kotlin.Triple",
+                                                                                                          "kotlin.jvm.internal.DefaultConstructorMarker",
+                                                                                                          "kotlin.jvm.internal.ClassBasedDeclarationContainer",
+                                                                                                          "kotlin.properties.ReadWriteProperty",
+                                                                                                          "kotlin.properties.ReadOnlyProperty"));
 
   private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
