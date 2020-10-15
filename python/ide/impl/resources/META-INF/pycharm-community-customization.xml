@@ -83,6 +83,8 @@
                                       id="requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
                                       id="environmentYml"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
+                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
