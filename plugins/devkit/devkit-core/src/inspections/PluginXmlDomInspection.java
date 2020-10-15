@@ -732,11 +732,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   /**
-   * Hardcoded known deprecated EPs with corresponding replacement.
+   * Hardcoded known deprecated EPs with corresponding replacement or empty String if no replacement EP.
    */
   private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
     .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
     .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
+    .put("com.intellij.exportable", "")
     .build();
 
   private static void annotateExtension(Extension extension,
@@ -758,12 +759,18 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     final String knownReplacementEp = ADDITIONAL_DEPRECATED_EP.get(effectiveQualifiedName);
-    if (knownReplacementEp != null &&
-        module != null &&
-        ExtensionPointIndex.findExtensionPoint(extension.getModule(), knownReplacementEp) != null) {
-      highlightDeprecated(
-        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep.use.replacement", effectiveQualifiedName, knownReplacementEp),
-        holder, false, false);
+    if (knownReplacementEp != null && module != null) {
+      if (StringUtil.isEmpty(knownReplacementEp)) {
+        highlightDeprecated(
+          extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
+          holder, false, false);
+      }
+      else if (ExtensionPointIndex.findExtensionPoint(module, knownReplacementEp) != null) {
+        highlightDeprecated(
+          extension,
+          DevKitBundle.message("inspections.plugin.xml.deprecated.ep.use.replacement", effectiveQualifiedName, knownReplacementEp),
+          holder, false, false);
+      }
     }
 
     if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName) && extension.exists()) {

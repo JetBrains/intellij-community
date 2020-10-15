@@ -14,6 +14,8 @@
         <extensionPoint qualifiedName="com.intellij.definitionsScopedSearch" interface="java.lang.Runnable"/>
         <extensionPoint qualifiedName="com.intellij.dom.fileDescription" interface="java.lang.Runnable"/>
 
+        <extensionPoint qualifiedName="com.intellij.exportable" interface="java.lang.Runnable"/>
+
         <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
                         dynamic="true"/>
         <extensionPoint name="intentionAction"
@@ -44,6 +46,9 @@
 
         <!-- no replacement EP 'com.intellij.dom.fileMetaData' defined -->
         <dom.fileDescription implementation="foo.MyRunnable"/>
+
+        <!-- no replacement EP to suggest -->
+        <<error descr="Deprecated extension point 'com.intellij.exportable'">exportable</error> implementation="foo.MyRunnable"/>
 
         <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
 
