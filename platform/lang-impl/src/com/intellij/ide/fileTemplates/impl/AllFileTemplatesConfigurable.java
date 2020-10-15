@@ -161,12 +161,17 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     while (names.contains(name)) {
       name = MessageFormat.format(nameTemplate, ++i + " ", selected.getName());
     }
-    final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
+    final FileTemplateBase newTemplate = new CustomFileTemplate(name, selected.getExtension());
     newTemplate.setText(selected.getText());
     newTemplate.setFileName(selected.getFileName());
     newTemplate.setReformatCode(selected.isReformatCode());
     newTemplate.setLiveTemplateEnabled(selected.isLiveTemplateEnabled());
+    newTemplate.setChildren(ContainerUtil.map2Array(selected.getChildren(), FileTemplate.class, template -> template.clone()));
+    newTemplate.updateChildrenNames();
     myCurrentTab.addTemplate(newTemplate);
+    for (FileTemplate child : newTemplate.getChildren()) {
+      myCurrentTab.addTemplate(child);
+    }
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
     fireListChanged();

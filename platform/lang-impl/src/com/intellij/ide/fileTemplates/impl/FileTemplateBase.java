@@ -172,6 +172,13 @@ public abstract class FileTemplateBase implements FileTemplate {
     return getQualifiedName() + TEMPLATE_CHILDREN_SUFFIX + index;
   }
 
+  public void updateChildrenNames() {
+    FileTemplate @NotNull [] children = getChildren();
+    for (int i = 0; i < children.length; i++) {
+      children[i].setName(getChildName(i));
+    }
+  }
+
   public static boolean isChild(@NotNull FileTemplate template) {
     return template.getName().contains(TEMPLATE_CHILDREN_SUFFIX);
   }
