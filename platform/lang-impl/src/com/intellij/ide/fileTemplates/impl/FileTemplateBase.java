@@ -168,6 +168,10 @@ public abstract class FileTemplateBase implements FileTemplate {
     myChildren = ArrayUtil.append(getChildren(), child);
   }
 
+  public String getChildName(int index) {
+    return getQualifiedName() + TEMPLATE_CHILDREN_SUFFIX + index;
+  }
+
   public static boolean isChild(@NotNull FileTemplate template) {
     return template.getName().contains(TEMPLATE_CHILDREN_SUFFIX);
   }

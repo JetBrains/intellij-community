@@ -110,12 +110,9 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       .filterMap(Language::getAssociatedFileType)
       .filterMap(FileType::getDefaultExtension)
       .first(), "txt");
-    String name = IdeBundle.message("template.unnamed");
     FileTemplate selected = getSelectedTemplate();
-    if (child) {
-      if (!(selected instanceof FileTemplateBase)) return;
-      name = ((FileTemplateBase)selected).getQualifiedName() + FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX + (selected.getChildren().length + 1);
-    }
+    if (!(selected instanceof FileTemplateBase)) return;
+    String name = child ? ((FileTemplateBase)selected).getChildName(selected.getChildren().length) : IdeBundle.message("template.unnamed");
     FileTemplate template = createTemplate(name, ext, "", child);
     if (child) {
       ((FileTemplateBase)selected).addChild(template);

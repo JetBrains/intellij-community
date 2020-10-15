@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +39,14 @@ public final class CustomFileTemplate extends FileTemplateBase {
   @Override
   public void setName(@NotNull String name) {
     myName = name;
+    updateChildren();
+  }
+
+  private void updateChildren() {
+    FileTemplate @NotNull [] children = getChildren();
+    for (int i = 0; i < children.length; i++) {
+      children[i].setName(getChildName(i));
+    }
   }
 
   @Override
@@ -49,6 +58,7 @@ public final class CustomFileTemplate extends FileTemplateBase {
   @Override
   public void setExtension(@NotNull String extension) {
     myExtension = extension;
+    updateChildren();
   }
 
   @Override
