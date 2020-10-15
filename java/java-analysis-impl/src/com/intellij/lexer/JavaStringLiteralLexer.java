@@ -34,8 +34,10 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
 
   @Override
   protected int locateUnicodeEscapeSequence(int start, int i) {
-    i++;
-    while (i < myBufferEnd && myBuffer.charAt(i) == 'u') i++;
+    do {
+      i++;
+    }
+    while (i < myBufferEnd && myBuffer.charAt(i) == 'u');
     int end = parseUnicodeDigits(i);
     if (end != i + 4) return end;
     int code = Integer.parseInt(myBuffer.subSequence(i, end).toString(), 16);

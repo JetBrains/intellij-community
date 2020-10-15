@@ -226,7 +226,10 @@ public final class JavaLexer extends LexerBase {
         c = charAt(pos);
         if (c == '\n' || c == '\r') continue;
         if (c == 'u') {
-          while (pos < myBufferEndOffset && charAt(pos) == 'u') pos++;
+          do {
+            pos++;
+          }
+          while (pos < myBufferEndOffset && charAt(pos) == 'u');
           if (pos + 3 >= myBufferEndOffset) return myBufferEndOffset;
           boolean isBackSlash = charAt(pos) == '0' && charAt(pos + 1) == '0' && charAt(pos + 2) == '5' && charAt(pos + 3) == 'c';
           // on encoded backslash we also need to skip escaped symbol (e.g. \\u005c" is translated to \")
