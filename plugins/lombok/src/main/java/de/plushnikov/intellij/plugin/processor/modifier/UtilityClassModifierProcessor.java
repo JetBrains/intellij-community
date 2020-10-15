@@ -2,10 +2,10 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -20,7 +20,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
     if (modifierListParent instanceof PsiClass) {
       PsiClass parentClass = (PsiClass) modifierListParent;
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, UtilityClass.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, LombokNames.UTILITY_CLASS)) {
         return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemNewBuilder());
       }
     }
@@ -31,7 +31,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierListParent, PsiClass.class, true);
 
-    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, UtilityClass.class) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemNewBuilder());
+    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokNames.UTILITY_CLASS) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemNewBuilder());
   }
 
   @Override
@@ -46,7 +46,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     // FINAL
     if (parent instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) parent;
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, UtilityClass.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokNames.UTILITY_CLASS)) {
         modifiers.add(PsiModifier.FINAL);
       }
     }

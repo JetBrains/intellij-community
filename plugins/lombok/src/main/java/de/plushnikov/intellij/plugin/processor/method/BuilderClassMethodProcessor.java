@@ -6,10 +6,10 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
 public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   public BuilderClassMethodProcessor() {
-    super(PsiClass.class, Builder.class);
+    super(PsiClass.class, LombokNames.BUILDER);
   }
 
   @Override

@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiClass.class, true);
 
-    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.Value.class);
+    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokNames.VALUE);
   }
 
   @Override
@@ -37,7 +38,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
     if (null != parentElement) {
 
       // FINAL
-      if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class)) {
+      if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, LombokNames.NON_FINAL)) {
         modifiers.add(PsiModifier.FINAL);
       }
 
@@ -46,7 +47,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
         // Visibility is only changed for package private fields
         hasPackagePrivateModifier(modifierList) &&
         // except they are annotated with @PackagePrivate
-        !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
+        !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, LombokNames.PACKAGE_PRIVATE)) {
         modifiers.add(PsiModifier.PRIVATE);
 
         // IDEA _right now_ checks if other modifiers are set, and ignores PACKAGE_LOCAL but may as well clean it up

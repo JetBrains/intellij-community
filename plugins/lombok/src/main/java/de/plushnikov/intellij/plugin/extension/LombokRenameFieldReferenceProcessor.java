@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -10,9 +11,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import lombok.Builder;
-import lombok.Singular;
-import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -63,9 +61,9 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         }
       }
 
-      final PsiAnnotation builderAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, Builder.class, lombok.experimental.SuperBuilder.class);
+      final PsiAnnotation builderAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokNames.BUILDER, LombokNames.SUPER_BUILDER);
       if (null != builderAnnotation) {
-        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Singular.class);
+        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.SINGULAR);
         final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiField, singularAnnotation);
         final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation);
         final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation);
@@ -85,7 +83,7 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         }
       }
 
-      final boolean hasFieldNameConstantAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, FieldNameConstants.class);
+      final boolean hasFieldNameConstantAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokNames.FIELD_NAME_CONSTANTS);
       if (hasFieldNameConstantAnnotation) {
         Arrays.stream(containingClass.getInnerClasses())
           .map(PsiClass::getFields)

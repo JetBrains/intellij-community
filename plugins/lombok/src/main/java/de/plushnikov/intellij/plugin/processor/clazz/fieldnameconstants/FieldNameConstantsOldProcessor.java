@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -12,7 +13,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.List;
 public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   public FieldNameConstantsOldProcessor() {
-    super(PsiField.class, FieldNameConstants.class);
+    super(PsiField.class, LombokNames.FIELD_NAME_CONSTANTS);
   }
 
   private FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {

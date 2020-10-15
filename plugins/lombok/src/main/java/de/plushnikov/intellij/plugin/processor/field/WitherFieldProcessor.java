@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -14,8 +15,6 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.*;
-import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,7 @@ import java.util.List;
 public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   public WitherFieldProcessor() {
-    super(PsiMethod.class, Wither.class, With.class);
+    super(PsiMethod.class, LombokNames.WITHER, LombokNames.WITH);
   }
 
   private RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
@@ -110,13 +109,13 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   @SuppressWarnings("unchecked")
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class, Value.class, Builder.class)) {
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokNames.ALL_ARGS_CONSTRUCTOR, LombokNames.VALUE, LombokNames.BUILDER)) {
       return true;
     }
 
     final Collection<PsiField> constructorParameters = filterFields(psiClass);
 
-    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class, Data.class)) {
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokNames.REQUIRED_ARGS_CONSTRUCTOR, LombokNames.DATA)) {
       final Collection<PsiField> requiredConstructorParameters = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass);
       if (constructorParameters.size() == requiredConstructorParameters.size()) {
         return true;
@@ -175,7 +174,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
         .withNavigationElement(psiField)
         .withModifier(methodModifier);
 
-      PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Wither.class, With.class);
+      PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.WITHER, LombokNames.WITH);
       addOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder, JavaLanguage.INSTANCE);

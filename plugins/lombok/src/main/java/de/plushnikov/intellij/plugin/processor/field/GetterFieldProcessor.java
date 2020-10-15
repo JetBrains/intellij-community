@@ -2,13 +2,13 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.List;
 public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   public GetterFieldProcessor() {
-    super(PsiMethod.class, Getter.class);
+    super(PsiMethod.class, LombokNames.GETTER);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -127,7 +127,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     PsiModifierList modifierList = methodBuilder.getModifierList();
     copyAnnotations(psiField, modifierList,
       LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
+    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.GETTER), modifierList, "onMethod");
     return methodBuilder;
   }
 

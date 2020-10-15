@@ -4,10 +4,10 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.Optional;
 public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsProcessor() {
-    super(PsiClass.class, FieldNameConstants.class);
+    super(PsiClass.class, LombokNames.FIELD_NAME_CONSTANTS);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

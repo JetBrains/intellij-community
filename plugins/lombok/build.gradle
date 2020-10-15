@@ -94,27 +94,6 @@ task generateLombok {
     copy {
       includeEmptyDirs = false
       from({ zipTree(configurations.lombok.singleFile) }) {
-        include 'lombok/extern/**'
-        include 'lombok/experimental/**'
-        include 'lombok/Builder.java'
-        include 'lombok/AccessLevel.java'
-        include 'lombok/*ArgsConstructor.java'
-        include 'lombok/Cleanup.java'
-        include 'lombok/CustomLog.java'
-        include 'lombok/Data.java'
-        include 'lombok/Delegate.java'
-        include 'lombok/Getter.java'
-        include 'lombok/Setter.java'
-        include 'lombok/EqualsAndHashCode.java'
-        include 'lombok/NonNull.java'
-        include 'lombok/Synchronized.java'
-        include 'lombok/ToString.java'
-        include 'lombok/SneakyThrows.java'
-        include 'lombok/Value.java'
-        include 'lombok/With.java'
-        include 'lombok/val.java'
-        include 'lombok/var.java'
-        include 'lombok/Singular.java'
         include 'lombok/core/handlers/Singulars.java'
       }
       into("generated/src")

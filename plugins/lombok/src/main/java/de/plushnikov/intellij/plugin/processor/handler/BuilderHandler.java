@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -13,9 +14,6 @@ import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerF
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +43,18 @@ public class BuilderHandler {
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
   static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
-  private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-    Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), With.class.getSimpleName(),
-    ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
-    RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
-    Data.class.getSimpleName(), Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
+  private static final Collection<String> INVALID_ON_BUILDERS = Stream.of(LombokNames.GETTER,
+                                                                          LombokNames.SETTER,
+                                                                          LombokNames.WITHER,
+                                                                          LombokNames.WITH,
+                                                                          LombokNames.TO_STRING,
+                                                                          LombokNames.EQUALS_AND_HASHCODE,
+                                                                          LombokNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                          LombokNames.ALL_ARGS_CONSTRUCTOR,
+                                                                          LombokNames.NO_ARGS_CONSTRUCTOR,
+                                                                          LombokNames.DATA,
+                                                                          LombokNames.VALUE,
+                                                                          LombokNames.FIELD_DEFAULTS).map(fqn -> StringUtil.getShortName(fqn)).collect(Collectors.toUnmodifiableSet());
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -461,7 +466,7 @@ public class BuilderHandler {
     if (psiField.getName().endsWith("$set") && PsiPrimitiveType.BOOLEAN.equals(psiField.getType())) {
       PsiElement navigationElement = psiField.getNavigationElement();
       if (navigationElement instanceof PsiField) {
-        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, Builder.Default.class.getCanonicalName());
+        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, LombokNames.BUILDER_DEFAULT);
       }
     }
     return !isBuilderDefaultSetter;

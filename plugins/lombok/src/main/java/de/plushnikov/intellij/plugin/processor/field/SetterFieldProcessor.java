@@ -2,13 +2,13 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.List;
 public class SetterFieldProcessor extends AbstractFieldProcessor {
 
   public SetterFieldProcessor() {
-    super(PsiMethod.class, Setter.class);
+    super(PsiMethod.class, LombokNames.SETTER);
   }
 
   @Override
@@ -112,7 +112,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Setter.class);
+    final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.SETTER);
 
     final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 

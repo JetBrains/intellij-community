@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -10,7 +11,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstruct
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,7 +22,7 @@ import java.util.List;
 public class ValueProcessor extends AbstractClassProcessor {
 
   public ValueProcessor() {
-    super(PsiMethod.class, Value.class);
+    super(PsiMethod.class, LombokNames.VALUE);
   }
 
   private ToStringProcessor getToStringProcessor() {
@@ -47,7 +47,7 @@ public class ValueProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, EqualsAndHashCode.class);
+    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokNames.EQUALS_AND_HASHCODE);
     if (null == equalsAndHashCodeAnnotation) {
       getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
@@ -67,18 +67,17 @@ public class ValueProcessor extends AbstractClassProcessor {
   @SuppressWarnings("unchecked")
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
 
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.GETTER)) {
       target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.EQUALS_AND_HASHCODE)) {
       target.addAll(ValueProcessor.this.getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.TO_STRING)) {
       target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
-      lombok.Builder.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.NO_ARGS_CONSTRUCTOR, LombokNames.REQUIRED_ARGS_CONSTRUCTOR, LombokNames.ALL_ARGS_CONSTRUCTOR, LombokNames.BUILDER)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
@@ -99,8 +98,8 @@ public class ValueProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    addClassAnnotation(result, psiClass, lombok.experimental.NonFinal.class.getName(), lombok.experimental.PackagePrivate.class.getName());
-    addFieldsAnnotation(result, psiClass, lombok.experimental.NonFinal.class.getName(), lombok.experimental.PackagePrivate.class.getName());
+    addClassAnnotation(result, psiClass, LombokNames.NON_FINAL, LombokNames.PACKAGE_PRIVATE);
+    addFieldsAnnotation(result, psiClass, LombokNames.NON_FINAL, LombokNames.PACKAGE_PRIVATE);
     return result;
   }
 

@@ -1,16 +1,15 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.experimental.Tolerate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
@@ -22,7 +21,7 @@ public abstract class AbstractProcessor implements Processor {
   /**
    * Annotation classes this processor supports
    */
-  private final Class<? extends Annotation>[] supportedAnnotationClasses;
+  private final String[] supportedAnnotationClasses;
   /**
    * Kind of output elements this processor supports
    */
@@ -39,14 +38,13 @@ public abstract class AbstractProcessor implements Processor {
    */
   @SuppressWarnings("unchecked")
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull Class<? extends Annotation>... supportedAnnotationClasses) {
+                              @NotNull String... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = supportedAnnotationClasses;
   }
 
-  @NotNull
-  public final Class<? extends Annotation>[] getSupportedAnnotationClasses() {
+  public final @NotNull String @NotNull [] getSupportedAnnotationClasses() {
     return supportedAnnotationClasses;
   }
 
@@ -64,7 +62,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedMethods) {
-    definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, Tolerate.class));
+    definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokNames.TOLERATE));
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,

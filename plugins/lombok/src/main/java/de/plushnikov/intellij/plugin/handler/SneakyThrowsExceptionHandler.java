@@ -3,9 +3,9 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.codeInsight.CustomExceptionHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
   }
 
   private boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
-    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, SneakyThrows.class);
+    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, LombokNames.SNEAKY_THROWS);
     if (psiAnnotation == null) {
       return false;
     }

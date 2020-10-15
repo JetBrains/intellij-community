@@ -3,11 +3,12 @@ package de.plushnikov.intellij.plugin.intention.valvar.from;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiVariable;
+import de.plushnikov.intellij.plugin.LombokNames;
 
 public class ReplaceValWithExplicitTypeIntentionAction extends AbstractReplaceVariableWithExplicitTypeIntentionAction {
 
   public ReplaceValWithExplicitTypeIntentionAction() {
-    super(lombok.val.class);
+    super(LombokNames.VAL);
   }
 
   @Override

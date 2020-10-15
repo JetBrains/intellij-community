@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -19,7 +19,7 @@ import java.util.List;
 public class NoArgsConstructorProcessor extends AbstractConstructorClassProcessor {
 
   public NoArgsConstructorProcessor() {
-    super(NoArgsConstructor.class, PsiMethod.class);
+    super(LombokNames.NO_ARGS_CONSTRUCTOR, PsiMethod.class);
   }
 
   @Override

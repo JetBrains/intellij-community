@@ -3,8 +3,8 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -16,6 +16,6 @@ public class BuilderHandler {
       return false;
     }
 
-    return PsiAnnotationSearchUtil.isAnnotatedWith(field, Builder.Default.class.getCanonicalName());
+    return PsiAnnotationSearchUtil.isAnnotatedWith(field, LombokNames.BUILDER_DEFAULT);
   }
 }

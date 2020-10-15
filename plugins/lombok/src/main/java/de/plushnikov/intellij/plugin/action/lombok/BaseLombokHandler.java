@@ -14,7 +14,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +38,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
 
   protected abstract void processClass(@NotNull PsiClass psiClass);
 
-  protected void processIntern(@NotNull Map<PsiField, PsiMethod> fieldMethodMap, @NotNull PsiClass psiClass, @NotNull Class<? extends Annotation> annotationClass) {
+  protected void processIntern(@NotNull Map<PsiField, PsiMethod> fieldMethodMap,
+                               @NotNull PsiClass psiClass, String annotationClassName) {
     if (fieldMethodMap.isEmpty()) {
       return;
     }
@@ -47,10 +47,10 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     final PsiMethod firstPropertyMethod = fieldMethodMap.values().iterator().next();
 
     final boolean useAnnotationOnClass = haveAllMethodsSameAccessLevel(fieldMethodMap.values()) &&
-      isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod, annotationClass);
+      isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod, annotationClassName);
 
     if (useAnnotationOnClass) {
-      addAnnotation(psiClass, firstPropertyMethod, annotationClass);
+      addAnnotation(psiClass, firstPropertyMethod, annotationClassName);
     }
 
     for (Map.Entry<PsiField, PsiMethod> fieldMethodEntry : fieldMethodMap.entrySet()) {
@@ -60,7 +60,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       if (null != propertyField) {
         boolean isStatic = propertyField.hasModifierProperty(PsiModifier.STATIC);
         if (isStatic || !useAnnotationOnClass) {
-          addAnnotation(propertyField, propertyMethod, annotationClass);
+          addAnnotation(propertyField, propertyMethod, annotationClassName);
         }
 
         // Move all annotations to field declaration
@@ -73,8 +73,10 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     }
   }
 
-  private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass, PsiMethod firstPropertyMethod, Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, annotationClass);
+  private boolean isNotAnnotatedWithOrSameAccessLevelAs(PsiClass psiClass,
+                                                        PsiMethod firstPropertyMethod,
+                                                        String annotationClassName) {
+    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, annotationClassName);
     if (null != presentAnnotation) {
 
       final String presentAccessModifier = LombokProcessorUtil.getMethodModifier(presentAnnotation);
@@ -95,21 +97,23 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
   }
 
   private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiModifierListOwner sourceElement,
-                             @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation newPsiAnnotation = LombokProcessorUtil.createAnnotationWithAccessLevel(annotationClass, sourceElement);
+                             String annotationClassName) {
+    final PsiAnnotation newPsiAnnotation = LombokProcessorUtil.createAnnotationWithAccessLevel(sourceElement, annotationClassName);
 
-    addAnnotation(targetElement, newPsiAnnotation, annotationClass);
+    addAnnotation(targetElement, newPsiAnnotation, annotationClassName);
   }
 
-  protected void addAnnotation(@NotNull PsiClass targetElement, @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation newPsiAnnotation = PsiAnnotationUtil.createPsiAnnotation(targetElement, annotationClass);
+  protected void addAnnotation(@NotNull PsiClass targetElement,
+                               String annotationClassName) {
+    final PsiAnnotation newPsiAnnotation = PsiAnnotationUtil.createPsiAnnotation(targetElement, annotationClassName);
 
-    addAnnotation(targetElement, newPsiAnnotation, annotationClass);
+    addAnnotation(targetElement, newPsiAnnotation, annotationClassName);
   }
 
-  private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiAnnotation newPsiAnnotation,
-                             @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClass);
+  private void addAnnotation(@NotNull PsiModifierListOwner targetElement,
+                             @NotNull PsiAnnotation newPsiAnnotation,
+                             String annotationClassName) {
+    final PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClassName);
 
     final Project project = targetElement.getProject();
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -126,8 +130,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     }
   }
 
-  protected void removeDefaultAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClass);
+  protected void removeDefaultAnnotation(@NotNull PsiModifierListOwner targetElement, String annotationClassName) {
+    final PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClassName);
     if (null != psiAnnotation) {
       boolean hasOnlyDefaultValues = true;
 

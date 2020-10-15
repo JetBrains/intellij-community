@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import lombok.extern.slf4j.Slf4j;
+import de.plushnikov.intellij.plugin.LombokNames;
 
 /**
  * @author Plushnikov Michail
@@ -11,6 +11,6 @@ public class Slf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
   private static final String LOGGER_INITIALIZER = "org.slf4j.LoggerFactory.getLogger(%s)";
 
   public Slf4jProcessor() {
-    super(Slf4j.class, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
+    super(LombokNames.SLF_4_J, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
   }
 }

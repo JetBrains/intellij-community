@@ -6,12 +6,12 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class SuperBuilderClassProcessor extends AbstractClassProcessor {
 
   public SuperBuilderClassProcessor() {
-    super(PsiClass.class, SuperBuilder.class);
+    super(PsiClass.class, LombokNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {

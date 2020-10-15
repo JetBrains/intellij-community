@@ -130,7 +130,7 @@ public class LombokProjectValidatorActivity implements StartupActivity {
   private boolean hasLombokLibrary(Project project) {
     PsiPackage lombokPackage;
     try {
-      lombokPackage = JavaPsiFacade.getInstance(project).findPackage("lombok");
+      lombokPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
     } catch (ProcessCanceledException ex) {
       lombokPackage = null;
     }

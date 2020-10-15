@@ -5,7 +5,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
-import lombok.Getter;
+import de.plushnikov.intellij.plugin.LombokNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class LombokGetterHandler extends BaseLombokHandler {
       }
     }
 
-    processIntern(fieldMethodMap, psiClass, Getter.class);
+    processIntern(fieldMethodMap, psiClass, LombokNames.GETTER);
   }
 
 }

@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import lombok.extern.slf4j.Slf4j;
+import de.plushnikov.intellij.plugin.LombokNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -20,7 +20,7 @@ public class UseSlf4jAnnotationQuickFix extends AddAnnotationFix implements Inte
   private final SmartPsiElementPointer<PsiNamedElement> elementToRemove;
 
   public UseSlf4jAnnotationQuickFix(@NotNull PsiNamedElement elementToRemove, @NotNull PsiClass containingClass) {
-    super(Slf4j.class.getName(), containingClass);
+    super(LombokNames.SLF_4_J, containingClass);
     this.elementToRemove = SmartPointerManager.getInstance(elementToRemove.getProject()).createSmartPsiElementPointer(elementToRemove);
   }
 

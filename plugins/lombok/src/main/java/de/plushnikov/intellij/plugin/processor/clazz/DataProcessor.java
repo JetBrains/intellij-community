@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -9,8 +10,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstruct
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ import java.util.List;
 public class DataProcessor extends AbstractClassProcessor {
 
   public DataProcessor() {
-    super(PsiMethod.class, Data.class);
+    super(PsiMethod.class, LombokNames.DATA);
   }
 
   private ToStringProcessor getToStringProcessor() {
@@ -52,7 +51,7 @@ public class DataProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, EqualsAndHashCode.class);
+    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokNames.EQUALS_AND_HASHCODE);
     if (null == equalsAndHashCodeAnnotation) {
       getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
@@ -75,16 +74,16 @@ public class DataProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.GETTER)) {
       target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Setter.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.SETTER)) {
       target.addAll(getSetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.EQUALS_AND_HASHCODE)) {
       target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.TO_STRING)) {
       target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
 
@@ -107,7 +106,11 @@ public class DataProcessor extends AbstractClassProcessor {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
     @SuppressWarnings("unchecked") final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass,
-      NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class, Builder.class, SuperBuilder.class);
+                                                                                                               LombokNames.NO_ARGS_CONSTRUCTOR,
+                                                                                                               LombokNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                                                               LombokNames.ALL_ARGS_CONSTRUCTOR,
+                                                                                                               LombokNames.BUILDER,
+                                                                                                               LombokNames.SUPER_BUILDER);
     if (notAnnotatedWith) {
       final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = getRequiredArgsConstructorProcessor();
       final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);

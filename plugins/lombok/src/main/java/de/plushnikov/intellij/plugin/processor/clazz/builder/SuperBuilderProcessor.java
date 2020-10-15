@@ -3,12 +3,12 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.List;
 public class SuperBuilderProcessor extends AbstractClassProcessor {
 
   public SuperBuilderProcessor() {
-    super(PsiMethod.class, SuperBuilder.class);
+    super(PsiMethod.class, LombokNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {
