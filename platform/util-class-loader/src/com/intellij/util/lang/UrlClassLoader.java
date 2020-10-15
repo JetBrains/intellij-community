@@ -306,7 +306,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * Use {@link UrlUtilRt#internProtocol(URL)}
+   * @deprecated Use {@link UrlUtilRt#internProtocol(URL)}
    */
   @Deprecated
   @Nullable

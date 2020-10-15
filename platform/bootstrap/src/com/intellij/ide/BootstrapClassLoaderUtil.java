@@ -277,7 +277,7 @@ public final class BootstrapClassLoaderUtil {
     return classpath;
   }
 
-  private static class TransformingLoader extends UrlClassLoader {
+  private static final class TransformingLoader extends UrlClassLoader {
     private final List<BytecodeTransformer> myTransformers;
 
     TransformingLoader(Builder builder, List<BytecodeTransformer> transformers) {
