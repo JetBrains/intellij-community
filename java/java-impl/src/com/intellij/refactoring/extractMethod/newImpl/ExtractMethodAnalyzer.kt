@@ -231,26 +231,9 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
 }
 
 private fun checkLocalClass(options: ExtractOptions) {
-  var container: PsiElement? = PsiTreeUtil.getParentOfType(options.elements.first(), PsiClass::class.java, PsiMethod::class.java)
-  while (container is PsiMethod && container.containingClass !== options.anchor.parent) {
-    container = PsiTreeUtil.getParentOfType(container, PsiMethod::class.java, true)
-  }
-  container ?: return
+  val container: PsiElement? = PsiTreeUtil.getParentOfType(options.elements.first(), PsiMember::class.java)
   val analyzer = CodeFragmentAnalyzer(options.elements)
-  val localClasses = mutableListOf<PsiClass>()
-  container.accept(object : JavaRecursiveElementWalkingVisitor() {
-    override fun visitClass(aClass: PsiClass) {
-      localClasses.add(aClass)
-    }
-
-    override fun visitAnonymousClass(aClass: PsiAnonymousClass) {
-      visitElement(aClass)
-    }
-
-    override fun visitTypeParameter(classParameter: PsiTypeParameter) {
-      visitElement(classParameter)
-    }
-  })
+  val localClasses = findLocalClassesIn(container)
   fun isExtracted(element: PsiElement): Boolean {
     return element.textRange in TextRange(options.elements.first().textRange.startOffset, options.elements.last().textRange.endOffset)
   }
@@ -283,4 +266,22 @@ private fun checkLocalClass(options: ExtractOptions) {
         .forEach { throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.outside.used"), it) }
     }
   }
+}
+
+private fun findLocalClassesIn(container: PsiElement?): List<PsiClass> {
+  val localClasses = mutableListOf<PsiClass>()
+  container?.accept(object : JavaRecursiveElementWalkingVisitor() {
+    override fun visitClass(aClass: PsiClass) {
+      localClasses.add(aClass)
+    }
+
+    override fun visitAnonymousClass(aClass: PsiAnonymousClass) {
+      visitElement(aClass)
+    }
+
+    override fun visitTypeParameter(classParameter: PsiTypeParameter) {
+      visitElement(classParameter)
+    }
+  })
+  return localClasses.filter(PsiUtil::isLocalClass)
 }

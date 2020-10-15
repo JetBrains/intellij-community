@@ -531,6 +531,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
+  public void testLocalClassScope() throws Exception {
+    doTest();
+  }
+
   public void testStaticImport() throws Exception {
     doTest();
   }
