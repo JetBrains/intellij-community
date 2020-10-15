@@ -12,13 +12,13 @@ function die() {
 }
 
 function set_java_home() {
-    readonly JDK_REPO="$(cd ../../prebuilts/studio/jdk && pwd)"
+    readonly JDK_REPO="$(cd ../../prebuilts/studio/jdk/jdk11 && pwd)"
     case `uname -s` in
         MINGW64_NT-10.0)
-            export JAVA_HOME="${JDK_REPO}/win64"
+            export JAVA_HOME="${JDK_REPO}/win"
             ;;
         CYGWIN_NT-10.0)
-            export JAVA_HOME="${JDK_REPO}/win64"
+            export JAVA_HOME="${JDK_REPO}/win"
             ;;
         Darwin)
             export JAVA_HOME="${JDK_REPO}/mac/Contents/Home"
