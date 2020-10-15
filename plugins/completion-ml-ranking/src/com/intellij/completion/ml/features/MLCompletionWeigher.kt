@@ -6,14 +6,12 @@ import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.completion.ml.storage.MutableLookupStorage
 
 class MLCompletionWeigher : CompletionWeigher() {
-  override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
-    val storage = (LookupManager.getActiveLookup(location.completionParameters.editor) as? LookupImpl)
-                    ?.let { LookupStorage.get(it) } ?: return DummyComparable.EMPTY
+  override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> {
+    val storage: LookupStorage = LookupStorage.get(location.completionParameters) ?: return DummyComparable.EMPTY
     if (!storage.shouldComputeFeatures()) return DummyComparable.EMPTY
     val result = mutableMapOf<String, MLFeatureValue>()
     val contextFeatures = storage.contextProvidersResult()

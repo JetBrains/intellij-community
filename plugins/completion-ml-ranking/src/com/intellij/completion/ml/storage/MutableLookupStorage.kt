@@ -1,16 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.storage
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.experiment.ExperimentStatus
-import com.intellij.completion.ml.util.idString
 import com.intellij.completion.ml.features.ContextFeaturesStorage
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
+import com.intellij.completion.ml.personalization.UserFactorStorage
+import com.intellij.completion.ml.personalization.UserFactorsManager
+import com.intellij.completion.ml.personalization.session.LookupSessionFactorsStorage
 import com.intellij.completion.ml.sorting.RankingModelWrapper
 import com.intellij.completion.ml.sorting.RankingSupport
+import com.intellij.completion.ml.util.idString
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -18,10 +23,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.completion.ml.personalization.UserFactorStorage
-import com.intellij.completion.ml.personalization.UserFactorsManager
-import com.intellij.completion.ml.personalization.session.LookupSessionFactorsStorage
 import org.jetbrains.annotations.TestOnly
 
 class MutableLookupStorage(
@@ -69,6 +72,32 @@ class MutableLookupStorage(
       val storage = MutableLookupStorage(System.currentTimeMillis(), language, RankingSupport.getRankingModel(language))
       lookup.putUserData(LOOKUP_STORAGE, storage)
       return storage
+    }
+
+    fun get(parameters: CompletionParameters): MutableLookupStorage? {
+      var storage = parameters.getUserData(LOOKUP_STORAGE)
+      if (storage == null) {
+        val activeLookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
+        if (activeLookup != null) {
+          storage = get(activeLookup)
+          if (storage != null) {
+            LOG.debug("Can't get storage from parameters. Fallback to storage from active lookup")
+            saveAsUserData(parameters, storage)
+          }
+        }
+      }
+      return storage
+    }
+
+    fun saveAsUserData(parameters: CompletionParameters, storage: MutableLookupStorage) {
+      val completionProcess = parameters.process
+      if (completionProcess is UserDataHolder) {
+        completionProcess.putUserData(LOOKUP_STORAGE, storage)
+      }
+    }
+
+    private fun <T> CompletionParameters.getUserData(key: Key<T>): T? {
+      return (process as? UserDataHolder)?.getUserData(key)
     }
   }
 
