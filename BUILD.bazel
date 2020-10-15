@@ -1,5 +1,3 @@
-exports_files(["test-log.xml"])
-
 filegroup(
     name = "licenses",
     srcs = glob([
@@ -7,11 +5,5 @@ filegroup(
         "LICENSE.txt",
         "NOTICE.txt",
     ]),
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "platform-build-info",
-    srcs = ["build.txt"],
     visibility = ["//visibility:public"],
 )
