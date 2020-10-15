@@ -344,7 +344,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         pass
 
     if is_pandas_container(type_qualifier, typeName, v):
-        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+        value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
 
     xml_shape = ''
