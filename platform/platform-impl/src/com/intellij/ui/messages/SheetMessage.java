@@ -34,6 +34,7 @@ final class SheetMessage implements Disposable {
   private final boolean myUseTransparent = useTransparent();
 
   private static final int TIME_TO_SHOW_SHEET = 250;
+  private static final int TIME_TO_SHOW_SHEET_SHORT = 200;
 
   private Image staticImage;
   private int imageHeight;
@@ -224,8 +225,9 @@ final class SheetMessage implements Disposable {
                           null);
           }
           else {
-            g2d.drawImage(staticImage, 0, 0,
-                          myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT,
+            int offset = imageHeight - myController.SHEET_NC_HEIGHT;
+            g2d.drawImage(staticImage, 0, offset,
+                          myController.SHEET_NC_WIDTH, offset + myController.SHEET_NC_HEIGHT,
                           0, 0,
                           staticImage.getWidth(null), staticImage.getHeight(null),
                           null);
@@ -242,7 +244,7 @@ final class SheetMessage implements Disposable {
     staticPanel.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
     myWindow.setContentPane(staticPanel);
 
-    int duration = myUseTransparent ? TIME_TO_SHOW_SHEET : Registry.intValue("ide.mac.message.sheets.java.emulation.animation.time", 140);
+    int duration = myUseTransparent ? TIME_TO_SHOW_SHEET : TIME_TO_SHOW_SHEET_SHORT;
     Animator myAnimator = new Animator("Roll Down Sheet Animator", myController.SHEET_NC_HEIGHT, duration, false) {
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
@@ -252,12 +254,12 @@ final class SheetMessage implements Disposable {
 
         if (myUseTransparent) {
           setPositionRelativeToParent();
-          imageHeight = newHeight;
-          myWindow.repaint();
         }
         else {
           setPositionRelativeToParent(newHeight);
         }
+        imageHeight = newHeight;
+        myWindow.repaint();
       }
 
       @Override
