@@ -66,7 +66,7 @@ enum class ReaderMode {
 }
 
 @State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
+class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State> {
   companion object {
     @JvmStatic
     fun instance(project: Project): ReaderModeSettings {
@@ -76,16 +76,17 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
 
   private var myState = State()
 
-  data class State(
-    var showBreadcrumbs: Boolean = true,
-    var showLigatures: Boolean = true,
-    var increaseLineSpacing: Boolean = false,
-    var showRenderedDocs: Boolean = true,
-    var showInlayHints: Boolean = true,
-    var showWarnings: Boolean = false,
-    var enabled: Boolean = true,
+  class State : BaseState() {
+    var showBreadcrumbs: Boolean = true
+    var showLigatures: Boolean = true
+    var increaseLineSpacing: Boolean = false
+    var showRenderedDocs: Boolean = true
+    var showInlayHints: Boolean = true
+    var showWarnings: Boolean = false
+    @get:ReportValue
+    var enabled: Boolean = true
     var mode: ReaderMode = LIBRARIES_AND_READ_ONLY
-  )
+  }
 
   var showBreadcrumbs: Boolean
     get() = state.showBreadcrumbs
@@ -139,4 +140,6 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
   override fun loadState(state: State) {
     myState = state
   }
+
+  override fun getStateModificationCount() = state.modificationCount
 }
