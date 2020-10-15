@@ -33,7 +33,7 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
 
   @Override
   public String getPresentableText() {
-    return myLevel.getSeverity().getDisplayLowercaseCapitalizedName();
+    return myLevel.getSeverity().getDisplayCapitalizedName();
   }
 
   public HighlightDisplayLevel getSeverityLevel() {

@@ -310,10 +310,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         if (count > 0) {
           HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
           if (severity != null) {
-            String name = count > 1 ? severity.getDisplayLowercasePluralName() : severity.getDisplayLowercaseName();
-
             Icon icon = mySeverityRegistrar.getRendererIconByIndex(i, status.fullInspect);
-            statusItems.add(new StatusItem(Integer.toString(count), icon, name));
+            statusItems.add(new StatusItem(Integer.toString(count), icon, severity.getCountMessage(count)));
 
             if (mainIcon == null) {
               mainIcon = icon;
