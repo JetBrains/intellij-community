@@ -1033,6 +1033,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
+
     val button = StripeButton(toolWindowPane, toolWindow)
     val entry = ToolWindowEntry(button, toolWindow, disposable)
     idToEntry[task.id] = entry
@@ -1058,7 +1060,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
-    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
     return entry
   }
 
