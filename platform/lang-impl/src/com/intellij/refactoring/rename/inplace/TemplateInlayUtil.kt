@@ -115,11 +115,12 @@ object TemplateInlayUtil {
     }
 
     val colorsScheme = editor.colorsScheme
+    val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip")
     return SelectableInlayButton(
       editor,
       default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
       active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-      hovered = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED))
+      hovered = factory.withTooltip(tooltip, button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED)))
     )
   }
 
