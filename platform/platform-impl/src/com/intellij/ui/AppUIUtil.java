@@ -484,4 +484,11 @@ public final class AppUIUtil {
   public static boolean isInFullscreen(@Nullable Window window) {
     return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
   }
+
+  public static Object adjustFractionalMetrics(@NotNull GraphicsConfiguration gc, Object defaultValue) {
+    if (SystemInfoRt.isMac && JBUIScale.sysScale(gc) == 1.0f) {
+      return RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    }
+    return defaultValue;
+  }
 }
