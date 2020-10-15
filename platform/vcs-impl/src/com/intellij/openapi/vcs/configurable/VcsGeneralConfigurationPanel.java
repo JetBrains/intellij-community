@@ -2,14 +2,18 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListUtil;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
@@ -30,7 +34,7 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
-public class VcsGeneralConfigurationPanel {
+public class VcsGeneralConfigurationPanel implements Disposable {
 
   private JCheckBox myShowReadOnlyStatusDialog;
 
@@ -102,6 +106,11 @@ public class VcsGeneralConfigurationPanel {
     myOnPatchCreation.setModel(new EnumComboBoxModel<>(ShowPatchAfterCreation.class));
     myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
                               RevealFileAction.getFileManagerName() + " after creation:");
+
+    ChangeListUtil.onChangeListAvailabilityChanged(myProject, this, true, () -> {
+      boolean changeListsEnabled = ChangeListManager.getInstance(myProject).areChangeListsEnabled();
+      UIUtil.setEnabled(myEmptyChangeListPanel, changeListsEnabled, true);
+    });
   }
 
   public void apply() {
@@ -268,6 +277,10 @@ public class VcsGeneralConfigurationPanel {
       myRemoveConfirmationPanel.setToolTipText(
         VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(removeConfirmation.getApplicableVcses(myProject))));
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static String composeText(final List<? extends AbstractVcs> applicableVcses) {
