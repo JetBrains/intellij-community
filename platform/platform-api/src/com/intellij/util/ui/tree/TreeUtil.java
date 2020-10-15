@@ -116,6 +116,10 @@ public final class TreeUtil {
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
   }
 
+  public static boolean hasManyNodes(@NotNull Tree tree, int threshold) {
+    return treeTraverser(tree).traverse().take(threshold).size() >= threshold;
+  }
+
   /**
    * @param tree a tree, which viewable paths are processed
    * @return a list of expanded paths
