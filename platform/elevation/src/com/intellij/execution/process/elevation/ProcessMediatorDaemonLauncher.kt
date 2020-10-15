@@ -1,19 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.util.ExecUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import java.io.Closeable
 import java.io.File
 import java.net.InetAddress
 import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 
 private typealias Port = Int
 
@@ -21,24 +30,66 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 object ProcessMediatorDaemonLauncher {
-  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon = runSuspendingAction {
-    UnixFifoDaemonHelloIpc.create(this).use { helloIpc ->
-      val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-        .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-        .let(helloIpc::patchDaemonCommandLine)
-        .let {
-          if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
+  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
+    val appExecutorService = AppExecutorUtil.getAppExecutorService()
+
+    val helloIpc = appExecutorService.submitAndAwaitCloseable { tryCreateHelloIpc() }
+                   ?: throw ExecutionException("Unable to arrange initial communication channel with the elevation daemon")
+
+    return helloIpc.use {
+      appExecutorService.submitAndAwait {
+        val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+          .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+          .let(helloIpc::patchDaemonCommandLine)
+          .let {
+            if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
+          }
+
+        val daemonProcessHandler = helloIpc.createDaemonProcessHandler(daemonCommandLine).also {
+          it.startNotify()
         }
 
-      val daemonProcessHandler = helloIpc.createDaemonProcessHandler(daemonCommandLine).also {
-        it.startNotify()
+        val daemonHello = helloIpc.readHello()
+                          ?: throw ProcessCanceledException()
+
+        ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonHello.port)
       }
-
-      val daemonHello = helloIpc.consumeDaemonHello()
-
-      ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonHello.port)
     }
   }
+
+  private fun tryCreateHelloIpc(): DaemonHelloIpc? =
+    kotlin.runCatching {
+      if (SystemInfo.isWindows) {
+        ProcessOutputBasedDaemonHelloIpc()
+      }
+      else {
+        UnixFifoDaemonHelloIpc()
+      }
+    }.recoverCatching {
+      SocketBasedDaemonHelloIpc()
+    }.getOrLogException(ElevationLogger.LOG)
+
+}
+
+private fun <R> ExecutorService.submitAndAwait(block: () -> R): R {
+  val future = CompletableFuture.supplyAsync(block, this)
+  return awaitWithCheckCanceled(future)
+}
+
+private fun <R : Closeable?> ExecutorService.submitAndAwaitCloseable(block: () -> R): R {
+  val future = CompletableFuture.supplyAsync(block, this)
+  return try {
+    awaitWithCheckCanceled(future)
+  }
+  catch (e: Throwable) {
+    future.whenComplete { closeable, _ -> closeable?.close() }
+    throw e
+  }
+}
+
+private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
+  if (ApplicationManager.getApplication() == null) return future.join()
+  return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
 }
 
 private class ProcessMediatorDaemonImpl(private val process: Process,

@@ -6,8 +6,8 @@ import com.intellij.execution.process.*
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import kotlinx.coroutines.*
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
@@ -22,24 +22,23 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal interface DaemonHelloIpc : Closeable {
   fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine): GeneralCommandLine
   fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler
-  fun consumeDaemonHello(): DaemonHello
+
+  /**
+   * Blocks until the greeting message from the daemon process. Returns null if the stream has reached EOF prematurely.
+   */
+  @Throws(IOException::class)
+  fun readHello(): DaemonHello?
+
+  /**
+   * The contract is that invoking close() interrupts any ongoing blocking operations,
+   * and makes [readHello] throw. The implementations must guarantee that.
+   */
+  override fun close()
 }
 
-internal abstract class AbstractInputStreamDaemonHelloIpc(
-  coroutineScope: CoroutineScope
-) : DaemonHelloIpc, ProcessAdapter(),
-    CoroutineScope by coroutineScope.childScope() {
+internal abstract class AbstractInputStreamDaemonHelloIpc : DaemonHelloIpc, ProcessAdapter() {
 
   private val cleanupList = CopyOnWriteArrayList<Closeable>()
-
-  init {
-    // TODO[eldar] revise the usage of invokeOnCompletion():
-    //   **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
-    //   This handler can be invoked concurrently with the surrounding code.
-    //   There is no guarantee on the execution context in which the [handler] is invoked.
-    @Suppress("LeakingThis")
-    coroutineContext[Job]!!.invokeOnCompletion { close() }
-  }
 
   final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return createProcessHandler(daemonCommandLine).also {
@@ -51,29 +50,22 @@ internal abstract class AbstractInputStreamDaemonHelloIpc(
     return OSProcessHandler.Silent(daemonCommandLine)
   }
 
-  override fun consumeDaemonHello(): DaemonHello {
-    return try {
-      ensureActive()
-      openInputStream().use { inputStream ->
-        ensureActive()
-        DaemonHello.parseDelimitedFrom(inputStream)
+  override fun readHello(): DaemonHello? {
+    return readAndClose(DaemonHello::parseDelimitedFrom).also {
+      if (it?.port == 0) {
+        throw IOException("Invalid/incomplete hello message from daemon: $it")
       }
-    }
-    catch (e: CancellationException) {
-      throw IOException(e)
     }
   }
 
-  protected abstract fun openInputStream(): InputStream
+  protected abstract fun <R> readAndClose(doRead: (InputStream) -> R): R
 
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
     ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text}")
   }
 
   override fun processTerminated(event: ProcessEvent) {
-    val message = "Daemon process terminated with exit code ${event.exitCode}"
-    ElevationLogger.LOG.info(message)
-    cancel(message)
+    ElevationLogger.LOG.info("Daemon process terminated with exit code ${event.exitCode}")
     close()
   }
 
@@ -82,27 +74,22 @@ internal abstract class AbstractInputStreamDaemonHelloIpc(
   }
 
   override fun close() {
-    try {
-      var exception: Exception? = null
-      for (closeable in cleanupList) {
-        try {
-          closeable.close()
-        }
-        catch (e: Exception) {
-          exception?.let { e.addSuppressed(it) }
-          exception = e
-        }
+    var exception: Exception? = null
+    for (closeable in cleanupList.reversed()) {
+      try {
+        closeable.close()
       }
-      exception?.let { throw it }
+      catch (e: Exception) {
+        exception?.let { e.addSuppressed(it) }
+        exception = e
+      }
     }
-    finally {
-      cancel("Closed")
-    }
+    exception?.let { throw it }
   }
 }
 
-internal open class ProcessOutputBasedDaemonHelloIpc(coroutineScope: CoroutineScope) : AbstractInputStreamDaemonHelloIpc(coroutineScope),
-                                                                                       ProcessListener {
+internal open class ProcessOutputBasedDaemonHelloIpc : AbstractInputStreamDaemonHelloIpc(),
+                                                       ProcessListener {
   private lateinit var stdoutStream: InputStream
 
   override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
@@ -119,63 +106,57 @@ internal open class ProcessOutputBasedDaemonHelloIpc(coroutineScope: CoroutineSc
     }
   }
 
-  override fun openInputStream() = stdoutStream
+  override fun <R> readAndClose(doRead: (InputStream) -> R): R = stdoutStream.use(doRead)
 }
 
-internal open class FileBasedDaemonHelloIpc(coroutineScope: CoroutineScope,
-                                            protected val path: Path) : AbstractInputStreamDaemonHelloIpc(coroutineScope) {
+internal open class FileBasedDaemonHelloIpc(protected val path: Path) : AbstractInputStreamDaemonHelloIpc() {
   override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
     addParameters("--hello-file", path.toAbsolutePath().toString())
   }
 
-  override fun openInputStream(): InputStream = Files.newInputStream(path)
+  override fun <R> readAndClose(doRead: (InputStream) -> R): R = Files.newInputStream(path).use(doRead)
 }
 
-internal class UnixFifoDaemonHelloIpc private constructor(coroutineScope: CoroutineScope,
-                                                          path: Path) : FileBasedDaemonHelloIpc(coroutineScope, path) {
+internal class UnixFifoDaemonHelloIpc(path: Path = FileUtil.generateRandomTemporaryPath().toPath()) : FileBasedDaemonHelloIpc(path) {
   init {
-    // We need to open the write end of the pipe to ensure opening the pipe for reading would not block indefinitely
-    // in case the real daemon process doesn't open in for writing (for example, if it fails to start)
-    Files.newByteChannel(path, READ, WRITE).also(::registerCloseable)
-  }
-
-  override fun openInputStream(): InputStream = Files.newInputStream(path)
-
-  companion object {
-    fun create(coroutineScope: CoroutineScope): UnixFifoDaemonHelloIpc {
-      val path = FileUtil.generateRandomTemporaryPath().toPath()
-
-      @Suppress("SpellCheckingInspection")
+    @Suppress("SpellCheckingInspection")
+    try {
+      ElevationLogger.LOG.assertTrue(SystemInfo.isUnix, "Can only use 'mkfifo' on Unix")
       val mkfifoCommandLine = GeneralCommandLine("mkfifo", "-m", "0666", path.toString())
       ExecUtil.execAndGetOutput(mkfifoCommandLine)
         .checkSuccess(ElevationLogger.LOG).also { success ->
-          if (!success) throw IOException("Unable to create fifo $path")
+          if (success) {
+            registerCloseable { FileUtil.delete(path) }
+          }
+          else throw IOException("Unable to create fifo $path")
         }
-      return UnixFifoDaemonHelloIpc(coroutineScope, path).also {
-        it.registerCloseable {
-          FileUtil.delete(path)
-        }
+
+      // We need to open the write end of the pipe  to ensure opening the pipe for reading would not block indefinitely
+      // in case the real daemon process doesn't open in for writing (for example, if it fails to start)
+      Files.newByteChannel(path, READ, WRITE).also(::registerCloseable)
+    }
+    catch (e: Throwable) {
+      use {  // to close any closeable registered so far
+        throw e
       }
     }
   }
+
+  private val inputStream = Files.newInputStream(path, READ).also(::registerCloseable)
+
+  override fun <R> readAndClose(doRead: (InputStream) -> R): R = inputStream.use(doRead)
 }
 
-internal class SocketBasedDaemonHelloIpc(coroutineScope: CoroutineScope,
-                                         serverSocketPort: Int = 0) : AbstractInputStreamDaemonHelloIpc(coroutineScope) {
+internal class SocketBasedDaemonHelloIpc(serverSocketPort: Int = 0) : AbstractInputStreamDaemonHelloIpc() {
   private val serverSocket = ServerSocket(serverSocketPort).also(::registerCloseable)
-
-  private val socketDeferred = async(Dispatchers.IO) {
-    serverSocket.accept().also(::registerCloseable)
-  }
 
   override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
     addParameters("--hello-port", serverSocket.localPort.toString())
   }
 
-  override fun openInputStream(): InputStream = runBlocking(coroutineContext) {
-    socketDeferred.await().getInputStream()
+  override fun <R> readAndClose(doRead: (InputStream) -> R): R {
+    return serverSocket.accept().use { socket ->
+      socket.getInputStream().use(doRead)
+    }
   }
 }
-
-private fun CoroutineScope.childScope(): CoroutineScope = this + childJob()
-private fun CoroutineScope.childJob(): CompletableJob = Job(coroutineContext[Job]!!)
