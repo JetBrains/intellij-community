@@ -1030,7 +1030,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.BookmarkCounterCollector"/>
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
-    <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
+    <statistics.counterUsagesCollector groupId="actions.runAnything" version="2"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="3"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
