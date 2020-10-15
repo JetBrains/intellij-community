@@ -110,8 +110,8 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
       Boolean parallelCompilation = getBoolean(configurationMap, "parallelCompilation");
-      if (parallelCompilation != null && workspaceConfiguration.PARALLEL_COMPILATION != parallelCompilation) {
-        workspaceConfiguration.PARALLEL_COMPILATION = parallelCompilation;
+      if (parallelCompilation != null && compilerConfiguration.isParallelCompilationEnabled() != parallelCompilation) {
+        compilerConfiguration.setParallelCompilationEnabled(parallelCompilation);
         changed = true;
       }
       Boolean rebuildOnDependencyChange = getBoolean(configurationMap, "rebuildModuleOnDependencyChange");

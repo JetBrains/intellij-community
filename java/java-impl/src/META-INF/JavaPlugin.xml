@@ -446,6 +446,7 @@
     <projectService serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
 
     <projectService serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
+    <projectService serviceImplementation="com.intellij.compiler.CompilerConfigurationSettings" configurationSchemaKey="compiler"/>
     <projectService
       serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
       serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration$JavaBuildWorkspaceConfiguration"

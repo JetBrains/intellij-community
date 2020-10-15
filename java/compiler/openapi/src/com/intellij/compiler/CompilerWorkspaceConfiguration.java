@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @State(name = "CompilerWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
@@ -27,7 +28,14 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
-  public boolean PARALLEL_COMPILATION = false;
+
+  /**
+   * @deprecated use {@link CompilerConfiguration#isParallelCompilationEnabled()}
+   */
+  @Nullable
+  @Deprecated
+  public Boolean PARALLEL_COMPILATION = null;
+
   public int COMPILER_PROCESS_HEAP_SIZE = 0;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
   public boolean REBUILD_ON_DEPENDENCY_CHANGE = true;

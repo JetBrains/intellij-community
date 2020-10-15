@@ -55,7 +55,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     assertFalse(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     assertFalse(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
     assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
+    assertTrue(compilerConfiguration.isParallelCompilationEnabled());
     assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
 
     final JpsJavaCompilerOptions javacOpts = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
