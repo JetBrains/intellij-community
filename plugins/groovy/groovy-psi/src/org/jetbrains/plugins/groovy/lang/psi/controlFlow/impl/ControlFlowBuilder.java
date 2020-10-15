@@ -506,7 +506,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitInstanceofExpression(@NotNull GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
-    processInstanceOf(expression, expression.getNegationToken() != null);
+    processInstanceOf(expression, GrInstanceOfExpression.isNegated(expression));
   }
 
   @Override
@@ -562,7 +562,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     if (ControlFlowBuilderUtil.isInstanceOfBinary(expression)) {
       expression.getLeftOperand().accept(this);
-      processInstanceOf(expression, ((GrInExpression)expression).getNegationToken() != null);
+      processInstanceOf(expression, GrInExpression.isNegated((GrInExpression)expression));
       return;
     }
     if (opType == T_EQ || opType == T_NEQ) {
@@ -578,7 +578,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     }
 
-    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != GroovyTokenTypes.kIN) {
+    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != KW_IN && opType != T_NOT_IN) {
       left.accept(this);
       if (right != null) {
         right.accept(this);

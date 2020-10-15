@@ -488,6 +488,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "==="                                     { return storeToken(T_ID); }
 "=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
+"!in"                                     { return storeToken(T_NOT_IN); }
+"!instanceof"                             { return storeToken(T_NOT_INSTANCEOF); }
 "~"                                       { return storeToken(T_BNOT); }
 "!=="                                     { return storeToken(T_NID); }
 "!="                                      { return storeToken(T_NEQ); }
