@@ -45,7 +45,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 59);
 
   private static final EventField<String> FILE_TYPE = EventFields.StringValidatedByCustomRule("file_type", "file_type");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
