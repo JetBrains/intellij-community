@@ -13,6 +13,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,13 +111,17 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       }
       if (usage instanceof MoveDirectoryUsageInfo) {
         MoveDirectoryUsageInfo moveDirUsage = (MoveDirectoryUsageInfo)usage;
-        PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(moveDirUsage.getSourceDirectory());
+        PsiDirectory sourceDirectory = moveDirUsage.getSourceDirectory();
+        if (sourceDirectory == null) continue;
+        PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(sourceDirectory);
         if (moduleDescriptor == null) continue;
 
         JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
-        PsiPackage oldPackage = directoryService.getPackage(moveDirUsage.getSourceDirectory());
+        PsiPackage oldPackage = directoryService.getPackage(sourceDirectory);
         if (oldPackage == null) continue;
-        PsiPackage newPackage = directoryService.getPackage(moveDirUsage.getTargetDirectory());
+        PsiDirectory targetDirectory = ObjectUtils.tryCast(moveDirUsage.getTargetFileItem(), PsiDirectory.class);
+        if (targetDirectory == null) continue;
+        PsiPackage newPackage = directoryService.getPackage(targetDirectory);
         if (newPackage == null) continue;
 
         renamePackageStatements(moduleDescriptor.getExports(), oldPackage, newPackage);
