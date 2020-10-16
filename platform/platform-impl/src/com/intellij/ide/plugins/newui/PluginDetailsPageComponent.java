@@ -147,11 +147,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(15), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     myPanel.add(header, BorderLayout.NORTH);
 
     myIconLabel = new JLabel();
+    myIconLabel.setBorder(JBUI.Borders.emptyTop(5));
     myIconLabel.setVerticalAlignment(SwingConstants.TOP);
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
@@ -160,6 +161,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       IdeBundle.message("plugin.settings.link.title"),
       createGearActions()
     );
+    myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
     myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     myGearButton.setOpaque(false);
     header.add(myGearButton, BorderLayout.EAST);
@@ -309,6 +311,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     } : new TextHorizontalLayout(JBUIScale.scale(7));
 
     JPanel panel2 = new NonOpaquePanel(layout);
+    panel2.setBorder(JBUI.Borders.emptyTop(5));
     panel2.add(myTagPanel = new TagPanel(mySearchListener));
     (myMarketplace ? panel2 : panel1).add(myVersion);
     panel2.add(myEnabledForProject);
@@ -511,7 +514,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.setText(version);
     myVersionSize.setText(version);
     myVersion
-      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
