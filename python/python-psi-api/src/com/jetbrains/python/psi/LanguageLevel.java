@@ -35,16 +35,16 @@ public enum LanguageLevel {
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON24(24),
+  PYTHON24(204),
   /**
    * @apiNote This level is not supported since 2018.1.
    */
-  PYTHON25(25),
+  PYTHON25(205),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON26(26),
-  PYTHON27(27),
+  PYTHON26(206),
+  PYTHON27(207),
   /**
    * @apiNote This level is not supported since 2018.1.
    * Use it only to distinguish Python 2 and Python 3.
@@ -87,7 +87,7 @@ public enum LanguageLevel {
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion > 305 || v.myVersion == 27)
+        .filter(v -> v.isAtLeast(PYTHON36) || v == PYTHON27)
         .collect(Collectors.toList())
     );
 
@@ -120,11 +120,11 @@ public enum LanguageLevel {
   }
 
   public int getMajorVersion() {
-    return myVersion < 100 ? myVersion / 10 : myVersion / 100;
+    return myVersion / 100;
   }
 
   public int getMinorVersion() {
-    return myVersion < 100 ? myVersion % 10 : myVersion % 100;
+    return myVersion % 100;
   }
 
   public boolean hasPrintStatement() {
