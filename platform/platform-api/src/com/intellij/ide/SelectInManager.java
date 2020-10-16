@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +79,7 @@ public final class SelectInManager  {
     }
   }
 
-  public static String getProject() {
+  public static @Nls String getProject() {
     return IdeBundle.message("select.in.project");
   }
 }

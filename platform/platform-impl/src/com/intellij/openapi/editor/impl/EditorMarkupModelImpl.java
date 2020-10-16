@@ -1344,6 +1344,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
+        //noinspection HardCodedStringLiteral
         final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (text == null) continue;
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -26,7 +27,7 @@ public interface TextAnnotationGutterProvider {
    */
   @Nullable String getLineText(int line, Editor editor);
 
-  @Nullable String getToolTip(int line, Editor editor);
+  @Nullable @NlsContexts.Tooltip String getToolTip(int line, Editor editor);
 
   EditorFontType getStyle(int line, Editor editor);
 
