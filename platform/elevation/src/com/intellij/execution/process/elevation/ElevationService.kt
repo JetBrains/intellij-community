@@ -31,7 +31,7 @@ class ElevationService : Disposable {
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val daemon = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
-    }, "Starting elevation daemon", true, null)
+    }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
     val channel = daemon.createChannel()
     val elevatorClient = ProcessMediatorClient(coroutineScope, channel)
 
