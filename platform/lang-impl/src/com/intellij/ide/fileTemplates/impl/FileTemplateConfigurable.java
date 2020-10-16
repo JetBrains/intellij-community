@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(FileTemplateConfigurable.class);
@@ -390,7 +391,10 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (fileType == FileTypes.UNKNOWN) return null;
 
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
-    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, FileTemplateManager.getInstance(myProject).getDefaultProperties());
+    Properties properties = new Properties();
+    properties.putAll(FileTemplateManager.getInstance(myProject).getDefaultProperties());
+    properties.setProperty(FileTemplate.ATTRIBUTE_NAME, IdeBundle.message("name.variable"));
+    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, properties);
     return file;
   }
 
