@@ -845,6 +845,8 @@
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
     <registryKey key="jdk.downloader.reuse.installed" defaultValue="true" description="Allow to reuse locally installed with the JDK Downloader JDK instead of download it again"/>
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true" description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
+    <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration" />
+
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
