@@ -1545,12 +1545,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-      ScheduledFuture<?> future = myExecutor.schedule(command, delay, unit);
+      ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
       if (myUnitTestMode) addFuture(future);
     }
 
     public void submit(@NotNull Runnable command) {
-      Future<?> future = myExecutor.submit(command);
+      Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
       if (myUnitTestMode) addFuture(future);
     }
 
@@ -1610,6 +1610,26 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       }
 
       CompoundRuntimeException.throwIfNotEmpty(throwables);
+    }
+  }
+
+  private static class MyLoggingRunnable implements Runnable {
+    private final Runnable myDelegate;
+
+    private MyLoggingRunnable(@NotNull Runnable delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void run() {
+      try {
+        myDelegate.run();
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
   }
 }
