@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -218,6 +219,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         MessageType messageType = notification.getType() == NotificationType.ERROR
                                   ? MessageType.ERROR
                                   : notification.getType() == NotificationType.WARNING ? MessageType.WARNING : MessageType.INFO;
+        List<AnAction> actions = notification.getActions();
         final NotificationListener notificationListener = notification.getListener();
         HyperlinkListener listener = notificationListener == null ? null : new HyperlinkListener() {
           @Override
@@ -226,17 +228,47 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           }
         };
         assert toolWindowId != null;
-        assert notification.getActions().isEmpty() : "Actions are not shown for toolwindow notifications. " +
-                                                     "ToolWindow id " + toolWindowId +
-                                                     ", group id '" + notification.getGroupId() + "'" +
-                                                     ", title '" + notification.getTitle() + "'" +
-                                                     ", content '" + notification.getContent() + "'";
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {
             msg += "<br>";
           }
           msg += notification.getContent();
+        }
+
+        if (!actions.isEmpty()) {
+          msg += HtmlChunk.br();
+
+          for (int index = 0; index < actions.size(); index++) {
+            AnAction action = actions.get(index);
+            var linkTarget = "notification-action-" + index + "for-tool-window-" + System.identityHashCode(notification);
+            String text = action.getTemplatePresentation().getText();
+            if (text == null) continue;
+
+            //noinspection StringConcatenationInLoop
+            msg += HtmlChunk.link(linkTarget, text) + " ";
+
+            var oldListener = listener;
+            listener = new HyperlinkListener() {
+              @Override
+              public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (!e.getDescription().equals(linkTarget)) {
+                  oldListener.hyperlinkUpdate(e);
+                  return;
+                }
+
+                if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+
+                Object source = e.getSource();
+                DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
+
+                NotificationCollector.getInstance()
+                  .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
+
+                Notification.fire(notification, action, context);
+              }
+            };
+          }
         }
 
         Window window = findWindowForBalloon(project);
