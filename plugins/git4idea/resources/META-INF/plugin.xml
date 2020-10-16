@@ -258,6 +258,7 @@
       <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
 
+    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction"/>
     <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
             use-shortcut-of="Refresh"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>

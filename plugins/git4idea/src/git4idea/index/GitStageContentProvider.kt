@@ -12,6 +12,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -32,6 +33,11 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
 
   override fun disposeContent() {
     disposable?.let { Disposer.dispose(it) }
+  }
+
+  companion object {
+    @NonNls
+    val STAGING_AREA_TAB_NAME = "Staging Area"
   }
 }
 

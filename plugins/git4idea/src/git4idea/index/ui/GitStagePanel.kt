@@ -35,10 +35,7 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle.message
-import git4idea.index.GitStageCommitWorkflow
-import git4idea.index.GitStageCommitWorkflowHandler
-import git4idea.index.GitStageTracker
-import git4idea.index.GitStageTrackerListener
+import git4idea.index.*
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
@@ -131,7 +128,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   }
 
   private fun setupTabTitleUpdater() {
-    val updater = CommitTabTitleUpdater(tree, "Staging Area") { VcsBundle.message("tab.title.commit") }
+    val updater = CommitTabTitleUpdater(tree, GitStageContentProvider.STAGING_AREA_TAB_NAME) { VcsBundle.message("tab.title.commit") }
     Disposer.register(this@GitStagePanel, updater)
 
     updater.pathsProvider = {
