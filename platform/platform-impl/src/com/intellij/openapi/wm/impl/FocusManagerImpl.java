@@ -121,16 +121,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    Window window = ComponentUtil.getWindow(c);
-    if ((window == null || window.isAutoRequestFocus()) &&
-        (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks"))) {
-      logFocusRequest(c, project, false);
-      c.requestFocus();
-    }
-    else {
-      logFocusRequest(c, project, true);
-      c.requestFocusInWindow();
-    }
+    logFocusRequest(c, project, true);
+    c.requestFocusInWindow();
     return ActionCallback.DONE;
   }
 
