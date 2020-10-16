@@ -158,7 +158,7 @@ open class IdeStarter : ApplicationStarter {
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
     lifecyclePublisher.appStarted()
 
-    if (PluginManagerCore.isRunningFromSources() && !app.isHeadlessEnvironment) {
+    if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
     }
   }
