@@ -414,6 +414,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     else if (Content.PROP_DISPLAY_NAME.equals(property)
              || Content.PROP_ICON.equals(property)
+             || Content.PROP_PINNED.equals(property)
              || Content.PROP_ACTIONS.equals(property)
              || Content.PROP_DESCRIPTION.equals(property)
              || Content.PROP_TAB_COLOR.equals(property)) {
