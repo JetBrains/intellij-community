@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
@@ -206,7 +207,7 @@ sealed class ModuleDependencyItem : Serializable {
   }
 
   //todo use LibraryProxyId to refer to SDK instead
-  data class SdkDependency(val sdkName: String, val sdkType: String) : ModuleDependencyItem()
+  data class SdkDependency(@NlsSafe val sdkName: String, val sdkType: String) : ModuleDependencyItem()
 
   object InheritedSdkDependency : ModuleDependencyItem()
   object ModuleSourceDependency : ModuleDependencyItem()

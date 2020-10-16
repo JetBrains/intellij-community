@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ class FrameworkDirectoryNode extends DetectedFrameworkTreeNodeBase {
 
   @Override
   public String getUncheckedDescription() {
-    return "'" + getRelativePath() + "' directory will be excluded from framework detection";
+    return ProjectBundle.message("label.directory.will.be.excluded.from.framework.detection", getRelativePath());
   }
 
   @Override

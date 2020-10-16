@@ -128,7 +128,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @NotNull
       @Override
       public String getTextFor(FrameworkType value) {
-        return value != null ? value.getPresentableName() : "All Frameworks...";
+        return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
       @Override
