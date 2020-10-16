@@ -233,14 +233,14 @@ public class WSLDistribution {
     if (executeCommandInShell && StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
       prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
     }
-    if (executeCommandInShell) {
+    if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
       commandLine.getEnvironment().forEach((key, val) -> {
         prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
       });
       commandLine.getEnvironment().clear();
     }
     else {
-      setWSLENV(commandLine);
+      passEnvironmentUsingInterop(commandLine);
     }
 
     commandLine.getParametersList().clearAll();
@@ -295,7 +295,7 @@ public class WSLDistribution {
   }
 
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
-  private static void setWSLENV(@NotNull GeneralCommandLine commandLine) {
+  private static void passEnvironmentUsingInterop(@NotNull GeneralCommandLine commandLine) {
     StringBuilder builder = new StringBuilder();
     for (String envName : commandLine.getEnvironment().keySet()) {
       if (StringUtil.isNotEmpty(envName)) {

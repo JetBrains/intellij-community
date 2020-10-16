@@ -11,6 +11,7 @@ public class WSLCommandLineOptions {
   private boolean myExecuteCommandInShell = true;
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;
+  private boolean myPassEnvVarsUsingInterop = false;
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -57,6 +58,20 @@ public class WSLCommandLineOptions {
    */
   public @NotNull WSLCommandLineOptions setRemoteWorkingDirectory(@Nullable String remoteWorkingDirectory) {
     myRemoteWorkingDirectory = remoteWorkingDirectory;
+    return this;
+  }
+
+  public boolean isPassEnvVarsUsingInterop() {
+    return myPassEnvVarsUsingInterop;
+  }
+
+  /**
+   * Enables passing environment variables to WSL process using environmental variable interoperability between Win32/WSL.
+   * See https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/ for details.
+   * @param passEnvVarsUsingInterop true to pass environment variables using interoperability
+   */
+  public @NotNull WSLCommandLineOptions setPassEnvVarsUsingInterop(boolean passEnvVarsUsingInterop) {
+    myPassEnvVarsUsingInterop = passEnvVarsUsingInterop;
     return this;
   }
 
