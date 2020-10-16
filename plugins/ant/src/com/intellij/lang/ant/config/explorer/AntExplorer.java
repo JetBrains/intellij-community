@@ -30,6 +30,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
@@ -53,6 +54,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomManager;
 import icons.AntIcons;
@@ -189,6 +191,21 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         treeModel.invalidate();
       }
     });
+
+    setupEmptyText();
+  }
+
+  private void setupEmptyText() {
+    StatusText emptyText = myTree.getEmptyText();
+    emptyText.appendLine(AntBundle.message("ant.empty.text.1"));
+    emptyText.appendLine(AntBundle.message("ant.empty.text.2"), SimpleTextAttributes.LINK_ATTRIBUTES,
+                         e -> addBuildFile());
+    emptyText.appendLine("");
+    emptyText.appendLine(
+      AllIcons.General.ContextHelp,
+      AntBundle.message("ant.empty.text.help"),
+      SimpleTextAttributes.LINK_ATTRIBUTES,
+      e -> HelpManager.getInstance().invokeHelp("procedures.building.ant.add"));
   }
 
   @Override
