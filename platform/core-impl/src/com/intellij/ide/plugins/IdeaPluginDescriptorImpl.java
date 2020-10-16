@@ -62,7 +62,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   transient List<Path> jarFiles;
 
-  private @Nullable List<Element> myActionElements;
+  private @Nullable List<Element> actionElements;
   // extension point name -> list of extension elements
   private @Nullable Map<String, List<Element>> epNameToExtensionElements;
 
@@ -220,11 +220,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "actions":
-          if (myActionElements == null) {
-            myActionElements = new ArrayList<>(child.getChildren());
+          if (actionElements == null) {
+            actionElements = new ArrayList<>(child.getChildren());
           }
           else {
-            myActionElements.addAll(child.getChildren());
+            actionElements.addAll(child.getChildren());
           }
           clearContent = child.getAttributeValue("resource-bundle") == null;
           break;
@@ -803,7 +803,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public @Nullable List<Element> getActionDescriptionElements() {
-    return myActionElements;
+    return actionElements;
   }
 
   @Override

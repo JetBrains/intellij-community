@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.ex;
 
 import com.intellij.openapi.keymap.Keymap;
@@ -23,17 +23,6 @@ public abstract class KeymapManagerEx extends KeymapManager {
   public abstract Keymap[] getAllKeymaps();
 
   public abstract void setActiveKeymap(@NotNull Keymap keymap);
-
-  /**
-   * Instructs the manager that one action should use shortcut of another one ({@code 'use-shortcut-of'} attribute at
-   * action's config located at plugin.xml).
-   *
-   * @param sourceActionId if of the action which shortcut should be used for the 'target action'
-   * @param targetActionId id of the action which should use shortcut of the 'source action'
-   */
-  public abstract void bindShortcuts(@NotNull String sourceActionId, @NotNull String targetActionId);
-
-  public abstract void unbindShortcuts(String targetActionId);
 
   @NotNull
   public abstract Set<String> getBoundActions();

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -74,7 +75,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
-  private SmartList<Supplier<@Nls String>> mySynonyms = new SmartList<>();
+  private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -420,10 +421,15 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public void addSynonym(@NotNull Supplier<@Nls String> text) {
-    mySynonyms.add(text);
+    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
+      mySynonyms = new SmartList<>(text);
+    }
+    else {
+      mySynonyms.add(text);
+    }
   }
 
-  public List<Supplier<@Nls String>> getSynonyms() {
+  public @NotNull List<Supplier<@Nls String>> getSynonyms() {
     return mySynonyms;
   }
 

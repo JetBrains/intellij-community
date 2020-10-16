@@ -3,10 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.Nls;
@@ -94,8 +91,9 @@ public final class Presentation implements Cloneable {
   private boolean myEnabled = true;
   private boolean myMultipleChoice = false;
   private double myWeight = DEFAULT_WEIGHT;
-  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics =
-    NotNullLazyValue.createValue(() -> SystemInfo.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions());
+  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
+    return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
+  });
 
   public Presentation() {
   }
