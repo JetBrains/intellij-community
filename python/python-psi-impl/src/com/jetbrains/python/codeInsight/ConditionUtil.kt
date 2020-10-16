@@ -63,7 +63,7 @@ fun findComparisonExpression(expression: PyBinaryExpression?): PyBinaryExpressio
     if (comparisonStrings.containsKey(comparisonExpression.operator)) {
       return comparisonExpression
     }
-    comparisonExpression = PsiTreeUtil.getParentOfType(expression, PyBinaryExpression::class.java)
+    comparisonExpression = PsiTreeUtil.getParentOfType(comparisonExpression, PyBinaryExpression::class.java)
   }
   return null
 }
