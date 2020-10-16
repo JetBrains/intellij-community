@@ -323,7 +323,7 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
     return lines;
   }
 
