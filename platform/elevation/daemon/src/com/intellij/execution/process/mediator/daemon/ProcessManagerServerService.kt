@@ -34,7 +34,7 @@ class ProcessManagerServerService : ProcessManagerGrpcKt.ProcessManagerCoroutine
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
     ExceptionAsStatus.wrap {
-      processManager.destroyProcess(request.pid, true)
+      processManager.destroyProcess(request.pid, request.force)
     }
     return Empty.getDefaultInstance()
   }
