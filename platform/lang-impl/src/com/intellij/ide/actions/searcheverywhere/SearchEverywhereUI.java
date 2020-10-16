@@ -223,6 +223,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     if (advertisementText != null) {
       myAdvertisementLabel.setText(advertisementText);
       mySearchField.add(myAdvertisementLabel, BorderLayout.EAST);
+      mySearchField.doLayout();
+      mySearchField.repaint();
     }
   }
 
