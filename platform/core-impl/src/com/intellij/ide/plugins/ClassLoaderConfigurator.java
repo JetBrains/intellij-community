@@ -207,7 +207,7 @@ final class ClassLoaderConfigurator {
     rootDescriptor.setClassLoader(classLoader);
     for (PluginDependency dependency : rootDescriptor.getPluginDependencies()) {
       if (dependency.subDescriptor != null) {
-        dependency.subDescriptor.setClassLoader(classLoader);
+        setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor, classLoader);
       }
     }
   }
