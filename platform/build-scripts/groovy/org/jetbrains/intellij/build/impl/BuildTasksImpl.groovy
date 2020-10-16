@@ -123,6 +123,11 @@ class BuildTasksImpl extends BuildTasks {
       ideaProperties += ["idea.platform.prefix": context.productProperties.platformPrefix]
     }
 
+    def additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    if (additionalPluginPaths != null) {
+      ideaProperties += ["plugin.path": additionalPluginPaths.join(",")]
+    }
+
     BuildUtils.runJava(
       context,
       vmOptions,
