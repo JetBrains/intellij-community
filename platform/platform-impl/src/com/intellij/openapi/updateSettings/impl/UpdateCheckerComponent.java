@@ -3,7 +3,6 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -68,16 +67,14 @@ final class UpdateCheckerComponent {
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
-  static final class MyApplicationInitializedListener implements ApplicationInitializedListener {
-    MyApplicationInitializedListener() {
+  static final class MyAppLifecycleListener implements AppLifecycleListener {
+    @Override
+    public void appStarted() {
       Application app = ApplicationManager.getApplication();
       if (app.isCommandLine() || app.isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        return;
       }
-    }
 
-    @Override
-    public void componentsInitialized() {
       UpdateSettings settings = UpdateSettings.getInstance();
       updateDefaultChannel(settings);
       if (settings.isCheckNeeded()) {

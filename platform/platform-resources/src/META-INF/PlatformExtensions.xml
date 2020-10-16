@@ -1041,7 +1041,6 @@
     <applicationService serviceInterface="com.intellij.ide.FrameStateManager" serviceImplementation="com.intellij.ide.FrameStateManagerImpl" preload="await"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent" headlessImplementation=""/>
-    <applicationInitializedListener implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent$MyApplicationInitializedListener"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent$MyActivity"/>
 
     <postStartupActivity implementation="com.intellij.ide.bookmarks.BookmarkManager$MyStartupActivity"/>
@@ -1107,6 +1106,7 @@
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
+    <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
 
     <listener class="com.intellij.openapi.vcs.FileStatusFactoryImpl$PluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
 
