@@ -60,15 +60,16 @@ object ProcessMediatorDaemonLauncher {
   private fun tryCreateHelloIpc(): DaemonHelloIpc? =
     kotlin.runCatching {
       if (SystemInfo.isWindows) {
-        ProcessOutputBasedDaemonHelloIpc()
+        DaemonHelloStdoutIpc()
       }
       else {
-        UnixFifoDaemonHelloIpc()
+        DaemonHelloUnixFifoIpc()
       }
+    }.onFailure { e ->
+      ElevationLogger.LOG.warn("Unable to create file-based hello channel; falling back to socket streams", e)
     }.recoverCatching {
-      SocketBasedDaemonHelloIpc()
+      DaemonHelloSocketIpc()
     }.getOrLogException(ElevationLogger.LOG)
-
 }
 
 private fun <R> ExecutorService.submitAndAwait(block: () -> R): R {

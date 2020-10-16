@@ -4,22 +4,15 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.mediator.rpc.DaemonHello
-import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import java.io.Closeable
 import java.io.IOException
-import java.io.InputStream
 import java.io.Reader
-import java.net.ServerSocket
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption.READ
-import java.nio.file.StandardOpenOption.WRITE
 
 internal interface DaemonHelloIpc : Closeable {
   fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine): GeneralCommandLine
@@ -38,7 +31,8 @@ internal interface DaemonHelloIpc : Closeable {
   override fun close()
 }
 
-internal abstract class AbstractInputStreamDaemonHelloIpc : MultiCloseable(), DaemonHelloIpc, ProcessListener {
+
+internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(protected val helloReader: R) : DaemonHelloIpc, ProcessAdapter() {
 
   final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return createProcessHandler(daemonCommandLine).also {
@@ -51,33 +45,34 @@ internal abstract class AbstractInputStreamDaemonHelloIpc : MultiCloseable(), Da
   }
 
   override fun readHello(): DaemonHello? {
-    return readAndClose(DaemonHello::parseDelimitedFrom).also {
+    return helloReader.read(DaemonHello::parseDelimitedFrom).also {
       if (it?.port == 0) {
         throw IOException("Invalid/incomplete hello message from daemon: $it")
       }
     }
   }
 
-  protected abstract fun <R> readAndClose(doRead: (InputStream) -> R): R
-
-  override fun startNotified(event: ProcessEvent) = Unit
-
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
     ElevationLogger.LOG.info("Daemon [$outputType]: ${event.text}")
   }
-
-  override fun processWillTerminate(event: ProcessEvent, willBeDestroyed: Boolean) = Unit
 
   override fun processTerminated(event: ProcessEvent) {
     ElevationLogger.LOG.info("Daemon process terminated with exit code ${event.exitCode}")
     close()
   }
+
+  override fun close() = helloReader.close()
 }
 
-internal open class ProcessOutputBasedDaemonHelloIpc : AbstractInputStreamDaemonHelloIpc(),
-                                                       ProcessListener {
-  private lateinit var stdoutStream: InputStream
+internal class DaemonHelloSocketIpc(
+  port: Int = 0
+) : AbstractDaemonHelloIpc<DaemonHelloSocketReader>(DaemonHelloSocketReader(port)) {
+  override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
+    addParameters("--hello-port", helloReader.port.toString())
+  }
+}
 
+internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutReader>(DaemonHelloStdoutReader()) {
   override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
     addParameters("--hello-file", "-")
   }
@@ -85,64 +80,23 @@ internal open class ProcessOutputBasedDaemonHelloIpc : AbstractInputStreamDaemon
   override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return object : OSProcessHandler.Silent(daemonCommandLine) {
       override fun createProcessOutReader(): Reader {
-        return Reader.nullReader()
+        return Reader.nullReader()  // don't let the process handler touch the stdout stream
       }
     }.also {
-      stdoutStream = it.process.inputStream
+      helloReader.inputStream = it.process.inputStream
     }
   }
-
-  override fun <R> readAndClose(doRead: (InputStream) -> R): R = stdoutStream.use(doRead)
 }
 
-internal open class FileBasedDaemonHelloIpc(protected val path: Path) : AbstractInputStreamDaemonHelloIpc() {
+internal open class DaemonHelloFileIpc(
+  helloReader: DaemonHelloFileReader
+) : AbstractDaemonHelloIpc<DaemonHelloFileReader>(helloReader) {
   override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
-    addParameters("--hello-file", path.toAbsolutePath().toString())
-  }
-
-  override fun <R> readAndClose(doRead: (InputStream) -> R): R = Files.newInputStream(path).use(doRead)
-}
-
-internal class UnixFifoDaemonHelloIpc(path: Path = FileUtil.generateRandomTemporaryPath().toPath()) : FileBasedDaemonHelloIpc(path) {
-  init {
-    @Suppress("SpellCheckingInspection")
-    try {
-      ElevationLogger.LOG.assertTrue(SystemInfo.isUnix, "Can only use 'mkfifo' on Unix")
-      val mkfifoCommandLine = GeneralCommandLine("mkfifo", "-m", "0666", path.toString())
-      ExecUtil.execAndGetOutput(mkfifoCommandLine)
-        .checkSuccess(ElevationLogger.LOG).also { success ->
-          if (success) {
-            registerCloseable { FileUtil.delete(path) }
-          }
-          else throw IOException("Unable to create fifo $path")
-        }
-
-      // We need to open the write end of the pipe  to ensure opening the pipe for reading would not block indefinitely
-      // in case the real daemon process doesn't open in for writing (for example, if it fails to start)
-      Files.newByteChannel(path, READ, WRITE).also(::registerCloseable)
-    }
-    catch (e: Throwable) {
-      use {  // to close any closeable registered so far
-        throw e
-      }
-    }
-  }
-
-  private val inputStream = Files.newInputStream(path, READ).also(::registerCloseable)
-
-  override fun <R> readAndClose(doRead: (InputStream) -> R): R = inputStream.use(doRead)
-}
-
-internal class SocketBasedDaemonHelloIpc(serverSocketPort: Int = 0) : AbstractInputStreamDaemonHelloIpc() {
-  private val serverSocket = ServerSocket(serverSocketPort).also(::registerCloseable)
-
-  override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
-    addParameters("--hello-port", serverSocket.localPort.toString())
-  }
-
-  override fun <R> readAndClose(doRead: (InputStream) -> R): R {
-    return serverSocket.accept().use { socket ->
-      socket.getInputStream().use(doRead)
-    }
+    addParameters("--hello-file", helloReader.path.toAbsolutePath().toString())
   }
 }
+
+internal class DaemonHelloUnixFifoIpc(
+  path: Path = FileUtil.generateRandomTemporaryPath().toPath()
+) : DaemonHelloFileIpc(DaemonHelloUnixFifoReader(path))
+
