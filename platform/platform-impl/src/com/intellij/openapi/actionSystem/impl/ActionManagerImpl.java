@@ -80,6 +80,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -212,8 +213,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @NotNull
-  private static AnActionListener publisher() {
+  private static @NotNull AnActionListener publisher() {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
@@ -228,16 +228,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
-  @Nullable
-  private static <T> T instantiate(@NotNull String stubClassName, @NotNull PluginDescriptor pluginDescriptor, Class<T> expectedClass) {
+  private static @Nullable <T> T instantiate(@NotNull String stubClassName, @NotNull PluginDescriptor pluginDescriptor, @NotNull Class<T> expectedClass) {
     Object obj;
     try {
-      if (expectedClass == ActionGroup.class) {
-        obj = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(stubClassName, pluginDescriptor);
+      Class<?> aClass = Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader());
+      Constructor<?> constructor = aClass.getDeclaredConstructor();
+      try {
+        constructor.setAccessible(true);
       }
-      else {
-        obj = ReflectionUtil.newInstance(Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader()), false);
+      catch (SecurityException ignored) {
       }
+      obj = constructor.newInstance();
     }
     catch (ProcessCanceledException e) {
       throw e;
