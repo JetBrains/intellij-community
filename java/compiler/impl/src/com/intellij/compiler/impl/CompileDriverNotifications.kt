@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl
 
+import com.intellij.build.BuildContentManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.NlsContexts.NotificationContent
@@ -69,6 +73,11 @@ class CompileDriverNotifications(
      * This wrapper helps to make sure we have only one active unresolved notification per project
      */
     fun showNotification() {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        thisLogger().error("" + baseNotification.content)
+        return
+      }
+
       if (!isShown.compareAndSet(false, true)) return
 
       val showNotification = Runnable {
@@ -80,13 +89,7 @@ class CompileDriverNotifications(
         baseNotification.notify(project)
       }
 
-      // activate the tool window before showing the notification
-      val toolWindow = notificationGroup.toolWindowId?.let(ToolWindowManager.getInstance(project)::getToolWindow)
-      if (toolWindow != null) {
-        toolWindow.show(showNotification)
-      } else {
-        showNotification.run()
-      }
+      showNotification.run()
     }
   }
 }
