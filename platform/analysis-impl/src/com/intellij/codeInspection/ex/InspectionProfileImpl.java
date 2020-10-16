@@ -373,6 +373,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myToolShortName = toolShortName;
   }
 
+  @NonNls
   @Override
   public @NotNull String getDisplayName() {
     return getName();

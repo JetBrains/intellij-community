@@ -150,7 +150,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static String getDescr() {
+  public static @Nls String getDescr() {
     return EclipseBundle.message("eclipse.classpath.storage.description");
   }
 }
