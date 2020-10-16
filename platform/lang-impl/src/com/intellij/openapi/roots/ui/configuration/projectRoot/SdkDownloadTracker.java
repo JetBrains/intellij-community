@@ -22,7 +22,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,7 +95,7 @@ public class SdkDownloadTracker {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
-    PendingDownload pd = new PendingDownload(originalSdk, item, new SmartPendingDownloadModalityTracker());
+    PendingDownload pd = new PendingDownload(originalSdk, item, new PendingDownloadModalityTracker());
     configureSdk(originalSdk, item);
     myPendingTasks.add(pd);
   }
@@ -180,12 +182,9 @@ public class SdkDownloadTracker {
 
     var tracker = new PendingDownloadModalityTracker() {
       @Override
-      public void updateModality() { }
-
-      @Override
-      public void invokeLater(@NotNull Runnable r) {
+      public synchronized void invokeLater(@NotNull Runnable r) {
         //we need to make sure our tasks are executed in-place for the blocking mode
-        ApplicationManager.getApplication().invokeAndWait(r);
+        ApplicationManager.getApplication().invokeAndWait(r, updateModality());
       }
     };
 
@@ -221,35 +220,30 @@ public class SdkDownloadTracker {
   // while the current Project Structure dialog is shown. The ModalityState from our
   // background task (ProgressManager.run) does not suite if the Project Structure dialog
   // is re-open once again.
-  private interface PendingDownloadModalityTracker {
-    void updateModality();
-    void invokeLater(@NotNull Runnable r);
-  }
-
   // We grab the modalityState from the {@link #tryRegisterDownloadingListener} call and
   // see if that {@link ModalityState#dominates} the current modality state. In fact,
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
-  private static class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
+  private static class PendingDownloadModalityTracker {
     @NotNull
     static ModalityState modality() {
-      ModalityState state = ApplicationManager.getApplication().getCurrentModalityState();
+      ModalityState state = ApplicationManager.getApplication().getDefaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(state);
       return state;
     }
 
-    ModalityState myModalityState = modality();
+    private ModalityState myModalityState = modality();
 
-    @Override
-    public synchronized void updateModality() {
+    @NotNull
+    synchronized ModalityState updateModality() {
       ModalityState newModality = modality();
       if (newModality != myModalityState && newModality.dominates(myModalityState)) {
         myModalityState = newModality;
       }
+      return myModalityState;
     }
 
-    @Override
-    public synchronized void invokeLater(@NotNull Runnable r) {
+    synchronized void invokeLater(@NotNull Runnable r) {
       ApplicationManager.getApplication().invokeLater(r, myModalityState);
     }
   }
@@ -358,8 +352,13 @@ public class SdkDownloadTracker {
               myProgressIndicator.removeStateDelegate(relayToVisibleIndicator);
             }
 
-            // make sure VFS has the right image of our SDK to avoid empty SDK from being created
-            VfsUtil.markDirtyAndRefresh(false, true, true, new File(myTask.getPlannedHomeDir()));
+            VirtualFile plannedHome = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myTask.getPlannedHomeDir()));
+            if (plannedHome == null) {
+              LOG.warn("The planned home dir for " + myTask + " does not exist");
+            } else {
+              // make sure VFS has the right image of our SDK to avoid empty SDK from being created
+              RefreshQueue.getInstance().refresh(false, true, null, myModalityTracker.updateModality(), plannedHome);
+            }
 
             //update the pending SDKs
             onSdkDownloadCompletedSuccessfully();
