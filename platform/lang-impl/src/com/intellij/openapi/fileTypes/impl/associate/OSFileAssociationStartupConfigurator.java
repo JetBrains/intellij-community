@@ -61,7 +61,7 @@ public class OSFileAssociationStartupConfigurator implements ApplicationInitiali
       myNotification = new Notification(NOTIF_GROUP_ID, getNotifTitle(),
                                         FileTypesBundle.message("filetype.associate.notif.success",
                                                                 ApplicationInfo.getInstance().getFullApplicationName()) +
-                                        (isOsRestartRequired ? FileTypesBundle.message("filetype.associate.message.os.restart") : ""),
+                                        (isOsRestartRequired ? "\n" + FileTypesBundle.message("filetype.associate.message.os.restart") : ""),
                                         isOsRestartRequired ? NotificationType.WARNING : NotificationType.INFORMATION);
     }
 
