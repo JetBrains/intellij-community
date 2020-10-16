@@ -138,7 +138,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
-    myCellRenderer = new LookupCellRenderer(this);
+    myCellRenderer = new LookupCellRenderer(this, myEditor.getContentComponent());
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
