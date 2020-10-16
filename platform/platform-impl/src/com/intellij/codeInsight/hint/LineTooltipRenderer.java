@@ -22,10 +22,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -47,7 +44,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
    * <br>
    * very nbsp; long nbsp; text nbsp; with nbsp; 'nbsp;' as spaces cannot be break
    */
-  @NonNls @Nullable protected String myText;
+  @Tooltip @Nullable protected String myText;
 
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
@@ -57,11 +54,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     void reload(boolean toExpand);
   }
 
-  public LineTooltipRenderer(@Nullable String text, Object @NotNull [] comparable) {
+  public LineTooltipRenderer(@Nullable @Tooltip String text, Object @NotNull [] comparable) {
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final String text, final int width, Object @NotNull [] comparable) {
+  public LineTooltipRenderer(@Nullable final @Tooltip String text, final int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;
@@ -454,7 +451,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public LineTooltipRenderer createRenderer(@Tooltip @Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
@@ -481,7 +478,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @Nullable
-  public String getText() {
+  public @Tooltip String getText() {
     return myText;
   }
 

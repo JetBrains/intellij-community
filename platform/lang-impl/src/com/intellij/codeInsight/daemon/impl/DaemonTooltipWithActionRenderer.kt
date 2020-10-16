@@ -47,7 +47,7 @@ import javax.swing.event.HyperlinkEvent
 val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
   KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK or KeyEvent.ALT_DOWN_MASK))
 
-internal class DaemonTooltipWithActionRenderer(text: String?,
+internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
                                                comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
