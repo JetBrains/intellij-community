@@ -3,7 +3,40 @@
   <id>Lombook Plugin</id>
   <name>Lombok</name>
   <vendor>JetBrains</vendor>
-  <description><![CDATA[A plugin that adds first-class support for Project Lombok]]></description>
+  <description><![CDATA[
+<h1>IntelliJ Lombok plugin</h1>
+<br/>
+<b>A plugin that adds first-class support for Project Lombok</b>
+<br/>
+<b>Features</b>
+<ul>
+  <li><a href="https://projectlombok.org/features/GetterSetter.html">@Getter and @Setter</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/FieldNameConstants">@FieldNameConstants</a></li>
+  <li><a href="https://projectlombok.org/features/ToString.html">@ToString</a></li>
+  <li><a href="https://projectlombok.org/features/EqualsAndHashCode.html">@EqualsAndHashCode</a></li>
+  <li><a href="https://projectlombok.org/features/Constructor.html">@AllArgsConstructor, @RequiredArgsConstructor and
+    @NoArgsConstructor</a></li>
+  <li><a href="https://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog,
+    @JBossLog, @Flogger, @CustomLog</a></li>
+  <li><a href="https://projectlombok.org/features/Data.html">@Data</a></li>
+  <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/SuperBuilder">@SuperBuilder</a></li>
+  <li><a href="https://projectlombok.org/features/Builder.html#singular">@Singular</a></li>
+  <li><a href="https://projectlombok.org/features/Delegate.html">@Delegate</a></li>
+  <li><a href="https://projectlombok.org/features/Value.html">@Value</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Accessors.html">@Accessors</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
+  <li><a href="https://projectlombok.org/features/With.html">@With</a></li>
+  <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
+  <li><a href="https://projectlombok.org/features/val.html">@val</a></li>
+  <li><a href="https://projectlombok.org/features/var.html">@var</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/var.html">experimental @var</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/UtilityClass.html">@UtilityClass</a></li>
+  <li><a href="https://projectlombok.org/features/configuration.html">Lombok config system</a></li>
+  <li>Code inspections</li>
+  <li>Refactoring actions (lombok and delombok)</li>
+</ul>
+<br/>]]></description>
   <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
