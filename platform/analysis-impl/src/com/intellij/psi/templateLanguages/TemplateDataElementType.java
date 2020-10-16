@@ -207,7 +207,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         modifications.addAll(tokenModifications);
       }
       else {
-        modifications.addOuterRange(currentRange, getTemplateDataInsertionTokens().contains(baseLexer.getTokenType()));
+        modifications.addOuterRange(currentRange, isInsertion(baseLexer.getTokenType(), baseLexer.getTokenSequence()));
       }
       baseLexer.advance();
     }
@@ -242,9 +242,17 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Returns token types of template elements which are expected to insert some strings into resulting file.
+   * @deprecated Use {@link #isInsertion(IElementType, CharSequence)} instead.
+   */
+  @Deprecated
+  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
+    return TokenSet.EMPTY;
+  }
+
+  /**
+   * Returns true if a string is expected to be inserted into resulting file in place of a current token.
    * It's fine to include only starting token of the whole insertion range. For example, if
-   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only type of <code><?=</code>
+   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only <code><?=</code>
    * may be included. Moreover, other tokens shouldn't be included if they can be a part of a non-insertion range like
    * <code><?$myVar?></code>.
    *
@@ -252,8 +260,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    *
    * @see RangeCollector#addOuterRange(TextRange, boolean)
    */
-  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
-    return TokenSet.EMPTY;
+  protected boolean isInsertion(@Nullable IElementType tokenType, @NotNull CharSequence tokenSequence) {
+    return false;
   }
 
   /**
