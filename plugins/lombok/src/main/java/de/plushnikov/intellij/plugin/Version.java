@@ -5,5 +5,5 @@ public interface Version {
   /**
    * Current version of lombok plugin
    */
-  String LAST_LOMBOK_VERSION = "1.18.12";
+  String LAST_LOMBOK_VERSION = "1.18.16";
 }
