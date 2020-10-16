@@ -241,6 +241,12 @@ idea.fatal.error.notification=disabled
       }
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
+
+      buildContext.productProperties.getAdditionalPluginPaths(buildContext)?.each { pluginPath ->
+        buildContext.ant.copy(todir: "$buildContext.paths.distAll/plugins/${new File(pluginPath).name}") {
+          fileset(dir: pluginPath)
+        }
+      }
     }
   }
 
