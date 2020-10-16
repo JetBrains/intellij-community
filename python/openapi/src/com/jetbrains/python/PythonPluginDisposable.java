@@ -8,16 +8,16 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The service is intended to be used instead of a project as a parent disposable.
+ * The service is intended to be used instead of a project/application as a parent disposable.
  */
 @Service
-public final class PyDisposable implements Disposable {
+public final class PythonPluginDisposable implements Disposable {
   public static @NotNull Disposable getInstance() {
-    return ApplicationManager.getApplication().getService(PyDisposable.class);
+    return ApplicationManager.getApplication().getService(PythonPluginDisposable.class);
   }
 
   public static @NotNull Disposable getInstance(@NotNull Project project) {
-    return project.getService(PyDisposable.class);
+    return project.getService(PythonPluginDisposable.class);
   }
 
   @Override
