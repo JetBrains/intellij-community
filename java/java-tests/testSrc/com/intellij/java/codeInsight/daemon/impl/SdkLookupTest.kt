@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
@@ -40,11 +41,13 @@ class SdkLookupTest : LightPlatformTestCase() {
 
   interface SdkLookupBuilderEx : SdkLookupBuilder {
     fun onDownloadingSdkDetectedEx(d: SdkLookupDownloadDecision): SdkLookupBuilderEx
+    fun onSdkFixResolved(d: SdkLookupDecision): SdkLookupBuilderEx
     fun lookupBlocking()
   }
 
   private val lookup: SdkLookupBuilderEx
     get() {
+      var ourFixDecision = SdkLookupDecision.CONTINUE
       var ourSdkDownloadDecision = SdkLookupDownloadDecision.WAIT
       var onSdkResolvedHook : (Sdk?) -> Unit = {}
 
@@ -55,6 +58,7 @@ class SdkLookupTest : LightPlatformTestCase() {
         .onSdkNameResolved { log += "sdk-name: ${it?.name}" }
         .onSdkResolved { onSdkResolvedHook(it); log += "sdk: ${it?.name}" }
         .onDownloadingSdkDetected { log += "sdk-downloading: ${it.name}"; ourSdkDownloadDecision }
+        .onSdkFixResolved { log += "fix: ${it.javaClass.simpleName}"; ourFixDecision }
 
       return object : SdkLookupBuilder by base, SdkLookupBuilderEx {
         override fun lookupBlocking() = base.lookupBlocking()
@@ -63,8 +67,12 @@ class SdkLookupTest : LightPlatformTestCase() {
           ourSdkDownloadDecision = d
         }
 
-        override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): SdkLookupBuilder = error(
-          "Must not call in test")
+        override fun onSdkFixResolved(d: SdkLookupDecision) = apply {
+          ourFixDecision = d
+        }
+
+        override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): SdkLookupBuilder = error("Must not call in test")
+        override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision): SdkLookupBuilder  = error("Must not call in test")
 
         override fun onSdkNameResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = error("Must not call in test")
         override fun onSdkResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = apply {
@@ -336,6 +344,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     }
 
     assertLog(
+      "fix: UnknownMissingSdkFixLocal",
       "configure: xqwr",
       "sdk-name: xqwr",
       "sdk: xqwr",
@@ -382,7 +391,7 @@ class SdkLookupTest : LightPlatformTestCase() {
           override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
           override fun getExistingSdkHome() = home.toString()
           override fun getVersionString() = "1.2.3"
-          override fun getSuggestedSdkName() = sdk.sdkName!!
+          override fun getSuggestedSdkName() = "suggested-name"
           override fun getRegisteredSdkPrototype() = prototypeSdk
         }
       }
@@ -395,6 +404,40 @@ class SdkLookupTest : LightPlatformTestCase() {
     }
 
     assertLog(
+      "fix: UnknownMissingSdkFixLocal",
+      "configure: suggested-name",
+      "sdk-name: suggested-name",
+      "sdk: suggested-name",
+    )
+  }
+
+
+  fun `test local fix with stop`() {
+    val prototypeSdk = newUnregisteredSdk("prototype")
+    val auto = object : UnknownSdkResolver {
+      override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
+      override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
+        override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
+        override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
+          val home = createTempDir("our home for ${sdk.sdkName}")
+          override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
+          override fun getExistingSdkHome() = home.toString()
+          override fun getVersionString() = "1.2.3"
+          override fun getSuggestedSdkName() = "suggested-name"
+          override fun getRegisteredSdkPrototype() = prototypeSdk
+        }
+      }
+    }
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
+
+    runInThreadAndPumpMessages {
+      lookup
+        .onSdkFixResolved(SdkLookupDecision.STOP)
+        .lookupBlocking()
+    }
+
+    assertLog(
+      "fix: UnknownMissingSdkFixLocal",
       "sdk-name: null",
       "sdk: null",
     )
@@ -423,6 +466,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     }
 
     assertLog(
+      "fix: UnknownMissingSdkFixLocal",
       "configure: prototype (2)",
       "sdk-name: prototype (2)",
       "sdk: prototype (2)",
@@ -460,10 +504,49 @@ class SdkLookupTest : LightPlatformTestCase() {
     }
 
     assertLog(
+      "fix: UnknownMissingSdkFixDownload",
       "sdk-name: xqwr",
       "download: xqwr",
       "configure: xqwr",
       "sdk: xqwr",
+    )
+  }
+
+  fun `test download fix stop`() {
+    val auto = object: UnknownSdkResolver {
+      override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
+      override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
+        override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? =  null
+        override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? {
+          if (sdk.sdkName != "xqwr") return null
+          return object : UnknownSdkDownloadableSdkFix {
+            override fun getDownloadDescription(): String = "download description"
+            override fun createTask(indicator: ProgressIndicator) = object: SdkDownloadTask {
+              override fun getSuggestedSdkName() = sdk.sdkName!!
+              override fun getPlannedHomeDir() = home.toString()
+              override fun getPlannedVersion() = versionString
+              override fun doDownload(indicator: ProgressIndicator) { log += "download: ${sdk.sdkName}" }
+            }
+            val home = createTempDir("our home for ${sdk.sdkName}")
+            override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
+            override fun getVersionString() = "1.2.3"
+          }
+        }
+      }
+    }
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
+
+    runInThreadAndPumpMessages {
+      lookup
+        .onSdkFixResolved(SdkLookupDecision.STOP)
+        .withSdkName("xqwr")
+        .lookupBlocking()
+    }
+
+    assertLog(
+      "fix: UnknownMissingSdkFixDownload",
+      "sdk-name: null",
+      "sdk: null",
     )
   }
 
@@ -495,6 +578,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     }
 
     assertLog(
+      "fix: UnknownMissingSdkFixDownload",
       "sdk-name: prototype (2)",
       "download: null",
       "configure: prototype (2)",

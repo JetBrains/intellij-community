@@ -41,6 +41,7 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   val onBeforeSdkSuggestionStarted = params.onBeforeSdkSuggestionStarted
   val onLocalSdkSuggested = params.onLocalSdkSuggested
   val onDownloadableSdkSuggested = params.onDownloadableSdkSuggested
+  val onSdkFixResolved = params.onSdkFixResolved
 
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
@@ -317,6 +318,10 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
             LOG.warn("The matched local SDK $possibleFix does not pass our filters in ${this@SdkLookupContextEx}")
             return@runSdkResolutionUnderProgress onSdkResolved(null)
           }
+        }
+
+        if (onSdkFixResolved(possibleFix) != SdkLookupDecision.CONTINUE) {
+          return@runSdkResolutionUnderProgress onSdkResolved(null)
         }
 
         possibleFix.addSuggestionListener(getFixListener(possibleFix))

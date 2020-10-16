@@ -6,9 +6,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.util.Consumer
 import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.Nls
 
 /**
  * Use this service to resolve an SDK request to a given component allowing
@@ -26,7 +27,10 @@ interface SdkLookup {
 
   companion object {
     @JvmStatic
-    fun newLookupBuilder(): SdkLookupBuilder = service<SdkLookup>().createBuilder()
+    fun newLookupBuilder(): SdkLookupBuilder = getInstance().createBuilder()
+
+    @JvmStatic
+    fun getInstance() = service<SdkLookup>()
   }
 }
 
@@ -139,6 +143,12 @@ interface SdkLookupBuilder {
    */
   @Contract(pure = true)
   fun onSdkResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder
+
+  /**
+   * This callback is executed before the resolved Sdk fix is found
+   */
+  @Contract(pure = true)
+  fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision) : SdkLookupBuilder
 }
 
 interface SdkLookupParameters {
@@ -155,6 +165,7 @@ interface SdkLookupParameters {
   val onBeforeSdkSuggestionStarted: () -> SdkLookupDecision
   val onLocalSdkSuggested: (UnknownSdkLocalSdkFix) -> SdkLookupDecision
   val onDownloadableSdkSuggested: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision
+  val onSdkFixResolved : (UnknownSdkFixAction) -> SdkLookupDecision
 
   val sdkHomeFilter: ((String) -> Boolean)?
   val versionFilter: ((String) -> Boolean)?
