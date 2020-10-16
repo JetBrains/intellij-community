@@ -485,10 +485,12 @@ public final class AppUIUtil {
     return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
   }
 
-  public static Object adjustFractionalMetrics(@NotNull GraphicsConfiguration gc, Object defaultValue) {
-    if (SystemInfoRt.isMac && JBUIScale.sysScale(gc) == 1.0f) {
-      return RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
-    }
-    return defaultValue;
+  public static Object adjustFractionalMetrics(Object defaultValue) {
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) return defaultValue;
+
+    GraphicsConfiguration gc =
+      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+
+    return (JBUIScale.sysScale(gc) == 1.0f)? RenderingHints.VALUE_FRACTIONALMETRICS_OFF : defaultValue;
   }
 }
