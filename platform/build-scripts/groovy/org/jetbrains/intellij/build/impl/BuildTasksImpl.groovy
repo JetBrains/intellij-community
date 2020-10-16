@@ -125,8 +125,16 @@ class BuildTasksImpl extends BuildTasks {
     }
 
     def additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-    if (additionalPluginPaths != null) {
-      ideaProperties += ["plugin.path": additionalPluginPaths.join(",")]
+    additionalPluginPaths?.each { pluginPath ->
+      File libFile = new File(pluginPath, "lib")
+      libFile.list { _, name ->
+        FileUtil.extensionEquals(name, "jar")
+      }.each { jarName ->
+        File jarFile = new File(libFile, jarName)
+        if (ideClasspath.add(jarFile.absolutePath)) {
+          context.messages.debug(" $jarFile from plugin ${libFile.parentFile.name}")
+        }
+      }
     }
 
     disableCompatibleIgnoredPlugins(context, "${tempDir}/config")
