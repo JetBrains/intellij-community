@@ -54,4 +54,5 @@ public interface LombokNames {
   @NonNls String ACCESS_LEVEL_PROTECTED = "PROTECTED";
   @NonNls String ACCESS_LEVEL_PRIVATE = "PRIVATE";
   @NonNls String ACCESS_LEVEL = "lombok.AccessLevel";
+  @NonNls String LOMBOK_EXPERIMENTAL = "lombok.experimental";
 }

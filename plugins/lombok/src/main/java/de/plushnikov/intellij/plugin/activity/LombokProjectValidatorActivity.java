@@ -7,10 +7,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -18,10 +18,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -135,15 +137,9 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
            compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
   }
 
-  private static boolean hasLombokLibrary(Project project) {
-    PsiPackage lombokPackage;
-    try {
-      lombokPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
-    }
-    catch (ProcessCanceledException ex) {
-      lombokPackage = null;
-    }
-    return lombokPackage != null;
+  public static boolean hasLombokLibrary(Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> new CachedValueProvider.Result<>(JavaPsiFacade.getInstance(project).findPackage(LombokNames.LOMBOK_EXPERIMENTAL),
+                                                                                                                  ProjectRootManager.getInstance(project))) != null;
   }
 
   @Nullable
