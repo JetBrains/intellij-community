@@ -957,8 +957,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (!manager.isNotNull(owner, checkBases)) return false;
     if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullability.NOT_NULL) return true;
+    if (!manager.isNotNull(owner, checkBases)) return false;
 
     PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
     if (anno == null || AnnotationUtil.isInferredAnnotation(anno)) return false;

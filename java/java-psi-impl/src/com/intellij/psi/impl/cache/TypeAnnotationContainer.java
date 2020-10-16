@@ -101,7 +101,9 @@ public class TypeAnnotationContainer {
         List<PsiAnnotation> result = new ArrayList<>();
         for (TypeAnnotationEntry entry : myList) {
           if (entry.myPath.length == 0) {
-            result.add(new ClsTypeAnnotationImpl(parent, entry.myText));
+            PsiAnnotation anno = parent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(parent, entry.myText) :
+                                 JavaPsiFacade.getElementFactory(parent.getProject()).createAnnotationFromText(entry.myText, parent);
+            result.add(anno);
           }
         }
         return result.toArray(PsiAnnotation.EMPTY_ARRAY);

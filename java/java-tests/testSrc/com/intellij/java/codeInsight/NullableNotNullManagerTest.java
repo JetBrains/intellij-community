@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.*;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -11,11 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +25,7 @@ import org.junit.Assume;
 
 import java.util.List;
 
-public class NullableNotNullManagerTest extends LightPlatformTestCase {
+public class NullableNotNullManagerTest extends LightJavaCodeInsightFixtureTestCase {
   private NullableNotNullManagerImpl myManager;
 
   @Override
@@ -96,6 +98,15 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
     myManager.setNotNulls(AnnotationUtil.NULLABLE);
     myManager.setNullables(AnnotationUtil.NOT_NULL);
     checkAnnotations();
+  }
+
+  public void testTypeAnnotationNullabilityOnStubs() {
+    PsiClass clazz = myFixture.addClass("import org.jetbrains.annotations.*;" +
+                                        "interface Foo {" +
+                                        "  String @NotNull [] read();" +
+                                        "}");
+    assertEquals(Nullability.NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getReturnType()));
+    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
   }
 
   private void checkAnnotations() {
