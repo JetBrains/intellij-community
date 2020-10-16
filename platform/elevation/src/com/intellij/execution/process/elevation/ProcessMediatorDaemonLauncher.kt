@@ -34,7 +34,7 @@ object ProcessMediatorDaemonLauncher {
     val appExecutorService = AppExecutorUtil.getAppExecutorService()
 
     val helloIpc = appExecutorService.submitAndAwaitCloseable { tryCreateHelloIpc() }
-                   ?: throw ExecutionException("Unable to arrange initial communication channel with the elevation daemon")
+                   ?: throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"))
 
     return helloIpc.use {
       appExecutorService.submitAndAwait {
