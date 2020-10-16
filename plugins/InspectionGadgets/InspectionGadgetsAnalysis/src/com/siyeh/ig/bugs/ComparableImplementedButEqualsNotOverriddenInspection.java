@@ -102,7 +102,9 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
   private static class AddNoteFix extends InspectionGadgetsFix {
 
     private static final Pattern PARAM_PATTERN = Pattern.compile("\\*[ \t]+@");
-    private static final @Nls String NOTE = " * Note: this class has a natural ordering that is inconsistent with equals.\n";
+    // Let's keep a doc comment in English. Otherwise it will be hard to suppress the warning based on the JavaDoc substring
+    // (see CompareToAndEqualsNotPairedVisitor#visitClass below).
+    private static final @NonNls String NOTE = " * Note: this class has a natural ordering that is inconsistent with equals.\n";
 
     @Nls
     @NotNull
