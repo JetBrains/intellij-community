@@ -79,7 +79,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return true
   }
 
-  private fun findParentInModel(root: StructureViewTreeElement, psiElement: PsiElement): PsiElement? {
+  protected open fun findParentInModel(root: StructureViewTreeElement, psiElement: PsiElement): PsiElement? {
     for (child in childrenFromNodeAndProviders(root)) {
       if ((child as StructureViewTreeElement).value == psiElement) {
         return root.value as? PsiElement
@@ -125,7 +125,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       .all { processStructureViewChildren(it, `object`, processor) }
   }
 
-  private fun childrenFromNodeAndProviders(parent: StructureViewTreeElement): List<TreeElement> {
+  protected fun childrenFromNodeAndProviders(parent: StructureViewTreeElement): List<TreeElement> {
     val children = if (parent is PsiTreeElementBase<*>) parent.childrenWithoutCustomRegions else parent.children.toList()
     return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
@@ -133,7 +133,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun normalizeChildren() = false
 
   protected open val applicableNodeProviders: List<NodeProvider<*>> = emptyList()
-  
+
   companion object {
     val MODEL: Key<SoftReference<StructureViewModel>?> = Key.create("editor.structure.model")
   }
