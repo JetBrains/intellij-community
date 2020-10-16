@@ -1,5 +1,8 @@
 # WinJumpListBridge
 
+This project based on the [origin jumplistbridge project](https://github.com/JetBrains/intellij-community/tree/4635352640ed54ef9379082171f33837d099ebb8/native/jumplistbridge)
+by Denis Fokin.
+
 TODO: description
 
 ## Build dependencies
@@ -15,3 +18,6 @@ For example if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you sh
 
 ## Integration with CLion
 TODO: description
+
+## Current binaries in repository
+TODO: description of environment for building

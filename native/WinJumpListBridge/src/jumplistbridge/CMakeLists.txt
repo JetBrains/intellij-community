@@ -23,3 +23,20 @@ target_include_directories(jumplistbridge
     PRIVATE "${JDK_PATH}/include"
     PRIVATE "${JDK_PATH}/include/win32"
 )
+
+# TODO: insert copyrights to DLL->Properties->Details
+
+# TODO: remove this target
+add_executable(jumplisttests
+    "winapi.h"
+    "wide_string.h"
+    "COM_errors.h"
+    "COM_errors.cpp"
+    "COM_object_safe_ptr.h"
+    "COM_guard.h"
+    "COM_guard.cpp"
+    "jump_task.h"
+    "jump_task.cpp"
+    "testsmain.cpp"
+)
+enable_target_compile_extra_warnings(jumplisttests)
