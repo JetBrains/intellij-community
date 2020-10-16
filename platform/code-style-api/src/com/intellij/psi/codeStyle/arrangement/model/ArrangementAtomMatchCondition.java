@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.codeStyle.arrangement.model;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.InvertibleArrangementSettingsToken;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -92,10 +94,16 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
 
   @Override
   public String toString() {
+    return getPresentableValue();
+  }
+
+  public @NotNull @Nls String getPresentableValue() {
     if (myValue instanceof Boolean) {
-      return String.format("%s%s", (Boolean)myValue ? "" : "not " , myType.getRepresentationValue());
+      return (Boolean)myValue ? myType.getRepresentationValue()
+                              : CodeStyleBundle.message("arrangement.settings.text.condition.not", myType.getRepresentationValue());
     }
     else {
+      //noinspection HardCodedStringLiteral
       return String.format("%s: %s", myType.getRepresentationValue(), StringUtil.toLowerCase(myValue.toString()));
     }
   }

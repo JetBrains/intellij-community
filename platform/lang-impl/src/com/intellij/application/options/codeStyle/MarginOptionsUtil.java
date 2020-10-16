@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -33,7 +34,7 @@ final class MarginOptionsUtil {
   }
 
   static void customizeWrapOnTypingCombo(@NotNull JComboBox<String> wrapOnTypingCombo, @NotNull CodeStyleSettings settings) {
-    wrapOnTypingCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
+    wrapOnTypingCombo.setRenderer(SimpleListCellRenderer.create("", (@NlsSafe var value) -> {
       for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i++) {
         if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i] == CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
           if (getInstance().WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
