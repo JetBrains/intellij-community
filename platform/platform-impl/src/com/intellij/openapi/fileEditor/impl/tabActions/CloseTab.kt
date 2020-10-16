@@ -37,7 +37,12 @@ class CloseTab(c: JComponent,
       e.presentation.setText("")
     }
     else {
-      e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+      if (pinned) {
+        e.presentation.setText(IdeBundle.message("action.unpin.tab.tooltip"))
+      }
+      else {
+        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+      }
     }
   }
 
