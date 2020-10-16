@@ -12,10 +12,18 @@ import org.jetbrains.annotations.NotNull;
 public class LombokTestUtil {
 
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       MavenDependencyUtil.addFromMaven(model, "org.projectlombok:lombok:1.18.12");
+      MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
+    }
+  };
+
+  public static final DefaultLightProjectDescriptor LOMBOK_OLD_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      MavenDependencyUtil.addFromMaven(model, "org.projectlombok:lombok:1.18.2");
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }

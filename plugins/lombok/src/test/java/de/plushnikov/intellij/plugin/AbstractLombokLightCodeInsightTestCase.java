@@ -25,18 +25,6 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCo
     return LombokTestUtil.LOMBOK_DESCRIPTOR;
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
-    loadLombokLibrary();
-  }
-
-  protected void loadLombokLibrary() {
-    myFixture.getProjectDisposable();
-    getModule();
-  }
-
   protected PsiFile loadToPsiFile(String fileName) {
     VirtualFile virtualFile = myFixture.copyFileToProject(fileName, fileName);
     myFixture.configureFromExistingVirtualFile(virtualFile);
