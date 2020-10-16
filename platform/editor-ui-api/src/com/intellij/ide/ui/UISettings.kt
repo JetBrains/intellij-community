@@ -91,6 +91,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.reuseNotModifiedTabs = value
     }
 
+  var openInPreviewTabIfPossible: Boolean
+    get() = state.openInPreviewTabIfPossible
+    set(value) {
+      state.openInPreviewTabIfPossible = value
+    }
+
   var disableMnemonics: Boolean
     get() = state.disableMnemonics
     set(value) {

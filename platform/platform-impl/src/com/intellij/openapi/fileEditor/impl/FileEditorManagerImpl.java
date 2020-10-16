@@ -108,6 +108,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
+  public static final Key<Boolean> OPEN_IN_PREVIEW_TAB = Key.create("OPEN_IN_PREVIEW_TAB");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   public enum OpenMode {
@@ -405,6 +406,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   protected void updateFileIcon(@NotNull VirtualFile file) {
     updateFileIcon(file, false);
+  }
+
+  private void resetPreviewFlag(@NotNull VirtualFile file) {
+    for (EditorsSplitters splitter : getAllSplitters()) {
+      splitter.findEditorComposites(file).stream()
+        .filter(EditorComposite::isPreview)
+        .forEach(c -> c.setPreview(false));
+      splitter.updateFileStyle(file);
+    }
   }
 
   /**
@@ -1969,6 +1979,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           updateFileIcon(file);
           updateFileColor(file);
           updateFileBackgroundColor(file);
+          resetPreviewFlag(file);
         }
 
       }

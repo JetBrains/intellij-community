@@ -175,9 +175,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     myTabs.getTabAt(index).setDefaultForeground(color);
   }
 
+  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
+    myTabs.getTabAt(index).setDefaultStyle(style);
+  }
+
   void setWaveColor(int index, @Nullable Color color) {
     TabInfo tab = myTabs.getTabAt(index);
-    tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
     tab.setDefaultWaveColor(color);
   }
 

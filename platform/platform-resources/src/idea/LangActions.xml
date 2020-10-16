@@ -725,6 +725,8 @@
       <action id="ProjectView.CompactDirectories"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
       <separator/>
+      <action id="ProjectView.OpenInPreviewTab"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
       <action id="ProjectView.AutoscrollToSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"/>

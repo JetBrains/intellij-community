@@ -32,10 +32,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -415,6 +412,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
       window.setWaveColor(index, getManager().isProblem(file) ? JBColor.red : null);
+    }
+  }
+
+  void updateFileStyle(@NotNull VirtualFile file) {
+    Collection<EditorWindow> windows = findWindows(file);
+    for (EditorWindow window : windows) {
+      EditorWithProviderComposite composite = window.findFileComposite(file);
+      int index = window.findEditorIndex(composite);
+      LOG.assertTrue(index != -1);
+      window.setStyleAt(index, composite != null && composite.isPreview() ? SimpleTextAttributes.STYLE_ITALIC : -1);
     }
   }
 

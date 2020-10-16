@@ -115,6 +115,9 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
         row {
           checkBox(reuseNotModifiedTabs)
         }
+        row {
+          checkBox(openInPreviewTabIfPossible)
+        }
       }
     }
   }
