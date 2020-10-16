@@ -17,11 +17,11 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nullable
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
-  
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return
-    
+
 
     val element = e.getData(CommonDataKeys.PSI_ELEMENT) as? Navigatable
     val editorWindow = openInRightSplit(project, file, element)
@@ -36,18 +36,22 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
       }
     }
   }
-  
+
   override fun update(e: AnActionEvent) {
     val project = getEventProject(e)
+    val editor = e.getData(CommonDataKeys.EDITOR)
+
     val place = e.place
-    if (project == null || 
-        place == ActionPlaces.EDITOR_TAB_POPUP || 
+    if (project == null ||
+        editor != null ||
+        place == ActionPlaces.EDITOR_TAB_POPUP ||
         place == ActionPlaces.EDITOR_POPUP) {
       e.presentation.isEnabledAndVisible = false
       return
-    } 
-    
-    val contextFile =  getVirtualFile(e)
+    }
+
+
+    val contextFile = getVirtualFile(e)
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
   }
 
