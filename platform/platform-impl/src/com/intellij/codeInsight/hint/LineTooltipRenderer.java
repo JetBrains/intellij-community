@@ -185,6 +185,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (myText == null) return null;
 
     //setup text
+    //noinspection HardCodedStringLiteral
     String tooltipPreText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     String dressedText = dressDescription(editor, tooltipPreText, myCurrentWidth > 0);
 
