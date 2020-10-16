@@ -19,7 +19,7 @@ final class IndentsPassFactory implements TextEditorHighlightingPassFactory, Tex
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     final IndentsPassFilter indentsPassFilter = IndentsPassFilter.EXTENSION_POINT.forLanguage(file.getLanguage());
-    if (indentsPassFilter != null && !indentsPassFilter.shouldRunIndentPass(file)) return null;
+    if (indentsPassFilter != null && indentsPassFilter.hasCustomIndentPass(file)) return null;
     return new IndentsPass(file.getProject(), editor, file);
   }
 }

@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 public interface IndentsPassFilter {
     LanguageExtension<IndentsPassFilter> EXTENSION_POINT = new LanguageExtension<>("com.intellij.daemon.indentsPassFilter");
 
-    boolean shouldRunIndentPass(@NotNull PsiFile file);
+    boolean hasCustomIndentPass(@NotNull PsiFile file);
 }
