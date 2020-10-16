@@ -525,7 +525,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup" text="Create Value Renderer"/>
+        <override-text place="XDebuggerTreeInlayPopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
