@@ -529,7 +529,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
-      new MacGestureSupportForEditor(getComponent());
+      try {
+        new MacGestureSupportForEditor(getComponent());
+      }
+      catch (Throwable t) {
+        LOG.warn("macOS gesture support failed", t);
+      }
     }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
