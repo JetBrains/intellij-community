@@ -74,7 +74,7 @@ public class PyCompatibilityInspection extends PyInspection {
   @NotNull
   public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
-    .filter(v -> v.isPython2() && v.isAtLeast(LanguageLevel.PYTHON26) || v.isAtLeast(LanguageLevel.PYTHON35))
+    .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON35))
     .toImmutableList();
 
   @NotNull
