@@ -209,7 +209,7 @@
     </action>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="ViewToolbarActionsGroup"/>
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
       <override-text place="NavBar"/>
     </action>
 
