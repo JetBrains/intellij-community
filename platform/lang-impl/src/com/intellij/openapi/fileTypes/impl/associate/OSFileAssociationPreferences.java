@@ -6,10 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.codehaus.groovy.tools.shell.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ import java.util.Objects;
 
 @State(name = "OSFileAssociationPreferences", storages =  @Storage("osFileIdePreferences.xml"))
 public final class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
-  private final static Logger LOG = Logger.create(OSFileAssociationPreferences.class);
+  private final static Logger LOG = Logger.getInstance(OSFileAssociationPreferences.class);
 
   public List<String> fileTypeNames = new ArrayList<>();
   public String ideLocationHash;
