@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -69,7 +68,7 @@ public final class MavenIndicesManager implements Disposable {
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
 
   public static MavenIndicesManager getInstance() {
-    return ServiceManager.getService(MavenIndicesManager.class);
+    return ApplicationManager.getApplication().getService(MavenIndicesManager.class);
   }
 
   @TestOnly

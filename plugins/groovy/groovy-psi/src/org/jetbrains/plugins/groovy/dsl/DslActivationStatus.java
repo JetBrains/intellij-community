@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,6 +149,6 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
   }
 
   public static DslActivationStatus getInstance() {
-    return ServiceManager.getService(DslActivationStatus.class);
+    return ApplicationManager.getApplication().getService(DslActivationStatus.class);
   }
 }

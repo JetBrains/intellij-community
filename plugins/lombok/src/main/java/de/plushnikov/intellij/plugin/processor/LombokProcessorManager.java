@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import de.plushnikov.intellij.plugin.processor.clazz.*;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.*;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
@@ -24,57 +24,57 @@ public class LombokProcessorManager {
   @NotNull
   public static Collection<Processor> getLombokProcessors() {
     return Arrays.asList(
-      ServiceManager.getService(AllArgsConstructorProcessor.class),
-      ServiceManager.getService(NoArgsConstructorProcessor.class),
-      ServiceManager.getService(RequiredArgsConstructorProcessor.class),
+      ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class),
+      ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class),
+      ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class),
 
-      ServiceManager.getService(LogProcessor.class),
-      ServiceManager.getService(Log4jProcessor.class),
-      ServiceManager.getService(Log4j2Processor.class),
-      ServiceManager.getService(Slf4jProcessor.class),
-      ServiceManager.getService(XSlf4jProcessor.class),
-      ServiceManager.getService(CommonsLogProcessor.class),
-      ServiceManager.getService(JBossLogProcessor.class),
-      ServiceManager.getService(FloggerProcessor.class),
-      ServiceManager.getService(CustomLogProcessor.class),
+      ApplicationManager.getApplication().getService(LogProcessor.class),
+      ApplicationManager.getApplication().getService(Log4jProcessor.class),
+      ApplicationManager.getApplication().getService(Log4j2Processor.class),
+      ApplicationManager.getApplication().getService(Slf4jProcessor.class),
+      ApplicationManager.getApplication().getService(XSlf4jProcessor.class),
+      ApplicationManager.getApplication().getService(CommonsLogProcessor.class),
+      ApplicationManager.getApplication().getService(JBossLogProcessor.class),
+      ApplicationManager.getApplication().getService(FloggerProcessor.class),
+      ApplicationManager.getApplication().getService(CustomLogProcessor.class),
 
-      ServiceManager.getService(DataProcessor.class),
-      ServiceManager.getService(EqualsAndHashCodeProcessor.class),
-      ServiceManager.getService(GetterProcessor.class),
-      ServiceManager.getService(SetterProcessor.class),
-      ServiceManager.getService(ToStringProcessor.class),
-      ServiceManager.getService(WitherProcessor.class),
+      ApplicationManager.getApplication().getService(DataProcessor.class),
+      ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class),
+      ApplicationManager.getApplication().getService(GetterProcessor.class),
+      ApplicationManager.getApplication().getService(SetterProcessor.class),
+      ApplicationManager.getApplication().getService(ToStringProcessor.class),
+      ApplicationManager.getApplication().getService(WitherProcessor.class),
 
-      ServiceManager.getService(BuilderPreDefinedInnerClassFieldProcessor.class),
-      ServiceManager.getService(BuilderPreDefinedInnerClassMethodProcessor.class),
-      ServiceManager.getService(BuilderClassProcessor.class),
-      ServiceManager.getService(BuilderProcessor.class),
-      ServiceManager.getService(BuilderClassMethodProcessor.class),
-      ServiceManager.getService(BuilderMethodProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassFieldProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassMethodProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderClassProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderClassMethodProcessor.class),
+      ApplicationManager.getApplication().getService(BuilderMethodProcessor.class),
 
-      ServiceManager.getService(SuperBuilderPreDefinedInnerClassFieldProcessor.class),
-      ServiceManager.getService(SuperBuilderPreDefinedInnerClassMethodProcessor.class),
-      ServiceManager.getService(SuperBuilderClassProcessor.class),
-      ServiceManager.getService(SuperBuilderProcessor.class),
+      ApplicationManager.getApplication().getService(SuperBuilderPreDefinedInnerClassFieldProcessor.class),
+      ApplicationManager.getApplication().getService(SuperBuilderPreDefinedInnerClassMethodProcessor.class),
+      ApplicationManager.getApplication().getService(SuperBuilderClassProcessor.class),
+      ApplicationManager.getApplication().getService(SuperBuilderProcessor.class),
 
-      ServiceManager.getService(ValueProcessor.class),
+      ApplicationManager.getApplication().getService(ValueProcessor.class),
 
-      ServiceManager.getService(UtilityClassProcessor.class),
+      ApplicationManager.getApplication().getService(UtilityClassProcessor.class),
 
-      ServiceManager.getService(FieldNameConstantsOldProcessor.class),
-      ServiceManager.getService(FieldNameConstantsFieldProcessor.class),
+      ApplicationManager.getApplication().getService(FieldNameConstantsOldProcessor.class),
+      ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class),
 
-      ServiceManager.getService(FieldNameConstantsProcessor.class),
-      ServiceManager.getService(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
+      ApplicationManager.getApplication().getService(FieldNameConstantsProcessor.class),
+      ApplicationManager.getApplication().getService(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
 
-      ServiceManager.getService(DelegateFieldProcessor.class),
-      ServiceManager.getService(GetterFieldProcessor.class),
-      ServiceManager.getService(SetterFieldProcessor.class),
-      ServiceManager.getService(WitherFieldProcessor.class),
+      ApplicationManager.getApplication().getService(DelegateFieldProcessor.class),
+      ApplicationManager.getApplication().getService(GetterFieldProcessor.class),
+      ApplicationManager.getApplication().getService(SetterFieldProcessor.class),
+      ApplicationManager.getApplication().getService(WitherFieldProcessor.class),
 
-      ServiceManager.getService(DelegateMethodProcessor.class),
+      ApplicationManager.getApplication().getService(DelegateMethodProcessor.class),
 
-      ServiceManager.getService(CleanupProcessor.class)
+      ApplicationManager.getApplication().getService(CleanupProcessor.class)
 //      ,ServiceManager.getService(SynchronizedProcessor.class)
     );
   }
@@ -82,9 +82,9 @@ public class LombokProcessorManager {
   @NotNull
   public static Collection<ModifierProcessor> getLombokModifierProcessors() {
     return Arrays.asList(
-      ServiceManager.getService(FieldDefaultsModifierProcessor.class),
-      ServiceManager.getService(UtilityClassModifierProcessor.class),
-      ServiceManager.getService(ValModifierProcessor.class),
-      ServiceManager.getService(ValueModifierProcessor.class));
+      ApplicationManager.getApplication().getService(FieldDefaultsModifierProcessor.class),
+      ApplicationManager.getApplication().getService(UtilityClassModifierProcessor.class),
+      ApplicationManager.getApplication().getService(ValModifierProcessor.class),
+      ApplicationManager.getApplication().getService(ValueModifierProcessor.class));
   }
 }

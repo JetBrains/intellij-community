@@ -4,7 +4,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
@@ -93,7 +92,7 @@ public final class DomApplicationComponent {
   }
 
   public static DomApplicationComponent getInstance() {
-    return ServiceManager.getService(DomApplicationComponent.class);
+    return ApplicationManager.getApplication().getService(DomApplicationComponent.class);
   }
 
   public synchronized int getCumulativeVersion(boolean forStubs) {

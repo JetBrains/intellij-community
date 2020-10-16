@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,7 +35,7 @@ public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent
   }
 
   public static CodeStyleSchemesUIConfiguration getInstance() {
-    return ServiceManager.getService(CodeStyleSchemesUIConfiguration.class);
+    return ApplicationManager.getApplication().getService(CodeStyleSchemesUIConfiguration.class);
   }
 
   public static final class Util {

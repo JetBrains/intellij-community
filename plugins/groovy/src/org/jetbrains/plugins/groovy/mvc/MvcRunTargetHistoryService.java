@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,7 +77,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
   }
 
   public static MvcRunTargetHistoryService getInstance() {
-    return ServiceManager.getService(MvcRunTargetHistoryService.class);
+    return ApplicationManager.getApplication().getService(MvcRunTargetHistoryService.class);
   }
 
   public void addCommand(@NotNull String command, @NotNull String vmOptions) {

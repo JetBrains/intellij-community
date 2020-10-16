@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -80,7 +81,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
 
   @NotNull
   public static VcsLogBigRepositoriesList getInstance() {
-    return ServiceManager.getService(VcsLogBigRepositoriesList.class);
+    return ApplicationManager.getApplication().getService(VcsLogBigRepositoriesList.class);
   }
 
   public static final class State {

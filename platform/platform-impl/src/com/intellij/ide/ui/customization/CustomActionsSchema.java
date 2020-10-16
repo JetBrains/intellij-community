@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,7 +109,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public static CustomActionsSchema getInstance() {
-    return ServiceManager.getService(CustomActionsSchema.class);
+    return ApplicationManager.getApplication().getService(CustomActionsSchema.class);
   }
 
   public void addAction(ActionUrl url) {

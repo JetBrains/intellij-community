@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -73,7 +73,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
   }
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
-    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
     return historyProvider != null && historyProvider.canShowFileHistory(project, paths, null);
   }
 
@@ -97,7 +97,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
   }
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
-    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
     historyProvider.showFileHistory(project, paths, null);
   }
 

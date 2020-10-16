@@ -38,9 +38,8 @@ public final class ServiceManager {
    */
   @Deprecated
   public static @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    Application application = ApplicationManager.getApplication();
-    if (application == null) return null;
-    return application.getServiceIfCreated(serviceClass);
+    Application app = ApplicationManager.getApplication();
+    return app == null ? null : app.getServiceIfCreated(serviceClass);
   }
 
   /**

@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -33,7 +33,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   }
 
   private FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
-    return ServiceManager.getService(FieldNameConstantsFieldProcessor.class);
+    return ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class);
   }
 
   @Override

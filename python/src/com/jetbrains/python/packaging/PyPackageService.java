@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -68,7 +69,7 @@ public class PyPackageService implements
   }
 
   public static PyPackageService getInstance() {
-    return ServiceManager.getService(PyPackageService.class);
+    return ApplicationManager.getApplication().getService(PyPackageService.class);
   }
 
   public @Nullable @SystemIndependent String getVirtualEnvBasePath() {

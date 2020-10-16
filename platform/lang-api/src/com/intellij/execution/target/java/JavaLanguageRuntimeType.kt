@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
@@ -6,8 +6,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -33,7 +33,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   override fun createConfigurable(project: Project,
                                   config: JavaLanguageRuntimeConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
-    return ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
+    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): JavaLanguageRuntimeConfiguration? {

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
@@ -25,7 +25,7 @@ public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPr
   }
 
   protected BuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(BuilderHandler.class);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
   @Override

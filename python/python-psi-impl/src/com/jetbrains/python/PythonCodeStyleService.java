@@ -1,6 +1,6 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -55,6 +55,6 @@ public class PythonCodeStyleService {
   }
 
   public static PythonCodeStyleService getInstance() {
-    return ServiceManager.getService(PythonCodeStyleService.class);
+    return ApplicationManager.getApplication().getService(PythonCodeStyleService.class);
   }
 }

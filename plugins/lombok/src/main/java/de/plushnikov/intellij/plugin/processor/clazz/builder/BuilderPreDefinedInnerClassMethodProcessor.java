@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -31,7 +31,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
   }
 
   protected BuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(BuilderHandler.class);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
   protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {

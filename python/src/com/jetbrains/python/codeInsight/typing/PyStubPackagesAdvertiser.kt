@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -106,7 +107,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       if (availablePackages.isEmpty()) return
 
       val ignoredStubPackages = ignoredPackages.mapNotNull { packageManager.parseRequirement(it) }
-      val cache = ServiceManager.getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
+      val cache = ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
 
       val forcedToLoad = processForcedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
       val checkedToLoad = processCheckedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)

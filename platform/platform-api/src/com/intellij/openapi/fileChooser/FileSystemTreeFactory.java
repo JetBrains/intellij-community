@@ -2,7 +2,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 
@@ -17,7 +17,7 @@ public interface FileSystemTreeFactory {
     }
 
     public static FileSystemTreeFactory getInstance() {
-      return ServiceManager.getService(FileSystemTreeFactory.class);
+      return ApplicationManager.getApplication().getService(FileSystemTreeFactory.class);
     }
   }
 }

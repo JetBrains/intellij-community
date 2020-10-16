@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ public interface BatchSuppressManager {
 
   final class SERVICE {
     public static BatchSuppressManager getInstance() {
-      return ServiceManager.getService(BatchSuppressManager.class);
+      return ApplicationManager.getApplication().getService(BatchSuppressManager.class);
     }
   }
   SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey key);

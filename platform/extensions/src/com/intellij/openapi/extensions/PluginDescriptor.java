@@ -63,7 +63,7 @@ public interface PluginDescriptor {
 
   @NlsSafe String getVersion();
 
-  String getResourceBundleBaseName();
+  @Nullable String getResourceBundleBaseName();
 
   @NlsSafe String getCategory();
 

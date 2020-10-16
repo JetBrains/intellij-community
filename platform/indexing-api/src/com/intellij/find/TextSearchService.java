@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface TextSearchService {
   static TextSearchService getInstance() {
-    return ServiceManager.getService(TextSearchService.class);
+    return ApplicationManager.getApplication().getService(TextSearchService.class);
   }
 
   @NotNull

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -610,11 +610,11 @@ public class BuilderHandler {
   }
 
   private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ServiceManager.getService(NoArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
 
 
   private ToStringProcessor getToStringProcessor() {
-    return ServiceManager.getService(ToStringProcessor.class);
+    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
   }
 }

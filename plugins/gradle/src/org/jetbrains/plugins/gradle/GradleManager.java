@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
@@ -106,7 +106,7 @@ public final class GradleManager
       final Project project = pair.first;
       final String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      GradleInstallationManager gradleInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
+      GradleInstallationManager gradleInstallationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
       File gradleHome = gradleInstallationManager.getGradleHome(project, projectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
@@ -376,7 +376,7 @@ public final class GradleManager
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
               }
-              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, project, true);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project, true);
             });
           }
         });

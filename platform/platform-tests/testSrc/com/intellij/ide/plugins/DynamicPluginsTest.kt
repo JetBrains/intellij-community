@@ -119,12 +119,12 @@ class DynamicPluginsTest {
 
     val extensionTag = "<applicationService serviceImplementation=\"${MyPersistentComponent::class.java.name}\"/>"
     val disposable = loadExtensionWithText(extensionTag, DynamicPlugins::class.java.classLoader)
-    val service = ServiceManager.getService(MyPersistentComponent::class.java)
+    val service = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
     service.myState.stateData = data
     Disposer.dispose(disposable)
 
     val disposable2 = loadExtensionWithText(extensionTag, DynamicPlugins::class.java.classLoader)
-    val service2 = ServiceManager.getService(MyPersistentComponent::class.java)
+    val service2 = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
     assertThat(service2.myState.stateData).isEqualTo(data)
     Disposer.dispose(disposable2)
   }

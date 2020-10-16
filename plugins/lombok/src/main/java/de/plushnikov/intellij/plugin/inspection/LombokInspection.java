@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
@@ -23,7 +23,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
   private final ValProcessor valProcessor;
 
   public LombokInspection() {
-    valProcessor = ServiceManager.getService(ValProcessor.class);
+    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
   }
 
   @NotNull

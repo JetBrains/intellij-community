@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 @State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
 public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public static UpdateSettings getInstance() {
-    return ServiceManager.getService(UpdateSettings.class);
+    return ApplicationManager.getApplication().getService(UpdateSettings.class);
   }
 
   private UpdateOptions myState = new UpdateOptions();

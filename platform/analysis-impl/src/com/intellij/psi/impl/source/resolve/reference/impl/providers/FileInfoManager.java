@@ -3,7 +3,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -21,7 +21,7 @@ import javax.swing.*;
  */
 public final class FileInfoManager {
   public static FileInfoManager getFileInfoManager() {
-    return ServiceManager.getService(FileInfoManager.class);
+    return ApplicationManager.getApplication().getService(FileInfoManager.class);
   }
 
   public static Object getFileLookupItem(PsiElement psiElement) {

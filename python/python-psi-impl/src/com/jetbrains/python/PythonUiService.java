@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -120,7 +120,7 @@ public class PythonUiService {
   }
 
   public static PythonUiService getInstance() {
-    return ServiceManager.getService(PythonUiService.class);
+    return ApplicationManager.getApplication().getService(PythonUiService.class);
   }
 
   @Nullable

@@ -4,6 +4,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -345,7 +346,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @State(name = "FindRecents", storages = @Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED))
   static final class FindRecents extends FindInProjectSettingsBase {
     public static FindRecents getInstance() {
-      return ServiceManager.getService(FindRecents.class);
+      return ApplicationManager.getApplication().getService(FindRecents.class);
     }
   }
 

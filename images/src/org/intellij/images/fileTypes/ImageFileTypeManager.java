@@ -15,14 +15,14 @@
  */
 package org.intellij.images.fileTypes;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ImageFileTypeManager {
   public static ImageFileTypeManager getInstance() {
-    return ServiceManager.getService(ImageFileTypeManager.class);
+    return ApplicationManager.getApplication().getService(ImageFileTypeManager.class);
   }
 
   public abstract boolean isImage(@NotNull VirtualFile file);

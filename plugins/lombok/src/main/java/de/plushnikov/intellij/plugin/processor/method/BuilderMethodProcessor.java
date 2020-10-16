@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -40,7 +40,7 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
-    final BuilderHandler builderHandler = ServiceManager.getService(BuilderHandler.class);
+    final BuilderHandler builderHandler = ApplicationManager.getApplication().getService(BuilderHandler.class);
     if (null != psiClass) {
 
       PsiClass builderClass = builderHandler.getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).orElse(null);

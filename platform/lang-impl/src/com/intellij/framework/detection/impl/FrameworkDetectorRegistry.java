@@ -3,7 +3,7 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -17,7 +17,7 @@ import java.util.List;
 
 public abstract class FrameworkDetectorRegistry {
   public static FrameworkDetectorRegistry getInstance() {
-    return ServiceManager.getService(FrameworkDetectorRegistry.class);
+    return ApplicationManager.getApplication().getService(FrameworkDetectorRegistry.class);
   }
 
   @Nullable

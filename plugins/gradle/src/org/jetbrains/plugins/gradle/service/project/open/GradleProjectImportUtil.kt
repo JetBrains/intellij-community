@@ -2,7 +2,7 @@
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
@@ -65,7 +65,7 @@ fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: Path) {
 }
 
 private fun suggestGradleHome(): String? {
-  val installationManager = ServiceManager.getService(GradleInstallationManager::class.java)
+  val installationManager = ApplicationManager.getApplication().getService(GradleInstallationManager::class.java)
   val lastUsedGradleHome = GradleUtil.getLastUsedGradleHome().nullize()
   if (lastUsedGradleHome != null) return lastUsedGradleHome
   val gradleHome = installationManager.autodetectedGradleHome ?: return null

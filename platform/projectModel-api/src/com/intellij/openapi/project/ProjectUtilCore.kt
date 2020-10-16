@@ -4,7 +4,6 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -78,7 +77,7 @@ val Project.isExternalStorageEnabled: Boolean
       return false
     }
 
-    val manager = ServiceManager.getService(this, ExternalStorageConfigurationManager::class.java) ?: return false
+    val manager = this.getService(ExternalStorageConfigurationManager::class.java) ?: return false
     if (manager.isEnabled) return true
     val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
     return testMode && enableExternalStorageByDefaultInTests

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
@@ -34,11 +34,11 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   private BuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(BuilderHandler.class);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
   private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
-    return ServiceManager.getService(AllArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
   @Override

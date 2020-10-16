@@ -3,7 +3,7 @@ package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 
 
 abstract class CompletionLoggerProvider {
@@ -13,7 +13,7 @@ abstract class CompletionLoggerProvider {
     open fun dispose(): Unit = Unit
 
     companion object {
-        fun getInstance(): CompletionLoggerProvider = ServiceManager.getService(CompletionLoggerProvider::class.java)
+        fun getInstance(): CompletionLoggerProvider = ApplicationManager.getApplication().getService(CompletionLoggerProvider::class.java)
     }
 
 }

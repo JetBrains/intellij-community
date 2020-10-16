@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -25,7 +25,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   }
 
   private WitherFieldProcessor getWitherFieldProcessor() {
-    return ServiceManager.getService(WitherFieldProcessor.class);
+    return ApplicationManager.getApplication().getService(WitherFieldProcessor.class);
   }
 
   @Override

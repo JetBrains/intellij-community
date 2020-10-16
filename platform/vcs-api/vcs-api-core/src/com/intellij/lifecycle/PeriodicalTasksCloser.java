@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lifecycle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,7 @@ public final class PeriodicalTasksCloser {
   private final Object myLock = new Object();
 
   public static PeriodicalTasksCloser getInstance() {
-    return ServiceManager.getService(PeriodicalTasksCloser.class);
+    return ApplicationManager.getApplication().getService(PeriodicalTasksCloser.class);
   }
 
   public <T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {

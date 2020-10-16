@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -38,7 +37,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
 
   public static ProjectDataManagerImpl getInstance() {
-    ProjectDataManager service = ServiceManager.getService(ProjectDataManager.class);
+    ProjectDataManager service = ApplicationManager.getApplication().getService(ProjectDataManager.class);
     return (ProjectDataManagerImpl)service;
   }
 

@@ -56,6 +56,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiDocumentManager;
@@ -280,15 +281,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static void processAbbreviationNode(@NotNull Element e, @NotNull String id) {
-    final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
-    if (!StringUtil.isEmpty(abbr)) {
-      final AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
+    String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
+    if (!Strings.isEmpty(abbr)) {
+      AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
       abbreviationManager.register(abbr, id, true);
     }
   }
 
-  @Nullable
-  private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin, @Nullable String bundleName) {
+  private static @Nullable ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin, @Nullable String bundleName) {
     String resBundleName;
     if (bundleName == null) {
       resBundleName = plugin.getPluginId() == PluginManagerCore.CORE_ID ? ACTIONS_BUNDLE : plugin.getResourceBundleBaseName();
@@ -319,18 +319,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static @NlsActions.ActionDescription String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
-    if (bundle != null) {
-      final String key = elementType + "." + id + ".description";
-      return AbstractBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
+    if (bundle == null) {
+      return descriptionValue;
     }
     else {
-      return descriptionValue;
+      String key = elementType + "." + id + ".description";
+      return AbstractBundle.messageOrDefault(bundle, key, Strings.notNullize(descriptionValue));
     }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  private static @NlsActions.ActionText String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
-    return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
+  private static @NlsActions.ActionText String computeActionText(@Nullable ResourceBundle bundle, String id, String elementType, @Nullable String textValue) {
+    String defaultValue = Strings.notNullize(textValue);
+    return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
   }
 
   private static boolean checkRelativeToAction(String relativeToActionId,
@@ -413,28 +414,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static void reportKeymapNotFoundWarning(@Nullable PluginId pluginId, @NotNull String keymapName) {
-    if (DefaultKeymap.isBundledKeymapHidden(keymapName)) return;
+    if (DefaultKeymap.isBundledKeymapHidden(keymapName)) {
+      return;
+    }
     String message = "keymap \"" + keymapName + "\" not found";
     LOG.warn(pluginId == null ? message : new PluginException(message, null, pluginId).getMessage());
   }
 
   private static String getPluginInfo(@Nullable PluginId id) {
-    if (id != null) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
-      if (plugin != null) {
-        String name = plugin.getName();
-        if (name == null) {
-          name = id.getIdString();
-        }
-        return " Plugin: " + name;
-      }
+    IdeaPluginDescriptor plugin = id == null ? null : PluginManagerCore.getPlugin(id);
+    if (plugin == null) {
+      return "";
     }
-    return "";
+
+    String name = plugin.getName();
+    if (name == null) {
+      name = id.getIdString();
+    }
+    return " Plugin: " + name;
   }
 
-  @NotNull
-  private static DataContext getContextBy(Component contextComponent) {
-    final DataManager dataManager = DataManager.getInstance();
+  private static @NotNull DataContext getContextBy(Component contextComponent) {
+    DataManager dataManager = DataManager.getInstance();
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 
@@ -740,12 +741,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(plugin.getPluginId(), "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
+
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
-    if (className == null) { // use default group if class isn't specified
+    if (className == null) {
+      // use default group if class isn't specified
       className = "true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))
                   ? DefaultCompactActionGroup.class.getName()
                   : DefaultActionGroup.class.getName();
     }
+
     try {
       String id = element.getAttributeValue(ID_ATTR_NAME);
       if (id != null && id.isEmpty()) {

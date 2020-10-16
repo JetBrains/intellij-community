@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -29,7 +29,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   private RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
-    return ServiceManager.getService(RequiredArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
   }
 
   @Override

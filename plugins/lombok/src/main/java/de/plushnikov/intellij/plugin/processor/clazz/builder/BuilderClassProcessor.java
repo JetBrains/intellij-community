@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -28,7 +28,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
   }
 
   private BuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(BuilderHandler.class);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
   @Override

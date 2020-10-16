@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
@@ -746,7 +745,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
   @NotNull
   public static EditorMouseHoverPopupManager getInstance() {
-    return ServiceManager.getService(EditorMouseHoverPopupManager.class);
+    return ApplicationManager.getApplication().getService(EditorMouseHoverPopupManager.class);
   }
 
   @Nullable

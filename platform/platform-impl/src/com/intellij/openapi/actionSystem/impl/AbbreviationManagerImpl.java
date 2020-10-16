@@ -59,18 +59,20 @@ public final class AbbreviationManagerImpl extends AbbreviationManager implement
 
   @Override
   public void loadState(@NotNull Element state) {
-    final List<Element> abbreviations = state.getChildren("abbreviations");
-    if (abbreviations.size() == 1) {
-      final List<Element> actions = abbreviations.get(0).getChildren("action");
-      for (Element action : actions) {
-        final String actionId = action.getAttributeValue("id");
-        Set<String> values = myActionId2Abbreviations.computeIfAbsent(actionId, k -> new LinkedHashSet<>(1));
-        for (Element abbr : action.getChildren("abbreviation")) {
-          final String abbrValue = abbr.getAttributeValue("name");
-          if (abbrValue != null) {
-            values.add(abbrValue);
-            myAbbreviation2ActionId.computeIfAbsent(abbrValue, k -> new ArrayList<>()).add(actionId);
-          }
+    List<Element> abbreviations = state.getChildren("abbreviations");
+    if (abbreviations.size() != 1) {
+      return;
+    }
+
+    final List<Element> actions = abbreviations.get(0).getChildren("action");
+    for (Element action : actions) {
+      final String actionId = action.getAttributeValue("id");
+      Set<String> values = myActionId2Abbreviations.computeIfAbsent(actionId, k -> new LinkedHashSet<>(1));
+      for (Element abbr : action.getChildren("abbreviation")) {
+        final String abbrValue = abbr.getAttributeValue("name");
+        if (abbrValue != null) {
+          values.add(abbrValue);
+          myAbbreviation2ActionId.computeIfAbsent(abbrValue, k -> new ArrayList<>()).add(actionId);
         }
       }
     }

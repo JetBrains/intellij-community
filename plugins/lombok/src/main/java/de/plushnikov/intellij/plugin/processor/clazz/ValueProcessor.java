@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -26,23 +26,23 @@ public class ValueProcessor extends AbstractClassProcessor {
   }
 
   private ToStringProcessor getToStringProcessor() {
-    return ServiceManager.getService(ToStringProcessor.class);
+    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
   }
 
   private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
-    return ServiceManager.getService(AllArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
   private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ServiceManager.getService(NoArgsConstructorProcessor.class);
+    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
 
   private GetterProcessor getGetterProcessor() {
-    return ServiceManager.getService(GetterProcessor.class);
+    return ApplicationManager.getApplication().getService(GetterProcessor.class);
   }
 
   private EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
-    return ServiceManager.getService(EqualsAndHashCodeProcessor.class);
+    return ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class);
   }
 
   @Override

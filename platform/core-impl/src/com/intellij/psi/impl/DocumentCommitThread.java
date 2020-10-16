@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -51,7 +50,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   private volatile boolean isDisposed;
 
   static DocumentCommitThread getInstance() {
-    return (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+    return (DocumentCommitThread)ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
   }
 
   DocumentCommitThread() {

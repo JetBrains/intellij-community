@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
@@ -20,7 +21,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
     @JvmStatic
     val instance: PySdkSettings
-      get() = ServiceManager.getService(PySdkSettings::class.java)
+      get() = ApplicationManager.getApplication().getService(PySdkSettings::class.java)
 
     private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
   }

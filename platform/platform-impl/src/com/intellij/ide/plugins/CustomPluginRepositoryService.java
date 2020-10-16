@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
@@ -19,7 +18,7 @@ import java.util.Map;
 @Service
 public final class CustomPluginRepositoryService {
   public static CustomPluginRepositoryService getInstance() {
-    return ServiceManager.getService(CustomPluginRepositoryService.class);
+    return ApplicationManager.getApplication().getService(CustomPluginRepositoryService.class);
   }
 
   private Collection<IdeaPluginDescriptor> myCustomRepositoryPluginsList;

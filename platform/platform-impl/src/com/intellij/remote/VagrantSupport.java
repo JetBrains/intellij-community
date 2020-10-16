@@ -4,7 +4,7 @@ package com.intellij.remote;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +21,7 @@ import java.util.List;
 public abstract class VagrantSupport {
   @Nullable
   public static VagrantSupport getInstance() {
-    return ServiceManager.getService(VagrantSupport.class);
+    return ApplicationManager.getApplication().getService(VagrantSupport.class);
   }
 
   public abstract ListenableFuture<RemoteCredentials> computeVagrantSettings(@Nullable Project project,

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -34,13 +34,13 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return ServiceManager.getService(BuilderHandler.class).validate(psiMethod, psiAnnotation, builder);
+    return ApplicationManager.getApplication().getService(BuilderHandler.class).validate(psiMethod, psiAnnotation, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
-      final BuilderHandler builderHandler = ServiceManager.getService(BuilderHandler.class);
+      final BuilderHandler builderHandler = ApplicationManager.getApplication().getService(BuilderHandler.class);
       builderHandler.createBuilderClassIfNotExist(psiClass, psiMethod, psiAnnotation).ifPresent(target::add);
     }
   }

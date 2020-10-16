@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -33,7 +33,7 @@ public abstract class CompletionService {
   public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
 
   public static CompletionService getCompletionService() {
-    return ServiceManager.getService(CompletionService.class);
+    return ApplicationManager.getApplication().getService(CompletionService.class);
   }
 
   /**

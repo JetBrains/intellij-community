@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorFontCache;
@@ -62,7 +61,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
 
 
   public static AppEditorFontOptions getInstance() {
-    return ServiceManager.getService(AppEditorFontOptions.class);
+    return ApplicationManager.getApplication().getService(AppEditorFontOptions.class);
   }
 
   @Nullable

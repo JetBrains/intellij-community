@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.model.ModelPatch;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -36,7 +36,7 @@ public class VcsFacade {
 
   @NotNull
   public static VcsFacade getInstance() {
-    return ServiceManager.getService(VcsFacade.class);
+    return ApplicationManager.getApplication().getService(VcsFacade.class);
   }
 
   public boolean hasChanges(@NotNull PsiFile file) {

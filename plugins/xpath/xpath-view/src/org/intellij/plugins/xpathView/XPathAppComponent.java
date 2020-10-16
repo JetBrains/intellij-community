@@ -20,8 +20,8 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Caret;
@@ -81,7 +81,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
   }
 
   public static XPathAppComponent getInstance() {
-    return ServiceManager.getService(XPathAppComponent.class);
+    return ApplicationManager.getApplication().getService(XPathAppComponent.class);
   }
 
   static class MyFindHandler extends EditorActionHandler {
