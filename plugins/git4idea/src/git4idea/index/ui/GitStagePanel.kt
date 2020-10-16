@@ -9,8 +9,6 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
@@ -27,11 +25,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.vcs.commit.CommitStatusPanel
-import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle.message
@@ -54,7 +50,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
-  private val tree: GitStageTree
+  val tree: GitStageTree
   private val commitPanel: GitStageCommitPanel
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
@@ -80,8 +76,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
     commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
     Disposer.register(this, commitPanel)
-
-    setupTabTitleUpdater()
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
@@ -125,17 +119,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     Disposer.register(disposableParent, this)
 
     runInEdtAsync(this, { tree.rebuildTree() })
-  }
-
-  private fun setupTabTitleUpdater() {
-    val updater = CommitTabTitleUpdater(tree, GitStageContentProvider.STAGING_AREA_TAB_NAME) { VcsBundle.message("tab.title.commit") }
-    Disposer.register(this@GitStagePanel, updater)
-
-    updater.pathsProvider = {
-      val singleRoot = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.singleOrNull()
-      if (singleRoot != null) listOf(getFilePath(singleRoot)) else state.changedRoots.map { getFilePath(it) }
-    }
-    updater.start()
   }
 
   @RequiresEdt
