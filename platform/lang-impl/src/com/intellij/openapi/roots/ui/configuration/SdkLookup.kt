@@ -26,7 +26,7 @@ interface SdkLookup {
 
   companion object {
     @JvmStatic
-    fun newLookupBuilder() = service<SdkLookup>().createBuilder()
+    fun newLookupBuilder(): SdkLookupBuilder = service<SdkLookup>().createBuilder()
   }
 }
 

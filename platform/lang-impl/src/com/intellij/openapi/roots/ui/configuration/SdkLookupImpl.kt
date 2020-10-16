@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -20,10 +19,8 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -125,41 +122,28 @@ internal class SdkLookupImpl : SdkLookup {
 
     object : SdkLookupContextEx(lookup) {
       override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
-        onSdkNameResolved(sdk)
-
-        var isDownloadSucceeded = false
-        val latch = CountDownLatch(1)
-        // this is done to update the modality state in the downloader to allow it to
-        // invoke-later even if this code is running under a modal dialog/progress
-        val lifetime = Disposer.newDisposable()
-        val isDownloading = SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(
-            sdk,
-            lifetime,
-            rootProgressIndicator,
-            Consumer {
-              isDownloadSucceeded = it
-              latch.countDown()
-            })
-
-        if (!isDownloading) {
-          onSdkResolved(sdk)
-          Disposer.dispose(lifetime)
-          return { true }
-        }
+        LOG.warn("It is not possible to wait for SDK download to complete in blocking execution mode. " +
+                  "Use another " + SdkLookupDownloadDecision::class.simpleName)
 
         return {
+          ApplicationManager.getApplication().assertIsNonDispatchThread()
+          onSdkNameResolved(sdk)
+
+          ///we do not has a better API on SdkDownloadTracker to wait for a download
+          ///smarter than with a busy waiting. Need to re-implement the SdkDownloadTracker
+          ///in a way to avoid heavy dependency on EDT (and modality state)
           try {
-            ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
-          } finally {
-            Disposer.dispose(lifetime)
+            while (true) {
+              rootProgressIndicator.checkCanceled()
+              if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) break
+              Thread.sleep(300)
+            }
+          } catch (e: InterruptedException) {
+            rootProgressIndicator.checkCanceled()
+            throw ProcessCanceledException()
           }
 
-          if (isDownloadSucceeded) {
-            testExistingSdk(sdk)
-          } else {
-            onSdkNameResolved(null)
-            false
-          }
+          false
         }
       }
 
@@ -228,6 +212,8 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
       //double checked to avoid
       if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@invokeAndWaitIfNeeded { false }
 
+      onSdkNameResolved(sdk)
+
       when (onDownloadingSdkDetected(sdk)) {
         SdkLookupDownloadDecision.WAIT -> doWaitSdkDownloadToComplete(sdk, rootProgressIndicator)
         SdkLookupDownloadDecision.SKIP -> {{ false }}
@@ -271,7 +257,6 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     }
 
     //it will be notified later when the download is completed
-    onSdkNameResolved(sdk)
     return { true }
   }
 

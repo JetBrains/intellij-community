@@ -38,17 +38,49 @@ class SdkLookupTest : LightPlatformTestCase() {
   val log = Collections.synchronizedList(mutableListOf<String>())
   val sdkType get() = SimpleJavaSdkType.getInstance()!!
 
-  val lookup get() = SdkLookup
-    .newLookupBuilder()
-    .withProject(project)
-    .withProgressIndicator(ProgressIndicatorBase())
-    .withSdkType(sdkType)
-    .onSdkNameResolved {  log += "sdk-name: ${it?.name}" }
-    .onSdkResolved { log += "sdk: ${it?.name}" }
+  interface SdkLookupBuilderEx : SdkLookupBuilder {
+    fun onDownloadingSdkDetectedEx(d: SdkLookupDownloadDecision): SdkLookupBuilderEx
+    fun lookupBlocking()
+  }
 
-  fun SdkLookupBuilder.lookupBlocking() = service<SdkLookup>().lookupBlocking(this as SdkLookupParameters)
+  private val lookup: SdkLookupBuilderEx
+    get() {
+      var ourSdkDownloadDecision = SdkLookupDownloadDecision.WAIT
+      var onSdkResolvedHook : (Sdk?) -> Unit = {}
+
+      val base = SdkLookup.newLookupBuilder()
+        .withProject(project)
+        .withProgressIndicator(ProgressIndicatorBase())
+        .withSdkType(sdkType)
+        .onSdkNameResolved { log += "sdk-name: ${it?.name}" }
+        .onSdkResolved { onSdkResolvedHook(it); log += "sdk: ${it?.name}" }
+        .onDownloadingSdkDetected { log += "sdk-downloading: ${it.name}"; ourSdkDownloadDecision }
+
+      return object : SdkLookupBuilder by base, SdkLookupBuilderEx {
+        override fun lookupBlocking() = base.lookupBlocking()
+
+        override fun onDownloadingSdkDetectedEx(d: SdkLookupDownloadDecision) = apply {
+          ourSdkDownloadDecision = d
+        }
+
+        override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): SdkLookupBuilder = error(
+          "Must not call in test")
+
+        override fun onSdkNameResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = error("Must not call in test")
+        override fun onSdkResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = apply {
+          onSdkResolvedHook = handler
+        }
+      }
+    }
+
+  fun SdkLookupBuilder.lookupBlocking(): Unit = service<SdkLookup>().lookupBlocking(this as SdkLookupParameters)
 
   private fun assertLog(vararg messages: String) {
+    fun List<String>.format() = joinToString("") { "\n  $it" }
+    Assert.assertEquals("actual log: " + log.format(), messages.toList().format(), log.format())
+  }
+
+  private fun assertLogContains(vararg messages: String) {
     fun List<String>.format() = joinToString("") { "\n  $it" }
     Assert.assertEquals("actual log: " + log.format(), messages.toList().format(), log.format())
   }
@@ -141,23 +173,85 @@ class SdkLookupTest : LightPlatformTestCase() {
       taskLatch.countDown()
     }
 
-    run/*InThreadAndPumpMessages*/ {
+    runInThreadAndPumpMessages {
       //right now it hangs doing async VFS refresh in downloader thread if running from a modal progress.
-      ProgressManager.getInstance().run(object : Task.Modal(project, "temp", true) {
-        override fun run(indicator: ProgressIndicator) {
+      //ProgressManager.getInstance().run(object : Task.Modal(project, "temp", true) {
+      //  override fun run(indicator: ProgressIndicator) {
           lookup
             .withSdkName("temp-5")
             .lookupBlocking()
-        }
-      })
+        //}
+      //})
     }
 
     assertLog(
       "sdk-name: temp-5",
+      "sdk-downloading: temp-5",
       "thread-ex",
       "download-completed",
       "sdk: temp-5",
     )
+  }
+
+  fun `test find downloading sdk stop`() {
+    val taskLatch = CountDownLatch(1)
+    val downloadStarted = CountDownLatch(1)
+    Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
+    val eternalTask = object : SdkDownloadTask {
+      val home = createTempDir("planned-home").toPath().systemIndependentPath
+      override fun getPlannedHomeDir() = home
+      override fun getSuggestedSdkName() = "suggested name"
+      override fun getPlannedVersion() = "planned version"
+      override fun doDownload(indicator: ProgressIndicator) {
+        downloadStarted.countDown()
+        log += "download-started"
+        taskLatch.await()
+        log += "download-completed"
+      }
+    }
+
+    val sdk = newSdk("temp-5")
+    val download = threadEx {
+      SdkDownloadTracker.getInstance().downloadSdk(eternalTask, listOf(sdk), ProgressIndicatorBase())
+    }
+
+    runInThreadAndPumpMessages {
+      downloadStarted.await()
+    }
+
+    //download should be running now
+
+    val downloadThread = threadEx {
+      object : WaitFor(1000) {
+        //this event should come from the lookup
+        override fun condition() = log.any { it.startsWith("sdk-downloading:") }
+      }
+
+      log += "thread-ex"
+      taskLatch.countDown()
+      download.join()
+    }
+
+    runInThreadAndPumpMessages {
+      lookup
+        .onDownloadingSdkDetectedEx(SdkLookupDownloadDecision.STOP)
+        .onSdkResolved {
+          downloadThread.join()
+        }
+        .withSdkName("temp-5")
+        .lookupBlocking()
+
+      downloadThread.join()
+    }
+
+    assertLog(
+      "download-started",
+      "sdk-name: temp-5",
+      "sdk-downloading: temp-5",
+      "thread-ex",
+      "download-completed",
+      "sdk: null",
+      )
   }
 
   fun `test find downloading sdk async`() {
@@ -209,6 +303,7 @@ class SdkLookupTest : LightPlatformTestCase() {
 
     assertLog(
       "sdk-name: temp-5",
+      "sdk-downloading: temp-5",
       "thread-ex",
       "download-completed",
       "sdk: temp-5",
