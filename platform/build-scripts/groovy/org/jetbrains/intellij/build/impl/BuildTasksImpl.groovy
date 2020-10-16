@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -128,6 +129,8 @@ class BuildTasksImpl extends BuildTasks {
       ideaProperties += ["plugin.path": additionalPluginPaths.join(",")]
     }
 
+    disableCompatibleIgnoredPlugins(context, "${tempDir}/config")
+
     BuildUtils.runJava(
       context,
       vmOptions,
@@ -135,6 +138,17 @@ class BuildTasksImpl extends BuildTasks {
       ideClasspath,
       "com.intellij.idea.Main",
       arguments)
+  }
+
+  private static void disableCompatibleIgnoredPlugins(BuildContext context, String configDir) {
+    String text = ""
+    context.productProperties.productLayout.compatiblePluginsToIgnore.each { moduleName ->
+      def pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
+      text += JDOMUtil.load(pluginXml).getChildTextTrim("id") + "\n"
+    }
+    if (!text.isEmpty()) {
+      FileUtil.writeToFile(new File(configDir + "/disabled_plugins.txt"), text)
+    }
   }
 
   File patchIdeaPropertiesFile() {
