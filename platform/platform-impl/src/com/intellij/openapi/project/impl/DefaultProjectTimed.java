@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.GuiUtils;
@@ -44,8 +43,8 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
   public void dispose() {
     // project must be disposed in EDT in write action
     Runnable doDispose = () -> {
-      if (!ApplicationManager.getApplication().isDisposed() && isCached()) {
-        WriteCommandAction.runWriteCommandAction(null, () -> super.dispose());
+      if (isCached()) {
+        WriteAction.run(() -> super.dispose());
       }
     };
     GuiUtils.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
