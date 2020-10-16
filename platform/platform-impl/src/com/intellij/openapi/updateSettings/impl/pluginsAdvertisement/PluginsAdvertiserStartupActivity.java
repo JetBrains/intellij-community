@@ -28,15 +28,17 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       }
     }
 
-    try {
-      PluginAdvertiserService pluginAdvertiserService = app.getService(PluginAdvertiserService.class);
-      pluginAdvertiserService.run(project);
-    }
-    catch (UnknownHostException e) {
-      PluginsAdvertiser.LOG.warn("Host name could not be resolved: " + e.getMessage());
-    }
-    catch (Exception e) {
-      PluginsAdvertiser.LOG.info(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        PluginAdvertiserService pluginAdvertiserService = app.getService(PluginAdvertiserService.class);
+        pluginAdvertiserService.run(project);
+      }
+      catch (UnknownHostException e) {
+        PluginsAdvertiser.LOG.warn("Host name could not be resolved: " + e.getMessage());
+      }
+      catch (Exception e) {
+        PluginsAdvertiser.LOG.info(e);
+      }
+    });
   }
 }
