@@ -2,9 +2,11 @@
 package com.jetbrains.builtInHelp
 
 import com.jetbrains.builtInHelp.search.HelpSearch
+import org.jetbrains.annotations.NonNls
 
 @Suppress("unused")
 class HelpSearchRequestHandler : HelpProcessingRequestBase() {
+  @NonNls
   override val prefix: String = "/search/"
 
   override fun getProcessedData(query: String, maxHits: Int): String {

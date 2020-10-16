@@ -7,6 +7,7 @@ import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.builtInHelp.Utils;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -17,10 +18,14 @@ import java.awt.event.ActionListener;
 
 public class SettingsPage implements Configurable {
 
+  @NonNls
   public static final String DEFAULT_BROWSER = "<default>";
 
+  @NonNls
   public static final SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
+  @NonNls
   public static final SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
+  @NonNls
   public static final SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
 
   private final SettingsPageUI ui = new SettingsPageUI();
