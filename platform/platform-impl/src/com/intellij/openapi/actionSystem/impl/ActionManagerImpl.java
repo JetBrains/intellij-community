@@ -993,6 +993,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
+    //noinspection HardCodedStringLiteral
     String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
     if (!text.isEmpty()) {
       action.addSynonym(() -> text);

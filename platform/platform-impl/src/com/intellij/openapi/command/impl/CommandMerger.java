@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -20,7 +21,7 @@ public final class CommandMerger {
   private Object myLastGroupId;
   private boolean myForcedGlobal;
   private boolean myTransparent;
-  private String myCommandName;
+  private @NlsContexts.Command String myCommandName;
   private boolean myValid = true;
   private List<UndoableAction> myCurrentActions = new ArrayList<>();
   private Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
@@ -51,7 +52,7 @@ public final class CommandMerger {
     myForcedGlobal |= action.isGlobal();
   }
 
-  public void commandFinished(String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+  public void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);

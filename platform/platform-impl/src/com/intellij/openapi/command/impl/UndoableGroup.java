@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +27,7 @@ final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
-  private final String myCommandName;
+  private final @NlsContexts.Command String myCommandName;
   private final boolean myGlobal;
   private final int myCommandTimestamp;
   private final boolean myTransparent;
@@ -39,15 +40,15 @@ final class UndoableGroup implements Dumpable {
 
   private boolean myValid;
 
-  UndoableGroup(String commandName,
-                       boolean isGlobal,
-                       UndoManagerImpl manager,
-                       EditorAndState stateBefore,
-                       EditorAndState stateAfter,
-                       List<UndoableAction> actions,
-                       UndoConfirmationPolicy confirmationPolicy,
-                       boolean transparent,
-                       boolean valid) {
+  UndoableGroup(@NlsContexts.Command String commandName,
+                boolean isGlobal,
+                UndoManagerImpl manager,
+                EditorAndState stateBefore,
+                EditorAndState stateAfter,
+                List<UndoableAction> actions,
+                UndoConfirmationPolicy confirmationPolicy,
+                boolean transparent,
+                boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
     myCommandTimestamp = manager.nextCommandTimestamp();
@@ -336,7 +337,7 @@ final class UndoableGroup implements Dumpable {
     myStateAfter = stateAfter;
   }
 
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) {
         String commandName = ((StartMarkAction)action).getCommandName();
