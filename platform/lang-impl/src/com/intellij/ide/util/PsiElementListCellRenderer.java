@@ -158,7 +158,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       }
       else if (!customizeNonPsiElementLeftRenderer(this, list, value, index, selected, hasFocus)) {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
+        @NlsSafe String text = value == null ? "" : value.toString();
+        append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setBackground(selected ? UIUtil.getListSelectionBackground(true) : bgColor);
     }
