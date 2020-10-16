@@ -222,8 +222,10 @@ class BaseInterpreterInterface(BaseCodeExecutor):
 
     def getFrame(self):
         try:
-            hidden_ns = self.get_ipython_hidden_vars_dict()
-            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+            with self.vars_lock:
+                hidden_ns = self.get_ipython_hidden_vars_dict()
+                struct = pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+                return struct
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
@@ -316,23 +318,24 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         :return:
         """
         try:
-            frame_variables = self.get_namespace()
-            var_objects = []
-            # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
-            vars = scope_attrs
-            for var_attrs in vars:
-                if '\t' in var_attrs:
-                    name, attrs = var_attrs.split('\t', 1)
+            with self.vars_lock:
+                frame_variables = self.get_namespace()
+                var_objects = []
+                # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+                vars = scope_attrs
+                for var_attrs in vars:
+                    if '\t' in var_attrs:
+                        name, attrs = var_attrs.split('\t', 1)
 
-                else:
-                    name = var_attrs
-                    attrs = None
-                if name in frame_variables.keys():
-                    var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
-                    var_objects.append((var_object, name))
-                else:
-                    var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
-                    var_objects.append((var_object, name))
+                    else:
+                        name = var_attrs
+                        attrs = None
+                    if name in frame_variables.keys():
+                        var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
+                        var_objects.append((var_object, name))
+                    else:
+                        var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
+                        var_objects.append((var_object, name))
 
             from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
             t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
