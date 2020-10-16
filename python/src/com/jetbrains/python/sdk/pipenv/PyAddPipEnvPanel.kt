@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.installSdkIfNeeded
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -44,7 +45,7 @@ class PyAddPipEnvPanel(private val project: Project?,
                        private val module: Module?,
                        private val existingSdks: List<Sdk>,
                        override var newProjectPath: String?,
-                       context: UserDataHolder) : PyAddNewEnvPanel() {
+                       private val context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName = "Pipenv"
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.pipenv.environment")
   override val icon: Icon = PIPENV_ICON
@@ -116,9 +117,10 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
+    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context)?.homePath
     return setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                       baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
-      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+                                       baseSdk, installPackagesCheckBox.isSelected)?.apply {
+      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
     }
   }
 
