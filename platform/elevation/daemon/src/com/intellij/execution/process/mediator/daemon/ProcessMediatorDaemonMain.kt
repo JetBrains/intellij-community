@@ -4,13 +4,11 @@ package com.intellij.execution.process.mediator.daemon
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
+import com.intellij.execution.process.mediator.util.parseArgs
 import io.grpc.Server
 import io.grpc.ServerBuilder
-import java.net.InetAddress
-import java.net.Socket
-import java.nio.file.Files
+import java.io.IOException
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import kotlin.system.exitProcess
 
 open class ProcessMediatorServerDaemon private constructor(private val server: Server) : ProcessMediatorDaemon {
@@ -57,39 +55,57 @@ object DaemonService: DaemonGrpcKt.DaemonCoroutineImplBase() {
   }
 }
 
+
 private fun die(message: String): Nothing {
   val programName = "ProcessMediatorDaemonMain"
-  System.err.println("Usage: $programName <host> <port>")
   System.err.println(message)
+  System.err.println("Usage: $programName < --hello-file=file|- | --hello-port=port >")
   exitProcess(1)
 }
 
 fun main(args: Array<String>) {
-  if (args.size != 2) {
-    die("Expected exactly two arguments")
+  var helloWriter: DaemonHelloWriter? = null
+  for ((option, value) in parseArgs(args)) {
+    if (value == null) die("Missing '$option' value")
+
+    when (option) {
+      "--hello-file" -> {
+        // handling multiple hello writers is too complicated w.r.t. resource management
+        if (helloWriter != null) System.err.println("Ignoring '$option'")
+        else helloWriter = if (value == "-") DaemonHelloStdoutWriter else DaemonHelloFileWriter(Path.of(value))
+      }
+
+      "--hello-port" -> {
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        if (helloWriter != null) System.err.println("Ignoring '$option'")
+        else helloWriter = DaemonHelloSocketWriter(value.toUShort())
+      }
+
+      null -> die("Unrecognized positional argument '$value'")
+      else -> die("Unrecognized option '$option'")
+    }
   }
+  if (helloWriter == null) die("Missing required option '--hello-file' or '--hello-port'")
 
-  val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
-  val daemonHello = DaemonHello.newBuilder()
-    .setPort(daemon.port)
-    .build()
+  val daemon = try {
+    helloWriter.use {
+      ProcessMediatorServerDaemon(ServerBuilder.forPort(0)).also { daemon ->
+        val daemonHello = DaemonHello.newBuilder()
+          .setPort(daemon.port)
+          .build()
 
-  when (args[0]) {
-    "--hello-port" -> {
-      val port = args[1].toIntOrNull()?.takeIf { it in 1..65535 } ?: die("Invalid port: '${args[1]}'")
-      Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
-        socket.getOutputStream().use { stream ->
-          daemonHello.writeDelimitedTo(stream)
+        try {
+          helloWriter.write(daemonHello::writeDelimitedTo)
+        }
+        catch (e: Throwable) {
+          daemon.stop()
+          throw e
         }
       }
     }
-    "--hello-file" -> {
-      val helloFilePath = Path.of(args[1])
-      Files.newOutputStream(helloFilePath, StandardOpenOption.WRITE).use { stream ->
-        daemonHello.writeDelimitedTo(stream)
-      }
-    }
   }
-
+  catch (e: IOException) {
+    die("Unable to write hello: ${e.message}")
+  }
   daemon.blockUntilShutdown()
 }
