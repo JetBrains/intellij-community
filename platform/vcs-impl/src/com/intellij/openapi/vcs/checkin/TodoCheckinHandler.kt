@@ -45,34 +45,33 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
 }
 
-class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
-  private val myProject: Project = checkinProjectPanel.project
-  private val myCheckinProjectPanel: CheckinProjectPanel = checkinProjectPanel
-  private val myConfiguration: VcsConfiguration = VcsConfiguration.getInstance(myProject)
+class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+  private val project: Project get() = commitPanel.project
+  private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  private var myTodoFilter: TodoFilter? = null
+  private var todoFilter: TodoFilter? = null
 
-  override fun isEnabled(): Boolean = myConfiguration.CHECK_NEW_TODO
+  override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    return object : BooleanCommitOption(myCheckinProjectPanel, message("before.checkin.new.todo.check", ""), true,
-                                        myConfiguration::CHECK_NEW_TODO) {
+    return object : BooleanCommitOption(commitPanel, message("before.checkin.new.todo.check", ""), true,
+                                        settings::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
         val panel = JPanel(BorderLayout(4, 0))
         panel.add(checkBox, BorderLayout.WEST)
-        setFilterText(myConfiguration.myTodoPanelSettings.todoFilterName)
-        if (myConfiguration.myTodoPanelSettings.todoFilterName != null) {
-          myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.todoFilterName)
+        setFilterText(settings.myTodoPanelSettings.todoFilterName)
+        if (settings.myTodoPanelSettings.todoFilterName != null) {
+          todoFilter = TodoConfiguration.getInstance().getTodoFilter(settings.myTodoPanelSettings.todoFilterName)
         }
-        val consumer = Consumer { todoFilter: TodoFilter? ->
-          myTodoFilter = todoFilter
-          val name = todoFilter?.name
-          myConfiguration.myTodoPanelSettings.todoFilterName = name
+        val consumer = Consumer { filter: TodoFilter? ->
+          todoFilter = filter
+          val name = filter?.name
+          settings.myTodoPanelSettings.todoFilterName = name
           setFilterText(name)
         }
         val linkLabel = LinkLabel<Any>(message("settings.filter.configure.link"), null)
         linkLabel.setListener(LinkListener { _, _ ->
-          val group = SetTodoFilterAction.createPopupActionGroup(myProject, myConfiguration.myTodoPanelSettings, consumer)
+          val group = SetTodoFilterAction.createPopupActionGroup(project, settings.myTodoPanelSettings, consumer)
           JBPopupMenu.showBelow(linkLabel, ActionPlaces.TODO_VIEW_TOOLBAR, group)
         }, null)
         panel.add(linkLabel, BorderLayout.CENTER)
@@ -93,13 +92,13 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
-    if (DumbService.getInstance(myProject).isDumb) {
-      return if (confirmCommitInDumbMode(myProject)) ReturnResult.COMMIT else ReturnResult.CANCEL
+    if (DumbService.getInstance(project).isDumb) {
+      return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
-    val changes = myCheckinProjectPanel.selectedChanges
-    val worker = TodoCheckinHandlerWorker(myProject, changes, myTodoFilter)
+    val changes = commitPanel.selectedChanges
+    val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
     val completed = Ref.create(false)
-    ProgressManager.getInstance().run(object : Task.Modal(myProject,
+    ProgressManager.getInstance().run(object : Task.Modal(project,
                                                           message("checkin.dialog.title.looking.for.new.edited.todo.items"),
                                                           true) {
       override fun run(indicator: ProgressIndicator) {
@@ -115,7 +114,7 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
   }
 
   private fun showResults(worker: TodoCheckinHandlerWorker, executor: CommitExecutor?): ReturnResult {
-    var commitButtonText = executor?.actionText ?: myCheckinProjectPanel.commitActionName
+    var commitButtonText = executor?.actionText ?: commitPanel.commitActionName
     commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
     val thereAreTodoFound = worker.addedOrEditedTodos.size + worker.inChangedTodos.size > 0
     if (thereAreTodoFound) {
@@ -137,13 +136,13 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
 
   private fun showTodo(worker: TodoCheckinHandlerWorker) {
     val title = message("checkin.title.for.commit.0", DateFormatUtil.formatDateTime(System.currentTimeMillis()))
-    ServiceManager.getService(myProject, TodoView::class.java).addCustomTodoView(
-      TodoTreeBuilderFactory { tree, _ -> CustomChangelistTodosTreeBuilder(tree, myProject, worker.changes, worker.inOneList()) },
-      title, TodoPanelSettings(myConfiguration.myTodoPanelSettings)
+    ServiceManager.getService(project, TodoView::class.java).addCustomTodoView(
+      TodoTreeBuilderFactory { tree, _ -> CustomChangelistTodosTreeBuilder(tree, project, worker.changes, worker.inOneList()) },
+      title, TodoPanelSettings(settings.myTodoPanelSettings)
     )
     ApplicationManager.getApplication().invokeLater(
       {
-        val manager = ToolWindowManager.getInstance(myProject)
+        val manager = ToolWindowManager.getInstance(project)
         val window = manager.getToolWindow("TODO")
 
         window?.show(Runnable {
@@ -154,7 +153,7 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
           }
         })
       },
-      ModalityState.NON_MODAL, myProject.disposed
+      ModalityState.NON_MODAL, project.disposed
     )
   }
 }
