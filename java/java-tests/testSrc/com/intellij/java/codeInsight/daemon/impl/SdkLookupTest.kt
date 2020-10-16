@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -140,15 +141,15 @@ class SdkLookupTest : LightPlatformTestCase() {
       taskLatch.countDown()
     }
 
-    runInThreadAndPumpMessages {
+    run/*InThreadAndPumpMessages*/ {
       //right now it hangs doing async VFS refresh in downloader thread if running from a modal progress.
-      //ProgressManager.getInstance().run(object : Task.Modal(project, "sad", true) {
-      //  override fun run(indicator: ProgressIndicator) {
+      ProgressManager.getInstance().run(object : Task.Modal(project, "temp", true) {
+        override fun run(indicator: ProgressIndicator) {
           lookup
             .withSdkName("temp-5")
             .lookupBlocking()
-        //}
-      //})
+        }
+      })
     }
 
     assertLog(

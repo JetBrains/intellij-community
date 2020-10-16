@@ -18,6 +18,7 @@ internal data class CommonSdkLookupBuilder(
 
   override val sdkType: SdkType? = null,
 
+  override val onDownloadingSdkDetected : (Sdk) -> SdkLookupDownloadDecision = { SdkLookupDownloadDecision.WAIT },
   override val onBeforeSdkSuggestionStarted: () -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
   override val onLocalSdkSuggested: (UnknownSdkLocalSdkFix) -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
   override val onDownloadableSdkSuggested: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
@@ -49,6 +50,9 @@ internal data class CommonSdkLookupBuilder(
 
   override fun withSdkHomeFilter(filter: (String) -> Boolean) =
     copy(sdkHomeFilter = filter)
+
+  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision) =
+    copy(onDownloadingSdkDetected = handler)
 
   override fun withProgressIndicator(indicator: ProgressIndicator) =
     copy(progressIndicator = indicator)

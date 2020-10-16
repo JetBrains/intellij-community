@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -19,8 +20,10 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -29,14 +32,15 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   private val sdkNameCallbackExecuted = AtomicBoolean(false)
   private val sdkCallbackExecuted = AtomicBoolean(false)
 
-  val sdkName= params.sdkName
+  val sdkName = params.sdkName
   val sdkType = params.sdkType
   val testSdkSequence = params.testSdkSequence
   val project = params.project
   val progressMessageTitle = params.progressMessageTitle
 
-  val sdkHomeFilter= params.sdkHomeFilter
-  val versionFilter= params.versionFilter
+  val sdkHomeFilter = params.sdkHomeFilter
+  val versionFilter = params.versionFilter
+  val onDownloadingSdkDetected = params.onDownloadingSdkDetected
   val onBeforeSdkSuggestionStarted = params.onBeforeSdkSuggestionStarted
   val onLocalSdkSuggested = params.onLocalSdkSuggested
   val onDownloadableSdkSuggested = params.onDownloadableSdkSuggested
@@ -120,26 +124,43 @@ internal class SdkLookupImpl : SdkLookup {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     object : SdkLookupContextEx(lookup) {
-      override fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator): Boolean {
-        ApplicationManager.getApplication().assertIsNonDispatchThread()
-
+      override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
         onSdkNameResolved(sdk)
 
-        ///we do not has a better API on SdkDownloadTracker to wait for a download
-        ///smarter than with a busy waiting. Need to re-implement the SdkDownloadTracker
-        ///in a way to avoid heavy dependency on EDT (and modality state)
-        try {
-          while (true) {
-            rootProgressIndicator.checkCanceled()
-            if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) break
-            Thread.sleep(300)
-          }
-        } catch (e: InterruptedException) {
-          rootProgressIndicator.checkCanceled()
-          throw ProcessCanceledException()
+        var isDownloadSucceeded = false
+        val latch = CountDownLatch(1)
+        // this is done to update the modality state in the downloader to allow it to
+        // invoke-later even if this code is running under a modal dialog/progress
+        val lifetime = Disposer.newDisposable()
+        val isDownloading = SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(
+            sdk,
+            lifetime,
+            rootProgressIndicator,
+            Consumer {
+              isDownloadSucceeded = it
+              latch.countDown()
+            })
+
+        if (!isDownloading) {
+          onSdkResolved(sdk)
+          Disposer.dispose(lifetime)
+          return { true }
         }
 
-        return false
+        return {
+          try {
+            ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
+          } finally {
+            Disposer.dispose(lifetime)
+          }
+
+          if (isDownloadSucceeded) {
+            testExistingSdk(sdk)
+          } else {
+            onSdkNameResolved(null)
+            false
+          }
+        }
       }
 
       override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, action: (ProgressIndicator) -> Unit) {
@@ -198,7 +219,26 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     return false
   }
 
-  open fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : Boolean {
+  fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : Boolean {
+    if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return false
+
+    //  we need to make sure there is no race conditions,
+    // the SdkDownloadTracker has to use WriteAction to apply changes
+    val action: () -> Boolean = invokeAndWaitIfNeeded {
+      //double checked to avoid
+      if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@invokeAndWaitIfNeeded { false }
+
+      when (onDownloadingSdkDetected(sdk)) {
+        SdkLookupDownloadDecision.WAIT -> doWaitSdkDownloadToComplete(sdk, rootProgressIndicator)
+        SdkLookupDownloadDecision.SKIP -> {{ false }}
+        SdkLookupDownloadDecision.STOP -> {{ onSdkResolved(null); true }}
+      }
+    }
+
+    return action()
+  }
+
+  open fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : () -> Boolean {
     val disposable = Disposer.newDisposable()
     val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
       Disposer.dispose(disposable)
@@ -216,7 +256,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
       onSdkResolved(finalSdk)
     }
 
-    val isDownloading = invokeAndWaitIfNeeded {
+    val isDownloading =
       SdkDownloadTracker
         .getInstance()
         .tryRegisterDownloadingListener(
@@ -224,19 +264,18 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
           disposable,
           rootProgressIndicator,
           onDownloadCompleted)
-    }
 
     if (!isDownloading) {
       Disposer.dispose(disposable)
-      return false
+      return { false }
     }
 
     //it will be notified later when the download is completed
     onSdkNameResolved(sdk)
-    return true
+    return { true }
   }
 
-  private fun testExistingSdk(sdk: Sdk): Boolean {
+  fun testExistingSdk(sdk: Sdk): Boolean {
     //it could be the case with an ordinary SDK, it may not pass the test below
     if (!checkSdkHomeAndVersion(sdk)) return false
 

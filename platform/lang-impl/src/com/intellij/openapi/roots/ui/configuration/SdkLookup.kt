@@ -30,6 +30,17 @@ interface SdkLookup {
   }
 }
 
+enum class SdkLookupDownloadDecision {
+  /** ignore this SDK and continue lookup, it may end with the same SDK Download suggestiom **/
+  SKIP,
+
+  /** stop lookup on this callback, it will notify other callbacks with null **/
+  STOP,
+
+  /** wait for the SDK to complete download, it may deadlock if executed from a modal dialog/progress **/
+  WAIT
+}
+
 enum class SdkLookupDecision {
   STOP,
   CONTINUE
@@ -70,6 +81,13 @@ interface SdkLookupBuilder {
 
   @Contract(pure = true)
   fun withSdkHomeFilter(filter: (String) -> Boolean): SdkLookupBuilder
+
+  /**
+   * A notification that is invoked at the moment when a downloading SDK
+   * is detected. It is a good chance the SDK matches the requested parameters
+   */
+  @Contract(pure = true)
+  fun onDownloadingSdkDetected(handler : (Sdk) -> SdkLookupDownloadDecision) : SdkLookupBuilder
 
   /**
    * A notification that is invoked at the moment where we failed to find
@@ -133,6 +151,7 @@ interface SdkLookupParameters {
 
   val sdkType: SdkType?
 
+  val onDownloadingSdkDetected : (Sdk) -> SdkLookupDownloadDecision
   val onBeforeSdkSuggestionStarted: () -> SdkLookupDecision
   val onLocalSdkSuggested: (UnknownSdkLocalSdkFix) -> SdkLookupDecision
   val onDownloadableSdkSuggested: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision
