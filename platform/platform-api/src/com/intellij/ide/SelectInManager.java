@@ -81,24 +81,4 @@ public final class SelectInManager  {
   public static String getProject() {
     return IdeBundle.message("select.in.project");
   }
-
-  public static String getPackages() {
-    return IdeBundle.message("select.in.packages");
-  }
-
-  public static String getCommander() {
-    return IdeBundle.message("select.in.commander");
-  }
-
-  public static String getFavorites() {
-    return IdeBundle.message("select.in.favorites");
-  }
-
-  public static String getNavBar() {
-    return IdeBundle.message("select.in.nav.bar");
-  }
-
-  public static String getScope() {
-    return IdeBundle.message("select.in.scope");
-  }
 }
