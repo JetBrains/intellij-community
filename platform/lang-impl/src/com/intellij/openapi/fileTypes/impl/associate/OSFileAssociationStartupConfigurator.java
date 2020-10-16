@@ -22,7 +22,7 @@ public class OSFileAssociationStartupConfigurator implements ApplicationInitiali
   private final static Logger LOG = Logger.getInstance(OSFileAssociationStartupConfigurator.class);
 
   // TODO<rv>: For testing purposes, to be removed
-  private final static boolean IS_ENABLED = System.getProperty("os.file.associations.update.enabled").equalsIgnoreCase("true");
+  private final static boolean IS_ENABLED = System.getProperty("os.file.associations.update.enabled", "false").equalsIgnoreCase("true");
 
   @Override
   public void componentsInitialized() {
