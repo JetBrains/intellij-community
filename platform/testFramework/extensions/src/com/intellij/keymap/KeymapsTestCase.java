@@ -436,12 +436,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
 
   @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
     "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow",
-    "ActivateServicesToolWindow", "ActivateHierarchyToolWindow",
+    "ActivateServicesToolWindow",
     "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",
     "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow", "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
-    "ActivateErrorsInSolutionToolWindow", "ActivateUnitTestsToolWindow", "ActivateInspectionResultsToolWindow",
+    "ActivateErrorsInSolutionToolWindow", "ActivateUnitTestsToolWindow",
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     ""
