@@ -17,12 +17,16 @@ private const val DIALOGS = "ui.dialogs"
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.settings", 57)
+    private val GROUP = EventLogGroup("ui.settings", 58)
 
     val CONFIGURABLE_CLASS = EventFields.Class("configurable")
     val SELECT = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
     val APPLY = GROUP.registerEvent("apply", CONFIGURABLE_CLASS)
     val RESET = GROUP.registerEvent("reset", CONFIGURABLE_CLASS)
+    @JvmField
+    val SEARCH = GROUP.registerEvent("search", CONFIGURABLE_CLASS,
+                                     EventFields.Int("hits"),
+                                     EventFields.Int("characters"))
   }
 
   override fun getGroup() = GROUP
