@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.log;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -20,7 +20,7 @@ import java.util.List;
 public class CustomLogProcessor extends AbstractLogProcessor {
 
   public CustomLogProcessor() {
-    super(LombokNames.CUSTOM_LOG);
+    super(LombokClassNames.CUSTOM_LOG);
   }
 
   @NotNull

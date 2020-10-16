@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -62,7 +62,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedMethods) {
-    definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokNames.TOLERATE));
+    definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,

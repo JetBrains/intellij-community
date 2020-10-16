@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -23,8 +23,8 @@ public class BuilderInfo {
   private static final String BUILDER_OBTAIN_VIA_FIELD = "field";
   private static final String BUILDER_OBTAIN_VIA_METHOD = "method";
   private static final String BUILDER_OBTAIN_VIA_STATIC = "isStatic";
-  private static final String BUILDER_OBTAIN_VIA_ANNOTATION = LombokNames.BUILDER_OBTAIN_VIA;
-  private static final String BUILDER_DEFAULT_ANNOTATION = LombokNames.BUILDER_DEFAULT;
+  private static final String BUILDER_OBTAIN_VIA_ANNOTATION = LombokClassNames.BUILDER_OBTAIN_VIA;
+  private static final String BUILDER_DEFAULT_ANNOTATION = LombokClassNames.BUILDER_DEFAULT;
 
   private PsiVariable variableInClass;
   private PsiType fieldInBuilderType;
@@ -61,7 +61,7 @@ public class BuilderInfo {
 
     result.fieldInBuilderName = psiParameter.getName();
 
-    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, LombokNames.SINGULAR);
+    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiParameter, result.singularAnnotation);
 
     return result;
@@ -83,7 +83,7 @@ public class BuilderInfo {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
     result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
 
-    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.SINGULAR);
+    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiField, result.singularAnnotation);
 
     return result;

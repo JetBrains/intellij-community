@@ -2,7 +2,8 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,18 +14,23 @@ import java.util.*;
  */
 public class LombokProcessorUtil {
 
+  @NonNls private static final String ACCESS_LEVEL_PRIVATE = "PRIVATE";
+  @NonNls private static final String ACCESS_LEVEL_PROTECTED = "PROTECTED";
+  @NonNls private static final String ACCESS_LEVEL_PACKAGE_LOCAL = "PACKAGE";
+  @NonNls private static final String ACCESS_LEVEL_PUBLIC = "PUBLIC";
+
   private static final Map<Integer, String> ACCESS_LEVEL_MAP = new HashMap<Integer, String>() {{
-    put(PsiUtil.ACCESS_LEVEL_PUBLIC, LombokNames.ACCESS_LEVEL_PUBLIC);
-    put(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, LombokNames.ACCESS_LEVEL_PACKAGE_LOCAL);
-    put(PsiUtil.ACCESS_LEVEL_PROTECTED, LombokNames.ACCESS_LEVEL_PROTECTED);
-    put(PsiUtil.ACCESS_LEVEL_PRIVATE, LombokNames.ACCESS_LEVEL_PRIVATE);
+    put(PsiUtil.ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PUBLIC);
+    put(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PACKAGE_LOCAL);
+    put(PsiUtil.ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PROTECTED);
+    put(PsiUtil.ACCESS_LEVEL_PRIVATE, ACCESS_LEVEL_PRIVATE);
   }};
 
   private static final Map<String, String> VALUE_ACCESS_LEVEL_MAP = new HashMap<String, String>() {{
-    put(LombokNames.ACCESS_LEVEL_PUBLIC, PsiModifier.PUBLIC);
-    put(LombokNames.ACCESS_LEVEL_PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL);
-    put(LombokNames.ACCESS_LEVEL_PROTECTED, PsiModifier.PROTECTED);
-    put(LombokNames.ACCESS_LEVEL_PRIVATE, PsiModifier.PRIVATE);
+    put(ACCESS_LEVEL_PUBLIC, PsiModifier.PUBLIC);
+    put(ACCESS_LEVEL_PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL);
+    put(ACCESS_LEVEL_PROTECTED, PsiModifier.PROTECTED);
+    put(ACCESS_LEVEL_PRIVATE, PsiModifier.PRIVATE);
   }};
 
   @Nullable
@@ -112,8 +118,8 @@ public class LombokProcessorUtil {
       final int accessLevelCode = PsiUtil.getAccessLevel(modifierList);
 
       final String accessLevel = ACCESS_LEVEL_MAP.get(accessLevelCode);
-      if (null != accessLevel && !LombokNames.ACCESS_LEVEL_PUBLIC.equals(accessLevel)) {
-        value = LombokNames.ACCESS_LEVEL + "." + accessLevel;
+      if (null != accessLevel && !ACCESS_LEVEL_PUBLIC.equals(accessLevel)) {
+        value = LombokClassNames.ACCESS_LEVEL + "." + accessLevel;
       }
     }
 

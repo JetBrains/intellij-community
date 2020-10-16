@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -204,9 +204,9 @@ public class EqualsAndHashCodeToStringHandler {
       final String getterName = LombokUtils.getGetterName(classField);
 
       final boolean hasGetter;
-      @SuppressWarnings("unchecked") final boolean annotatedWith = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokNames.DATA, LombokNames.VALUE, LombokNames.GETTER);
+      @SuppressWarnings("unchecked") final boolean annotatedWith = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.DATA, LombokClassNames.VALUE, LombokClassNames.GETTER);
       if (annotatedWith) {
-        final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokNames.GETTER);
+        final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.GETTER);
         hasGetter = null == getterLombokAnnotation || null != LombokProcessorUtil.getMethodModifier(getterLombokAnnotation);
       } else {
         hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName, 0);

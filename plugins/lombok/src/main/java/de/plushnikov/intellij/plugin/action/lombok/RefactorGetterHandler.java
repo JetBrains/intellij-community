@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {
-          PsiAnnotation psiAnnotation = modifierList.addAnnotation(LombokNames.GETTER);
+          PsiAnnotation psiAnnotation = modifierList.addAnnotation(LombokClassNames.GETTER);
 //          psiAnnotation.setDeclaredAttributeValue("value", )
 
           psiMethod.delete();

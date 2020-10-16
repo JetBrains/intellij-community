@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -26,11 +26,11 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
-  static final String SINGULAR_CLASS = LombokNames.SINGULAR;
-  static final String BUILDER_DEFAULT_CLASS = LombokNames.BUILDER_DEFAULT;
+  static final String SINGULAR_CLASS = LombokClassNames.SINGULAR;
+  static final String BUILDER_DEFAULT_CLASS = LombokClassNames.BUILDER_DEFAULT;
 
   public BuilderProcessor() {
-    super(PsiMethod.class, LombokNames.BUILDER);
+    super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
   private BuilderHandler getBuilderHandler() {
@@ -61,7 +61,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.ALL_ARGS_CONSTRUCTOR)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
       // Create all args constructor only if there is no declared constructors and no lombok constructor annotations
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       if (definedConstructors.isEmpty()) {

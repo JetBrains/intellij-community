@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -17,7 +17,7 @@ import java.util.List;
 public class AllArgsConstructorProcessor extends AbstractConstructorClassProcessor {
 
   public AllArgsConstructorProcessor() {
-    super(LombokNames.ALL_ARGS_CONSTRUCTOR, PsiMethod.class);
+    super(LombokClassNames.ALL_ARGS_CONSTRUCTOR, PsiMethod.class);
   }
 
   @Override

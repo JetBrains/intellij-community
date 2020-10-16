@@ -5,7 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 
 /**
@@ -16,12 +16,12 @@ public class LombokCanBeFinalHandler extends CanBeFinalHandler {
   @Override
   public boolean canBeFinal(PsiMember member) {
     if (member instanceof PsiField) {
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(member, LombokNames.SETTER)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(member, LombokClassNames.SETTER)) {
         return false;
       }
 
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(member, PsiClass.class);
-      return null == psiClass || !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokNames.SETTER, LombokNames.DATA, LombokNames.VALUE);
+      return null == psiClass || !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.SETTER, LombokClassNames.DATA, LombokClassNames.VALUE);
     }
     return true;
   }

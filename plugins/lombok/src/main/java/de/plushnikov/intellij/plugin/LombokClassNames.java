@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin;
 
 import org.jetbrains.annotations.NonNls;
 
-public interface LombokNames {
+public interface LombokClassNames {
   @NonNls String FIELD_NAME_CONSTANTS = "lombok.experimental.FieldNameConstants";
   @NonNls String SETTER = "lombok.Setter";
   @NonNls String DATA = "lombok.Data";
@@ -49,10 +49,5 @@ public interface LombokNames {
   @NonNls String FIELD_NAME_CONSTANTS_INCLUDE = "lombok.experimental.FieldNameConstants.Include";
   @NonNls String FIELD_NAME_CONSTANTS_EXCLUDE = "lombok.experimental.FieldNameConstants.Exclude";
   @NonNls String BUILDER_OBTAIN_VIA = "lombok.Builder.ObtainVia";
-  @NonNls String ACCESS_LEVEL_PUBLIC = "PUBLIC";
-  @NonNls String ACCESS_LEVEL_PACKAGE_LOCAL = "PACKAGE";
-  @NonNls String ACCESS_LEVEL_PROTECTED = "PROTECTED";
-  @NonNls String ACCESS_LEVEL_PRIVATE = "PRIVATE";
   @NonNls String ACCESS_LEVEL = "lombok.AccessLevel";
-  @NonNls String LOMBOK_EXPERIMENTAL = "lombok.experimental";
 }

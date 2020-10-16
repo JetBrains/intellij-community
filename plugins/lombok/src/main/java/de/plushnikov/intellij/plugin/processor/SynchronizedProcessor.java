@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -21,7 +21,7 @@ import java.util.Collections;
 public class SynchronizedProcessor extends AbstractProcessor {
 
   public SynchronizedProcessor() {
-    super(PsiElement.class, LombokNames.SYNCHRONIZED);
+    super(PsiElement.class, LombokClassNames.SYNCHRONIZED);
   }
 
   @NotNull

@@ -4,7 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -45,7 +45,7 @@ public class AccessorsInfo {
 
   @NotNull
   public static AccessorsInfo build(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokNames.ACCESSORS);
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
     } else {
@@ -55,7 +55,7 @@ public class AccessorsInfo {
 
   @NotNull
   public static AccessorsInfo build(@NotNull PsiField psiField, @NotNull AccessorsInfo classAccessorsInfo) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.ACCESSORS);
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, psiField.getContainingClass());
     } else {
@@ -67,7 +67,7 @@ public class AccessorsInfo {
   public static AccessorsInfo build(@Nullable PsiClass psiClass) {
     PsiClass containingClass = psiClass;
     while (null != containingClass) {
-      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokNames.ACCESSORS);
+      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokClassNames.ACCESSORS);
       if (null != accessorsClassAnnotation) {
         return buildFromAnnotation(accessorsClassAnnotation, containingClass);
       }

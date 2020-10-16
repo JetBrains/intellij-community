@@ -5,7 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -262,7 +262,7 @@ public class DelegateHandler {
 
     @SuppressWarnings("deprecation")
     private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokNames.DELEGATE, LombokNames.EXPERIMENTAL_DELEGATE)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE)) {
         builder.addError("@Delegate does not support recursion (delegating to a type that itself has @Delegate members). " +
           "Member \"%s\" is @Delegate in type \"%s\"", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
         valid = false;

@@ -5,7 +5,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class SuperBuilderPreDefinedInnerClassFieldProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
 
   public SuperBuilderPreDefinedInnerClassFieldProcessor() {
-    super(PsiField.class, LombokNames.SUPER_BUILDER);
+    super(PsiField.class, LombokClassNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {

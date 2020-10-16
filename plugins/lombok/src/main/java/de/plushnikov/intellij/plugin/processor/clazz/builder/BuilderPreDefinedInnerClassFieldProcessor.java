@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
   public BuilderPreDefinedInnerClassFieldProcessor() {
-    super(PsiField.class, LombokNames.BUILDER);
+    super(PsiField.class, LombokClassNames.BUILDER);
   }
 
   protected BuilderHandler getBuilderHandler() {

@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.LombokNames;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -138,7 +137,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean hasLombokLibrary(Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> new CachedValueProvider.Result<>(JavaPsiFacade.getInstance(project).findPackage(LombokNames.LOMBOK_EXPERIMENTAL),
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> new CachedValueProvider.Result<>(JavaPsiFacade.getInstance(project).findPackage("lombok.experimental"),
                                                                                                                   ProjectRootManager.getInstance(project))) != null;
   }
 

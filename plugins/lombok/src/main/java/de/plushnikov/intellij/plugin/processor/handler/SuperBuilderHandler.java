@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
@@ -266,7 +266,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     final Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(baseClassBuilder).stream()
-      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokNames.TOLERATE))
+      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE))
       .map(PsiMethod::getName).collect(Collectors.toSet());
 
     // create builder methods

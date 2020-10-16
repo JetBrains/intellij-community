@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -27,7 +27,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
   public FieldNameConstantsFieldProcessor() {
-    super(PsiField.class, LombokNames.FIELD_NAME_CONSTANTS);
+    super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
   @Override

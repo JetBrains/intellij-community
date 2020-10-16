@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 /**
  * @author Plushnikov Michail
@@ -11,6 +11,6 @@ public class CommonsLogProcessor extends AbstractTopicSupportingSimpleLogProcess
   private static final String LOGGER_INITIALIZER = "org.apache.commons.logging.LogFactory.getLog(%s)";
 
   public CommonsLogProcessor() {
-    super(LombokNames.COMMONS_LOG, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
+    super(LombokClassNames.COMMONS_LOG, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
   }
 }

@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -17,8 +17,8 @@ import java.util.Collection;
 
 public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassProcessor {
 
-  private static final String FIELD_NAME_CONSTANTS_INCLUDE = LombokNames.FIELD_NAME_CONSTANTS_INCLUDE;
-  private static final String FIELD_NAME_CONSTANTS_EXCLUDE = LombokNames.FIELD_NAME_CONSTANTS_EXCLUDE;
+  private static final String FIELD_NAME_CONSTANTS_INCLUDE = LombokClassNames.FIELD_NAME_CONSTANTS_INCLUDE;
+  private static final String FIELD_NAME_CONSTANTS_EXCLUDE = LombokClassNames.FIELD_NAME_CONSTANTS_EXCLUDE;
 
   AbstractFieldNameConstantsProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull String supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);

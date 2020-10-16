@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -43,18 +43,18 @@ public class BuilderHandler {
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
   static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
-  private static final Collection<String> INVALID_ON_BUILDERS = Stream.of(LombokNames.GETTER,
-                                                                          LombokNames.SETTER,
-                                                                          LombokNames.WITHER,
-                                                                          LombokNames.WITH,
-                                                                          LombokNames.TO_STRING,
-                                                                          LombokNames.EQUALS_AND_HASHCODE,
-                                                                          LombokNames.REQUIRED_ARGS_CONSTRUCTOR,
-                                                                          LombokNames.ALL_ARGS_CONSTRUCTOR,
-                                                                          LombokNames.NO_ARGS_CONSTRUCTOR,
-                                                                          LombokNames.DATA,
-                                                                          LombokNames.VALUE,
-                                                                          LombokNames.FIELD_DEFAULTS).map(fqn -> StringUtil.getShortName(fqn)).collect(Collectors.toUnmodifiableSet());
+  private static final Collection<String> INVALID_ON_BUILDERS = Stream.of(LombokClassNames.GETTER,
+                                                                          LombokClassNames.SETTER,
+                                                                          LombokClassNames.WITHER,
+                                                                          LombokClassNames.WITH,
+                                                                          LombokClassNames.TO_STRING,
+                                                                          LombokClassNames.EQUALS_AND_HASHCODE,
+                                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.NO_ARGS_CONSTRUCTOR,
+                                                                          LombokClassNames.DATA,
+                                                                          LombokClassNames.VALUE,
+                                                                          LombokClassNames.FIELD_DEFAULTS).map(fqn -> StringUtil.getShortName(fqn)).collect(Collectors.toUnmodifiableSet());
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -466,7 +466,7 @@ public class BuilderHandler {
     if (psiField.getName().endsWith("$set") && PsiPrimitiveType.BOOLEAN.equals(psiField.getType())) {
       PsiElement navigationElement = psiField.getNavigationElement();
       if (navigationElement instanceof PsiField) {
-        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, LombokNames.BUILDER_DEFAULT);
+        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, LombokClassNames.BUILDER_DEFAULT);
       }
     }
     return !isBuilderDefaultSetter;

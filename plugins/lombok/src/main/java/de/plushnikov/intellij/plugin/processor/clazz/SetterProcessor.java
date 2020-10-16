@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
@@ -26,7 +26,7 @@ import java.util.List;
 public class SetterProcessor extends AbstractClassProcessor {
 
   public SetterProcessor() {
-    super(PsiMethod.class, LombokNames.SETTER);
+    super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
   private SetterFieldProcessor getSetterFieldProcessor() {

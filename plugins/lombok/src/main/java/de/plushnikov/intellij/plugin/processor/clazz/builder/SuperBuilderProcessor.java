@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -23,7 +23,7 @@ import java.util.List;
 public class SuperBuilderProcessor extends AbstractClassProcessor {
 
   public SuperBuilderProcessor() {
-    super(PsiMethod.class, LombokNames.SUPER_BUILDER);
+    super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {

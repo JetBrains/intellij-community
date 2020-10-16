@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -22,7 +22,7 @@ import java.util.List;
 public class ValueProcessor extends AbstractClassProcessor {
 
   public ValueProcessor() {
-    super(PsiMethod.class, LombokNames.VALUE);
+    super(PsiMethod.class, LombokClassNames.VALUE);
   }
 
   private ToStringProcessor getToStringProcessor() {
@@ -47,7 +47,7 @@ public class ValueProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokNames.EQUALS_AND_HASHCODE);
+    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.EQUALS_AND_HASHCODE);
     if (null == equalsAndHashCodeAnnotation) {
       getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
@@ -67,17 +67,17 @@ public class ValueProcessor extends AbstractClassProcessor {
   @SuppressWarnings("unchecked")
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
 
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.GETTER)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.GETTER)) {
       target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.EQUALS_AND_HASHCODE)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE)) {
       target.addAll(ValueProcessor.this.getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.TO_STRING)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.TO_STRING)) {
       target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
     // create required constructor only if there are no other constructor annotations
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.NO_ARGS_CONSTRUCTOR, LombokNames.REQUIRED_ARGS_CONSTRUCTOR, LombokNames.ALL_ARGS_CONSTRUCTOR, LombokNames.BUILDER)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR, LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR, LombokClassNames.BUILDER)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
@@ -98,8 +98,8 @@ public class ValueProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    addClassAnnotation(result, psiClass, LombokNames.NON_FINAL, LombokNames.PACKAGE_PRIVATE);
-    addFieldsAnnotation(result, psiClass, LombokNames.NON_FINAL, LombokNames.PACKAGE_PRIVATE);
+    addClassAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);
+    addFieldsAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);
     return result;
   }
 

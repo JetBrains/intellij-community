@@ -6,7 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class SuperBuilderClassProcessor extends AbstractClassProcessor {
 
   public SuperBuilderClassProcessor() {
-    super(PsiClass.class, LombokNames.SUPER_BUILDER);
+    super(PsiClass.class, LombokClassNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {

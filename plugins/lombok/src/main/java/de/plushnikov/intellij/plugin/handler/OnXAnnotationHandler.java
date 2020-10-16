@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,14 +19,14 @@ public class OnXAnnotationHandler {
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
-    LombokNames.GETTER,
-    LombokNames.SETTER,
-    LombokNames.WITH,
-    LombokNames.WITHER,
-    LombokNames.NO_ARGS_CONSTRUCTOR,
-    LombokNames.REQUIRED_ARGS_CONSTRUCTOR,
-    LombokNames.ALL_ARGS_CONSTRUCTOR,
-    LombokNames.EQUALS_AND_HASHCODE
+    LombokClassNames.GETTER,
+    LombokClassNames.SETTER,
+    LombokClassNames.WITH,
+    LombokClassNames.WITHER,
+    LombokClassNames.NO_ARGS_CONSTRUCTOR,
+    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+    LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+    LombokClassNames.EQUALS_AND_HASHCODE
   );
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
     "onConstructor",

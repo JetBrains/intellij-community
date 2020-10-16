@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class LombokTestUtil {
 
+  public static final String MAVEN_COORDINATES = "org.projectlombok:lombok:" + Version.LAST_LOMBOK_VERSION;
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      MavenDependencyUtil.addFromMaven(model, "org.projectlombok:lombok:1.18.16");
+      MavenDependencyUtil.addFromMaven(model, MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }

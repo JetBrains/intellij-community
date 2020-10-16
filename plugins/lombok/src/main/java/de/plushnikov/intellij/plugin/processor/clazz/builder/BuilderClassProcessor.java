@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
@@ -24,7 +24,7 @@ import java.util.List;
 public class BuilderClassProcessor extends AbstractClassProcessor {
 
   public BuilderClassProcessor() {
-    super(PsiClass.class, LombokNames.BUILDER);
+    super(PsiClass.class, LombokClassNames.BUILDER);
   }
 
   private BuilderHandler getBuilderHandler() {

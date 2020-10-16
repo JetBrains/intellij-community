@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -162,8 +162,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
       result = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
     }
     if (result) {
-      result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokNames.NO_ARGS_CONSTRUCTOR, LombokNames.ALL_ARGS_CONSTRUCTOR,
-                                                          LombokNames.REQUIRED_ARGS_CONSTRUCTOR);
+      result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR);
     }
     return result;
   }

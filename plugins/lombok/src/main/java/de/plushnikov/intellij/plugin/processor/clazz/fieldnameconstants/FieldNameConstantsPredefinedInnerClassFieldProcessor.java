@@ -4,7 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
@@ -23,7 +23,7 @@ import java.util.*;
 public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsPredefinedInnerClassFieldProcessor() {
-    super(PsiField.class, LombokNames.FIELD_NAME_CONSTANTS);
+    super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
   @NotNull

@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -34,11 +34,11 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
   private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
-  private static final String TOSTRING_INCLUDE = LombokNames.TO_STRING_INCLUDE;
-  private static final String TOSTRING_EXCLUDE = LombokNames.TO_STRING_EXCLUDE;
+  private static final String TOSTRING_INCLUDE = LombokClassNames.TO_STRING_INCLUDE;
+  private static final String TOSTRING_EXCLUDE = LombokClassNames.TO_STRING_EXCLUDE;
 
   public ToStringProcessor() {
-    super(PsiMethod.class, LombokNames.TO_STRING);
+    super(PsiMethod.class, LombokClassNames.TO_STRING);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {

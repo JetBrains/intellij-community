@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.psi.PsiVariable;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +13,6 @@ public class LombokCleanUpImplicitResourceCloser implements ImplicitResourceClos
 
   @Override
   public boolean isSafelyClosed(@NotNull PsiVariable variable) {
-    return PsiAnnotationSearchUtil.isAnnotatedWith(variable, LombokNames.CLEANUP);
+    return PsiAnnotationSearchUtil.isAnnotatedWith(variable, LombokClassNames.CLEANUP);
   }
 }

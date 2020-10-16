@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
@@ -20,16 +20,16 @@ public class ValProcessor extends AbstractProcessor {
 
   private static final String LOMBOK_VAL_NAME = "val";
   private static final String LOMBOK_VAR_NAME = "var";
-  private static final String LOMBOK_VAL_FQN = LombokNames.VAL;
-  private static final String LOMBOK_VAR_FQN = LombokNames.VAR;
-  private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = LombokNames.EXPERIMENTAL_VAR;
+  private static final String LOMBOK_VAL_FQN = LombokClassNames.VAL;
+  private static final String LOMBOK_VAR_FQN = LombokClassNames.VAR;
+  private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = LombokClassNames.EXPERIMENTAL_VAR;
 
   @SuppressWarnings("unchecked")
   public ValProcessor() throws ClassNotFoundException {
     super(PsiElement.class,
-          LombokNames.VAL,
-          LombokNames.EXPERIMENTAL_VAR,
-          LombokNames.VAR);
+          LombokClassNames.VAL,
+          LombokClassNames.EXPERIMENTAL_VAR,
+          LombokClassNames.VAR);
   }
 
   public static boolean isVal(@NotNull PsiVariable psiVariable) {

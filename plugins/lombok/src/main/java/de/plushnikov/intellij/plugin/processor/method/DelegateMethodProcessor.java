@@ -6,7 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -18,7 +18,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   @SuppressWarnings({"deprecation"})
   public DelegateMethodProcessor() {
-    super(PsiMethod.class, LombokNames.DELEGATE, LombokNames.EXPERIMENTAL_DELEGATE);
+    super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
   private DelegateHandler getDelegateHandler() {

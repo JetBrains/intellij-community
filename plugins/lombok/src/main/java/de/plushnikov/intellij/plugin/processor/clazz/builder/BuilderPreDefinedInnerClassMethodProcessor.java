@@ -5,7 +5,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
   public BuilderPreDefinedInnerClassMethodProcessor() {
-    super(PsiMethod.class, LombokNames.BUILDER);
+    super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
   protected BuilderHandler getBuilderHandler() {
@@ -38,7 +38,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     final Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(psiBuilderClass).stream()
-      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokNames.TOLERATE))
+      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE))
       .map(PsiMethod::getName).collect(Collectors.toSet());
 
     BuilderHandler builderHandler = getBuilderHandler();

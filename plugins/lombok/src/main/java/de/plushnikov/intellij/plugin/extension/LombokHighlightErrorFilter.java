@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.handler.*;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -115,7 +115,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
         // applicable only for methods
         if (importantParent instanceof PsiMethod) {
-          AddAnnotationFix fix = new AddAnnotationFix(LombokNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
+          AddAnnotationFix fix = new AddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
           highlightInfo.registerFix(fix, null, null, null, null);
         }
       }
@@ -234,7 +234,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
           return true;
         }
 
-        return !PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) resolve, LombokNames.BUILDER_DEFAULT);
+        return !PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) resolve, LombokClassNames.BUILDER_DEFAULT);
       }
     };
 

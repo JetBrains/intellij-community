@@ -11,7 +11,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PropertyUtil;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
 
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class RefactorSetterHandler extends BaseRefactorHandler {
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {
-          modifierList.addAnnotation(LombokNames.SETTER);
+          modifierList.addAnnotation(LombokClassNames.SETTER);
 
           psiMethod.delete();
         }

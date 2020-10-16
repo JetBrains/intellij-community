@@ -1,14 +1,14 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 import static com.intellij.psi.PsiModifier.FINAL;
 
 public class ReplaceExplicitTypeWithValIntentionAction extends AbstractReplaceExplicitTypeWithVariableIntentionAction {
 
   public ReplaceExplicitTypeWithValIntentionAction() {
-    super(LombokNames.VAL);
+    super(LombokClassNames.VAL);
   }
 
   @Override

@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.action.lombok;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokEqualsAndHashcodeHandler extends BaseLombokHandler {
@@ -20,6 +20,6 @@ public class LombokEqualsAndHashcodeHandler extends BaseLombokHandler {
       hashCodeMethod.delete();
     }
 
-    addAnnotation(psiClass, LombokNames.EQUALS_AND_HASHCODE);
+    addAnnotation(psiClass, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 }

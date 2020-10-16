@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
-import de.plushnikov.intellij.plugin.LombokNames;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -61,9 +61,9 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         }
       }
 
-      final PsiAnnotation builderAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokNames.BUILDER, LombokNames.SUPER_BUILDER);
+      final PsiAnnotation builderAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokClassNames.BUILDER, LombokClassNames.SUPER_BUILDER);
       if (null != builderAnnotation) {
-        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokNames.SINGULAR);
+        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
         final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiField, singularAnnotation);
         final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation);
         final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation);
@@ -83,7 +83,7 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         }
       }
 
-      final boolean hasFieldNameConstantAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokNames.FIELD_NAME_CONSTANTS);
+      final boolean hasFieldNameConstantAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokClassNames.FIELD_NAME_CONSTANTS);
       if (hasFieldNameConstantAnnotation) {
         Arrays.stream(containingClass.getInnerClasses())
           .map(PsiClass::getFields)
