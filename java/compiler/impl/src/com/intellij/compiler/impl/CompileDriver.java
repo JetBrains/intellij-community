@@ -27,7 +27,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -742,7 +741,7 @@ public final class CompileDriver {
         }
         else {
           if (!jdk.equals(moduleJdk)) {
-            showCyclicModulesHaveDifferentJdksError(ModuleSourceSet.getModules(sourceSets));
+            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.jdk", ModuleSourceSet.getModules(sourceSets));
             return false;
           }
         }
@@ -753,7 +752,7 @@ public final class CompileDriver {
         }
         else {
           if (!languageLevel.equals(moduleLanguageLevel)) {
-            showCyclicModulesHaveDifferentLanguageLevel(ModuleSourceSet.getModules(sourceSets));
+            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.language.level", ModuleSourceSet.getModules(sourceSets));
             return false;
           }
         }
@@ -762,24 +761,15 @@ public final class CompileDriver {
     return true;
   }
 
-  private void showCyclicModulesHaveDifferentLanguageLevel(Set<? extends Module> modulesInChunk) {
+  private void showCyclicModulesErrorNotification(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NotNull String messageId,
+                                                  @NotNull Set<? extends Module> modulesInChunk) {
     Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
     LOG.assertTrue(firstModule != null);
-    String moduleNameToSelect = firstModule.getName();
-    final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
-                               CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-    showConfigurationDialog(moduleNameToSelect, null);
-  }
-
-  private void showCyclicModulesHaveDifferentJdksError(Set<? extends Module> modulesInChunk) {
-    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
-    LOG.assertTrue(firstModule != null);
-    String moduleNameToSelect = firstModule.getName();
-    final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
-                               CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-    showConfigurationDialog(moduleNameToSelect, null);
+    CompileDriverNotifications.getInstance(myProject)
+      .createCannotStartNotification()
+      .withContent(JavaCompilerBundle.message(messageId, getModulesString(modulesInChunk)))
+      .withOpenSettingsAction(firstModule.getName(), null)
+      .showNotification();
   }
 
   private static String getModulesString(Collection<? extends Module> modulesInChunk) {
@@ -794,41 +784,24 @@ public final class CompileDriver {
                                      boolean notSpecifiedValueInheritedFromProject,
                                      List<String> modules,
                                      String editorNameToSelect) {
-    String nameToSelect = null;
-    final StringBuilder names = new StringBuilder();
+    String nameToSelect = notSpecifiedValueInheritedFromProject ? null : ContainerUtil.getFirstItem(modules);
+
     final int maxModulesToShow = 10;
-    for (String name : ContainerUtil.getFirstItems(modules, maxModulesToShow)) {
-      if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
-        nameToSelect = name;
-      }
-      if (names.length() > 0) {
-        names.append(",\n");
-      }
-      names.append("\"");
-      names.append(name);
-      names.append("\"");
-    }
+    List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
     if (modules.size() > maxModulesToShow) {
-      names.append(",\n...");
+      actualNamesToInclude.add(JavaCompilerBundle.message("error.jdk.module.names.overflow.element.ellipsis"));
     }
-    final String message = JavaCompilerBundle.message(resourceId, modules.size(), names.toString());
+    final String message = JavaCompilerBundle.message(resourceId, modules.size(), NlsMessages.formatNarrowAndList(actualNamesToInclude));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
     }
 
-    Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-    showConfigurationDialog(nameToSelect, editorNameToSelect);
-  }
-
-  private void showConfigurationDialog(@Nullable String moduleNameToSelect, @Nullable String tabNameToSelect) {
-    ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
-    if (moduleNameToSelect != null) {
-      service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
-    }
-    else {
-      service.openProjectSettings();
-    }
+    CompileDriverNotifications.getInstance(myProject)
+      .createCannotStartNotification()
+      .withContent(message)
+      .withOpenSettingsAction(nameToSelect, editorNameToSelect)
+      .showNotification();
   }
 
   public static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind, CompilerMessageCategory defaultCategory) {

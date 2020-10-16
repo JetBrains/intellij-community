@@ -268,6 +268,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <notificationGroup id="jps configuration error"
+                       toolWindowId="Build"
+                       displayType="TOOL_WINDOW"
+                       bundle="messages.JavaCompilerBundle"
+                       key="notification.group.title.jps.cannot.start.compiler" />
+
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider" />

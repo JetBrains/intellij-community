@@ -13,7 +13,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkModalNotification
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.util.registry.Registry
 
-@Service
+@Service //project
 class CompilerDriverUnknownSdkTracker(
   private val project: Project
 ) {
