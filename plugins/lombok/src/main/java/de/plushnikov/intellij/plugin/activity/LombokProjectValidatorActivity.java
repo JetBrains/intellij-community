@@ -3,6 +3,8 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,8 +20,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
+import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +38,7 @@ import java.util.regex.Pattern;
  *
  * @author Alexej Kubarev
  */
-public class LombokProjectValidatorActivity implements StartupActivity {
+public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
 
   private static final Pattern LOMBOK_VERSION_PATTERN = Pattern.compile("(.*:)([\\d.]+)(.*)");
 
@@ -45,62 +49,66 @@ public class LombokProjectValidatorActivity implements StartupActivity {
       return;
     }
 
-    final boolean hasLombokLibrary = hasLombokLibrary(project);
+    ReadAction.nonBlocking(() -> {
+      final boolean hasLombokLibrary = hasLombokLibrary(project);
 
+      // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
+      if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
+        return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
+                                                         LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
+                                                         NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
+      }
+
+      // If dependency is present and out of date notification setting is enabled (defaults to disabled)
+      if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
+        final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        for (Module module : moduleManager.getModules()) {
+          String lombokVersion = parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
+
+          if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
+            return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
+                                                             LombokBundle
+                                                               .message("config.warn.dependency.outdated.message", project.getName(),
+                                                                        module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+                                                             NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
+          }
+        }
+      }
+
+      // Annotation Processing check
+      if (hasLombokLibrary &&
+          ProjectSettings.isEnabled(project, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true) &&
+          !hasAnnotationProcessorsEnabled(project)) {
+        return getNotificationGroup()
+          .createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
+                              LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
+                              NotificationType.ERROR,
+                              (not, e) -> {
+                                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                  enableAnnotations(project);
+                                  not.expire();
+                                }
+                              });
+      }
+      return null;
+    }).expireWith(LombokProcessorProvider.getInstance(project))
+      .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
+        if (notification != null) {
+          Notifications.Bus.notify(notification, project);
+        }
+      }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @NotNull
+  private static NotificationGroup getNotificationGroup() {
     NotificationGroup group = NotificationGroup.findRegisteredGroup(Version.PLUGIN_NAME);
     if (group == null) {
       group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.BALLOON, true);
     }
-
-    // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
-    if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
-      Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-        LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
-        NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-
-      Notifications.Bus.notify(notification, project);
-    }
-
-    // If dependency is present and out of date notification setting is enabled (defaults to disabled)
-    if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
-      final ModuleManager moduleManager = ModuleManager.getInstance(project);
-      for (Module module : moduleManager.getModules()) {
-        String lombokVersion = parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
-
-        if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
-          Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
-            LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
-            NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
-
-          Notifications.Bus.notify(notification, project);
-        }
-      }
-    }
-
-    // Annotation Processing check
-    boolean annotationProcessorsEnabled = hasAnnotationProcessorsEnabled(project);
-    if (hasLombokLibrary && !annotationProcessorsEnabled &&
-      ProjectSettings.isEnabled(project, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true)) {
-
-      suggestEnableAnnotations(project, group);
-    }
+    return group;
   }
 
-  private void suggestEnableAnnotations(Project project, NotificationGroup group) {
-    Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-      LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
-      NotificationType.ERROR,
-      (not, e) -> {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          enableAnnotations(project);
-          not.expire();
-        }
-      });
-
-    Notifications.Bus.notify(notification, project);
-  }
-
-  private void enableAnnotations(Project project) {
+  private static void enableAnnotations(Project project) {
     CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     compilerConfiguration.getDefaultProcessorProfile().setEnabled(true);
     compilerConfiguration.getModuleProcessorProfiles().forEach(pp -> pp.setEnabled(true));
@@ -108,7 +116,7 @@ public class LombokProjectValidatorActivity implements StartupActivity {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(
-        "Java annotation processing has been enabled",
+        LombokBundle.message("popup.content.java.annotation.processing.has.been.enabled"),
         MessageType.INFO,
         null
       )
@@ -117,28 +125,29 @@ public class LombokProjectValidatorActivity implements StartupActivity {
       .show(RelativePoint.getNorthEastOf(statusBar.getComponent()), Balloon.Position.atRight);
   }
 
-  private CompilerConfigurationImpl getCompilerConfiguration(Project project) {
-    return (CompilerConfigurationImpl) CompilerConfiguration.getInstance(project);
+  private static CompilerConfigurationImpl getCompilerConfiguration(Project project) {
+    return (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
   }
 
-  private boolean hasAnnotationProcessorsEnabled(Project project) {
+  private static boolean hasAnnotationProcessorsEnabled(Project project) {
     final CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     return compilerConfiguration.getDefaultProcessorProfile().isEnabled() &&
-      compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
+           compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
   }
 
-  private boolean hasLombokLibrary(Project project) {
+  private static boolean hasLombokLibrary(Project project) {
     PsiPackage lombokPackage;
     try {
       lombokPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
-    } catch (ProcessCanceledException ex) {
+    }
+    catch (ProcessCanceledException ex) {
       lombokPackage = null;
     }
     return lombokPackage != null;
   }
 
   @Nullable
-  private OrderEntry findLombokEntry(@NotNull ModuleRootManager moduleRootManager) {
+  private static OrderEntry findLombokEntry(@NotNull ModuleRootManager moduleRootManager) {
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry.getPresentableName().contains("lombok")) {

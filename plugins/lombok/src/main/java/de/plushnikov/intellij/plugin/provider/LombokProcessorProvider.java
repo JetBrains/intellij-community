@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +17,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LombokProcessorProvider {
+public class LombokProcessorProvider implements Disposable {
+
+  @Override
+  public void dispose() { }
 
   public static LombokProcessorProvider getInstance(@NotNull Project project) {
     final LombokProcessorProvider service = ServiceManager.getService(project, LombokProcessorProvider.class);
