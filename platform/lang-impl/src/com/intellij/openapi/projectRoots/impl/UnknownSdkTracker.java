@@ -57,27 +57,6 @@ public class UnknownSdkTracker {
     return Registry.is("unknown.sdk") && UnknownSdkResolver.EP_NAME.hasAnyExtensions();
   }
 
-  public void collectUnknownSdksBlocking(@NotNull UnknownSdkBlockingCollector collector,
-                                         @NotNull ShowStatusCallback showStatus) {
-    if (!isEnabled()) {
-      showStatus.showEmptyStatus();
-      return;
-    }
-
-    ProgressManager.getInstance()
-      .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          var snapshot = collector.collectSdksBlocking();
-
-          var action = createProcessSdksAction(snapshot, showStatus);
-          if (action == null) return;
-
-          action.run(indicator);
-        }
-      });
-  }
-
   public @NotNull List<UnknownSdkFix> collectUnknownSdks(@NotNull UnknownSdkBlockingCollector collector,
                                                          @NotNull ProgressIndicator indicator) {
     if (!isEnabled()) {

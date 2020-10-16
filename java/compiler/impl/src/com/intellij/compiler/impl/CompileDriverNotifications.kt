@@ -44,8 +44,14 @@ class CompileDriverNotifications(
       .setTitle(JavaCompilerBundle.message("notification.title.jps.cannot.start.compiler"))
       .setImportant(true)
 
-    fun withOpenSettingsAction(moduleNameToSelect: String?, tabNameToSelect: String?): LightNotification = apply {
-      val handler = Runnable {
+    fun withExpiringAction(@NotificationContent title : String,
+                           handler: () -> Unit) = apply {
+      baseNotification.addAction(NotificationAction.createSimpleExpiring(title, handler))
+    }
+
+    @JvmOverloads
+    fun withOpenSettingsAction(moduleNameToSelect: String? = null, tabNameToSelect: String? = null) =
+      withExpiringAction(JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog")) {
         val service = ProjectSettingsService.getInstance(project)
         if (moduleNameToSelect != null) {
           service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect)
@@ -55,13 +61,7 @@ class CompileDriverNotifications(
         }
       }
 
-      baseNotification.addAction(NotificationAction.createSimpleExpiring(
-        JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog"),
-        handler
-      ))
-    }
-
-    fun withContent(@NotificationContent content : String): LightNotification = apply {
+    fun withContent(@NotificationContent content: String): LightNotification = apply {
       baseNotification.setContent(content)
     }
 

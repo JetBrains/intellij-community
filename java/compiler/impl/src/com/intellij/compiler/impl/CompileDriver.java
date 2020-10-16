@@ -677,10 +677,9 @@ public final class CompileDriver {
     if (runUnknownSdkCheck) {
       var result = CompilerDriverUnknownSdkTracker
         .getInstance(myProject)
-        .fixSdkSettings(projectSdkNotSpecified, scopeModules);
+        .fixSdkSettings(projectSdkNotSpecified, scopeModules, formatModulesList(modulesWithoutJdkAssigned));
 
-      if (result.getShouldOpenProjectStructureDialog()) {
-        result.openProjectStructureDialogIfNeeded();
+      if (result == CompilerDriverUnknownSdkTracker.Outcome.STOP_COMPILE) {
         return false;
       }
 
@@ -785,13 +784,7 @@ public final class CompileDriver {
                                      List<String> modules,
                                      String editorNameToSelect) {
     String nameToSelect = notSpecifiedValueInheritedFromProject ? null : ContainerUtil.getFirstItem(modules);
-
-    final int maxModulesToShow = 10;
-    List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
-    if (modules.size() > maxModulesToShow) {
-      actualNamesToInclude.add(JavaCompilerBundle.message("error.jdk.module.names.overflow.element.ellipsis"));
-    }
-    final String message = JavaCompilerBundle.message(resourceId, modules.size(), NlsMessages.formatNarrowAndList(actualNamesToInclude));
+    final String message = JavaCompilerBundle.message(resourceId, modules.size(), formatModulesList(modules));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
@@ -802,6 +795,17 @@ public final class CompileDriver {
       .withContent(message)
       .withOpenSettingsAction(nameToSelect, editorNameToSelect)
       .showNotification();
+  }
+
+  @NotNull
+  private static String formatModulesList(@NotNull List<String> modules) {
+    final int maxModulesToShow = 10;
+    List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
+    if (modules.size() > maxModulesToShow) {
+      actualNamesToInclude.add(JavaCompilerBundle.message("error.jdk.module.names.overflow.element.ellipsis"));
+    }
+
+    return NlsMessages.formatNarrowAndList(actualNamesToInclude);
   }
 
   public static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind, CompilerMessageCategory defaultCategory) {
