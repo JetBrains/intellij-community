@@ -9,9 +9,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
@@ -19,23 +19,22 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.CodeSmellDetector
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtil.rethrowUnchecked
 import com.intellij.util.PairConsumer
 import com.intellij.util.ui.UIUtil.getWarningIcon
 
@@ -49,8 +48,6 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
 /**
  * The check-in handler which performs code analysis before check-in. Source code for this class
  * is provided as a sample of using the [CheckinHandler] API.
- *
- * @author lesya
  */
 class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
   private val project: Project get() = commitPanel.project
@@ -64,12 +61,11 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
-    if (DumbService.getInstance(project).isDumb) {
-      return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
-    }
+    if (isDumb(project)) return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
 
     return try {
-      runCodeAnalysis(executor)
+      val codeSmells = findCodeSmells()
+      if (codeSmells.isEmpty()) ReturnResult.COMMIT else processFoundCodeSmells(codeSmells, executor)
     }
     catch (e: ProcessCanceledException) {
       ReturnResult.CANCEL
@@ -80,61 +76,58 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     }
   }
 
-  private fun runCodeAnalysis(commitExecutor: CommitExecutor?): ReturnResult {
-    val files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
-    return if (files.size <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
-      runCodeAnalysisNew(commitExecutor, files)
-    }
-    else runCodeAnalysisOld(commitExecutor, files)
+  private fun findCodeSmells(): List<CodeSmellInfo> {
+    val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
+    val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
+
+    if (files.size > newAnalysisThreshold) return CodeSmellDetector.getInstance(project).findCodeSmells(files)
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    return FindNewCodeSmellsTask(project, files).find()
   }
 
   private fun processFoundCodeSmells(codeSmells: List<CodeSmellInfo>, executor: CommitExecutor?): ReturnResult {
-    var commitButtonText = executor?.actionText ?: commitPanel.commitActionName
-    commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
+    val commitActionText = removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
 
-    val answer = askReviewCommitCancel(project, codeSmells, commitButtonText)
-    if (answer == Messages.YES) {
-      CodeSmellDetector.getInstance(project).showCodeSmellErrors(codeSmells)
-      return ReturnResult.CLOSE_WINDOW
-    }
-    return if (answer == Messages.CANCEL) {
-      ReturnResult.CANCEL
-    }
-    else ReturnResult.COMMIT
-  }
-
-  private fun runCodeAnalysisNew(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
-    val codeSmells = Ref.create<List<CodeSmellInfo>>()
-    val exception = Ref.create<Exception>()
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
-    ProgressManager.getInstance().run(object : Task.Modal(project, message("checking.code.smells.progress.title"), true) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          assert(myProject != null)
-          indicator.isIndeterminate = true
-          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator))
-          indicator.text = VcsBundle.getString("before.checkin.waiting.for.smart.mode")
-          DumbService.getInstance(myProject).waitForSmartMode()
-        }
-        catch (e: ProcessCanceledException) {
-          LOG.info("Code analysis canceled", e)
-          exception.set(e)
-        }
-        catch (e: Exception) {
-          LOG.error(e)
-          exception.set(e)
-        }
+    return when (askReviewCommitCancel(project, codeSmells, commitActionText)) {
+      Messages.YES -> {
+        CodeSmellDetector.getInstance(project).showCodeSmellErrors(codeSmells)
+        ReturnResult.CLOSE_WINDOW
       }
-    })
-    if (!exception.isNull) {
-      ExceptionUtil.rethrowAllAsUnchecked(exception.get())
+      Messages.NO -> ReturnResult.COMMIT
+      else -> ReturnResult.CANCEL
     }
-    return if (codeSmells.get().isNotEmpty()) processFoundCodeSmells(codeSmells.get(), commitExecutor) else ReturnResult.COMMIT
+  }
+}
+
+private class FindNewCodeSmellsTask(project: Project, private val files: List<VirtualFile>) :
+  Task.WithResult<List<CodeSmellInfo>, Exception>(project, message("checking.code.smells.progress.title"), true) {
+
+  fun find(): List<CodeSmellInfo> {
+    queue()
+
+    return try {
+      result
+    }
+    catch (e: ProcessCanceledException) {
+      LOG.info("Code analysis canceled", e)
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      rethrowUnchecked(e)
+      throw RuntimeException(e)
+    }
   }
 
-  private fun runCodeAnalysisOld(commitExecutor: CommitExecutor?, files: List<VirtualFile>): ReturnResult {
-    val codeSmells = CodeSmellDetector.getInstance(project).findCodeSmells(files)
-    return if (codeSmells.isNotEmpty()) processFoundCodeSmells(codeSmells, commitExecutor) else ReturnResult.COMMIT
+  override fun compute(indicator: ProgressIndicator): List<CodeSmellInfo> {
+    indicator.isIndeterminate = true
+    val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject!!, files, indicator)
+
+    indicator.text = message("before.checkin.waiting.for.smart.mode")
+    DumbService.getInstance(myProject).waitForSmartMode()
+
+    return codeSmells
   }
 }
 
