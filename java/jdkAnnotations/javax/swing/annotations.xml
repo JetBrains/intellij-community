@@ -81,6 +81,10 @@
   <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item
+    name='javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
