@@ -70,6 +70,11 @@ public class TodoCheckinHandlerWorker {
     myTodoFilter = todoFilter;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public void execute() {
     for (Change change : myChanges) {
       ProgressManager.checkCanceled();

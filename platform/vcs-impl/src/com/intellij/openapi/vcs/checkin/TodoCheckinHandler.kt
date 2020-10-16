@@ -15,12 +15,16 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
@@ -51,7 +55,7 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
   override fun isEnabled(): Boolean = myConfiguration.CHECK_NEW_TODO
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    return object : BooleanCommitOption(myCheckinProjectPanel, VcsBundle.message("before.checkin.new.todo.check", ""), true,
+    return object : BooleanCommitOption(myCheckinProjectPanel, message("before.checkin.new.todo.check", ""), true,
                                         myConfiguration::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
         val panel = JPanel(BorderLayout(4, 0))
@@ -66,7 +70,7 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
           myConfiguration.myTodoPanelSettings.todoFilterName = name
           setFilterText(name)
         }
-        val linkLabel = LinkLabel<Any>(VcsBundle.message("settings.filter.configure.link"), null)
+        val linkLabel = LinkLabel<Any>(message("settings.filter.configure.link"), null)
         linkLabel.setListener(LinkListener { _, _ ->
           val group = SetTodoFilterAction.createPopupActionGroup(myProject, myConfiguration.myTodoPanelSettings, consumer)
           JBPopupMenu.showBelow(linkLabel, ActionPlaces.TODO_VIEW_TOOLBAR, group)
@@ -77,11 +81,11 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
 
       private fun setFilterText(filterName: String?) {
         if (filterName == null) {
-          checkBox.text = VcsBundle.message("before.checkin.new.todo.check", IdeBundle.message("action.todo.show.all"))
+          checkBox.text = message("before.checkin.new.todo.check", IdeBundle.message("action.todo.show.all"))
         }
         else {
-          checkBox.text = VcsBundle.message("before.checkin.new.todo.check",
-                                            VcsBundle.message("checkin.filter.filter.name", filterName))
+          checkBox.text = message("before.checkin.new.todo.check",
+                                  message("checkin.filter.filter.name", filterName))
         }
       }
     }
@@ -90,21 +94,13 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
     if (DumbService.getInstance(myProject).isDumb) {
-      return if (Messages.showOkCancelDialog(myProject,
-                                             VcsBundle.message("checkin.dialog.message.cant.be.performed",
-                                                               ApplicationNamesInfo.getInstance().fullProductName),
-                                             VcsBundle.message("checkin.dialog.title.not.possible.right.now"),
-                                             VcsBundle.message("checkin.wait"),
-                                             VcsBundle.message("checkin.commit"), null) == Messages.OK) {
-        ReturnResult.CANCEL
-      }
-      else ReturnResult.COMMIT
+      return if (confirmCommitInDumbMode(myProject)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
     val changes = myCheckinProjectPanel.selectedChanges
     val worker = TodoCheckinHandlerWorker(myProject, changes, myTodoFilter)
     val completed = Ref.create(false)
     ProgressManager.getInstance().run(object : Task.Modal(myProject,
-                                                          VcsBundle.message("checkin.dialog.title.looking.for.new.edited.todo.items"),
+                                                          message("checkin.dialog.title.looking.for.new.edited.todo.items"),
                                                           true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.isIndeterminate = true
@@ -121,35 +117,26 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
   private fun showResults(worker: TodoCheckinHandlerWorker, executor: CommitExecutor?): ReturnResult {
     var commitButtonText = executor?.actionText ?: myCheckinProjectPanel.commitActionName
     commitButtonText = StringUtil.trimEnd(commitButtonText!!, "...")
-    val text = createMessage(worker)
     val thereAreTodoFound = worker.addedOrEditedTodos.size + worker.inChangedTodos.size > 0
-    val title = VcsBundle.message("checkin.dialog.title.todo")
     if (thereAreTodoFound) {
-      return askReviewOrCommit(worker, commitButtonText, text, title)
+      return askReviewOrCommit(worker, commitButtonText)
     }
-    else if (Messages.YES == Messages.showYesNoDialog(myProject, text, title, commitButtonText, getCancelButtonText(), getWarningIcon())) {
-      return ReturnResult.COMMIT
-    }
-    return ReturnResult.CANCEL
+    return if (confirmCommitWithSkippedFiles(worker, commitButtonText)) ReturnResult.COMMIT else ReturnResult.CANCEL
   }
 
-  private fun askReviewOrCommit(worker: TodoCheckinHandlerWorker,
-                                @NlsContexts.Button commitButton: String,
-                                @NlsContexts.DialogMessage text: String,
-                                @NlsContexts.DialogTitle title: String): ReturnResult {
-    val yesButton = VcsBundle.message("todo.in.new.review.button")
-    when (Messages.showYesNoCancelDialog(myProject, text, title, yesButton, commitButton, getCancelButtonText(), getWarningIcon())) {
+  private fun askReviewOrCommit(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitButton: String): ReturnResult {
+    return when (askReviewCommitCancel(worker, commitButton)) {
       Messages.YES -> {
         showTodo(worker)
-        return ReturnResult.CLOSE_WINDOW
+        ReturnResult.CLOSE_WINDOW
       }
-      Messages.NO -> return ReturnResult.COMMIT
+      Messages.NO -> ReturnResult.COMMIT
+      else -> ReturnResult.CANCEL
     }
-    return ReturnResult.CANCEL
   }
 
   private fun showTodo(worker: TodoCheckinHandlerWorker) {
-    val title = VcsBundle.message("checkin.title.for.commit.0", DateFormatUtil.formatDateTime(System.currentTimeMillis()))
+    val title = message("checkin.title.for.commit.0", DateFormatUtil.formatDateTime(System.currentTimeMillis()))
     ServiceManager.getService(myProject, TodoView::class.java).addCustomTodoView(
       TodoTreeBuilderFactory { tree, _ -> CustomChangelistTodosTreeBuilder(tree, myProject, worker.changes, worker.inOneList()) },
       title, TodoPanelSettings(myConfiguration.myTodoPanelSettings)
@@ -170,25 +157,42 @@ class TodoCheckinHandler(checkinProjectPanel: CheckinProjectPanel) : CheckinHand
       ModalityState.NON_MODAL, myProject.disposed
     )
   }
+}
 
-  companion object {
-    @NlsContexts.DialogMessage
-    private fun createMessage(worker: TodoCheckinHandlerWorker): String {
-      val added = worker.addedOrEditedTodos.size
-      val changed = worker.inChangedTodos.size
-      val skipped = worker.skipped.size
-      return if (added == 0 && changed == 0) {
-        VcsBundle.message("todo.handler.only.skipped", skipped)
-      }
-      else if (changed == 0) {
-        VcsBundle.message("todo.handler.only.added", added, skipped)
-      }
-      else if (added == 0) {
-        VcsBundle.message("todo.handler.only.in.changed", changed, skipped)
-      }
-      else {
-        VcsBundle.message("todo.handler.only.both", added, changed, skipped)
-      }
-    }
+private fun confirmCommitInDumbMode(project: Project): Boolean =
+  !yesNo(message("checkin.dialog.title.not.possible.right.now"),
+         message("checkin.dialog.message.cant.be.performed", ApplicationNamesInfo.getInstance().fullProductName))
+    .icon(null)
+    .yesText(message("checkin.wait"))
+    .noText(message("checkin.commit"))
+    .ask(project)
+
+private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String) =
+  yesNo(message("checkin.dialog.title.todo"), getDescription(worker))
+    .icon(getWarningIcon())
+    .yesText(commitActionText)
+    .noText(getCancelButtonText())
+    .ask(worker.project)
+
+@YesNoCancelResult
+private fun askReviewCommitCancel(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): Int =
+  yesNoCancel(message("checkin.dialog.title.todo"), getDescription(worker))
+    .icon(getWarningIcon())
+    .yesText(message("todo.in.new.review.button"))
+    .noText(commitActionText)
+    .cancelText(getCancelButtonText())
+    .show(worker.project)
+
+@DialogMessage
+private fun getDescription(worker: TodoCheckinHandlerWorker): String {
+  val added = worker.addedOrEditedTodos.size
+  val changed = worker.inChangedTodos.size
+  val skipped = worker.skipped.size
+
+  return when {
+    added == 0 && changed == 0 -> message("todo.handler.only.skipped", skipped)
+    changed == 0 -> message("todo.handler.only.added", added, skipped)
+    added == 0 -> message("todo.handler.only.in.changed", changed, skipped)
+    else -> message("todo.handler.only.both", added, changed, skipped)
   }
 }
