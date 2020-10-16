@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.reference.SoftReference
 import com.intellij.util.Processor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
 /**
@@ -100,8 +101,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       }
     }
 
-    val builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file)
-    val model = (builder as? TreeBasedStructureViewBuilder)?.createStructureViewModel(editor)
+    val model = createModel(file, editor)
     if (model != null) {
       currentFile = SoftReference(file)
       currentFileStructure = SoftReference(model)
@@ -109,6 +109,11 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       editor?.putUserData(MODEL, currentFileStructure)
     }
     return model
+  }
+
+  protected open fun createModel(file: PsiFile, editor: Editor?): @NotNull StructureViewModel? {
+    val builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file)
+    return (builder as? TreeBasedStructureViewBuilder)?.createStructureViewModel(editor)
   }
 
   private fun processStructureViewChildren(parent: StructureViewTreeElement,
