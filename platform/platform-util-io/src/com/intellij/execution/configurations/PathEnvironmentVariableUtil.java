@@ -2,7 +2,6 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
@@ -17,7 +16,6 @@ import java.io.FileFilter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A collection of utility methods for working with PATH environment variable.
@@ -162,22 +160,4 @@ public final class PathEnvironmentVariableUtil {
     return EnvironmentUtil.getValue(PATH);
   }
 
-  /**
-   * Workaround for the problem with environment variables of macOS apps launched via GUI
-   *
-   * @see EnvironmentUtil#getEnvironmentMap
-   */
-  public static @NotNull String clarifyExePath(@NotNull String exePath) {
-    if (SystemInfoRt.isMac && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH");
-      String shellPath = EnvironmentUtil.getValue("PATH");
-      if (!Objects.equals(systemPath, shellPath)) {
-        File exeFile = findInPath(exePath, shellPath, null);
-        if (exeFile != null) {
-          return exeFile.getPath();
-        }
-      }
-    }
-    return exePath;
-  }
 }
