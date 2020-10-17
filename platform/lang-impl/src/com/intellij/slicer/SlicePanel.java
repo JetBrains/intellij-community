@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -346,7 +346,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     if (isToShowPreviewButton()) {
-      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text", "usages"),
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"),
                                        LangBundle.message("action.preview.description"), AllIcons.Actions.PreviewDetails) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
