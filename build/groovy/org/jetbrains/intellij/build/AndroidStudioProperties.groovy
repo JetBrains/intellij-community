@@ -72,7 +72,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.cidr.util.serializer",
                                                     "intellij.cidr.workspaceModel",
                                                     "intellij.cidr.workspaceModel.ide",
-                                                    "intellij.cidr.workspaceModelBridge",
                                                     "intellij.cmake.psi",
                                                   ] +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
