@@ -38,7 +38,8 @@ public interface UnknownSdkFixAction {
   /**
    * Applies suggestions under a given progress
    */
-  void applySuggestionBlocking(@NotNull ProgressIndicator indicator);
+  @NotNull
+  Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator);
 
   /**
    * Attaches a listener to the instance. Events are not fired before

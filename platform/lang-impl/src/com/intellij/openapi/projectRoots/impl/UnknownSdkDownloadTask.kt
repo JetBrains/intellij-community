@@ -52,9 +52,9 @@ internal data class UnknownSdkDownloadTask
     )
   }
 
-  fun runBlocking(indicator: ProgressIndicator) {
+  fun runBlocking(indicator: ProgressIndicator) : Sdk {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    runImpl(indicator)
+    return runImpl(indicator)
   }
 
   fun runAsync(project: Project?) {
@@ -74,7 +74,7 @@ internal data class UnknownSdkDownloadTask
     }.queue()
   }
 
-  private fun runImpl(indicator: ProgressIndicator) {
+  private fun runImpl(indicator: ProgressIndicator) : Sdk {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val sdk = runCatching {
@@ -88,7 +88,7 @@ internal data class UnknownSdkDownloadTask
     }
     invokeAndWaitIfNeeded { onCompleted.consume(sdk.getOrNull()) }
 
-    sdk.exceptionOrNull()?.let { t ->
+    return sdk.getOrElse { t ->
       if (t is ControlFlowException) throw t
       throw object : RuntimeException("Failed to download ${info.sdkType.presentableName} ${fix.downloadDescription} for $info. ${t.message}", t) {
         override fun getLocalizedMessage() = ProjectBundle.message("dialog.message.failed.to.download.0.1", fix.downloadDescription, t.message)
