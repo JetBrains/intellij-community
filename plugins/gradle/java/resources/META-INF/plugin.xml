@@ -17,6 +17,7 @@
   <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
+  <depends optional="true" config-file="gradle-dependency-update-integration.xml">com.intellij.externalSystem.dependencyUpdater</depends>
 
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
