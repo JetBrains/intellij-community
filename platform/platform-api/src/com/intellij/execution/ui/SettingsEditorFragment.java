@@ -67,7 +67,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, @Nls String name, @Nls String group, @NotNull SettingsEditor<S> inner) {
+  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id,
+                                                               @Nls String name,
+                                                               @Nls String group,
+                                                               @NotNull SettingsEditor<S> inner,
+                                                               Predicate<? super S> initialSelection) {
     JComponent component = inner.getComponent();
     SettingsEditorFragment<S, JComponent> fragment = new SettingsEditorFragment<>(id, name, group, component,
                                                                                   (settings, c) -> inner.resetFrom(settings),
@@ -79,13 +83,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                                                                       throw new RuntimeException(e);
                                                                                     }
                                                                                   },
-                                                                                  s -> false);
+                                                                                  initialSelection);
     Disposer.register(fragment, inner);
     return fragment;
   }
 
   public static <Settings> SettingsEditorFragment<Settings, ?> createTag(String id, @Nls String name, @Nls String group,
-                                                                         Predicate<? super Settings> getter, BiConsumer<? super Settings, ? super Boolean> setter) {
+                                                                         Predicate<? super Settings> getter,
+                                                                         BiConsumer<? super Settings, ? super Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, ?>> ref = new Ref<>();
     TagButton tagButton = new TagButton(name, () -> ref.get().setSelected(false));
     SettingsEditorFragment<Settings, ?> fragment = new SettingsEditorFragment<Settings, JComponent>(id, name, group, tagButton,
