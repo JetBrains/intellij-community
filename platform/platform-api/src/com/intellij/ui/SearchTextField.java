@@ -30,9 +30,10 @@ import java.util.List;
 
 public class SearchTextField extends JPanel {
   private class SearchHistoryAction extends AnAction{
-    private final String name;
+    private final @NlsSafe String name;
     private final boolean enabled;
-    public SearchHistoryAction(String name, boolean enabled){
+
+    SearchHistoryAction(@NlsSafe String name, boolean enabled){
       this.name = name;
       this.enabled = enabled;
       getTemplatePresentation().setText(name);
@@ -42,7 +43,6 @@ public class SearchTextField extends JPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setText(name);
       e.getPresentation().setEnabled(enabled);
     }
@@ -69,7 +69,7 @@ public class SearchTextField extends JPanel {
   private JBPopup myPopup;
   private ActionPopupMenu myNativeSearchPopup;
   private DefaultActionGroup myHistoryPopupActionGroup = new DefaultActionGroup();
-  private SearchHistoryAction noItemsSearchHistoryAction = new SearchHistoryAction(IdeBundle.message("no.recent.searches"), false);
+  private final SearchHistoryAction noItemsSearchHistoryAction = new SearchHistoryAction(IdeBundle.message("no.recent.searches"), false);
   private String myHistoryPropertyName;
 
   public SearchTextField() {
@@ -492,6 +492,7 @@ public class SearchTextField extends JPanel {
   public void setSearchIcon(final Icon icon) {
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   public static final class FindAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
