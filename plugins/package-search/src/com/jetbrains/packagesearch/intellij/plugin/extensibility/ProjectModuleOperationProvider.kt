@@ -4,10 +4,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationItem
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependency
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
+import com.intellij.buildsystem.model.OperationFailure
+import com.intellij.buildsystem.model.OperationItem
+import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 
 interface ProjectModuleOperationProvider {
 

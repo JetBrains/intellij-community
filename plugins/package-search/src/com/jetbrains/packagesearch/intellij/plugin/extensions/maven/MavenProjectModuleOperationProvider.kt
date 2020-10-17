@@ -7,10 +7,10 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationItem
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependency
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
+import com.intellij.buildsystem.model.OperationFailure
+import com.intellij.buildsystem.model.OperationItem
+import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import org.jetbrains.idea.maven.project.MavenProjectsManager
