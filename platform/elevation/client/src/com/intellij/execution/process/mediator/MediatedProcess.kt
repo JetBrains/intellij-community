@@ -3,6 +3,7 @@ package com.intellij.execution.process.mediator
 
 import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.util.blockingGet
+import com.intellij.execution.process.mediator.util.childSupervisorJob
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -46,8 +47,7 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
         pipeStdout = (outFile == null),
         pipeStderr = (errFile == null),
       ).also { process ->
-        val cleanable = CLEANER.register(process, handle::close)
-        processMediatorClient.registerCleanup(cleanable::clean)
+        CLEANER.register(process, handle::releaseAsync)
       }
     }
   }
@@ -162,62 +162,48 @@ private class MediatedProcessHandle(
   inFile: File?,
   outFile: File?,
   errFile: File?,
-) : CoroutineScope by client.childSupervisorScope(),
-    AutoCloseable {
+) : CoroutineScope by client.childSupervisorScope() {
 
   val pid: Deferred<Long> = async {
     client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
   }
 
-  private val cleanupJob = launch(start = CoroutineStart.LAZY) {
-    // must be called exactly once;
-    // once invoked, the pid is no more valid, and the process must be assumed reaped
-    client.release(pid.await())
+  private val releaseJob = launch(start = CoroutineStart.LAZY) {
+    try {
+      rpcJob.cancelAndJoin()
+    }
+    finally {
+      // must be called exactly once;
+      // once invoked, the pid is no more valid, and the process must be assumed reaped
+      client.release(pid.await())
+    }
   }
 
   /** Controls all operations except CreateProcess() and Release(). */
-  private val rpcAwaitingJob = SupervisorJob(coroutineContext[Job])
+  private val rpcJob = childSupervisorJob()
 
   suspend fun <R> rpc(block: suspend ProcessMediatorClient.() -> R): R {
-    // This might require a bit of explanation.
-    //
-    // We want to ensure the Release() rpc is not started until any other RPC finishes.
-    // This is achieved by making any RPC from within the outer withContext() coroutine
-    // (a child of 'rpcAwaitingJob', which means the latter can't complete until all its children do).
-    // But at the same time it is desirable to ensure the original caller coroutine still
-    // controls the cancellation of the RPC, that is why the original job is restored as a parent using
-    // the inner withContext().
-    //
-    // In fact, the 'rpcAwaitingJob' never gets cancelled explicitly at all,
-    // only through the parent scope of MediatedProcessHandle, or finishes using the complete() call in release().
-    // It is only used for this single purpose - to ensure strict ordering relation between any RPC call and
-    // the final Release() call.
-    //
-    // In other words, if there was an RW lock for coroutines, this whole thing would be replaced by
-    // trying to acquire a read lock in this method, and acquiring a write lock in release().
-    val originalJob = currentCoroutineContext()[Job]!!
-    return withContext(rpcAwaitingJob) {
-      withContext(coroutineContext + originalJob) {
-        client.block()
-      }
+    (this as CoroutineScope).ensureActive()
+    currentCoroutineContext().ensureActive()
+    // Perform the call in the scope of this handle, so that it is dispatched in the same way
+    // as CreateProcess() and Release(). The parent is overridden so that we can await for
+    // the call to complete before Release, but the caller is still able to cancel it.
+    val deferred = (this as CoroutineScope).async(rpcJob) {
+      client.block()
+    }
+    return try {
+      deferred.await()
+    }
+    catch (e: CancellationException) {
+      deferred.cancel(e)
+      throw e
     }
   }
 
-  /** Once this is invoked, calling any other methods will throw [CancellationException]. */
-  suspend fun release() {
-    try {
-      // let ongoing operations finish gracefully, but don't accept new calls
-      rpcAwaitingJob.complete()
-      rpcAwaitingJob.join()
-    }
-    finally {
-      cleanupJob.join()
-    }
-  }
-
-  override fun close() {
-    runBlocking {
-      release()
-    }
+  /** Once this is invoked, attempting to make any RPC will throw [CancellationException]. */
+  fun releaseAsync() {
+    // let ongoing operations finish gracefully, but don't accept new calls
+    rpcJob.complete()
+    releaseJob.start()
   }
 }
