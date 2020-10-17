@@ -2172,8 +2172,8 @@ public class JBTabsImpl extends JComponent
   @Nullable
   private TabInfo _findInfo(final Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
-    if (component == null) return null;
-    while (component != this || component != null) {
+    while (component != this) {
+      if (component == null) return null;
       if (component instanceof TabLabel) {
         return ((TabLabel)component).getInfo();
       }
@@ -2181,7 +2181,6 @@ public class JBTabsImpl extends JComponent
         final TabInfo info = findInfo(component);
         if (info != null) return info;
       }
-      if (component == null) break;
       component = component.getParent();
     }
 
