@@ -6,15 +6,16 @@ import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.ExceptionAsStatus
 import com.intellij.execution.process.mediator.util.LoggingClientInterceptor
-import com.intellij.execution.process.mediator.util.childSupervisorJob
 import com.intellij.execution.process.mediator.util.childSupervisorScope
 import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -28,8 +29,6 @@ class ProcessMediatorClient(
 
   private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(loggingChannel)
   private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(loggingChannel)
-
-  private val cleanupJob = childSupervisorJob()
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
@@ -129,9 +128,6 @@ class ProcessMediatorClient(
   override fun close() {
     try {
       runBlocking {
-        cleanupJob.complete()  // don't accept new cleanup tasks anymore
-        cleanupJob.children.forEach { it.start() }
-        cleanupJob.join()  // wait all the cleanup tasks to finish
         shutdown()
       }
     }
@@ -139,11 +135,5 @@ class ProcessMediatorClient(
       cancel()
       channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
-  }
-
-  fun registerCleanup(cleanupHook: suspend () -> Unit) {
-    launch(cleanupJob, start = CoroutineStart.LAZY) {
-      cleanupHook()
-    }.also { if (it.isCancelled) it.ensureActive() }
   }
 }

@@ -8,10 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import io.grpc.ManagedChannel
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -21,18 +18,16 @@ import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.Callable
+import java.util.concurrent.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
 open class ProcessMediatorTest {
   private val deferred = CompletableDeferred<Unit>()
-  private val coroutineScope = CoroutineScope(CoroutineExceptionHandler { _, cause ->
+  private val coroutineScope = CoroutineScope(deferred + CoroutineExceptionHandler { _, cause ->
     if (cause !is CancellationException) {
-      deferred.completeExceptionally(cause)
+      deferred.completeExceptionally(cause)  // to propagate child failures past supervisor jobs up to the top
     }
   })
 
@@ -62,6 +57,10 @@ open class ProcessMediatorTest {
   @AfterEach
   fun tearDown() {
     FileUtil.delete(tmpDir)
+    val watchdogJob = coroutineScope.launch {
+      delay(TIMEOUT_MS)
+      deferred.completeExceptionally(TimeoutException("tearDown() timed out"))
+    }
     try {
       client.close()
     }
@@ -69,6 +68,7 @@ open class ProcessMediatorTest {
       daemon.stop()
       daemon.blockUntilShutdown()
     }
+    watchdogJob.cancel()
     runBlocking {
       deferred.complete(Unit)
       deferred.await()  // throw in case any background coroutine failed with uncaught exception
@@ -95,6 +95,15 @@ open class ProcessMediatorTest {
   }
 
   @Test
+  internal fun `create process with endless loop without destroying shouldn't hang the client on close`() {
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Loop::class)
+      .startMediatedProcess()
+    val pid = process.pid()
+    assertTrue(process.isAlive)
+    assertTrue(ProcessHandle.of(pid).isPresent)
+  }
+
+  @Test
   internal fun `destroy process with endless loop`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Loop::class)
       .startMediatedProcess()
@@ -102,7 +111,7 @@ open class ProcessMediatorTest {
     assertTrue(process.isAlive)
     assertTrue(ProcessHandle.of(pid).isPresent)
 
-    destroyProcess(process)
+    //destroyProcess(process)
   }
 
   @Test
@@ -115,7 +124,7 @@ open class ProcessMediatorTest {
     assertTrue(ProcessHandle.of(process.pid()).isEmpty)
     assertFalse(process.isAlive)
 
-    destroyProcess(process)
+    //destroyProcess(process)
   }
 
   @Test
@@ -239,7 +248,7 @@ open class ProcessMediatorTest {
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
     assertTrue(hasExited)
     assertFalse(process.isAlive)
-    destroyProcess(process)
+    //destroyProcess(process)
   }
 
   @Test
