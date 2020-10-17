@@ -7,7 +7,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +21,6 @@ import static javax.swing.SwingConstants.*;
 public final class TabsUtil {
   public static final JBValue TAB_VERTICAL_PADDING = new JBValue.Float(2);
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
-  private static final @NonNls String FAKE_LABEL_TEXT = "XXX";
 
   private TabsUtil() {
   }
@@ -32,7 +30,7 @@ public final class TabsUtil {
   }
 
   public static int getTabsHeight(int verticalPadding) {
-    JLabel xxx = new JLabel(FAKE_LABEL_TEXT);
+    @SuppressWarnings("HardCodedStringLiteral") JLabel xxx = new JLabel("XXX");
     xxx.setFont(getLabelFont());
     return xxx.getPreferredSize().height + (verticalPadding * 2);
   }
