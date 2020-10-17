@@ -5,6 +5,9 @@ import com.intellij.openapi.application.Experiments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WSLCommandLineOptions {
 
   private boolean myLaunchWithWslExe = true;
@@ -12,6 +15,7 @@ public class WSLCommandLineOptions {
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;
   private boolean myPassEnvVarsUsingInterop = false;
+  private final List<String> myInitShellCommands = new ArrayList<>();
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -75,11 +79,22 @@ public class WSLCommandLineOptions {
     return this;
   }
 
+  public @NotNull List<String> getInitShellCommands() {
+    return myInitShellCommands;
+  }
+
+  public @NotNull WSLCommandLineOptions addInitCommand(@NotNull String initCommand) {
+    myInitShellCommands.add(initCommand);
+    return this;
+  }
+
   @Override
   public String toString() {
     return "launchWithWslExe=" + myLaunchWithWslExe +
            ", executeCommandInShell=" + myExecuteCommandInShell +
            ", sudo=" + mySudo +
-           ", remoteWorkingDirectory='" + myRemoteWorkingDirectory + '\'';
+           ", remoteWorkingDirectory='" + myRemoteWorkingDirectory + '\'' +
+           ", passEnvVarsUsingInterop=" + myPassEnvVarsUsingInterop +
+           ", initCommands=" + myInitShellCommands;
   }
 }

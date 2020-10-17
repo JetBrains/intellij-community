@@ -242,6 +242,11 @@ public class WSLDistribution {
     else {
       passEnvironmentUsingInterop(commandLine);
     }
+    if (executeCommandInShell) {
+      for (String command : options.getInitShellCommands()) {
+        prependCommand(linuxCommand, command, "&&");
+      }
+    }
 
     commandLine.getParametersList().clearAll();
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
