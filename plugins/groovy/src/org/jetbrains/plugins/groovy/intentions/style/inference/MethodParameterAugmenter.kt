@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
@@ -27,24 +26,23 @@ class MethodParameterAugmenter : TypeAugmenter() {
       if (!Registry.`is`(GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE, false)) {
         return null
       }
-      val (scope, originalFile) = getFileScope(method) ?: return null
-      return computeInferredMethod(method, scope, originalFile)
+      val scope = getFileScope(method) ?: return null
+      return computeInferredMethod(method, scope)
     }
 
-    private fun computeInferredMethod(method: GrMethod, scope: SearchScope, originalFile: VirtualFile?): InferenceResult? =
+    private fun computeInferredMethod(method: GrMethod, scope : SearchScope): InferenceResult? =
       CachedValuesManager.getCachedValue(method) {
         RecursionManager.doPreventingRecursion(method, true) {
           val options = SignatureInferenceOptions(scope, true, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
           val typedMethod = runInferenceProcess(method, options)
           val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
-          val dependencies = if (originalFile != null) arrayOf(method, originalFile) else arrayOf(method)
-          CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), *dependencies)
+          CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
         }
       }
 
-    private fun getFileScope(method: GrMethod): Pair<SearchScope, VirtualFile?>? {
+    private fun getFileScope(method: GrMethod): SearchScope? {
       val originalMethod = getOriginalMethod(method)
-      return originalMethod.containingFile?.run { GlobalSearchScope.fileScope(this) to this.virtualFile }
+      return originalMethod.containingFile?.run {GlobalSearchScope.fileScope(this)}
     }
 
   }
