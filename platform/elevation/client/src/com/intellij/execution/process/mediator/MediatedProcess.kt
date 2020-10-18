@@ -15,7 +15,9 @@ import java.lang.ref.Cleaner
 private val CLEANER = Cleaner.create()
 
 class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
-                                          pipeStdin: Boolean) : Process(), CoroutineScope by handle {
+                                          pipeStdin: Boolean,
+                                          pipeStdout: Boolean,
+                                          pipeStderr: Boolean) : Process(), CoroutineScope by handle {
   companion object {
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {
@@ -38,17 +40,21 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
       errFile: File?,
     ): MediatedProcess {
       val handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile)
-      return MediatedProcess(handle,
-                             pipeStdin = (inFile == null)).also { process ->
+      return MediatedProcess(
+        handle,
+        pipeStdin = (inFile == null),
+        pipeStdout = (outFile == null),
+        pipeStderr = (errFile == null),
+      ).also { process ->
         val cleanable = CLEANER.register(process, handle::close)
         processMediatorClient.registerCleanup(cleanable::clean)
       }
     }
   }
 
-  private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else OutputStream.nullOutputStream()
-  private val stdout: InputStream = createInputStream(1)
-  private val stderr: InputStream = createInputStream(2)
+  private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else NullOutputStream
+  private val stdout: InputStream = if (pipeStdout) createInputStream(1) else NullInputStream
+  private val stderr: InputStream = if (pipeStderr) createInputStream(2) else NullInputStream
 
   private val termination: Deferred<Int> = async {
     handle.rpc {
@@ -132,6 +138,15 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
         destroyProcess(getPid(), force)
       }
     }
+  }
+
+  private object NullInputStream : InputStream() {
+    override fun read(): Int = -1
+    override fun available(): Int = 0
+  }
+
+  private object NullOutputStream : OutputStream() {
+    override fun write(b: Int) = throw IOException("Stream closed")
   }
 }
 
