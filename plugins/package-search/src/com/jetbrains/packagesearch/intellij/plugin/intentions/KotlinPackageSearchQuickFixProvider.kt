@@ -1,10 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.intentions
 
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.idea.LoggerFactory
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
-import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
