@@ -84,7 +84,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     var showInlayHints: Boolean = true
     var showWarnings: Boolean = false
     @get:ReportValue
-    var enabled: Boolean = true
+    var enabled by property(true)
     var mode: ReaderMode = LIBRARIES_AND_READ_ONLY
   }
 
