@@ -175,6 +175,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     doOpen(directory.toPath(), null);
   }
 
+  /**
+   * Opens a system file manager with given directory selected in it.
+   */
+  public static void selectDirectory(@NotNull File directory) {
+    doOpen(directory.toPath(), directory.toPath());
+  }
+
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
     String dir = _dir.toAbsolutePath().normalize().toString();
     String toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
