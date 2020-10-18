@@ -28,6 +28,7 @@ Supports Maven and Gradle projects.
     </extensionPoints>
 
     <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.externalSystem.dependencyUpdater</depends>
     <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
     <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
     <depends optional="true" config-file="plugin-withMaven.xml">org.jetbrains.idea.maven</depends>
