@@ -77,7 +77,6 @@ public final class GroovyMethodInfo {
           addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
         }
         else {
-          assert methodDescriptor.className == null;
           addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
         }
       }

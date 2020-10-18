@@ -60,29 +60,27 @@ final class ExecuteJShellAction extends AnAction{
         final Sdk sdk = config != null ? config.getRuntimeSdk() : null;
         handler = JShellHandler.create(project, vFile, module, sdk);
       }
-      if (handler != null) {
-        handler.toFront();
-        boolean hasDataToEvaluate = false;
+      handler.toFront();
+      boolean hasDataToEvaluate = false;
 
-        final Document document = editor.getDocument();
-        final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
-        if (selectedRange.isEmpty()) {
-          final PsiElement snippet = getSnippetFromContext(project, e);
-          if (snippet instanceof PsiJShellFile) {
-            for (PsiElement element : ((PsiJShellFile)snippet).getExecutableSnippets()) {
-              hasDataToEvaluate |= scheduleEval(handler, element.getText());
-            }
-          }
-          else if (snippet != null){
-            hasDataToEvaluate = scheduleEval(handler, snippet.getText());
+      final Document document = editor.getDocument();
+      final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
+      if (selectedRange.isEmpty()) {
+        final PsiElement snippet = getSnippetFromContext(project, e);
+        if (snippet instanceof PsiJShellFile) {
+          for (PsiElement element : ((PsiJShellFile)snippet).getExecutableSnippets()) {
+            hasDataToEvaluate |= scheduleEval(handler, element.getText());
           }
         }
-        else {
-          hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
+        else if (snippet != null){
+          hasDataToEvaluate = scheduleEval(handler, snippet.getText());
         }
-        if (!hasDataToEvaluate) {
-          JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.nothing.to.execute"), project);
-        }
+      }
+      else {
+        hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
+      }
+      if (!hasDataToEvaluate) {
+        JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.nothing.to.execute"), project);
       }
     }
     catch (Exception ex) {
@@ -100,7 +98,7 @@ final class ExecuteJShellAction extends AnAction{
   }
 
   @Nullable
-  private PsiElement getSnippetFromContext(Project project, AnActionEvent e) {
+  private static PsiElement getSnippetFromContext(Project project, @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

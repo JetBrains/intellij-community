@@ -227,7 +227,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             notificationListener.hyperlinkUpdate(notification, e);
           }
         };
-        assert toolWindowId != null;
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {

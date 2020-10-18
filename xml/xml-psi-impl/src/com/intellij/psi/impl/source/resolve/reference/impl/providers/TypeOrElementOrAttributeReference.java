@@ -230,7 +230,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return nsDescriptor instanceof XsdNsDescriptor ? (XsdNsDescriptor)nsDescriptor:null;
   }
 
-  private static String getNamespace(final XmlTag tag, final String text) {
+  private static @NotNull String getNamespace(final @NotNull XmlTag tag, final String text) {
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(text);
     final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
     if (!namespaceByPrefix.isEmpty()) return namespaceByPrefix;
@@ -244,8 +244,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       if (targetNS != null) {
         final String targetNsPrefix = rootTag.getPrefixByNamespace(targetNS);
 
-        if (namespacePrefix.equals(targetNsPrefix) ||
-            (namespaceByPrefix.isEmpty() && targetNsPrefix == null)) {
+        if (namespacePrefix.equals(targetNsPrefix) || targetNsPrefix == null) {
           return targetNS;
         }
       }

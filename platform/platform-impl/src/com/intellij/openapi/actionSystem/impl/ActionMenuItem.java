@@ -228,11 +228,12 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
         }
         Icon selected = myPresentation.getSelectedIcon();
-        if (selected == null)
+        if (selected == null) {
           selected = icon;
+        }
 
         setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
-        setSelectedIcon(wrapNullIcon(selected != null ? selected : icon));
+        setSelectedIcon(wrapNullIcon(selected));
         setDisabledIcon(wrapNullIcon(disabled));
       }
     }

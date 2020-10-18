@@ -65,7 +65,7 @@ public class IndentHelperImpl extends IndentHelper {
       }
 
       if (includeNonSpace) {
-        return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1) + getIndent(file, text, includeNonSpace);
+        return getIndentInner(file, prev, true, recursionLevel + 1) + getIndent(file, text, true);
       }
 
 
@@ -78,10 +78,10 @@ public class IndentHelperImpl extends IndentHelper {
       }
 
       if (parent == null) {
-        return getIndent(file, text, includeNonSpace);
+        return getIndent(file, text, false);
       }
       else {
-        return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1);
+        return getIndentInner(file, prev, false, recursionLevel + 1);
       }
     }
     else {

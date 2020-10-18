@@ -409,7 +409,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       else if (isArgumentInVarargPosition(expressions, ei, varargParam, substitutor)) {
         if (pi == parameters.length - 1) {
-          assert varargParam != null;
           final PsiType type = varargParam.getType();
           result.add(ParameterInfoImpl.create(pi).withName(varargParam.getName()).withType(type));
           buf.append(escapePresentableType(type));

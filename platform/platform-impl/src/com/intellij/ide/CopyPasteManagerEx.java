@@ -316,6 +316,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
     else if (t instanceof Sizeable) {
       int size = ((Sizeable)t).getSize();
+      //noinspection ConstantConditions
       if (size >= 0) {
         return size;
       }

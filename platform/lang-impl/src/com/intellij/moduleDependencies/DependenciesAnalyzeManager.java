@@ -62,6 +62,6 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state != null ? state : new State();
+    myState = state;
   }
 }

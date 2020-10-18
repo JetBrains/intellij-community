@@ -573,7 +573,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
       }
 
-      if (!deps.isEmpty() && !selectedModules.isEmpty()) {
+      if (!deps.isEmpty()) {
         final String message = checked ? getEnableMessage(selectedModules, deps) : getDisableMessage(deps);
         if (Messages.showOkCancelDialog(message, checked ? ExternalSystemBundle.message("enable.dependant.modules")
                                                          : ExternalSystemBundle.message("disable.modules.with.dependency.on.this"),

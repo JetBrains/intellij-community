@@ -60,10 +60,8 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
   @Override
   public void loadState(@NotNull RemoteRepositoriesConfiguration.State state) {
     final List<RemoteRepositoryDescription> loaded = new SmartList<>();
-    if (state.data != null) {
-      for (State.Repo repo : state.data) {
-        loaded.add(new RemoteRepositoryDescription(repo.id, repo.name, repo.url));
-      }
+    for (State.Repo repo : state.data) {
+      loaded.add(new RemoteRepositoryDescription(repo.id, repo.name, repo.url));
     }
     setRepositories(loaded);
   }

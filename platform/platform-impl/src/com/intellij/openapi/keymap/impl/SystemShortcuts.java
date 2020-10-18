@@ -347,9 +347,6 @@ public final class SystemShortcuts {
     if (ourShkClass == null) {
       ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
     }
-    if (ourShkClass == null) {
-      return ourUnknownSysAction;
-    }
 
     if (ourMethodGetDescription == null) {
       ourMethodGetDescription = ReflectionUtil.getMethod(ourShkClass, "getDescription");
@@ -397,9 +394,6 @@ public final class SystemShortcuts {
 
       if (ourShkClass == null) {
         ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-      }
-      if (ourShkClass == null) {
-        return;
       }
 
       if (ourMethodReadSystemHotkeys == null) {

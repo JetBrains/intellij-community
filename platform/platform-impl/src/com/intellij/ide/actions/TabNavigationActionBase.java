@@ -56,7 +56,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
       return;
     }
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (toolWindowManager != null && toolWindowManager.isEditorComponentActive()) {
+    if (toolWindowManager.isEditorComponentActive()) {
       final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
       EditorWindow currentWindow = EditorWindow.DATA_KEY.getData(dataContext);
       if (currentWindow == null){

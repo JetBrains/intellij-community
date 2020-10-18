@@ -52,11 +52,9 @@ public class JDParser {
     if (info == null || !isJavadoc(info)) return;
 
     JDComment comment = parse(info, formatter);
-    if (comment != null) {
-      String indent = formatter.getIndent(info.commentOwner);
-      String commentText = comment.generate(indent);
-      formatter.replaceCommentText(commentText, info.docComment);
-    }
+    String indent = formatter.getIndent(info.commentOwner);
+    String commentText = comment.generate(indent);
+    formatter.replaceCommentText(commentText, info.docComment);
   }
 
   private static boolean isJavadoc(CommentInfo info) {
@@ -130,7 +128,7 @@ public class JDParser {
     return new CommentInfo(docComment, owner, commentHeader, sb.toString(), commentFooter);
   }
 
-  private JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
+  private @NotNull JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
     JDComment comment = createComment(info.commentOwner, formatter);
     parse(info.comment, comment);
     if (info.commentHeader != null) {
@@ -458,7 +456,7 @@ public class JDParser {
 
           // wrap now
           if (wrapPos >= seq.length() - 1 || wrapPos < 0) {
-            seq = isMarked ? seq : seq.trim();
+            seq = seq.trim();
             list.add(seq);
             break;
           }

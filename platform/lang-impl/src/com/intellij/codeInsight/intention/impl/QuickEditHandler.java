@@ -95,7 +95,6 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     myNewVirtualFile = Objects.requireNonNull((LightVirtualFile)myNewFile.getVirtualFile());
     myNewVirtualFile.setOriginalFile(injectedFile.getVirtualFile());
 
-    assert myNewFile != null : "PSI file is null";
     assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
 
     // suppress possible errors as in injected mode

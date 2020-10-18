@@ -127,9 +127,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setTitle("Component Panel Test Action");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());

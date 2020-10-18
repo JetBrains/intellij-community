@@ -421,7 +421,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if (commentContext.docAsterisk) {
-          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
+          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, true,
                                                          !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
         }
 

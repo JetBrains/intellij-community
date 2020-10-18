@@ -333,7 +333,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         myDialog.setLocation(showPoint.getScreenPoint());
       }
       else {
-        w.setLocationRelativeTo(parent);
+        w.setLocationRelativeTo(null);
       }
       mySuggestRegexHintForEmptyResults = true;
       myDialog.show();

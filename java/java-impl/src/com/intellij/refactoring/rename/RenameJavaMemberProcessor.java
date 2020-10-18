@@ -24,10 +24,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +55,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
       occurence.replace(qualified);
     }
     else {
-      PsiReferenceExpression qualified = createQualifiedMemberReference(occurence, newName, containingClass, isStatic);
+      PsiReferenceExpression qualified = createQualifiedMemberReference(occurence, newName, containingClass, false);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
       occurence.replace(qualified);
     }
@@ -244,7 +244,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
       if (ref == null) return;
       final PsiElement occurrence = ref.getElement();
       final PsiElement target = info.getReferencedElement();
-      if (target instanceof PsiMember && occurrence != null) {
+      if (target instanceof PsiMember) {
         final PsiMember targetMember = (PsiMember)target;
         PsiClass containingClass = targetMember.getContainingClass();
         qualifyMember(occurrence, targetMember.getName(), containingClass, true);

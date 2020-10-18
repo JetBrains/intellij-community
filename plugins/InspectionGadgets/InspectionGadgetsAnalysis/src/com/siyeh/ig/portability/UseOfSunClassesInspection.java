@@ -49,7 +49,7 @@ public class UseOfSunClassesInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)deepComponentType;
       @NonNls final String className = classType.getCanonicalText();
-      if (className == null || !className.startsWith("sun.")) {
+      if (!className.startsWith("sun.")) {
         return;
       }
       final PsiTypeElement typeElement = variable.getTypeElement();
@@ -72,7 +72,7 @@ public class UseOfSunClassesInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)type;
       @NonNls final String className = classType.getCanonicalText();
-      if (className == null || !className.startsWith("sun.")) {
+      if (!className.startsWith("sun.")) {
         return;
       }
       registerNewExpressionError(newExpression);

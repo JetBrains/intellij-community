@@ -79,7 +79,7 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
             // html tag, not found in jsp tree
             result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), unescapedName, index, XmlTag.class);
           }
-          else if (name.equals("<unnamed>") && parent != null) {
+          else if (name.equals("<unnamed>")) {
             // scriplet/declaration missed because null name
             result = restoreElementInternal(parent, "", index, XmlTag.class);
           }

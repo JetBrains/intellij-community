@@ -191,7 +191,7 @@ public final class IncProjectBuilder {
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
       // If build was canceled for some reasons e.g compilation error we should report built modules
-      if (sourcesState != null) sourcesState.reportSourcesState();
+      sourcesState.reportSourcesState();
       // some builder decided to stop the build
       // report optional progress message if any
       final String msg = e.getMessage();

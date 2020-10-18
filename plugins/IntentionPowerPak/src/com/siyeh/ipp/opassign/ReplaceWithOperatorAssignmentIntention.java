@@ -51,7 +51,6 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)PsiUtil.deparenthesizeExpression(rhs);
     assert polyadicExpression != null;
     final PsiExpression lhs = expression.getLExpression();
-    assert rhs != null;
     final PsiExpression[] operands = polyadicExpression.getOperands();
     final PsiJavaToken sign = polyadicExpression.getTokenBeforeOperand(operands[1]);
     assert sign != null;

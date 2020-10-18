@@ -140,9 +140,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
           @Override
           @NotNull
           public String getTextFor(final DomElement value) {
-            final String name = DomUtil.getFile(value).getName();
-            assert name != null;
-            return name;
+            return DomUtil.getFile(value).getName();
           }
         }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }

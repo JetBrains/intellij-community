@@ -229,8 +229,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myConfiguration.loadState(computeState());
   }
 
-  @Nullable
-  private ExcludesConfigurationState computeState() {
+  private @NotNull ExcludesConfigurationState computeState() {
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {

@@ -55,13 +55,11 @@ public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
-      if (!(aClass.getParent() instanceof PsiJavaFile)) {
+      PsiElement parent = aClass.getParent();
+      if (!(parent instanceof PsiJavaFile)) {
         return;
       }
-      final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-      if (file == null) {
-        return;
-      }
+      final PsiJavaFile file = (PsiJavaFile)parent;
       int numClasses = 0;
       final PsiElement[] children = file.getChildren();
       for (final PsiElement child : children) {

@@ -135,8 +135,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       .filterMap(myActionManager::getAction)
       .transform(action -> {
         ActionWrapper wrapper = wrapAnAction(action, context);
-        Integer degree = matcher.matchingDegree(pattern);
-        return new MatchedValue(wrapper, pattern, degree == null ? 0 : degree.intValue()) {
+        int degree = matcher.matchingDegree(pattern);
+        return new MatchedValue(wrapper, pattern, degree) {
           @NotNull
           @Override
           public String getValueText() {

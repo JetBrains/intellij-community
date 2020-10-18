@@ -132,9 +132,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
     final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
-      @Nullable
       @Override
-      public JComponent createComponent() {
+      public @NotNull JComponent createComponent() {
         final Splitter splitter = new Splitter(true);
 
         final JPanel eqPanel = new JPanel(new BorderLayout());

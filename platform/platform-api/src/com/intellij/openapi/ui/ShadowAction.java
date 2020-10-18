@@ -121,9 +121,6 @@ public final class ShadowAction {
     }
 
     Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return;
-    }
 
     ShortcutSet shortcutSet = new CustomShortcutSet(keymap.getShortcuts(myActionId));
     shortcutSetDisposable = Disposer.newDisposable();

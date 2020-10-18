@@ -92,9 +92,8 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
         return null;
       }
 
-      @Nullable
       @Override
-      public Icon getIcon(boolean unused) {
+      public @NotNull Icon getIcon(boolean unused) {
         return AllIcons.Nodes.CustomRegion;
       }
     };

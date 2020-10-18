@@ -61,9 +61,7 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
 
   @Override
   public void loadState(@NotNull ProjectDictionaryState state) {
-    if (state != null) {
-      this.dictionaryStates = state.dictionaryStates;
-    }
+    this.dictionaryStates = state.dictionaryStates;
     retrieveProjectDictionaries();
   }
 

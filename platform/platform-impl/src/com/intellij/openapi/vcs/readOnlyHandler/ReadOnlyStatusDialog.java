@@ -107,16 +107,14 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   @Override
   protected boolean isToBeShown() {
     ReadonlyStatusHandlerImpl.State state = ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState();
-    return state != null && state.SHOW_DIALOG;
+    return state.SHOW_DIALOG;
   }
 
   @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     if (onOk) {
       ReadonlyStatusHandlerImpl.State state = ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState();
-      if (state != null) {
-        state.SHOW_DIALOG = value;
-      }
+      state.SHOW_DIALOG = value;
     }
   }
 

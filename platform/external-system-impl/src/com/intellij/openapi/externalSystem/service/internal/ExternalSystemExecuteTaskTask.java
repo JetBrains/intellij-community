@@ -110,7 +110,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
         ));
       }
     }
-    assert result != null;
     return result;
   }
 

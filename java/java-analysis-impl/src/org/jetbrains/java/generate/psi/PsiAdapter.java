@@ -642,7 +642,7 @@ public final class PsiAdapter {
     public static String @NotNull [] getImplementsClassnames(PsiClass clazz) {
         PsiClass[] interfaces = clazz.getInterfaces();
 
-        if (interfaces == null || interfaces.length == 0) {
+        if (interfaces.length == 0) {
           return ArrayUtilRt.EMPTY_STRING_ARRAY;
         }
 

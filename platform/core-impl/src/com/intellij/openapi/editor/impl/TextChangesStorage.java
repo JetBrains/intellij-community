@@ -181,7 +181,7 @@ public class TextChangesStorage {
         ));
         return insertionIndex;
       }
-      else if (insertionIndex > 0 && !myChanges.isEmpty()) {
+      else if (insertionIndex > 0) {
         ChangeEntry changeEntry = myChanges.get(insertionIndex - 1);
         clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
       }
@@ -429,7 +429,7 @@ public class TextChangesStorage {
             break;
           }
         }
-        if (end >= clientStart && clientStart < clientEnd) {
+        if (clientStart < clientEnd) {
           int changeTextStartOffset = start <= clientStart ? 0 : start - clientStart;
           int length = Math.min(clientEnd, end) - Math.max(clientStart, start);
           CharArrayUtil.getChars(changeEntry.change.getText(), data, changeTextStartOffset, outputOffset, length);

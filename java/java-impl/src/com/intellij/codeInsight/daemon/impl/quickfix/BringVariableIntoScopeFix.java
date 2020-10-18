@@ -110,7 +110,6 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     PsiLocalVariable outOfScopeVariable = myOutOfScopeVariable;
-    LOG.assertTrue(outOfScopeVariable != null);
     PsiManager manager = file.getManager();
     outOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(outOfScopeVariable, PsiModifier.FINAL, false);

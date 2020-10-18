@@ -100,9 +100,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
         final MemberChooser<PsiElementClassMember> chooser =
             new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
-                @Nullable
                 @Override
-                protected String getHelpId() {
+                protected @NotNull String getHelpId() {
                     return "editing.altInsert.tostring";
                 }
 

@@ -82,11 +82,9 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod, parameter));
         ReferencesSearch.search(nodeMethod).forEach(reference -> {
           final PsiElement element = reference.getElement();
-          if (element != null) {
-            JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
-            if (safeDeleteDelegate != null) {
-              safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
-            }
+          JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+          if (safeDeleteDelegate != null) {
+            safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
           }
           return true;
         });

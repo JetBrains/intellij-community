@@ -162,14 +162,15 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * Note, that the method never returns {@code null}. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
-  @NotNull public Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     // Check cached value first
-    if(myIcon != null){
+    if (myIcon != null) {
       return myIcon;
     }
 
     // Create new icon
-    if(myIconPath != null && myIconPath.length() > 0) {
+    if (myIconPath != null && myIconPath.length() > 0) {
       final VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
@@ -183,10 +184,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
         myIcon = IconLoader.findIcon(myIconPath);
       }
     }
-    if(myIcon == null){
+    if (myIcon == null) {
       myIcon = UIDesignerIcons.Unknown;
-     }
-    LOG.assertTrue(myIcon != null);
+    }
     return myIcon;
   }
 

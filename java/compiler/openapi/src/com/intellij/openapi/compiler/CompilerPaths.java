@@ -44,7 +44,7 @@ public class CompilerPaths {
   /**
    * @return a root directory where compiler caches for the given project are stored
    */
-  public static File getCacheStoreDirectory(final Project project) {
+  public static @NotNull File getCacheStoreDirectory(final Project project) {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 

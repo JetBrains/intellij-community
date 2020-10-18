@@ -90,9 +90,8 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
       };
       Disposer.register(myDisposable, treeStructure);
       treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
-        @Nullable
         @Override
-        public ExternalProjectsStructure getStructure() {
+        public @NotNull ExternalProjectsStructure getStructure() {
           return treeStructure;
         }
 

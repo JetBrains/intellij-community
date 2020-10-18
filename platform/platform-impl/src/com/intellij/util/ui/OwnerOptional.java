@@ -48,10 +48,7 @@ public final class OwnerOptional {
 
     if (owner instanceof Dialog) {
       Dialog ownerDialog = (Dialog)owner;
-      if (ownerDialog.isModal() || UIUtil.isPossibleOwner(ownerDialog)) {
-        owner = ownerDialog;
-      }
-      else {
+      if (!ownerDialog.isModal() && !UIUtil.isPossibleOwner(ownerDialog)) {
         while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
           owner = owner.getOwner();
         }

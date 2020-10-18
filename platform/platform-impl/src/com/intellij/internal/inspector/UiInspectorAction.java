@@ -1454,7 +1454,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
                 changed = ((Boolean)value).booleanValue();
               }
             }
-          } catch (Exception e) {changed = false;}
+          }
+          catch (Exception ignored) {
+          }
           myProperties.add(new PropertyBean(prefix + propertyName, propertyValue, changed));
         }
         catch (Exception ignored) {

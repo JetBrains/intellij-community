@@ -98,9 +98,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
     public XDebuggerTreeNode getDebuggerTreeRoot() {
       try {
         JComponent debuggerComponent = getTabComponent("Debugger");
-        if (debuggerComponent != null) {
-          myRobot.click(debuggerComponent);
-        }
+        myRobot.click(debuggerComponent);
         ThreeComponentsSplitter threeComponentsSplitter =
           myRobot.finder().findByType(debuggerComponent, ThreeComponentsSplitter.class, false);
         JComponent innerComponent = threeComponentsSplitter.getInnerComponent();
@@ -194,7 +192,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
     public boolean stop() {
       for (final ActionButton button : getToolbarButtons()) {
         final AnAction action = button.getAction();
-        if (action != null && action.getClass().getName().equals("com.intellij.execution.actions.StopAction")) {
+        if (action.getClass().getName().equals("com.intellij.execution.actions.StopAction")) {
           //noinspection ConstantConditions
           boolean enabled = method("isButtonEnabled").withReturnType(boolean.class).in(button).invoke();
           if (enabled) {

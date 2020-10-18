@@ -162,7 +162,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     myConflicts = new MultiMap<>();
     for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
-      if (newName == null) continue;
       UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(
         element, myRefactoringScope, mySearchInComments, mySearchInNonJavaFiles, newName);
       final ArrayList<UsageInfo> infos = new ArrayList<>(Arrays.asList(usages));
@@ -395,8 +394,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
 
-  @Nullable
-  private String getNewQName(PsiElement element) {
+  private @NotNull String getNewQName(PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
     if (element instanceof PsiClass) {
       return StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(((PsiClass)element).getName()));

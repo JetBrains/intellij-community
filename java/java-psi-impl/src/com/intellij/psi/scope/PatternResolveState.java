@@ -32,9 +32,6 @@ public enum PatternResolveState {
   @NotNull
   public static PatternResolveState stateAtParent(PsiPatternVariable element, PsiExpression parent) {
     PsiPattern pattern = element.getPattern();
-    if (pattern == null) {
-      throw new IllegalArgumentException("Variable has no pattern associated");
-    }
     PatternResolveState state = WHEN_TRUE;
     for (PsiElement prev = pattern, current = prev.getParent(); prev != parent; prev = current, current = current.getParent()) {
       if (current instanceof PsiInstanceOfExpression || current instanceof PsiParenthesizedExpression ||

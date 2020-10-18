@@ -210,7 +210,6 @@ final class BindToExistingBeanStep extends StepAdapter{
 
           // There are two possible types: boolean and java.lang.String
           @NonNls final String typeName = returnType.getCanonicalText();
-          LOG.assertTrue(typeName != null);
           if(!"boolean".equals(typeName) && !"java.lang.String".equals(typeName)){
             continue;
           }

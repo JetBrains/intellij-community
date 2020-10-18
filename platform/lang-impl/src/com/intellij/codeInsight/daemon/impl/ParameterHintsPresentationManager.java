@@ -170,9 +170,8 @@ public final class ParameterHintsPresentationManager implements Disposable {
       return null;
     }
 
-    @Nullable
     @Override
-    public String getContextMenuGroupId(@NotNull Inlay inlay) {
+    public @NotNull String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 

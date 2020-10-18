@@ -176,7 +176,7 @@ public final class DnDManagerImpl extends DnDManager {
       }
     }
 
-    if (currentEvent == null) return currentEvent;
+    if (currentEvent == null) return null;
 
     final DnDAction dndAction = getDnDActionForPlatformAction(nativeAction);
     if (dndAction == null) return null;

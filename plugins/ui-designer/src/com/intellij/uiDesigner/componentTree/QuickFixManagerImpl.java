@@ -54,7 +54,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
 
 
       final String text;
-      if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
+      if (errorInfos.length > 0) {
         text = errorInfos [0].myDescription;
       }
       else {

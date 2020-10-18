@@ -59,7 +59,7 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
 
   @Override
   public void loadState(@NotNull DictionaryState state) {
-    if (state != null && state.name != null) {
+    if (state.name != null) {
       name = state.name;
       words = state.words;
     }

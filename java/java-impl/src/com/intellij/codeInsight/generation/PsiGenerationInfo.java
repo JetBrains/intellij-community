@@ -89,7 +89,6 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
       member = (T)existingMember;
       if (!member.isValid()) {
         LOG.error("invalid member: " + member +
-                  " existing member: " + existingMember.isValid() +
                   " self modified list: " + modifierList +
                   " existing modified list: " + existingModifierList);
       }

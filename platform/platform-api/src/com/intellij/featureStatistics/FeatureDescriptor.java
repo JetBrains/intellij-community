@@ -80,7 +80,7 @@ public class FeatureDescriptor{
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
     List dependencies = element.getChildren(ELEMENT_DEPENDENCY);
-    if (dependencies != null && !dependencies.isEmpty()) {
+    if (!dependencies.isEmpty()) {
       myDependencies = new HashSet<>();
       for (Object dependency : dependencies) {
         Element dependencyElement = (Element)dependency;

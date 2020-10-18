@@ -101,6 +101,6 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
     }
 
-    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);
+    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, null, width);
   }
 }

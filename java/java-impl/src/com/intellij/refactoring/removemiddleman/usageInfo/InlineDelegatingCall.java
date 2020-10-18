@@ -49,7 +49,6 @@ public class InlineDelegatingCall extends FixableUsageInfo {
     replacementText.append(myAccess).append(".");
     replacementText.append(delegatingName).append('(');
     final PsiExpressionList argumentList = expression.getArgumentList();
-    assert argumentList != null;
     final PsiExpression[] args = argumentList.getExpressions();
     boolean first = true;
     for (int i : paramaterPermutation) {

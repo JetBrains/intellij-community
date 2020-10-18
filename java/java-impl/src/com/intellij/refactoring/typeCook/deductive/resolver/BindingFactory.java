@@ -512,7 +512,7 @@ public class BindingFactory {
           }
         }
         else {
-          binding.myBindings.put(index, type);
+          binding.myBindings.put(index, null);
         }
       }
 

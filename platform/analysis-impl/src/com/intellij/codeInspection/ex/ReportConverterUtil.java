@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,23 +18,18 @@ import java.nio.file.Paths;
 
 public final class ReportConverterUtil {
   public static @Nullable InspectionsReportConverter getReportConverter(@Nullable String outputFormat) {
-    return InspectionsReportConverter.EP_NAME.getExtensionList().stream()
-      .filter(converter -> converter.getFormatName().equals(outputFormat))
-      .findFirst().orElse(null);
+    return ContainerUtil.find(InspectionsReportConverter.EP_NAME.getExtensionList(), converter -> converter.getFormatName().equals(outputFormat));
   }
 
   @NotNull
   public static Path getResultsDataPath(@NotNull Disposable parentDisposable, @Nullable InspectionsReportConverter reportConverter, @NotNull String outputPath) throws IOException {
     Path resultsDataPath;
-    if ((reportConverter == null || !reportConverter.useTmpDirForRawData())
-        // use default xml converter(if null( or don't store default xml report in tmp dir
-        &&
-        outputPath != null) {  // and don't use STDOUT stream
+    // use default xml converter(if null( or don't store default xml report in tmp dir
+    if (reportConverter == null || !reportConverter.useTmpDirForRawData()) {  // and don't use STDOUT stream
       resultsDataPath = Paths.get(outputPath);
       Files.createDirectories(resultsDataPath);
     }
     else {
-
       File tmpDir = FileUtilRt.createTempDirectory("inspections", "data", false);
       Disposer.register(parentDisposable, () -> FileUtil.delete(tmpDir));
       resultsDataPath = tmpDir.toPath();

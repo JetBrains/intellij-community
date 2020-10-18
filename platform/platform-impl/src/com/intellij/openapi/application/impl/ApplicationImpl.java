@@ -979,7 +979,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       throw (RuntimeException)result.getThrowable();
     }
 
-    return !(result.getThrowable() instanceof ProcessCanceledException);
+    return true;
   }
 
   private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {

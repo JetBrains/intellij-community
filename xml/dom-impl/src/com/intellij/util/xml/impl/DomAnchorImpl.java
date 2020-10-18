@@ -354,9 +354,8 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       myHandler = handler;
     }
 
-    @Nullable
     @Override
-    public T retrieveDomElement() {
+    public @NotNull T retrieveDomElement() {
       return (T)myHandler.getProxy();
     }
 

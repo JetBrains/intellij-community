@@ -21,7 +21,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (window != null) {
       final EditorWindow[] siblings = window.findSiblings();
-      if (siblings != null && siblings.length == 1) {
+      if (siblings.length == 1) {
         final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
         final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
         vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
@@ -53,7 +53,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   private static boolean isEnabled(VirtualFile vFile, EditorWindow window) {
     if (vFile != null && window != null) {
       final EditorWindow[] siblings = window.findSiblings ();
-      if (siblings != null && siblings.length == 1) {
+      if (siblings.length == 1) {
         return true;
       }
     }

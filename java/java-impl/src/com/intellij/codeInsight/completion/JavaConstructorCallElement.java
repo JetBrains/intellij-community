@@ -77,9 +77,8 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return myConstructor;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @NotNull PsiElement getPsiElement() {
     return myConstructor;
   }
 

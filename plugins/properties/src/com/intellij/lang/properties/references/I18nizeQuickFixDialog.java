@@ -502,7 +502,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
           }
           else {
             FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-            LOG.assertTrue(template != null);
             return (PsiFile)FileTemplateUtil.createFromTemplate(template, file.getName(), null, psiManager.findDirectory(dir));
           }
         }

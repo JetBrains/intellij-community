@@ -21,7 +21,6 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.MethodUpHandler;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.TemplateLanguageStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -54,7 +53,7 @@ public class MethodUpAction extends BaseCodeInsightAction implements DumbAware {
   static boolean checkValidForFile(final PsiFile file) {
     try {
       final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
-      return structureViewBuilder instanceof TreeBasedStructureViewBuilder || structureViewBuilder instanceof TemplateLanguageStructureViewBuilder;
+      return structureViewBuilder instanceof TreeBasedStructureViewBuilder;
     }
     catch (IndexNotReadyException e) {
       return false;

@@ -38,7 +38,6 @@ public class XmlPrefixReferenceProvider extends PsiReferenceProvider {
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     XmlAttributeValue attributeValue = (XmlAttributeValue)element;
     String value = attributeValue.getValue();
-    if (value == null) return PsiReference.EMPTY_ARRAY;
     int i = value.indexOf(':');
     if (i <= 0) return PsiReference.EMPTY_ARRAY;
     PsiElement parent = attributeValue.getParent();

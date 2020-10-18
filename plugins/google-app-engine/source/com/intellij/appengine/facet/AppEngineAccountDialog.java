@@ -45,7 +45,7 @@ public class AppEngineAccountDialog {
 
   public static void storePassword(@NotNull String email, @NotNull String password) {
     String accountName = getPasswordKey(email);
-    PasswordSafe.getInstance().set(CredentialAttributes(AppEngineAccountDialog.class, accountName), password == null ? null : new Credentials(accountName, password));
+    PasswordSafe.getInstance().set(CredentialAttributes(AppEngineAccountDialog.class, accountName), new Credentials(accountName, password));
   }
 
   private static String getPasswordKey(String email) {

@@ -187,11 +187,10 @@ public abstract class ActionGroup extends AnAction {
     boolean dumbAware = super.isDumbAware();
     if (dumbAware) {
       myDumbAware = Boolean.TRUE;
-    } else {
-      if (myDumbAware == null) {
-        Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-        myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
-      }
+    }
+    else {
+      Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+      myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
     }
 
     return myDumbAware;

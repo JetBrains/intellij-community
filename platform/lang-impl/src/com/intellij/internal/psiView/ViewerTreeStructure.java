@@ -89,7 +89,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
         if (!myShowWhiteSpaces) {
           final List<PsiElement> childrenList = new ArrayList<>(elementChildren.length);
           for (PsiElement psiElement : elementChildren) {
-            if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
+            if (psiElement instanceof PsiWhiteSpace) {
               continue;
             }
             childrenList.add(psiElement);

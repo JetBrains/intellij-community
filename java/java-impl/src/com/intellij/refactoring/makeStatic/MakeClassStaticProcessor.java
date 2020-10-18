@@ -36,6 +36,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         PsiParameter parameter = factory.createParameter(classParameterName, parameterType);
         PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, makeClassParameterFinal(usages) || generateFinalParams);
         addParameterAfter = paramList.addAfter(parameter, null);
-        anchor = javaDocHelper.addParameterAfter(classParameterName, anchor);
+        anchor = javaDocHelper.addParameterAfter(classParameterName, null);
 
         addAssignmentToField(classParameterName, constructor);
 
@@ -159,7 +160,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
-  private String convertToFieldName(final String parameterName) {
+  private @NotNull String convertToFieldName(final String parameterName) {
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(myProject);
     final String propertyName = manager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
     final String fieldName = manager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
@@ -209,9 +210,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
           String name = mySettings.getNameForField((PsiField)resolved);
           if (name != null) {
             name = convertToFieldName(name);
-            if (name != null) {
-              newRef = (PsiReferenceExpression) factory.createExpressionFromText(name, null);
-            }
+            newRef = (PsiReferenceExpression) factory.createExpressionFromText(name, null);
           }
         }
       }

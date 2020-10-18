@@ -93,7 +93,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             if (!fromUpdate) {
               final String name = ((PsiDirectory)element).getName();
               final String path = relativePath != null ? (relativePath.length() > 0 ? (relativePath + "/") : "") + name : null;
-              final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), fromUpdate, path, relativeMap);
+              final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), false, path, relativeMap);
               if (map == null) return null;
               for (Map.Entry<PsiFile, PsiClass[]> entry : map.entrySet()) {
                 fillResultsMap(result, entry.getKey(), entry.getValue());

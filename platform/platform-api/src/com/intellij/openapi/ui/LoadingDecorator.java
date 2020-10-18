@@ -177,12 +177,12 @@ public class LoadingDecorator {
     public void setVisible(final boolean visible, boolean takeSnapshot) {
       if (myVisible == visible) return;
 
-      if (myVisible && !visible && myCurrentAlpha != -1) return;
+      if (myVisible && myCurrentAlpha != -1) return;
 
       myVisible = visible;
       myFadeOutAnimator.reset();
       if (myVisible) {
-        setVisible(myVisible);
+        setVisible(true);
         myCurrentAlpha = -1;
 
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {

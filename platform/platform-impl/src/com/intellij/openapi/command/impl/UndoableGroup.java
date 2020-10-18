@@ -261,7 +261,7 @@ final class UndoableGroup implements Dumpable {
         }
       }
       if (global) {
-        finishMark.setGlobal(global);
+        finishMark.setGlobal(true);
         finishMark.setCommandName(commandName);
       }
     }

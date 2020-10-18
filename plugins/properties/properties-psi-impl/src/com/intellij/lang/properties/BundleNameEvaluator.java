@@ -18,6 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface BundleNameEvaluator {
@@ -40,8 +41,7 @@ public interface BundleNameEvaluator {
 
   BundleNameEvaluator BASE_NAME = new BundleNameEvaluator() {
     @Override
-    @Nullable
-    public String evaluateBundleName(final PsiFile psiFile) {
+    public @NotNull String evaluateBundleName(final PsiFile psiFile) {
       return ResourceBundleManager.getInstance(psiFile.getProject()).getBaseName(psiFile);
     }
   };

@@ -54,7 +54,7 @@ public class ExternalProjectsWorkspaceImpl implements PersistentStateComponent<E
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state == null ? new State() : state;
+    myState = state;
   }
 
   public static boolean isDependencySubstitutionEnabled() {

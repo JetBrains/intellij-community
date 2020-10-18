@@ -479,7 +479,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         }
 
-        if (first == null || last == null) continue;
+        if (first == null) continue;
         Rectangle firstBounds = getPathBounds(getPath(first));
 
         if (isExpanded(getPath(last))) {

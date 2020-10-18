@@ -33,7 +33,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
   protected Block getRootBlock(PsiElement element, FileViewProvider viewProvider, CodeStyleSettings settings) {
     ASTNode node = element.getNode();
     if (node == null) {
-      return createDummyBlock(node);
+      return createDummyBlock(null);
     }
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();

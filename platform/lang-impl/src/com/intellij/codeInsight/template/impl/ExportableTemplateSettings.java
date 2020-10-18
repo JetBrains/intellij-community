@@ -7,7 +7,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,9 +19,8 @@ import java.util.List;
 final class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
   public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
 
-  @Nullable
   @Override
-  public ExportableTemplateSettings getState() {
+  public @NotNull ExportableTemplateSettings getState() {
     return this;
   }
 
