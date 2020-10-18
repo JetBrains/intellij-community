@@ -3,12 +3,10 @@ package com.intellij.execution;
 
 import com.intellij.execution.target.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.wizard.AbstractWizardStepEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ObjectUtils;
@@ -135,14 +133,8 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     }
 
     @Nullable
-    private Pair<T, List<AbstractWizardStepEx>> createStepsForNewWizard(Project project, LanguageRuntimeType<?> defaultRuntimeType) {
-      T config = type.createDefaultConfig();
-      List<AbstractWizardStepEx> steps = type.createStepsForNewWizard(project, config, defaultRuntimeType);
-      if (steps == null) {
-        LOGGER.error("Cannot instantiate remote target wizard");
-        return null;
-      }
-      return Pair.create(config, steps);
+    TargetEnvironmentWizard createWizard(@NotNull Project project, @Nullable LanguageRuntimeType<?> languageRuntime) {
+      return TargetEnvironmentWizard.createWizard(project, type, languageRuntime);
     }
   }
 
@@ -154,17 +146,12 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
       }
       if (anObject instanceof Type) {
         //noinspection unchecked,rawtypes
-        Pair<TargetEnvironmentConfiguration, List<AbstractWizardStepEx>> wizardData =
-          ((Type)anObject).createStepsForNewWizard(myProject, myDefaultRuntimeType);
-        if (wizardData != null) {
-          TargetEnvironmentConfiguration newTarget = wizardData.first;
-          TargetEnvironmentWizard wizard = new TargetEnvironmentWizard(
-            myProject, ExecutionBundle.message("run.on.targets.wizard.title.new.target"), newTarget, wizardData.second);
-          if (wizard.showAndGet()) {
-            TargetEnvironmentsManager.getInstance().addTarget(newTarget);
-            addTarget(newTarget, 2);
-            setSelectedIndex(2);
-          }
+        TargetEnvironmentWizard wizard = ((Type)anObject).createWizard(myProject, myDefaultRuntimeType);
+        if (wizard != null && wizard.showAndGet()) {
+          TargetEnvironmentConfiguration newTarget = wizard.getSubject();
+          TargetEnvironmentsManager.getInstance().addTarget(newTarget);
+          addTarget(newTarget, 2);
+          setSelectedIndex(2);
         }
         return;
       }

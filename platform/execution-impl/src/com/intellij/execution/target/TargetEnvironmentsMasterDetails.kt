@@ -15,7 +15,8 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.ui.StatusText
 
-class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val project: Project, private val initialSelectedName: String? = null)
+class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val project: Project,
+                                                                private val initialSelectedName: String? = null)
   : MasterDetailsComponent() {
 
   init {
@@ -94,16 +95,30 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
       .filterNotNull()
       .toList()
 
-  private inner class CreateNewTargetAction<T : TargetEnvironmentConfiguration>(private val type: TargetEnvironmentType<T>)
+  private inner class CreateNewTargetAction<T : TargetEnvironmentConfiguration>(private val project: Project,
+                                                                                private val type: TargetEnvironmentType<T>)
     : DumbAwareAction(type.displayName, null, type.icon) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      val newConfig = type.createDefaultConfig()
-      type.initializeNewlyCreated(newConfig)
-      // there may be not yet stored names
-      newConfig.displayName = UniqueNameGenerator.generateUniqueName(type.displayName) { curName ->
-        getConfiguredTargets().none { it.displayName == curName }
+      val newConfig: TargetEnvironmentConfiguration
+
+      val wizard = TargetEnvironmentWizard.createWizard(project, type, null)
+      if (wizard != null) {
+        if (!wizard.showAndGet()) return
+
+        newConfig = wizard.subject
       }
+      else {
+        newConfig = type.createDefaultConfig()
+        type.initializeNewlyCreated(newConfig)
+      }
+
+      if (newConfig.displayName.isBlank()) {
+        newConfig.displayName = UniqueNameGenerator.generateUniqueName(type.displayName) { curName ->
+          getConfiguredTargets().none { it.displayName == curName }
+        }
+      }
+      // there may be not yet stored names
       TargetEnvironmentsManager.instance.ensureUniqueName(newConfig)
       val newNode = addTargetNode(newConfig)
       selectNodeInTree(newNode, true, true)
@@ -118,7 +133,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return TargetEnvironmentType.EXTENSION_NAME.extensionList
-        .map { CreateNewTargetAction(it) }
+        .map { CreateNewTargetAction(project, it) }
         .toArray(AnAction.EMPTY_ARRAY)
     }
 
