@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import icons.MavenIcons
 import org.jetbrains.idea.maven.execution.RunnerBundle
@@ -15,6 +16,7 @@ import java.util.concurrent.CompletableFuture
 class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
   override val icon = MavenIcons.ExecuteMavenGoal
 
+  @NlsSafe
   override val displayName = "Maven"
 
   override val configurableDescription = "Configure Maven"

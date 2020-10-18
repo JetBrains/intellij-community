@@ -47,7 +47,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
       }
     }
     if (!types.isEmpty()) {
-      model.addElement(new Separator("New Targets"));
+      model.addElement(new Separator(ExecutionBundle.message("run.on.targets.label.new.targets")));
       for (Type<?> type : types) {
         model.addElement(type);
       }
@@ -61,7 +61,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   public void addTarget(@NotNull TargetEnvironmentConfiguration config, int index) {
     if (!hasSavedTargets) {
       hasSavedTargets = true;
-      ((MyModel)getModel()).insertElementAt(new Separator("Saved Targets"), 1);
+      ((MyModel)getModel()).insertElementAt(new Separator(ExecutionBundle.message("run.on.targets.label.saved.targets")), 1);
     }
     Icon icon = TargetEnvironmentConfigurationKt.getTargetType(config).getIcon();
     ((MyModel)getModel()).insertElementAt(new Target(config.getDisplayName(), icon), index);
@@ -114,13 +114,13 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   }
 
   private static final class Separator extends Item {
-    private Separator(String displayName) {
+    private Separator(@NlsContexts.Label String displayName) {
       super(displayName, null);
     }
   }
 
   private static final class Target extends Item {
-    private Target(String name, Icon icon) {
+    private Target(@NlsContexts.Label String name, Icon icon) {
       super(name, icon);
     }
   }
@@ -158,7 +158,8 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
           ((Type)anObject).createStepsForNewWizard(myProject, myDefaultRuntimeType);
         if (wizardData != null) {
           TargetEnvironmentConfiguration newTarget = wizardData.first;
-          TargetEnvironmentWizard wizard = new TargetEnvironmentWizard(myProject, "New Target", newTarget, wizardData.second);
+          TargetEnvironmentWizard wizard = new TargetEnvironmentWizard(
+            myProject, ExecutionBundle.message("run.on.targets.wizard.title.new.target"), newTarget, wizardData.second);
           if (wizard.showAndGet()) {
             TargetEnvironmentsManager.getInstance().addTarget(newTarget);
             addTarget(newTarget, 2);

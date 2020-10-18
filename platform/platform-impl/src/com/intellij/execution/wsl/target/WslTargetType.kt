@@ -7,11 +7,13 @@ import com.intellij.execution.wsl.WSLUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
 
 class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(TYPE_ID) {
+
   override val displayName: String
-    get() = "WSL"
+    @NlsSafe get() = "WSL"
 
   override val icon: Icon = AllIcons.RunConfigurations.Wsl
 

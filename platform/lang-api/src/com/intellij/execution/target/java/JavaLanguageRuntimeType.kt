@@ -13,11 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
 
+  @Nls
   override val displayName = "Java"
 
   override val configurableDescription = "Configure Java"
