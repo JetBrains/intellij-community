@@ -18,10 +18,6 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
     this.variableClassName = variableClassName;
   }
 
-  public AbstractReplaceExplicitTypeWithVariableIntentionAction(Class<?> variableClass) {
-    this(variableClass.getName());
-  }
-
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override

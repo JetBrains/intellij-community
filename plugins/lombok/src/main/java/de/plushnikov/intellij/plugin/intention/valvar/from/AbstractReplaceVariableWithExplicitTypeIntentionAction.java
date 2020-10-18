@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import org.jetbrains.annotations.Nls;
@@ -18,10 +19,6 @@ public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction ext
     this.variableClassName = variableClassName;
   }
 
-  public AbstractReplaceVariableWithExplicitTypeIntentionAction(Class<?> variableClass) {
-    this(variableClass.getName());
-  }
-
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -31,10 +28,10 @@ public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction ext
 
   @Override
   public boolean isAvailableOnVariable(PsiVariable psiVariable) {
-    if ("lombok.val".equals(variableClassName)) {
+    if (LombokClassNames.VAL.equals(variableClassName)) {
       return ValProcessor.isVal(psiVariable);
     }
-    if ("lombok.var".equals(variableClassName)) {
+    if (LombokClassNames.VAR.equals(variableClassName)) {
       return ValProcessor.isVar(psiVariable);
     }
     return false;

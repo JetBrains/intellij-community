@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -18,18 +19,11 @@ import java.util.Collections;
 
 public class ValProcessor extends AbstractProcessor {
 
-  private static final String LOMBOK_VAL_NAME = "val";
-  private static final String LOMBOK_VAR_NAME = "var";
-  private static final String LOMBOK_VAL_FQN = LombokClassNames.VAL;
-  private static final String LOMBOK_VAR_FQN = LombokClassNames.VAR;
-  private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = LombokClassNames.EXPERIMENTAL_VAR;
+  private static final String LOMBOK_VAL_NAME = StringUtil.getShortName(LombokClassNames.VAL);
+  private static final String LOMBOK_VAR_NAME = StringUtil.getShortName(LombokClassNames.VAR);
 
-  @SuppressWarnings("unchecked")
-  public ValProcessor() throws ClassNotFoundException {
-    super(PsiElement.class,
-          LombokClassNames.VAL,
-          LombokClassNames.EXPERIMENTAL_VAR,
-          LombokClassNames.VAR);
+  public ValProcessor() {
+    super(PsiElement.class, LombokClassNames.VAL, LombokClassNames.EXPERIMENTAL_VAR, LombokClassNames.VAR);
   }
 
   public static boolean isVal(@NotNull PsiVariable psiVariable) {
@@ -107,7 +101,7 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   private static boolean isVal(@Nullable String fullQualifiedName) {
-    return LOMBOK_VAL_FQN.equals(fullQualifiedName);
+    return LombokClassNames.VAL.equals(fullQualifiedName);
   }
 
   private static boolean isPossibleVar(@Nullable String shortName) {
@@ -115,7 +109,7 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   private static boolean isVar(@Nullable String fullQualifiedName) {
-    return LOMBOK_VAR_FQN.equals(fullQualifiedName) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(fullQualifiedName);
+    return LombokClassNames.VAR.equals(fullQualifiedName) || LombokClassNames.EXPERIMENTAL_VAR.equals(fullQualifiedName);
   }
 
   @Nullable
