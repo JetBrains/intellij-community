@@ -4,6 +4,7 @@ package com.intellij.execution.process.mediator
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
+import com.intellij.openapi.util.io.FileUtil
 import io.grpc.ManagedChannel
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
@@ -16,10 +17,9 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
+import java.io.*
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
@@ -38,6 +38,7 @@ open class ProcessMediatorTest {
 
   private lateinit var client: ProcessMediatorClient
   private lateinit var daemon: ProcessMediatorDaemon
+  private lateinit var tmpDir: Path
 
   protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
@@ -55,10 +56,12 @@ open class ProcessMediatorTest {
     daemon = createProcessMediatorDaemon(testInfo)
     val channel = daemon.createChannel()
     client = ProcessMediatorClient(coroutineScope, channel)
+    tmpDir = Files.createTempDirectory("")
   }
 
   @AfterEach
   fun tearDown() {
+    FileUtil.delete(tmpDir)
     try {
       client.close()
     }
@@ -237,6 +240,81 @@ open class ProcessMediatorTest {
     assertTrue(hasExited)
     assertFalse(process.isAlive)
     destroyProcess(process)
+  }
+
+  @Test
+  internal fun `input redirect`() {
+    val content = "test data"
+    val inputFile = File(tmpDir.toFile(), "input.txt")
+    inputFile.writeText(content)
+
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
+      .redirectInput(inputFile)
+      .startMediatedProcess()
+
+    // Writing to the redirected stream is not allowed.
+    assertThrows(IOException::class.java) {
+      OutputStreamWriter(process.outputStream).use {
+        it.write("this wouldn't work\n")
+        it.flush()
+      }
+    }
+
+    val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+    assertEquals(content + '\n', output)
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
+    destroyProcess(process)
+  }
+
+  @Test
+  internal fun `output redirect`() {
+    val outputFile = File(tmpDir.toFile(), "output.txt")
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
+      .redirectOutput(outputFile)
+      .startMediatedProcess()
+
+    val content = "test data\n"
+    OutputStreamWriter(process.outputStream).use {
+      it.write(content)
+      it.flush()
+    }
+
+    // Reading from a redirected stream will always result in empty output.
+    val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+    assertEquals("", output)
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
+    destroyProcess(process)
+
+    assertEquals(content, outputFile.readText())
+  }
+
+  @Test
+  internal fun `error redirect`() {
+    val errorFile = File(tmpDir.toFile(), "error.txt")
+    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
+      .apply { command().add("with_stderr") }
+      .redirectError(errorFile)
+      .startMediatedProcess()
+
+    val content = "test data\n"
+    OutputStreamWriter(process.outputStream).use {
+      it.write(content)
+      it.flush()
+    }
+
+    // Reading from a redirected stream will always result in empty output.
+    val output = BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
+    assertEquals("", output)
+
+    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    assertTrue(hasExited)
+    destroyProcess(process)
+
+    assertEquals(content, errorFile.readText())
   }
 
   @Test
