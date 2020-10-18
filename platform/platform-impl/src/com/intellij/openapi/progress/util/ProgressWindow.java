@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BlockingProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -216,10 +217,37 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         pumpEventsForHierarchy();
         return null;
       });
+    } catch (Throwable t) {
+      if (isRunning()) {
+        LOG.warn("Exception while pumping messages in ProgressWindow#startBlocking. " +
+                 "The dialog modality state message processing is finished. " + t.getMessage(), new RuntimeException(t));
+      }
+      throw t;
     }
     finally {
       exitModality();
     }
+  }
+
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    var wasRunning = isRunning();
+    super.initStateFrom(indicator);
+    var newIsRunning = isRunning();
+    if (wasRunning == newIsRunning) return;
+
+    String extra = "";
+    if (wasRunning) {
+      extra = "It may cause the messages processing with the dialog ModalityState " +
+              "to exit faster and provoke deadlocks, especially when invokeLaterAndWait() alike " +
+              "methods were used under the progress. ";
+    }
+
+    LOG.warn("Calling ProgressWindow#initStateFrom() changed the isRunning() from " +
+             wasRunning + " to " + newIsRunning + ". " + extra +
+             "this=" + this + ", " +
+             "indicator=" + indicator, new RuntimeException()
+    );
   }
 
   public void pumpEventsForHierarchy() {
