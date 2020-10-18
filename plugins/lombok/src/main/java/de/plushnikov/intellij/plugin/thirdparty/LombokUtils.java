@@ -33,7 +33,16 @@ Various problems with spring have also been reported. See issue #287, issue #271
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-    return LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
+    return toGetterName(accessorsInfo, psiFieldName, isBoolean);
+  }
+
+  public static String getSetterName(@NotNull PsiField psiField) {
+    return getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+  }
+
+  public static String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    return toSetterName(accessorsInfo, psiField.getName(), isBoolean);
   }
 
   /**

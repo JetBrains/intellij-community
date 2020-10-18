@@ -249,6 +249,10 @@
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceVarWithExplicitTypeIntentionAction</className>
       <category>Lombok</category>
     </intentionAction>
+    <intentionAction>
+      <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
+      <category>Lombok</category>
+    </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
