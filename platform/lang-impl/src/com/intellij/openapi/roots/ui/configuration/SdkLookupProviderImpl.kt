@@ -46,9 +46,11 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     val context = SdkLookupContext()
     this.context = context
     context.onProgress(builder.progressIndicator)
+    val progressIndicator = context.progressIndicator ?: ProgressIndicatorBase()
+
     val parameters = builder
       .copy(
-        progressIndicator = context.progressIndicator,
+        progressIndicator = progressIndicator,
         //listeners are merged, so copy is the way to avoid chaining the listeners
         onSdkNameResolved = { sdk ->
           context.setSdkInfo(sdk)
@@ -67,7 +69,7 @@ class SdkLookupProviderImpl : SdkLookupProvider {
   private class SdkLookupContext {
     private val sdk = AsyncPromise<Sdk?>()
     private val sdkInfo = AtomicReference<SdkInfo>(SdkInfo.Unresolved)
-    val progressIndicator = ProgressIndicatorBase()
+    var progressIndicator : ProgressIndicator? = null
 
     @TestOnly
     fun getSdkPromiseForTests() = sdk
@@ -76,9 +78,7 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     fun blockingGetSdk(): Sdk? = sdk.get()
 
     fun onProgress(progressIndicator: ProgressIndicator?) {
-      if (progressIndicator is ProgressIndicatorEx) {
-        this.progressIndicator.addStateDelegate(progressIndicator)
-      }
+      this.progressIndicator = progressIndicator
     }
 
     fun setSdkInfo(sdk: Sdk?) {

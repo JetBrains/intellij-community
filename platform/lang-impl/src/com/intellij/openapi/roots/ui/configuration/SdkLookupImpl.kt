@@ -8,8 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
-import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,7 +17,6 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
@@ -46,13 +43,10 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
 
-  fun attachIndicatorIfNeeded(rootProgressIndicator: ProgressIndicatorBase) {
-    val indicator = params.progressIndicator ?: return
-    if (indicator is ProgressIndicatorEx) {
-      rootProgressIndicator.addStateDelegate(indicator)
-    } else {
-      rootProgressIndicator.addStateDelegate(RelayUiToDelegateIndicator(indicator))
-    }
+  fun resolveProgressIndicator() : ProgressIndicator {
+    val indicator = params.progressIndicator
+    if (indicator != null) return indicator
+    return ProgressIndicatorBase()
   }
 
   fun onSdkNameResolved(sdk: Sdk?) {
@@ -148,7 +142,7 @@ internal class SdkLookupImpl : SdkLookup {
         }
       }
 
-      override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, action: (ProgressIndicator) -> Unit) {
+      override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator, action: (ProgressIndicator) -> Unit) {
         //it is already running under progress, no need to open yet another one
         action.invoke(rootProgressIndicator)
       }
@@ -162,8 +156,7 @@ internal class SdkLookupImpl : SdkLookup {
 
 private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
   fun lookup() {
-    val rootProgressIndicator = ProgressIndicatorBase()
-    attachIndicatorIfNeeded(rootProgressIndicator)
+    val rootProgressIndicator = resolveProgressIndicator()
 
     run {
       val namedSdk = sdkName?.let {
@@ -269,7 +262,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     return true
   }
 
-  private fun continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicatorBase) {
+  private fun continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicator) {
     if (sdkType == null) {
       //it is not possible to suggest everything, if [sdkType] is not specified
       onSdkResolved(null)
@@ -370,35 +363,15 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
                         .firstOrNull()
   }
 
-  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase,
+  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator,
                                          action: (ProgressIndicator) -> Unit) {
     val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
     val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND){
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
-        runWithBoundProgress(rootProgressIndicator, indicator, action)
+        runUnderNestedProgressAndRelayMessages(rootProgressIndicator, indicator, action = action)
       }
     })
-  }
-
-  fun runWithBoundProgress(rootProgressIndicator: ProgressIndicatorBase,
-                           indicator: ProgressIndicator,
-                           action: (ProgressIndicatorBase) -> Unit) {
-    object : ProgressIndicatorListenerAdapter() {
-      override fun cancelled() {
-        rootProgressIndicator.cancel()
-      }
-    }.installToProgressIfPossible(indicator)
-
-    val relayToVisibleIndicator: ProgressIndicatorEx = RelayUiToDelegateIndicator(indicator)
-    rootProgressIndicator.addStateDelegate(relayToVisibleIndicator)
-
-    try {
-      action(rootProgressIndicator)
-    }
-    finally {
-      rootProgressIndicator.removeStateDelegate(relayToVisibleIndicator)
-    }
   }
 }
