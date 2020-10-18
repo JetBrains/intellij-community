@@ -259,12 +259,11 @@ public class WhatsNewAction extends AnAction implements DumbAware {
            "            <div class=\"container\">\n" +
            "                <div class=\"content\">\n" +
            "                    <h2 class=\"title title_h2 offset-24\">\n" +
-           "                        The page cannot be loaded\n" +
+           "                        Couldn't load page\n" +
            "                    </h2>\n" +
            "\n" +
            "                    <p class=\"text offset-24\">\n" +
-           "                        Content for this page cannot be loaded. Please check\n" +
-           "                        your internet connection.\n" +
+           "                        The content for this page cannot be loaded. Please check your internet connection.\n" +
            "                    </p>\n" +
            "\n" +
            "                    <p class=\"text offset-12\">\n" +
