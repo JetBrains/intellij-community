@@ -27,7 +27,7 @@ public class RevealProjectDirAction extends DumbAwareAction implements LightEdit
     ReopenProjectAction action = getReopenAction(e);
     assert action != null;
     String path = action.getProjectPath();
-    RevealFileAction.openDirectory(new File(path));
+    RevealFileAction.selectDirectory(new File(path));
   }
 
   @Override
