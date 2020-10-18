@@ -29,7 +29,7 @@ import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
-  private static final String ID = "Problems View";
+  public static final String ID = "Problems View";
   private static final int CURRENT_FILE_INDEX = 0;
 
   public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
