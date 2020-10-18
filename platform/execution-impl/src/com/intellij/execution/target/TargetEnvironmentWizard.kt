@@ -4,10 +4,10 @@ package com.intellij.execution.target
 import com.intellij.ide.wizard.AbstractWizardEx
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts
 
 class TargetEnvironmentWizard(project: Project,
-                              @Nls title: String,
+                              @NlsContexts.DialogTitle title: String,
                               val subject: TargetEnvironmentConfiguration,
                               steps: List<AbstractWizardStepEx>)
   : AbstractWizardEx(title, project, steps) {
