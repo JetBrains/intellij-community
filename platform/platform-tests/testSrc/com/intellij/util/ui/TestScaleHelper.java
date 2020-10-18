@@ -145,7 +145,7 @@ public final class TestScaleHelper {
       if (StartupUiUtil.isUnderDarcula()) {
         flags |= ImageLoader.USE_DARK;
       }
-      Image img = ImageLoader.loadFromUrl(new File(path).toURI().toURL().toString(), null, flags, null, ctx);
+      Image img = ImageLoader.loadFromUrl(new File(path).toURI().toURL().toString(), null, flags, ctx);
       return ImageUtil.toBufferedImage(img);
     }
     catch (MalformedURLException e) {

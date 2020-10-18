@@ -239,7 +239,7 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
       // do not use cache
       int flags = ImageLoader.ALLOW_FLOAT_SCALING;
       if (isDark) {
@@ -552,9 +552,8 @@ public final class IconLoader {
       icon = getOrigin((RetrievableIcon)icon);
     }
 
-    return Objects.requireNonNull(iconToDisabledIcon.get(icon, it -> {
-      return filterIcon(it, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
-    }));
+    return Objects.requireNonNull(iconToDisabledIcon.get(icon,
+           existingIcon -> filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor)));
   }
 
   /**
@@ -692,9 +691,7 @@ public final class IconLoader {
       return key instanceof Pair && ((Pair<?, ?>)key).second == classLoader;
     });
 
-    iconToDisabledIcon.asMap().keySet().removeIf(icon -> {
-      return icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader);
-    });
+    iconToDisabledIcon.asMap().keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
   }
 
   @ApiStatus.Internal
@@ -736,12 +733,7 @@ public final class IconLoader {
       this.localFilterSupplier = localFilterSupplier;
 
       // For instance, ShadowPainter updates the context from outside.
-      getScaleContext().addUpdateListener(new UserScaleContext.UpdateListener() {
-        @Override
-        public void contextUpdated() {
-          realIcon = null;
-        }
-      });
+      getScaleContext().addUpdateListener(() -> realIcon = null);
     }
 
     private static @Nullable ImageIcon unwrapIcon(Object icon) {
@@ -937,18 +929,16 @@ public final class IconLoader {
       return isDarkOverridden == null ? pathTransform.get().isDark() : isDarkOverridden;
     }
 
-    private @Nullable List<ImageFilter> getFilters() {
+    private @NotNull List<ImageFilter> getFilters() {
       ImageFilter global = pathTransform.get().getFilter();
       ImageFilter local = localFilterSupplier == null ? null : localFilterSupplier.get();
       if (global != null && local != null) {
         return Arrays.asList(global, local);
       }
-      else if (global != null) {
+      if (global != null) {
         return Collections.singletonList(global);
       }
-      else {
-        return local == null ? null : Collections.singletonList(local);
-      }
+      return local == null ? Collections.emptyList() : Collections.singletonList(local);
     }
 
     public final @Nullable URL getURL() {
@@ -1014,7 +1004,7 @@ public final class IconLoader {
     }
 
     private static long key(@NotNull ScaleContext context) {
-      return (((long)Float.floatToIntBits((float)context.getScale(DerivedScaleType.EFF_USR_SCALE))) << 32) |
+      return ((long)Float.floatToIntBits((float)context.getScale(DerivedScaleType.EFF_USR_SCALE)) << 32) |
              ((long)Float.floatToIntBits((float)context.getScale(SYS_SCALE)) & 0xffffffffL);
     }
 
@@ -1071,7 +1061,7 @@ public final class IconLoader {
 
   @ApiStatus.Internal
   public interface ImageDataLoader {
-    @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark);
+    @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark);
 
     @Nullable URL getURL();
 
@@ -1090,7 +1080,7 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
       int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
       if (isDark) {
         flags |= ImageLoader.USE_DARK;
@@ -1196,7 +1186,7 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
       int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (useCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;
@@ -1260,10 +1250,10 @@ public final class IconLoader {
     }
   }
 
-  static @Nullable URL doResolve(@Nullable String path,
-                                 @Nullable ClassLoader classLoader,
-                                 @Nullable Class<?> ownerClass,
-                                 @NotNull HandleNotFound handleNotFound) {
+  private static @Nullable URL doResolve(@Nullable String path,
+                                         @Nullable ClassLoader classLoader,
+                                         @Nullable Class<?> ownerClass,
+                                         @NotNull HandleNotFound handleNotFound) {
     URL url = null;
     if (path != null) {
       if (classLoader != null) {

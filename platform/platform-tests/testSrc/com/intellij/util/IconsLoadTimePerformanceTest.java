@@ -73,7 +73,7 @@ public class IconsLoadTimePerformanceTest {
         if (StartupUiUtil.isUnderDarcula()) {
           flags |= ImageLoader.USE_DARK;
         }
-        ImageLoader.loadFromUrl(url.toString(), null, flags, null, ScaleContext.create());
+        ImageLoader.loadFromUrl(url.toString(), null, flags, ScaleContext.create());
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

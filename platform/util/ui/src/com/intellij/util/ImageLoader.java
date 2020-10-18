@@ -102,9 +102,9 @@ public final class ImageLoader {
                                          String name,
                                          String ext,
                                          float scale,
-                                         @NotNull List<ImageDescriptor> list) {
+                                         @NotNull List<? super ImageDescriptor> list) {
     String _ext = isSvg ? "svg" : ext;
-    float _scale = isSvg ? scale : (retina ? 2 : 1);
+    float _scale = isSvg ? scale : retina ? 2 : 1;
 
     if (retina && isDark) {
       list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true));
@@ -125,7 +125,7 @@ public final class ImageLoader {
 
   @ApiStatus.Internal
   public static @Nullable Image loadRasterized(@NotNull String path,
-                                               @Nullable List<ImageFilter> filters,
+                                               @NotNull List<? extends ImageFilter> filters,
                                                @NotNull ClassLoader classLoader,
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                                @NotNull ScaleContext scaleContext,
@@ -148,7 +148,7 @@ public final class ImageLoader {
 
     float imageScale;
 
-    String ext = isSvg ? "svg" : (dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1));
+    String ext = isSvg ? "svg" : dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1);
 
     String effectivePath;
     boolean isEffectiveDark = isDark;
@@ -203,7 +203,7 @@ public final class ImageLoader {
 
   @ApiStatus.Internal
   public static @Nullable Image load(@NotNull String path,
-                                     @Nullable List<ImageFilter> filters,
+                                     @NotNull List<? extends ImageFilter> filters,
                                      @Nullable Class<?> resourceClass,
                                      @Nullable ClassLoader classLoader,
                                      @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
@@ -379,7 +379,7 @@ public final class ImageLoader {
   // originalUserSize - The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
   // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
   public static @Nullable Image convertImage(@NotNull Image image,
-                                             @Nullable List<ImageFilter> filters,
+                                             @NotNull List<? extends ImageFilter> filters,
                                              @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                              ScaleContext scaleContext,
                                              boolean isUpScaleNeeded,
@@ -396,7 +396,7 @@ public final class ImageLoader {
       image = scaleImage(image, scale);
     }
 
-    if (filters != null && !filters.isEmpty()) {
+    if (!filters.isEmpty()) {
       Toolkit toolkit = Toolkit.getDefaultToolkit();
       for (ImageFilter filter : filters) {
         if (filter != null) {
@@ -419,9 +419,9 @@ public final class ImageLoader {
     return createImageDescriptorList(path, flags, scaleContext);
   }
 
-  private static List<ImageDescriptor> createImageDescriptorList(@NotNull String path,
-                                                                 @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                                 @NotNull ScaleContext scaleContext) {
+  private static @NotNull List<ImageDescriptor> createImageDescriptorList(@NotNull String path,
+                                                                          @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
+                                                                          @NotNull ScaleContext scaleContext) {
     // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than up-scaling non-retina images.
     float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
@@ -467,7 +467,7 @@ public final class ImageLoader {
       flags |= USE_DARK;
     }
     String path = url.toString();
-    return load(path, null, null, null, flags, ScaleContext.create(), !path.endsWith(".svg"));
+    return load(path, Collections.emptyList(), null, null, flags, ScaleContext.create(), !path.endsWith(".svg"));
   }
 
   /**
@@ -477,11 +477,10 @@ public final class ImageLoader {
   public static @Nullable Image loadFromUrl(@NotNull String path,
                                             @Nullable Class<?> aClass,
                                             @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                            @Nullable List<ImageFilter> filters,
                                             @NotNull ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    return load(path, filters, aClass, null, flags, scaleContext, !path.endsWith(".svg"));
+    return load(path, Collections.emptyList(), aClass, null, flags, scaleContext, !path.endsWith(".svg"));
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
@@ -546,7 +545,7 @@ public final class ImageLoader {
     int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
     flags = BitUtil.set(flags, USE_DARK, StartupUiUtil.isUnderDarcula());
     //noinspection MagicConstant
-    return load(path, null, aClass, null, flags, scaleContext, false);
+    return load(path, Collections.emptyList(), aClass, null, flags, scaleContext, false);
   }
 
   public static Image loadFromBytes(byte @NotNull [] bytes) {
