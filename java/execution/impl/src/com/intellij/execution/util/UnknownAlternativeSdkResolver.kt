@@ -3,6 +3,7 @@ package com.intellij.execution.util
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,8 +13,8 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.roots.ui.configuration.*
-import com.intellij.openapi.roots.ui.configuration.SdkLookup.Companion.getInstance
 import com.intellij.openapi.roots.ui.configuration.SdkLookup.Companion.newLookupBuilder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import kotlin.jvm.Throws
 
 @Service //project
 class UnknownAlternativeSdkResolver(private val project: Project) {
@@ -61,7 +61,17 @@ class UnknownAlternativeSdkResolver(private val project: Project) {
           .onSdkResolved { sdk: Sdk? ->
             theSdk.set(sdk)
           }
-        getInstance().lookupBlocking(lookup as SdkLookupParameters)
+        SdkLookup.getInstance().lookupBlocking(lookup as SdkLookupParameters)
+
+        val fix = theFix.get()
+        if (theSdk.get() == null && fix != null && UnknownSdkTracker.getInstance(myProject).isAutoFixAction(fix)) {
+          theFix.set(null)
+          invokeAndWaitIfNeeded {
+            if (project.isDisposed) return@invokeAndWaitIfNeeded
+            val sdk = UnknownSdkTracker.getInstance(myProject).applyAutoFixAndNotify(fix, indicator)
+            theSdk.set(sdk)
+          }
+        }
       }
     }.queue()
 

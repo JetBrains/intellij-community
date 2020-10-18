@@ -301,6 +301,27 @@ public class UnknownSdkTracker {
     return otherFixes;
   }
 
+  public boolean isAutoFixAction(@Nullable UnknownSdkFixAction fix) {
+    return fix instanceof UnknownMissingSdkFixLocal;
+  }
+
+  @NotNull
+  public Sdk applyAutoFixAndNotify(@NotNull UnknownSdkFixAction fix, @NotNull ProgressIndicator indicator) throws IllegalArgumentException {
+    if (!isAutoFixAction(fix)) throw new IllegalArgumentException("The argument must pass #isAutoFixAction test");
+    assert fix instanceof UnknownMissingSdkFixLocal : "Invalid fix: " + fix;
+
+    indicator.pushState();
+    indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
+
+    try {
+      return fix.applySuggestionBlocking(indicator);
+    }
+    finally {
+      indicator.popState();
+      UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(List.of((UnknownMissingSdkFixLocal)fix));
+    }
+  }
+
   @NotNull
   private List<UnknownSdkLookup> collectSdkLookups(@NotNull ProgressIndicator indicator) {
     List<UnknownSdkLookup> lookups = new ArrayList<>();
