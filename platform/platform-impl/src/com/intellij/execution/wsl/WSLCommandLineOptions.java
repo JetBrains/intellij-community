@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WSLCommandLineOptions {
+public final class WSLCommandLineOptions {
 
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
@@ -62,6 +62,9 @@ public class WSLCommandLineOptions {
    */
   public @NotNull WSLCommandLineOptions setRemoteWorkingDirectory(@Nullable String remoteWorkingDirectory) {
     myRemoteWorkingDirectory = remoteWorkingDirectory;
+    if (remoteWorkingDirectory != null && !remoteWorkingDirectory.startsWith("/")) {
+      throw new AssertionError("Linux path was expected, but got " + remoteWorkingDirectory);
+    }
     return this;
   }
 
