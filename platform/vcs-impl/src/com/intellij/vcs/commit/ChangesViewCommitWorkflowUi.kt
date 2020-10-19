@@ -27,13 +27,6 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   fun setCompletionContext(changeLists: List<LocalChangeList>)
 }
 
-interface CommitProgressUi {
-  var isEmptyMessage: Boolean
-  var isEmptyChanges: Boolean
-
-  var isDumbMode: Boolean
-}
-
 interface CommitAuthorListener : EventListener {
   fun commitAuthorChanged()
 }
