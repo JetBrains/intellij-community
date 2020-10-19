@@ -106,6 +106,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       updateTopPanel(internalTemplate);
       myNameField.selectAll();
       myExtensionField.selectAll();
+      myFileName.setPlaceholder(IdeBundle.message(template != null && FileTemplateBase.isChild(template) ? "template.file.name" : "template.file.name.optional"));
     }
   }
 
@@ -126,19 +127,19 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       JLabel extLabel = new JLabel(IdeBundle.message("label.extension"));
       extLabel.setLabelFor(myExtensionField);
       myTopPanel.add(extLabel,
-                     new GridBagConstraints(child ? 0 : 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+                     new GridBagConstraints(child ? 0 : 2, child ? 1 : 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
                                             GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
       myTopPanel.add(myExtensionField,
-                     new GridBagConstraints(child ? 1 : 3, 0, 1, 1, .3, 0.0, GridBagConstraints.WEST,
+                     new GridBagConstraints(child ? 1 : 3, child ? 1 : 0, 1, 1, .3, 0.0, GridBagConstraints.WEST,
                                             child ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
       if (child || (isEditable() || StringUtil.isNotEmpty(myFileName.getText()))) {
         JLabel label = new JLabel(IdeBundle.message("label.generate.file.name"));
         label.setLabelFor(myFileName);
         myTopPanel.add(label,
-                       new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                       new GridBagConstraints(0, child ? 0 : 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                               GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
         myTopPanel.add(myFileName,
-                       new GridBagConstraints(1, 1, 3, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+                       new GridBagConstraints(1, child ? 0 : 1, 3, 1, 1.0, 0.0, GridBagConstraints.CENTER,
                                               GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
       }
     }
@@ -173,6 +174,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myFileName = new EditorTextField(createDocument(createFile("", "file name")), myProject, myVelocityFileType);
     myFileName.setFont(EditorUtil.getEditorFont());
     myFileName.setPlaceholder(IdeBundle.message("template.file.name"));
+    myFileName.setShowPlaceholderWhenFocused(true);
 
     myDescriptionComponent = new JEditorPane();
     myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -439,8 +441,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   }
 
   public void focusToNameField() {
-    JTextField field = FileTemplateBase.isChild(myTemplate) ? myExtensionField : myNameField;
-    field.selectAll();
+    JComponent field = FileTemplateBase.isChild(myTemplate) ? myFileName : myNameField;
+    myNameField.selectAll();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
   }
 }
