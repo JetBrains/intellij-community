@@ -61,7 +61,7 @@ public class JsonValidationError {
     private static String getPropertyNameWithComment(MissingPropertyIssueData prop) {
       String comment = "";
       if (prop.enumItemsCount == 1) {
-        comment = " = " + prop.defaultValue.toString();
+        comment = " = " + prop.defaultValue;
       }
       return "'" + prop.propertyName + "'" + comment;
     }

@@ -44,6 +44,6 @@ public class PsiJavaTokenImpl extends LeafPsiElement implements PsiJavaToken{
 
   @Override
   public String toString(){
-    return "PsiJavaToken:" + getElementType().toString();
+    return "PsiJavaToken:" + getElementType();
   }
 }

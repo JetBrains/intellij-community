@@ -421,7 +421,7 @@ final class ProjectData {
       ContentData(@NotNull Content content, @NotNull BarContainer barContainer) {
         this.content = content;
         this.barContainer = barContainer;
-        contextName = toolWindowId + "_" + content.toString();
+        contextName = toolWindowId + "_" + content;
       }
 
       void setOptionalContextActions(ActionGroup group) {

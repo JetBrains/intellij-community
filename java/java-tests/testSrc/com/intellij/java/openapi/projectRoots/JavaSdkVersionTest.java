@@ -21,7 +21,7 @@ public class JavaSdkVersionTest {
   @Test
   public void maxLanguageLevelSanity() {
     for (JavaSdkVersion version : JavaSdkVersion.values()) {
-      assertFalse("Fails for " + version.toString(), version.getMaxLanguageLevel().isPreview());
+      assertFalse("Fails for " + version, version.getMaxLanguageLevel().isPreview());
     }
   }
 

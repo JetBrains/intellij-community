@@ -154,7 +154,7 @@ public final class TestScaleHelper {
   }
 
   public static String msg(UserScaleContext ctx) {
-    return "[JRE-HiDPI " + JreHiDpiUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
+    return "[JRE-HiDPI " + JreHiDpiUtil.isJreHiDPIEnabled() + "], " + ctx;
   }
 
   private static class MyGraphicsConfiguration extends GraphicsConfiguration {

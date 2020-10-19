@@ -244,7 +244,7 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   private static void checkWithExpected(Collection<? extends PsiType> suggestedTypes, final String... expectedTypes) {
-    assertEquals("Suggested types: " + suggestedTypes.toString(), expectedTypes.length, suggestedTypes.size());
+    assertEquals("Suggested types: " + suggestedTypes, expectedTypes.length, suggestedTypes.size());
     assertTrue(ContainerUtil.map(suggestedTypes, PsiType::getCanonicalText).containsAll(Arrays.asList(expectedTypes)));
   }
 

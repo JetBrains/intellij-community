@@ -530,7 +530,7 @@ public class TreeTraverserTest extends TestCase {
                  "POST_ORDER_DFS [null]\n" +
                  "PRE_ORDER_DFS [null]\n" +
                  "TRACING_BFS [null]",
-                 StringUtil.join(traversals.map(o -> o + " " + t1.traverse(o).toList().toString()), "\n"));
+                 StringUtil.join(traversals.map(o -> o + " " + t1.traverse(o).toList()), "\n"));
 
     JBTreeTraverser<Object> t2 = JBTreeTraverser.from(o -> JBIterable.of(nil, nil)).withRoots(Arrays.asList(42));
     assertEquals("BI_ORDER_DFS [42, null, null, null, null, 42]\n" +
@@ -541,7 +541,7 @@ public class TreeTraverserTest extends TestCase {
                  "POST_ORDER_DFS [null, null, 42]\n" +
                  "PRE_ORDER_DFS [42, null, null]\n" +
                  "TRACING_BFS [42, null]",
-                 StringUtil.join(traversals.map(o -> o + " " + t2.traverse(o).toList().toString()), "\n"));
+                 StringUtil.join(traversals.map(o -> o + " " + t2.traverse(o).toList()), "\n"));
   }
 
   public void testSimplePreOrderDfs() {

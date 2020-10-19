@@ -144,7 +144,7 @@ public final class JBCefApp {
       .getProviders()
       .stream()
       .flatMap(p -> {
-        LOG.debug("got options: [" + p.getOptions().toString() + "] from:" + p.getClass().getName());
+        LOG.debug("got options: [" + p.getOptions() + "] from:" + p.getClass().getName());
         return p.getOptions().stream();
       })
       .distinct()

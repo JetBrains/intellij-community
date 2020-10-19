@@ -1016,7 +1016,7 @@ public final class IncProjectBuilder {
             LOG.info(e);
           }
           finally {
-            LOG.debug("Finished compilation of " + task.getChunk().toString());
+            LOG.debug("Finished compilation of " + task.getChunk());
             myTasksCountDown.countDown();
             List<BuildChunkTask> nextTasks;
             synchronized (myQueueLock) {

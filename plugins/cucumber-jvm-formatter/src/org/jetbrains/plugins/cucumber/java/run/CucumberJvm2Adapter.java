@@ -123,7 +123,7 @@ public class CucumberJvm2Adapter {
     public String getStepName() {
       String stepName;
       if (myRealStep.isHook()) {
-        stepName = "Hook: " + myRealStep.getHookType().toString();
+        stepName = "Hook: " + myRealStep.getHookType();
       } else {
         stepName = getStepKeyword() + " " + myRealStep.getStepText();
       }

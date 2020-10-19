@@ -151,9 +151,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     List<ActionUrl> storedActions = schema.getActions();
     if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("stored: " + storedActions.toString());
+      System.err.println("stored: " + storedActions);
       //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("actual: " + getActions().toString());
+      System.err.println("actual: " + getActions());
     }
     if (storedActions.size() != getActions().size()) {
       return true;

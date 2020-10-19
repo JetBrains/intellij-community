@@ -291,7 +291,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
     ArrayList<String> infos = new ArrayList<>();
     for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
-      infos.add("SdkFixInfo:" + notification.toString());
+      infos.add("SdkFixInfo:" + notification);
     }
 
     EditorNotificationPanel sdkNotification = SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");

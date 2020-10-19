@@ -62,7 +62,7 @@ public class ActionCommand extends TypeCommand {
             context.error(getMessage(), getLine());
           }
         };
-        context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        context.message("Invoking action via shortcut: " + stroke, getLine());
 
         final KeyStroke finalStroke = stroke;
 

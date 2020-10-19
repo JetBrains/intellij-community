@@ -51,7 +51,7 @@ final class CompositeBinaryBuilderMap {
         int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
         LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
                   "id = " + enumeratedId + ", " +
-                  "value" + cumulativeVersion.toString());
+                  "value" + cumulativeVersion);
         myCumulativeVersionMap.put(fileType, enumeratedId);
       }
     }

@@ -146,6 +146,6 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   public static void dump() {
-    Logger.getInstance(ID.class).info("ID registry: " + ourRegistry.toString());
+    Logger.getInstance(ID.class).info("ID registry: " + ourRegistry);
   }
 }

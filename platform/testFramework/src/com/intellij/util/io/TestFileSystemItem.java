@@ -61,7 +61,7 @@ public final class TestFileSystemItem {
         notFound.remove(name);
       }
     }
-    Assert.assertTrue("files " + notFound.toString() + " not found in " + relativePath, notFound.isEmpty());
+    Assert.assertTrue("files " + notFound + " not found in " + relativePath, notFound.isEmpty());
   }
 
   private void assertFileEqual(File file, String relativePath) {

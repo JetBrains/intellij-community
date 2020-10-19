@@ -319,7 +319,7 @@ public final class SheetController implements Disposable {
               if (url != null) {
                 Desktop.getDesktop().browse(url.toURI());
               } else {
-                LOG.warn("URL is null; HyperlinkEvent: " + he.toString());
+                LOG.warn("URL is null; HyperlinkEvent: " + he);
               }
             }
             catch (IOException | URISyntaxException e) {

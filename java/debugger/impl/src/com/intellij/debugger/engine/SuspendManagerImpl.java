@@ -81,7 +81,7 @@ public class SuspendManagerImpl implements SuspendManager {
             myFrozenThreads.remove(getThread());
             getThread().resume();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Thread resumed : " + getThread().toString());
+              LOG.debug("Thread resumed : " + getThread());
             }
             break;
           case EventRequest.SUSPEND_NONE:

@@ -298,7 +298,7 @@ public class IDEATestNGRemoteListener {
             }
           }
           else {
-            paramString = "[" + parameter.toString() + "]";
+            paramString = "[" + parameter + "]";
           }
         }
       }

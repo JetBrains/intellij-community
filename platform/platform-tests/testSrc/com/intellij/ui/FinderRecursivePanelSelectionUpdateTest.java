@@ -94,7 +94,7 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     }
     catch (Exception e) {
       final IllegalStateException exception = assertInstanceOf(e, IllegalStateException.class);
-      assertEquals("failed to select idx=1: component=" + placeholder.toString() + ", pathToSelect=[a, b]", exception.getMessage());
+      assertEquals("failed to select idx=1: component=" + placeholder + ", pathToSelect=[a, b]", exception.getMessage());
     }
   }
 

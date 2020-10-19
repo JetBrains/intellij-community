@@ -285,7 +285,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @NotNull
   private static WidgetState getDownloadErrorState(@Nullable @Nls String message) {
-    String s = message == null ? "" : (": " + HtmlChunk.br().toString() + message);
+    String s = message == null ? "" : (": " + HtmlChunk.br() + message);
     MyWidgetState state = new MyWidgetState(JsonBundle.message("schema.widget.error.cant.download") + s,
                                             JsonBundle.message("schema.widget.error.label"), true);
     state.setWarning(true);

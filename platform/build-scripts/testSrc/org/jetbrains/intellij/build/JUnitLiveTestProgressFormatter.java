@@ -40,17 +40,17 @@ public class JUnitLiveTestProgressFormatter implements JUnitResultFormatter, Ign
 
   @Override
   public void testAssumptionFailure(Test test, Throwable exception) {
-    printMessage(test, "assumption violated (" + exception.toString() + ")");
+    printMessage(test, "assumption violated (" + exception + ")");
   }
 
   @Override
   public void addError(Test test, Throwable e) {
-    printMessage(test, "error (" + e.toString() + ")");
+    printMessage(test, "error (" + e + ")");
   }
 
   @Override
   public void addFailure(Test test, AssertionFailedError e) {
-    printMessage(test, "failed (" + e.toString() + ")");
+    printMessage(test, "failed (" + e + ")");
   }
 
   @Override

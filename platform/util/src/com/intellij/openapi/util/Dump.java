@@ -18,6 +18,6 @@ public final class Dump {
     Exception e = new Exception();
     StackTraceElement[] element = e.getStackTrace();
     StackTraceElement dumper = element[2];
-    ps.println(text + " at " + dumper.toString());
+    ps.println(text + " at " + dumper);
   }
 }

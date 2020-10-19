@@ -46,6 +46,6 @@ public class CyclicDependencyException extends PicoIntrospectionException {
 
     @Override
     public @NonNls String getMessage() {
-        return "Cyclic dependency: " + stack.toString();
+        return "Cyclic dependency: " + stack;
     }
 }

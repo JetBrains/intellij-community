@@ -55,6 +55,6 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
 
   @Override
   public String toString(){
-    return "PsiDocToken:" + getTokenType().toString();
+    return "PsiDocToken:" + getTokenType();
   }
 }

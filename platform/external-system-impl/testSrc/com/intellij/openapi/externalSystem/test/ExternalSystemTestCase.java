@@ -560,7 +560,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   protected static <T> void assertContain(java.util.List<? extends T> actual, T... expected) {
     java.util.List<T> expectedList = Arrays.asList(expected);
-    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual, actual.containsAll(expectedList));
   }
 
   protected static <T> void assertDoNotContain(List<? extends T> actual, T... expected) {

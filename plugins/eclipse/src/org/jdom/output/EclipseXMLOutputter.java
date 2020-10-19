@@ -1499,7 +1499,7 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
       "omitEncoding = " + false + ", " +
       "indent = '" + "\t" + "'" + ", " +
       "expandEmptyElements = " + userFormat.expandEmptyElements + ", " +
-      "lineSeparator = '" + buffer.toString() + "', " +
+      "lineSeparator = '" + buffer + "', " +
       "textMode = " + userFormat.mode + "]"
     );
   }

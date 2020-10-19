@@ -126,7 +126,7 @@ public class CucumberJvm3Adapter {
     public String getStepName() {
       String stepName;
       if (myRealStep instanceof HookTestStep) {
-        stepName = "Hook: " + ((HookTestStep)myRealStep).getHookType().toString();
+        stepName = "Hook: " + ((HookTestStep)myRealStep).getHookType();
       } else {
         stepName = getStepKeyword() + " " + ((PickleStepTestStep) myRealStep).getPickleStep().getText();
       }

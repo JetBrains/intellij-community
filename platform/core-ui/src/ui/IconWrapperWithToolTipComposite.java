@@ -61,6 +61,6 @@ public class IconWrapperWithToolTipComposite implements IconWithToolTip, Copyabl
 
   @Override
   public String toString() {
-    return "IconWrapperWithTooltipComposite:" + myIcon.toString();
+    return "IconWrapperWithTooltipComposite:" + myIcon;
   }
 }

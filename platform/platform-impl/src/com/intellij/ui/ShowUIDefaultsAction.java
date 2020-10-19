@@ -262,9 +262,9 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                       for (int row : rows) {
                         Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
                         if (pair.second instanceof Color) {
-                          result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
+                          result.add("\"" + pair.first + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
                         } else {
-                          result.add("\"" + pair.first.toString() + "\": \"" + pair.second + "\"" + tail);
+                          result.add("\"" + pair.first + "\": \"" + pair.second + "\"" + tail);
                         }
                       }
 

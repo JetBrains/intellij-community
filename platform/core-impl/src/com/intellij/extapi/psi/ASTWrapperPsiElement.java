@@ -27,6 +27,6 @@ public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + myNode.getElementType().toString() + ")";
+    return getClass().getSimpleName() + "(" + myNode.getElementType() + ")";
   }
 }

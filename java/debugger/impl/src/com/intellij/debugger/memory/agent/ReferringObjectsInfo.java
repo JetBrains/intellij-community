@@ -49,7 +49,7 @@ public class ReferringObjectsInfo {
   public List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) {
     Integer index = myReversedMap.get(value);
     if (index == null) {
-      LOG.error("Could not find referring object for reference " + value.toString());
+      LOG.error("Could not find referring object for reference " + value);
       return Collections.emptyList();
     }
 

@@ -200,7 +200,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
         String[] chunk = expected[chunkIndex];
         final List<String> expectedChunkList = new ArrayList<>(Arrays.asList(chunk));
         int nextIndex = runningIndex + chunk.length;
-        assertTrue("Expected chunk " + expectedChunkList.toString(), nextIndex <= myLog.size());
+        assertTrue("Expected chunk " + expectedChunkList, nextIndex <= myLog.size());
         final List<String> actualChunkList = new ArrayList<>(myLog.subList(runningIndex, nextIndex));
         Collections.sort(expectedChunkList);
         Collections.sort(actualChunkList);

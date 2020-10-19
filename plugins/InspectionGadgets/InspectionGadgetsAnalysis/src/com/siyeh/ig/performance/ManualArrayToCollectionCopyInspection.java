@@ -334,7 +334,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         final String negatedExpressionText = expressionText.substring(1);
         final Object lhConstant = computeConstant(negatedExpressionText, context);
         if (lhConstant != null) {
-          return " - " + lhConstant.toString();
+          return " - " + lhConstant;
         }
         return " + (" + expressionText + ")";
       }

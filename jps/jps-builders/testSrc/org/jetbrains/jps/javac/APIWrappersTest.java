@@ -32,7 +32,7 @@ public class APIWrappersTest extends TestCase {
           else {
             try {
               final Method apiMethod = apiIfaceClass.getMethod(declaredMethod.getName(), declaredMethod.getParameterTypes());
-              fail("Method " + apiMethod.toString() + " in API interface " + apiIfaceClass.getName() + " should not match a non-public method in a wrapper class " + declaredMethod);
+              fail("Method " + apiMethod + " in API interface " + apiIfaceClass.getName() + " should not match a non-public method in a wrapper class " + declaredMethod);
             }
             catch (NoSuchMethodException ignored) {
               // as expected: for non-public methods there should be no corresponding methods in the API interface
