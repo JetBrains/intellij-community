@@ -53,7 +53,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     var increaseLineSpacing: Boolean = false
     var showRenderedDocs: Boolean = true
     var showInlayHints: Boolean = true
-    var showWarnings: Boolean = false
+    var showWarnings: Boolean = true
     @get:ReportValue
     var enabled by property(true)
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
