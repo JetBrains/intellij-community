@@ -327,29 +327,32 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
-    if (tasks.size() == 1 ||
-        ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for (Runnable r : tasks) r.run();
       return;
     }
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
-    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
-    List<Future<?>> results = new ArrayList<>();
-    if (tasks.size() > 1) {
-      int numThreads = Math.max(Math.min(UnindexedFilesUpdater.getNumberOfIndexingThreads() - 1, tasks.size() - 1), 1);
+    Runnable taskProcessor = new Runnable() {
+      final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
 
-      for (int i = 0; i < numThreads; ++i) {
-        results.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
-          Runnable runnable;
-          while ((runnable = tasksQueue.poll()) != null) runnable.run();
-        }, ProgressWrapper.wrap(progress))));
+      @Override
+      public void run() {
+        Runnable runnable;
+        while ((runnable = tasksQueue.poll()) != null) runnable.run();
       }
-    }
+    };
 
-    Runnable runnable;
-    while ((runnable = tasksQueue.poll()) != null) runnable.run();
+    List<Future<?>> results = new ArrayList<>();
+    int numThreads = Math.max(Math.min(UnindexedFilesUpdater.getNumberOfIndexingThreads() - 1, tasks.size() - 1), 1);
+
+    for (int i = 0; i < numThreads; ++i) {
+      results.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ProgressManager.getInstance().runProcess(taskProcessor, ProgressWrapper.wrap(progress));
+      }));
+    }
+    taskProcessor.run();
 
     for (Future<?> result : results) {
       try {
