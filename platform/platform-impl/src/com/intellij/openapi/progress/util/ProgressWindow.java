@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -196,13 +197,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  public void startBlocking() {
-    startBlocking(EmptyRunnable.getInstance());
-  }
-
   @Override
   @RequiresEdt
   public void startBlocking(@NotNull Runnable init) {
+    pumpEventsWhile(init, progress -> !progress.wasStarted() || progress.isRunning());
+  }
+
+  private void pumpEventsWhile(@NotNull Runnable init, @NotNull Predicate<? super ProgressWindow> runCondition) {
     EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
@@ -214,7 +215,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     try {
       ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        pumpEventsForHierarchy();
+        initializeOnEdtIfNeeded();
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+          if (isCancellationEvent(event)) {
+            cancel();
+          }
+          return !runCondition.test(this);
+        });
         return null;
       });
     } catch (Throwable t) {
@@ -248,16 +255,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
              "this=" + this + ", " +
              "indicator=" + indicator, new RuntimeException()
     );
-  }
-
-  public void pumpEventsForHierarchy() {
-    initializeOnEdtIfNeeded();
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-      if (isCancellationEvent(event)) {
-        cancel();
-      }
-      return wasStarted() && !isRunning();
-    });
   }
 
   final boolean isCancellationEvent(@Nullable AWTEvent event) {

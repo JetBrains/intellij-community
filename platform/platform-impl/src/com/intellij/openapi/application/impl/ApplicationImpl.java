@@ -413,7 +413,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     final CompletableFuture<ProgressWindow> progress =
       createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
 
-    ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
+    ProgressRunner<?> progressRunner = new ProgressRunner<>(process)
       .sync()
       .onThread(ProgressRunner.ThreadToUse.POOLED)
       .modal()
