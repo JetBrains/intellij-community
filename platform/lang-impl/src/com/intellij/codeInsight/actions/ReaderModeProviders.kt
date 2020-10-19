@@ -42,7 +42,7 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
   override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
     if (ReaderModeSettings.instance(project).enabled
         && !ReaderModeSettings.instance(project).showWarnings
-        && ReaderModeFileEditorListener.matchMode(project, file)) {
+        && ReaderModeSettings.matchMode(project, file)) {
       return FileHighlightingSetting.SKIP_INSPECTION
     }
 

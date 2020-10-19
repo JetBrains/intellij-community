@@ -15,4 +15,8 @@ interface ReaderModeProvider {
    * otherwise, if it's false, it should apply changes for every opening file
    */
   fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {}
+
+  enum class ReaderMode {
+    LIBRARIES, READ_ONLY, LIBRARIES_AND_READ_ONLY
+  }
 }

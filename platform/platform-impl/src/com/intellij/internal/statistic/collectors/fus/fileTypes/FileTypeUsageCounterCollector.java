@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.codeInsight.actions.ReaderModeSettings;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -50,6 +50,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final EventField<String> FILE_TYPE = EventFields.StringValidatedByCustomRule("file_type", "file_type");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
+  private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
 
   @Override
   public EventLogGroup getGroup() {
@@ -63,8 +64,8 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit");
-  private static final VarargEventId OPEN = registerFileTypeEvent("open", IS_WRITABLE);
-  private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
+  private static final VarargEventId OPEN = registerFileTypeEvent("open", IS_WRITABLE, IS_IN_READER_MODE);
+  private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
     log(EDIT, project, file);
@@ -80,11 +81,15 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
+    OPEN.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
+                                       IS_WRITABLE.with(file.isWritable())),
+                                       IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file))));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
+    CLOSE.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
+                                        IS_WRITABLE.with(file.isWritable())),
+                                        IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file))));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {

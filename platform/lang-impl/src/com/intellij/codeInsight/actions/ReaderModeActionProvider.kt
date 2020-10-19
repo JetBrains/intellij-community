@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
+import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.LangBundle
@@ -39,7 +40,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           else {
             if (project.isInitialized) {
               val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = ReaderModeFileEditorListener.matchMode(project, file)
+              e.presentation.isEnabledAndVisible = matchMode(project, file)
             }
             else {
               e.presentation.isEnabledAndVisible = false
