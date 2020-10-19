@@ -5,7 +5,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -30,10 +30,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class UsedIconsListingAction extends AnAction {
+final class UsedIconsListingAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(LangDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
@@ -50,17 +50,19 @@ public class UsedIconsListingAction extends AnAction {
         if ("AllIcons.java".equals(file.getName())) return true;
 
         PsiClass container = PsiUtil.getTopLevelClass(reference.getElement());
-        if (container != null && container.getQualifiedName().startsWith("icons.")) return true;
+        if (container != null && container.getQualifiedName().startsWith("icons.")) {
+          return true;
+        }
 
         for (PsiExpression arg : call.getArgumentList().getExpressions()) {
+          Object value;
           if (arg instanceof PsiLiteralExpression) {
-            Object value = ((PsiLiteralExpression)arg).getValue();
-            processValue(value, call, file);
+            value = ((PsiLiteralExpression)arg).getValue();
           }
           else {
-            Object value = psiFacade.getConstantEvaluationHelper().computeConstantExpression(arg, false);
-            processValue(value, call, file);
+            value = psiFacade.getConstantEvaluationHelper().computeConstantExpression(arg, false);
           }
+          processValue(value, call, file);
         }
 
 
