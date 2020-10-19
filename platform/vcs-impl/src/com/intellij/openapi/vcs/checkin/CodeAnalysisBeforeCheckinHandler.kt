@@ -3,13 +3,16 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
+import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
@@ -17,6 +20,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
@@ -37,6 +41,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ExceptionUtil.rethrowUnchecked
 import com.intellij.util.PairConsumer
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
@@ -45,18 +51,46 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel)
 }
 
+class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitProblem {
+  override val text: String
+    get() {
+      val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
+      val warnings = codeSmells.size - errors
+
+      val errorsText = if (errors > 0) HighlightSeverity.ERROR.getCountMessage(errors) else null
+      val warningsText = if (warnings > 0) HighlightSeverity.WARNING.getCountMessage(warnings) else null
+
+      return formatAndList(listOfNotNull(errorsText, warningsText))
+    }
+}
+
 /**
  * The check-in handler which performs code analysis before check-in. Source code for this class
  * is provided as a sample of using the [CheckinHandler] API.
  */
-class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<CommitProblem> {
+class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) :
+  CheckinHandler(), CommitCheck<CodeAnalysisCommitProblem> {
+
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(): CommitProblem? = null
-  override fun showDetails(problem: CommitProblem) = Unit
+  override suspend fun runCheck(): CodeAnalysisCommitProblem? {
+    val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+    val codeSmells = withContext(Dispatchers.Default) {
+      ProgressManager.getInstance().runProcess(
+        Computable { CodeSmellDetector.getInstance(project).findCodeSmells(files) },
+        ProgressIndicatorBase().apply { isIndeterminate = false } // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
+      )
+    }
+    return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
+  }
+
+  override fun showDetails(problem: CodeAnalysisCommitProblem) =
+    CodeSmellDetector.getInstance(project).showCodeSmellErrors(problem.codeSmells)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
