@@ -106,9 +106,10 @@ internal class ProjectPluginTracker(project: Project) : PersistentStateComponent
     this.state = state
   }
 
-  fun changeEnableDisable(plugin: IdeaPluginDescriptor,
-                          newState: PluginEnabledState) {
-    val pluginId = plugin.pluginId
+  fun changeEnableDisable(
+    pluginId: PluginId,
+    newState: PluginEnabledState
+  ) {
     if (newState.isPerProject) {
       state.register(pluginId, enable = newState.isEnabled)
     }
@@ -117,15 +118,9 @@ internal class ProjectPluginTracker(project: Project) : PersistentStateComponent
     }
   }
 
-  fun isEnabled(plugin: IdeaPluginDescriptor) = state
-    .enabledPlugins
-    .containsPluginId(plugin)
+  fun isEnabled(pluginId: PluginId) = state.enabledPlugins.contains(pluginId.idString)
 
-  fun isDisabled(plugin: IdeaPluginDescriptor) = state
-    .disabledPlugins
-    .containsPluginId(plugin)
+  fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
 }
-
-private fun Set<String>.containsPluginId(descriptor: IdeaPluginDescriptor) = contains(descriptor.pluginId.idString)
 
 private fun Set<String>.findPluginById() = mapNotNull { PluginId.findId(it) }.mapNotNull { PluginManagerCore.getPlugin(it) }

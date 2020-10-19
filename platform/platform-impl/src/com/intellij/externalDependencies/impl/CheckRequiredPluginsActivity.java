@@ -19,7 +19,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +29,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 final class CheckRequiredPluginsActivity implements StartupActivity {
   private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
@@ -70,7 +72,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
         continue;
       }
 
-      if (!plugin.isEnabled() || pluginTracker.isDisabled(plugin)) {
+      if (!plugin.isEnabled() || pluginTracker.isDisabled(pluginId)) {
         boolean canEnableWithoutRestart = false;
         if (Registry.is("ide.plugins.load.automatically")) {
           IdeaPluginDescriptorImpl fullDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)plugin);
@@ -120,10 +122,10 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
     }
 
     if (!pluginsToEnableWithoutRestart.isEmpty()) {
-      LOG.info("Automatically enabling plugins required for this project: " +
-               StringUtil.join(pluginsToEnableWithoutRestart, (plugin) -> plugin.getPluginId().toString(), ", "));
-      for (IdeaPluginDescriptor descriptor : pluginsToEnableWithoutRestart) {
-        pluginTracker.changeEnableDisable(descriptor, PluginEnabledState.ENABLED_FOR_PROJECT);
+      List<PluginId> pluginIds = map(pluginsToEnableWithoutRestart, IdeaPluginDescriptor::getPluginId);
+      LOG.info("Automatically enabling plugins required for this project: " + join(pluginIds, ", "));
+      for (PluginId pluginId : pluginIds) {
+        pluginTracker.changeEnableDisable(pluginId, PluginEnabledState.ENABLED_FOR_PROJECT);
       }
       ApplicationManager.getApplication().invokeLater(() -> PluginEnabler.enablePlugins(project, pluginsToEnableWithoutRestart, true));
     }
@@ -155,7 +157,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       .getNotificationGroup(NOTIFICATION_GROUP_ID)
       .createNotification(
         IdeBundle.message("notification.title.required.plugins.weren.t.loaded"),
-        StringUtil.join(errorMessages, "<br>"),
+        join(errorMessages, "<br>"),
         NotificationType.ERROR,
         createListener(project, problemPluginIds)
       ).notify(project);

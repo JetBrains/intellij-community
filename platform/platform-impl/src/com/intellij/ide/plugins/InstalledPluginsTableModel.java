@@ -76,9 +76,9 @@ public class InstalledPluginsTableModel {
     PluginEnabledState enabled;
     if (descriptorEnabled || PluginManagerCore.isDisabled(pluginId)) {
       ProjectPluginTracker pluginTracker = getPluginTracker();
-      enabled = (pluginTracker != null && pluginTracker.isEnabled(ideaPluginDescriptor)) ?
+      enabled = (pluginTracker != null && pluginTracker.isEnabled(pluginId)) ?
                 PluginEnabledState.ENABLED_FOR_PROJECT :
-                (pluginTracker != null && pluginTracker.isDisabled(ideaPluginDescriptor)) ?
+                (pluginTracker != null && pluginTracker.isDisabled(pluginId)) ?
                 PluginEnabledState.DISABLED_FOR_PROJECT :
                 descriptorEnabled ?
                 PluginEnabledState.ENABLED :
