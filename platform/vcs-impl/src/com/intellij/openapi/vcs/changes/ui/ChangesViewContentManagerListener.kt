@@ -11,6 +11,6 @@ interface ChangesViewContentManagerListener {
   companion object {
     @JvmField
     val TOPIC: Topic<ChangesViewContentManagerListener> =
-      Topic.create("VCS Tool Windows Content Changes", ChangesViewContentManagerListener::class.java)
+      Topic(ChangesViewContentManagerListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }

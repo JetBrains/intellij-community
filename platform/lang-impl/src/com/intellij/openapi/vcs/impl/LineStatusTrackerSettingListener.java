@@ -5,7 +5,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 
 public interface LineStatusTrackerSettingListener {
-  Topic<LineStatusTrackerSettingListener> TOPIC = new Topic<>(LineStatusTrackerSettingListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  Topic<LineStatusTrackerSettingListener> TOPIC = new Topic<>(LineStatusTrackerSettingListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   @RequiresEdt
   void settingsUpdated();
