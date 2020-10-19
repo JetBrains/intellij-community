@@ -48,14 +48,14 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
   private var myState = State()
 
   class State : BaseState() {
-    var showBreadcrumbs: Boolean = true
-    var showLigatures: Boolean = true
-    var increaseLineSpacing: Boolean = false
-    var showRenderedDocs: Boolean = true
-    var showInlayHints: Boolean = true
-    var showWarnings: Boolean = true
-    @get:ReportValue
-    var enabled by property(true)
+    @get:ReportValue var showBreadcrumbs by property(true)
+    @get:ReportValue var showLigatures by property(true)
+    @get:ReportValue var increaseLineSpacing by property(false)
+    @get:ReportValue var showRenderedDocs by property(true)
+    @get:ReportValue var showInlayHints by property(true)
+    @get:ReportValue var showWarnings by property(true)
+    @get:ReportValue var enabled by property(true)
+
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
 
