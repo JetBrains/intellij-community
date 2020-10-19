@@ -1,4 +1,4 @@
-fragment repositoryPermission on Repository {
+fragment repositoryInfo on Repository {
     ...nodeInfo
     owner {
         ...repositoryOwnerName

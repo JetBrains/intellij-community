@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -220,6 +221,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
     private val listComponent = GHPRListComponent.create(project, dataContext, parentDisposable)
+    private val createComponent = GHPRCreateComponentFactory(project, this, parentDisposable).create()
     private var currentDisposable: Disposable? = null
 
     private var currentPullRequest: GHPRIdentifier? = null
@@ -233,6 +235,14 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
           else -> null
         }
       }
+    }
+
+    override fun createPullRequest() {
+      tab.displayName = GithubBundle.message("tab.title.pull.requests.new")
+      currentDisposable?.let { Disposer.dispose(it) }
+      currentPullRequest = null
+      wrapper.setContent(createComponent)
+      wrapper.repaint()
     }
 
     override fun viewList() {

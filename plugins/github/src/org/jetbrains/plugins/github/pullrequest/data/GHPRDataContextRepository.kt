@@ -85,8 +85,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     indicator.text = GithubBundle.message("pull.request.loading.repo.info")
     val repoWithPermissions =
-      requestExecutor.execute(indicator, GHGQLRequests.Repo.findPermission(
-        GHRepositoryCoordinates(account.server, parsedRepositoryCoordinates.repositoryPath)))
+      requestExecutor.execute(indicator, GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server,
+                                                                                         parsedRepositoryCoordinates.repositoryPath)))
       ?: throw IllegalArgumentException(
         "Repository ${parsedRepositoryCoordinates.repositoryPath} does not exist at ${account.server} or you don't have access.")
 

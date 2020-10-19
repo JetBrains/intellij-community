@@ -6,6 +6,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 interface GHPRToolWindowTabComponentController {
 
+  fun createPullRequest()
+
   fun viewList()
 
   fun refreshList()

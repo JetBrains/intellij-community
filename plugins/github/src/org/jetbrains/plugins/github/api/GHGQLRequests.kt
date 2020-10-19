@@ -45,11 +45,11 @@ object GHGQLRequests {
   }
 
   object Repo {
-    fun findPermission(repository: GHRepositoryCoordinates): GQLQuery<GHRepositoryPermission?> {
-      return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findRepositoryPermission,
+    fun find(repository: GHRepositoryCoordinates): GQLQuery<GHRepository?> {
+      return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findRepository,
                                               mapOf("repoOwner" to repository.repositoryPath.owner,
                                                     "repoName" to repository.repositoryPath.repository),
-                                              GHRepositoryPermission::class.java,
+                                              GHRepository::class.java,
                                               "repository")
     }
 

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
   const val findOrganizationTeams = "findOrganizationTeams"
-  const val findRepositoryPermission = "findRepositoryPermission"
+  const val findRepository = "findRepository"
   const val getProtectionRules = "getProtectionRules"
   const val commentBody = "commentBody"
   const val updateIssueComment = "updateIssueComment"

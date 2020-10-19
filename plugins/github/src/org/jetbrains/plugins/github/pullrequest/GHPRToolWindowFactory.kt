@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestAction
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -25,7 +26,7 @@ import javax.swing.JPanel
 class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
-    setTitleActions(listOf(GHPRSelectPullRequestForFileAction()))
+    setTitleActions(listOf(GHPRSelectPullRequestForFileAction(), GHPRCreatePullRequestAction()))
     setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
     component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     with(contentManager) {
