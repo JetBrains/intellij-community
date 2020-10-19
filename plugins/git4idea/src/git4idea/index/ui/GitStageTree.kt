@@ -355,18 +355,18 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
       val hoverData = (tree as? GitStageTree)?.hoverData
-      if (hoverData == null || tree.expandableItemsHandler.expandedItems.isNotEmpty()) {
+      if ((hoverData == null && !selected) || tree.expandableItemsHandler.expandedItems.contains(row)) {
         return null
       }
 
-      val hovered = hoverData.node == node
+      val hovered = hoverData?.node == node
       val baseIcon = when {
-        hovered -> hoverData.operation.icon
+        hovered -> hoverData!!.operation.icon
         selected -> tree.getFirstMatchingOperation(node)?.icon
         else -> null
       } ?: return null
 
-      val foreground = if (hovered && hoverData.isOverOperationIcon) baseIcon
+      val foreground = if (hovered && hoverData!!.isOverOperationIcon) baseIcon
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
       val treeFocused = tree.hasFocus()
