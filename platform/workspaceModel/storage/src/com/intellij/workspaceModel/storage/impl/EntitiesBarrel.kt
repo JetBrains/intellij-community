@@ -31,9 +31,21 @@ internal class MutableEntitiesBarrel private constructor(
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(newEntity)
   }
 
+  fun book(clazz: Int): EntityId {
+    val arrayId = getMutableEntityFamily(clazz).book()
+    return EntityId(arrayId, clazz)
+  }
+
   fun <T : WorkspaceEntity> cloneAndAdd(newEntity: WorkspaceEntityData<T>, clazz: Int): WorkspaceEntityData<T> {
     val cloned = newEntity.clone()
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(cloned)
+    return cloned
+  }
+
+  fun <T : WorkspaceEntity> cloneAndAddAt(newEntity: WorkspaceEntityData<T>, entityId: EntityId): WorkspaceEntityData<T> {
+    val cloned = newEntity.clone()
+    cloned.id = entityId.arrayId
+    (getMutableEntityFamily(entityId.clazz) as MutableEntityFamily<T>).insertAtId(cloned)
     return cloned
   }
 
