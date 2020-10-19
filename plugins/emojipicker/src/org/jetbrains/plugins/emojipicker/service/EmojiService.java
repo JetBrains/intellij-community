@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,6 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
   private volatile SearchIndex myEmojiSearchIndex;
 
   private final String[] myEmojiNames;
-  private final Map<String, String> myCategoryNamesMap;
   private volatile EmojiSkinTone mySkinTone;
   private volatile boolean dirty;
 
@@ -84,11 +83,12 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
       myCategories.addAll(emojiData.myCategories);
       String[] names = emojiNames = new String[emoji.size()];
       CldrData cldr = new CldrData(emojiData);
-      cldr.read(Locale.ENGLISH, emojiNames);
+      final Locale baseLocale = Locale.ENGLISH;
+      cldr.read(baseLocale, emojiNames);
       searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
 
       ProgressManager.getInstance().run(
-        new Task.Backgroundable(null, "Initializing emoji picker", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        new Task.Backgroundable(null, getString("message.EmojiPicker.Initializing"), false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try {
@@ -99,17 +99,17 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
               try(ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedNamesPath, StandardOpenOption.CREATE))) {
                 out.writeObject(names);
               }
-              indicator.setText("Building search index");
+              indicator.setText(getString("message.EmojiPicker.BuildingIndex"));
               indicator.setIndeterminate(false);
               Locale[] locales = Locale.getAvailableLocales();
               double multiplier = 1.0 / (double) locales.length;
               for (int i = 0; i < locales.length; i++) {
                 indicator.setFraction((double) i * multiplier);
-                cldr.read(locales[i], null);
+                if(!locales[i].equals(baseLocale)) cldr.read(locales[i], null);
               }
               indicator.setIndeterminate(true);
               SearchIndex searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
-              indicator.setText("Saving data");
+              indicator.setText(getString("message.EmojiPicker.SavingIndexData"));
               try(ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedIndexPath, StandardOpenOption.CREATE))) {
                 out.writeObject(searchIndex.myIndex);
               }
@@ -126,24 +126,23 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     myEmoji = emoji;
     myEmojiSearchIndex = searchIndex;
     myEmojiNames = emojiNames;
-
-    try(BufferedReader in = new BufferedReader(new InputStreamReader(
-      EmojiService.class.getResourceAsStream("/messages/categories/en.txt"), StandardCharsets.UTF_8))) {
-      myCategoryNamesMap = in.lines().map(s -> {
-        int i = s.indexOf(":");
-        if(i == -1) return null;
-        return new Pair<>(s.substring(0, i).strip(), s.substring(i + 1).strip());
-      }).filter(Objects::nonNull).collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
-    }
   }
 
   public List<EmojiCategory> getCategories() {
     return myCategories;
   }
 
-  public String findNameForCategory(EmojiCategory category) {
+  public @NlsSafe String getString(String key) throws MissingResourceException {
+    return ResourceBundle.getBundle("/messages/EmojipickerBundle").getString(key);
+  }
+
+  public @NlsSafe String findNameForCategory(EmojiCategory category) {
     if(category == null) return null;
-    return myCategoryNamesMap.getOrDefault(category.getId(), category.getId());
+    try {
+      return getString("category.EmojiPicker." + category.getId());
+    } catch (MissingResourceException ignore) {
+      return category.getId();
+    }
   }
 
   public String findNameForEmoji(Emoji emoji) {
