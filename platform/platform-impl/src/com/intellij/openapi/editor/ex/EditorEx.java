@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,7 @@ public interface EditorEx extends Editor {
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
-  void setPlaceholder(@Nullable CharSequence text);
+  void setPlaceholder(@Nullable @Nls CharSequence text);
 
   /**
    * Sets text attributes for a placeholder. Font style and color are currently supported. 

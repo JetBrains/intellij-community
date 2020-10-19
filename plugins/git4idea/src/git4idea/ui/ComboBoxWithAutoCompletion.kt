@@ -40,7 +40,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private var selectingItem = false
 
-  private var myPlaceHolder: String? = null
+  @Nls private var myPlaceHolder: String? = null
 
   init {
     isEditable = true
