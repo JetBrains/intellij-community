@@ -18,6 +18,7 @@ package com.intellij.ui.content.tabs;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Toggleable;
 
 /**
  * @author spleaner
@@ -25,7 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
  * @deprecated use {@link PinActiveTabAction}
  */
 @Deprecated
-public class PinToolwindowTabAction extends PinActiveTabAction.TW {
+public class PinToolwindowTabAction extends PinActiveTabAction.TW implements Toggleable {
   public static final String ACTION_NAME = "PinToolwindowTab";
 
   public static AnAction getPinAction() {
