@@ -490,7 +490,7 @@ object UpdateChecker {
     }
   }
 
-  private fun getAllUpdatedPlugins(checkPluginsUpdateResult: CheckPluginsUpdateResult): List<PluginDownloader>? {
+  private fun getAllUpdatedPlugins(checkPluginsUpdateResult: CheckPluginsUpdateResult): List<PluginDownloader> {
     val notIgnored: (PluginDownloader) -> Boolean = { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
     val updatedPlugins = checkPluginsUpdateResult.availableUpdates?.filterTo(ArrayList(), notIgnored)
     val updatedDisabledPlugins = checkPluginsUpdateResult.availableDisabledUpdates.filter(notIgnored)
@@ -537,8 +537,7 @@ object UpdateChecker {
     }
 
     var updateFound = false
-
-    if (updatedPlugins != null && updatedPlugins.isNotEmpty()) {
+    if (updatedPlugins.isNotEmpty()) {
       updateFound = true
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }

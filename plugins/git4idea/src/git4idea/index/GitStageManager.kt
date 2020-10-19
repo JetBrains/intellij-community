@@ -3,6 +3,7 @@ package git4idea.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
@@ -17,8 +18,7 @@ import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
-class GitStageManager(val project: Project) : Disposable {
-
+internal class GitStageManager(private val project: Project) : Disposable {
   fun installListeners() {
     val connection = project.messageBus.connect(this)
     connection.subscribe(GitStagingAreaSettingsListener.TOPIC, object : GitStagingAreaSettingsListener {
@@ -58,11 +58,11 @@ class GitStageManager(val project: Project) : Disposable {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(GitStageManager::class.java)
+    fun getInstance(project: Project): GitStageManager = project.service()
   }
 }
 
-class GitStageStartupActivity : StartupActivity.Background {
+internal class GitStageStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()

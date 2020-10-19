@@ -26,6 +26,8 @@ import java.util.*;
  */
 public class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
+  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
+  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -77,8 +79,6 @@ public class UrlClassLoader extends ClassLoader {
     }
     catch (MalformedURLException ignore) { }
   }
-
-  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   @NotNull
   protected ClassPath getClassPath() {
@@ -332,7 +332,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  protected Class<?> findClass(final String name) throws ClassNotFoundException {
+  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
     Class<?> clazz = _findClass(name);
     if (clazz == null) {
       throw new ClassNotFoundException(name);
@@ -340,14 +340,14 @@ public class UrlClassLoader extends ClassLoader {
     return clazz;
   }
 
-  @Nullable
-  protected final Class<?> _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
-    if (res == null) {
+  protected @Nullable final Class<?> _findClass(@NotNull String name) {
+    Resource resource = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
+    if (resource == null) {
       return null;
     }
+
     try {
-      return defineClass(name, res);
+      return defineClass(name, resource);
     }
     catch (IOException e) {
       LoggerRt.getInstance(UrlClassLoader.class).error(e);
@@ -404,13 +404,13 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
-  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
-
   @Override
   public URL findResource(String name) {
-    if (ourSkipFindingResource.get() != null) return null;
+    if (ourSkipFindingResource.get() != null) {
+      return null;
+    }
     Resource res = findResourceImpl(name);
-    return res != null ? res.getURL() : null;
+    return res == null ? null : res.getURL();
   }
 
   @Nullable
@@ -430,14 +430,17 @@ public class UrlClassLoader extends ClassLoader {
       ourSkipFindingResource.set(Boolean.TRUE);
       try {
         InputStream stream = super.getResourceAsStream(name);
-        if (stream != null) return stream;
-      } finally {
+        if (stream != null) {
+          return stream;
+        }
+      }
+      finally {
         ourSkipFindingResource.set(null);
       }
     }
     try {
       Resource res = findResourceImpl(name);
-      return res != null ? res.getInputStream() : null;
+      return res == null ? null : res.getInputStream();
     }
     catch (IOException e) {
       return null;
@@ -452,7 +455,7 @@ public class UrlClassLoader extends ClassLoader {
   // called by a parent class on Java 7+
   @NotNull
   protected Object getClassLoadingLock(String className) {
-    return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;
+    return myClassLoadingLocks == null ? this : myClassLoadingLocks.getOrCreateLock(className);
   }
 
   /**

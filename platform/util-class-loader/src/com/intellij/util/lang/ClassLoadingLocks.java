@@ -16,8 +16,7 @@ final class ClassLoadingLocks {
   private final ConcurrentMap<String, WeakLockReference> myMap = new ConcurrentHashMap<String, WeakLockReference>();
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<Object>();
 
-  @NotNull
-  Object getOrCreateLock(@NotNull String className) {
+  @NotNull Object getOrCreateLock(@NotNull String className) {
     WeakLockReference lockReference = myMap.get(className);
     if (lockReference != null) {
       Object lock = lockReference.get();
@@ -31,13 +30,15 @@ final class ClassLoadingLocks {
     while (true) {
       processQueue();
       WeakLockReference oldRef = myMap.putIfAbsent(className, newRef);
-      if (oldRef == null) return newLock;
+      if (oldRef == null) {
+        return newLock;
+      }
       Object oldLock = oldRef.get();
       if (oldLock != null) {
         return oldLock;
       }
-      else {
-        if (myMap.replace(className, oldRef, newRef)) return newLock;
+      else if (myMap.replace(className, oldRef, newRef)) {
+        return newLock;
       }
     }
   }

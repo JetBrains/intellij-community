@@ -107,7 +107,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                    ActionWithClassloader<Result, ParameterType> actionWithClassloader,
                    ParameterType parameter) {
       Result resource = doExecute(name, classloader, parameter);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
       return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter, false);
     }
 
@@ -122,7 +124,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, null, parameter, true);
   }
 
-  public void setCoreLoader(ClassLoader loader) {
+  public void setCoreLoader(@Nullable ClassLoader loader) {
     myCoreLoader = loader;
   }
 
@@ -147,7 +149,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
       if (parent instanceof PluginClassLoader) {
         Result resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
-          actionWithClassloader, parameter);
+                                                              actionWithClassloader, parameter);
         if (resource != null) {
           return resource;
         }
@@ -155,7 +157,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       }
 
       Result resource = actionWithClassloader.execute(name, parent, parameter);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
     }
 
     if (withRoot && myCoreLoader != null && (visited == null || visited.add(myCoreLoader))) {
@@ -284,7 +288,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   @Override
   public URL findResource(String name) {
     URL resource = findOwnResource(name);
-    if (resource != null) return resource;
+    if (resource != null) {
+      return resource;
+    }
     return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null);
   }
 
@@ -292,13 +298,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return super.findResource(name);
   }
 
-  private static final ActionWithPluginClassLoader<InputStream, Void>
-    getResourceAsStreamInPluginCL = new ActionWithPluginClassLoader<InputStream, Void>() {
-    @Override
-    protected InputStream doExecute(String name, PluginClassLoader classloader, Void parameter) {
-      return classloader.getOwnResourceAsStream(name);
-    }
-  };
+  private static final ActionWithPluginClassLoader<InputStream, Void> getResourceAsStreamInPluginCL =
+    new ActionWithPluginClassLoader<InputStream, Void>() {
+      @Override
+      protected InputStream doExecute(String name, PluginClassLoader classloader, Void parameter) {
+        return classloader.getOwnResourceAsStream(name);
+      }
+    };
 
   private static final ActionWithClassloader<InputStream, Void> getResourceAsStreamInCl = new ActionWithClassloader<InputStream, Void>() {
     @Override
