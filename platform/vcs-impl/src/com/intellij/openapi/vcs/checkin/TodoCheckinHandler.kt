@@ -31,19 +31,26 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.search.TodoItem
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.PairConsumer
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<CommitProblem> {
+class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblem {
+  override val text: String get() = message("label.todo.items.found", todoItems.size)
+}
+
+class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<TodoCommitProblem> {
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
@@ -52,8 +59,17 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(): CommitProblem? = null
-  override fun showDetails(problem: CommitProblem) = Unit
+  override suspend fun runCheck(): TodoCommitProblem? {
+    val changes = commitPanel.selectedChanges
+    val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
+
+    withContext(Dispatchers.Default) { worker.execute() }
+
+    val todoItems = worker.inOneList()
+    return if (todoItems.isNotEmpty()) TodoCommitProblem(changes, todoItems) else null
+  }
+
+  override fun showDetails(problem: TodoCommitProblem) = showTodoItems(problem.changes, problem.todoItems)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     object : BooleanCommitOption(commitPanel, "", true, settings::CHECK_NEW_TODO) {
@@ -101,16 +117,16 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   private fun processFoundTodoItems(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): ReturnResult =
     when (askReviewCommitCancel(worker, commitActionText)) {
       Messages.YES -> {
-        showTodoItems(worker)
+        showTodoItems(worker.changes, worker.inOneList())
         ReturnResult.CLOSE_WINDOW
       }
       Messages.NO -> ReturnResult.COMMIT
       else -> ReturnResult.CANCEL
     }
 
-  private fun showTodoItems(worker: TodoCheckinHandlerWorker) {
+  private fun showTodoItems(changes: Collection<Change>, todoItems: Collection<TodoItem>) {
     project.service<TodoView>().addCustomTodoView(
-      TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, worker.changes, worker.inOneList()) },
+      TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
       message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
       TodoPanelSettings(todoSettings)
     )
