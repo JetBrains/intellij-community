@@ -758,7 +758,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E {
     Thread thread = Thread.currentThread();
 
-    if (!Registry.is("ide.prioritize.threads") || isPrioritizedThread(thread)) {
+    if (!Registry.is("ide.prioritize.threads", true) || isPrioritizedThread(thread)) {
       return computable.compute();
     }
 
