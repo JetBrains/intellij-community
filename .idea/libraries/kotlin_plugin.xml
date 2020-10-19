@@ -41,6 +41,8 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/markdown-0.1.25.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/noarg-ide-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/parcelize-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/parcelize-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/sam-with-receiver-ide-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/jps/kotlin-jps-plugin.jar!/" />
     </CLASSES>
