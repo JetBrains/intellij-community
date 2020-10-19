@@ -187,8 +187,10 @@ class InferenceCache {
     for (Instruction closureInstruction : myFlow) {
       PsiElement closure = closureInstruction.getElement();
       if (closure instanceof GrFunctionalExpression) {
-        GrControlFlowOwner owner =
-          Objects.requireNonNull(FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure));
+        GrControlFlowOwner owner = FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure);
+        if (owner == null) {
+          continue;
+        }
         Set<ResolvedVariableDescriptor> foreignVariables =
           ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
         closureInstructions.add(Pair.create(closureInstruction, foreignVariables));
