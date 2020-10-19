@@ -160,7 +160,7 @@ object EventFields {
   @JvmField
   val AnonymizedPath = object : PrimitiveEventField<String?>() {
     override val validationRule: List<String>
-      get() = listOf("{regex#hash}")
+      get() = listOf("{regexp#hash}")
 
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
