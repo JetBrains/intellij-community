@@ -3,12 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.events.EnumEventField;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,8 +20,8 @@ public class ImportOldConfigsUsagesCollector {
     @Override
     public void componentsInitialized() {
       ImportOldConfigsState state = ImportOldConfigsState.getInstance();
-      if (state.isOldConfigPanelWasOpened()) {
-        IMPORT_DIALOG_SHOWN_EVENT.log(state.getType(), state.isSourceConfigFolderExists());
+      if (state.wasOldConfigPanelOpened()) {
+        IMPORT_DIALOG_SHOWN_EVENT.log(state.getType(), state.doesSourceConfigFolderExist());
       }
     }
   }
@@ -34,14 +29,13 @@ public class ImportOldConfigsUsagesCollector {
   public static class ImportOldConfigsState {
     private static final ImportOldConfigsState ourInstance = new ImportOldConfigsState();
 
-    public static ImportOldConfigsState getInstance() {
+    public static @NotNull ImportOldConfigsState getInstance() {
       return ourInstance;
     }
 
     private volatile boolean myOldConfigPanelWasOpened = false;
     private volatile boolean mySourceConfigFolderExists = false;
-    @NotNull
-    private volatile ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
+    private volatile @NotNull ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
 
     public void saveImportOldConfigType(@NotNull JRadioButton previous,
                                         @NotNull JRadioButton custom,
@@ -52,10 +46,9 @@ public class ImportOldConfigsUsagesCollector {
       myType = getOldImportType(previous, custom, doNotImport);
     }
 
-    @NotNull
-    private static ImportOldConfigType getOldImportType(@NotNull JRadioButton previous,
-                                                        @NotNull JRadioButton custom,
-                                                        @NotNull JRadioButton doNotImport) {
+    private static @NotNull ImportOldConfigType getOldImportType(@NotNull JRadioButton previous,
+                                                                 @NotNull JRadioButton custom,
+                                                                 @NotNull JRadioButton doNotImport) {
       if (previous.isSelected()) return ImportOldConfigType.FROM_PREVIOUS;
       if (custom.isSelected()) return ImportOldConfigType.FROM_CUSTOM;
       if (doNotImport.isSelected()) return ImportOldConfigType.DO_NOT_IMPORT;
@@ -63,16 +56,15 @@ public class ImportOldConfigsUsagesCollector {
     }
 
 
-    public boolean isOldConfigPanelWasOpened() {
+    public boolean wasOldConfigPanelOpened() {
       return myOldConfigPanelWasOpened;
     }
 
-    public boolean isSourceConfigFolderExists() {
+    public boolean doesSourceConfigFolderExist() {
       return mySourceConfigFolderExists;
     }
 
-    @NotNull
-    public ImportOldConfigType getType() {
+    public @NotNull ImportOldConfigType getType() {
       return myType;
     }
   }
