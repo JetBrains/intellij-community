@@ -484,7 +484,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
       long t = System.currentTimeMillis();
       while (!processHandler.isProcessTerminated()) {
-        if (System.currentTimeMillis() - t > 5000) {
+        if (System.currentTimeMillis() - t > 15000) {
           throw new InterruptedException("Timed out waiting watcher process to terminate");
         }
         TimeoutUtil.sleep(100);
