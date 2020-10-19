@@ -237,10 +237,13 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
+    CancellationTokenSource cancellationTokenSource = projectResolverContext.getCancellationTokenSource();
+    CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
     return getBuildEnvironment(projectResolverContext.getConnection(),
                                projectResolverContext.getExternalSystemTaskId(),
                                projectResolverContext.getListener(),
-                               projectResolverContext.getCancellationTokenSource());
+                               cancellationToken,
+                               projectResolverContext.getSettings());
   }
 
   public static void prepare(@NotNull LongRunningOperation operation,
@@ -259,7 +262,7 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
     List<String> jvmArgs = settings.getJvmArguments();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null);
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null, settings);
 
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
@@ -516,7 +519,7 @@ public class GradleExecutionHelper {
                                                @NotNull ExternalSystemTaskId taskId,
                                                @NotNull ExternalSystemTaskNotificationListener listener,
                                                @Nullable CancellationTokenSource cancellationTokenSource) {
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationTokenSource);
+    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationTokenSource, null);
 
     GradleVersion gradleVersion = null;
     if (buildEnvironment != null) {
@@ -529,21 +532,29 @@ public class GradleExecutionHelper {
   public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
                                                      @NotNull ExternalSystemTaskId taskId,
                                                      @NotNull ExternalSystemTaskNotificationListener listener,
-                                                     @Nullable CancellationTokenSource cancellationTokenSource) {
+                                                     @Nullable CancellationTokenSource cancellationTokenSource,
+                                                     @Nullable GradleExecutionSettings settings) {
     CancellationToken cancellationToken = cancellationTokenSource != null ? cancellationTokenSource.token() : null;
-    return getBuildEnvironment(connection, taskId, listener, cancellationToken);
+    return getBuildEnvironment(connection, taskId, listener, cancellationToken, settings);
   }
 
   @Nullable
   public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
                                                      @NotNull ExternalSystemTaskId taskId,
                                                      @NotNull ExternalSystemTaskNotificationListener listener,
-                                                     @Nullable CancellationToken cancellationToken) {
+                                                     @Nullable CancellationToken cancellationToken,
+                                                     @Nullable GradleExecutionSettings settings) {
     BuildEnvironment buildEnvironment = null;
     try {
       ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
       if (cancellationToken != null) {
         modelBuilder.withCancellationToken(cancellationToken);
+      }
+      if (settings != null) {
+        final String javaHome = settings.getJavaHome();
+        if (javaHome != null && new File(javaHome).isDirectory()) {
+          modelBuilder.setJavaHome(new File(javaHome));
+        }
       }
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.

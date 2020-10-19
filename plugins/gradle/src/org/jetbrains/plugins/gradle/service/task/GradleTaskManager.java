@@ -122,7 +122,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource);
+        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
         final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
         throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
       }
