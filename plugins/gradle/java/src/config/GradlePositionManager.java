@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
+import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.groovy.scripts.TextResourceScriptSource;
 import org.gradle.internal.resource.DefaultTextFileResourceLoader;
 import org.gradle.internal.resource.TextResource;
@@ -135,7 +136,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
     @Nullable
     private static String calcClassName(File scriptFile) {
-      TextResource resource = new DefaultTextFileResourceLoader().loadFile("script", scriptFile);
+      TextResource resource = new DefaultTextFileResourceLoader(new IdentityFileResolver()).loadFile("script", scriptFile);
       TextResourceScriptSource scriptSource = new TextResourceScriptSource(resource);
       return scriptSource.getClassName();
     }
