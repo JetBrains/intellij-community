@@ -298,9 +298,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               .createPanel();
           }
 
-          @Nullable
           @Override
-          public JComponent getPreferredFocusedComponent() {
+          public @NotNull JComponent getPreferredFocusedComponent() {
             return name;
           }
 

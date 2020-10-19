@@ -117,7 +117,7 @@ public class EditorComposite implements Disposable {
     Disposer.register(project, this);
 
     if (editors.length > 1) {
-      myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
+      myTabbedPaneWrapper = createTabbedPaneWrapper(editors, null);
       JComponent component = myTabbedPaneWrapper.getComponent();
       myComponent = new MyComponent(component, () -> component);
     }
@@ -176,7 +176,7 @@ public class EditorComposite implements Disposable {
   }
 
   @NotNull
-  private TabbedPaneWrapper.AsJBTabs createTabbedPaneWrapper(FileEditor[] editors) {
+  private TabbedPaneWrapper.AsJBTabs createTabbedPaneWrapper(FileEditor @NotNull [] editors, MyComponent myComponent) {
     PrevNextActionsDescriptor descriptor = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
     final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(myFileEditorManager.getProject(), SwingConstants.BOTTOM, descriptor, this);
 
@@ -552,7 +552,7 @@ public class EditorComposite implements Disposable {
     //noinspection NonAtomicOperationOnVolatileField : field is modified only in EDT
     myEditors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
-      myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors);
+      myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors, myComponent);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());
     }
     else {

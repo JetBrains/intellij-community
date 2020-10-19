@@ -43,7 +43,7 @@ public class NSDefaults {
       final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
       try {
         final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-        if (defaults == null || defaults.equals(ID.NIL))
+        if (defaults.equals(ID.NIL))
           return null;
 
         if (doSyncronize) {
@@ -57,7 +57,7 @@ public class NSDefaults {
           return null;
 
         final ID valObj = Foundation.invoke(tail.cachedNodeObj, "objectForKey:", Foundation.nsString(key));
-        if (valObj == null || valObj.equals(ID.NIL))
+        if (valObj.equals(ID.NIL))
           return null;
         return Foundation.toStringViaUTF8(valObj);
       } finally {
@@ -73,7 +73,7 @@ public class NSDefaults {
       final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
       try {
         final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-        if (defaults == null || defaults.equals(ID.NIL))
+        if (defaults.equals(ID.NIL))
           return;
 
         _readPath(defaults);
@@ -109,7 +109,7 @@ public class NSDefaults {
       final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
       try {
         final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-        if (defaults == null || defaults.equals(ID.NIL))
+        if (defaults.equals(ID.NIL))
           return -1;
 
         _readPath(defaults);
@@ -165,13 +165,13 @@ public class NSDefaults {
           return;
 
         final ID nodeObj = Foundation.invoke(parent, mySelector, Foundation.nsString(myNodeName));
-        if (nodeObj == null || nodeObj.equals(ID.NIL))
+        if (nodeObj.equals(ID.NIL))
           return;
 
         cachedNodeObj = nodeObj;
       }
 
-      private static ID _createDictionary() { return Foundation.invoke("NSMutableDictionary", "new"); }
+      private static @NotNull ID _createDictionary() { return Foundation.invoke("NSMutableDictionary", "new"); }
 
       void writeStringValue(@NotNull String key, String val) {
         final ID mnode;
@@ -183,7 +183,7 @@ public class NSDefaults {
         } else
           mnode = Foundation.invoke(cachedNodeObj, "mutableCopy");
 
-        if (mnode == null || mnode.equals(ID.NIL))
+        if (mnode.equals(ID.NIL))
           return;
 
         if (val != null)
@@ -279,7 +279,7 @@ public class NSDefaults {
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-      if (defaults == null || defaults.equals(ID.NIL))
+      if (defaults.equals(ID.NIL))
         return;
       final ID dict = Foundation.invoke("NSMutableDictionary", "new");
       if (values != null) {
@@ -304,7 +304,7 @@ public class NSDefaults {
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-      if (defaults == null || defaults.equals(ID.NIL))
+      if (defaults.equals(ID.NIL))
         return;
       Foundation.invoke(defaults, "removePersistentDomainForName:", Foundation.nsString(domainName));
     } finally {
@@ -318,10 +318,10 @@ public class NSDefaults {
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-      if (defaults == null || defaults.equals(ID.NIL))
+      if (defaults.equals(ID.NIL))
         return false;
       final ID valObj = Foundation.invoke(defaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle"));
-      if (valObj == null || valObj.equals(ID.NIL))
+      if (valObj.equals(ID.NIL))
         return false;
 
       final String sval = Foundation.toStringViaUTF8(valObj);

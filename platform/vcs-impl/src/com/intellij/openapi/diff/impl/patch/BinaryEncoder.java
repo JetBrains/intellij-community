@@ -42,7 +42,7 @@ public final class BinaryEncoder {
     byte[] deflated = new byte[maxLineSize];
     try (DeflaterInputStream deflaterStream = new DeflaterInputStream(input)) {
       int lineSize;
-      do {
+      while (true) {
         lineSize = deflaterStream.read(deflated, 0, maxLineSize);
         if (lineSize <= 0) break;
         writer.append(getCharForLineSize(lineSize));
@@ -52,7 +52,7 @@ public final class BinaryEncoder {
         writer.append(new String(Base85x.encode(deflated, newSize)));
         writer.append('\n');
       }
-      while (lineSize > 0);
+
     }
     catch (Base85x.Base85FormatException e) {
       throw new BinaryPatchException(e);

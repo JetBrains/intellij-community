@@ -139,7 +139,7 @@ public class ByWord implements DiffPolicy {
       boolean isWhitespace = Character.isWhitespace(nextChar);
       if (withinFormatting) {
         if (isWhitespace) continue;
-        if (start != -1 && start < i) words.add(policy.createFormatting(text, new TextRange(start, i)));
+        if (start < i) words.add(policy.createFormatting(text, new TextRange(start, i)));
         start = -1;
         withinFormatting = false;
       }

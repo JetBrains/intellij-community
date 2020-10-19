@@ -8,10 +8,11 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.rules.UsageGroupingRuleEx;import com.intellij.util.containers.ContainerUtil;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public final class ActiveRules {
     }
 
     @Override
-    public @Nullable String getGroupingActionId() {
+    public @NotNull String getGroupingActionId() {
       return "UsageGrouping.FileStructure";
     }
 

@@ -282,7 +282,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
         if (rootNode != null) {
           final List<AbstractTreeNode<?>> kids = collectChildren(rootNode);
-          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
+          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, null);
         }
         else {
           async.cancel();

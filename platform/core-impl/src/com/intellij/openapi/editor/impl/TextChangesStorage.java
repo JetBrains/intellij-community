@@ -266,7 +266,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the right.
-      if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
+      if (newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         changeEntry.change = adjusted;
@@ -277,9 +277,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change is left-adjacent to the stored change.
-      if (newChangeEnd == storedClientStart) {
-        changeEntry.clientStartOffset += changeDiff;
-      }
+      changeEntry.clientStartOffset += changeDiff;
     }
 
     if (insertionIndex >= 0) {

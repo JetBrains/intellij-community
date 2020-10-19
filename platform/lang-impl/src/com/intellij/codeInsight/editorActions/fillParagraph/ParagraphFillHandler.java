@@ -143,14 +143,13 @@ public class ParagraphFillHandler {
     return document.getLineEndOffset(lineNumber);
   }
 
-  @Nullable
-  private PsiElement getFirstElement(@NotNull final PsiElement element) {
+  private @NotNull PsiElement getFirstElement(@NotNull final PsiElement element) {
     final IElementType elementType = element.getNode().getElementType();
     PsiElement prevSibling = element.getPrevSibling();
     PsiElement result = element;
     while (prevSibling != null && (prevSibling.getNode().getElementType().equals(elementType) ||
                                    (atWhitespaceToken(prevSibling) &&
-                                   StringUtil.countChars(prevSibling.getText(), '\n') <= 1))) {
+                                    StringUtil.countChars(prevSibling.getText(), '\n') <= 1))) {
       String text = prevSibling.getText();
       final String prefix = getPrefix(element);
       final String postfix = getPostfix(element);
@@ -161,21 +160,21 @@ public class ParagraphFillHandler {
           StringUtil.isEmptyOrSpaces(text)) {
         break;
       }
-      if (prevSibling.getNode().getElementType().equals(elementType))
+      if (prevSibling.getNode().getElementType().equals(elementType)) {
         result = prevSibling;
+      }
       prevSibling = prevSibling.getPrevSibling();
     }
     return result;
   }
 
-  @Nullable
-  private PsiElement getLastElement(@NotNull final PsiElement element) {
+  private @NotNull PsiElement getLastElement(@NotNull final PsiElement element) {
     final IElementType elementType = element.getNode().getElementType();
     PsiElement nextSibling = element.getNextSibling();
     PsiElement result = element;
     while (nextSibling != null && (nextSibling.getNode().getElementType().equals(elementType) ||
                                    (atWhitespaceToken(nextSibling) &&
-                                   StringUtil.countChars(nextSibling.getText(), '\n') <= 1))) {
+                                    StringUtil.countChars(nextSibling.getText(), '\n') <= 1))) {
       String text = nextSibling.getText();
       final String prefix = getPrefix(element);
       final String postfix = getPostfix(element);
@@ -186,8 +185,9 @@ public class ParagraphFillHandler {
           StringUtil.isEmptyOrSpaces(text)) {
         break;
       }
-      if (nextSibling.getNode().getElementType().equals(elementType))
+      if (nextSibling.getNode().getElementType().equals(elementType)) {
         result = nextSibling;
+      }
       nextSibling = nextSibling.getNextSibling();
     }
     return result;

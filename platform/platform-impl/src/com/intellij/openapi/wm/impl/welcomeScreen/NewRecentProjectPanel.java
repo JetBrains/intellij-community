@@ -249,15 +249,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
               Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula());
-              if (icon == null) {
-                if (StartupUiUtil.isUnderDarcula()) {
-                  //No dark icon for this project
-                  icon = recentProjectsManage.getProjectIcon(projectPath, false);
-                }
-              }
-              if (icon == null) {
-                icon = EmptyIcon.ICON_16;
-              }
 
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override

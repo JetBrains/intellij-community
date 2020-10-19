@@ -182,8 +182,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @TestOnly
   public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
-      String text = Queryable.Util.print((Queryable)getValue(), printInfo, this);
-      if (text != null) return text;
+      return Queryable.Util.print((Queryable)getValue(), printInfo, this);
     }
 
     return getTestPresentation();

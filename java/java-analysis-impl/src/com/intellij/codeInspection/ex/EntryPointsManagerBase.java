@@ -430,7 +430,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           while (lastDotIdx > parenIndex) lastDotIdx = fqName.lastIndexOf('.', lastDotIdx - 1);
 
           boolean notype = false;
-          if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx || spaceIdx > parenIndex) {
+          if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx) {
             notype = true;
           }
 

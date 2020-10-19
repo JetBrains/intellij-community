@@ -29,10 +29,10 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull private final Project myProject;
 
-  @NotNull private RunProfile myRunProfile;
+  @NotNull private final RunProfile myRunProfile;
   @NotNull private final Executor myExecutor;
 
-  @NotNull private ExecutionTarget myTarget;
+  @NotNull private final ExecutionTarget myTarget;
   private TargetEnvironmentFactory myTargetEnvironmentFactory;
   private volatile TargetEnvironment myPrepareRemoteEnvironment;
 
@@ -55,6 +55,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     myRunnerAndConfigurationSettings = null;
     myExecutor = null;
     myRunner = null;
+    myRunProfile = null;
+    myTarget = null;
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -246,13 +248,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
     }
-    else if (myRunProfile != null) {
-      return myRunProfile.getName();
-    }
-    else if (myContentToReuse != null) {
-      return myContentToReuse.getDisplayName();
-    }
-    return super.toString();
+    return myRunProfile.getName();
   }
 
   void setDataContext(@NotNull DataContext dataContext) {

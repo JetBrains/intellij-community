@@ -77,8 +77,6 @@ public final class GroupDisplayNameUtil {
     final Package thisPackage = aClass.getPackage();
     assert thisPackage != null : "need package to determine group display name";
     final String name = thisPackage.getName();
-    assert name != null :
-      "inspection has default package, group display name cannot be determined";
     final int index = name.lastIndexOf('.');
     final String key = name.substring(index + 1);
     final String groupDisplayName = packageGroupDisplayNameMap.get(key);

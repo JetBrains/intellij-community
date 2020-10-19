@@ -39,8 +39,6 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
-
 /**
  * @author peter
  */
@@ -213,13 +211,11 @@ public abstract class CompletionPhase implements Disposable {
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.
             if (ScreenReader.isActive() &&
-                indicator.getLookup() != null &&
                 event.getOppositeComponent() != null &&
                 indicator.getLookup().getComponent() != null &&
                 // Check the opposite is in the lookup ancestor
-                (SwingUtilities.getWindowAncestor(event.getOppositeComponent())) ==
-                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent()))
-            {
+                SwingUtilities.getWindowAncestor(event.getOppositeComponent()) ==
+                SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent())) {
               return;
             }
             indicator.closeAndFinish(true);

@@ -62,7 +62,7 @@ public final class Foundation {
     return invokArgs;
   }
 
-  public static ID invoke(final ID id, final Pointer selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final Pointer selector, Object... args) {
     // objc_msgSend is called with the calling convention of the target method
     // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
     // it is therefore important to not call objc_msgSend as a vararg function
@@ -95,7 +95,7 @@ public final class Foundation {
     return invoke(cls, selector, args);
   }
 
-  public static ID invoke(final ID id, final String selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
   }
 

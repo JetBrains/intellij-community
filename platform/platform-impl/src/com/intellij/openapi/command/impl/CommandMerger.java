@@ -88,7 +88,7 @@ public final class CommandMerger {
     myStateAfter = nextCommandToMerge.myStateAfter;
     if (myTransparent) { // todo write test
       if (nextCommandToMerge.hasActions()) {
-        myTransparent &= nextCommandToMerge.myTransparent;
+        myTransparent = nextCommandToMerge.myTransparent;
       }
     }
     else {

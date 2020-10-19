@@ -163,10 +163,8 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
     Icon icon = fetchIcon(project, placeInfo);
 
-    if (icon != null) {
-      titleTextComponent.setIcon(icon);
-      titleTextComponent.setIconTextGap(4);
-    }
+    titleTextComponent.setIcon(icon);
+    titleTextComponent.setIconTextGap(4);
 
     titleTextComponent.setBorder(JBUI.Borders.empty());
 

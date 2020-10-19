@@ -29,7 +29,7 @@ public final class NSColor {
         Foundation.invoke("NSColor", selector),
         "colorUsingColorSpace:",
         Foundation.invoke("NSColorSpace", "genericRGBColorSpace"));
-      if (nsCol == null || nsCol.equals(ID.NIL))
+      if (nsCol.equals(ID.NIL))
         return null;
 
       final double nsRed    = Foundation.invoke_fpret(nsCol, "redComponent");
