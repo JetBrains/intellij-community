@@ -35,7 +35,7 @@ public abstract class TabLayout {
   public abstract int getDropIndexFor(Point point);
 
   public static int getMaxPinnedTabWidth() {
-    return JBUI.scale(Registry.intValue("ide.editor.max.pinned.tab.width", 100));
+    return JBUI.scale(Registry.intValue("ide.editor.max.pinned.tab.width", 2000));
   }
 
   @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
