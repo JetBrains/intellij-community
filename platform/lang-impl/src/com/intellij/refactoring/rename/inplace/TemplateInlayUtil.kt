@@ -6,6 +6,8 @@ import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -25,16 +27,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import com.intellij.refactoring.rename.RenameUsagesCollector
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Insets
-import java.awt.Rectangle
+import java.awt.*
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.LayoutFocusTraversalPolicy
 
@@ -44,15 +46,11 @@ object TemplateInlayUtil {
   @JvmStatic
   fun createNavigatableButton(templateState: TemplateState,
                               inEditorOffset: Int,
-                              presentation: SelectableInlayPresentation): Inlay<PresentationRenderer>? {
+                              presentation: SelectableInlayPresentation,
+                              templateElement: VirtualTemplateElement): Inlay<PresentationRenderer>? {
     val renderer = PresentationRenderer(presentation)
     val inlay = templateState.editor.inlayModel.addInlineElement(inEditorOffset, true, renderer) ?: return null
-    VirtualTemplateElement.installOnTemplate(templateState, object : VirtualTemplateElement {
-      override fun onSelect(templateState: TemplateState) {
-        presentation.isSelected = true
-        templateState.focusCurrentHighlighter(false)
-      }
-    })
+    VirtualTemplateElement.installOnTemplate(templateState, templateElement)
     presentation.addListener(object : PresentationListener {
       override fun contentChanged(area: Rectangle) {
         inlay.repaint()
@@ -65,14 +63,24 @@ object TemplateInlayUtil {
     Disposer.register(templateState, inlay)
     return inlay
   }
+  
+  open class SelectableTemplateElement(val presentation: SelectableInlayPresentation) : VirtualTemplateElement {
+    override fun onSelect(templateState: TemplateState) {
+      presentation.isSelected = true
+      templateState.focusCurrentHighlighter(false)
+    }
+
+  }
 
   @JvmStatic
   fun createNavigatableButtonWithPopup(templateState: TemplateState,
                                        inEditorOffset: Int,
                                        presentation: SelectableInlayPresentation,
-                                       panel: DialogPanel): Inlay<PresentationRenderer>? {
+                                       panel: DialogPanel,
+                                       templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+                                       logStatisticsOnHide : () -> Unit = {}): Inlay<PresentationRenderer>? {
     val editor = templateState.editor
-    val inlay = createNavigatableButton(templateState, inEditorOffset, presentation) ?: return null
+    val inlay = createNavigatableButton(templateState, inEditorOffset, presentation, templateElement) ?: return null
     fun showPopup() {
       try {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
@@ -84,6 +92,7 @@ object TemplateInlayUtil {
             override fun onClosed(event: LightweightWindowEvent) {
               presentation.isSelected = false
               templateState.focusCurrentHighlighter(true)
+              logStatisticsOnHide.invoke()
             }
           })
           .createPopup()
@@ -140,17 +149,23 @@ object TemplateInlayUtil {
     ))
 
     var tooltip = LangBundle.message("inlay.rename.tooltip.comments")
-    val commentsStatusIcon = if (processor.isToSearchInComments(elementToRename)) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
+    val toSearchInComments = processor.isToSearchInComments(elementToRename)
+    val commentsStatusIcon = if (toSearchInComments) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
 
     var buttonsPresentation = button(factory.icon(commentsStatusIcon))
+    val toSearchForTextOccurrences: Boolean
     if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
-      val textOccurrencesStatusIcon = if (processor.isToSearchForTextOccurrences(elementToRename))
+      toSearchForTextOccurrences = processor.isToSearchForTextOccurrences(elementToRename)
+      val textOccurrencesStatusIcon = if (toSearchForTextOccurrences)
                                                 AllIcons.Actions.InlayRenameInNoCodeFilesActive 
                                             else 
                                                 AllIcons.Actions.InlayRenameInNoCodeFiles
       val inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
       buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
+    }
+    else {
+      toSearchForTextOccurrences = false
     }
     tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement")
 
@@ -160,17 +175,55 @@ object TemplateInlayUtil {
                                           background = colorsScheme.getColor(bgKey)),
         padding = InlayPresentationFactory.Padding(4, 0,0, 0)
       )
+
+    val presentation = object : SelectableInlayButton(editor,
+                                                      withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
+                                                      withBackground(INLINE_REFACTORING_SETTINGS_FOCUSED),
+                                                      factory.withTooltip(tooltip, withBackground(INLINE_REFACTORING_SETTINGS_HOVERED))) {
+      override fun mouseClicked(event: MouseEvent, translated: Point) {
+        super.mouseClicked(event, translated)
+        logStatisticsOnShow(editor, event)
+      }
+    }
     
-    val presentation = SelectableInlayButton(editor,
-                                             withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
-                                             withBackground(INLINE_REFACTORING_SETTINGS_FOCUSED),
-                                             factory.withTooltip(tooltip, withBackground(INLINE_REFACTORING_SETTINGS_HOVERED)))
-    val panel = renamePanel(elementToRename, editor, restart)
-    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel)
+    val templateElement = object : SelectableTemplateElement(presentation) {
+      override fun onSelect(templateState: TemplateState) {
+        super.onSelect(templateState)
+        logStatisticsOnShow(editor)
+      }
+    }
+
+    val settings = Settings(toSearchInComments, toSearchForTextOccurrences);
+    val panel = renamePanel(elementToRename, editor, settings, restart)
+    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel, templateElement) {
+      logStatisticsOnHide(editor, toSearchInComments, settings.inComments, toSearchForTextOccurrences, settings.inTextOccurrences)
+    }
+  }
+
+  private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null) {
+    val showEvent = mouseEvent
+                    ?: KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_TAB, KeyEvent.VK_TAB.toChar())
+    RenameUsagesCollector.show.log(editor.project,
+                                   EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
+  }
+
+  private data class Settings (var inComments : Boolean, var inTextOccurrences : Boolean) 
+
+  private fun logStatisticsOnHide(editor: EditorImpl,
+                                  toSearchInComments: Boolean,
+                                  toSearchInCommentsNew: Boolean,
+                                  toSearchForTextOccurrences: Boolean,
+                                  toSearchForTextOccurrencesNew: Boolean) {
+    RenameUsagesCollector.hide.log(editor.project, 
+                                   RenameUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
+    RenameUsagesCollector.settingsChanged.log(editor.project,
+                                              RenameUsagesCollector.searchInComments.with(toSearchInCommentsNew),
+                                              RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew));
   }
 
   private fun renamePanel(elementToRename: PsiElement,
                           editor: Editor,
+                          settings : Settings,
                           restart: Runnable): DialogPanel {
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
@@ -180,8 +233,10 @@ object TemplateInlayUtil {
           cell {
             checkBox(RefactoringBundle.message("comments.and.strings"),
                      processor.isToSearchInComments(elementToRename),
-                     actionListener = { _, cb ->  processor.setToSearchInComments(elementToRename, cb.isSelected)
-                                                  restart.run()
+                     actionListener = { _, cb ->
+                       settings.inComments = cb.isSelected
+                       processor.setToSearchInComments(elementToRename, cb.isSelected)
+                       restart.run()
                      }
             ).focused()
             component(JLabel(AllIcons.Actions.InlayRenameInComments))
@@ -192,8 +247,11 @@ object TemplateInlayUtil {
             cell {
               checkBox(RefactoringBundle.message("text.occurrences"),
                        processor.isToSearchForTextOccurrences(elementToRename),
-                       actionListener = { _, cb -> processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
-                                                   restart.run()})
+                       actionListener = { _, cb ->
+                         settings.inTextOccurrences = cb.isSelected
+                         processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
+                         restart.run()
+                       })
               component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
             }
           }
@@ -202,24 +260,25 @@ object TemplateInlayUtil {
       row {
         cell {
           link(LangBundle.message("inlay.rename.link.label.more.options"), null) {
-            doRename(editor, renameAction)
+            doRename(editor, renameAction, null)
           }.component.isFocusable = true
           comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
         }
       }
     }
     DumbAwareAction.create {
-      doRename(editor, renameAction)
+      doRename(editor, renameAction, it)
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_RENAME), panel)
     panel.isFocusCycleRoot = true
     panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
     return panel
   }
 
-  private fun doRename(editor: Editor, renameAction: AnAction) {
+  private fun doRename(editor: Editor, renameAction: AnAction, anActionEvent: AnActionEvent?) {
+    RenameUsagesCollector.openRenameDialog.log(editor.project, RenameUsagesCollector.linkUsed.with(anActionEvent == null))
     val event = AnActionEvent(null,
                               DataManager.getInstance().getDataContext(editor.component),
-                              ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
+                              anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
                               ActionManager.getInstance(), 0)
     if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
       ActionUtil.performActionDumbAware(renameAction, event)

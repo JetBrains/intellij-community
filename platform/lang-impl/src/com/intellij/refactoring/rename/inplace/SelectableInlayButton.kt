@@ -9,7 +9,7 @@ import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
 
-class SelectableInlayButton(
+open class SelectableInlayButton(
   private val editor: EditorEx,
   private val default: InlayPresentation,
   private val active: InlayPresentation,
