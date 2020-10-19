@@ -9,7 +9,7 @@ internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
-  internal val changeLog: ChangeLog = HashMap()
+  internal val changeLog: ChangeLog = LinkedHashMap()
 
   internal fun clear() {
     modificationCount++
