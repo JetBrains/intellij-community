@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -51,6 +52,8 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
     }
 
     ReadAction.nonBlocking(() -> {
+      if (project.isDisposed()) return null;
+
       final boolean hasLombokLibrary = hasLombokLibrary(project);
 
       // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
@@ -84,12 +87,14 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
           .createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
                               LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
                               NotificationType.ERROR,
-                              (not, e) -> {
-                                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                  enableAnnotations(project);
-                                  not.expire();
-                                }
-                              });
+                              ApplicationManager.getApplication().isUnitTestMode() ? null
+                                                                                   : (not, e) -> {
+                                                                                     if (e.getEventType() ==
+                                                                                         HyperlinkEvent.EventType.ACTIVATED) {
+                                                                                       enableAnnotations(project);
+                                                                                       not.expire();
+                                                                                     }
+                                                                                   });
       }
       return null;
     }).expireWith(LombokProcessorProvider.getInstance(project))
