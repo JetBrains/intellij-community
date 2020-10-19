@@ -77,6 +77,15 @@ open class ProcessMediatorTest {
   }
 
   @Test
+  internal fun `error on create process`() {
+    val path = "/path/to/non-existent/binary"
+    assertFalse(FileUtil.exists(path))
+    assertThrows(IOException::class.java) {
+      ProcessBuilder(path).startMediatedProcess()
+    }
+  }
+
+  @Test
   internal fun `create simple process returning zero exit code`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()

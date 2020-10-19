@@ -52,18 +52,20 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
     }
   }
 
+  // if anything goes wrong during process creation, this will fail with the corresponding exception
+  private val pid = handle.pid.blockingGet()
+
   private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else NullOutputStream
   private val stdout: InputStream = if (pipeStdout) createInputStream(1) else NullInputStream
   private val stderr: InputStream = if (pipeStderr) createInputStream(2) else NullInputStream
 
   private val termination: Deferred<Int> = async {
     handle.rpc {
-      awaitTermination(getPid())
+      awaitTermination(pid)
     }
   }
 
-  private suspend fun getPid(): Long = handle.pid.await()
-  override fun pid(): Long = handle.pid.blockingGet()
+  override fun pid(): Long = pid
 
   override fun getOutputStream(): OutputStream = stdin
   override fun getInputStream(): InputStream = stdout
@@ -78,7 +80,7 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
         try {
           // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
           //       and cancelling it makes the coroutine die in a horrible way leaving the remote call in a broken state.
-          writeStream(getPid(), fd, channel.receiveAsFlow())
+          writeStream(pid, fd, channel.receiveAsFlow())
             .onCompletion { ackFlow.value = null }
             .fold(0L) { l, _ ->
               (l + 1).also {
@@ -100,7 +102,7 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
     val channel = produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
-          readStream(getPid(), fd).collect(channel::send)
+          readStream(pid, fd).collect(channel::send)
         }
         catch (e: IOException) {
           channel.close(e)
@@ -135,7 +137,7 @@ class MediatedProcess private constructor(private val handle: MediatedProcessHan
   private fun destroy(force: Boolean) {
     launch {
       handle.rpc {
-        destroyProcess(getPid(), force)
+        destroyProcess(pid, force)
       }
     }
   }
@@ -164,9 +166,8 @@ private class MediatedProcessHandle(
   errFile: File?,
 ) : CoroutineScope by client.childSupervisorScope() {
 
-  val pid: Deferred<Long> = async {
-    client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
-  }
+  /** Controls all operations except CreateProcess() and Release(). */
+  private val rpcJob = childSupervisorJob()
 
   private val releaseJob = launch(start = CoroutineStart.LAZY) {
     try {
@@ -179,8 +180,16 @@ private class MediatedProcessHandle(
     }
   }
 
-  /** Controls all operations except CreateProcess() and Release(). */
-  private val rpcJob = childSupervisorJob()
+  val pid: Deferred<Long> = async {
+    try {
+      client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
+    }
+    catch (e: Throwable) {
+      rpcJob.cancel("Failed to create process")
+      releaseJob.cancel("Failed to create process")
+      throw e
+    }
+  }
 
   suspend fun <R> rpc(block: suspend ProcessMediatorClient.() -> R): R {
     (this as CoroutineScope).ensureActive()
