@@ -5,29 +5,25 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 
-internal object AddDiffOperation {
+internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
   private val LOG = logger<AddDiffOperation>()
+  private val replaceMap = HashBiMap.create<EntityId, EntityId>()
+  private val diffLog = diff.superNewChangeLog.changeLog
 
-  fun addDiff(target: WorkspaceEntityStorageBuilderImpl, diff: WorkspaceEntityStorageDiffBuilder) {
+  // Initial storage is required in case something will fail and we need to send a report
+  private val initialStorage = target.toStorage()
+
+  fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
 
-    diff as WorkspaceEntityStorageBuilderImpl
-
-    // Initial storage is required in case something will fail and we need to send a report
-    val initialStorage = target.toStorage()
-
-    val replaceMap = HashBiMap.create<EntityId, EntityId>()
-
-    val diffLog = diff.superNewChangeLog.changeLog
     for ((entityId, change) in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
           change as ChangeEntry.AddEntity<WorkspaceEntity>
 
-          checkPersistentId(target, diff, initialStorage, change.entityData, null)
+          checkPersistentId(change.entityData, null)
 
           val sourceEntityId = change.entityData.createPid()
 
@@ -49,11 +45,10 @@ internal object AddDiffOperation {
           // Restore links to soft references
           if (targetEntityData is SoftLinkable) target.indexes.updateSoftLinksIndex(targetEntityData)
 
-          addRestoreChildren(diff, sourceEntityId, diffLog, replaceMap, target, initialStorage, targetEntityId)
-
+          addRestoreChildren(sourceEntityId, targetEntityId)
 
           // Restore parent references
-          addRestoreParents(diff, sourceEntityId, diffLog, replaceMap, target, initialStorage, targetEntityId)
+          addRestoreParents(sourceEntityId, targetEntityId)
 
           target.indexes.updateIndices(change.entityData.createPid(), targetEntityData, diff)
           target.superNewChangeLog.addAddEvent(targetEntityId, targetEntityData)
@@ -69,7 +64,7 @@ internal object AddDiffOperation {
           target.superNewChangeLog.addRemoveEvent(entityId)
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
-          replaceOperation(target, diff, change, replaceMap, initialStorage, diffLog)
+          replaceOperation(change)
         }
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
           change as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
@@ -87,7 +82,7 @@ internal object AddDiffOperation {
           }
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
-          replaceOperation(target, diff, change.dataChange, replaceMap, initialStorage, diffLog)
+          replaceOperation(change.dataChange)
         }
       }
     }
@@ -97,13 +92,7 @@ internal object AddDiffOperation {
     target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
   }
 
-  private fun addRestoreParents(diff: WorkspaceEntityStorageBuilderImpl,
-                                sourceEntityId: EntityId,
-                                diffLog: ChangeLog,
-                                replaceMap: HashBiMap<EntityId, EntityId>,
-                                target: WorkspaceEntityStorageBuilderImpl,
-                                initialStorage: WorkspaceEntityStorageImpl,
-                                targetEntityId: EntityId) {
+  private fun addRestoreParents(sourceEntityId: EntityId, targetEntityId: EntityId) {
     val allParents = diff.refs.getParentRefsOfChild(sourceEntityId)
     for ((connectionId, sourceParentId) in allParents) {
       val targetParentId = if (diffLog[sourceParentId] is ChangeEntry.AddEntity<*>) {
@@ -129,13 +118,7 @@ internal object AddDiffOperation {
     }
   }
 
-  private fun addRestoreChildren(diff: WorkspaceEntityStorageBuilderImpl,
-                                 sourceEntityId: EntityId,
-                                 diffLog: ChangeLog,
-                                 replaceMap: HashBiMap<EntityId, EntityId>,
-                                 target: WorkspaceEntityStorageBuilderImpl,
-                                 initialStorage: WorkspaceEntityStorageImpl,
-                                 targetEntityId: EntityId) {
+  private fun addRestoreChildren(sourceEntityId: EntityId, targetEntityId: EntityId) {
     // Restore children references
     val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId)
     for ((connectionId, sourceChildrenIds) in allSourceChildren) {
@@ -168,12 +151,7 @@ internal object AddDiffOperation {
     }
   }
 
-  private fun replaceOperation(target: WorkspaceEntityStorageBuilderImpl,
-                               diff: WorkspaceEntityStorageBuilderImpl,
-                               change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>,
-                               replaceMap: HashBiMap<EntityId, EntityId>,
-                               initialStorage: WorkspaceEntityStorageImpl,
-                               diffLog: ChangeLog) {
+  private fun replaceOperation(change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>) {
     change as ChangeEntry.ReplaceEntity<WorkspaceEntity>
 
     val sourceEntityId = change.newData.createPid()
@@ -185,7 +163,7 @@ internal object AddDiffOperation {
     val newTargetEntityData = change.newData.clone()
     newTargetEntityData.id = targetEntityId.arrayId
 
-    checkPersistentId(target, diff, initialStorage, change.newData, newTargetEntityData.createPid())
+    checkPersistentId(change.newData, newTargetEntityData.createPid())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId) ?: return
@@ -211,21 +189,18 @@ internal object AddDiffOperation {
     val removedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
     change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
 
-    replaceRestoreChildren(target, newEntityId, addedChildrenMap, diffLog, replaceMap, removedChildrenMap, initialStorage, diff)
+    replaceRestoreChildren(newEntityId, addedChildrenMap, removedChildrenMap)
 
-    replaceRestoreParents(change, target, newEntityId, initialStorage, diff, diffLog, replaceMap)
+    replaceRestoreParents(change, newEntityId)
 
     WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId, beforeChildren, beforeParents, newTargetEntityData)
   }
 
-  private fun replaceRestoreChildren(target: WorkspaceEntityStorageBuilderImpl,
-                                     newEntityId: EntityId,
-                                     addedChildrenMap: HashMultimap<ConnectionId, EntityId>,
-                                     diffLog: ChangeLog,
-                                     replaceMap: HashBiMap<EntityId, EntityId>,
-                                     removedChildrenMap: HashMultimap<ConnectionId, EntityId>,
-                                     initialStorage: WorkspaceEntityStorageImpl,
-                                     diff: WorkspaceEntityStorageBuilderImpl) {
+  private fun replaceRestoreChildren(
+    newEntityId: EntityId,
+    addedChildrenMap: HashMultimap<ConnectionId, EntityId>,
+    removedChildrenMap: HashMultimap<ConnectionId, EntityId>,
+  ) {
     val existingChildren = target.refs.getChildrenRefsOfParentBy(newEntityId)
 
     for ((connectionId, children) in existingChildren) {
@@ -298,13 +273,10 @@ internal object AddDiffOperation {
     }
   }
 
-  private fun replaceRestoreParents(change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>,
-                                    target: WorkspaceEntityStorageBuilderImpl,
-                                    newEntityId: EntityId,
-                                    initialStorage: WorkspaceEntityStorageImpl,
-                                    diff: WorkspaceEntityStorageBuilderImpl,
-                                    diffLog: ChangeLog,
-                                    replaceMap: HashBiMap<EntityId, EntityId>) {
+  private fun replaceRestoreParents(
+    change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>,
+    newEntityId: EntityId,
+  ) {
     val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
 
     val modifiedParentsMap = updatedModifiedParents.toMutableMap()
@@ -363,11 +335,7 @@ internal object AddDiffOperation {
     }
   }
 
-  private fun checkPersistentId(target: WorkspaceEntityStorageBuilderImpl,
-                                diff: WorkspaceEntityStorageBuilderImpl,
-                                initialStorage: WorkspaceEntityStorageImpl,
-                                entityData: WorkspaceEntityData<WorkspaceEntity>,
-                                newEntityId: EntityId?) {
+  private fun checkPersistentId(entityData: WorkspaceEntityData<WorkspaceEntity>, newEntityId: EntityId?) {
     val newPersistentId = entityData.persistentId(target)
     if (newPersistentId != null) {
       val existingIds = target.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)

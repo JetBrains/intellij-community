@@ -586,7 +586,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun isEmpty(): Boolean = this.superNewChangeLog.changeLog.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
-    AddDiffOperation.addDiff(this, diff)
+    diff as WorkspaceEntityStorageBuilderImpl
+    AddDiffOperation(this, diff).addDiff()
   }
 
   @Suppress("UNCHECKED_CAST")
