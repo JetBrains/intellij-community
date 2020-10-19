@@ -349,11 +349,11 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val treeCellRendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
+      floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
       return treeCellRendererComponent
     }
 
-    fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
+    fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
       val hoverData = (tree as? GitStageTree)?.hoverData
       if (hoverData == null || tree.expandableItemsHandler.expandedItems.isNotEmpty()) {
         return null
@@ -369,9 +369,10 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       val foreground = if (hovered && hoverData.isOverOperationIcon) baseIcon
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
-      val backgroundColor = if (selected) UIUtil.getTreeBackground(selected, hasFocus)
+      val treeFocused = tree.hasFocus()
+      val backgroundColor = if (selected) UIUtil.getTreeBackground(selected, treeFocused)
                             else tree.getPathBackground(tree.getPathForRow(row), row)
-                                 ?: UIUtil.getTreeBackground(selected, hasFocus)
+                                 ?: UIUtil.getTreeBackground(selected, treeFocused)
       val background = ColorIcon(foreground.iconWidth, tree.getRowHeight(), foreground.iconWidth, tree.getRowHeight(),
                                  backgroundColor, false)
 
