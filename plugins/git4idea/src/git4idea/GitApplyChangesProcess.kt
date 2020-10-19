@@ -87,6 +87,7 @@ class GitApplyChangesProcess(private val project: Project,
                              commits: List<VcsFullCommitDetails>,
                              successfulCommits: MutableList<VcsFullCommitDetails>,
                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+    val doAutoCommit = autoCommit || !changeListManager.areChangeListsEnabled()
     for (commit in commits) {
       val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
       val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
@@ -100,11 +101,11 @@ class GitApplyChangesProcess(private val project: Project,
       try {
         if (changeListManager.areChangeListsEnabled()) changeListManager.setDefaultChangeList(changeList, true)
 
-        val result = command(repository, commit.id, autoCommit,
+        val result = command(repository, commit.id, doAutoCommit,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
         if (result.success()) {
-          if (autoCommit) {
+          if (doAutoCommit) {
             refreshChangedVfs(repository, startHash)
             successfulCommits.add(commit)
           }
