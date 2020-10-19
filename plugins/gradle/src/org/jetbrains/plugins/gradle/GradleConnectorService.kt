@@ -127,6 +127,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val serviceDirectory: String?,
     val distributionType: DistributionType?,
     val gradleHome: String?,
+    val javaHome: String?,
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?
@@ -169,6 +170,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         executionSettings?.serviceDirectory,
         executionSettings?.distributionType,
         executionSettings?.gradleHome,
+        executionSettings?.javaHome,
         executionSettings?.wrapperPropertyFile,
         executionSettings?.isVerboseProcessing,
         executionSettings?.remoteProcessIdleTtlInMs?.toInt()
