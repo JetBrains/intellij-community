@@ -103,9 +103,7 @@ final class ClassLoaderConfigurator {
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
       assert !mainDependent.isUseIdeaClassLoader();
-      PluginClassLoader loader = new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath());
-      loader.setCoreLoader(coreLoader);
-      mainDependent.setClassLoader(loader);
+      mainDependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath(), coreLoader));
       return;
     }
 
@@ -129,11 +127,23 @@ final class ClassLoaderConfigurator {
       }
     }
 
-    ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(EMPTY_CLASS_LOADER_ARRAY);
-    ClassLoader mainDependentClassLoader = createPluginClassLoader(parentLoaders, classPath, mainDependent);
+    ClassLoader mainDependentClassLoader;
+    if (mainDependent.isUseIdeaClassLoader()) {
+      mainDependentClassLoader = configureUsingIdeaClassloader(classPath, mainDependent);
+    }
+    else {
+      ClassLoader[] parentLoaders;
+      if (loaders.isEmpty()) {
+        parentLoaders = usePluginClassLoader ? EMPTY_CLASS_LOADER_ARRAY : new ClassLoader[]{coreLoader};
+      }
+      else {
+        parentLoaders = loaders.toArray(EMPTY_CLASS_LOADER_ARRAY);
+      }
+      mainDependentClassLoader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, mainDependent, mainDependent.getPluginPath(), usePluginClassLoader ? coreLoader : null);
+    }
 
     // second, set class loaders for sub descriptors
-    if (SEPARATE_CLASSLOADER_FOR_SUB) {
+    if (SEPARATE_CLASSLOADER_FOR_SUB && usePluginClassLoader) {
       mainDependent.setClassLoader(mainDependentClassLoader);
       configureSubPlugins(mainDependentClassLoader, pluginDependencies, urlClassLoaderBuilder);
     }
@@ -162,39 +172,28 @@ final class ClassLoaderConfigurator {
         addLoaderOrLogError(dependent, dependency, loaders);
       }
 
-      dependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), dependent, dependent.getPluginPath()));
+      dependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), dependent, dependent.getPluginPath(), coreLoader));
     }
   }
 
-  private @NotNull ClassLoader createPluginClassLoader(@NotNull ClassLoader @NotNull [] parentLoaders,
-                                                       @NotNull List<Path> classPath,
-                                                       @NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (descriptor.isUseIdeaClassLoader()) {
-      getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
-      ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
-      try {
-        Class<?> loaderClass = loader.getClass();
-        if (loaderClass.getName().endsWith(".BootstrapClassLoaderUtil$TransformingLoader")) {
-          loaderClass = loaderClass.getSuperclass();
-        }
+  private @NotNull static ClassLoader configureUsingIdeaClassloader(@NotNull List<Path> classPath, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
+    ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
+    try {
+      Class<?> loaderClass = loader.getClass();
+      if (loaderClass.getName().endsWith(".BootstrapClassLoaderUtil$TransformingLoader")) {
+        loaderClass = loaderClass.getSuperclass();
+      }
 
-        // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
-        MethodHandle addURL = MethodHandles.lookup().findVirtual(loaderClass, "addURL", MethodType.methodType(void.class, URL.class));
-        for (Path pathElement : classPath) {
-          addURL.invoke(loader, localFileToUrl(pathElement, descriptor));
-        }
-        return loader;
-      }
-      catch (Throwable t) {
-        throw new IllegalStateException("An unexpected core classloader: " + loader.getClass(), t);
-      }
-    }
-    else {
-      PluginClassLoader loader = new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.getPluginPath());
-      if (usePluginClassLoader) {
-        loader.setCoreLoader(coreLoader);
+      // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
+      MethodHandle addURL = MethodHandles.lookup().findVirtual(loaderClass, "addURL", MethodType.methodType(void.class, URL.class));
+      for (Path pathElement : classPath) {
+        addURL.invoke(loader, localFileToUrl(pathElement, descriptor));
       }
       return loader;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException("An unexpected core classloader: " + loader.getClass(), t);
     }
   }
 

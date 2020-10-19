@@ -268,12 +268,18 @@ public final class PluginDescriptorLoader {
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
         file = urlToFile(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR)));
-        Path pluginPath = null;
-        if (file.getParent() != null && file.getParent().endsWith("lib")) {
-          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-          pluginPath = file.getParent().getParent();
+        Path parentFile = file.getParent();
+        if (parentFile == null || !parentFile.endsWith("lib")) {
+          return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, null);
         }
-        return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, pluginPath);
+        else {
+          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          IdeaPluginDescriptorImpl descriptor = loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, file.getParent().getParent());
+          if (descriptor != null) {
+            descriptor.jarFiles = null;
+          }
+          return descriptor;
+        }
       }
       else {
         return null;
