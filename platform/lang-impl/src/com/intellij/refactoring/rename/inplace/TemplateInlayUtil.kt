@@ -96,6 +96,11 @@ object TemplateInlayUtil {
             }
           })
           .createPopup()
+        DumbAwareAction.create {
+          popup.cancel()
+          templateState.gotoEnd(false)
+          logStatisticsOnHide.invoke()
+        }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
         popup.showInBestPositionFor(editor)
       }
       finally {
@@ -193,7 +198,7 @@ object TemplateInlayUtil {
       }
     }
 
-    val settings = Settings(toSearchInComments, toSearchForTextOccurrences);
+    val settings = Settings(toSearchInComments, toSearchForTextOccurrences)
     val panel = renamePanel(elementToRename, editor, settings, restart)
     return createNavigatableButtonWithPopup(templateState, offset, presentation, panel, templateElement) {
       logStatisticsOnHide(editor, toSearchInComments, settings.inComments, toSearchForTextOccurrences, settings.inTextOccurrences)
@@ -218,7 +223,7 @@ object TemplateInlayUtil {
                                    RenameUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
     RenameUsagesCollector.settingsChanged.log(editor.project,
                                               RenameUsagesCollector.searchInComments.with(toSearchInCommentsNew),
-                                              RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew));
+                                              RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew))
   }
 
   private fun renamePanel(elementToRename: PsiElement,
