@@ -1,23 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ImportOldConfigsUsagesCollector  {
+import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
+import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
+
+public class ImportOldConfigsUsagesCollector {
+  private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 1);
+  private static final EventId2<ImportOldConfigType, Boolean> IMPORT_DIALOG_SHOWN_EVENT =
+    EVENT_GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType.class), Boolean("config_folder_exists"));
+
   public static class Trigger implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
-      final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
+      ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
-        final FeatureUsageData data = new FeatureUsageData().
-          addData("selected", state.getType().name()).
-          addData("config_folder_exists", state.isSourceConfigFolderExists());
-        FUCounterUsageLogger.getInstance().logEvent("import.old.config", "import.dialog.shown", data);
+        IMPORT_DIALOG_SHOWN_EVENT.log(state.getType(), state.isSourceConfigFolderExists());
       }
     }
   }
