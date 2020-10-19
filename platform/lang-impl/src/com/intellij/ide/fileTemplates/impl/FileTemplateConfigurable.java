@@ -172,6 +172,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myTemplateEditor = createEditor(null);
     myFileName = new EditorTextField(createDocument(createFile("", "file name")), myProject, myVelocityFileType);
     myFileName.setFont(EditorUtil.getEditorFont());
+    myFileName.setPlaceholder(IdeBundle.message("template.file.name"));
 
     myDescriptionComponent = new JEditorPane();
     myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
