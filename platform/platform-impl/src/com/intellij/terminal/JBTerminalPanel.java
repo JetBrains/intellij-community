@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
@@ -321,12 +320,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
-        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830, revert once it's fixed.
-        if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
-          // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
-          processKeyEvent(e);
-        }
-        dispatchEvent(e);
+        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830
+        // Once it's fixed, replace "processKeyEvent(e)" with "dispatchEvent(e)".
+        JBTerminalPanel.this.processKeyEvent(e);
         return true;
       }
       return false;
