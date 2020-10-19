@@ -90,48 +90,49 @@ public final class ProcessMediatorProto {
     java.lang.String[] descriptorData = {
       "\n\025processMediator.proto\022\035intellij.proces" +
       "s.mediator.rpc\032\033google/protobuf/empty.pr" +
-      "oto\"\033\n\013DaemonHello\022\014\n\004port\030\001 \001(\r\"X\n\024Crea" +
-      "teProcessRequest\022@\n\014command_line\030\001 \001(\0132*" +
-      ".intellij.process.mediator.rpc.CommandLi" +
-      "ne\"!\n\022CreateProcessReply\022\013\n\003pid\030\001 \001(\004\"3\n" +
-      "\025DestroyProcessRequest\022\013\n\003pid\030\001 \001(\004\022\r\n\005f" +
-      "orce\030\002 \001(\010\"&\n\027AwaitTerminationRequest\022\013\n" +
-      "\003pid\030\001 \001(\004\"*\n\025AwaitTerminationReply\022\021\n\te" +
-      "xit_code\030\001 \001(\r\"\035\n\016ReleaseRequest\022\013\n\003pid\030" +
-      "\001 \001(\004\"%\n\nFileHandle\022\013\n\003pid\030\001 \001(\004\022\n\n\002fd\030\002" +
-      " \001(\r\"\033\n\tDataChunk\022\016\n\006buffer\030\001 \001(\014\"N\n\021Rea" +
-      "dStreamRequest\0229\n\006handle\030\001 \001(\0132).intelli" +
-      "j.process.mediator.rpc.FileHandle\"\242\001\n\022Wr" +
-      "iteStreamRequest\022;\n\006handle\030\001 \001(\0132).intel" +
-      "lij.process.mediator.rpc.FileHandleH\000\0229\n" +
-      "\005chunk\030\002 \001(\0132(.intellij.process.mediator" +
-      ".rpc.DataChunkH\000B\024\n\022FileHandleOrBuffer\"\342" +
-      "\001\n\013CommandLine\022\017\n\007command\030\001 \003(\t\022\023\n\013worki" +
-      "ng_dir\030\002 \001(\t\022\017\n\007in_file\030\003 \001(\t\022\020\n\010out_fil" +
-      "e\030\004 \001(\t\022\020\n\010err_file\030\005 \001(\t\022H\n\007environ\030\006 \003" +
-      "(\01327.intellij.process.mediator.rpc.Comma" +
-      "ndLine.EnvironEntry\032.\n\014EnvironEntry\022\013\n\003k" +
-      "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\0012D\n\006Daemon\022:\n" +
-      "\010Shutdown\022\026.google.protobuf.Empty\032\026.goog" +
-      "le.protobuf.Empty2\210\005\n\016ProcessManager\022w\n\r" +
-      "CreateProcess\0223.intellij.process.mediato" +
-      "r.rpc.CreateProcessRequest\0321.intellij.pr" +
-      "ocess.mediator.rpc.CreateProcessReply\022^\n" +
-      "\016DestroyProcess\0224.intellij.process.media" +
-      "tor.rpc.DestroyProcessRequest\032\026.google.p" +
-      "rotobuf.Empty\022\200\001\n\020AwaitTermination\0226.int" +
-      "ellij.process.mediator.rpc.AwaitTerminat" +
-      "ionRequest\0324.intellij.process.mediator.r" +
-      "pc.AwaitTerminationReply\022\\\n\013WriteStream\022" +
-      "1.intellij.process.mediator.rpc.WriteStr" +
-      "eamRequest\032\026.google.protobuf.Empty(\0010\001\022j" +
-      "\n\nReadStream\0220.intellij.process.mediator" +
-      ".rpc.ReadStreamRequest\032(.intellij.proces" +
-      "s.mediator.rpc.DataChunk0\001\022P\n\007Release\022-." +
-      "intellij.process.mediator.rpc.ReleaseReq" +
-      "uest\032\026.google.protobuf.EmptyBE\n+com.inte" +
-      "llij.execution.process.mediator.rpcB\024Pro" +
-      "cessMediatorProtoP\001b\006proto3"
+      "oto\"*\n\013DaemonHello\022\014\n\004port\030\001 \001(\r\022\r\n\005toke" +
+      "n\030\002 \001(\014\"X\n\024CreateProcessRequest\022@\n\014comma" +
+      "nd_line\030\001 \001(\0132*.intellij.process.mediato" +
+      "r.rpc.CommandLine\"!\n\022CreateProcessReply\022" +
+      "\013\n\003pid\030\001 \001(\004\"3\n\025DestroyProcessRequest\022\013\n" +
+      "\003pid\030\001 \001(\004\022\r\n\005force\030\002 \001(\010\"&\n\027AwaitTermin" +
+      "ationRequest\022\013\n\003pid\030\001 \001(\004\"*\n\025AwaitTermin" +
+      "ationReply\022\021\n\texit_code\030\001 \001(\r\"\035\n\016Release" +
+      "Request\022\013\n\003pid\030\001 \001(\004\"%\n\nFileHandle\022\013\n\003pi" +
+      "d\030\001 \001(\004\022\n\n\002fd\030\002 \001(\r\"\033\n\tDataChunk\022\016\n\006buff" +
+      "er\030\001 \001(\014\"N\n\021ReadStreamRequest\0229\n\006handle\030" +
+      "\001 \001(\0132).intellij.process.mediator.rpc.Fi" +
+      "leHandle\"\242\001\n\022WriteStreamRequest\022;\n\006handl" +
+      "e\030\001 \001(\0132).intellij.process.mediator.rpc." +
+      "FileHandleH\000\0229\n\005chunk\030\002 \001(\0132(.intellij.p" +
+      "rocess.mediator.rpc.DataChunkH\000B\024\n\022FileH" +
+      "andleOrBuffer\"\342\001\n\013CommandLine\022\017\n\007command" +
+      "\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022\017\n\007in_file\030\003" +
+      " \001(\t\022\020\n\010out_file\030\004 \001(\t\022\020\n\010err_file\030\005 \001(\t" +
+      "\022H\n\007environ\030\006 \003(\01327.intellij.process.med" +
+      "iator.rpc.CommandLine.EnvironEntry\032.\n\014En" +
+      "vironEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\002" +
+      "8\0012D\n\006Daemon\022:\n\010Shutdown\022\026.google.protob" +
+      "uf.Empty\032\026.google.protobuf.Empty2\210\005\n\016Pro" +
+      "cessManager\022w\n\rCreateProcess\0223.intellij." +
+      "process.mediator.rpc.CreateProcessReques" +
+      "t\0321.intellij.process.mediator.rpc.Create" +
+      "ProcessReply\022^\n\016DestroyProcess\0224.intelli" +
+      "j.process.mediator.rpc.DestroyProcessReq" +
+      "uest\032\026.google.protobuf.Empty\022\200\001\n\020AwaitTe" +
+      "rmination\0226.intellij.process.mediator.rp" +
+      "c.AwaitTerminationRequest\0324.intellij.pro" +
+      "cess.mediator.rpc.AwaitTerminationReply\022" +
+      "\\\n\013WriteStream\0221.intellij.process.mediat" +
+      "or.rpc.WriteStreamRequest\032\026.google.proto" +
+      "buf.Empty(\0010\001\022j\n\nReadStream\0220.intellij.p" +
+      "rocess.mediator.rpc.ReadStreamRequest\032(." +
+      "intellij.process.mediator.rpc.DataChunk0" +
+      "\001\022P\n\007Release\022-.intellij.process.mediator" +
+      ".rpc.ReleaseRequest\032\026.google.protobuf.Em" +
+      "ptyBE\n+com.intellij.execution.process.me" +
+      "diator.rpcB\024ProcessMediatorProtoP\001b\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -143,7 +144,7 @@ public final class ProcessMediatorProto {
     internal_static_intellij_process_mediator_rpc_DaemonHello_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_DaemonHello_descriptor,
-        new java.lang.String[] { "Port", });
+        new java.lang.String[] { "Port", "Token", });
     internal_static_intellij_process_mediator_rpc_CreateProcessRequest_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_intellij_process_mediator_rpc_CreateProcessRequest_fieldAccessorTable = new

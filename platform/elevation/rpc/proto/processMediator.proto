@@ -15,6 +15,7 @@ service Daemon {
 // exchanged on startup before gRPC is up and running
 message DaemonHello {
   uint32 port = 1;
+  bytes token = 2;
 }
 
 service ProcessManager {

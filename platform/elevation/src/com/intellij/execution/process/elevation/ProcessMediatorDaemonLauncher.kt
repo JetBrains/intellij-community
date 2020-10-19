@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.google.protobuf.ByteString
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.util.ExecUtil
@@ -17,6 +19,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.stub.MetadataUtils
 import java.io.Closeable
 import java.io.File
 import java.net.InetAddress
@@ -52,7 +55,9 @@ object ProcessMediatorDaemonLauncher {
         val daemonHello = helloIpc.readHello()
                           ?: throw ProcessCanceledException()
 
-        ProcessMediatorDaemonImpl(daemonProcessHandler.process, daemonHello.port)
+        ProcessMediatorDaemonImpl(daemonProcessHandler.process,
+                                  daemonHello.port,
+                                  daemonHello.token)
       }
     }
   }
@@ -94,9 +99,14 @@ private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
 }
 
 private class ProcessMediatorDaemonImpl(private val process: Process,
-                                        private val port: Port) : ProcessMediatorDaemon {
+                                        private val port: Port,
+                                        token: ByteString) : ProcessMediatorDaemon {
+  private val credentials = DaemonClientCredentials(token)
+
   override fun createChannel(): ManagedChannel {
-    return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext().build()
+    return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext()
+      .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
+      .build()
   }
 
   override fun stop() {

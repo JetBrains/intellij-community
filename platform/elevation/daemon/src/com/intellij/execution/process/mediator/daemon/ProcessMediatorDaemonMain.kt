@@ -11,7 +11,8 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.system.exitProcess
 
-open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>) : ProcessMediatorDaemon {
+open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
+                                       credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
   private val processManager = ProcessManager()
   private val server: Server
 
@@ -19,6 +20,7 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>) : ProcessMedia
 
   init {
     this.server = builder
+      .intercept(CredentialsAuthServerInterceptor(credentials))
       .addService(ProcessManagerServerService.createServiceDefinition(processManager))
       .addService(DaemonService())
       .build()
@@ -80,9 +82,11 @@ fun main(args: Array<String>) {
   if (helloWriter == null) die("Missing required option '--hello-file' or '--hello-port'")
 
   helloWriter.use {
-    val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
+    val credentials = DaemonClientCredentials.generate()
+    val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
     val daemonHello = DaemonHello.newBuilder()
       .setPort(daemon.port)
+      .setToken(credentials.token)
       .build()
 
     try {
