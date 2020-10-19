@@ -6,6 +6,7 @@ import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.builtInHelp.BuiltInHelpBundle;
 import com.jetbrains.builtInHelp.Utils;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,9 +18,6 @@ import java.awt.event.ActionListener;
 
 
 public class SettingsPage implements Configurable {
-
-  @NonNls
-  public static final String DEFAULT_BROWSER = "<default>";
 
   @NonNls
   public static final SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
@@ -40,7 +38,7 @@ public class SettingsPage implements Configurable {
     ui.addListeners();
 
     WebBrowserManager mgr = WebBrowserManager.getInstance();
-    ui.webBrowserList.addItem(DEFAULT_BROWSER);
+    ui.webBrowserList.addItem(BuiltInHelpBundle.message("use.default.browser"));
     for (WebBrowser browser : mgr.getBrowsers()) {
       ui.webBrowserList.addItem(browser.getName());
     }
@@ -135,7 +133,7 @@ public class SettingsPage implements Configurable {
     }
 
     void reset() {
-      webBrowserList.setSelectedItem(Utils.getStoredValue(USE_BROWSER, DEFAULT_BROWSER));
+      webBrowserList.setSelectedItem(Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")));
       openWebSite.setSelected(Boolean.valueOf(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
       baseUrl.setText(Utils.getStoredValue(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
       modified = false;
