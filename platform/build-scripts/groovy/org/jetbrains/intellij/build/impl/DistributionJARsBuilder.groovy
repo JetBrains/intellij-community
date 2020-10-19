@@ -276,7 +276,6 @@ class DistributionJARsBuilder {
       runAsync(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
     ).join()
     buildLib()
-    new BrokenPluginsBuildFileService(buildContext).buildFile()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
@@ -635,6 +634,7 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
+    new BrokenPluginsBuildFileService(buildContext, layoutBuilder).buildFile()
 
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)

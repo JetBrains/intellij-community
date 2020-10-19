@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.execution.ParametersListUtil
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
@@ -17,11 +18,13 @@ import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 @CompileStatic
 final class BrokenPluginsBuildFileService {
-  BrokenPluginsBuildFileService(BuildContext context) {
+  BrokenPluginsBuildFileService(BuildContext context, LayoutBuilder layoutBuilder) {
     myBuildContext = context
+    myLayout = layoutBuilder
   }
 
   private BuildContext myBuildContext
+  private LayoutBuilder myLayout
   private static final String BROKEN_PLUGINS_FILE_NAME = "brokenPlugins.txt"
   private static final String MARKETPLACE_BROKEN_PLUGINS_URL = "/files/brokenPlugins.json"
   private Gson gson = new Gson()
@@ -81,12 +84,16 @@ final class BrokenPluginsBuildFileService {
 
 
   private storeBrokenPlugin(Map<String, Set<String>> brokenPlugin) {
-    final File file = new File("${myBuildContext.paths.communityHome}/platform/platform-resources/src/$BROKEN_PLUGINS_FILE_NAME")
-    myBuildContext.messages.info("Saving broken plugin into file ${file.name}")
     final String text = brokenPlugin.collect { id, versions ->
       "$id ${versions.collect { escapeIfSpaces(it) }.join(" ")}"
     }.join("\n")
-    file.write(text)
+
+    File patchedKeyMapDir = new File(myBuildContext.paths.temp, "patched-broken-plugins")
+    File targetFile = new File(patchedKeyMapDir, "brokenPlugins.txt")
+    myBuildContext.messages.info("Saving broken plugin into file ${targetFile.absolutePath}")
+    FileUtil.createParentDirs(targetFile)
+    targetFile.write(text)
+    myLayout.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
   }
 
   private static String escapeIfSpaces(String string) {
