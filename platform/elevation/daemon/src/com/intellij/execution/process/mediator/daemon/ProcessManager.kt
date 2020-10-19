@@ -12,13 +12,16 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 typealias Pid = Long
 
-internal class ProcessManager {
+internal class ProcessManager : Closeable {
   private val processMap = ConcurrentHashMap<Pid, Process>()
+  private val isClosed = AtomicBoolean()
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
@@ -107,13 +110,21 @@ internal class ProcessManager {
   }
 
   fun release(pid: Pid) {
-    unregisterProcess(pid).destroyForcibly()
+    val process = unregisterProcess(pid)
+    releaseProcess(process)
+  }
+
+  private fun releaseProcess(process: Process) {
+    process.destroy()
   }
 
   private fun registerProcess(process: Process): Pid {
     val pid = process.pid()
     processMap.putIfAbsent(pid, process).also { previous ->
       check(previous == null) { "Duplicate PID $pid" }
+    }
+    if (isClosed.get()) {
+      processMap.remove(pid)?.let { releaseProcess(it) }
     }
     return pid
   }
@@ -126,6 +137,15 @@ internal class ProcessManager {
   private fun unregisterProcess(pid: Pid): Process {
     val process = processMap.remove(pid)
     return requireNotNull(process) { "Unknown PID $pid" }
+  }
+
+  override fun close() {
+    if (!isClosed.getAndSet(true)) {
+      while (true) {
+        val pid = processMap.keys.firstOrNull() ?: break
+        processMap.remove(pid)?.let { releaseProcess(it) }
+      }
+    }
   }
 }
 
