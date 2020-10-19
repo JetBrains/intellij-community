@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -339,9 +338,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       }
     };
     group.add(addAction);
-    if (Registry.is("file.templates.multi")) {
-      group.add(addChildAction);
-    }
+    group.add(addChildAction);
     group.add(removeAction);
     group.add(cloneAction);
     group.add(resetAction);
