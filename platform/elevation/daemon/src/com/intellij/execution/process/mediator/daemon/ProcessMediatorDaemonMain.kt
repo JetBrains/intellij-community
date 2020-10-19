@@ -11,47 +11,39 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.system.exitProcess
 
-open class ProcessMediatorServerDaemon private constructor(private val server: Server) : ProcessMediatorDaemon {
+open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>) : ProcessMediatorDaemon {
+  private val processManager = ProcessManager()
+  private val server: Server
+
   val port get() = server.port
 
   init {
-    server.start()
-    System.err.println("Started server on port $port")
-    Runtime.getRuntime().addShutdownHook(
-      Thread {
-        System.err.println("*** shutting down gRPC server since JVM is shutting down")
-        this@ProcessMediatorServerDaemon.stop()
-        System.err.println("*** server shut down")
+    this.server = builder
+      .addService(ProcessManagerServerService.createServiceDefinition(processManager))
+      .addService(DaemonService())
+      .build()
+      .start()
+      .also {
+        System.err.println("Started server on port ${it.port}")
       }
-    )
   }
-
-  constructor(builder: ServerBuilder<*>) : this(buildServer(builder))
 
   override fun stop() {
     server.shutdown()
+    System.err.println("server shut down")
   }
 
   override fun blockUntilShutdown() {
     server.awaitTermination()
   }
 
-  companion object {
-    private fun buildServer(builder: ServerBuilder<*>): Server {
-      return builder
-        .addService(ProcessManagerServerService.createServiceDefinition())
-        .addService(DaemonService)
-        .build()
+  inner class DaemonService : DaemonGrpcKt.DaemonCoroutineImplBase() {
+    override suspend fun shutdown(request: Empty): Empty {
+      processManager.use {  // to close it
+        stop()
+      }
+      return Empty.getDefaultInstance()
     }
-  }
-}
-
-object DaemonService: DaemonGrpcKt.DaemonCoroutineImplBase() {
-  override suspend fun shutdown(request: Empty): Empty {
-    // TODO think about
-    // - should we destroy running processes
-    // - how to stop server
-    return Empty.getDefaultInstance()
   }
 }
 
@@ -87,25 +79,31 @@ fun main(args: Array<String>) {
   }
   if (helloWriter == null) die("Missing required option '--hello-file' or '--hello-port'")
 
-  val daemon = try {
-    helloWriter.use {
-      ProcessMediatorServerDaemon(ServerBuilder.forPort(0)).also { daemon ->
-        val daemonHello = DaemonHello.newBuilder()
-          .setPort(daemon.port)
-          .build()
+  helloWriter.use {
+    val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0))
+    val daemonHello = DaemonHello.newBuilder()
+      .setPort(daemon.port)
+      .build()
 
-        try {
-          helloWriter.write(daemonHello::writeDelimitedTo)
-        }
-        catch (e: Throwable) {
-          daemon.stop()
-          throw e
-        }
+    try {
+      try {
+        helloWriter.write(daemonHello::writeDelimitedTo)
+      }
+      catch (e: IOException) {
+        die("Unable to write hello: ${e.message}")
       }
     }
+    catch (e: Throwable) {
+      daemon.stop()
+      throw e
+    }
+
+    Runtime.getRuntime().addShutdownHook(
+      Thread {
+        System.err.println("Shutting down gRPC server since JVM is shutting down")
+        daemon.stop()
+      }
+    )
+    daemon.blockUntilShutdown()
   }
-  catch (e: IOException) {
-    die("Unable to write hello: ${e.message}")
-  }
-  daemon.blockUntilShutdown()
 }
