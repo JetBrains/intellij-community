@@ -151,7 +151,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       ui.includeIntoCommit(changes)
     }
 
-  private fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
+  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
     workflow.executeDefault(executor)
   }
   catch (e: InputException) { // TODO Looks like this catch is unnecessary - check

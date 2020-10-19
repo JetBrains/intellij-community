@@ -43,7 +43,7 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<CommitProblem> {
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
@@ -51,6 +51,9 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   private var todoFilter: TodoFilter? = null
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
+
+  override suspend fun runCheck(): CommitProblem? = null
+  override fun showDetails(problem: CommitProblem) = Unit
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     object : BooleanCommitOption(commitPanel, "", true, settings::CHECK_NEW_TODO) {

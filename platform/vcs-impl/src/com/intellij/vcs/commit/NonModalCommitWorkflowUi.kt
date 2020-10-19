@@ -5,6 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Sentence
 
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi {
   val commitProgressUi: CommitProgressUi
@@ -21,9 +24,14 @@ interface CommitActionsUi {
   fun setCustomCommitActions(actions: List<AnAction>)
 }
 
+@ApiStatus.Experimental
 interface CommitProgressUi {
   var isEmptyMessage: Boolean
   var isEmptyChanges: Boolean
 
   var isDumbMode: Boolean
+
+  fun startProgress()
+  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: () -> Unit)
+  fun endProgress()
 }

@@ -49,11 +49,14 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
  * The check-in handler which performs code analysis before check-in. Source code for this class
  * is provided as a sample of using the [CheckinHandler] API.
  */
-class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<CommitProblem> {
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
+
+  override suspend fun runCheck(): CommitProblem? = null
+  override fun showDetails(problem: CommitProblem) = Unit
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
