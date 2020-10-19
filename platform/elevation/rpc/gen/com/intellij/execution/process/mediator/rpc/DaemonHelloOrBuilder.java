@@ -12,4 +12,10 @@ public interface DaemonHelloOrBuilder extends
    * @return The port.
    */
   int getPort();
+
+  /**
+   * <code>bytes token = 2;</code>
+   * @return The token.
+   */
+  com.google.protobuf.ByteString getToken();
 }

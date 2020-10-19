@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private DaemonHello() {
+    token_ = com.google.protobuf.ByteString.EMPTY;
   }
 
   @java.lang.Override
@@ -55,6 +56,11 @@ private static final long serialVersionUID = 0L;
           case 8: {
 
             port_ = input.readUInt32();
+            break;
+          }
+          case 18: {
+
+            token_ = input.readBytes();
             break;
           }
           default: {
@@ -100,6 +106,17 @@ private static final long serialVersionUID = 0L;
     return port_;
   }
 
+  public static final int TOKEN_FIELD_NUMBER = 2;
+  private com.google.protobuf.ByteString token_;
+  /**
+   * <code>bytes token = 2;</code>
+   * @return The token.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString getToken() {
+    return token_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -117,6 +134,9 @@ private static final long serialVersionUID = 0L;
     if (port_ != 0) {
       output.writeUInt32(1, port_);
     }
+    if (!token_.isEmpty()) {
+      output.writeBytes(2, token_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -129,6 +149,10 @@ private static final long serialVersionUID = 0L;
     if (port_ != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeUInt32Size(1, port_);
+    }
+    if (!token_.isEmpty()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(2, token_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -147,6 +171,8 @@ private static final long serialVersionUID = 0L;
 
     if (getPort()
         != other.getPort()) return false;
+    if (!getToken()
+        .equals(other.getToken())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -160,6 +186,8 @@ private static final long serialVersionUID = 0L;
     hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + PORT_FIELD_NUMBER;
     hash = (53 * hash) + getPort();
+    hash = (37 * hash) + TOKEN_FIELD_NUMBER;
+    hash = (53 * hash) + getToken().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -299,6 +327,8 @@ private static final long serialVersionUID = 0L;
       super.clear();
       port_ = 0;
 
+      token_ = com.google.protobuf.ByteString.EMPTY;
+
       return this;
     }
 
@@ -326,6 +356,7 @@ private static final long serialVersionUID = 0L;
     public com.intellij.execution.process.mediator.rpc.DaemonHello buildPartial() {
       com.intellij.execution.process.mediator.rpc.DaemonHello result = new com.intellij.execution.process.mediator.rpc.DaemonHello(this);
       result.port_ = port_;
+      result.token_ = token_;
       onBuilt();
       return result;
     }
@@ -376,6 +407,9 @@ private static final long serialVersionUID = 0L;
       if (other == com.intellij.execution.process.mediator.rpc.DaemonHello.getDefaultInstance()) return this;
       if (other.getPort() != 0) {
         setPort(other.getPort());
+      }
+      if (other.getToken() != com.google.protobuf.ByteString.EMPTY) {
+        setToken(other.getToken());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -433,6 +467,40 @@ private static final long serialVersionUID = 0L;
     public Builder clearPort() {
       
       port_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.ByteString token_ = com.google.protobuf.ByteString.EMPTY;
+    /**
+     * <code>bytes token = 2;</code>
+     * @return The token.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getToken() {
+      return token_;
+    }
+    /**
+     * <code>bytes token = 2;</code>
+     * @param value The token to set.
+     * @return This builder for chaining.
+     */
+    public Builder setToken(com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      token_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bytes token = 2;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearToken() {
+      
+      token_ = getDefaultInstance().getToken();
       onChanged();
       return this;
     }

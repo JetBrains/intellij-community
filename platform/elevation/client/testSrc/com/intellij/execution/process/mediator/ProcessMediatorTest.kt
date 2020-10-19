@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
+import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
@@ -8,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import io.grpc.ManagedChannel
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
+import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -37,9 +39,12 @@ open class ProcessMediatorTest {
 
   protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
-    return object : ProcessMediatorServerDaemon(InProcessServerBuilder.forName(bindName).directExecutor()) {
+    val credentials = DaemonClientCredentials.generate()
+    return object : ProcessMediatorServerDaemon(InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
       override fun createChannel(): ManagedChannel {
-        return InProcessChannelBuilder.forName(bindName).directExecutor().build()
+        return InProcessChannelBuilder.forName(bindName)
+          .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
+          .directExecutor().build()
       }
     }
   }
