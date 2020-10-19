@@ -617,7 +617,7 @@ def _df_to_str(value):
         if i == 0:
             res.append(r.strip())
         else:
-            res.append(f"[{r}]")
+            res.append("[%s]" % r)
     return ' '.join(res)
 
 
