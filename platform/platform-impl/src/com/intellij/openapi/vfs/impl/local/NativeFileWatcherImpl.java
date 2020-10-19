@@ -11,12 +11,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -54,6 +56,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
+  private volatile List<String> myIgnoredRoots = new SmartList<>();
   private final String[] myLastChangedPaths = new String[2];
   private int myLastChangedPathIndex;
 
@@ -239,12 +242,21 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (!restart && myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) {
+      myNotificationSink.notifyManualWatchRoots(myIgnoredRoots);
       return;
     }
 
     mySettingRoots.incrementAndGet();
     myRecursiveWatchRoots = recursive;
     myFlatWatchRoots = flat;
+    myIgnoredRoots = new SmartList<>();
+
+    if (SystemInfo.isWindows) {
+      List<String> ignored = new SmartList<>();
+      recursive = screenUncRoots(recursive, ignored);
+      flat = screenUncRoots(flat, ignored);
+      myIgnoredRoots = ignored;
+    }
 
     try {
       writeLine(ROOTS_COMMAND);
@@ -255,6 +267,23 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     catch (IOException e) {
       LOG.warn(e);
     }
+  }
+
+  private static List<String> screenUncRoots(List<String> roots, List<String> ignored) {
+    List<String> filtered = null;
+    for (int i = 0; i < roots.size(); i++) {
+      String root = roots.get(i);
+      if (OSAgnosticPathUtil.isUncPath(root)) {
+        if (filtered == null) {
+          filtered = new ArrayList<>(roots.subList(0, i));
+        }
+        ignored.add(root);
+      }
+      else if (filtered != null) {
+        filtered.add(root);
+      }
+    }
+    return filtered != null ? filtered : roots;
   }
 
   private void writeLine(String line) throws IOException {
@@ -396,7 +425,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processUnwatchable() {
-      myNotificationSink.notifyManualWatchRoots(myLines);
+      List<String> unwatched = myIgnoredRoots;
+      unwatched.addAll(myLines);
+      myNotificationSink.notifyManualWatchRoots(unwatched);
     }
 
     private void processChange(String path, WatcherOp op) {
