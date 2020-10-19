@@ -99,12 +99,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       { if (this::watcher.isInitialized) shutdown(watcher) },
       {
         runInEdtAndWait {
-          if (this::vfsTempDir.isInitialized) {
-            runWriteAction { vfsTempDir.delete(this) }
-          }
-          if (this::fs.isInitialized) {
-            (fs as LocalFileSystemImpl).cleanupForNextTest()
-          }
+          if (this::vfsTempDir.isInitialized) runWriteAction { vfsTempDir.delete(this) }
+          if (this::fs.isInitialized) (fs as LocalFileSystemImpl).cleanupForNextTest()
         }
       },
     ).run()
