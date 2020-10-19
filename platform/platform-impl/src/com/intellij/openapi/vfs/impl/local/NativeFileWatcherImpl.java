@@ -192,8 +192,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     LOG.info("Starting file watcher: " + myExecutable);
-    ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
-    Process process = processBuilder.start();
+    Process process = new ProcessBuilder(myExecutable.getAbsolutePath()).start();
     myProcessHandler = new MyProcessHandler(process, myExecutable.getName());
     myProcessHandler.startNotify();
 
@@ -215,7 +214,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         if (!processHandler.waitFor(10)) {
           Runnable r = () -> {
             if (!processHandler.waitFor(500)) {
-              LOG.warn("File watcher is still alive. Doing a force quit.");
+              LOG.warn("File watcher is still alive, doing a force quit.");
               processHandler.destroyProcess();
             }
           };
@@ -249,12 +248,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     try {
       writeLine(ROOTS_COMMAND);
-      for (String path : recursive) {
-        writeLine(path);
-      }
-      for (String path : flat) {
-        writeLine("|" + path);
-      }
+      for (String path : recursive) writeLine(path);
+      for (String path : flat) writeLine('|' + path);
       writeLine("#");
     }
     catch (IOException e) {
@@ -295,12 +290,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private WatcherOp myLastOp;
     private final List<String> myLines = new ArrayList<>();
 
-    private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+    MyProcessHandler(Process process, String commandLine) {
       super(process, commandLine, CHARSET);
       myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), CHARSET));
     }
 
-    private void writeLine(String line) throws IOException {
+    void writeLine(String line) throws IOException {
       myWriter.write(line);
       myWriter.newLine();
       myWriter.flush();
@@ -404,7 +399,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myNotificationSink.notifyManualWatchRoots(myLines);
     }
 
-    private void processChange(@NotNull String path, @NotNull WatcherOp op) {
+    private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
         return;
@@ -464,11 +459,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     return false;
   }
 
+  //<editor-fold desc="Test stuff.">
   @Override
   @TestOnly
   public void startup() throws IOException {
     Application app = ApplicationManager.getApplication();
-    assert app != null && app.isUnitTestMode() : app;
+    if (app == null || !app.isUnitTestMode()) throw new IllegalStateException();
 
     myIsShuttingDown = false;
     myStartAttemptCount.set(0);
@@ -479,7 +475,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @TestOnly
   public void shutdown() throws InterruptedException {
     Application app = ApplicationManager.getApplication();
-    assert app != null && app.isUnitTestMode() : app;
+    if (app == null || !app.isUnitTestMode()) throw new IllegalStateException();
 
     MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
@@ -495,4 +491,5 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
     }
   }
+  //</editor-fold>
 }
