@@ -51,47 +51,37 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val indexes: MutableStorageIndexes
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  private val newChangeLog: LinkedHashMap<EntityId, Pair<ChangeEntry, ChangeEntry.ChangeEntitySource<*>?>> = LinkedHashMap()
+  private val superNewChangeLog = WorkspaceBuilderChangeLog()
 
-  internal val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
+  internal val changeLogImpl: MutableList<ChangeEntryX> = mutableListOf()
 
-  private val changeLog: List<ChangeEntry>
+  private val changeLog: List<ChangeEntryX>
     get() = changeLogImpl
 
-  private inline fun newUpdateChangeLog(updater: (MutableMap<EntityId, Pair<ChangeEntry, ChangeEntry.ChangeEntitySource<*>?>>) -> Unit) {
-    updater(newChangeLog)
-    incModificationCount()
-  }
-
-  private inline fun updateChangeLog(updater: (MutableList<ChangeEntry>) -> Unit) {
-    updater(changeLogImpl)
-    //incModificationCount()
-  }
-
   internal fun incModificationCount() {
-    modificationCount++
+    this.superNewChangeLog.modificationCount++
   }
 
-  internal sealed class ChangeEntry {
+  internal sealed class ChangeEntryX {
     data class AddEntity<E : WorkspaceEntity>(
       val entityData: WorkspaceEntityData<E>,
       val clazz: Int,
-    ) : ChangeEntry()
+    ) : ChangeEntryX()
 
-    data class RemoveEntity(val id: EntityId) : ChangeEntry()
+    data class RemoveEntity(val id: EntityId) : ChangeEntryX()
 
-    data class ChangeEntitySource<E : WorkspaceEntity>(val newData: WorkspaceEntityData<E>) : ChangeEntry()
+    data class ChangeEntitySource<E : WorkspaceEntity>(val newData: WorkspaceEntityData<E>) : ChangeEntryX()
 
     data class ReplaceEntity<E : WorkspaceEntity>(
       val newData: WorkspaceEntityData<E>,
       val newChildren: List<Pair<ConnectionId, EntityId>>,
       val removedChildren: List<Pair<ConnectionId, EntityId>>,
       val modifiedParents: Map<ConnectionId, EntityId?>
-    ) : ChangeEntry()
+    ) : ChangeEntryX()
   }
 
-  override var modificationCount: Long = 0
-    private set
+  override val modificationCount: Long
+    get() = this.superNewChangeLog.modificationCount
 
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -222,28 +212,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val removedKeys = beforeParents.keys - parents.keys
     removedKeys.forEach { parentsMapRes[it] = null }
 
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)) }
-
-    newUpdateChangeLog {
-      val existingChange = it[pid]
-      val replaceEvent = ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)
-      if (existingChange == null) {
-        it[pid] = replaceEvent to null
-      }
-      else {
-        when (val firstChange = existingChange.first) {
-          is ChangeEntry.AddEntity<*> -> it[pid] = ChangeEntry.AddEntity(copiedData, pid.clazz) to null
-          is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
-          is ChangeEntry.ChangeEntitySource<*> -> it[pid] = replaceEvent to firstChange
-          is ChangeEntry.ReplaceEntity<*> -> {
-            val newAddedChildren = (firstChange.newChildren.toSet() - removedChildren.toSet()).toList()
-            val newRemovedChildren = (firstChange.removedChildren.toSet() - addedChildren.toSet()).toList()
-            val newChangedParents = firstChange.modifiedParents + parentsMapRes
-            it[pid] = ChangeEntry.ReplaceEntity(copiedData, newAddedChildren, newRemovedChildren, newChangedParents) to existingChange.second
-          }
-        }
-      }
-    }
+    this.superNewChangeLog.addReplaceEvent(pid, copiedData, addedChildren, removedChildren, parentsMapRes)
   }
 
   private fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
@@ -268,25 +237,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      updateChangeLog { it.add(ChangeEntry.ReplaceEntity(entity, emptyList(), emptyList(), emptyMap())) }
-
-      newUpdateChangeLog {
-        val existingChange = it[entityId]
-        val replaceEvent = ChangeEntry.ReplaceEntity(entity, emptyList(), emptyList(), emptyMap())
-        if (existingChange == null) {
-          it[entityId] = replaceEvent to null
-        }
-        else {
-          when (val firstChange = existingChange.first) {
-            is ChangeEntry.AddEntity<*> -> {
-              it[entityId] = ChangeEntry.AddEntity(entity, entityId.clazz) to null
-            }
-            is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $entity")
-            is ChangeEntry.ChangeEntitySource<*> -> it[entityId] = replaceEvent to firstChange
-            is ChangeEntry.ReplaceEntity<*> -> { /* Keep the old event */ }
-          }
-        }
-      }
+      this.superNewChangeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
 
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
@@ -297,25 +248,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     copiedData.entitySource = newSource
 
     val entityId = copiedData.createPid()
-    updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(copiedData)) }
 
-    newUpdateChangeLog {
-      val existingChange = it[entityId]
-      val changeSourceEvent = ChangeEntry.ChangeEntitySource(copiedData)
-      if (existingChange == null) {
-        it[entityId] = changeSourceEvent to null
-      }
-      else {
-        when (val firstChange = existingChange.first) {
-          is ChangeEntry.AddEntity<*> -> {
-            it[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz) to null
-          }
-          is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
-          is ChangeEntry.ChangeEntitySource<*> -> it[entityId] = changeSourceEvent to null
-          is ChangeEntry.ReplaceEntity<*> -> it[entityId] = firstChange to changeSourceEvent
-        }
-      }
-    }
+    this.superNewChangeLog.addChangeSourceEvent(entityId, copiedData)
 
     indexes.entitySourceIndex.index(entityId, newSource)
 
@@ -325,27 +259,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun removeEntity(e: WorkspaceEntity) {
     e as WorkspaceEntityBase
     val removedEntities = removeEntity(e.id)
-    updateChangeLog {
-      removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
-    }
-
-    newUpdateChangeLog {
-      removedEntities.forEach { removedEntityId ->
-        val existingChange = it[removedEntityId]
-        val removeEvent = ChangeEntry.RemoveEntity(removedEntityId)
-        if (existingChange == null) {
-          it[removedEntityId] = removeEvent to null
-        }
-        else {
-          when (val firstChange = existingChange.first) {
-            is ChangeEntry.AddEntity<*> -> it.remove(removedEntityId)
-            is ChangeEntry.RemoveEntity -> LOG.error("Trying to remove the entity twice. $removedEntityId")
-            is ChangeEntry.ChangeEntitySource<*> -> it[removedEntityId] = removeEvent to null
-            is ChangeEntry.ReplaceEntity<*> -> it[removedEntityId] = removeEvent to null
-          }
-        }
-      }
-    }
+    removedEntities.forEach { this.superNewChangeLog.addRemoveEvent(it) }
   }
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
@@ -385,7 +299,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     replaceWith as AbstractEntityStorage
 
     val initialStore = this.toStorage()
-    val initialChangeLogSize = this.changeLog.size
 
     LOG.debug { "Performing replace by source" }
 
@@ -482,44 +395,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
             this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
 
             if (dataDiffersByProperties) {
-              updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
-              newUpdateChangeLog {
-                val existingChange = it[pid]
-                val replaceEvent = ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())
-                if (existingChange == null) {
-                  it[pid] = replaceEvent to null
-                }
-                else {
-                  when (val firstChange = existingChange.first) {
-                    is ChangeEntry.AddEntity<*> -> {
-                      it[pid] = ChangeEntry.AddEntity(clonedEntity, pid.clazz) to null
-                    }
-                    is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $clonedEntity")
-                    is ChangeEntry.ChangeEntitySource<*> -> it[pid] = replaceEvent to firstChange
-                    is ChangeEntry.ReplaceEntity<*> -> { /* Keep the old event */ }
-                  }
-                }
-              }
+              this.superNewChangeLog.addReplaceEvent(pid, clonedEntity, emptyList(), emptyList(), emptyMap())
             }
             if (dataDiffersByEntitySource) {
-              updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(clonedEntity)) }
-              newUpdateChangeLog {
-                val existingChange = it[pid]
-                val changeSourceEvent = ChangeEntry.ChangeEntitySource(clonedEntity)
-                if (existingChange == null) {
-                  it[pid] = changeSourceEvent to null
-                }
-                else {
-                  when (val firstChange = existingChange.first) {
-                    is ChangeEntry.AddEntity<*> -> {
-                      it[pid] = ChangeEntry.AddEntity(clonedEntity, pid.clazz) to null
-                    }
-                    is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $clonedEntity")
-                    is ChangeEntry.ChangeEntitySource<*> -> it[pid] = changeSourceEvent to null
-                    is ChangeEntry.ReplaceEntity<*> -> it[pid] = firstChange to changeSourceEvent
-                  }
-                }
-              }
+              this.superNewChangeLog.addChangeSourceEvent(pid, clonedEntity)
             }
           }
 
@@ -560,22 +439,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       this.entitiesByType.remove(localEntity.id, entityClass)
       indexes.removeFromIndices(entityId)
       if (localEntity is SoftLinkable) indexes.removeFromSoftLinksIndex(localEntity)
-      updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
-      newUpdateChangeLog {
-        val existingChange = it[entityId]
-        val removeEvent = ChangeEntry.RemoveEntity(entityId)
-        if (existingChange == null) {
-          it[entityId] = removeEvent to null
-        }
-        else {
-          when (val firstChange = existingChange.first) {
-            is ChangeEntry.AddEntity<*> -> it.remove(entityId)
-            is ChangeEntry.RemoveEntity -> LOG.error("Trying to remove the entity twice. $entityId")
-            is ChangeEntry.ChangeEntitySource<*> -> it[entityId] = removeEvent to null
-            is ChangeEntry.ReplaceEntity<*> -> it[entityId] = removeEvent to null
-          }
-        }
-      }
+      this.superNewChangeLog.addRemoveEvent(entityId)
     }
 
     val lostChildren = HashSet<EntityId>()
@@ -610,7 +474,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
             }
           }
         }
@@ -639,7 +503,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
           if (!connectionId.canRemoveParent()) rbsFailedAndReport("Cannot restore connection to $parentId; $connectionId", sourceFilter,
-                                                                  initialStore, replaceWith, this, initialChangeLogSize)
+                                                                  initialStore, replaceWith, this)
         }
 
         // ----------------- Update children references -----------------------
@@ -665,7 +529,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Some children left without parents. We should delete these children as well.
     for (entityId in lostChildren) {
       if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
-        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child",
+                           sourceFilter, initialStore, replaceWith, this)
       }
       removeEntity(entityId)
     }
@@ -679,7 +544,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val localParent = this.entityDataById(parentId)
             if (localParent == null) rbsFailedAndReport(
               "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
-              replaceWith, this, initialChangeLogSize)
+              replaceWith, this)
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -696,7 +561,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
 
     LOG.debug { "Replace by source finished" }
   }
@@ -705,17 +570,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                  sourceFilter: (EntitySource) -> Boolean,
                                  left: WorkspaceEntityStorage,
                                  right: WorkspaceEntityStorage,
-                                 resulting: WorkspaceEntityStorageBuilder,
-                                 initialChangeLogSize: Int) {
-    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting, initialChangeLogSize)
+                                 resulting: WorkspaceEntityStorageBuilder) {
+    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting)
   }
 
   private fun addDiffAndReport(message: String,
                                left: WorkspaceEntityStorage,
                                right: WorkspaceEntityStorage,
-                               resulting: WorkspaceEntityStorageBuilder,
-                               initialChangeLogSize: Int) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting, initialChangeLogSize)
+                               resulting: WorkspaceEntityStorageBuilder) {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting)
   }
 
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
@@ -734,11 +597,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val changes = LinkedHashMap<EntityId, Pair<Class<*>, EntityChange<*>>>()
     for (change in changeLog) {
       when (change) {
-        is ChangeEntry.AddEntity<*> -> {
+        is ChangeEntryX.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
           changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Added(addedEntity)
         }
-        is ChangeEntry.RemoveEntity -> {
+        is ChangeEntryX.RemoveEntity -> {
           val removedData = originalImpl.entityDataById(change.id)
           val oldChange = changes.remove(change.id)
           if (oldChange?.second !is EntityChange.Added && removedData != null) {
@@ -746,7 +609,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             changes[removedEntity.id] = change.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Removed(removedEntity)
           }
         }
-        is ChangeEntry.ReplaceEntity<*> -> {
+        is ChangeEntryX.ReplaceEntity<*> -> {
           val id = change.newData.createPid()
           val oldChange = changes.remove(id)
           if (oldChange?.second is EntityChange.Added) {
@@ -763,7 +626,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             }
           }
         }
-        is ChangeEntry.ChangeEntitySource<*> -> {
+        is ChangeEntryX.ChangeEntitySource<*> -> {
           val id = change.newData.createPid()
           val oldChange = changes.remove(id)
           if (oldChange?.second is EntityChange.Added) {
@@ -786,8 +649,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun resetChanges() {
-    updateChangeLog { it.clear() }
-    newUpdateChangeLog { it.clear() }
+    this.superNewChangeLog.clear()
   }
 
   override fun toStorage(): WorkspaceEntityStorageImpl {
@@ -798,7 +660,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     return storage
   }
 
-  override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
+  override fun isEmpty(): Boolean = this.superNewChangeLog.changeLog.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
 
@@ -806,9 +668,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     diff as WorkspaceEntityStorageBuilderImpl
     val initialStorage = this.toStorage()
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
-    val initialChangeLogSize = 0
 
-    val diffLog = diff.newChangeLog
+    val diffLog = diff.superNewChangeLog.changeLog
     for ((entityId, changePair) in diffLog) {
       val firstChange = changePair.first
       when (firstChange) {
@@ -830,7 +691,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
                   
                   Existing entity data: $existingEntity
                   New entity data: ${firstChange.entityData}
-                  """.trimIndent(), initialStorage, diff, this, initialChangeLogSize)
+                  """.trimIndent(), initialStorage, diff, this)
             }
           }
           //endregion
@@ -880,8 +741,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
                   targetChildrenIds += sourceChildId
                 }
                 else if (!connectionId.canRemoveChild()) {
-                  addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff, this,
-                                   initialChangeLogSize)
+                  addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff, this)
                 }
               }
             }
@@ -904,8 +764,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (this.entityDataById(sourceParentId) != null) sourceParentId
               else {
                 if (!connectionId.canRemoveParent()) {
-                  addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff, this,
-                                   initialChangeLogSize)
+                  addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff, this)
                 }
                 null
               }
@@ -916,16 +775,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           }
 
           indexes.updateIndices(firstChange.entityData.createPid(), targetEntityData, diff)
-          updateChangeLog {
-            it.add(ChangeEntry.AddEntity(targetEntityData, firstChange.clazz))
-          }
-          newUpdateChangeLog {
-
-            // XXX: This check should exist, but some tests fails with it.
-            //if (targetEntityId in it) LOG.error("Trying to add entity again. ")
-
-            it[targetEntityId] = ChangeEntry.AddEntity(targetEntityData, firstChange.clazz) to null
-          }
+          this.superNewChangeLog.addAddEvent(targetEntityId, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
           val outdatedId = firstChange.id
@@ -935,22 +785,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid)
           }
-          updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
-          newUpdateChangeLog {
-            val existingChange = it[entityId]
-            val removeEvent = ChangeEntry.RemoveEntity(entityId)
-            if (existingChange == null) {
-              it[entityId] = removeEvent to null
-            }
-            else {
-              when (existingChange.first) {
-                is ChangeEntry.AddEntity<*> -> it.remove(entityId)
-                is ChangeEntry.RemoveEntity -> LOG.error("Trying to remove the entity twice. $entityId")
-                is ChangeEntry.ChangeEntitySource<*> -> it[entityId] = removeEvent to null
-                is ChangeEntry.ReplaceEntity<*> -> it[entityId] = removeEvent to null
-              }
-            }
-          }
+          this.superNewChangeLog.addRemoveEvent(entityId)
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
           // TODO second change (entity source)
@@ -984,7 +819,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
                   
                   Existing entity data: $existingEntity
                   New entity data: ${firstChange.newData}
-                  """.trimIndent(), initialStorage, diff, this, initialChangeLogSize)
+                  """.trimIndent(), initialStorage, diff, this)
             }
           }
 
@@ -995,33 +830,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           newTargetEntityData.entitySource = existingTargetEntityData.entitySource
 
           indexes.updateIndices(sourceEntityId, newTargetEntityData, diff)
-          updateChangeLog {
-            it.add(ChangeEntry.ReplaceEntity(newTargetEntityData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents))
-          }
-          newUpdateChangeLog {
-            val existingChange = it[targetEntityId]
-            val replaceEvent = ChangeEntry.ReplaceEntity(newTargetEntityData, updatedNewChildren, updatedRemovedChildren,
-                                                         updatedModifiedParents)
-            if (existingChange == null) {
-              it[targetEntityId] = replaceEvent to null
-            }
-            else {
-              when (val firstChange = existingChange.first) {
-                is ChangeEntry.AddEntity<*> -> {
-                  it[targetEntityId] = ChangeEntry.AddEntity(newTargetEntityData, targetEntityId.clazz) to null
-                }
-                is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $newTargetEntityData")
-                is ChangeEntry.ChangeEntitySource<*> -> it[targetEntityId] = replaceEvent to firstChange
-                is ChangeEntry.ReplaceEntity<*> -> {
-                  val newAddedChildren = (firstChange.newChildren.toSet() - updatedRemovedChildren.toSet()).toList()
-                  val newRemovedChildren = (firstChange.removedChildren.toSet() - updatedNewChildren.toSet()).toList()
-                  val newChangedParents = firstChange.modifiedParents + updatedModifiedParents
-                  it[targetEntityId] = ChangeEntry.ReplaceEntity(newTargetEntityData, newAddedChildren, newRemovedChildren,
-                                                                 newChangedParents) to existingChange.second
-                }
-              }
-            }
-          }
+
+          this.superNewChangeLog.addReplaceEvent(targetEntityId, newTargetEntityData, updatedNewChildren, updatedRemovedChildren,
+                                                 updatedModifiedParents)
 
           // Can we move this method before adding change log?
 
@@ -1073,7 +884,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             for (removedChild in removedChildrenSet) {
               val removed = mutableChildren.remove(removedChild)
               if (!removed) addDiffAndReport("Trying to remove child that isn't present", initialStorage,
-                                                                     diff, this, initialChangeLogSize)
+                                             diff, this)
             }
 
             // .... Update if something changed
@@ -1086,7 +897,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           // Do we have more children to remove? This should not happen
           if (!removedChildrenMapRaw.isEmpty) addDiffAndReport("Trying to remove children that aren't present", initialStorage,
-                                                               diff, this, initialChangeLogSize)
+                                                               diff, this)
 
           // Do we have more children to add? Add them
           for ((connectionId, children) in addedChildrenMapRaw.asMap()) {
@@ -1123,7 +934,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (newParent == null) {
                 // This child doesn't have a parent anymore
                 if (!connectionId.canRemoveParent()) addDiffAndReport("Cannrt restore some dependencies; $connectionId", initialStorage,
-                                                                      diff, this, initialChangeLogSize)
+                                                                      diff, this)
                 else refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
               }
               else {
@@ -1141,7 +952,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
                   }
                   else {
                     if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage,
-                                                                          diff, this, initialChangeLogSize)
+                                                                          diff, this)
                     refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
                   }
                 }
@@ -1180,24 +991,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val newEntitySource = firstChange.newData.entitySource
             existingEntityData.entitySource = newEntitySource
             this.indexes.entitySourceIndex.index(usedPid, newEntitySource)
-            updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(existingEntityData)) }
-            newUpdateChangeLog {
-              val existingChange = it[usedPid]
-              val changeSourceEvent = ChangeEntry.ChangeEntitySource(existingEntityData)
-              if (existingChange == null) {
-                it[usedPid] = changeSourceEvent to null
-              }
-              else {
-                when (val firstChange = existingChange.first) {
-                  is ChangeEntry.AddEntity<*> -> {
-                    it[usedPid] = ChangeEntry.AddEntity(existingEntityData, usedPid.clazz) to null
-                  }
-                  is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $existingEntityData")
-                  is ChangeEntry.ChangeEntitySource<*> -> it[usedPid] = changeSourceEvent to null
-                  is ChangeEntry.ReplaceEntity<*> -> it[usedPid] = firstChange to changeSourceEvent
-                }
-              }
-            }
+            this.superNewChangeLog.addChangeSourceEvent(usedPid, existingEntityData)
           }
         }
       }
@@ -1205,7 +999,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     indexes.applyExternalMappingChanges(diff, replaceMap)
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this, initialChangeLogSize)
+    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -1249,12 +1043,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
     val pid = pEntityData.createPid()
-    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, pid.clazz)) }
-
-    newUpdateChangeLog {
-      if (pid in it) LOG.error("Trying to add entity again. $pEntityData")
-      it[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz) to null
-    }
+    this.superNewChangeLog.addAddEvent(pid, pEntityData)
   }
 
   /**
@@ -1485,13 +1274,17 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
+  internal fun assertConsistencyInStrictModeForRbs(message: String,
+                                                   sourceFilter: (EntitySource) -> Boolean,
+                                                   left: WorkspaceEntityStorage,
+                                                   right: WorkspaceEntityStorage,
+                                                   resulting: WorkspaceEntityStorageBuilder) {
     if (StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
-        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting, initialChangeLogSize)
+        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting)
       }
     }
   }
@@ -1501,8 +1294,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
                                       sourceFilter: ((EntitySource) -> Boolean)?,
                                       left: WorkspaceEntityStorage,
                                       right: WorkspaceEntityStorage,
-                                      resulting: WorkspaceEntityStorageBuilder,
-                                      initialChangeLogSize: Int) {
+                                      resulting: WorkspaceEntityStorageBuilder) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
       allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
@@ -1521,11 +1313,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val classToIntConverterAttachment = createAttachment("ClassToIntConverter", "Class to int converter") { serializer, stream ->
       serializer.serializeClassToIntConverter(stream)
     }
-    val leftLogAttachment = createAttachment("Left_Diff_Log", "Log of left builder") { serializer, stream ->
-      serializer.serializeDiffLog(stream, (resulting as WorkspaceEntityStorageBuilderImpl).changeLogImpl.take(initialChangeLogSize))
-    }
 
-    var attachments = arrayOf(leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment, leftLogAttachment)
+    var attachments = arrayOf(leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment)
     if (right is WorkspaceEntityStorageBuilder) {
       attachments += createAttachment("Right_Diff_Log", "Log of right builder") { serializer, stream ->
         right as WorkspaceEntityStorageBuilderImpl

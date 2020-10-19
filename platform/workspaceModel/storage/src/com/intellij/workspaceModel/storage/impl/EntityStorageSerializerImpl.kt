@@ -178,10 +178,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(MultimapStorageIndex::class.java)
     kryo.register(VirtualFileIndex.VirtualFileUrlInfo::class.java)
 
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity::class.java)
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity::class.java)
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity::class.java)
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntryX.AddEntity::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntryX.RemoveEntity::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntryX.ReplaceEntity::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntryX.ChangeEntitySource::class.java)
     kryo.register(LinkedHashSet::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
@@ -320,7 +320,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  internal fun serializeDiffLog(stream: OutputStream, changeLog: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>) {
+  internal fun serializeDiffLog(stream: OutputStream, changeLog: List<WorkspaceEntityStorageBuilderImpl.ChangeEntryX>) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -330,10 +330,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       val entityDataSequence = changeLog.mapNotNull {
         when (it) {
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity<*> -> it.entityData
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity -> null
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity<*> -> it.newData
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource<*> -> it.newData
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntryX.AddEntity<*> -> it.entityData
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntryX.RemoveEntity -> null
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntryX.ReplaceEntity<*> -> it.newData
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntryX.ChangeEntitySource<*> -> it.newData
         }
       }.asSequence()
 
@@ -453,7 +453,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
-    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
+    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntryX>
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
@@ -466,7 +466,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       readAndRegisterClasses(input, kryo)
 
-      log = kryo.readClassAndObject(input) as List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
+      log = kryo.readClassAndObject(input) as List<WorkspaceEntityStorageBuilderImpl.ChangeEntryX>
     }
 
     builder as WorkspaceEntityStorageBuilderImpl
