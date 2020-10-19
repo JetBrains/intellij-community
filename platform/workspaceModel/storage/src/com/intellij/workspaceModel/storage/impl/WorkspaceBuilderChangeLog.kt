@@ -4,9 +4,12 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
+internal typealias ChangeLog = MutableMap<EntityId, Pair<ChangeEntry, ChangeEntry.ChangeEntitySource<*>?>>
+
 class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
-  internal val changeLog: LinkedHashMap<EntityId, Pair<ChangeEntry, ChangeEntry.ChangeEntitySource<*>?>> = LinkedHashMap()
+
+  internal val changeLog: ChangeLog = HashMap()
 
   internal fun clear() {
     modificationCount++

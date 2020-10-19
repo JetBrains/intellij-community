@@ -5,9 +5,11 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
 import org.junit.Before
@@ -43,9 +45,8 @@ class ImlSerializationTest {
 
     checkSerializationSize(bytes, expectedSize, 2_000)
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               48_000 == expectedSize && "v4" == serializer.serializerDataFormatVersion)
+               48_000 == expectedSize && "v5" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test

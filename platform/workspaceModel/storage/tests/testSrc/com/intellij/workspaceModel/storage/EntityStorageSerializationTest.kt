@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNull
 import org.junit.Test
@@ -81,10 +81,10 @@ private val expectedKryoRegistration = """
   [36, kotlin.Pair]
   [37, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
   [38, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex${'$'}VirtualFileUrlInfo]
-  [39, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}AddEntity]
-  [40, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}RemoveEntity]
-  [41, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ReplaceEntity]
-  [42, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ChangeEntitySource]
+  [39, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [40, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [41, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [42, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
   [43, java.util.LinkedHashSet]
   [44, java.util.Collections${'$'}UnmodifiableCollection]
   [45, java.util.Collections${'$'}UnmodifiableSet]

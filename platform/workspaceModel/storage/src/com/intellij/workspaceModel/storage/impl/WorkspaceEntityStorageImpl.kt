@@ -51,7 +51,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val indexes: MutableStorageIndexes
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  private val superNewChangeLog = WorkspaceBuilderChangeLog()
+  internal val superNewChangeLog = WorkspaceBuilderChangeLog()
 
   internal val changeLogImpl: MutableList<ChangeEntryX> = mutableListOf()
 
@@ -1318,7 +1318,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (right is WorkspaceEntityStorageBuilder) {
       attachments += createAttachment("Right_Diff_Log", "Log of right builder") { serializer, stream ->
         right as WorkspaceEntityStorageBuilderImpl
-        serializer.serializeDiffLog(stream, right.changeLogImpl)
+        serializer.serializeDiffLog(stream, right.superNewChangeLog)
       }
     }
     LOG.error(_message, e, *attachments)
