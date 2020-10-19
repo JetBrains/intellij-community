@@ -399,9 +399,8 @@ public final class ReplaceInProjectManager {
     }
 
     int[] replacedCount = {0};
-    final boolean[] success = {true};
-
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+    boolean[] success = {true};
+    boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
       myProject,
       null,
@@ -437,7 +436,7 @@ public final class ReplaceInProjectManager {
         }
       }
     );
-
+    success[0] &= result;
     replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
