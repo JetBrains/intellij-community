@@ -63,6 +63,7 @@ public final class FileBasedIndexSwitcher {
             }
           }
         }
+        myFileBasedIndex.waitUntilIndicesAreInitialized();
         myFileBasedIndex.performShutdown(true);
         myFileBasedIndex.dropRegisteredIndexes();
         IndexingStamp.dropTimestampMemoryCaches();
