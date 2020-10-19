@@ -49,10 +49,19 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (PsiUtil.isIdeaProject(project) && !vm.hasProperty(SYSTEM_CL_PROPERTY)) {
-      String qualifiedName = UrlClassLoader.class.getName();
-      if (loaderValid(project, module, qualifiedName, jdk)) {
-        vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+    if (PsiUtil.isIdeaProject(project)) {
+      if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
+        String qualifiedName = UrlClassLoader.class.getName();
+        if (loaderValid(project, module, qualifiedName, jdk)) {
+          vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+        }
+      }
+      String basePath = project.getBasePath();
+      if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, new File(basePath, "test-system").getAbsolutePath());
+      }
+      if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, new File(basePath, "test-config").getAbsolutePath());
       }
     }
 
