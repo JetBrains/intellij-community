@@ -359,9 +359,7 @@ public final class TypeConstraints {
     public boolean isAssignableFrom(@NotNull Exact other) {
       if (equals(other) || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
-        String name = myClass.getQualifiedName();
-        if (name == null) return false;
-        return InheritanceUtil.isInheritor(((ExactClass)other).myClass, name);
+        return InheritanceUtil.isInheritorOrSelf(((ExactClass)other).myClass, myClass, true);
       }
       return false;
     }
@@ -379,10 +377,10 @@ public final class TypeConstraints {
         if (myClass.isInterface() && otherClass.isInterface()) return true;
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-        String otherName = otherClass.getQualifiedName();
-        String myName = myClass.getQualifiedName();
-        return otherName != null && InheritanceUtil.isInheritor(myClass, otherName) ||
-               myName != null && InheritanceUtil.isInheritor(otherClass, myName);
+        PsiManager manager = myClass.getManager();
+        return manager.areElementsEquivalent(myClass, otherClass) || 
+               otherClass.isInheritor(myClass, true) ||
+               myClass.isInheritor(otherClass, true);
       }
       return false;
     }
