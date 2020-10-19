@@ -165,24 +165,6 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
   }
 
   override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as EntityId
-
-    if (arrayId != other.arrayId) return false
-    if (clazz != other.clazz) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = arrayId
-    result = 31 * result + clazz.hashCode()
-    return result
-  }
 }
 
 interface SoftLinkable {
