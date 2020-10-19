@@ -92,7 +92,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowRight",
     "ResizeToolWindowUp",
     "ResizeToolWindowDown",
-    "MaximizeToolWindow"
+    "MaximizeToolWindow",
+    
+    "MaintenanceAction"
   };
   private static final int MIN_FONT_SIZE = 8;
 
