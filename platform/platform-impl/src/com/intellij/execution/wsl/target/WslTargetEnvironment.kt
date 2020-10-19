@@ -39,9 +39,9 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
   init {
     for (uploadRoot in wslRequest.uploadVolumes) {
-      val targetRoot: String? = distribution.getWslPath(uploadRoot.localRootPath.toAbsolutePath().toString())
+      val targetRoot: String? = toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
-        myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot, distribution)
+        myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
     }
     for (targetPortBinding in wslRequest.targetPortBindings) {
@@ -60,25 +60,44 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     }
   }
 
+  private fun toLinuxPath(localPath: String): String? {
+    val linuxPath = distribution.getWslPath(localPath)
+    if (linuxPath != null) {
+      return linuxPath
+    }
+    return convertUncPathToLinux(localPath)
+  }
+
+  private fun convertUncPathToLinux(localPath: String): String? {
+    val root: String = WSLDistribution.UNC_PREFIX + distribution.msId
+    val winLocalPath = FileUtil.toSystemDependentName(localPath)
+    if (winLocalPath.startsWith(root)) {
+      val linuxPath = winLocalPath.substring(root.length)
+      if (linuxPath.isEmpty()) {
+        return "/"
+      }
+      if (linuxPath.startsWith("\\")) {
+        return FileUtil.toSystemIndependentName(linuxPath)
+      }
+    }
+    return null
+  }
+
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     var line = GeneralCommandLine(commandLine.collectCommandsSynchronously())
-    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
+    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory).setLaunchWithWslExe(false)
     line = distribution.patchCommandLine(line, null, options)
     return line.createProcess()
   }
 
   override fun shutdown() {}
 
-  private class Volume(override val localRoot: Path,
-                       override val targetRoot: String,
-                       private val myDistribution: WSLDistribution) : UploadableVolume {
+  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume {
     @Throws(IOException::class)
-    override fun upload(relativePath: String,
-                        targetProgressIndicator: TargetProgressIndicator): String {
-      val localPath = FileUtil.toCanonicalPath(FileUtil.join(
-        localRoot.toString(), relativePath))
-      return myDistribution.getWslPath(localPath)!!
+    override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator): String {
+      val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
+      return toLinuxPath(localPath)!!
     }
   }
 }
