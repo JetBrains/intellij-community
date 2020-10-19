@@ -10,6 +10,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -57,7 +58,7 @@ class MethodExtractor {
       }
       val extractOptions = findExtractOptions(statements)
       selectTargetClass(extractOptions) { options ->
-        if (Registry.`is`("java.refactoring.extractMethod.inplace")) {
+        if (Registry.`is`("java.refactoring.extractMethod.inplace") && EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           doInplaceExtract(editor, options)
         }
         else {
