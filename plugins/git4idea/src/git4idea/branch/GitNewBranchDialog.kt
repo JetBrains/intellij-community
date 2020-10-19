@@ -13,6 +13,7 @@ import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator
+import git4idea.validators.checkRefNameEmptyOrHead
 import git4idea.validators.conflictsWithLocalBranch
 import git4idea.validators.conflictsWithRemoteBranch
 import org.jetbrains.annotations.Nls
@@ -52,6 +53,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   private var branchName = initialName.orEmpty()
   private var overwriteCheckbox: JCheckBox? = null
   private var setTrackingCheckbox: JCheckBox? = null
+  private val validator = GitRefNameValidator.getInstance()
 
   init {
     title = dialogTitle
@@ -59,7 +61,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     init()
   }
 
-  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(branchName.trim(), checkout, reset, tracking) else null
+  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking) else null
 
   override fun createCenterPanel() = panel {
     row {
@@ -90,8 +92,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun validateBranchName(): ValidationInfoBuilder.(JTextField) -> ValidationInfo? = {
-    it.text = GitRefNameValidator.getInstance().cleanUpBranchName(it.text)
-    val errorInfo = conflictsWithRemoteBranch(repositories, it.text)
+    it.text = validator.cleanUpBranchNameOnTyping(it.text)
+    val errorInfo = checkRefNameEmptyOrHead(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
     if (errorInfo != null) error(errorInfo.message)
     else {
       val localBranchConflict = conflictsWithLocalBranch(repositories, it.text)
