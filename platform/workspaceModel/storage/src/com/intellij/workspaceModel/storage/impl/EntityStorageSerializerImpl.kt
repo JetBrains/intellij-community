@@ -182,6 +182,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ChangeEntry.RemoveEntity::class.java)
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
     kryo.register(ChangeEntry.ChangeEntitySource::class.java)
+    kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
     kryo.register(LinkedHashSet::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
@@ -328,12 +329,13 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val entityDataSequence = log.changeLog.values.flatMap { pair -> pair.second?.let { sequenceOf(pair.first, it) } ?: sequenceOf(pair.first) }.mapNotNull {
+      val entityDataSequence = log.changeLog.values.mapNotNull {
         when (it) {
           is ChangeEntry.AddEntity<*> -> it.entityData
           is ChangeEntry.RemoveEntity -> null
           is ChangeEntry.ReplaceEntity<*> -> it.newData
           is ChangeEntry.ChangeEntitySource<*> -> it.newData
+          is ChangeEntry.ReplaceAndChangeSource<*> -> it.dataChange.newData
         }
       }.asSequence()
 

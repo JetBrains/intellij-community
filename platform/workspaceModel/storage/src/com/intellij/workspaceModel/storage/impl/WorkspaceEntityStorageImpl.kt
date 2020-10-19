@@ -567,15 +567,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val originalImpl = original as AbstractEntityStorage
 
     val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
-    for ((entityId, changePair) in this.superNewChangeLog.changeLog) {
-      val (change, secondChange) = changePair
-      if (secondChange != null) {
-        val oldData = originalImpl.entityDataById(entityId) ?: continue
-        val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-        val replaceToData = secondChange.newData.createEntity(this) as WorkspaceEntityBase
-        res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-          .add(EntityChange.Replaced(replacedData, replaceToData))
-      }
+    for ((entityId, change) in this.superNewChangeLog.changeLog) {
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
@@ -597,6 +589,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val oldData = originalImpl.entityDataById(entityId) ?: continue
           val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
           val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            .add(EntityChange.Replaced(replacedData, replaceToData))
+        }
+        is ChangeEntry.ReplaceAndChangeSource<*> -> {
+          val oldData = originalImpl.entityDataById(entityId) ?: continue
+          val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+          val replaceToData = change.dataChange.newData.createEntity(this) as WorkspaceEntityBase
           res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
             .add(EntityChange.Replaced(replacedData, replaceToData))
         }

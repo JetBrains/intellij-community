@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
-internal typealias ChangeLog = MutableMap<EntityId, Pair<ChangeEntry, ChangeEntry.ChangeEntitySource<*>?>>
+internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
 class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
@@ -25,22 +25,28 @@ class WorkspaceBuilderChangeLog {
 
     val existingChange = changeLog[entityId]
     val replaceEvent = ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)
+
+    val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity<*> ->
+      val newAddedChildren = (replaceEntity.newChildren.toSet() - removedChildren.toSet()).toList()
+      val newRemovedChildren = (replaceEntity.removedChildren.toSet() - addedChildren.toSet()).toList()
+      val newChangedParents = replaceEntity.modifiedParents + parentsMapRes
+      ChangeEntry.ReplaceEntity(copiedData, newAddedChildren, newRemovedChildren, newChangedParents)
+    }
+
     if (existingChange == null) {
-      changeLog[entityId] = replaceEvent to null
+      changeLog[entityId] = replaceEvent
     }
     else {
-      when (val firstChange = existingChange.first) {
-        is ChangeEntry.AddEntity<*> -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz) to null
+      when (existingChange) {
+        is ChangeEntry.AddEntity<*> -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz)
         is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
-        is ChangeEntry.ChangeEntitySource<*> -> changeLog[entityId] = replaceEvent to firstChange
-        is ChangeEntry.ReplaceEntity<*> -> {
-          val newAddedChildren = (firstChange.newChildren.toSet() - removedChildren.toSet()).toList()
-          val newRemovedChildren = (firstChange.removedChildren.toSet() - addedChildren.toSet()).toList()
-          val newChangedParents = firstChange.modifiedParents + parentsMapRes
-          changeLog[entityId] = ChangeEntry.ReplaceEntity(copiedData, newAddedChildren, newRemovedChildren,
-                                                          newChangedParents) to existingChange.second
+        is ChangeEntry.ChangeEntitySource<*> -> changeLog[entityId] = ChangeEntry.ReplaceAndChangeSource.from(replaceEvent, existingChange)
+        is ChangeEntry.ReplaceEntity<*> -> changeLog[entityId] = makeReplaceEvent(existingChange)
+        is ChangeEntry.ReplaceAndChangeSource<*> -> {
+          val newReplaceEvent = makeReplaceEvent(existingChange.dataChange)
+          changeLog[entityId] = ChangeEntry.ReplaceAndChangeSource.from(newReplaceEvent, existingChange.sourceChange)
         }
-      }
+      }.let { }
     }
   }
 
@@ -50,7 +56,7 @@ class WorkspaceBuilderChangeLog {
     // XXX: This check should exist, but some tests fails with it.
     //if (targetEntityId in it) LOG.error("Trying to add entity again. ")
 
-    changeLog[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz) to null
+    changeLog[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz)
   }
 
   internal fun <T : WorkspaceEntity> addChangeSourceEvent(entityId: EntityId, copiedData: WorkspaceEntityData<T>) {
@@ -59,15 +65,17 @@ class WorkspaceBuilderChangeLog {
     val existingChange = changeLog[entityId]
     val changeSourceEvent = ChangeEntry.ChangeEntitySource(copiedData)
     if (existingChange == null) {
-      changeLog[entityId] = changeSourceEvent to null
+      changeLog[entityId] = changeSourceEvent
     }
     else {
-      when (val firstChange = existingChange.first) {
-        is ChangeEntry.AddEntity<*> -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz) to null
+      when (existingChange) {
+        is ChangeEntry.AddEntity<*> -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz)
         is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
-        is ChangeEntry.ChangeEntitySource<*> -> changeLog[entityId] = changeSourceEvent to null
-        is ChangeEntry.ReplaceEntity<*> -> changeLog[entityId] = firstChange to changeSourceEvent
-      }
+        is ChangeEntry.ChangeEntitySource<*> -> changeLog[entityId] = changeSourceEvent
+        is ChangeEntry.ReplaceEntity<*> -> changeLog[entityId] = ChangeEntry.ReplaceAndChangeSource.from(existingChange, changeSourceEvent)
+        is ChangeEntry.ReplaceAndChangeSource<*> -> changeLog[entityId] = ChangeEntry.ReplaceAndChangeSource.from(existingChange.dataChange,
+                                                                                                                  changeSourceEvent)
+      }.let { }
     }
   }
 
@@ -77,14 +85,15 @@ class WorkspaceBuilderChangeLog {
     val existingChange = changeLog[removedEntityId]
     val removeEvent = ChangeEntry.RemoveEntity(removedEntityId)
     if (existingChange == null) {
-      changeLog[removedEntityId] = removeEvent to null
+      changeLog[removedEntityId] = removeEvent
     }
     else {
-      when (existingChange.first) {
+      when (existingChange) {
         is ChangeEntry.AddEntity<*> -> changeLog.remove(removedEntityId)
         is ChangeEntry.RemoveEntity -> LOG.error("Trying to remove the entity twice. $removedEntityId")
-        is ChangeEntry.ChangeEntitySource<*> -> changeLog[removedEntityId] = removeEvent to null
-        is ChangeEntry.ReplaceEntity<*> -> changeLog[removedEntityId] = removeEvent to null
+        is ChangeEntry.ChangeEntitySource<*> -> changeLog[removedEntityId] = removeEvent
+        is ChangeEntry.ReplaceEntity<*> -> changeLog[removedEntityId] = removeEvent
+        is ChangeEntry.ReplaceAndChangeSource<*> -> changeLog[removedEntityId] = removeEvent
       }
     }
   }
@@ -107,4 +116,15 @@ internal sealed class ChangeEntry {
     val removedChildren: List<Pair<ConnectionId, EntityId>>,
     val modifiedParents: Map<ConnectionId, EntityId?>
   ) : ChangeEntry()
+
+  data class ReplaceAndChangeSource<E : WorkspaceEntity>(
+    val dataChange: ReplaceEntity<E>,
+    val sourceChange: ChangeEntitySource<E>,
+  ) : ChangeEntry() {
+    companion object {
+      fun <T : WorkspaceEntity> from(dataChange: ReplaceEntity<T>, sourceChange: ChangeEntitySource<*>): ReplaceAndChangeSource<T> {
+        return ReplaceAndChangeSource(dataChange, sourceChange as ChangeEntitySource<T>)
+      }
+    }
+  }
 }
