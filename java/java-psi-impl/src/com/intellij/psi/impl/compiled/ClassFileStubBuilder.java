@@ -27,7 +27,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @NotNull Stream<Full> getAllSubBuilders() {
-    return ClassFileDecompilers.getInstance().EP_NAME.extensions().filter(d -> d instanceof Full).map(d -> (Full) d);
+    return ClassFileDecompilers.getInstance().EP_NAME.extensions().filter(d -> d instanceof Full).map(d -> (Full)d);
   }
 
   @Override

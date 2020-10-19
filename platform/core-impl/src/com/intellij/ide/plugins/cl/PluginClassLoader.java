@@ -212,10 +212,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null, withRoot);
     }
 
-    if (c != null) {
-      if (resolve) {
-        resolveClass(c);
-      }
+    if (c != null && resolve) {
+      resolveClass(c);
     }
 
     if (StartUpMeasurer.measuringPluginStartupCosts) {
