@@ -25,7 +25,7 @@ final class ClassLoaderConfigurator {
   private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
   private static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "false"));
 
-  // weird flag with unknown purpose
+  // grab classes from platform loader only if nothing is found in any of plugin dependencies
   private final boolean usePluginClassLoader;
   private final ClassLoader coreLoader;
   private final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
@@ -102,8 +102,10 @@ final class ClassLoaderConfigurator {
 
     List<PluginDependency> pluginDependencies = mainDependent.pluginDependencies;
     if (pluginDependencies == null) {
-      loaders.add(coreLoader);
-      mainDependent.setClassLoader(createPluginClassLoader(loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), classPath, mainDependent));
+      assert !mainDependent.isUseIdeaClassLoader();
+      PluginClassLoader loader = new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), mainDependent, mainDependent.getPluginPath());
+      loader.setCoreLoader(coreLoader);
+      mainDependent.setClassLoader(loader);
       return;
     }
 
@@ -116,11 +118,17 @@ final class ClassLoaderConfigurator {
 
       IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
       if (dependencyDescriptor != null) {
-        addLoaderOrLogError(mainDependent, dependencyDescriptor, loaders);
+        ClassLoader loader = dependencyDescriptor.getClassLoader();
+        if (loader == null) {
+          getLogger().error(PluginLoadingError.formatErrorMessage(mainDependent,
+                                                                  "requires missing class loader for '" + dependencyDescriptor.getName() + "'"));
+        }
+        else if (!usePluginClassLoader || loader != coreLoader) {
+          loaders.add(loader);
+        }
       }
     }
 
-    // do not add core loader if there is some dependency - will be added to some dependency
     ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(EMPTY_CLASS_LOADER_ARRAY);
     ClassLoader mainDependentClassLoader = createPluginClassLoader(parentLoaders, classPath, mainDependent);
 
@@ -163,7 +171,7 @@ final class ClassLoaderConfigurator {
                                                        @NotNull IdeaPluginDescriptorImpl descriptor) {
     if (descriptor.isUseIdeaClassLoader()) {
       getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
-      ClassLoader loader = PluginManagerCore.class.getClassLoader();
+      ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
       try {
         Class<?> loaderClass = loader.getClass();
         if (loaderClass.getName().endsWith(".BootstrapClassLoaderUtil$TransformingLoader")) {

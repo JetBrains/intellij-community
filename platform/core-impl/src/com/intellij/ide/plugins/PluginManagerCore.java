@@ -838,7 +838,7 @@ public final class PluginManagerCore {
   public static void initClassLoaderForDynamicPlugin(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(ContainerUtil.concat(getLoadedPlugins(null), Collections.singletonList(pluginDescriptor)));
     ClassLoaderConfigurator classLoaderConfigurator =
-      new ClassLoaderConfigurator(/* usePluginClassLoader = */ false, PluginManagerCore.class.getClassLoader(), idMap, ourAdditionalLayoutMap);
+      new ClassLoaderConfigurator(true, PluginManagerCore.class.getClassLoader(), idMap, ourAdditionalLayoutMap);
     classLoaderConfigurator.configure(pluginDescriptor);
   }
 
