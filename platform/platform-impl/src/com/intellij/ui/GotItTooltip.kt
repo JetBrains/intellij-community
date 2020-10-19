@@ -25,9 +25,11 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ActionListener
@@ -238,6 +240,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         setBorderColor(BORDER_COLOR).
         setCornerToPointerDistance(ARROW_SHIFT).
         setFillColor(BACKGROUND_COLOR).
+        setPointerSize(JBUI.size(16, 8)).
         createBalloon().
       apply { setAnimationEnabled(false) }
 
@@ -316,6 +319,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     }
 
     panel.background = BACKGROUND_COLOR
+    panel.border = PANEL_MARGINS
 
     return panel
   }
@@ -330,7 +334,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     private val MAX_WIDTH   = JBUIScale.scale(280)
     private val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
     private val BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", JBColor(0xf7f7f7, 0x474a4c))
-    private val BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", JBColor(0xadadad, 0x636569))
+    private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBColor(Color(0xcccccc), JBColor.namedColor("ToolTip.borderColor", 0x636569)))
+
+    private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
   }
 }
 

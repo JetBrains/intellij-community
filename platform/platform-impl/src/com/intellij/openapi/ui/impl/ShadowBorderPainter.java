@@ -60,7 +60,7 @@ public final class ShadowBorderPainter {
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     graphics.drawImage(scaled, 0, 0, null);
 
-    final BufferedImage shadow = new ShadowRenderer(shadowSize, .25f, Gray.x00).createShadow(s);
+    final BufferedImage shadow = new ShadowRenderer(shadowSize, .2f, Gray.x00).createShadow(s);
     if (paintSource) {
       final Graphics imgG = shadow.getGraphics();
       final double d = shadowSize * 0.5;
