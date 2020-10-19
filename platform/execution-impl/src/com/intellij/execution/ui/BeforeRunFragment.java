@@ -18,8 +18,6 @@ import java.util.List;
 
 public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
   private final BeforeRunComponent myBeforeRunComponent;
-  private final Key<?> myBuildTaskKey;
-  private RunnerAndConfigurationSettingsImpl mySettings;
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     List<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
@@ -48,16 +46,11 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   private BeforeRunFragment(@NotNull BeforeRunComponent beforeRunComponent, Key<?> buildTaskKey) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
-          ExecutionBundle.message("run.configuration.before.run.group"), wrap(beforeRunComponent), -2);
+          ExecutionBundle.message("run.configuration.before.run.group"), wrap(beforeRunComponent), -2,
+          s -> ContainerUtil.exists(s.getManager().getBeforeRunTasks(s.getConfiguration()), task -> task.getProviderId() != buildTaskKey));
     myBeforeRunComponent = beforeRunComponent;
-    myBuildTaskKey = buildTaskKey;
     beforeRunComponent.myChangeListener = () -> fireEditorStateChanged();
     setActionHint(ExecutionBundle.message("specify.tasks.to.be.performed.before.starting.the.application"));
-  }
-
-  @Override
-  public boolean isInitiallyVisible(S s) {
-    return ContainerUtil.exists(mySettings.getManager().getBeforeRunTasks(s), task -> task.getProviderId() != myBuildTaskKey);
   }
 
   private static JComponent wrap(BeforeRunComponent component) {
@@ -85,9 +78,8 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
   }
 
   @Override
-  public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    mySettings = s;
-    myBeforeRunComponent.reset(mySettings);
+  public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
+    myBeforeRunComponent.reset(s);
   }
 
   @Override

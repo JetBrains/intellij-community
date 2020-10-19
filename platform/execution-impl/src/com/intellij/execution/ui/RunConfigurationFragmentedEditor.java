@@ -81,9 +81,9 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       RunConfigurationEditorFragment<Settings, JComponent> fragment =
         new RunConfigurationEditorFragment<>(executor.getId() + ".config", executor.getStartActionText(),
                                              ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
-                                             component, 0) {
+                                             component, 0, settings -> false) {
           @Override
-          public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+          public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
             if (configEditor != null) {
               configEditor.resetFrom(s.getConfigurationSettings(runner));
             }
@@ -160,7 +160,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
-    if (!isDefaultSettings() && !fragment.isCanBeHidden()) {
+    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag()) {
       //noinspection unchecked
       Settings clone = (Settings)mySettings.clone();
       fragment.applyEditorTo(clone);
