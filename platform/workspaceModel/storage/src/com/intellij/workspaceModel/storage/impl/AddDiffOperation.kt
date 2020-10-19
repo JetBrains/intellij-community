@@ -49,62 +49,11 @@ internal object AddDiffOperation {
           // Restore links to soft references
           if (targetEntityData is SoftLinkable) target.indexes.updateSoftLinksIndex(targetEntityData)
 
-          // Restore children references
-          val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId)
-          for ((connectionId, sourceChildrenIds) in allSourceChildren) {
-            val targetChildrenIds = mutableSetOf<EntityId>()
-            for (sourceChildId in sourceChildrenIds) {
-              if (diffLog[sourceChildId] is ChangeEntry.AddEntity<*>) {
-                // target particular entity is added in the same transaction.
-                val possibleTargetChildId = replaceMap[sourceChildId]
-                if (possibleTargetChildId != null) {
-                  // Entity was already added to the structure
-                  targetChildrenIds += possibleTargetChildId
-                }
-                else {
-                  // target entity isn't added yet. Add a placeholder
-                  val placeholderId = target.entitiesByType.book(sourceChildId.clazz)
-                  replaceMap[sourceChildId] = placeholderId
-                  targetChildrenIds += placeholderId
-                }
-              }
-              else {
-                if (target.entityDataById(sourceChildId) != null) {
-                  targetChildrenIds += sourceChildId
-                }
-                else if (!connectionId.canRemoveChild()) {
-                  target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff, target)
-                }
-              }
-            }
-            target.refs.updateChildrenOfParent(connectionId, targetEntityId, targetChildrenIds)
-          }
+          addRestoreChildren(diff, sourceEntityId, diffLog, replaceMap, target, initialStorage, targetEntityId)
 
 
           // Restore parent references
-          val allParents = diff.refs.getParentRefsOfChild(sourceEntityId)
-          for ((connectionId, sourceParentId) in allParents) {
-            val targetParentId = if (diffLog[sourceParentId] is ChangeEntry.AddEntity<*>) {
-              replaceMap[sourceParentId] ?: run {
-                // target entity isn't added to the current builder yet. Add a placeholder
-                val placeholderId = target.entitiesByType.book(sourceParentId.clazz)
-                replaceMap[sourceParentId] = placeholderId
-                placeholderId
-              }
-            }
-            else {
-              if (target.entityDataById(sourceParentId) != null) sourceParentId
-              else {
-                if (!connectionId.canRemoveParent()) {
-                  target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff, target)
-                }
-                null
-              }
-            }
-            if (targetParentId != null) {
-              target.refs.updateParentOfChild(connectionId, targetEntityId, targetParentId)
-            }
-          }
+          addRestoreParents(diff, sourceEntityId, diffLog, replaceMap, target, initialStorage, targetEntityId)
 
           target.indexes.updateIndices(change.entityData.createPid(), targetEntityData, diff)
           target.superNewChangeLog.addAddEvent(targetEntityId, targetEntityData)
@@ -148,6 +97,77 @@ internal object AddDiffOperation {
     target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
   }
 
+  private fun addRestoreParents(diff: WorkspaceEntityStorageBuilderImpl,
+                                sourceEntityId: EntityId,
+                                diffLog: ChangeLog,
+                                replaceMap: HashBiMap<EntityId, EntityId>,
+                                target: WorkspaceEntityStorageBuilderImpl,
+                                initialStorage: WorkspaceEntityStorageImpl,
+                                targetEntityId: EntityId) {
+    val allParents = diff.refs.getParentRefsOfChild(sourceEntityId)
+    for ((connectionId, sourceParentId) in allParents) {
+      val targetParentId = if (diffLog[sourceParentId] is ChangeEntry.AddEntity<*>) {
+        replaceMap[sourceParentId] ?: run {
+          // target entity isn't added to the current builder yet. Add a placeholder
+          val placeholderId = target.entitiesByType.book(sourceParentId.clazz)
+          replaceMap[sourceParentId] = placeholderId
+          placeholderId
+        }
+      }
+      else {
+        if (target.entityDataById(sourceParentId) != null) sourceParentId
+        else {
+          if (!connectionId.canRemoveParent()) {
+            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff, target)
+          }
+          null
+        }
+      }
+      if (targetParentId != null) {
+        target.refs.updateParentOfChild(connectionId, targetEntityId, targetParentId)
+      }
+    }
+  }
+
+  private fun addRestoreChildren(diff: WorkspaceEntityStorageBuilderImpl,
+                                 sourceEntityId: EntityId,
+                                 diffLog: ChangeLog,
+                                 replaceMap: HashBiMap<EntityId, EntityId>,
+                                 target: WorkspaceEntityStorageBuilderImpl,
+                                 initialStorage: WorkspaceEntityStorageImpl,
+                                 targetEntityId: EntityId) {
+    // Restore children references
+    val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId)
+    for ((connectionId, sourceChildrenIds) in allSourceChildren) {
+      val targetChildrenIds = mutableSetOf<EntityId>()
+      for (sourceChildId in sourceChildrenIds) {
+        if (diffLog[sourceChildId] is ChangeEntry.AddEntity<*>) {
+          // target particular entity is added in the same transaction.
+          val possibleTargetChildId = replaceMap[sourceChildId]
+          if (possibleTargetChildId != null) {
+            // Entity was already added to the structure
+            targetChildrenIds += possibleTargetChildId
+          }
+          else {
+            // target entity isn't added yet. Add a placeholder
+            val placeholderId = target.entitiesByType.book(sourceChildId.clazz)
+            replaceMap[sourceChildId] = placeholderId
+            targetChildrenIds += placeholderId
+          }
+        }
+        else {
+          if (target.entityDataById(sourceChildId) != null) {
+            targetChildrenIds += sourceChildId
+          }
+          else if (!connectionId.canRemoveChild()) {
+            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff, target)
+          }
+        }
+      }
+      target.refs.updateChildrenOfParent(connectionId, targetEntityId, targetChildrenIds)
+    }
+  }
+
   private fun replaceOperation(target: WorkspaceEntityStorageBuilderImpl,
                                diff: WorkspaceEntityStorageBuilderImpl,
                                change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>,
@@ -175,8 +195,6 @@ internal object AddDiffOperation {
 
     target.indexes.updateIndices(sourceEntityId, newTargetEntityData, diff)
 
-    // Can we move target method before adding change log?
-
     val newEntityId = newTargetEntityData.createPid()
     val oldPersistentId = target.entityDataById(newEntityId)?.persistentId(target)
 
@@ -187,21 +205,34 @@ internal object AddDiffOperation {
     target.updatePersistentIdIndexes(newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
 
 
-    val addedChildrenMapRaw = HashMultimap.create<ConnectionId, EntityId>()
-    change.newChildren.forEach { addedChildrenMapRaw.put(it.first, it.second) }
+    val addedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
+    change.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
 
-    val removedChildrenMapRaw = HashMultimap.create<ConnectionId, EntityId>()
-    change.removedChildren.forEach { removedChildrenMapRaw.put(it.first, it.second) }
+    val removedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
+    change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
 
-    val updatedModifiedParentsRaw = change.modifiedParents.mapValues { it.value }
+    replaceRestoreChildren(target, newEntityId, addedChildrenMap, diffLog, replaceMap, removedChildrenMap, initialStorage, diff)
 
+    replaceRestoreParents(change, target, newEntityId, initialStorage, diff, diffLog, replaceMap)
+
+    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId, beforeChildren, beforeParents, newTargetEntityData)
+  }
+
+  private fun replaceRestoreChildren(target: WorkspaceEntityStorageBuilderImpl,
+                                     newEntityId: EntityId,
+                                     addedChildrenMap: HashMultimap<ConnectionId, EntityId>,
+                                     diffLog: ChangeLog,
+                                     replaceMap: HashBiMap<EntityId, EntityId>,
+                                     removedChildrenMap: HashMultimap<ConnectionId, EntityId>,
+                                     initialStorage: WorkspaceEntityStorageImpl,
+                                     diff: WorkspaceEntityStorageBuilderImpl) {
     val existingChildren = target.refs.getChildrenRefsOfParentBy(newEntityId)
 
     for ((connectionId, children) in existingChildren) {
       // Take current children....
       val mutableChildren = children.toMutableSet()
 
-      val addedChildrenSet = addedChildrenMapRaw[connectionId] ?: emptySet()
+      val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
       for (addedChild in addedChildrenSet) {
         if (diffLog[addedChild] is ChangeEntry.AddEntity<*>) {
           val possibleNewChildId = replaceMap[addedChild]
@@ -221,7 +252,7 @@ internal object AddDiffOperation {
         }
       }
 
-      val removedChildrenSet = removedChildrenMapRaw[connectionId] ?: emptySet()
+      val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
       for (removedChild in removedChildrenSet) {
         val removed = mutableChildren.remove(removedChild)
         if (!removed) target.addDiffAndReport("Trying to remove child that isn't present", initialStorage,
@@ -232,16 +263,16 @@ internal object AddDiffOperation {
       if (children != mutableChildren) {
         target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
       }
-      addedChildrenMapRaw.removeAll(connectionId)
-      removedChildrenMapRaw.removeAll(connectionId)
+      addedChildrenMap.removeAll(connectionId)
+      removedChildrenMap.removeAll(connectionId)
     }
 
     // Do we have more children to remove? target should not happen
-    if (!removedChildrenMapRaw.isEmpty) target.addDiffAndReport("Trying to remove children that aren't present", initialStorage,
-                                                                diff, target)
+    if (!removedChildrenMap.isEmpty) target.addDiffAndReport("Trying to remove children that aren't present", initialStorage,
+                                                             diff, target)
 
     // Do we have more children to add? Add them
-    for ((connectionId, children) in addedChildrenMapRaw.asMap()) {
+    for ((connectionId, children) in addedChildrenMap.asMap()) {
       val mutableChildren = children.toMutableSet()
 
       for (child in children) {
@@ -265,13 +296,22 @@ internal object AddDiffOperation {
 
       target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
     }
+  }
 
+  private fun replaceRestoreParents(change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>,
+                                    target: WorkspaceEntityStorageBuilderImpl,
+                                    newEntityId: EntityId,
+                                    initialStorage: WorkspaceEntityStorageImpl,
+                                    diff: WorkspaceEntityStorageBuilderImpl,
+                                    diffLog: ChangeLog,
+                                    replaceMap: HashBiMap<EntityId, EntityId>) {
+    val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
 
-    val modifiedParentsMapRaw = updatedModifiedParentsRaw.toMutableMap()
-    val existingParentsRaw = target.refs.getParentRefsOfChild(newEntityId)
-    for ((connectionId, existingParent) in existingParentsRaw) {
-      if (connectionId in modifiedParentsMapRaw) {
-        val newParent = modifiedParentsMapRaw.getValue(connectionId)
+    val modifiedParentsMap = updatedModifiedParents.toMutableMap()
+    val existingParents = target.refs.getParentRefsOfChild(newEntityId)
+    for ((connectionId, existingParent) in existingParents) {
+      if (connectionId in modifiedParentsMap) {
+        val newParent = modifiedParentsMap.getValue(connectionId)
         if (newParent == null) {
           // target child doesn't have a parent anymore
           if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannrt restore some dependencies; $connectionId",
@@ -300,12 +340,12 @@ internal object AddDiffOperation {
             }
           }
         }
-        modifiedParentsMapRaw.remove(connectionId)
+        modifiedParentsMap.remove(connectionId)
       }
     }
 
     // Any new parents? Add them
-    for ((connectionId, parentId) in modifiedParentsMapRaw) {
+    for ((connectionId, parentId) in modifiedParentsMap) {
       if (parentId == null) continue
       if (diffLog[parentId] is ChangeEntry.AddEntity<*>) {
         var possibleNewParent = replaceMap[parentId]
@@ -321,8 +361,6 @@ internal object AddDiffOperation {
         }
       }
     }
-
-    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId, beforeChildren, beforeParents, newTargetEntityData)
   }
 
   private fun checkPersistentId(target: WorkspaceEntityStorageBuilderImpl,
