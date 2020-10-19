@@ -67,6 +67,8 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
+import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.*;
+import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -119,6 +121,7 @@ public final class ConfigImportHelper {
     ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
+    ImportOldConfigsState.InitialImportScenario importScenarioStatistics = null;
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
@@ -141,24 +144,36 @@ public final class ConfigImportHelper {
       }
       else if (shouldAskForConfig()) {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+        importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
       else if (guessedOldConfigDirs.isEmpty()) {
         boolean importedFromCloud = false;
         CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
         if (configProvider != null) {
           importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+
+          if (importedFromCloud) {
+            importScenarioStatistics = IMPORTED_FROM_CLOUD;
+          }
         }
         if (!importedFromCloud && !veryFirstStartOnThisComputer) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
         }
       }
       else {
         Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
         if (isConfigOld(bestConfigGuess.second)) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
         }
         else {
           oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+
+          if (oldConfigDirAndOldIdePath == null) {
+            log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+            importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
+          }
         }
       }
 
@@ -171,6 +186,10 @@ public final class ConfigImportHelper {
           // Don't import plugins from other product even if configs are imported
           configImportOptions.importPlugins = false;
           System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.getFileName().toString());
+          importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
+        }
+        else if (importScenarioStatistics == null) {
+          importScenarioStatistics = IMPORTED_FROM_PREVIOUS_VERSION;
         }
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
@@ -182,8 +201,12 @@ public final class ConfigImportHelper {
       }
       else {
         log.info("No configs imported, starting with clean configs at " + newConfigDir);
+        if (importScenarioStatistics == null) {
+          importScenarioStatistics = CLEAN_CONFIGS;
+        }
       }
 
+      ImportOldConfigsState.getInstance().reportImportScenario(importScenarioStatistics);
       vmOptionFileChanged |= doesVmOptionFileExist(newConfigDir);
     }
     finally {
