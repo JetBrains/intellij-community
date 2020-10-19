@@ -15,6 +15,9 @@
     <extensionPoint name="alphaUnsortedInspectionSuppressor"
                     interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
                     dynamic="true"/>
+    <extensionPoint name="duplicatePropertyKeyAnnotationSuppressor"
+                    interface="com.intellij.lang.properties.DuplicatePropertyKeyAnnotationSuppressor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
