@@ -180,6 +180,8 @@ class GitApplyChangesProcess(private val project: Project,
                      changeList: LocalChangeList,
                      successfulCommits: MutableList<VcsFullCommitDetails>,
                      alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+    if (!changeListManager.areChangeListsEnabled()) return false
+
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList == null) {
       LOG.error("Couldn't find the changelist with id ${changeList.id} and name ${changeList.name} among " +
