@@ -1,10 +1,12 @@
 package de.plushnikov.intellij.plugin;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,11 @@ public class LombokTestUtil {
       MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
+    }
+
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk18();
     }
   };
 
