@@ -58,10 +58,10 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
       }
       String basePath = project.getBasePath();
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
-        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, new File(basePath, "test-system").getAbsolutePath());
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, new File(basePath, "system/test").getAbsolutePath());
       }
       if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
-        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, new File(basePath, "test-config").getAbsolutePath());
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, new File(basePath, "config/test").getAbsolutePath());
       }
     }
 
