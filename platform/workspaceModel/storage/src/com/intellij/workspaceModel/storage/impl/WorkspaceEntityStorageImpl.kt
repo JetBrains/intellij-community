@@ -148,47 +148,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Add an entry to changelog
-    addReplaceEvent(pid, beforeChildren, beforeParents, copiedData)
+    Companion.addReplaceEvent(this, pid, beforeChildren, beforeParents, copiedData)
 
     val updatedEntity = copiedData.createEntity(this)
 
     updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData)
 
     return updatedEntity
-  }
-
-  private fun <T : WorkspaceEntity> addReplaceEvent(pid: EntityId,
-                                                    beforeChildren: List<Pair<ConnectionId, EntityId>>,
-                                                    beforeParents: Map<ConnectionId, EntityId>,
-                                                    copiedData: WorkspaceEntityData<T>) {
-    val parents = this.refs.getParentRefsOfChild(pid)
-    val unmappedChildren = this.refs.getChildrenRefsOfParentBy(pid)
-    val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
-
-    // Collect children changes
-    val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
-    val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
-
-    // Collect parent changes
-    val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
-    for ((connectionId, parentId) in parents) {
-      val existingParent = parentsMapRes[connectionId]
-      if (existingParent != null) {
-        if (existingParent == parentId) {
-          parentsMapRes.remove(connectionId, parentId)
-        }
-        else {
-          parentsMapRes[connectionId] = parentId
-        }
-      }
-      else {
-        parentsMapRes[connectionId] = parentId
-      }
-    }
-    val removedKeys = beforeParents.keys - parents.keys
-    removedKeys.forEach { parentsMapRes[it] = null }
-
-    this.superNewChangeLog.addReplaceEvent(pid, copiedData, addedChildren, removedChildren, parentsMapRes)
   }
 
   internal fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
@@ -710,6 +676,40 @@ internal class WorkspaceEntityStorageBuilderImpl(
           WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes)
         }
       }
+    }
+
+    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl, pid: EntityId,
+                                                      beforeChildren: List<Pair<ConnectionId, EntityId>>,
+                                                      beforeParents: Map<ConnectionId, EntityId>,
+                                                      copiedData: WorkspaceEntityData<T>) {
+      val parents = builder.refs.getParentRefsOfChild(pid)
+      val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(pid)
+      val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
+
+      // Collect children changes
+      val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
+      val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
+
+      // Collect parent changes
+      val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
+      for ((connectionId, parentId) in parents) {
+        val existingParent = parentsMapRes[connectionId]
+        if (existingParent != null) {
+          if (existingParent == parentId) {
+            parentsMapRes.remove(connectionId, parentId)
+          }
+          else {
+            parentsMapRes[connectionId] = parentId
+          }
+        }
+        else {
+          parentsMapRes[connectionId] = parentId
+        }
+      }
+      val removedKeys = beforeParents.keys - parents.keys
+      removedKeys.forEach { parentsMapRes[it] = null }
+
+      builder.superNewChangeLog.addReplaceEvent(pid, copiedData, addedChildren, removedChildren, parentsMapRes)
     }
   }
 }

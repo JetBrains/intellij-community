@@ -156,16 +156,11 @@ internal object AddDiffOperation {
                                diffLog: ChangeLog) {
     change as ChangeEntry.ReplaceEntity<WorkspaceEntity>
 
-    val updatedNewChildren = change.newChildren.map { (connectionId, id) -> connectionId to replaceMap.getOrDefault(id, id) }
-    val updatedRemovedChildren = change.removedChildren.map { (connectionId, id) ->
-      connectionId to replaceMap.getOrDefault(id, id)
-    }
-    val updatedModifiedParents = change.modifiedParents.mapValues {
-      if (it.value == null) null
-      else replaceMap.getOrDefault(it.value, it.value)
-    }
-
     val sourceEntityId = change.newData.createPid()
+
+    val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId).flatMap { (key, value) -> value.map { key to it } }
+    val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId)
+
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId)
     val newTargetEntityData = change.newData.clone()
     newTargetEntityData.id = targetEntityId.arrayId
@@ -179,9 +174,6 @@ internal object AddDiffOperation {
     newTargetEntityData.entitySource = existingTargetEntityData.entitySource
 
     target.indexes.updateIndices(sourceEntityId, newTargetEntityData, diff)
-
-    target.superNewChangeLog.addReplaceEvent(targetEntityId, newTargetEntityData, updatedNewChildren, updatedRemovedChildren,
-                                             updatedModifiedParents)
 
     // Can we move target method before adding change log?
 
@@ -203,9 +195,9 @@ internal object AddDiffOperation {
 
     val updatedModifiedParentsRaw = change.modifiedParents.mapValues { it.value }
 
-    val existingChildrenRaw = target.refs.getChildrenRefsOfParentBy(newEntityId)
+    val existingChildren = target.refs.getChildrenRefsOfParentBy(newEntityId)
 
-    for ((connectionId, children) in existingChildrenRaw) {
+    for ((connectionId, children) in existingChildren) {
       // Take current children....
       val mutableChildren = children.toMutableSet()
 
@@ -329,6 +321,8 @@ internal object AddDiffOperation {
         }
       }
     }
+
+    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId, beforeChildren, beforeParents, newTargetEntityData)
   }
 
   private fun checkPersistentId(target: WorkspaceEntityStorageBuilderImpl,
