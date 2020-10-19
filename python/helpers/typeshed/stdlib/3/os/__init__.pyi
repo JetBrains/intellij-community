@@ -1,6 +1,14 @@
 import sys
-from _typeshed import AnyPath, OpenBinaryMode, OpenBinaryModeReading, OpenBinaryModeUpdating, OpenBinaryModeWriting, OpenTextMode
-from builtins import OSError as error
+from _typeshed import (
+    AnyPath,
+    FileDescriptorLike,
+    OpenBinaryMode,
+    OpenBinaryModeReading,
+    OpenBinaryModeUpdating,
+    OpenBinaryModeWriting,
+    OpenTextMode,
+)
+from builtins import OSError
 from io import BufferedRandom, BufferedReader, BufferedWriter, FileIO, TextIOWrapper as _TextIOWrapper
 from posix import listdir as listdir, times_result
 from typing import (
@@ -17,7 +25,6 @@ from typing import (
     List,
     Mapping,
     MutableMapping,
-    NamedTuple,
     NoReturn,
     Optional,
     Sequence,
@@ -37,6 +44,8 @@ _supports_unicode_filenames = path.supports_unicode_filenames
 _T = TypeVar("_T")
 
 # ----- os variables -----
+
+error = OSError
 
 supports_bytes_environ: bool
 
@@ -260,7 +269,9 @@ class stat_result:
     st_type: int
 
 if sys.version_info >= (3, 6):
-    from builtins import _PathLike as PathLike  # See comment in builtins
+    from builtins import _PathLike
+
+    PathLike = _PathLike  # See comment in builtins
 
 _FdOrAnyPath = Union[int, AnyPath]
 
@@ -292,9 +303,16 @@ else:
         def stat(self, *, follow_symlinks: bool = ...) -> stat_result: ...
 
 if sys.platform != "win32":
+    _Tuple10Int = Tuple[int, int, int, int, int, int, int, int, int, int]
+    _Tuple11Int = Tuple[int, int, int, int, int, int, int, int, int, int, int]
     if sys.version_info >= (3, 7):
         # f_fsid was added in https://github.com/python/cpython/pull/4571
-        class statvfs_result(NamedTuple):  # Unix only
+        class statvfs_result(_Tuple10Int):  # Unix only
+            def __new__(cls, seq: Union[_Tuple10Int, _Tuple11Int], dict: Dict[str, int] = ...) -> statvfs_result: ...
+            n_fields: int
+            n_sequence_fields: int
+            n_unnamed_fields: int
+
             f_bsize: int
             f_frsize: int
             f_blocks: int
@@ -305,9 +323,13 @@ if sys.platform != "win32":
             f_favail: int
             f_flag: int
             f_namemax: int
-            f_fsid: int
+            f_fsid: int = ...
     else:
-        class statvfs_result(NamedTuple):  # Unix only
+        class statvfs_result(_Tuple10Int):  # Unix only
+            n_fields: int
+            n_sequence_fields: int
+            n_unnamed_fields: int
+
             f_bsize: int
             f_frsize: int
             f_blocks: int
@@ -489,7 +511,7 @@ else:
     def dup2(fd: int, fd2: int, inheritable: bool = ...) -> None: ...
 
 def fstat(fd: int) -> stat_result: ...
-def fsync(fd: int) -> None: ...
+def fsync(fd: FileDescriptorLike) -> None: ...
 def lseek(__fd: int, __position: int, __how: int) -> int: ...
 def open(path: AnyPath, flags: int, mode: int = ..., *, dir_fd: Optional[int] = ...) -> int: ...
 def pipe() -> Tuple[int, int]: ...
@@ -500,7 +522,7 @@ if sys.platform != "win32":
     def fchmod(fd: int, mode: int) -> None: ...
     def fchown(fd: int, uid: int, gid: int) -> None: ...
     if sys.platform != "darwin":
-        def fdatasync(fd: int) -> None: ...  # Unix only, not Mac
+        def fdatasync(fd: FileDescriptorLike) -> None: ...  # Unix only, not Mac
     def fpathconf(__fd: int, __name: Union[str, int]) -> int: ...
     def fstatvfs(__fd: int) -> statvfs_result: ...
     def ftruncate(__fd: int, __length: int) -> None: ...
@@ -551,7 +573,7 @@ def access(
 def chdir(path: _FdOrAnyPath) -> None: ...
 
 if sys.platform != "win32":
-    def fchdir(fd: int) -> None: ...
+    def fchdir(fd: FileDescriptorLike) -> None: ...
 
 def getcwd() -> str: ...
 def getcwdb() -> bytes: ...

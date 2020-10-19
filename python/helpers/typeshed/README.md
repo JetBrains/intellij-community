@@ -1,6 +1,6 @@
 # typeshed
 
-[![Build Status](https://travis-ci.org/python/typeshed.svg?branch=master)](https://travis-ci.org/python/typeshed)
+[![Build status](https://github.com/python/typeshed/workflows/Check%20stubs/badge.svg)](https://github.com/python/typeshed/actions?query=workflow%3A%22Check+stubs%22)
 [![Chat at https://gitter.im/python/typing](https://badges.gitter.im/python/typing.svg)](https://gitter.im/python/typing?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Pull Requests Welcome](https://img.shields.io/badge/pull%20requests-welcome-brightgreen.svg)](https://github.com/python/typeshed/blob/master/CONTRIBUTING.md)
 
@@ -77,6 +77,13 @@ versions of Python, `third_party` has version subdirectories, just like
 For more information on directory structure and stub versioning, see
 [the relevant section of CONTRIBUTING.md](
 https://github.com/python/typeshed/blob/master/CONTRIBUTING.md#stub-versioning).
+
+Third-party packages are generally removed from typeshed when one of the
+following criteria is met:
+
+* The upstream package ships a py.typed file for at least 6-12 months, or
+* the package does not support any of the Python versions supported by
+  typeshed.
 
 ## Contributing
 

@@ -128,7 +128,7 @@ class TextIOBase(IOBase):
     def __next__(self) -> str: ...  # type: ignore
     def detach(self) -> BinaryIO: ...
     def write(self, __s: str) -> int: ...
-    def writelines(self, __lines: List[str]) -> None: ...  # type: ignore
+    def writelines(self, __lines: Iterable[str]) -> None: ...  # type: ignore
     def readline(self, __size: int = ...) -> str: ...  # type: ignore
     def readlines(self, __hint: int = ...) -> List[str]: ...  # type: ignore
     def read(self, __size: Optional[int] = ...) -> str: ...
@@ -166,7 +166,7 @@ class TextIOWrapper(TextIOBase, TextIO):
     def __enter__(self: _T) -> _T: ...
     def __iter__(self) -> Iterator[str]: ...  # type: ignore
     def __next__(self) -> str: ...  # type: ignore
-    def writelines(self, __lines: List[str]) -> None: ...  # type: ignore
+    def writelines(self, __lines: Iterable[str]) -> None: ...  # type: ignore
     def readline(self, __size: int = ...) -> str: ...  # type: ignore
     def readlines(self, __hint: int = ...) -> List[str]: ...  # type: ignore
     def seek(self, __cookie: int, __whence: int = ...) -> int: ...

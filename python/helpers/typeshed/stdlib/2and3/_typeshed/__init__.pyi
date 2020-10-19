@@ -16,7 +16,7 @@ import array
 import mmap
 import sys
 from typing import AbstractSet, Container, Iterable, Protocol, Text, Tuple, TypeVar, Union
-from typing_extensions import Literal
+from typing_extensions import Literal, final
 
 _KT = TypeVar("_KT")
 _KT_co = TypeVar("_KT_co", covariant=True)
@@ -164,3 +164,8 @@ if sys.version_info >= (3,):
 else:
     ReadableBuffer = Union[bytes, bytearray, memoryview, array.array, mmap.mmap, buffer]
     WriteableBuffer = Union[bytearray, memoryview, array.array, mmap.mmap, buffer]
+
+# Used by type checkers for checks involving None (does not exist at runtime)
+@final
+class NoneType:
+    def __bool__(self) -> Literal[False]: ...

@@ -3,8 +3,8 @@ import ssl
 import sys
 from _typeshed import StrPath
 from logging import FileHandler, Handler, LogRecord
-from socket import SocketType
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from socket import SocketKind, SocketType
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 if sys.version_info >= (3, 7):
     from queue import Queue, SimpleQueue
@@ -12,9 +12,6 @@ elif sys.version_info >= (3,):
     from queue import Queue
 else:
     from Queue import Queue
-
-# TODO update socket stubs to add SocketKind
-_SocketKind = int
 
 DEFAULT_TCP_LOGGING_PORT: int
 DEFAULT_UDP_LOGGING_PORT: int
@@ -158,8 +155,16 @@ class SysLogHandler(Handler):
     LOG_LOCAL5: int
     LOG_LOCAL6: int
     LOG_LOCAL7: int
+    unixsocket: bool  # undocumented
+    socktype: SocketKind  # undocumented
+    if sys.version_info >= (3,):
+        ident: str  # undocumented
+    facility: int  # undocumented
+    priority_names: ClassVar[Dict[str, int]]  # undocumented
+    facility_names: ClassVar[Dict[str, int]]  # undocumented
+    priority_map: ClassVar[Dict[str, str]]  # undocumented
     def __init__(
-        self, address: Union[Tuple[str, int], str] = ..., facility: int = ..., socktype: Optional[_SocketKind] = ...
+        self, address: Union[Tuple[str, int], str] = ..., facility: int = ..., socktype: Optional[SocketKind] = ...
     ) -> None: ...
     def encodePriority(self, facility: Union[int, str], priority: Union[int, str]) -> int: ...
     def mapPriority(self, levelName: str) -> str: ...

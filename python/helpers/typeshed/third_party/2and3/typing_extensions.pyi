@@ -98,3 +98,8 @@ _AnnotatedAlias: Any = ...  # undocumented
 
 # TypeAlias is a (non-subscriptable) special form.
 class TypeAlias: ...
+
+@runtime_checkable
+class SupportsIndex(Protocol, metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def __index__(self) -> int: ...

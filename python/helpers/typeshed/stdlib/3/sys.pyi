@@ -5,7 +5,7 @@
 
 import sys
 from builtins import object as _object
-from importlib.abc import MetaPathFinder
+from importlib.abc import MetaPathFinder, PathEntryFinder
 from types import FrameType, ModuleType, TracebackType
 from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, TextIO, Tuple, Type, TypeVar, Union, overload
 
@@ -42,7 +42,7 @@ meta_path: List[MetaPathFinder]
 modules: Dict[str, ModuleType]
 path: List[str]
 path_hooks: List[Any]  # TODO precise type; function, path to finder
-path_importer_cache: Dict[str, Any]  # TODO precise type
+path_importer_cache: Dict[str, Optional[PathEntryFinder]]
 platform: str
 if sys.version_info >= (3, 9):
     platlibdir: str
