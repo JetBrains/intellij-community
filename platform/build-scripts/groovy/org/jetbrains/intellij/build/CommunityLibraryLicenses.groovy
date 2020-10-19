@@ -670,7 +670,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-python"),
     jetbrainsLibrary("completion-ranking-python-exp"),
     jetbrainsLibrary("completion-ranking-rust-exp"),
-    jetbrainsLibrary("completion-ranking-scala"),
+    jetbrainsLibrary("completion-ranking-scala-exp"),
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("file-prediction-model"),
