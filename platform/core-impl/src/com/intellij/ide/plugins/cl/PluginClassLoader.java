@@ -252,7 +252,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private @Nullable Class<?> loadClassInsideSelf(@NotNull String name) {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
-      if (c != null) {
+      if (c != null && c.getClassLoader() == this) {
         return c;
       }
 
