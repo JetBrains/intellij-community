@@ -557,17 +557,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                new RemoveRedundantStringCallFix(name, FixType.REPLACE_WITH_QUALIFIER));
     }
 
-    @NotNull
-    private static TextRange getRange(PsiMethodCallExpression call) {
-      PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
-      if (nameElement != null) {
-        TextRange callRange = call.getTextRange();
-        return new TextRange(nameElement.getTextRange().getStartOffset(), callRange.getEndOffset()).shiftLeft(
-          callRange.getStartOffset());
-      }
-      return call.getTextRange();
-    }
-
     /**
      * An instance of {@link LocalQuickFix} for problems that can be solved by replacing
      * {@link String#substring(int, int)} with {@link String#charAt(int)}
