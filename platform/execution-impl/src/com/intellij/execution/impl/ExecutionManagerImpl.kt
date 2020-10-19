@@ -887,7 +887,7 @@ private data class RunningConfigurationEntry(val descriptor: RunContentDescripto
                                              val settings: RunnerAndConfigurationSettings?,
                                              val executor: Executor)
 
-private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()) {
+private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()), Disposable {
   init {
     add(console.component, BorderLayout.CENTER)
   }
@@ -897,5 +897,9 @@ private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLa
   fun isPreparationFinished() = finished
   fun setPreparationFinished() {
     finished = true
+  }
+
+  override fun dispose() {
+    Disposer.dispose(console)
   }
 }
