@@ -45,7 +45,7 @@ class RunAnythingUsageCollector {
 
 
     private fun getSafeToReportClazzName(clazz: Class<*>): String {
-      return if (getPluginInfo(clazz).isSafeToReport()) clazz.simpleName else "third.party"
+      return if (getPluginInfo(clazz).isSafeToReport()) clazz.name else "third.party"
     }
 
     private fun getSafeToReportTitle(group: RunAnythingGroup): String {
