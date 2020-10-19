@@ -85,7 +85,7 @@ final class BrokenPluginsBuildFileService {
 
   private storeBrokenPlugin(Map<String, Set<String>> brokenPlugin) {
     final String text = brokenPlugin.collect { id, versions ->
-      "$id ${versions.collect { escapeIfSpaces(it) }.join(" ")}"
+      "${escapeIfSpaces(id)} ${versions.collect { escapeIfSpaces(it) }.join(" ")}"
     }.join("\n")
 
     File patchedKeyMapDir = new File(myBuildContext.paths.temp, "patched-broken-plugins")
