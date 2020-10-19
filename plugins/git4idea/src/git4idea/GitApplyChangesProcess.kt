@@ -98,7 +98,7 @@ class GitApplyChangesProcess(private val project: Project,
 
       val startHash = GitUtil.getHead(repository)
       try {
-        changeListManager.setDefaultChangeList(changeList, true)
+        if (changeListManager.areChangeListsEnabled()) changeListManager.setDefaultChangeList(changeList, true)
 
         val result = command(repository, commit.id, autoCommit,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
@@ -157,14 +157,17 @@ class GitApplyChangesProcess(private val project: Project,
         }
       }
       finally {
-        changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
-        changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
+        if (changeListManager.areChangeListsEnabled()) {
+          changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
+          changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
+        }
       }
     }
     return true
   }
 
   private fun createChangeList(commitMessage: String, commit: VcsFullCommitDetails): LocalChangeList {
+    if (!changeListManager.areChangeListsEnabled()) return changeListManager.defaultChangeList
     val changeListName = createNameForChangeList(project, commitMessage)
     val changeListData = if (preserveCommitMetadata) createChangeListData(commit) else null
     return changeListManager.addChangeList(changeListName, commitMessage, changeListData)
