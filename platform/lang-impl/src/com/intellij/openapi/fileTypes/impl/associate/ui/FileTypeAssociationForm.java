@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl.associate.ui;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
@@ -155,6 +156,7 @@ public class FileTypeAssociationForm {
     return !(fileType instanceof NativeFileType) &&
            !(fileType instanceof UserBinaryFileType) &&
            !(fileType instanceof ArchiveFileType) &&
+           !(fileType instanceof FakeFileType) &&
            (!(fileType instanceof OSFileIdeAssociation) ||
             ((OSFileIdeAssociation)fileType).isFileAssociationAllowed());
   }
