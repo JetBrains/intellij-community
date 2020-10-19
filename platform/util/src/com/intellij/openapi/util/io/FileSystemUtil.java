@@ -537,7 +537,11 @@ public final class FileSystemUtil {
     return altName;
   }
 
-  public static boolean isCaseSensitive(@NotNull String name) {
+  /**
+   * @return true when the {@code name} contains case-toggleable characters (for which toLowerCase() != toUpperCase())
+   * E.g. "Child.txt" is case-toggleable because "CHILD.TXT" != "child.txt", but "122.45" is not.
+   */
+  public static boolean isCaseToggleable(@NotNull String name) {
     return !toggleCase(name).equals(name);
   }
 
