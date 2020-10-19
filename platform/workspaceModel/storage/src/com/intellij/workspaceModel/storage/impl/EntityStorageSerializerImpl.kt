@@ -472,8 +472,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
 
     builder as WorkspaceEntityStorageBuilderImpl
-    builder.superNewChangeLog.changeLog.clear()
-    builder.superNewChangeLog.changeLog.putAll(log)
+    builder.changeLog.changeLog.clear()
+    builder.changeLog.changeLog.putAll(log)
 
     return builder
   }

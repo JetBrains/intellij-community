@@ -50,14 +50,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val indexes: MutableStorageIndexes
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  internal val superNewChangeLog = WorkspaceBuilderChangeLog()
+  internal val changeLog = WorkspaceBuilderChangeLog()
 
   internal fun incModificationCount() {
-    this.superNewChangeLog.modificationCount++
+    this.changeLog.modificationCount++
   }
 
   override val modificationCount: Long
-    get() = this.superNewChangeLog.modificationCount
+    get() = this.changeLog.modificationCount
 
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -179,7 +179,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      this.superNewChangeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
+      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
 
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
@@ -189,9 +189,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
     copiedData.entitySource = newSource
 
-    val entityId = copiedData.createPid()
+    val entityId = copiedData.createEntityId()
 
-    this.superNewChangeLog.addChangeSourceEvent(entityId, copiedData)
+    this.changeLog.addChangeSourceEvent(entityId, copiedData)
 
     indexes.entitySourceIndex.index(entityId, newSource)
 
@@ -201,7 +201,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun removeEntity(e: WorkspaceEntity) {
     e as WorkspaceEntityBase
     val removedEntities = removeEntity(e.id)
-    removedEntities.forEach { this.superNewChangeLog.addRemoveEvent(it) }
+    removedEntities.forEach { this.changeLog.addRemoveEvent(it) }
   }
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
@@ -337,10 +337,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
             this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
 
             if (dataDiffersByProperties) {
-              this.superNewChangeLog.addReplaceEvent(pid, clonedEntity, emptyList(), emptyList(), emptyMap())
+              this.changeLog.addReplaceEvent(pid, clonedEntity, emptyList(), emptyList(), emptyMap())
             }
             if (dataDiffersByEntitySource) {
-              this.superNewChangeLog.addChangeSourceEvent(pid, clonedEntity)
+              this.changeLog.addChangeSourceEvent(pid, clonedEntity)
             }
           }
 
@@ -381,7 +381,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       this.entitiesByType.remove(localEntity.id, entityClass)
       indexes.removeFromIndices(entityId)
       if (localEntity is SoftLinkable) indexes.removeFromSoftLinksIndex(localEntity)
-      this.superNewChangeLog.addRemoveEvent(entityId)
+      this.changeLog.addRemoveEvent(entityId)
     }
 
     val lostChildren = HashSet<EntityId>()
@@ -533,7 +533,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val originalImpl = original as AbstractEntityStorage
 
     val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
-    for ((entityId, change) in this.superNewChangeLog.changeLog) {
+    for ((entityId, change) in this.changeLog.changeLog) {
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
@@ -572,7 +572,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun resetChanges() {
-    this.superNewChangeLog.clear()
+    this.changeLog.clear()
   }
 
   override fun toStorage(): WorkspaceEntityStorageImpl {
@@ -583,7 +583,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     return storage
   }
 
-  override fun isEmpty(): Boolean = this.superNewChangeLog.changeLog.isEmpty()
+  override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
     diff as WorkspaceEntityStorageBuilderImpl
@@ -631,8 +631,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
-    val pid = pEntityData.createPid()
-    this.superNewChangeLog.addAddEvent(pid, pEntityData)
+    val pid = pEntityData.createEntityId()
+    this.changeLog.addAddEvent(pid, pEntityData)
   }
 
   /**
@@ -710,7 +710,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val removedKeys = beforeParents.keys - parents.keys
       removedKeys.forEach { parentsMapRes[it] = null }
 
-      builder.superNewChangeLog.addReplaceEvent(pid, copiedData, addedChildren, removedChildren, parentsMapRes)
+      builder.changeLog.addReplaceEvent(pid, copiedData, addedChildren, removedChildren, parentsMapRes)
     }
   }
 }
@@ -895,7 +895,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      val removed = keys.remove(entity.createPid())
+      val removed = keys.remove(entity.createEntityId())
       assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
     }
   }
@@ -944,7 +944,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (right is WorkspaceEntityStorageBuilder) {
       attachments += createAttachment("Right_Diff_Log", "Log of right builder") { serializer, stream ->
         right as WorkspaceEntityStorageBuilderImpl
-        serializer.serializeDiffLog(stream, right.superNewChangeLog)
+        serializer.serializeDiffLog(stream, right.changeLog)
       }
     }
     LOG.error(_message, e, *attachments)

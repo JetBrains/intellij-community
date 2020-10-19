@@ -10,7 +10,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
   private val LOG = logger<AddDiffOperation>()
   private val replaceMap = HashBiMap.create<EntityId, EntityId>()
-  private val diffLog = diff.superNewChangeLog.changeLog
+  private val diffLog = diff.changeLog.changeLog
 
   // Initial storage is required in case something will fail and we need to send a report
   private val initialStorage = target.toStorage()
@@ -25,7 +25,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
           checkPersistentId(change.entityData, null)
 
-          val sourceEntityId = change.entityData.createPid()
+          val sourceEntityId = change.entityData.createEntityId()
 
           // Adding new entity
           val targetEntityData: WorkspaceEntityData<WorkspaceEntity>
@@ -39,7 +39,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           else {
             // Add new entity to store (without references)
             targetEntityData = target.entitiesByType.cloneAndAdd(change.entityData, change.clazz)
-            targetEntityId = targetEntityData.createPid()
+            targetEntityId = targetEntityData.createEntityId()
             replaceMap[sourceEntityId] = targetEntityId
           }
           // Restore links to soft references
@@ -50,8 +50,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           // Restore parent references
           addRestoreParents(sourceEntityId, targetEntityId)
 
-          target.indexes.updateIndices(change.entityData.createPid(), targetEntityData, diff)
-          target.superNewChangeLog.addAddEvent(targetEntityId, targetEntityData)
+          target.indexes.updateIndices(change.entityData.createEntityId(), targetEntityData, diff)
+          target.changeLog.addAddEvent(targetEntityId, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
           val outdatedId = change.id
@@ -61,7 +61,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           if (target.entityDataById(usedPid) != null) {
             target.removeEntity(usedPid)
           }
-          target.superNewChangeLog.addRemoveEvent(entityId)
+          target.changeLog.addRemoveEvent(entityId)
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
           replaceOperation(change)
@@ -69,7 +69,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
           change as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
 
-          val outdatedId = change.newData.createPid()
+          val outdatedId = change.newData.createEntityId()
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
 
           // We don't modify entity that isn't exist in target version of storage
@@ -78,7 +78,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
             val newEntitySource = change.newData.entitySource
             existingEntityData.entitySource = newEntitySource
             target.indexes.entitySourceIndex.index(usedPid, newEntitySource)
-            target.superNewChangeLog.addChangeSourceEvent(usedPid, existingEntityData)
+            target.changeLog.addChangeSourceEvent(usedPid, existingEntityData)
           }
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
@@ -154,7 +154,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   private fun replaceOperation(change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>) {
     change as ChangeEntry.ReplaceEntity<WorkspaceEntity>
 
-    val sourceEntityId = change.newData.createPid()
+    val sourceEntityId = change.newData.createEntityId()
 
     val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId).flatMap { (key, value) -> value.map { key to it } }
     val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId)
@@ -163,7 +163,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     val newTargetEntityData = change.newData.clone()
     newTargetEntityData.id = targetEntityId.arrayId
 
-    checkPersistentId(change.newData, newTargetEntityData.createPid())
+    checkPersistentId(change.newData, newTargetEntityData.createEntityId())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId) ?: return
@@ -173,7 +173,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     target.indexes.updateIndices(sourceEntityId, newTargetEntityData, diff)
 
-    val newEntityId = newTargetEntityData.createPid()
+    val newEntityId = newTargetEntityData.createEntityId()
     val oldPersistentId = target.entityDataById(newEntityId)?.persistentId(target)
 
     /// Replace entity data. id should not be changed
