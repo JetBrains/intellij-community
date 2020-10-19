@@ -312,6 +312,14 @@ public class MismatchedCollectionQueryUpdate {
 
   void m(List l) {}
 
+  void initializeCollectionInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child;
+    root.put("A", child = new HashMap<>());
+    child.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
   public void foo()
   {
     final Set localFoo = foo;
