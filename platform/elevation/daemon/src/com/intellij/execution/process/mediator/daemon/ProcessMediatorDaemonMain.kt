@@ -9,7 +9,12 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import java.io.IOException
 import java.nio.file.Path
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.X509EncodedKeySpec
+import java.util.*
 import kotlin.system.exitProcess
+
 
 open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
                                        credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
@@ -53,12 +58,14 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
 private fun die(message: String): Nothing {
   val programName = "ProcessMediatorDaemonMain"
   System.err.println(message)
-  System.err.println("Usage: $programName < --hello-file=file|- | --hello-port=port >")
+  System.err.println("Usage: $programName < --hello-file=file|- | --hello-port=port > [ --token-encrypt-rsa=public-key ]")
   exitProcess(1)
 }
 
 fun main(args: Array<String>) {
   var helloWriter: DaemonHelloWriter? = null
+  var publicKey: PublicKey? = null
+
   for ((option, value) in parseArgs(args)) {
     if (value == null) die("Missing '$option' value")
 
@@ -75,6 +82,11 @@ fun main(args: Array<String>) {
         else helloWriter = DaemonHelloSocketWriter(value.toUShort())
       }
 
+      "--token-encrypt-rsa" -> {
+        val bytes = Base64.getDecoder().decode(value)
+        publicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(bytes))
+      }
+
       null -> die("Unrecognized positional argument '$value'")
       else -> die("Unrecognized option '$option'")
     }
@@ -83,10 +95,12 @@ fun main(args: Array<String>) {
 
   helloWriter.use {
     val credentials = DaemonClientCredentials.generate()
+    val token = if (publicKey != null) credentials.rsaEncrypt(publicKey) else credentials.token
+
     val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
     val daemonHello = DaemonHello.newBuilder()
       .setPort(daemon.port)
-      .setToken(credentials.token)
+      .setToken(token)
       .build()
 
     try {

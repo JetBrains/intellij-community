@@ -3,7 +3,10 @@ package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.ByteString
 import io.grpc.*
+import java.security.PrivateKey
+import java.security.PublicKey
 import java.security.SecureRandom
+import javax.crypto.Cipher
 
 
 data class DaemonClientCredentials(val token: ByteString) {
@@ -11,6 +14,14 @@ data class DaemonClientCredentials(val token: ByteString) {
 
   fun asMetadata() = Metadata().apply {
     put(TOKEN_METADATA_KEY, token.toByteArray())
+  }
+
+  fun rsaEncrypt(publicKey: PublicKey): ByteString {
+    val cipher = createRsaCipher().apply {
+      init(Cipher.ENCRYPT_MODE, publicKey)
+    }
+    val encryptedBytes = cipher.doFinal(token.toByteArray())
+    return ByteString.copyFrom(encryptedBytes)
   }
 
   companion object {
@@ -28,6 +39,16 @@ data class DaemonClientCredentials(val token: ByteString) {
       val bytes = ByteArray(length).apply(SecureRandom()::nextBytes)
       return DaemonClientCredentials(bytes)
     }
+
+    fun rsaDecrypt(encryptedToken: ByteString, privateKey: PrivateKey): DaemonClientCredentials {
+      val cipher = createRsaCipher().apply {
+        init(Cipher.DECRYPT_MODE, privateKey)
+      }
+      val token = cipher.doFinal(encryptedToken.toByteArray())
+      return DaemonClientCredentials(token)
+    }
+
+    private fun createRsaCipher() = Cipher.getInstance("RSA/ECB/PKCS1Padding")
   }
 }
 
