@@ -9,10 +9,10 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.BlockingProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -39,7 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import java.util.function.Predicate;
+import java.util.function.BooleanSupplier;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -197,13 +197,20 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Override
-  @RequiresEdt
+  /**
+   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager}
+   */
+  @Deprecated
   public void startBlocking(@NotNull Runnable init) {
-    pumpEventsWhile(init, progress -> !progress.wasStarted() || progress.isRunning());
+    startBlocking(init, () -> wasStarted() && !isRunning());
   }
 
-  private void pumpEventsWhile(@NotNull Runnable init, @NotNull Predicate<? super ProgressWindow> runCondition) {
+  @Override
+  public void startBlocking(@NotNull Runnable init, @NotNull BooleanSupplier stopCondition) {
+    pumpEventsWhile(init, stopCondition);
+  }
+
+  private void pumpEventsWhile(@NotNull Runnable init, @NotNull BooleanSupplier stopCondition) {
     EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
@@ -220,7 +227,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           if (isCancellationEvent(event)) {
             cancel();
           }
-          return !runCondition.test(this);
+          return stopCondition.getAsBoolean();
         });
         return null;
       });

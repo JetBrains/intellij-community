@@ -1009,4 +1009,36 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertEquals("0.3141519", ui.getText());
     assertEquals("2.3141519", ui.getText2());
   }
+
+  public void testMessagePumpingInProgressWindow_startBlockingMustNotStopWhenSomeOneStoppedIndicator() {
+    ProgressManager.getInstance().run(new Task.Modal(null, "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.stop();
+        // this makes ProgressWindows#isRunning() false, thus it stops messages processing
+        // to make it fail more predictably
+        TimeoutUtil.sleep(50);
+
+        // deadlocks, because ProgressWindow is no longer processing the message pump
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+        });
+      }
+    });
+  }
+
+  public void testMessagePumpingInProgressWindow_startBlockingMustNotStopWhenSomeOneDoesWeirdDelegateTricksWithIndicator() {
+    ProgressManager.getInstance().run(new Task.Modal(null, "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        new ProgressIndicatorBase().addStateDelegate((ProgressIndicatorEx)indicator);
+        // this makes ProgressWindows#isRunning() false, thus it stops messages processing
+        // to make it fail more predictably
+        TimeoutUtil.sleep(50);
+
+        // deadlocks, because ProgressWindow is no longer processing the message pump
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+        });
+      }
+    });
+  }
 }

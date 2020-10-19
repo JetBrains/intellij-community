@@ -291,7 +291,7 @@ public final class ProgressRunner<R> {
       //   but EDT is broken due an exception. Hence, initial task should be completed exceptionally
       CompletableFuture<Void> blockingRunFuture = progressFuture.thenAccept(progressIndicator -> {
         if (progressIndicator instanceof BlockingProgressIndicator) {
-          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up);
+          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up, ()->taskFuture.isDone());
         }
         else {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");
