@@ -50,22 +50,25 @@ public class WSLDistribution {
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
-  @NotNull private final Path myExecutablePath;
+  @Nullable private final Path myExecutablePath;
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @NotNull Path executablePath) {
+  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @Nullable Path executablePath) {
     myDescriptor = descriptor;
     myExecutablePath = executablePath;
   }
 
+  public WSLDistribution(@NotNull String msId) {
+    this(new WslDistributionDescriptor(msId, msId, null, msId), null);
+  }
+
   /**
-   * @return executable file
+   * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
    */
-  @NotNull
-  public Path getExecutablePath() {
+  public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
 
@@ -262,7 +265,7 @@ public class WSLDistribution {
       }
     }
     else {
-      commandLine.setExePath(getExecutablePath().toString());
+      commandLine.setExePath(Objects.requireNonNull(getExecutablePath()).toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
     }
