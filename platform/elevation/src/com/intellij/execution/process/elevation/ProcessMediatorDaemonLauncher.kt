@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
-import com.google.protobuf.ByteString
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
@@ -23,6 +22,8 @@ import io.grpc.stub.MetadataUtils
 import java.io.Closeable
 import java.io.File
 import java.net.InetAddress
+import java.security.KeyPair
+import java.security.KeyPairGenerator
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -41,8 +42,13 @@ object ProcessMediatorDaemonLauncher {
 
     return helloIpc.use {
       appExecutorService.submitAndAwait {
+        val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
+          initialize(1024)
+        }.genKeyPair()
+
         val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
           .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+          .withParameters("--token-encrypt-rsa", Base64.getEncoder().encodeToString(keyPair.public.encoded))
           .let(helloIpc::patchDaemonCommandLine)
           .let {
             if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
@@ -55,9 +61,10 @@ object ProcessMediatorDaemonLauncher {
         val daemonHello = helloIpc.readHello()
                           ?: throw ProcessCanceledException()
 
+        val credentials = DaemonClientCredentials.rsaDecrypt(daemonHello.token, keyPair.private)
         ProcessMediatorDaemonImpl(daemonProcessHandler.process,
                                   daemonHello.port,
-                                  daemonHello.token)
+                                  credentials)
       }
     }
   }
@@ -100,8 +107,7 @@ private fun <R> awaitWithCheckCanceled(future: CompletableFuture<R>): R {
 
 private class ProcessMediatorDaemonImpl(private val process: Process,
                                         private val port: Port,
-                                        token: ByteString) : ProcessMediatorDaemon {
-  private val credentials = DaemonClientCredentials(token)
+                                        private val credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
 
   override fun createChannel(): ManagedChannel {
     return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext()
