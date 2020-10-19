@@ -21,14 +21,10 @@ import org.jetbrains.annotations.Nullable;
 public class OSFileAssociationStartupConfigurator implements ApplicationInitializedListener {
   private final static Logger LOG = Logger.getInstance(OSFileAssociationStartupConfigurator.class);
 
-  // TODO<rv>: For testing purposes, to be removed
-  private final static boolean IS_ENABLED = System.getProperty("os.file.associations.update.enabled", "false").equalsIgnoreCase("true");
-
   @Override
   public void componentsInitialized() {
-    if (!IS_ENABLED) return;
     OSFileAssociationPreferences preferences = OSFileAssociationPreferences.getInstance();
-    if (preferences.ideLocationChanged()) {
+    if (!preferences.fileTypeNames.isEmpty() && preferences.ideLocationChanged()) {
       LOG.info("Restoring file type associations on IDE location change");
       SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
       MyResultHandler resultHandler = new MyResultHandler(connection);
