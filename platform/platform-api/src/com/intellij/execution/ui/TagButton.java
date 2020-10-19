@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +20,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
   private final InplaceButton myCloseButton;
 
-  public TagButton(@NlsContexts.Button String text, Runnable action) {
+  public TagButton(@Nls String text, Runnable action) {
     myButton = new JButton(text) {
       @Override
       protected void paintComponent(Graphics g) {

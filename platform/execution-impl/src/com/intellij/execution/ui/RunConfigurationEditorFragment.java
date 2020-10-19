@@ -24,7 +24,7 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
 
   public abstract void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s);
 
-  public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, String name, String group,
+  public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, @Nls String name, @Nls String group,
                                                                                  @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> getter,
                                                                                  @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> setter,
                                                                                  int menuPosition) {
