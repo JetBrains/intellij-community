@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
@@ -34,7 +35,10 @@ internal class GitStageManager(private val project: Project) : Disposable {
     }, this)
   }
 
+  @RequiresEdt
   private fun onAvailabilityChanged() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).scheduleUpdateAll()
     }

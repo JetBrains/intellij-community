@@ -581,6 +581,9 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void updateCommitWorkflow(boolean isNonModal) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (myDisposed) return;
+
       if (isNonModal) {
         if (myCommitPanel == null) {
           myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());

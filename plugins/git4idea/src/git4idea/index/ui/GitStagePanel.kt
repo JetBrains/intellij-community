@@ -138,6 +138,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+    if (Disposer.isDisposed(this)) return
     if (!force && (isInEditor == (editorTabPreview != null))) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
