@@ -1588,7 +1588,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId, ID<?, ?> indexId) {
-    getIndex(indexId).invalidateIndexedStateForFile(inputId);
+    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    if (index == null) {
+      LOG.error("can't find registered index '" + indexId.getName() + "'");
+    }
+    index.invalidateIndexedStateForFile(inputId);
   }
 
   void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
