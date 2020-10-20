@@ -10,6 +10,7 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvi
 import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -163,7 +164,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   private fun fetchTasks(project: Project): Map<String, MultiMap<String, TaskData>> {
     return CachedValuesManager.getManager(project).getCachedValue(project) {
-      CachedValueProvider.Result.create(getGradleTasksMap(project), ProjectRootManager.getInstance(project))
+      CachedValueProvider.Result.create(getGradleTasksMap(project), AutoImportProjectTracker.getInstance(project))
     }
   }
 

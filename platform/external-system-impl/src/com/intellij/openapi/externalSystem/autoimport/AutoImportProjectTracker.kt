@@ -23,17 +23,20 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.BooleanProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.streams.asStream
 
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
-class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
+class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, ModificationTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
   @Suppress("unused")
   private val debugThrowable = Throwable("Initialized with project=(${project.isDisposed}, ${Disposer.isDisposed(project)}, $project)")
 
@@ -52,6 +55,9 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   var isAsyncChangesProcessing by asyncChangesProcessingProperty
+
+  @Volatile
+  private var ownModificationCount = 0L
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
@@ -75,6 +81,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
         if (status != SUCCESS) projectData.status.markBroken(currentTime())
         projectRefreshOperation.finishTask(id)
+        incrementModificationCount()
       }
     }
 
@@ -250,6 +257,14 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     delayDispatcher.activate()
   }
 
+  override fun getModificationCount(): Long {
+    return ownModificationCount
+  }
+
+  private fun incrementModificationCount() {
+    MOD_COUNT_UPDATER.incrementAndGet(this)
+  }
+
   @TestOnly
   fun getActivatedProjects() =
     projectDataMap.values
@@ -325,6 +340,9 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
+
+    @JvmStatic
+    private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(AutoImportProjectTracker::class.java, "ownModificationCount")
 
     @TestOnly
     @JvmStatic
