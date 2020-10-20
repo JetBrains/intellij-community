@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.ui.IconDeferrer
-import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.lang.ref.WeakReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -22,8 +21,8 @@ import kotlin.concurrent.write
 internal class TimedIconCache {
   private val idToIcon = HashMap<String, Icon>()
   private val idToInvalid = HashMap<String, Boolean>()
-  private val iconCheckTimes: Object2LongMap<String> = Object2LongOpenHashMap()
-  private val iconCalcTime: Object2LongMap<String> = Object2LongOpenHashMap()
+  private val iconCheckTimes = Object2LongOpenHashMap<String>()
+  private val iconCalcTime = Object2LongOpenHashMap<String>()
 
   private val lock = ReentrantReadWriteLock()
 
@@ -47,7 +46,6 @@ internal class TimedIconCache {
       }
 
       val icon = deferIcon(id, settings.configuration.icon, project.hashCode() xor settings.hashCode(), project)
-
       set(id, icon)
       icon
     }
@@ -75,7 +73,7 @@ internal class TimedIconCache {
 
       lock.write {
         iconCalcTime.put(id, System.currentTimeMillis() - startTime)
-        idToInvalid.set(id, iconToValid.second)
+        idToInvalid.put(id, iconToValid.second)
       }
       return@deferAutoUpdatable iconToValid.first
     }
@@ -88,7 +86,9 @@ internal class TimedIconCache {
 
   private fun calcIcon(id: String, baseIcon: Icon?, runManagerImpl: RunManagerImpl): Pair<Icon, Boolean> {
     val settings = runManagerImpl.getConfigurationById(id)
-    if (settings == null) return (baseIcon ?: AllIcons.Actions.Help) to false
+    if (settings == null) {
+      return (baseIcon ?: AllIcons.Actions.Help) to false
+    }
 
     try {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(runManagerImpl.project, Runnable {

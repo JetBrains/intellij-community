@@ -31,8 +31,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -117,35 +120,35 @@ public final class PluginLogo {
     return Default;
   }
 
-  @NotNull
-  static Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
-    if (icon instanceof IconLoader.CachedImageIcon) {
-      URL url = ((IconLoader.CachedImageIcon)icon).getURL();
-      if (url != null) {
-        if (!JBColor.isBright()) {
-          String path = URLUtil.urlToFile(url).getAbsolutePath();
-          if (path.endsWith(".svg") && !path.endsWith("_dark.svg")) {
-            File darkFile = new File(path.substring(0, path.length() - 4) + "_dark.svg");
-            if (darkFile.exists() && darkFile.isFile()) {
-              try {
-                url = darkFile.toURI().toURL();
-              }
-              catch (MalformedURLException e) {
-                if (logger != null) {
-                  logger.error(e);
-                }
-              }
-            }
-          }
+  static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
+    URL url = icon instanceof IconLoader.CachedImageIcon ? ((IconLoader.CachedImageIcon)icon).getURL() : null;
+    if (url == null) {
+      return icon;
+    }
+
+    if (!JBColor.isBright()) {
+      String path = URLUtil.urlToFile(url).getAbsolutePath();
+      if (path.endsWith(".svg") && !path.endsWith("_dark.svg")) {
+        Path darkFile = Paths.get(path.substring(0, path.length() - 4) + "_dark.svg");
+        try (InputStream stream = Files.newInputStream(darkFile)) {
+          return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
         }
-        try {
-          return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
+        catch (NoSuchFileException ignore) {
         }
         catch (IOException e) {
           if (logger != null) {
             logger.error(e);
           }
         }
+      }
+    }
+
+    try {
+      return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
+    }
+    catch (IOException e) {
+      if (logger != null) {
+        logger.error(e);
       }
     }
     return icon;
