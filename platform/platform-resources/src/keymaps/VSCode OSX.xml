@@ -661,7 +661,9 @@
         <keyboard-shortcut first-keystroke="ctrl T"/>
     </action>
 
-    <action id="SwitchHeaderSource"/>
+    <action id="SwitchHeaderSource">
+        <keyboard-shortcut first-keystroke="control meta O"/>
+    </action>
     <action id="BuildSolutionAction">
         <keyboard-shortcut first-keystroke="meta shift B"/>
     </action>
