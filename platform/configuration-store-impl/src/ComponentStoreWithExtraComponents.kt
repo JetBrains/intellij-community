@@ -42,7 +42,8 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       settingsSavingComponents.add(component)
     }
     else if (component is SettingsSavingComponent) {
-      asyncSettingsSavingComponents.drop()
+      @Suppress("UNUSED_VARIABLE") //this is needed to work around bug in Kotlin compiler (KT-42826)
+      val result = asyncSettingsSavingComponents.drop()
     }
 
     super.initComponent(component, serviceDescriptor, pluginId)
