@@ -38,8 +38,5 @@
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
-    <orderEntry type="module" module-name="intellij.gradle.dsl" />
-    <orderEntry type="module" module-name="intellij.gradle.dsl.impl" />
   </component>
 </module>
