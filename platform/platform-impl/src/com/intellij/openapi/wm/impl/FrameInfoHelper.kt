@@ -14,6 +14,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.peer.ComponentPeer
 import java.awt.peer.FramePeer
+import javax.swing.JFrame
 
 internal class FrameInfoHelper {
   companion object {
@@ -43,26 +44,28 @@ internal class FrameInfoHelper {
     this.info = info
   }
 
-  fun updateFrameInfo(frame: ProjectFrameHelper) {
-    info = updateFrameInfo(frame, null, info)
+  fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame) {
+    info = updateFrameInfo(frameHelper, frame, null, info)
   }
 
   fun getModificationCount(): Long {
     return info?.modificationCount ?: 0
   }
 
-  fun updateAndGetModificationCount(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
-    val frame = windowManager.getFrameHelper(project) ?: return getModificationCount()
-    return updateAndGetModificationCount(frame, lastNormalFrameBounds, windowManager)
+  fun update(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl) {
+    val frameHelper = windowManager.getFrameHelper(project) ?: return
+    updateAndGetInfo(frameHelper, frameHelper.frame ?: return, lastNormalFrameBounds, windowManager)
   }
 
-  fun updateAndGetModificationCount(frame: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
-    val newInfo = updateFrameInfo(frame, lastNormalFrameBounds, info)
-    updateDefaultFrameInfoInDeviceSpace(windowManager, newInfo)
+  fun updateAndGetInfo(frameHelper: ProjectFrameHelper,
+                       frame: JFrame,
+                       lastNormalFrameBounds: Rectangle?,
+                       windowManager: WindowManagerImpl): FrameInfo {
+    val newInfo = updateFrameInfo(frameHelper, frame, lastNormalFrameBounds, info)
+    windowManager.defaultFrameInfoHelper.copyFrom(newInfo)
     info = newInfo
-
     isDirty = false
-    return getModificationCount()
+    return newInfo
   }
 
   fun copyFrom(newInfo: FrameInfo) {
@@ -74,8 +77,7 @@ internal class FrameInfoHelper {
   }
 }
 
-private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
-  val frame = frameHelper.frame!!
+internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
   var extendedState = frame.extendedState
   if (SystemInfoRt.isMac) {
     // java 11
@@ -112,9 +114,4 @@ private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBoun
     frameInfo.fullScreen = isInFullScreen
   }
   return frameInfo
-}
-
-internal fun updateDefaultFrameInfoInDeviceSpace(windowManager: WindowManagerImpl, newInfo: FrameInfo) {
-  // see comment in the myFrameStateListener about chicken and egg problem
-  windowManager.defaultFrameInfoHelper.copyFrom(newInfo)
 }

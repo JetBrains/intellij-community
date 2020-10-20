@@ -411,7 +411,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       if (toolWindowPane == null) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          LOG.warn("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
+          LOG.error("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
         }
 
         val toolWindowsPane = init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))

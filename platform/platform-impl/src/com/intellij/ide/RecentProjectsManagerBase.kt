@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.project.impl.ProjectUiFrameAllocator
+import com.intellij.openapi.project.impl.ProjectUiFrameManager
+import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
@@ -275,7 +277,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
-      info.frame = ProjectFrameBounds.getInstance(project).frameInfoHelper.info
+      ProjectFrameBounds.getInstance(project).frameInfoHelper.info?.let {
+        info.frame = it
+      }
       info.build = appInfo!!.build.asString()
       info.productionCode = appInfo.build.productCode
       info.eap = appInfo.isEAP
@@ -538,11 +542,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       LOG.warn("Cannot find frameHelper for ${project.name} to update frame info")
       return
     }
+    val frame = frameHelper.frame
+    if (frame == null) {
+      LOG.warn("frameHelper.frame is null, cannot  ${project.name} to update frame info")
+      return
+    }
 
     val workspaceId = project.stateStore.projectWorkspaceId
 
-    // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, windowManager)
+    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
@@ -554,13 +562,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           info.frame = frameInfo
         }
         info.projectWorkspaceId = workspaceId
-        info.frameTitle = frameHelper.frame?.title
+        info.frameTitle = frame.title
       }
     }
 
     LOG.runAndLogException {
       if (writLastProjectInfo) {
-        writeInfoFile(frameInfo, frameHelper.frame ?: return@runAndLogException)
+        writeInfoFile(frameInfo, frame)
       }
 
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
