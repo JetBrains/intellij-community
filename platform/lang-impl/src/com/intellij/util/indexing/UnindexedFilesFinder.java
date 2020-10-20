@@ -60,8 +60,9 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
       if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
+        int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+
         if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
-          int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
           List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
           for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
             for (ID<?, ?> id : ids) {
@@ -74,6 +75,7 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
           }
         }
         if (!shouldIndexFile.get()) {
+          IndexingStamp.flushCache(inputId);
           return false;
         }
       }

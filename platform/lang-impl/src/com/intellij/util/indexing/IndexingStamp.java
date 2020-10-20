@@ -509,6 +509,22 @@ public final class IndexingStamp {
 
   public static void flushCache(@Nullable Integer finishedFile) {
     if (finishedFile != null && finishedFile == INVALID_FILE_ID) finishedFile = 0;
+
+    if (finishedFile != null) {
+      Lock readLock = getStripedLock(finishedFile).readLock();
+      readLock.lock();
+      try {
+        Timestamps timestamps = ourTimestampsCache.get(finishedFile);
+        if (timestamps == null) return;
+        if (!timestamps.isDirty()) {
+          ourTimestampsCache.remove(finishedFile);
+          return;
+        }
+      } finally {
+        readLock.unlock();
+      }
+    }
+
     // todo make better (e.g. FinishedFiles striping, remove integers)
     while (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
       List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
