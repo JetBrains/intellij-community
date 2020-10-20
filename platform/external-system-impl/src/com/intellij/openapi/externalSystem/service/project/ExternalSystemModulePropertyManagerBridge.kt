@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -61,25 +62,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
         val internalFile = entitySource as? JpsFileEntitySource ?: (entitySource as JpsImportedEntitySource).internalFile
         JpsImportedEntitySource(internalFile, externalSystemId, module.project.isExternalStorageEnabled)
       }
-
-      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
-        val entitiesMap = storage.entitiesBySource { it == entitySource }
-        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
-          if (it !is FacetEntity) {
-            diffBuilder.changeSource(it, newSource)
-          }
-        }
-      }
-
-      val diff = module.diff
-      if (diff != null) {
-        changeSources(diff, storage)
-      }
-      else {
-        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
-          changeSources(builder, builder)
-        }
-      }
+      ModuleManagerComponentBridge.changeModuleEntitySource(module, newSource)
     }
   }
 

@@ -600,6 +600,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       get() = getExternalMapping(INDEX_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(INDEX_ID)
+
+    @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
@@ -611,6 +613,30 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
     private val dependencyComparatorValue = CachedValue { storage ->
       DFSTBuilder(buildModuleGraph(storage, true)).comparator()
+    }
+
+    @JvmStatic
+    fun changeModuleEntitySource(module: ModuleBridge, newSource: EntitySource) {
+      val storage = module.entityStorage.current
+      val oldEntitySource = storage.findModuleEntity(module)?.entitySource ?: return
+      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
+        val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
+        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
+          if (it !is FacetEntity) {
+            diffBuilder.changeSource(it, newSource)
+          }
+        }
+      }
+
+      val diff = module.diff
+      if (diff != null) {
+        changeSources(diff, storage)
+      }
+      else {
+        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+          changeSources(builder, builder)
+        }
+      }
     }
 
     private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {
