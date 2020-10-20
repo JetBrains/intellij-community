@@ -1516,11 +1516,11 @@ def dump_threads(stream=None):
     pydevd_utils.dump_threads(stream)
 
 
-def usage(doExit=0):
+def usage(do_exit=True, exit_code=0):
     sys.stdout.write('Usage:\n')
-    sys.stdout.write('pydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
-    if doExit:
-        sys.exit(0)
+    sys.stdout.write('\tpydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
+    if do_exit:
+        sys.exit(exit_code)
 
 
 class _CustomWriter(object):
@@ -1976,7 +1976,11 @@ def main():
         SetupHolder.setup = setup
     except ValueError:
         traceback.print_exc()
-        usage(1)
+        usage(exit_code=1)
+
+    # noinspection PyUnboundLocalVariable
+    if setup['help']:
+        usage()
 
     if setup['print-in-debugger-startup']:
         try:
