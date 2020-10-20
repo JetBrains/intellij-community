@@ -12,11 +12,11 @@ import javax.swing.*;
  */
 public final class GradleIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, GradleIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, GradleIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Gradle = load("/icons/gradle.svg", -7397805633485974102L, 2);
-  /** 16x16 */ public static final @NotNull Icon GradleFile = load("/icons/gradleFile.svg", 1754253769060460981L, 0);
-  /** 16x16 */ public static final @NotNull Icon GradleLoadChanges = load("/icons/gradleLoadChanges.svg", -4397701995832603142L, 2);
-  /** 16x16 */ public static final @NotNull Icon GradleNavigate = load("/icons/gradleNavigate.svg", -7721642217643536601L, 2);
-  /** 13x13 */ public static final @NotNull Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg", 966565980901490860L, 2);
+  /** 16x16 */ public static final @NotNull Icon Gradle = load("icons/gradle.svg", -7397805633485974102L, 2);
+  /** 16x16 */ public static final @NotNull Icon GradleFile = load("icons/gradleFile.svg", 1754253769060460981L, 0);
+  /** 16x16 */ public static final @NotNull Icon GradleLoadChanges = load("icons/gradleLoadChanges.svg", -4397701995832603142L, 2);
+  /** 16x16 */ public static final @NotNull Icon GradleNavigate = load("icons/gradleNavigate.svg", -7721642217643536601L, 2);
+  /** 13x13 */ public static final @NotNull Icon ToolWindowGradle = load("icons/toolWindowGradle.svg", 966565980901490860L, 2);
 }

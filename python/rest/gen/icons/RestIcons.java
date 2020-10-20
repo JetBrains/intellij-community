@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public final class RestIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, RestIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, RestIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Rst = load("/icons/com/jetbrains/rest/rst.png", 0L, 1);
+  /** 16x16 */ public static final @NotNull Icon Rst = load("icons/com/jetbrains/rest/rst.png", 0L, 1);
 }
