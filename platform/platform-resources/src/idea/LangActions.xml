@@ -522,10 +522,10 @@
 
     <group id="SegmentedRunDebugConfigActionGroup">
       <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
+      <action id="RunningRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
+      <action id="DebuggingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
+      <action id="ProfilingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
+      <action id="RDCBar" class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
     </group>
 
     <group id="RunDebugConfigActionBarGroup" popup="false">
