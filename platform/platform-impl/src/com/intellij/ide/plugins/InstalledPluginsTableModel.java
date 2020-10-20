@@ -53,9 +53,7 @@ public class InstalledPluginsTableModel {
   }
 
   protected final @Nullable ProjectPluginTracker getPluginTracker() {
-    return myProject != null ?
-           ProjectPluginTracker.getInstance(myProject) :
-           null;
+    return ProjectPluginTrackerManager.createPluginTrackerOrNull(myProject);
   }
 
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
