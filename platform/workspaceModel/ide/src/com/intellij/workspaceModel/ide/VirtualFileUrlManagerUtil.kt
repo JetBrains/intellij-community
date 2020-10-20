@@ -16,7 +16,7 @@ import java.nio.file.Paths
  * should have as many dependencies as possible and there is no dependency to intellij.platform.core module.
  * That's why this method was declared here, where service was registered.
  */
-fun VirtualFileUrlManager.Companion.getInstance(project: Project) = project.service<VirtualFileUrlManager>()
+fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
 fun VirtualFileUrl.append(relativePath: String, manager: VirtualFileUrlManager): VirtualFileUrl {
   return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))
