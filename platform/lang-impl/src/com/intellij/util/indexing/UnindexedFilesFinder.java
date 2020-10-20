@@ -46,9 +46,7 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
 
-    myShouldProcessUpToDateFiles = true;
-    // TODO: this optimization is incorrect and may lead to red code after IDE upgrade (see IDEA-252846).
-    //myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
+    myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
   }
 
   @Override
