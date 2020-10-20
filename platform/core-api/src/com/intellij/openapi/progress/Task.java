@@ -295,7 +295,8 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
-    private volatile Object myResult;
+    private volatile T myResult;
+    private volatile Throwable myError;
 
     public WithResult(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
@@ -307,7 +308,7 @@ public abstract class Task implements TaskInfo, Progressive {
         myResult = compute(indicator);
       }
       catch (Throwable t) {
-        myResult = t;
+        myError = t;
       }
     }
 
@@ -315,13 +316,13 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @SuppressWarnings("unchecked")
     public T getResult() throws E {
-      Object result = myResult;
-      if (result instanceof Throwable) {
-        ExceptionUtil.rethrowUnchecked((Throwable)result);
-        throw (E)result;
+      Throwable t = myError;
+      if (t != null) {
+        ExceptionUtil.rethrowUnchecked(t);
+        throw (E)t;
       }
       else {
-        return (T)result;
+        return myResult;
       }
     }
   }
