@@ -463,6 +463,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter3/intellij.cucumber.jvmFormatter3.iml" filepath="$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter3/intellij.cucumber.jvmFormatter3.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter4/intellij.cucumber.jvmFormatter4.iml" filepath="$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter4/intellij.cucumber.jvmFormatter4.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter5/intellij.cucumber.jvmFormatter5.iml" filepath="$PROJECT_DIR$/intellij/plugins/cucumber-jvm-formatter5/intellij.cucumber.jvmFormatter5.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" filepath="$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" filepath="$PROJECT_DIR$/intellij/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/devkit/devkit-core/intellij.devkit.iml" filepath="$PROJECT_DIR$/intellij/plugins/devkit/devkit-core/intellij.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" />
