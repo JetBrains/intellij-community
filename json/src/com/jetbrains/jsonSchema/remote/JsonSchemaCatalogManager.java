@@ -36,8 +36,11 @@ import java.util.concurrent.ConcurrentMap;
 public final class JsonSchemaCatalogManager {
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
-  private static final Set<String> SCHEMA_URLS_WITH_TOO_MANY_VARIANTS = Set.of(
-    "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json"
+  private static final Set<String> SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS = Set.of(
+    // To match changing schema URLs for azure-pipelines:
+    // - https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json
+    // - https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/v1.174.2/service-schema.json
+    "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/"
   );
 
   private final @NotNull Project myProject;
@@ -106,10 +109,14 @@ public final class JsonSchemaCatalogManager {
       myResolvedMappings.put(name, StringUtil.notNullize(schemaUrl, EMPTY));
     }
 
-    if (schemaUrl == null || SCHEMA_URLS_WITH_TOO_MANY_VARIANTS.contains(schemaUrl)) {
+    if (schemaUrl == null || isIgnoredAsHavingTooManyVariants(schemaUrl)) {
       return null;
     }
     return JsonFileResolver.resolveSchemaByReference(file, schemaUrl);
+  }
+
+  private static boolean isIgnoredAsHavingTooManyVariants(@NotNull String schemaUrl) {
+    return SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS.stream().anyMatch(prefix -> schemaUrl.startsWith(prefix));
   }
 
   public List<JsonSchemaCatalogEntry> getAllCatalogEntries() {
