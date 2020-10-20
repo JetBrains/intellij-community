@@ -9,8 +9,10 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.BaseInputStreamReader
 import java.io.Closeable
 import java.io.IOException
+import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Path
 
@@ -80,7 +82,7 @@ internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutRe
   override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return object : OSProcessHandler.Silent(daemonCommandLine) {
       override fun createProcessOutReader(): Reader {
-        return Reader.nullReader()  // don't let the process handler touch the stdout stream
+        return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
       }
     }.also {
       helloReader.inputStream = it.process.inputStream
