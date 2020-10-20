@@ -96,6 +96,8 @@ private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPa
       addToLeft(title)
     }
   val loginPanel = CloneDialogLoginPanel(account).apply {
+    Disposer.register(this@GHECloneDialogLoginPanel, this)
+
     if (account == null) setServer("", true)
     setTokenUi()
   }
