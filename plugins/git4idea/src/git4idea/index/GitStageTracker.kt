@@ -28,7 +28,6 @@ import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitUntrackedFilesHolder
 import git4idea.status.GitChangeProvider
 import git4idea.util.toShortenedLogString
 import org.jetbrains.annotations.NonNls
@@ -117,17 +116,12 @@ class GitStageTracker(val project: Project) : Disposable {
   private fun markDirty(events: List<VFileEvent>) {
     val gitRoots = gitRoots()
 
-    val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
-      events.any { e -> GitUntrackedFilesHolder.totalRefreshNeeded(repo, e.path) }
-    }.map { it.root }.intersect(gitRoots)
-
     val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.filter {
       gitRoots.contains(it.root)
     }.map { it.filePath }
 
-    LOG.debug("Mark dirty", files, roots)
-    dirtyScopeManager.filesDirty(emptyList(), roots)
-    dirtyScopeManager.filePathsDirty(files, emptyList())
+    LOG.debug("Mark dirty", files)
+    VcsDirtyScopeManager.getInstance(project).filePathsDirty(files, emptyList())
   }
 
   private fun doUpdateState(repository: GitRepository) {
