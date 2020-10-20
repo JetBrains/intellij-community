@@ -121,12 +121,10 @@ class GitPullDialog(private val project: Project,
   fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
 
   private fun loadSettings() {
-    branchField.item = pullSettings.branch
     selectedOptions += pullSettings.options
   }
 
   private fun saveSettings() {
-    pullSettings.branch = branchField.item
     pullSettings.options = selectedOptions
   }
 
