@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.java
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeContributionUI
@@ -18,17 +19,17 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
 
   override fun createPanel(): DialogPanel {
     return panel {
-      row("JDK home path:") {
+      row(ExecutionBundle.message("java.language.runtime.jdk.home.path")) {
         textField(config::homePath)
-          .comment("The path to the JDK on the target")
+          .comment(ExecutionBundle.message("java.language.runtime.text.path.to.jdk.on.target"))
       }
-      row("JDK version:") {
+      row(ExecutionBundle.message("java.language.runtime.jdk.version")) {
         textField(config::javaVersionString)
       }
 
       addVolumeUI(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME)
 
-      hideableRow("Advanced Volume Settings") {
+      hideableRow(ExecutionBundle.message("java.language.runtime.separator.advanced.volume.settings")) {
         subRowIndent = 0
         addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
         addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.options.MasterDetails
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
@@ -25,7 +26,7 @@ class TargetEnvironmentsConfigurable(project: Project, initialSelectedName: Stri
 
   override fun getId(): String = "Runtime.Targets.Configurable"
 
-  override fun getDisplayName(): String = "Runtime Targets"
+  override fun getDisplayName(): String = ExecutionBundle.message("configurable.name.runtime.targets")
 
   override fun createComponent(): JComponent = editor.createComponent()
 

@@ -96,9 +96,9 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * Volume descriptor is identified by its [type] and defines the UI properties to explain user the semantic of the volume.
    */
   data class VolumeDescriptor(val type: VolumeType,
-                              @get:Nls val wizardLabel: String,
-                              @get:Nls val description: String,
-                              @get:NonNls val defaultPath: String) {
+                              @Nls val wizardLabel: String,
+                              @Nls val description: String,
+                              @NonNls val defaultPath: String) {
 
     constructor(typeId: String, wizardLabel: String, description: String, defaultPath: String) :
       this(VolumeType(typeId), wizardLabel, description, defaultPath)
