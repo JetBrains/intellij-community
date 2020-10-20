@@ -60,6 +60,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
 
   @Override
   public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    if (PropertiesTokenTypes.COMMENTS.contains(left.getElementType())) return SpaceRequirements.MUST_LINE_BREAK;
     return SpaceRequirements.MAY;
   }
 
