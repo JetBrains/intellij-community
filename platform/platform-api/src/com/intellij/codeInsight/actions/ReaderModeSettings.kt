@@ -14,6 +14,7 @@ import com.intellij.psi.PsiManager
 class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State> {
   companion object {
     private var EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
+    private var EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
 
     @JvmStatic
     fun instance(project: Project): ReaderModeSettings {
@@ -32,12 +33,19 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     fun matchMode(project: Project?, file: VirtualFile?): Boolean {
       if (project == null || file == null) return false
+      return matchMode(project, file, instance(project).mode)
+    }
 
-      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file) || FileIndexFacade.getInstance(
-        project).isInLibrarySource(file)
+    private fun matchMode(project: Project, file: VirtualFile, mode: ReaderMode): Boolean {
+      for (m in EP_READER_MODE_MATCHER.iterable) {
+        val matched = m.matches(project, file, mode)
+        if (matched != null) return matched
+      }
+      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file)
+                        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
       val isWritable = file.isWritable
 
-      return when (instance(project).mode) {
+      return when (mode) {
         ReaderMode.LIBRARIES_AND_READ_ONLY -> inLibraries || !isWritable
         ReaderMode.LIBRARIES -> inLibraries
         ReaderMode.READ_ONLY -> !isWritable
