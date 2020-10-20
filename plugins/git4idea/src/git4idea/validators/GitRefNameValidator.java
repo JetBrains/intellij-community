@@ -46,6 +46,7 @@ public final class GitRefNameValidator implements InputValidator {
     "(^\\.)|" +                             // begins with a dot
     "(^-)|" +                               // begins with '-'
     "(^/)|" +                               // begins with '/'
+    "(\\.\\.)+|" +                          // two dots in a row
     "[ ~:^?*\\[\\\\]+|(@\\{)+|" +           // contains invalid character: space, one of ~:^?*[\ or @{ sequence
     CONTROL_CHARS                           // contains a control character
   );
@@ -85,6 +86,6 @@ public final class GitRefNameValidator implements InputValidator {
 
   @NotNull
   public String deduplicateChars(@NotNull String branchName) {
-    return branchName.replaceAll("(/){2,}", "/" ).replaceAll("(\\.){2,}", ".").replaceAll("(_){2,}", "_");
+    return branchName.replaceAll("(/){2,}", "/" ).replaceAll("(_){2,}", "_");
   }
 }
