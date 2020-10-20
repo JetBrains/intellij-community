@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -180,13 +180,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myDynamicPluginsToInstall.clear();
     myPluginsToRemoveOnCancel.clear();
 
-    Pair<List<IdeaPluginDescriptor>, List<IdeaPluginDescriptor>> pair = collectPluginsToEnableDisable();
-    boolean enableDisableAppliedWithoutRestart = PluginEnabler.updatePluginEnabledState(
-      getProject(),
-      pair.getFirst(),
-      pair.getSecond(),
-      parent
-    );
+    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent);
     myDynamicPluginsToUninstall.clear();
     myDiff.clear();
 
@@ -207,9 +201,32 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myPluginsToRemoveOnCancel.clear();
   }
 
-  private @NotNull Pair<@NotNull List<IdeaPluginDescriptor>, @NotNull List<IdeaPluginDescriptor>> collectPluginsToEnableDisable() {
-    List<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
-    List<IdeaPluginDescriptor> pluginsToDisable = new ArrayList<>();
+  private final class UpdatePluginStateAction implements BiPredicate<@Nullable JComponent, @NotNull Boolean> {
+
+    private final ArrayList<IdeaPluginDescriptor> myPluginsToEnable = new ArrayList<>();
+    private final ArrayList<IdeaPluginDescriptor> myPluginsToDisable = new ArrayList<>();
+
+    public void register(@NotNull IdeaPluginDescriptor descriptor,
+                         boolean enable) {
+      (enable ? myPluginsToEnable : myPluginsToDisable).add(descriptor);
+    }
+
+    @Override
+    public boolean test(@Nullable JComponent parentComponent,
+                        @NotNull Boolean updatePluginEnabledState) {
+      return PluginEnabler.updatePluginEnabledState(
+        getProject(),
+        myPluginsToEnable,
+        myPluginsToDisable,
+        parentComponent,
+        updatePluginEnabledState
+      );
+    }
+  }
+
+  private boolean applyEnableDisablePlugins(@Nullable JComponent parent) {
+    UpdatePluginStateAction applyPerProjectAction = new UpdatePluginStateAction();
+    UpdatePluginStateAction applyGloballyAction = new UpdatePluginStateAction();
 
     ProjectPluginTracker pluginTracker = getPluginTracker();
     for (Map.Entry<IdeaPluginDescriptor, PluginEnabledState> entry : myDiff.entrySet()) {
@@ -233,16 +250,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       boolean shouldEnable = newState.isEnabled();
       boolean isEnabled = entry.getValue().isEnabled();
-      if (shouldEnable && !isEnabled) {
-        pluginsToEnable.add(descriptor);
-      }
-      else if (!shouldEnable &&
-               (isEnabled || myErrorPluginsToDisable.contains(pluginId))) {
-        pluginsToDisable.add(descriptor);
+      if (shouldEnable != isEnabled ||
+          !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
+        UpdatePluginStateAction action = newState.isPerProject() ?
+                                         applyPerProjectAction :
+                                         applyGloballyAction;
+        action.register(descriptor, shouldEnable);
       }
     }
 
-    return Pair.create(pluginsToEnable, pluginsToDisable);
+    return applyPerProjectAction.test(parent, Boolean.FALSE) &&
+           applyGloballyAction.test(parent, Boolean.TRUE);
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
