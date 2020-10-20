@@ -4,16 +4,11 @@ package com.intellij.execution.process.mediator.daemon
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
-import com.intellij.execution.process.mediator.util.parseArgs
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import java.io.File
 import java.io.IOException
-import java.nio.file.Path
-import java.security.KeyFactory
-import java.security.PublicKey
-import java.security.spec.X509EncodedKeySpec
-import java.util.*
-import kotlin.system.exitProcess
+import java.util.concurrent.TimeUnit
 
 
 open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
@@ -54,74 +49,91 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   }
 }
 
+private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder {
+  return ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+                        *ProcessMediatorDaemonRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
+                        "-cp", System.getProperty("java.class.path"),
+                        ProcessMediatorDaemonRuntimeClasspath.getMainClass().name,
+                        *args)
+}
 
-private fun die(message: String): Nothing {
-  val programName = "ProcessMediatorDaemonMain"
-  System.err.println(message)
-  System.err.println("Usage: $programName [ --hello-file=file|- | --hello-port=port ] [ --token-encrypt-rsa=public-key ]")
-  exitProcess(1)
+private fun openHelloWriter(helloOption: DaemonLaunchOptions.HelloOption?): DaemonHelloWriter? =
+  when (helloOption) {
+    null -> null
+    DaemonLaunchOptions.HelloOption.Stdout -> DaemonHelloStdoutWriter
+    is DaemonLaunchOptions.HelloOption.File -> DaemonHelloFileWriter(helloOption.path)
+    is DaemonLaunchOptions.HelloOption.Port -> DaemonHelloSocketWriter(helloOption.port)
+  }
+
+private fun DaemonHelloWriter?.writeHello(daemonHello: DaemonHello) {
+  this?.write(daemonHello::writeDelimitedTo) ?: println(daemonHello)
+}
+
+
+private fun trampoline(launchOptions: DaemonLaunchOptions) {
+  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
+    val daemonOptions = launchOptions.copy(trampoline = false,
+                                           helloOption = DaemonLaunchOptions.HelloOption.Stdout)
+    val daemonProcess = createDaemonProcessCommandLine(*daemonOptions.asCmdlineArgs().toTypedArray())
+      .redirectInput(ProcessBuilder.Redirect.DISCARD)
+      .redirectOutput(ProcessBuilder.Redirect.PIPE)
+      .redirectError(ProcessBuilder.Redirect.INHERIT)
+      .start()
+
+    try {
+      val daemonHello = daemonProcess.inputStream.use(DaemonHello::parseDelimitedFrom)
+                        ?: throw IOException("Unable to read daemon hello")
+
+      helloWriter.writeHello(daemonHello)
+    }
+    catch (e: Throwable) {
+      if (e is IOException) System.err.println("Unable to relay daemon hello: ${e.message}")
+      daemonProcess.run {
+        destroy()
+        kotlin.runCatching { waitFor(10, TimeUnit.SECONDS) }
+        destroyForcibly()
+      }
+      throw e
+    }
+  }
 }
 
 fun main(args: Array<String>) {
-  var helloWriter: DaemonHelloWriter? = null
-  var publicKey: PublicKey? = null
+  val launchOptions = DaemonLaunchOptions.parseFromArgsOrDie("ProcessMediatorDaemonMain", args)
 
-  for ((option, value) in parseArgs(args)) {
-    if (value == null) die("Missing '$option' value")
-
-    when (option) {
-      "--hello-file" -> {
-        // handling multiple hello writers is too complicated w.r.t. resource management
-        if (helloWriter != null) System.err.println("Ignoring '$option'")
-        else helloWriter = if (value == "-") DaemonHelloStdoutWriter else DaemonHelloFileWriter(Path.of(value))
-      }
-
-      "--hello-port" -> {
-        @Suppress("EXPERIMENTAL_API_USAGE")
-        val port = value.toUShortOrNull() ?: die("Invalid port specified: value")
-        if (helloWriter != null) System.err.println("Ignoring '$option'")
-        else helloWriter = DaemonHelloSocketWriter(port)
-      }
-
-      "--token-encrypt-rsa" -> {
-        val bytes = Base64.getDecoder().decode(value)
-        publicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(bytes))
-      }
-
-      null -> die("Unrecognized positional argument '$value'")
-      else -> die("Unrecognized option '$option'")
-    }
+  if (launchOptions.trampoline) {
+    return trampoline(launchOptions)
   }
 
-  helloWriter.use {
+  val daemon: ProcessMediatorServerDaemon
+
+  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
     val credentials = DaemonClientCredentials.generate()
-    val token = if (publicKey != null) credentials.rsaEncrypt(publicKey) else credentials.token
-
-    val daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
-    val daemonHello = DaemonHello.newBuilder()
-      .setPort(daemon.port)
-      .setToken(token)
-      .build()
-
+    daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
     try {
-      try {
-        helloWriter?.write(daemonHello::writeDelimitedTo) ?: println(daemonHello)  // human-readable
+      val token = when (val publicKey = launchOptions.publicKeyOption?.publicKey) {
+        null -> credentials.token
+        else -> credentials.rsaEncrypt(publicKey)
       }
-      catch (e: IOException) {
-        die("Unable to write hello: ${e.message}")
-      }
+      val daemonHello = DaemonHello.newBuilder()
+        .setPort(daemon.port)
+        .setToken(token)
+        .build()
+
+      helloWriter.writeHello(daemonHello)
     }
     catch (e: Throwable) {
+      if (e is IOException) System.err.println("Unable to write hello: ${e.message}")
       daemon.stop()
       throw e
     }
-
-    Runtime.getRuntime().addShutdownHook(
-      Thread {
-        System.err.println("Shutting down gRPC server since JVM is shutting down")
-        daemon.stop()
-      }
-    )
-    daemon.blockUntilShutdown()
   }
+
+  Runtime.getRuntime().addShutdownHook(
+    Thread {
+      System.err.println("Shutting down gRPC server since JVM is shutting down")
+      daemon.stop()
+    }
+  )
+  daemon.blockUntilShutdown()
 }
