@@ -188,7 +188,7 @@ public class MismatchedCollectionQueryUpdateInspection
           return;
         }
         PsiElement parent = reference.getParent();
-        PsiElement grandParent = skipAssigmentExpression(parent);
+        PsiElement grandParent = skipAssigmentExprUp(parent);
         if (parent instanceof PsiExpressionList ||
             (parent instanceof PsiAssignmentExpression && grandParent instanceof PsiExpressionList)) {
           PsiExpressionList args = (PsiExpressionList)(parent instanceof PsiExpressionList ? parent : grandParent);
@@ -450,7 +450,7 @@ public class MismatchedCollectionQueryUpdateInspection
     return immutable && !SideEffectChecker.mayHaveSideEffects(call);
   }
 
-  private static PsiElement skipAssigmentExpression(@Nullable PsiElement parent) {
+  private static PsiElement skipAssigmentExprUp(@Nullable PsiElement parent) {
     parent = PsiUtil.skipParenthesizedExprUp(parent);
     while (parent instanceof PsiAssignmentExpression) {
       parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
