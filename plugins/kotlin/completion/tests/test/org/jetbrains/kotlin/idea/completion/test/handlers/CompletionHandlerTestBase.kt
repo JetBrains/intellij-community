@@ -5,11 +5,14 @@
 
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
+import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.completion.KotlinCompletionContributor
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
@@ -140,6 +143,12 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             } else {
                 fixture.type(completionChar)
             }
+        }
+
+        fun enableTypeParamsInsertion() {
+            val completionContributor = CompletionContributor.forLanguage(KotlinLanguage.INSTANCE)
+                .find { it is KotlinCompletionContributor } as? KotlinCompletionContributor
+            completionContributor?.isInsertTypeArgumentEnabled = true
         }
     }
 }

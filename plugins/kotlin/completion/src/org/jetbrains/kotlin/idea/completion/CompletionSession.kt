@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
@@ -50,7 +51,6 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-import java.util.*
 
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
@@ -72,20 +72,32 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
 
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
-    protected val parameters: CompletionParameters,
-    protected val toFromOriginalFileMapper: ToFromOriginalFileMapper,
-    resultSet: CompletionResultSet
+    originalParameters: CompletionParameters,
+    resultSet: CompletionResultSet,
+    isInsertTypeArgumentEnabled: Boolean = false
 ) {
     init {
         CompletionBenchmarkSink.instance.onCompletionStarted(this)
     }
 
-    protected val position = parameters.position
+    protected val parameters = run {
+        val enabled = isInsertTypeArgumentEnabled || Registry.`is`("kotlin.completion.insert-type-argument", false)
+        val fixedPosition = if (enabled)
+            addParamTypesIfNeeded(originalParameters.position)
+        else
+            originalParameters.position
+
+        originalParameters.withPosition(fixedPosition, fixedPosition.textOffset)
+    }
+
+    protected val toFromOriginalFileMapper = ToFromOriginalFileMapper.create(this.parameters)
+    protected val position = this.parameters.position
+
     protected val file = position.containingFile as KtFile
     protected val resolutionFacade = file.getResolutionFacade()
     protected val moduleDescriptor = resolutionFacade.moduleDescriptor
     protected val project = position.project
-    protected val isJvmModule = TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()
+    protected val isJvmModule = TargetPlatformDetector.getPlatform(originalParameters.originalFile as KtFile).isJvm()
     protected val isDebuggerContext = file is KtCodeFragment
 
     protected val nameExpression: KtSimpleNameExpression?
@@ -114,8 +126,8 @@ abstract class CompletionSession(
     private val kotlinIdentifierPartPattern = StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$'))
 
     protected val prefix = CompletionUtil.findIdentifierPrefix(
-        parameters.position.containingFile,
-        parameters.offset,
+        originalParameters.position.containingFile,
+        originalParameters.offset,
         kotlinIdentifierPartPattern or singleCharPattern('@'),
         kotlinIdentifierStartPattern
     )!!
@@ -149,14 +161,14 @@ abstract class CompletionSession(
     protected val collector: LookupElementsCollector by lazy(LazyThreadSafetyMode.NONE) {
         LookupElementsCollector(
             { CompletionBenchmarkSink.instance.onFlush(this) },
-            prefixMatcher, parameters, resultSet,
+            prefixMatcher, originalParameters, resultSet,
             createSorter(), (file as? KtCodeFragment)?.extraCompletionFilter,
             moduleDescriptor.platform.isMultiPlatform()
         )
     }
 
     protected val searchScope: GlobalSearchScope =
-        getResolveScope(parameters.originalFile as KtFile)
+        getResolveScope(originalParameters.originalFile as KtFile)
 
     protected fun indicesHelper(mayIncludeInaccessible: Boolean): KotlinIndicesHelper {
         val filter = if (mayIncludeInaccessible) isVisibleFilter else isVisibleFilterCheckAlways

@@ -64,9 +64,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 class BasicCompletionSession(
     configuration: CompletionSessionConfiguration,
     parameters: CompletionParameters,
-    toFromOriginalFileMapper: ToFromOriginalFileMapper,
-    resultSet: CompletionResultSet
-) : CompletionSession(configuration, parameters, toFromOriginalFileMapper, resultSet) {
+    resultSet: CompletionResultSet,
+    isInsertTypeArgumentEnabled: Boolean = false
+) : CompletionSession(configuration, parameters, resultSet, isInsertTypeArgumentEnabled) {
 
     private interface CompletionKind {
         val descriptorKindFilter: DescriptorKindFilter?
@@ -136,6 +136,11 @@ class BasicCompletionSession(
                     lookupElement
                 }
             }
+        }
+
+        collector.addLookupElementPostProcessor { lookupElement ->
+            position.argList?.let { lookupElement.argList = it }
+            lookupElement
         }
 
         completionKind.doComplete()
@@ -579,7 +584,7 @@ class BasicCompletionSession(
 
             val keywordsPrefix = prefix.substringBefore('@') // if there is '@' in the prefix - use shorter prefix to not loose 'this' etc
             val isUseSiteAnnotationTarget = position.prevLeaf()?.node?.elementType == KtTokens.AT
-            KeywordCompletion.complete(expression ?: parameters.position, resultSet.prefixMatcher, isJvmModule) { lookupElement ->
+            KeywordCompletion.complete(expression ?: position, resultSet.prefixMatcher, isJvmModule) { lookupElement ->
                 val keyword = lookupElement.lookupString
                 if (keyword in keywordsToSkip) return@complete
 

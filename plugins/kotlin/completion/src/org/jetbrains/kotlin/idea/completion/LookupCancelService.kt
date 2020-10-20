@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
 
 class LookupCancelService {
     internal class Reminiscence(editor: Editor, offset: Int) {

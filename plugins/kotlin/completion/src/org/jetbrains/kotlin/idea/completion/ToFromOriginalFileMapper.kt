@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.utils.checkWithAttachment
 import kotlin.math.min
 
 class ToFromOriginalFileMapper private constructor(
@@ -32,23 +31,22 @@ class ToFromOriginalFileMapper private constructor(
     private val tailLength: Int
     private val shift: Int
 
+    private val typeParamsOffset: Int
+    private val typeParamsShift: Int
+
     //TODO: lazy initialization?
 
     init {
         val (originalText, syntheticText) = runReadAction {
             originalFile.text to syntheticFile.text
         }
-        val originalSubSequence = originalText.take(completionOffset)
-        val syntheticSubSequence = syntheticText.take(completionOffset)
-        checkWithAttachment(originalSubSequence == syntheticSubSequence, {
-            "original subText [len: ${originalSubSequence.length}]" +
-                    " does not match synthetic subText [len: ${syntheticSubSequence.length}], " +
-                    "completionOffset: $completionOffset"
-        }) {
-            it.withAttachment("original subText.kt", originalSubSequence)
-                .withAttachment("original.kt", originalText)
-                .withAttachment("synthetic subText.kt", syntheticSubSequence)
-                .withAttachment("synthetic.kt", syntheticText)
+
+        typeParamsOffset = (0 until completionOffset).firstOrNull { originalText[it] != syntheticText[it] } ?: 0
+        if (typeParamsOffset > 0) {
+            val typeParamsEnd = (typeParamsOffset until completionOffset).first { originalText[typeParamsOffset] == syntheticText[it] }
+            typeParamsShift = typeParamsEnd - typeParamsOffset
+        } else {
+            typeParamsShift = 0
         }
 
         syntheticLength = syntheticText.length
@@ -61,14 +59,16 @@ class ToFromOriginalFileMapper private constructor(
     }
 
     private fun toOriginalFile(offset: Int): Int? = when {
-        offset <= completionOffset -> offset
-        offset >= syntheticLength - tailLength -> offset - shift
+        offset <= typeParamsOffset -> offset
+        offset in (typeParamsOffset + 1)..completionOffset -> offset - typeParamsShift
+        offset >= originalLength - tailLength -> offset - shift - typeParamsShift
         else -> null
     }
 
     private fun toSyntheticFile(offset: Int): Int? = when {
-        offset <= completionOffset -> offset
-        offset >= originalLength - tailLength -> offset + shift
+        offset <= typeParamsOffset -> offset
+        offset in (typeParamsOffset + 1)..completionOffset -> offset + typeParamsShift
+        offset >= originalLength - tailLength -> offset + shift + typeParamsShift
         else -> null
     }
 

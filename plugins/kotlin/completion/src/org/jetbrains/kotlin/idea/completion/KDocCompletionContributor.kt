@@ -68,15 +68,14 @@ class KDocCompletionContributor : CompletionContributor() {
 
 object KDocNameCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        KDocNameCompletionSession(parameters, ToFromOriginalFileMapper.create(parameters), result).complete()
+        KDocNameCompletionSession(parameters, result).complete()
     }
 }
 
 class KDocNameCompletionSession(
     parameters: CompletionParameters,
-    toFromOriginalFileMapper: ToFromOriginalFileMapper,
     resultSet: CompletionResultSet
-) : CompletionSession(CompletionSessionConfiguration(parameters), parameters, toFromOriginalFileMapper, resultSet) {
+) : CompletionSession(CompletionSessionConfiguration(parameters), parameters, resultSet) {
 
     override val descriptorKindFilter: DescriptorKindFilter? get() = null
     override val expectedInfos: Collection<ExpectedInfo> get() = emptyList()

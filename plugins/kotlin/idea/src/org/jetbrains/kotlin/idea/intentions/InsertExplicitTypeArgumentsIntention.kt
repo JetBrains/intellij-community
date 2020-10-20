@@ -50,15 +50,17 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
             return typeArgs.isNotEmpty() && typeArgs.values.none { ErrorUtils.containsErrorType(it) || it is CapturedType || it is NewCapturedType }
         }
 
-        fun applyTo(element: KtCallElement, shortenReferences: Boolean = true) {
-            val argumentList = createTypeArguments(element, element.analyze()) ?: return
-
+        fun applyTo(element: KtCallElement, argumentList: KtTypeArgumentList, shortenReferences: Boolean = true) {
             val callee = element.calleeExpression ?: return
             val newArgumentList = element.addAfter(argumentList, callee) as KtTypeArgumentList
-
             if (shortenReferences) {
                 ShortenReferences.DEFAULT.process(newArgumentList)
             }
+        }
+
+        fun applyTo(element: KtCallElement, shortenReferences: Boolean = true) {
+            val argumentList = createTypeArguments(element, element.analyze()) ?: return
+            applyTo(element, argumentList, shortenReferences)
         }
 
         fun createTypeArguments(element: KtCallElement, bindingContext: BindingContext): KtTypeArgumentList? {

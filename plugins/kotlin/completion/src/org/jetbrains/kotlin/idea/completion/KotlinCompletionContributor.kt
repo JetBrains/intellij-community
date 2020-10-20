@@ -37,6 +37,8 @@ import kotlin.math.max
 var KtFile.doNotComplete: Boolean? by UserDataProperty(Key.create("DO_NOT_COMPLETE"))
 
 class KotlinCompletionContributor : CompletionContributor() {
+    var isInsertTypeArgumentEnabled: Boolean = false
+
     private val AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
         psiElement().withText(""),
         psiElement().withElementType(elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
@@ -242,8 +244,6 @@ class KotlinCompletionContributor : CompletionContributor() {
         if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
         if (parametersOriginFile.doNotComplete == true) return
 
-        val toFromOriginalFileMapper = ToFromOriginalFileMapper.create(parameters)
-
         if (position.node.elementType == KtTokens.LONG_TEMPLATE_ENTRY_START) {
             val expression = (position.parent as? KtBlockStringTemplateEntry)?.expression
             if (expression is KtDotQualifiedExpression) {
@@ -257,19 +257,17 @@ class KotlinCompletionContributor : CompletionContributor() {
                     // correctedOffset      ^
                     val correctedOffset = correctedPosition.endOffset - CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.length
                     val correctedParameters = parameters.withPosition(correctedPosition, correctedOffset)
-                    doComplete(correctedParameters, toFromOriginalFileMapper, result,
-                               lookupElementPostProcessor = { wrapLookupElementForStringTemplateAfterDotCompletion(it) })
+                    doComplete(correctedParameters, result) { wrapLookupElementForStringTemplateAfterDotCompletion(it) }
                     return
                 }
             }
         }
 
-        doComplete(parameters, toFromOriginalFileMapper, result)
+        doComplete(parameters, result)
     }
 
     private fun doComplete(
         parameters: CompletionParameters,
-        toFromOriginalFileMapper: ToFromOriginalFileMapper,
         result: CompletionResultSet,
         lookupElementPostProcessor: ((LookupElement) -> LookupElement)? = null
     ) {
@@ -303,7 +301,7 @@ class KotlinCompletionContributor : CompletionContributor() {
 
         val configuration = CompletionSessionConfiguration(parameters)
         if (parameters.completionType == CompletionType.BASIC) {
-            val session = BasicCompletionSession(configuration, parameters, toFromOriginalFileMapper, result)
+            val session = BasicCompletionSession(configuration, parameters, result, isInsertTypeArgumentEnabled)
 
             addPostProcessor(session)
 
@@ -324,12 +322,14 @@ class KotlinCompletionContributor : CompletionContributor() {
                     dataClassComponentFunctions = true
                 )
 
-                val newSession = BasicCompletionSession(newConfiguration, parameters, toFromOriginalFileMapper, result)
+                val newSession = BasicCompletionSession(
+                    newConfiguration, parameters, result, isInsertTypeArgumentEnabled
+                )
                 addPostProcessor(newSession)
                 newSession.complete()
             }
         } else {
-            val session = SmartCompletionSession(configuration, parameters, toFromOriginalFileMapper, result)
+            val session = SmartCompletionSession(configuration, parameters, result, isInsertTypeArgumentEnabled)
             addPostProcessor(session)
             session.complete()
         }

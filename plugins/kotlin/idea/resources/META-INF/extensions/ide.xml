@@ -136,6 +136,11 @@
                      defaultValue="false"
                      restartRequired="false"/>
 
+      <registryKey key="kotlin.completion.insert-type-argument"
+                   description="Enable type argument insertion at code completion"
+                   defaultValue="false"
+                   restartRequired="false"/>
+
         <fileEditorProvider implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
 
         <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>

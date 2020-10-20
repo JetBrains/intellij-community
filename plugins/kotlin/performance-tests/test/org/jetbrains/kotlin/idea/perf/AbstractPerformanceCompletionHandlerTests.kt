@@ -60,6 +60,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
     }
 
     protected open fun doPerfTest(unused: String) {
+        enableTypeParamsInsertion()
         val testPath = testPath()
         setUpFixture(testPath)
 
