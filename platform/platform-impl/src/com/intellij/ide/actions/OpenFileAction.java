@@ -26,11 +26,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -83,7 +83,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         presentation.setEnabledAndVisible(false);
         return;
       }
-      if (Registry.is("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.setIcon(AllIcons.Welcome.Open);
         presentation.setSelectedIcon(AllIcons.Welcome.OpenSelected);
         presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
