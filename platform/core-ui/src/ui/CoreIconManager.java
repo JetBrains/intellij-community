@@ -50,7 +50,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
 
   @Override
   public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
-    return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, aClass, cacheKey, flags));
+    return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, aClass.getClassLoader(), cacheKey, flags));
   }
 
   private static final class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {

@@ -209,8 +209,7 @@ public final class IconLoader {
   // result is not cached
   @SuppressWarnings("DuplicatedCode")
   @ApiStatus.Internal
-  public static @NotNull IconLoader.ImageDataLoader loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int imageFlags) {
-    ClassLoader classLoader = aClass.getClassLoader();
+  public static @NotNull IconLoader.ImageDataLoader loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = pathTransform.get().patchPath(path, classLoader);
     String effectivePath = patchedPath == null ? path : patchedPath.first;
@@ -218,7 +217,7 @@ public final class IconLoader {
       classLoader = patchedPath.second;
     }
 
-    ImageDataLoader resolver = new ImageDataResolverImpl(effectivePath, aClass, classLoader, null, false) {
+    ImageDataLoader resolver = new ImageDataResolverImpl(effectivePath, null, classLoader, null, false) {
       @Override
       public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
         // do not use cache
@@ -227,8 +226,8 @@ public final class IconLoader {
           flags |= ImageLoader.USE_DARK;
         }
         assert overriddenPath != null;
-        assert ownerClass != null;
-        return ImageLoader.loadRasterized(overriddenPath, filters, ownerClass, flags, scaleContext, cacheKey == 0, cacheKey, imageFlags);
+        assert classLoader != null;
+        return ImageLoader.loadRasterized(overriddenPath, filters, classLoader, flags, scaleContext, cacheKey == 0, cacheKey, imageFlags);
       }
     };
     if (startTime != -1) {

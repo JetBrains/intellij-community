@@ -126,7 +126,7 @@ public final class ImageLoader {
   @ApiStatus.Internal
   public static @Nullable Image loadRasterized(@NotNull String path,
                                                @Nullable List<ImageFilter> filters,
-                                               @NotNull Class<?> resourceClass,
+                                               @NotNull ClassLoader classLoader,
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                                ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
@@ -177,10 +177,10 @@ public final class ImageLoader {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;
       if (isSvg) {
-        image = SVGLoader.loadFromClassResource(resourceClass, null, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
       }
       else {
-        image = loadPngFromClassResource(effectivePath, resourceClass, null, imageScale, originalUserSize);
+        image = loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
       }
 
       if (start != -1) {
