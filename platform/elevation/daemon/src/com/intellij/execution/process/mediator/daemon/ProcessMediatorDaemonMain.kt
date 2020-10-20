@@ -58,7 +58,7 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
 private fun die(message: String): Nothing {
   val programName = "ProcessMediatorDaemonMain"
   System.err.println(message)
-  System.err.println("Usage: $programName < --hello-file=file|- | --hello-port=port > [ --token-encrypt-rsa=public-key ]")
+  System.err.println("Usage: $programName [ --hello-file=file|- | --hello-port=port ] [ --token-encrypt-rsa=public-key ]")
   exitProcess(1)
 }
 
@@ -78,8 +78,9 @@ fun main(args: Array<String>) {
 
       "--hello-port" -> {
         @Suppress("EXPERIMENTAL_API_USAGE")
+        val port = value.toUShortOrNull() ?: die("Invalid port specified: value")
         if (helloWriter != null) System.err.println("Ignoring '$option'")
-        else helloWriter = DaemonHelloSocketWriter(value.toUShort())
+        else helloWriter = DaemonHelloSocketWriter(port)
       }
 
       "--token-encrypt-rsa" -> {
@@ -91,7 +92,6 @@ fun main(args: Array<String>) {
       else -> die("Unrecognized option '$option'")
     }
   }
-  if (helloWriter == null) die("Missing required option '--hello-file' or '--hello-port'")
 
   helloWriter.use {
     val credentials = DaemonClientCredentials.generate()
@@ -105,7 +105,7 @@ fun main(args: Array<String>) {
 
     try {
       try {
-        helloWriter.write(daemonHello::writeDelimitedTo)
+        helloWriter?.write(daemonHello::writeDelimitedTo) ?: println(daemonHello)  // human-readable
       }
       catch (e: IOException) {
         die("Unable to write hello: ${e.message}")
