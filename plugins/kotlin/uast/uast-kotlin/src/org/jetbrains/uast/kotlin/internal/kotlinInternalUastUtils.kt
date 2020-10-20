@@ -349,7 +349,7 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
     resolveToPsiClass({ sourcePsi.toUElement() }, declarationDescriptor, sourcePsi)?.let { return it }
 
     if (declarationDescriptor is DeclarationDescriptorWithSource) {
-        declarationDescriptor.source.getPsi()?.let { it.getMaybeLightElement() ?: it }?.let { return it }
+        declarationDescriptor.source.getPsi()?.takeIf { it.isValid }?.let { it.getMaybeLightElement() ?: it }?.let { return it }
     }
 
     resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
