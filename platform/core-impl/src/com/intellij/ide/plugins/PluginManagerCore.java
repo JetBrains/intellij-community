@@ -29,7 +29,9 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -577,10 +579,10 @@ public final class PluginManagerCore {
     return null;
   }
 
-  private static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                                         @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                                         boolean withOptional,
-                                                                                         boolean hasAllModules) {
+  static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
+                                                                                 @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                                                                 boolean withOptional,
+                                                                                 boolean hasAllModules) {
     Supplier<IdeaPluginDescriptorImpl> javaDep = () -> idToDescriptorMap.apply(JAVA_MODULE_ID);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> in = new HashMap<>(descriptors.size());
@@ -1393,11 +1395,9 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable IdeaPluginDescriptor findPluginByModuleDependency(@NotNull PluginId id) {
-    for (IdeaPluginDescriptor descriptor : getPlugins()) {
-      if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id)) {
-          return descriptor;
-        }
+    for (IdeaPluginDescriptorImpl descriptor : ourPlugins) {
+      if (descriptor.getModules().contains(id)) {
+        return descriptor;
       }
     }
     return null;
@@ -1479,23 +1479,6 @@ public final class PluginManagerCore {
       }
     }
 
-    return true;
-  }
-
-  public static boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                       boolean withOptionalDeps,
-                                                       @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = createPluginIdGraph(Arrays.asList(ourPlugins),
-                                                                               (id) -> (IdeaPluginDescriptorImpl)getPlugin(id),
-                                                                               withOptionalDeps,
-                                                                               findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
-    Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
-    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
-    GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
-    for (IdeaPluginDescriptorImpl dependency : dependencies) {
-      if (dependency == rootDescriptor) continue;
-      if (consumer.apply(dependency) == FileVisitResult.TERMINATE) return false;
-    }
     return true;
   }
 
