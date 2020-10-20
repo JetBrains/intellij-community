@@ -57,7 +57,7 @@ public final class SvgCacheManager {
       .autoCommitDelay(60_000)
       .compressHigh();
     store = storeBuilder.openOrNewOnIoError(dbFile, true, e -> {
-      getLogger().error("Cannot open icon cache database", e);
+      getLogger().debug("Cannot open icon cache database", e);
     });
     storeErrorHandler.isStoreOpened = true;
 
