@@ -16,6 +16,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.OrderRootType
@@ -88,7 +89,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
       catch (t: Throwable) {
         LOG.warn(t)
-        targetProgressIndicator.addText("Failed to upload ${volume.localRoot}. ${t.localizedMessage}", ProcessOutputType.STDERR)
+        targetProgressIndicator.addText(LangBundle.message("progress.message.failed.to.upload.0.1", volume.localRoot, t.localizedMessage), ProcessOutputType.STDERR)
         targetProgressIndicator.addText("\n", ProcessOutputType.STDERR)
         result.resolveFailure(t)
       }
@@ -137,7 +138,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException("Cannot find Java configuration in " + target.displayName + " target")
+        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", target.displayName))
       }
 
       val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
@@ -174,7 +175,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
     if (vmParameters.isUrlClassloader()) {
       if (request !is LocalTargetEnvironmentRequest) {
-        throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
+        throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
       }
 
       for (parameter in vmParameters.parameters) {
@@ -384,7 +385,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
       if (vmParameters.isUrlClassloader()) {
         if (request !is LocalTargetEnvironmentRequest) {
-          throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
+          throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
         }
 
         // since request is known to be local we will simplify to TargetValue.fixed below
@@ -605,7 +606,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
     @Throws(CantRunException::class)
     private fun throwUnableToCreateTempFile(cause: IOException?) {
-      throw CantRunException("Failed to create a temporary file in " + FileUtil.getTempDirectory(), cause)
+      throw CantRunException(LangBundle.message("error.message.failed.to.create.a.temporary.file.in.0", FileUtil.getTempDirectory()), cause)
     }
   }
 
