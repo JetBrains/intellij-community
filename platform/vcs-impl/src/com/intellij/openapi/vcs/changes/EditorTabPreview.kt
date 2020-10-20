@@ -141,7 +141,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   companion object {
     fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean, escapeHandler: Runnable? = null) {
       val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
-      val editor = FileEditorManager.getInstance(project).openFile(file, focusEditor, true).singleOrNull() ?: return
+      val diffPreviewFilesManager = EditorDiffPreviewFilesManager.getInstance(project)
+      val editor = diffPreviewFilesManager.openFile(file, focusEditor).singleOrNull() ?: return
 
       if (wasAlreadyOpen || escapeHandler == null) return
       EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
