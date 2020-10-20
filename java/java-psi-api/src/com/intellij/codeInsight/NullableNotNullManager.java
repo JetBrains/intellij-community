@@ -301,8 +301,10 @@ public abstract class NullableNotNullManager {
                                ? findAnnotationInHierarchy(owner, qualifiedNames, skipExternal)
                                : findAnnotation(owner, qualifiedNames, skipExternal);
     PsiType type = getOwnerType(owner);
-    if (memberAnno != null && type instanceof PsiArrayType && AnnotationTargetUtil.isTypeAnnotation(memberAnno)) {
-      // Ambiguous TYPE_USE annotation on array type: we consider that it annotates an array component instead. 
+    if (memberAnno != null && type instanceof PsiArrayType && !isInferredAnnotation(memberAnno) && !isExternalAnnotation(memberAnno) &&
+        AnnotationTargetUtil.isTypeAnnotation(memberAnno)) {
+      // Ambiguous TYPE_USE annotation on array type: we consider that it annotates an array component instead.
+      // ignore inferred/external annotations here, as they are applicable to PsiModifierListOwner only, regardless of target
       memberAnno = null;
     }
     if (memberAnno != null) {
