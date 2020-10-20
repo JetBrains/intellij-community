@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
@@ -79,7 +79,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, module, existingSdks, context)
     if (baseSdk == null) return null
 
-    val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.sentence"), false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         val packageManager = PyPackageManager.getInstance(baseSdk)

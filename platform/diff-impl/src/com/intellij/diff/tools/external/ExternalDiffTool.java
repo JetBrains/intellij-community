@@ -77,7 +77,7 @@ public final class ExternalDiffTool {
   private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
                                                              @NotNull DiffRequestChain chain) throws Throwable {
     if (chain instanceof AsyncDiffRequestChain) {
-      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
+      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), indicator -> {
         ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
         return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
       });
@@ -86,7 +86,7 @@ public final class ExternalDiffTool {
       List<? extends DiffRequestProducer> allProducers = chain.getRequests();
       int index = chain.getIndex();
 
-      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
+      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), indicator -> {
         return collectRequests(project, allProducers, index, indicator);
       });
     }
@@ -132,11 +132,9 @@ public final class ExternalDiffTool {
   }
 
   private static <T> T computeWithModalProgress(@Nullable Project project,
-                                                @NotNull @NlsContexts.ProgressTitle String title,
-                                                boolean canBeCancelled,
-                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
-    throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, canBeCancelled) {
+                                                @NotNull @NlsContexts.DialogTitle String title,
+                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable) throws Exception {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, true) {
       @Override
       protected T compute(@NotNull ProgressIndicator indicator) throws Exception {
         return computable.convert(indicator);
