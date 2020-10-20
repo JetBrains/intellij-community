@@ -474,8 +474,6 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" filepath="$PROJECT_DIR$/intellij/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/editorconfig/intellij.editorconfig.iml" filepath="$PROJECT_DIR$/intellij/plugins/editorconfig/intellij.editorconfig.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/emojipicker/intellij.emojipicker.iml" filepath="$PROJECT_DIR$/intellij/plugins/emojipicker/intellij.emojipicker.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" filepath="$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/filePrediction/intellij.filePrediction.iml" filepath="$PROJECT_DIR$/intellij/plugins/filePrediction/intellij.filePrediction.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle/intellij.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle/intellij.gradle.common.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle/intellij.gradle.common.iml" />
