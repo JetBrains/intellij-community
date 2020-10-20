@@ -97,8 +97,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                                    @NotNull final Collection<String> activeProfiles,
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
+    String projectPath = files.isEmpty() ? null : files.iterator().next().getPath();
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(projectPath);
     return performCancelable(() -> {
-      final List<File> ioFiles = ContainerUtil.map(files, file -> new File(file.getPath()));
+      final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
       return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
     });
   }
