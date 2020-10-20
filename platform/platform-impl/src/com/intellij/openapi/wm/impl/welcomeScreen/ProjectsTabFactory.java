@@ -210,7 +210,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       @Override
       public void drop(@NotNull DnDEvent event) {
         List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
-        if (files.isEmpty()) {
+        if (!files.isEmpty()) {
           ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
         }
       }
