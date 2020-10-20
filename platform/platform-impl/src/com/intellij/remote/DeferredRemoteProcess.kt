@@ -2,6 +2,7 @@
 package com.intellij.remote
 
 import com.google.common.net.HostAndPort
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.isPending
 import java.io.InputStream
@@ -88,12 +89,14 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
       handler(process)
     }
     else {
+      val cause = Throwable("Initially called from this context.")
       promise.then {
         try {
           it?.let(handler)
         }
-        catch (ignored: Throwable) {
-          // Ignored.
+        catch (err: Throwable) {
+          err.addSuppressed(cause)
+          LOG.info("$this: Got an error that nothing could catch: ${err.message}", err)
         }
       }
       null
@@ -156,5 +159,9 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
       tryGet()?.let(streamGetter)?.available() ?: 0
 
     override fun markSupported(): Boolean = false
+  }
+
+  private companion object {
+    private val LOG = logger<DeferredRemoteProcess>()
   }
 }
