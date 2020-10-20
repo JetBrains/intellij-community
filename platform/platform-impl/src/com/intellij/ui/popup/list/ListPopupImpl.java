@@ -435,25 +435,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   public boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
     if (nextStep != PopupStep.FINAL_CHOICE) {
-      final Point point = myList.indexToLocation(myList.getSelectedIndex());
-      SwingUtilities.convertPointToScreen(point, myList);
-      myChild = createPopup(this, nextStep, parentValue);
-      if (myChild instanceof ListPopupImpl) {
-        for (ListSelectionListener listener : myList.getListSelectionListeners()) {
-          ((ListPopupImpl)myChild).addListSelectionListener(listener);
-        }
-      }
-      final JComponent container = getContent();
-
-      int y = point.y;
-      if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
-        SeparatorWithText swt = new SeparatorWithText();
-        swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
-        y += swt.getPreferredSize().height - 1;
-      }
-
-      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
-      setIndexForShowingChild(myList.getSelectedIndex());
+      showNextStepPopup(nextStep, parentValue);
       return false;
     }
     else {
@@ -465,6 +447,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  protected void showNextStepPopup(PopupStep nextStep, Object parentValue) {
+    final Point point = myList.indexToLocation(myList.getSelectedIndex());
+    SwingUtilities.convertPointToScreen(point, myList);
+    myChild = createPopup(this, nextStep, parentValue);
+    if (myChild instanceof ListPopupImpl) {
+      for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+        ((ListPopupImpl)myChild).addListSelectionListener(listener);
+      }
+    }
+    final JComponent container = getContent();
+
+    int y = point.y;
+    if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
+      SeparatorWithText swt = new SeparatorWithText();
+      swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
+      y += swt.getPreferredSize().height - 1;
+    }
+
+    myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+    setIndexForShowingChild(myList.getSelectedIndex());
+  }
 
   @Override
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
@@ -494,6 +497,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         if (index != myLastSelectedIndex) {
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
+            showSubMenu(index);
           }
           restartTimer();
           myLastSelectedIndex = index;
@@ -505,6 +509,17 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       notifyParentOnChildSelection();
+    }
+
+    private void showSubMenu(int forIndex) {
+      disposeChildren();
+
+      ListPopupStep<Object> listStep = getListStep();
+      Object selectedValue = myListModel.getElementAt(forIndex);
+      if (!listStep.hasSubstep(selectedValue)) return;
+
+      PopupStep<?> step = listStep.onChosen(selectedValue, false);
+      showNextStepPopup(step, selectedValue);
     }
   }
 
