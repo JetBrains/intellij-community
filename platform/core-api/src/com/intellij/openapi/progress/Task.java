@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -296,8 +295,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
-    private final Ref<T> myResult = Ref.create();
-    private final Ref<Throwable> myError = Ref.create();
+    private volatile Object myResult;
 
     public WithResult(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
@@ -306,10 +304,10 @@ public abstract class Task implements TaskInfo, Progressive {
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       try {
-        myResult.set(compute(indicator));
+        myResult = compute(indicator);
       }
       catch (Throwable t) {
-        myError.set(t);
+        myResult = t;
       }
     }
 
@@ -317,10 +315,14 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @SuppressWarnings("unchecked")
     public T getResult() throws E {
-      Throwable t = myError.get();
-      ExceptionUtil.rethrowUnchecked(t);
-      if (t != null) throw (E)t;
-      return myResult.get();
+      Object result = myResult;
+      if (result instanceof Throwable) {
+        ExceptionUtil.rethrowUnchecked((Throwable)result);
+        throw (E)result;
+      }
+      else {
+        return (T)result;
+      }
     }
   }
 }
