@@ -23,10 +23,12 @@ public class EmojiSearchField extends ExtendableTextField {
     public Icon getIcon(boolean hovered) {
       return AllIcons.Actions.Search;
     }
+
     @Override
     public boolean isIconBeforeText() {
       return true;
     }
+
     @Override
     public int getIconGap() {
       return JBUIScale.scale(6);
@@ -45,14 +47,17 @@ public class EmojiSearchField extends ExtendableTextField {
       public Icon getIcon(boolean hovered) {
         return emojiPicker.getCurrentSkinToneIcon(hovered);
       }
+
       @Override
       public boolean isIconBeforeText() {
         return false;
       }
+
       @Override
       public int getIconGap() {
         return JBUIScale.scale(6);
       }
+
       @Override
       public Runnable getActionOnClick() {
         return emojiPicker::openSkinToneSelectionPanel;
@@ -76,14 +81,16 @@ public class EmojiSearchField extends ExtendableTextField {
       void handle(KeyEvent e, boolean typed) {
         int c = typed ? e.getKeyChar() : e.getKeyCode();
         boolean mayIntercept = c == KeyEvent.VK_SPACE || c == KeyEvent.VK_ENTER;
-        if(mayIntercept == typed && emojiPicker.handleKey(c, e.getModifiersEx())) {
+        if (mayIntercept == typed && emojiPicker.handleKey(c, e.getModifiersEx())) {
           e.consume();
         }
       }
+
       @Override
       public void keyTyped(KeyEvent e) {
         handle(e, true);
       }
+
       @Override
       public void keyPressed(KeyEvent e) {
         handle(e, false);
@@ -98,12 +105,11 @@ public class EmojiSearchField extends ExtendableTextField {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if(myEmojiPicker.getCurrentFocusTarget() instanceof EmojiSkinTonesPanel) {
+    if (myEmojiPicker.getCurrentFocusTarget() instanceof EmojiSkinTonesPanel) {
       g.setColor(myStyle.myFocusBorderColor);
       Insets i = getInsets();
       final int SIZE = 30;
       g.drawRoundRect(getWidth() - i.right - SIZE - 8, getHeight() / 2 - SIZE / 2, SIZE, SIZE, 6, 6);
     }
   }
-
 }

@@ -8,9 +8,13 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
+import org.jetbrains.plugins.emojipicker.messages.EmojiCategoriesBundle;
+import org.jetbrains.plugins.emojipicker.messages.EmojipickerBundle;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
 import javax.swing.*;
@@ -24,8 +28,6 @@ import java.util.List;
 import java.util.Objects;
 
 class EmojiListPanel extends JBScrollPane {
-
-
   private static final Image NO_EMOJI_FOUND_IMAGE = ImageLoader.scaleImage(Objects.requireNonNull(
     ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"))), 40);
   private final Dimension myCellSize = new Dimension(JBUIScale.scale(40), JBUIScale.scale(40));
@@ -58,30 +60,34 @@ class EmojiListPanel extends JBScrollPane {
       }
     });
     getViewport().addChangeListener(e -> {
-      if(myCurrentPanel == myCategoriesPanel) {
+      if (myCurrentPanel == myCategoriesPanel) {
         Component topComponent = myCategoriesPanel.getComponentAt(getViewport().getViewPosition());
-        if(topComponent instanceof Category) emojiPicker.selectCategory(((Category) topComponent).myCategory, false);
-        else emojiPicker.selectCategory(myCategoriesPanel.myCategories.get(0).myCategory, false);
+        if (topComponent instanceof Category) {
+          emojiPicker.selectCategory(((Category)topComponent).myCategory, false);
+        }
+        else {
+          emojiPicker.selectCategory(myCategoriesPanel.myCategories.get(0).myCategory, false);
+        }
       }
     });
     setBorder(JBUI.Borders.customLine(myStyle.myBorderColor, 1, 0, 0, 0));
   }
 
   void selectCategory(EmojiCategory category) {
-    if(myCurrentPanel != myCategoriesPanel) {
+    if (myCurrentPanel != myCategoriesPanel) {
       setViewportView(myCurrentPanel = myCategoriesPanel);
     }
-    if(category == null || category == myCategoriesPanel.myCategories.get(0).myCategory) {
+    if (category == null || category == myCategoriesPanel.myCategories.get(0).myCategory) {
       setCurrentItem(myCategoriesPanel.myCategories.get(0).myCategory.getEmoji().isEmpty() ?
                      myCategoriesPanel.myCategories.get(1) : myCategoriesPanel.myCategories.get(0), 0);
       myCategoriesPanel.scrollRectToVisible(new Rectangle(0, 0, 1, getHeight()));
     }
     else {
       Category cat = null;
-      for(Category c : myCategoriesPanel.myCategories) {
-        if(c.myCategory == category) cat = c;
+      for (Category c : myCategoriesPanel.myCategories) {
+        if (c.myCategory == category) cat = c;
       }
-      if(cat == null) return;
+      if (cat == null) return;
       setCurrentItem(cat, 0);
       cat.scrollRectToVisible(new Rectangle(0, 0, 1, getHeight()));
     }
@@ -90,52 +96,56 @@ class EmojiListPanel extends JBScrollPane {
   void updateSkinTone(EmojiSkinTone skinTone) {
     myCurrentSkinTone = skinTone;
     myCurrentPanel.repaint();
-    if(myCurrentItemCategory != null && myCurrentItemIndex >= 0) {
+    if (myCurrentItemCategory != null && myCurrentItemIndex >= 0) {
       myEmojiPicker.updateEmojiInfo(myCurrentItemCategory.myCategory.getEmoji().get(myCurrentItemIndex), myCurrentSkinTone);
     }
   }
 
-  void updateSearchFilter(String text) {
-    if(text.isEmpty()) {
+  void updateSearchFilter(@NonNls String text) {
+    if (text.isEmpty()) {
       myEmojiPicker.selectCategory(myCategoriesPanel.myCategories.get(0).myCategory, true);
     }
     else {
       myEmojiPicker.selectCategory(null, false);
       mySearchCategoryPanel.myCategory = new EmojiCategory(null, EmojiService.getInstance().findEmojiByPrefix(text.strip()));
       mySearchCategoryPanel.updateLayout(getWidth());
-      if(mySearchCategoryPanel.myCategory.getEmoji().isEmpty()) setCurrentItem(null, -1);
-      else setCurrentItem(mySearchCategoryPanel, 0);
+      if (mySearchCategoryPanel.myCategory.getEmoji().isEmpty()) {
+        setCurrentItem(null, -1);
+      }
+      else {
+        setCurrentItem(mySearchCategoryPanel, 0);
+      }
       setViewportView(myCurrentPanel = mySearchCategoryPanel);
     }
   }
 
   void selectCurrentEmoji() {
-    if(!hasCurrentItem()) return;
+    if (!hasCurrentItem()) return;
     Emoji emoji = myCurrentItemCategory.myCategory.getEmoji().get(myCurrentItemIndex);
     EmojiService.getInstance().saveRecentlyUsedEmoji(emoji);
     myEmojiPicker.selectEmoji(emoji.getTonedValue(myCurrentSkinTone));
   }
 
   void navigate(int dx, int dy) {
-    if(myCurrentItemIndex < 0) return;
+    if (myCurrentItemIndex < 0) return;
     int x = (myCurrentItemIndex % myItemsPerRow + dx + myItemsPerRow) % myItemsPerRow;
     int y = myCurrentItemIndex / myItemsPerRow + dy;
     int newIndex = myItemsPerRow * y + x;
-    if(newIndex >= 0 && newIndex < myCurrentItemCategory.myCategory.getEmoji().size()) {
+    if (newIndex >= 0 && newIndex < myCurrentItemCategory.myCategory.getEmoji().size()) {
       setCurrentItem(myCurrentItemCategory, newIndex);
     }
     else {
       int cat = myCategoriesPanel.findCategoryIndex(myCurrentItemCategory);
-      if(cat == -1) return;
+      if (cat == -1) return;
       boolean up = newIndex < 0;
       cat += up ? -1 : 1;
-      if(cat < 0 || cat >= myCategoriesPanel.myCategories.size()) return;
+      if (cat < 0 || cat >= myCategoriesPanel.myCategories.size()) return;
       Category c = myCategoriesPanel.myCategories.get(cat);
       int rows = (c.myCategory.getEmoji().size() + myItemsPerRow - 1) / myItemsPerRow;
       y = up ? rows - 1 : 0;
-      if(y < 0 || myItemsPerRow * y + x >= c.myCategory.getEmoji().size()) {
+      if (y < 0 || myItemsPerRow * y + x >= c.myCategory.getEmoji().size()) {
         y--;
-        if(y < 0) return;
+        if (y < 0) return;
       }
       setCurrentItem(c, myItemsPerRow * y + x);
     }
@@ -162,9 +172,6 @@ class EmojiListPanel extends JBScrollPane {
   }
 
 
-
-
-
   private abstract class UpdatableLayoutPanel extends JPanel {
 
     private UpdatableLayoutPanel() {
@@ -172,7 +179,6 @@ class EmojiListPanel extends JBScrollPane {
     }
 
     abstract void updateLayout(int width);
-
   }
 
 
@@ -184,21 +190,20 @@ class EmojiListPanel extends JBScrollPane {
       myCategories = categories;
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
       add(Box.createRigidArea(new Dimension(0, 15)));
-      for(Category c : categories) add(c);
+      for (Category c : categories) add(c);
     }
 
     @Override
     void updateLayout(int width) {
-      for(Category c : myCategories) c.updateLayout(width);
+      for (Category c : myCategories) c.updateLayout(width);
     }
 
     private int findCategoryIndex(Category c) {
       for (int i = 0; i < myCategories.size(); i++) {
-        if(myCategories.get(i) == c) return i;
+        if (myCategories.get(i) == c) return i;
       }
       return -1;
     }
-
   }
 
 
@@ -207,37 +212,42 @@ class EmojiListPanel extends JBScrollPane {
     private static final int NO_LABEL_PADDING = 12;
     private static final int LABEL_HEIGHT = 32;
     private EmojiCategory myCategory;
-    private final String myName;
+    @Nls private final String myName;
     private final Insets myPadding;
 
     private Category(EmojiCategory category) {
       myCategory = category;
-      myName = EmojiService.getInstance().findNameForCategory(category);
+      myName = EmojiCategoriesBundle.findNameForCategory(category);
       myPadding = JBUI.insets(myName == null ? NO_LABEL_PADDING : LABEL_HEIGHT, myHorizontalPadding, 8, myHorizontalPadding);
       MouseAdapter mouseAdapter = new MouseAdapter() {
         private int getItemIndexUnderCursor(Point point) {
-          if(point.x < myPadding.left || point.y < myPadding.top) return -1;
+          if (point.x < myPadding.left || point.y < myPadding.top) return -1;
           int x = xVisibleToGrid(point.x), y = yVisibleToGrid(point.y);
-          if(x >= myItemsPerRow || point.x > xGridToVisible(x) + myCellSize.width || point.y > yGridToVisible(y) + myCellSize.height) {
+          if (x >= myItemsPerRow || point.x > xGridToVisible(x) + myCellSize.width || point.y > yGridToVisible(y) + myCellSize.height) {
             return -1;
           }
           int index = myItemsPerRow * y + x;
           return index >= 0 && index < myCategory.getEmoji().size() ? index : -1;
         }
+
         private boolean setCurrentItemUnderCursor(Point point) {
           int item = getItemIndexUnderCursor(point);
-          if(item != -1) {
+          if (item != -1) {
             setCurrentItem(Category.this, item);
             return true;
           }
-          else return false;
+          else {
+            return false;
+          }
         }
+
         @Override
         public void mouseClicked(MouseEvent e) {
-          if(setCurrentItemUnderCursor(e.getPoint())) {
+          if (setCurrentItemUnderCursor(e.getPoint())) {
             selectCurrentEmoji();
           }
         }
+
         @Override
         public void mouseMoved(MouseEvent e) {
           setCurrentItemUnderCursor(e.getPoint());
@@ -250,12 +260,15 @@ class EmojiListPanel extends JBScrollPane {
     private int xVisibleToGrid(int x) {
       return (x - myPadding.left) / (myCellSize.width + myCellGaps.width);
     }
+
     private int yVisibleToGrid(int y) {
       return (y - myPadding.top) / (myCellSize.height + myCellGaps.height);
     }
+
     private int xGridToVisible(int x) {
       return x * (myCellSize.width + myCellGaps.width) + myPadding.left;
     }
+
     private int yGridToVisible(int y) {
       return y * (myCellSize.height + myCellGaps.height) + myPadding.top;
     }
@@ -277,21 +290,23 @@ class EmojiListPanel extends JBScrollPane {
     @Override
     public void paint(Graphics g) {
       super.paint(g);
-      ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
-      if(myName == null && myCategory.getEmoji().isEmpty()) paintNoEmojiFound(g);
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
+      if (myName == null && myCategory.getEmoji().isEmpty()) {
+        paintNoEmojiFound(g);
+      }
       else {
-        if(myItemsPerRow <= 0) return;
+        if (myItemsPerRow <= 0) return;
         paintSelection(g);
         paintItems(g);
-        if(myName != null) paintCategoryLabel(g);
+        if (myName != null) paintCategoryLabel(g);
       }
     }
 
     private void paintNoEmojiFound(Graphics g) {
-      if(g instanceof Graphics2D) {
+      if (g instanceof Graphics2D) {
         int x = (getWidth() - NO_EMOJI_FOUND_IMAGE.getWidth(this)) / 2;
         int y = (getHeight() - NO_EMOJI_FOUND_IMAGE.getHeight(this)) / 2;
-        Graphics2D g2 = (Graphics2D) g;
+        Graphics2D g2 = (Graphics2D)g;
         final Composite saveComposite = g2.getComposite();
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
         StartupUiUtil.drawImage(g, NO_EMOJI_FOUND_IMAGE, x, y, null);
@@ -299,14 +314,14 @@ class EmojiListPanel extends JBScrollPane {
       }
       g.setColor(myStyle.myNoEmojiFoundTextColor);
       g.setFont(myStyle.myLightFont);
-      String message = "No emoji found";
+      @Nls String message = EmojipickerBundle.message("message.EmojiPicker.NoEmojiFound");
       int x = (getWidth() - g.getFontMetrics().stringWidth(message)) / 2;
       int y = (getHeight() + NO_EMOJI_FOUND_IMAGE.getHeight(this)) / 2 + 25;
       g.drawString(message, x, y);
     }
 
     private void paintSelection(Graphics g) {
-      if(myCurrentItemCategory == this && myCurrentItemIndex != -1) {
+      if (myCurrentItemCategory == this && myCurrentItemIndex != -1) {
         int x = xGridToVisible(myCurrentItemIndex % myItemsPerRow);
         int y = yGridToVisible(myCurrentItemIndex / myItemsPerRow);
         g.setColor(myStyle.myHoverBackgroundColor);
@@ -317,18 +332,18 @@ class EmojiListPanel extends JBScrollPane {
     private void paintItems(Graphics g) {
       Rectangle bounds = g.getClipBounds();
       int from = yVisibleToGrid(bounds.y) * myItemsPerRow, to = yVisibleToGrid(bounds.y + bounds.height) * myItemsPerRow + myItemsPerRow;
-      if(from < 0) from = 0;
+      if (from < 0) from = 0;
       int itemCount = myCategory.getEmoji().size();
-      if(to > itemCount) to = itemCount;
-      if(from > to) from = to;
+      if (to > itemCount) to = itemCount;
+      if (from > to) from = to;
       FontMetrics metrics = g.getFontMetrics(myStyle.myEmojiFont);
       int verticalOffset = metrics.getHeight() / 2 - metrics.getDescent();
       for (int i = from; i < to; i++) {
         int x = xGridToVisible(i % myItemsPerRow), y = yGridToVisible(i / myItemsPerRow);
-        String item = myCategory.getEmoji().get(i).getTonedValue(myCurrentSkinTone);
+        @Nls String item = myCategory.getEmoji().get(i).getTonedValue(myCurrentSkinTone);
         int width = metrics.stringWidth(item);
-        new TextLayout(item, myStyle.myEmojiFont, ((Graphics2D) g).getFontRenderContext())
-          .draw((Graphics2D) g,x + (myCellSize.width - width) / 2F, y + myCellSize.height / 2F + verticalOffset);
+        new TextLayout(item, myStyle.myEmojiFont, ((Graphics2D)g).getFontRenderContext())
+          .draw((Graphics2D)g, x + (myCellSize.width - width) / 2F, y + myCellSize.height / 2F + verticalOffset);
       }
     }
 
@@ -340,8 +355,5 @@ class EmojiListPanel extends JBScrollPane {
       g.setColor(myStyle.myTextColor);
       g.drawString(myName, 16, offset + 20);
     }
-
   }
-
-
 }

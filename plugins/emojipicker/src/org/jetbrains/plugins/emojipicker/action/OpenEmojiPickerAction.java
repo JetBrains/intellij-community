@@ -27,12 +27,16 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
 
   private static Context getContext(AnActionEvent e, boolean findOnly) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if(editor != null) {
-      if(editor.isViewer()) return null;
-      if(findOnly) return Context.FOUND;
+    if (editor != null) {
+      if (editor.isViewer()) return null;
+      if (findOnly) return Context.FOUND;
       Consumer<String> input;
-      if(editor instanceof EditorImpl) input = ((EditorImpl) editor)::type;
-      else if(editor.getContentComponent() instanceof TypingTarget) input = ((TypingTarget) editor.getContentComponent())::type;
+      if (editor instanceof EditorImpl) {
+        input = ((EditorImpl)editor)::type;
+      }
+      else if (editor.getContentComponent() instanceof TypingTarget) {
+        input = ((TypingTarget)editor.getContentComponent())::type;
+      }
       else {
         input = s -> WriteCommandAction.writeCommandAction(editor.getProject()).run(() -> {
           com.intellij.openapi.editor.Document doc = editor.getDocument();
@@ -46,28 +50,29 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
     }
 
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if(component instanceof EmojiSearchField) {
+    if (component instanceof EmojiSearchField) {
       // Easy way to block recursive pickers
       return null;
     }
 
-    if(component instanceof TypingTarget) {
-      if(findOnly) return Context.FOUND;
+    if (component instanceof TypingTarget) {
+      if (findOnly) return Context.FOUND;
       return new Context(
-        ((TypingTarget) component)::type,
+        ((TypingTarget)component)::type,
         p -> p.showUnderneathOf(component)
       );
     }
 
-    if(component instanceof JTextComponent) {
-      if(findOnly) return Context.FOUND;
-      JTextComponent field = (JTextComponent) component;
+    if (component instanceof JTextComponent) {
+      if (findOnly) return Context.FOUND;
+      JTextComponent field = (JTextComponent)component;
       Document doc = field.getDocument();
       return new Context(
         s -> {
           try {
             doc.insertString(field.getCaretPosition(), s, null);
-          } catch (BadLocationException exception) {
+          }
+          catch (BadLocationException exception) {
             throw new RuntimeException(exception);
           }
         },
@@ -86,24 +91,21 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Context context = getContext(e, false);
-    if(context != null) {
+    if (context != null) {
       JBPopup popup = EmojiPicker.createPopup(e.getProject(), context.myInputCallback);
       context.myPopupShowCallback.accept(popup);
     }
   }
 
 
-
-
-
   private static class Context {
     private static final Context FOUND = new Context(null, null);
     private final Consumer<String> myInputCallback;
     private final Consumer<JBPopup> myPopupShowCallback;
+
     private Context(Consumer<String> inputCallback, Consumer<JBPopup> popupShowCallback) {
       myInputCallback = inputCallback;
       myPopupShowCallback = popupShowCallback;
     }
   }
-
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.emojipicker;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.Serializable;
@@ -9,9 +10,7 @@ import java.util.List;
 
 
 public class EmojiCategory implements Serializable {
-
-
-  private final String myId;
+  @NonNls private final String myId;
   private final List<Emoji> myEmoji;
   private transient Icon myIcon;
 
@@ -20,6 +19,7 @@ public class EmojiCategory implements Serializable {
     myEmoji = emojiList;
   }
 
+  @NonNls
   public String getId() {
     return myId;
   }
@@ -30,11 +30,9 @@ public class EmojiCategory implements Serializable {
 
   public Icon getIcon() {
     Icon icon = myIcon;
-    if(icon == null) {
+    if (icon == null) {
       myIcon = icon = IconLoader.getIcon("/icons/categories/" + myId + ".svg", EmojiCategory.class);
     }
     return icon;
   }
-
-
 }
