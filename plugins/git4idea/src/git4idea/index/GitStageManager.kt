@@ -3,13 +3,12 @@ package git4idea.index
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
-import com.intellij.openapi.vcs.impl.VcsInitObject
-import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.CommitWorkflowManager
@@ -32,9 +31,7 @@ internal class GitStageManager {
     }
   }
 
-  internal class GitStageStartupActivity : VcsStartupActivity {
-    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
-
+  internal class GitStageStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
       if (isStagingAreaAvailable(project)) {
         GitStageTracker.getInstance(project).scheduleUpdateAll()
