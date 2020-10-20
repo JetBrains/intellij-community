@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBScrollPane
@@ -106,9 +108,11 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     createComponent()?.revalidate()
   }
 
-  private abstract inner class ChangeRuntimeActionBase(protected val runtime: LanguageRuntimeConfiguration, text: String) : AnAction(text)
+  private abstract inner class ChangeRuntimeActionBase(protected val runtime: LanguageRuntimeConfiguration,
+                                                       @NlsActions.ActionText text: String) : AnAction(text)
 
-  private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Duplicate") {
+  private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration)
+    : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.duplicate.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       val copy = runtime.getRuntimeType().duplicateConfig(runtime)
       config.runtimes.addConfig(copy)
@@ -116,7 +120,8 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     }
   }
 
-  private inner class RemoveRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Remove") {
+  private inner class RemoveRuntimeAction(runtime: LanguageRuntimeConfiguration)
+    : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.remove.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       config.runtimes.removeConfig(runtime)
       forceRefreshUI()

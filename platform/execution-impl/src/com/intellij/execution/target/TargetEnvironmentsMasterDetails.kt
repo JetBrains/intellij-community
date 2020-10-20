@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -23,7 +24,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
     myTree.emptyText.text = "No targets added"
-    myTree.emptyText.appendSecondaryText("Add new target", SimpleTextAttributes.LINK_ATTRIBUTES) { _ ->
+    myTree.emptyText.appendSecondaryText(ExecutionBundle.message("targets.details.status.text.add.new.target"),
+                                         SimpleTextAttributes.LINK_ATTRIBUTES) { _ ->
       val popup = ActionManager.getInstance().createActionPopupMenu("TargetEnvironmentsConfigurable.EmptyListText", CreateNewTargetGroup())
       val size = myTree.emptyText.preferredSize
       val textY = myTree.height / if (myTree.emptyText.isShowAboveCenter) 3 else 2
@@ -33,10 +35,10 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
     myTree.emptyText.appendSecondaryText(" ($shortcutText)", StatusText.DEFAULT_ATTRIBUTES, null)
   }
 
-  override fun getDisplayName(): String = "Remote Targets"
+  override fun getDisplayName(): String = ExecutionBundle.message("targets.details.configurable.name.remote.targets")
 
   override fun getEmptySelectionString(): String? {
-    return "Select target to configure"
+    return ExecutionBundle.message("targets.details.status.text.select.target.to.configure")
   }
 
   override fun reset() {
@@ -125,7 +127,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
     }
   }
 
-  private inner class CreateNewTargetGroup : ActionGroup("Add", "", IconUtil.getAddIcon()),
+  private inner class CreateNewTargetGroup : ActionGroup(ExecutionBundle.message("targets.details.action.add.text"),
+                                                         "", IconUtil.getAddIcon()),
                                              ActionGroupWithPreselection, DumbAware {
     init {
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree)
@@ -142,7 +145,9 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
     }
   }
 
-  private inner class DuplicateAction : DumbAwareAction("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+  private inner class DuplicateAction : DumbAwareAction(ExecutionBundle.message("targets.details.action.duplicate.text"),
+                                                        ExecutionBundle.message("targets.details.action.duplicate.description"),
+                                                        PlatformIcons.COPY_ICON) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree)
     }
