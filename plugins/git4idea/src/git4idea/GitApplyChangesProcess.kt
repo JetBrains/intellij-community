@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -32,6 +33,7 @@ import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.i18n.GitBundle
+import git4idea.index.showStagingArea
 import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
@@ -180,7 +182,12 @@ class GitApplyChangesProcess(private val project: Project,
                      changeList: LocalChangeList,
                      successfulCommits: MutableList<VcsFullCommitDetails>,
                      alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    if (!changeListManager.areChangeListsEnabled()) return false
+    if (!changeListManager.areChangeListsEnabled()) {
+      runInEdt {
+        showStagingArea(project, commitMessage)
+      }
+      return false
+    }
 
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList == null) {
