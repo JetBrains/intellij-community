@@ -128,7 +128,7 @@ public final class ImageLoader {
                                                @Nullable List<ImageFilter> filters,
                                                @NotNull ClassLoader classLoader,
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                               ScaleContext scaleContext,
+                                               @NotNull ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
                                                long rasterizedCacheKey,
                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
