@@ -133,7 +133,16 @@ public class SettingsPage implements Configurable {
     }
 
     void reset() {
-      webBrowserList.setSelectedItem(Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")));
+      final String storedSelection = Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
+      int totalItems = webBrowserList.getItemCount();
+
+      for (int i = 0; i < totalItems; i++) {
+        if (webBrowserList.getItemAt(i).equals(storedSelection)) {
+          webBrowserList.setSelectedIndex(i);
+          break;
+        }
+      }
+
       openWebSite.setSelected(Boolean.valueOf(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
       baseUrl.setText(Utils.getStoredValue(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
       modified = false;
