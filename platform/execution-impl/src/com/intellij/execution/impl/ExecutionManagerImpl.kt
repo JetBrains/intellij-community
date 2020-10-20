@@ -596,6 +596,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         LOG.warn(t)
         promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
         processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
         val exitCode = if (promise.isSucceeded) 0 else -1
