@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.*
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.util.stream.Stream
@@ -76,7 +77,10 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     isKeepTreeState = true
     isScrollToSelection = false
     setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
-    addMouseMotionListener(MyMouseMotionListener())
+    MyMouseListener().also {
+      addMouseMotionListener(it)
+      addMouseListener(it)
+    }
     MyClickListener().installOn(this)
     MyDnDSupport().install(parentDisposable)
     settings.addListener(object : GitStageUiSettingsListener {
@@ -437,7 +441,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
   private data class FloatingIcon(val icon: Icon, val location: Int)
 
-  private inner class MyMouseMotionListener : MouseMotionListener {
+  private inner class MyMouseListener : MouseAdapter(), MouseMotionListener {
 
     override fun mouseMoved(e: MouseEvent?) {
       val hoverData = e?.let { getHoverData(it.point) }
@@ -451,6 +455,11 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       this@GitStageTree.hoverData = hoverData
       toolTipText = if (hoverData.isOverOperationIcon) hoverData.operation.actionText.get() else null
       expandableItemsHandler.isEnabled = !hoverData.isOverOperationIcon
+    }
+
+    override fun mouseExited(e: MouseEvent?) {
+      this@GitStageTree.hoverData = null
+      expandableItemsHandler.isEnabled = true
     }
 
     override fun mouseDragged(e: MouseEvent?) = Unit
