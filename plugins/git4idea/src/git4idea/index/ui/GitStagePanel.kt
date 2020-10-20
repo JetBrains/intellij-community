@@ -155,6 +155,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     }
   }
 
+  internal fun setCommitMessage(commitMessage: String) {
+    commitPanel.commitMessage.setCommitMessage(commitMessage)
+  }
+
   override fun dispose() {
   }
 
