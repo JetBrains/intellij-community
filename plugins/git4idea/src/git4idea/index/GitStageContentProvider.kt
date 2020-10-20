@@ -53,6 +53,8 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   companion object {
     @NonNls
     val STAGING_AREA_TAB_NAME = "Staging Area"
+
+    private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true
   }
 }
 
@@ -70,5 +72,3 @@ class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
 class GitStageDisplayNameSupplier : Supplier<String> {
   override fun get(): @Nls String = VcsBundle.message("tab.title.commit")
 }
-
-private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true
