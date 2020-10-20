@@ -227,6 +227,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract static class Modal extends Task {
     public Modal(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
+      //noinspection DialogTitleCapitalization
       super(project, title, canBeCancelled);
     }
 
@@ -298,7 +299,7 @@ public abstract class Task implements TaskInfo, Progressive {
     private final Ref<T> myResult = Ref.create();
     private final Ref<Throwable> myError = Ref.create();
 
-    public WithResult(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+    public WithResult(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 
