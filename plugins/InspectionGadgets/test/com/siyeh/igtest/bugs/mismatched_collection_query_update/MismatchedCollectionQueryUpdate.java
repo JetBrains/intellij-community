@@ -312,11 +312,31 @@ public class MismatchedCollectionQueryUpdate {
 
   void m(List l) {}
 
-  void initializeCollectionInsideMethodCall() {
+  void initializationInsideMethodCall() {
     HashMap<String, Map<String, String>> root = new HashMap<>();
     HashMap<String, String> child;
     root.put("A", child = new HashMap<>());
     child.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
+  void chainedInitializationInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child1;
+    HashMap<String, String> child2;
+    root.put("A", child1 = child2 = new HashMap<>());
+    child1.put("A", "B");
+    child2.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
+  void parenthesizedInitializationInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child1;
+    HashMap<String, String> child2;
+    root.put("A", ((child1 = ((child2 = ((new HashMap<>())))))));
+    child1.put("A", "B");
+    child2.put("A", "B");
     root.forEach((key, value) -> System.out.println(key + ": " + value));
   }
 
