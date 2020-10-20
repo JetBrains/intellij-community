@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.xdebugger.frame.*;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
-public class JavaReferringObjectsValue extends JavaValue {
+public class JavaReferringObjectsValue extends JavaValue implements XReferrersProvider.ShortestPathAware {
   private static final long MAX_REFERRING = 100;
   private final ReferringObjectsProvider myReferringObjectsProvider;
   private final Function<? super XValueNode, ? extends XValueNode> myNodeConfigurator;
@@ -54,6 +55,11 @@ public class JavaReferringObjectsValue extends JavaValue {
         return new JavaReferringObjectsValue(JavaReferringObjectsValue.this, myReferringObjectsProvider, null);
       }
     };
+  }
+
+  @Override
+  public boolean isShortestPathAvailable() {
+    return myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider;
   }
 
   @Override
