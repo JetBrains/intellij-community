@@ -34,8 +34,20 @@ public interface IconManager {
 
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
+  /**
+   * Path must be specified without a leading slash, in a format for {@link ClassLoader#getResourceAsStream(String)}
+   */
   @ApiStatus.Internal
-  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags);
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags);
+
+  /**
+   * @deprecated Method just for backward compatibility (old generated icon classes).
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
+    return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
+  }
 
   @NotNull
   default Icon createEmptyIcon(@NotNull Icon icon) {
@@ -113,7 +125,7 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
     return DummyIcon.INSTANCE;
   }
 

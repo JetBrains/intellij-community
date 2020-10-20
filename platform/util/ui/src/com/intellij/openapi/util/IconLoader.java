@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -217,23 +218,91 @@ public final class IconLoader {
       classLoader = patchedPath.second;
     }
 
-    ImageDataLoader resolver = new ImageDataResolverImpl(effectivePath, null, classLoader, null, false) {
-      @Override
-      public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
-        // do not use cache
-        int flags = ImageLoader.ALLOW_FLOAT_SCALING;
-        if (isDark) {
-          flags |= ImageLoader.USE_DARK;
-        }
-        assert overriddenPath != null;
-        assert classLoader != null;
-        return ImageLoader.loadRasterized(overriddenPath, filters, classLoader, flags, scaleContext, cacheKey == 0, cacheKey, imageFlags);
-      }
-    };
+    ImageDataLoader resolver = new ImageDataByClassloaderResolver(effectivePath, classLoader, cacheKey, imageFlags);
     if (startTime != -1) {
       IconLoadMeasurer.findIcon.end(startTime);
     }
     return resolver;
+  }
+
+  private static final class ImageDataByClassloaderResolver implements ImageDataLoader {
+    private final WeakReference<ClassLoader> classLoaderRef;
+    private final long cacheKey;
+    private final int imageFlags;
+    private final String path;
+
+    ImageDataByClassloaderResolver(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+      this.path = path;
+      classLoaderRef = new WeakReference<>(classLoader);
+      this.cacheKey = cacheKey;
+      this.imageFlags = imageFlags;
+    }
+
+    @Override
+    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+      // do not use cache
+      int flags = ImageLoader.ALLOW_FLOAT_SCALING;
+      if (isDark) {
+        flags |= ImageLoader.USE_DARK;
+      }
+      ClassLoader classLoader = classLoaderRef.get();
+      if (classLoader == null) {
+        return null;
+      }
+      return ImageLoader.loadRasterized(path, filters, classLoader, flags, scaleContext, cacheKey == 0, cacheKey, imageFlags);
+    }
+
+    @Override
+    public @Nullable URL getURL() {
+      ClassLoader classLoader = classLoaderRef.get();
+      return classLoader == null ? null : classLoader.getResource(path);
+    }
+
+    @Override
+    public @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+      ClassLoader classLoader = classLoaderRef.get();
+      return classLoader == null ? null : createNewResolverIfNeeded(classLoader, originalPath, transform);
+    }
+
+    @Override
+    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
+      return classLoaderRef.get() == classLoader;
+    }
+
+    @Override
+    public String toString() {
+      return "ImageDataByClassloaderResolver(" +
+             ", classLoader=" + classLoaderRef.get() +
+             ", path='" + path + '\'' +
+             ')';
+    }
+  }
+
+  private @Nullable static ImageDataResolverImpl createNewResolverIfNeeded(@Nullable ClassLoader originalClassLoader,
+                                                                           @NotNull String originalPath,
+                                                                           @NotNull IconTransform transform) {
+    Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, originalClassLoader);
+    if (patchedPath == null) {
+      return null;
+    }
+
+    ClassLoader classLoader = patchedPath.second == null ? originalClassLoader : patchedPath.second;
+    String path = patchedPath.first;
+    if (path != null && path.startsWith("/")) {
+      return new ImageDataResolverImpl(path.substring(1), null, classLoader, HandleNotFound.IGNORE, false);
+    }
+
+    // This use case for temp themes only. Here we want immediately replace existing icon to a local one
+    if (path != null && path.startsWith("file:/")) {
+      try {
+        ImageDataResolverImpl resolver = new ImageDataResolverImpl(new URL(path), path.substring(1), classLoader, false);
+        resolver.resolve();
+        return resolver;
+      }
+      catch (MalformedURLException ignore) {
+      }
+    }
+    return null;
   }
 
   public static void activate() {
@@ -1171,31 +1240,7 @@ public final class IconLoader {
 
     @Override
     public final @Nullable IconLoader.ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
-      if (patchedPath == null) {
-        return null;
-      }
-
-      ClassLoader classLoader = patchedPath.second == null ? this.classLoader : patchedPath.second;
-      String path = patchedPath.first;
-      if (classLoader != null && path != null && path.startsWith("/")) {
-        ImageDataResolverImpl resolver = new ImageDataResolverImpl(path.substring(1), null, classLoader, handleNotFound, useCacheOnLoad);
-        resolver.resolve();
-        return resolver;
-      }
-
-      // This use case for temp themes only. Here we want immediately replace existing icon to a local one
-      if (path != null && path.startsWith("file:/")) {
-        try {
-          ImageDataResolverImpl resolver = new ImageDataResolverImpl(new URL(path), path.substring(1), classLoader, useCacheOnLoad);
-          resolver.resolve();
-          return resolver;
-        }
-        catch (MalformedURLException ignore) {
-        }
-      }
-
-      return null;
+      return createNewResolverIfNeeded(classLoader, originalPath, transform);
     }
 
     @Override
@@ -1215,11 +1260,10 @@ public final class IconLoader {
     }
   }
 
-  static @Nullable URL doResolve(@Nullable String overriddenPath,
+  static @Nullable URL doResolve(@Nullable String path,
                                  @Nullable ClassLoader classLoader,
                                  @Nullable Class<?> ownerClass,
                                  @NotNull HandleNotFound handleNotFound) {
-    String path = overriddenPath;
     URL url = null;
     if (path != null) {
       if (classLoader != null) {
