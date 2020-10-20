@@ -43,6 +43,9 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
         val matched = m.matches(project, file, mode)
         if (matched != null) return matched
       }
+
+      if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
+
       val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file)
                         || FileIndexFacade.getInstance(project).isInLibrarySource(file)
       val isWritable = file.isWritable
@@ -63,7 +66,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     @get:ReportValue var increaseLineSpacing by property(false)
     @get:ReportValue var showRenderedDocs by property(true)
     @get:ReportValue var showInlayHints by property(true)
-    @get:ReportValue var showWarnings by property(true)
+    @get:ReportValue var showWarnings by property(false)
     @get:ReportValue var enabled by property(Experiments.getInstance().isFeatureEnabled("editor.reader.mode"))
 
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
