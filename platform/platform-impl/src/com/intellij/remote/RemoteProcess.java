@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Koshevoy
  */
 public abstract class RemoteProcess extends Process implements SelfKiller {
+  //Emulate pid for UnixProcessManager.getProcessId
+  @SuppressWarnings("unused") private static final int pid = -1;
+
   public abstract boolean killProcessTree();
 
   public abstract boolean isDisconnected();
