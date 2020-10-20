@@ -1,9 +1,0 @@
-apply plugin: 'java'
-
-ext {
-  depVersion = '1.0'
-}
-dependencies {
-  implementation group: 'group', name: 'artifact', version: "${depVersion}"
-  implementation group: 'another', name: 'artifact', version: depVersion
-}

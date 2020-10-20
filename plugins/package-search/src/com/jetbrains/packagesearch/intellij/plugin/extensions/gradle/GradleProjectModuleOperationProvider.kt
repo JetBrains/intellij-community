@@ -13,10 +13,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOpera
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
-import com.intellij.buildsystem.model.OperationFailure
-import com.intellij.buildsystem.model.OperationItem
-import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
+import com.jetbrains.packagesearch.patchers.buildsystem.OperationItem
+import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependency
+import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 

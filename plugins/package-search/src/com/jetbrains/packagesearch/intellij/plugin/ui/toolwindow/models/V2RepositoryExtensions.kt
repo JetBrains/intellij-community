@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.api.model.V2Repository
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
 
 fun V2Repository?.asList() =
     if (this != null) {
