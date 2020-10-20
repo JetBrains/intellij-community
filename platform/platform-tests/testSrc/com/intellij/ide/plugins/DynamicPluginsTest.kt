@@ -182,6 +182,7 @@ class DynamicPluginsTest {
 
   @Test
   fun loadOptionalDependency() {
+    val beforeList = PluginManagerCore.getLoadedPlugins()
     val plugin2Builder = PluginBuilder().randomId("bar")
     val plugin1Disposable = loadPluginWithOptionalDependency(
       PluginBuilder().randomId("foo"),
@@ -201,6 +202,8 @@ class DynamicPluginsTest {
     finally {
       Disposer.dispose(plugin1Disposable)
     }
+
+    assertThat(PluginManagerCore.getLoadedPlugins()).isEqualTo(beforeList)
   }
 
   @Test

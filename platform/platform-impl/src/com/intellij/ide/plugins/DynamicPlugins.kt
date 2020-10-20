@@ -15,7 +15,6 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
@@ -55,7 +54,6 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -73,6 +71,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.ref.GCWatcher
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.awt.Window
@@ -436,8 +435,14 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, options: UnloadPluginOptions = UnloadPluginOptions()): Boolean {
+  fun unloadPlugin(fullyLoadedPluginDescriptor: IdeaPluginDescriptorImpl, options: UnloadPluginOptions = UnloadPluginOptions()): Boolean {
     val app = ApplicationManager.getApplication() as ApplicationImpl
+    val pluginId = fullyLoadedPluginDescriptor.pluginId
+
+    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
+    // We need to find the real plugin loaded into the current instance and unload its classloader.
+    val pluginDescriptor = PluginManagerCore.getPlugin(pluginId) as? IdeaPluginDescriptorImpl
+                           ?: return false
 
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor) { loadedDescriptor, fullDescriptor ->
@@ -447,11 +452,6 @@ object DynamicPlugins {
         true
       }
     }
-
-    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
-    // We need to find the real plugin loaded into the current instance and unload its classloader.
-    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl
-                                 ?: return false
 
     var forbidGettingServicesToken: AccessToken? = null
     var classLoaderUnloaded: Boolean
@@ -464,33 +464,37 @@ object DynamicPlugins {
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
       // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
-      forbidGettingServicesToken = app.forbidGettingServices("Plugin ${pluginDescriptor.pluginId} being unloaded.")
+      forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
 
       app.runWriteAction {
         try {
-          processLoadedOptionalDependenciesOnPlugin(pluginDescriptor.pluginId) { subDescriptor ->
+          processLoadedOptionalDependenciesOnPlugin(pluginId) { subDescriptor ->
+            // must be before unloadPluginDescriptorNotRecursively as this method nullize classloader
+            val classLoader = subDescriptor.pluginClassLoader as? PluginClassLoader
             unloadPluginDescriptorNotRecursively(subDescriptor)
 
             var detached: Boolean? = false
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
-              detached = (subDescriptor.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
+            if (pluginDescriptor.pluginClassLoader is PluginClassLoader) {
+              detached = classLoader?.detachParent(pluginDescriptor.pluginClassLoader)
             }
             if (detached != true) {
-              LOG.info("Failed to detach classloader of ${loadedPluginDescriptor.pluginId} from classloader of ${subDescriptor.pluginId}")
+              LOG.info("Failed to detach classloader of $pluginId from classloader of ${subDescriptor.pluginId}")
             }
             true
           }
 
-          if (!pluginDescriptor.isUseIdeaClassLoader && loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
-            IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
-            Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
+          if (pluginDescriptor.pluginClassLoader is PluginClassLoader) {
+            IconLoader.detachClassLoader(pluginDescriptor.pluginClassLoader)
+            Language.unregisterLanguages(pluginDescriptor.pluginClassLoader)
           }
 
-          unloadDependencyDescriptors(pluginDescriptor, PluginStateChecker())
+          pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker()) }
           unloadPluginDescriptorNotRecursively(pluginDescriptor)
 
+          app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
-            (project.getServiceIfCreated(CachedValuesManager::class.java) as CachedValuesManagerImpl?)?.clearCachedValues()
+            (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
+            (project.serviceIfCreated<CachedValuesManager>() as CachedValuesManagerImpl?)?.clearCachedValues()
           }
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
@@ -505,17 +509,14 @@ object DynamicPlugins {
           serviceIfCreated<IconDeferrer>()?.clearCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
-          val projectManager = ProjectManagerEx.getInstanceExIfCreated()
-          if (projectManager != null) {
-            (projectManager as ProjectManagerImpl).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
-          }
+          (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
           if (options.disable) {
             // update list of disabled plugins
             PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asList())
           }
           else {
-            PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().minus(loadedPluginDescriptor).toList())
+            PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().minus(pluginDescriptor).toList())
           }
         }
         finally {
@@ -536,49 +537,51 @@ object DynamicPlugins {
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
       clearTemporaryLostComponent()
 
-      if (app.isUnitTestMode && loadedPluginDescriptor.pluginClassLoader !is PluginClassLoader) {
-        @Suppress("ReturnInsideFinallyBlock")
-        return true
-      }
-
-      classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] = loadedPluginDescriptor.pluginClassLoader as? PluginClassLoader
-      val checkClassLoaderUnload = options.waitForClassloaderUnload || Registry.`is`("ide.plugins.snapshot.on.unload.fail") || options.requireMemorySnapshot
-      val timeout = if (checkClassLoaderUnload) {
-        options.unloadWaitTimeout ?: Registry.intValue("ide.plugins.unload.timeout", 5000)
+      if (app.isUnitTestMode && pluginDescriptor.pluginClassLoader !is PluginClassLoader) {
+        classLoaderUnloaded = true
       }
       else {
-        0
-      }
-      classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(timeout)
-      if (classLoaderUnloaded) {
-        LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (classloader unload checked=$checkClassLoaderUnload)")
-        classloadersFromUnloadedPlugins.remove(pluginDescriptor.pluginId)
-      }
-      else {
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        if ((options.requireMemorySnapshot || (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !app.isUnitTestMode)) &&
-            MemoryDumpHelper.memoryDumpAvailable()) {
-          classLoaderUnloaded = saveMemorySnapshot(pluginDescriptor.pluginId)
+        classloadersFromUnloadedPlugins.put(pluginId, pluginDescriptor.pluginClassLoader as? PluginClassLoader)
+        val checkClassLoaderUnload = options.waitForClassloaderUnload || Registry.`is`(
+          "ide.plugins.snapshot.on.unload.fail") || options.requireMemorySnapshot
+        val timeout = if (checkClassLoaderUnload) {
+          options.unloadWaitTimeout ?: Registry.intValue("ide.plugins.unload.timeout", 5000)
         }
         else {
-          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
+          0
         }
-      }
 
-      val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
-      val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(loadedPluginDescriptor))
-      @Suppress("DEPRECATION")
-      FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
+        classLoaderUnloaded = unloadClassLoader(pluginDescriptor, timeout)
+        if (classLoaderUnloaded) {
+          LOG.info("Successfully unloaded plugin $pluginId (classloader unload checked=$checkClassLoaderUnload)")
+          classloadersFromUnloadedPlugins.remove(pluginId)
+        }
+        else {
+          InstalledPluginsState.getInstance().isRestartRequired = true
+          if ((options.requireMemorySnapshot || (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !app.isUnitTestMode)) &&
+              MemoryDumpHelper.memoryDumpAvailable()) {
+            classLoaderUnloaded = saveMemorySnapshot(pluginId)
+          }
+          else {
+            LOG.info("Plugin $pluginId is not unload-safe because class loader cannot be unloaded")
+          }
+        }
+
+        val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
+        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
+        @Suppress("DEPRECATION")
+        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
+      }
     }
     return classLoaderUnloaded
   }
 
-  private fun unloadDependencyDescriptors(pluginDescriptor: IdeaPluginDescriptorImpl, pluginStateChecker: PluginStateChecker) {
-    for (dependency in (pluginDescriptor.pluginDependencies ?: return)) {
+  private fun unloadDependencyDescriptors(pluginDependencies: List<PluginDependency>, pluginStateChecker: PluginStateChecker) {
+    for (dependency in pluginDependencies) {
+      val subDescriptor = dependency.subDescriptor ?: continue
       if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
-        val subDescriptor = dependency.subDescriptor ?: continue
         unloadPluginDescriptorNotRecursively(subDescriptor)
-        unloadDependencyDescriptors(subDescriptor, pluginStateChecker)
+        unloadDependencyDescriptors(subDescriptor.pluginDependencies ?: continue, pluginStateChecker)
       }
     }
   }
@@ -617,11 +620,6 @@ object DynamicPlugins {
     unregisterUnknownLevelExtensions(pluginDescriptor.module.extensions, pluginDescriptor, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
 
-    appExtensionArea.clearUserCache()
-    for (project in openedProjects) {
-      (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
-    }
-
     for (priorityUnloadListener in priorityUnloadListeners) {
       priorityUnloadListener.run()
     }
@@ -652,17 +650,17 @@ object DynamicPlugins {
       val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
-        Disposer.disposeChildren(module, createDisposeTreePredicate(pluginId))
+        createDisposeTreePredicate(pluginDescriptor)?.let { Disposer.disposeChildren(module, it) }
       }
 
-      Disposer.disposeChildren(project, createDisposeTreePredicate(pluginId))
+      createDisposeTreePredicate(pluginDescriptor)?.let { Disposer.disposeChildren(project, it) }
     }
 
     appMessageBus.disconnectPluginConnections(Predicate { aClass ->
       (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor == pluginDescriptor
     })
 
-    Disposer.disposeChildren(ApplicationManager.getApplication(), createDisposeTreePredicate(pluginId))
+    createDisposeTreePredicate(pluginDescriptor)?.let { Disposer.disposeChildren(ApplicationManager.getApplication(), it) }
   }
 
   private fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<Element>>?,
@@ -945,14 +943,14 @@ private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
   }
 }
 
-private fun createDisposeTreePredicate(pluginId: PluginId): Predicate<Disposable> {
+private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
+  val classLoader = pluginDescriptor.classLoader as? PluginClassLoader ?: return null
   return Predicate {
     if (it is PluginManager.PluginAwareDisposable) {
-      it.pluginId == pluginId
+      it.classLoaderId == classLoader.instanceId
     }
     else {
-      val classLoader = it::class.java.classLoader
-      classLoader is PluginAwareClassLoader && classLoader.pluginId == pluginId
+      it::class.java.classLoader == classLoader
     }
   }
 }
@@ -1087,4 +1085,15 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
 
 private fun findContainerExtensionPoint(containerDescriptor: ContainerDescriptor, epName: String): ExtensionPointImpl<*>? {
   return containerDescriptor.extensionPoints?.find { it.name == epName }
+}
+
+private fun unloadClassLoader(pluginDescriptor: IdeaPluginDescriptorImpl, timeoutMs: Int): Boolean {
+  if (timeoutMs == 0) {
+    pluginDescriptor.classLoader = null
+    return true
+  }
+
+  val watcher = GCWatcher.tracking(pluginDescriptor.classLoader)
+  ClassLoaderConfigurator.setPluginClassLoaderForMainAndSubPlugins(pluginDescriptor, null)
+  return watcher.tryCollect(timeoutMs)
 }

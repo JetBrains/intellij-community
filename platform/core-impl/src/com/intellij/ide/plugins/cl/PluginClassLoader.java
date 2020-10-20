@@ -34,6 +34,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     }
   }
 
+  private static final AtomicInteger instanceIdProducer = new AtomicInteger();
+
   private ClassLoader[] myParents;
   private final PluginDescriptor myPluginDescriptor;
   private final List<String> myLibDirectories;
@@ -46,6 +48,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   // to simplify analyzing of heap dump (dynamic plugin reloading)
   private final PluginId pluginId;
+
+
+  private final int instanceId;
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
@@ -60,6 +65,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                            @Nullable Path pluginRoot,
                            @Nullable ClassLoader coreLoader) {
     super(builder);
+
+    instanceId = instanceIdProducer.incrementAndGet();
 
     myParents = parents;
     myPluginDescriptor = pluginDescriptor;
@@ -78,6 +85,11 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         myLibDirectories.add(libDir.toAbsolutePath().toString());
       }
     }
+  }
+
+  @Override
+  public int getInstanceId() {
+    return instanceId;
   }
 
   @Override

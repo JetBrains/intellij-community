@@ -265,12 +265,12 @@ public final class PluginManager {
       return Disposer.newDisposable();
     }
 
-    PluginId pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
+    int classLoaderId = ((PluginAwareClassLoader)classLoader).getInstanceId();
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new PluginAwareDisposable() {
       @Override
-      public @NotNull PluginId getPluginId() {
-        return pluginId;
+      public int getClassLoaderId() {
+        return classLoaderId;
       }
 
       @Override
@@ -285,6 +285,6 @@ public final class PluginManager {
   }
 
   interface PluginAwareDisposable extends Disposable {
-    @NotNull PluginId getPluginId();
+    int getClassLoaderId();
   }
 }

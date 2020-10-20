@@ -210,7 +210,7 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  private static void setPluginClassLoaderForMainAndSubPlugins(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @Nullable ClassLoader classLoader) {
+  static void setPluginClassLoaderForMainAndSubPlugins(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @Nullable ClassLoader classLoader) {
     rootDescriptor.setClassLoader(classLoader);
     for (PluginDependency dependency : rootDescriptor.getPluginDependencies()) {
       if (dependency.subDescriptor != null) {
