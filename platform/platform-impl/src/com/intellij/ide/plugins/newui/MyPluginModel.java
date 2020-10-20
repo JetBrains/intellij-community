@@ -201,6 +201,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void clear(@Nullable JComponent parentComponent) {
+    cancel(parentComponent);
+
+    updateAfterEnableDisable();
+  }
+
+  public void cancel(@Nullable JComponent parentComponent) {
+    myDiff.forEach((key, value) -> setEnabled(key.getPluginId(), value));
     myDiff.clear();
 
     myPluginsToRemoveOnCancel.forEach(pluginDescriptor -> PluginInstaller.uninstallDynamicPlugin(parentComponent, pluginDescriptor, false));

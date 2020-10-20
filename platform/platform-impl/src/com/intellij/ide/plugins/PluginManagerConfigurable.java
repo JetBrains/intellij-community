@@ -1662,7 +1662,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void cancel() {
-    reset();
+    myPluginModel.cancel(myCardPanel);
   }
 
   @Override
