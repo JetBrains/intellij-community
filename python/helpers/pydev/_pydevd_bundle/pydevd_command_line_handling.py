@@ -62,6 +62,7 @@ ACCEPTED_ARG_HANDLERS = [
     ArgHandlerBool('print-in-debugger-startup'),
     ArgHandlerBool('cmd-line'),
     ArgHandlerBool('module'),
+    ArgHandlerBool('help'),
 ]
 
 ARGV_REP_TO_HANDLER = {}
