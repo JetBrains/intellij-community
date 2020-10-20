@@ -808,7 +808,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
    * @see #isEnabled(PluginId, Map)
    */
   private @NotNull PluginEnabledState getState(@NotNull PluginId pluginId) {
-    return getEnabledMap().getOrDefault(pluginId, PluginEnabledState.ENABLED);
+    PluginEnabledState state = getEnabledMap().get(pluginId);
+    return state != null ? state : PluginEnabledState.ENABLED;
   }
 
   public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins,
