@@ -1,13 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
@@ -20,40 +16,20 @@ import com.intellij.vcs.commit.CommitWorkflowManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
-internal class GitStageManager(private val project: Project) : Disposable {
-  fun installListeners() {
-    stageLocalChangesRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-      }
-    }, this)
-    stageLineStatusTrackerRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-      }
-    }, this)
-  }
-
-  @RequiresEdt
-  private fun onAvailabilityChanged() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-
-    if (isStagingAreaAvailable(project)) {
-      GitStageTracker.getInstance(project).scheduleUpdateAll()
-    }
-    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
-    // Notify LSTM after CLM to let it save current partial changelists state
-    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-  }
-
-  override fun dispose() {
-  }
-
+internal class GitStageManager {
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): GitStageManager = project.service()
+    @RequiresEdt
+    private fun onAvailabilityChanged(project: Project) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+
+      if (isStagingAreaAvailable(project)) {
+        GitStageTracker.getInstance(project).scheduleUpdateAll()
+      }
+      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+      ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+      // Notify LSTM after CLM to let it save current partial changelists state
+      ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+    }
   }
 
   internal class GitStageStartupActivity : VcsStartupActivity {
@@ -63,19 +39,18 @@ internal class GitStageManager(private val project: Project) : Disposable {
       if (isStagingAreaAvailable(project)) {
         GitStageTracker.getInstance(project).scheduleUpdateAll()
       }
-      getInstance(project).installListeners()
     }
   }
 
-  class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
+  internal class StagingSettingsListener(val project: Project) : GitStagingAreaSettingsListener {
     override fun settingsChanged() {
-      getInstance(project).onAvailabilityChanged()
+      onAvailabilityChanged(project)
     }
   }
 
-  class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
+  internal class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
     override fun settingsChanged() {
-      getInstance(project).onAvailabilityChanged()
+      onAvailabilityChanged(project)
     }
   }
 }
