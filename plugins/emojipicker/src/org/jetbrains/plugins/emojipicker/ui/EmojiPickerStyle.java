@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 
 
 class EmojiPickerStyle {
-
   final Font myFont = JBUI.Fonts.label().deriveFont(Font.BOLD, JBUIScale.scale(13F));
   final Font myLightFont = myFont.deriveFont(Font.PLAIN);
   final Font myEmojiFont = Stream.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
@@ -28,5 +27,4 @@ class EmojiPickerStyle {
   final Color myFocusBorderColor = new JBColor(0x97C3F3, 0x97C3F3);
   final Color myTextColor = JBUI.CurrentTheme.Label.foreground();
   final Color myNoEmojiFoundTextColor = new JBColor(0x808080, 0xBBBBBB);
-
 }
