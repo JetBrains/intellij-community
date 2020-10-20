@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.io.TempDir
 import java.io.*
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.*
@@ -35,7 +35,6 @@ open class ProcessMediatorTest {
 
   private lateinit var client: ProcessMediatorClient
   private lateinit var daemon: ProcessMediatorDaemon
-  private lateinit var tmpDir: Path
 
   protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
@@ -56,12 +55,10 @@ open class ProcessMediatorTest {
     daemon = createProcessMediatorDaemon(testInfo)
     val channel = daemon.createChannel()
     client = ProcessMediatorClient(coroutineScope, channel)
-    tmpDir = Files.createTempDirectory("")
   }
 
   @AfterEach
   fun tearDown() {
-    FileUtil.delete(tmpDir)
     val watchdogJob = coroutineScope.launch {
       delay(TIMEOUT_MS)
       deferred.completeExceptionally(TimeoutException("tearDown() timed out"))
@@ -266,7 +263,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `input redirect`() {
+  internal fun `input redirect`(@TempDir tmpDir: Path) {
     val content = "test data"
     val inputFile = File(tmpDir.toFile(), "input.txt")
     inputFile.writeText(content)
@@ -292,7 +289,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `output redirect`() {
+  internal fun `output redirect`(@TempDir tmpDir: Path) {
     val outputFile = File(tmpDir.toFile(), "output.txt")
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
       .redirectOutput(outputFile)
@@ -316,7 +313,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `error redirect`() {
+  internal fun `error redirect`(@TempDir tmpDir: Path) {
     val errorFile = File(tmpDir.toFile(), "error.txt")
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
       .apply { command().add("with_stderr") }
