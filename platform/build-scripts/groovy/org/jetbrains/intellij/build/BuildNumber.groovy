@@ -46,7 +46,7 @@ final class BuildNumber implements Comparable<BuildNumber> {
       }
       builder.append('.')
     }
-    if (builder.charAt(builder.length() - 1) == '.') {
+    if (builder.charAt(builder.length() - 1) == '.' as char) {
       builder.setLength(builder.length() - 1)
     }
     return builder.toString()
@@ -152,7 +152,7 @@ final class BuildNumber implements Comparable<BuildNumber> {
 
     BuildNumber that = (BuildNumber)o
 
-    if (!myProductCode.equals(that.myProductCode)) return false
+    if (myProductCode != that.myProductCode) return false
     return Arrays.equals(myComponents, that.myComponents)
   }
 
