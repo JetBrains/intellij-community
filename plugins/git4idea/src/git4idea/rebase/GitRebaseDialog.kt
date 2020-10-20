@@ -178,7 +178,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun findRef(refName: String): GitReference? {
-    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName }
+    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName || ref.fullName == refName }
     return localBranches.find(predicate)
            ?: remoteBranches.find(predicate)
            ?: getTags().find(predicate)
