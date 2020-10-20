@@ -438,7 +438,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myExpandedFirstMessage.set(true);
       Runnable finalSelectErrorTask = selectErrorNodeTask;
       myTreeModel.invalidate(getRootElement(), true).onProcessed(p -> finalSelectErrorTask.run());
-    } else {
+    }
+    else {
       if (isMessageEvent && myExpandedFirstMessage.compareAndSet(false, true)) {
         ExecutionNode finalCurrentNode = currentNode;
         myTreeModel.invalidate(getRootElement(), false).onProcessed(p -> {
@@ -699,7 +700,18 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
 
-      relativePath = isEmpty(parentsPath) ? filePath : getRelativePath(parentsPath, filePath);
+      if (isEmpty(parentsPath)) {
+        File userHomeDir = new File(SystemProperties.getUserHome());
+        if (FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
+          relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
+        }
+        else {
+          relativePath = filePath;
+        }
+      }
+      else {
+        relativePath = getRelativePath(parentsPath, filePath);
+      }
       Path path = Paths.get(relativePath);
       String nodeName = path.getFileName().toString();
       Path pathParent = path.getParent();
