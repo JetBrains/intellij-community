@@ -35,8 +35,11 @@ class ElevationService : Disposable {
     val channel = daemon.createChannel()
     val elevatorClient = ProcessMediatorClient(coroutineScope, channel)
 
-    val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).also {
-      ElevationLogger.LOG.debug("Created process PID ${it.pid()}")
+    val process = MediatedProcess.create(elevatorClient, commandLine.toProcessBuilder()).apply {
+      onExit().whenComplete { _, _ ->
+        elevatorClient.close()
+      }
+      ElevationLogger.LOG.debug("Created process PID ${pid()}")
     }
     return object : OSProcessHandler(process, commandLine.commandLineString, commandLine.charset) {
       override fun readerOptions(): BaseOutputReader.Options {
