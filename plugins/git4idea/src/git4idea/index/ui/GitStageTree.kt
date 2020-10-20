@@ -401,8 +401,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
       val treeFocused = tree.hasFocus()
-      val backgroundColor = if (selected) UIUtil.getTreeBackground(selected, treeFocused)
-                            else tree.getPathBackground(tree.getPathForRow(row), row)
+      val path = tree.getPathForRow(row)
+      val backgroundColor = if (selected || path == null) UIUtil.getTreeBackground(selected, treeFocused)
+                            else tree.getPathBackground(path, row)
                                  ?: UIUtil.getTreeBackground(selected, treeFocused)
       val background = ColorIcon(foreground.iconWidth, tree.getRowHeight(), foreground.iconWidth, tree.getRowHeight(),
                                  backgroundColor, false)
