@@ -129,6 +129,12 @@ public class SensitiveDataValidator {
     return myRulesStorage;
   }
 
+  public boolean isGroupAllowed(@NotNull EventLogGroup group) {
+    if (TestModeValidationRule.isTestModeEnabled()) return true;
+    if (myRulesStorage.isUnreachable()) return true;
+    return myRulesStorage.getGroupRules(group.getId()) != null;
+  }
+
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
