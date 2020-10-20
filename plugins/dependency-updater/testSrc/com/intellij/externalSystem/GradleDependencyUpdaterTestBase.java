@@ -10,6 +10,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -48,14 +49,14 @@ public class GradleDependencyUpdaterTestBase extends GradleImportingTestCase {
   protected void assertScriptChanged() throws IOException {
     File expected = new File(myTestDataDir, "expected/" + getTestName(true) + myTestDataExtension);
     String expectedData = FileUtil.loadFile(expected, "UTF-8");
-    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), "UTF-8");
+    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
     assertSameLines(expectedData, actualData);
   }
 
   protected void assertScriptNotChanged() throws IOException {
     File expected = new File(myTestDataDir, "projects/" + getTestName(true) + myTestDataExtension);
     String expectedData = FileUtil.loadFile(expected, "UTF-8");
-    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), "UTF-8");
+    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
     assertSameLines(expectedData, actualData);
   }
 
