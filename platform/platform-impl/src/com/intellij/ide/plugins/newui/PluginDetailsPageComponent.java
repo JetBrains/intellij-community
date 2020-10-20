@@ -98,6 +98,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private ListPluginComponent myShowComponent;
   private boolean myRequiresRestart = true;
+  private boolean myPluginIsRequired = false;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -458,6 +459,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myPluginModel.appendOrUpdateDescriptor(descriptor);
         myRequiresRestart = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) != null;
       }
+
+      myPluginIsRequired = myPluginModel.isRequiredPlugin(myPlugin);
     }
 
     return super.select(key, now);
@@ -875,7 +878,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null);
+                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null) ||
+                          !myNewState.isEnabled() && myPluginIsRequired;
       e.getPresentation().setVisible(!invisible);
     }
   }
