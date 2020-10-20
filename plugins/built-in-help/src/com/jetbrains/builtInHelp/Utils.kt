@@ -18,6 +18,7 @@ class Utils {
     private val secureKey = CredentialAttributes("Web Help Bundle")
 
     @JvmStatic
+    @NonNls
     fun getStoredValue(key: SettingsPage.SettingKey, default: String): String {
       if (!key.second) {
         return PropertiesComponent.getInstance().getValue(key.first, default)
