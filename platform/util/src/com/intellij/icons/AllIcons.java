@@ -403,10 +403,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BalloonWarning = load("general/balloonWarning.svg", -8276668115639094254L, 2);
     /** 12x12 */ public static final @NotNull Icon BalloonWarning12 = load("general/balloonWarning12.svg", 6705424357398127516L, 2);
     /** 8x4 */ public static final @NotNull Icon ButtonDropTriangle = load("general/buttonDropTriangle.svg", -8269536136438475818L, 2);
-    /** 16x16 */ public static final @NotNull Icon ChevronDown = load("/general/chevron-down.svg", -6012940629945477261L, 0);
-    /** 16x16 */ public static final @NotNull Icon ChevronLeft = load("/general/chevron-left.svg", -4543373687359135559L, 0);
-    /** 16x16 */ public static final @NotNull Icon ChevronRight = load("/general/chevron-right.svg", 1614753329141226892L, 0);
-    /** 16x16 */ public static final @NotNull Icon ChevronUp = load("/general/chevron-up.svg", 8857373647534016930L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronDown = load("general/chevron-down.svg", -6012940629945477261L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronLeft = load("general/chevron-left.svg", -4543373687359135559L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronRight = load("general/chevron-right.svg", 1614753329141226892L, 0);
+    /** 16x16 */ public static final @NotNull Icon ChevronUp = load("general/chevron-up.svg", 8857373647534016930L, 0);
     /** 16x16 */ public static final @NotNull Icon CollapseComponent = load("general/collapseComponent.svg", 363988761748794912L, 0);
     /** 16x16 */ public static final @NotNull Icon CollapseComponentHover = load("general/collapseComponentHover.svg", 812123968509113857L, 0);
     /** 16x16 */ public static final @NotNull Icon ContextHelp = load("general/contextHelp.svg", 1376735081551049382L, 0);
