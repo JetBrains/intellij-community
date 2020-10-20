@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
@@ -18,17 +17,18 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions()
     val presentation = e.presentation
     presentation.isEnabledAndVisible = isEnabled
-    if (!isEnabled)
+    if (!isEnabled) {
       return
+    }
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
-      if (Registry.`is`("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.icon = AllIcons.Welcome.FromVCSTab
         presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
       }
       else {
         presentation.icon = AllIcons.Vcs.Branch
-        presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text");
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text")
       }
     }
     else {

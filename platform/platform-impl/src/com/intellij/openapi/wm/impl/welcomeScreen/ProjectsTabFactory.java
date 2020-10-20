@@ -19,7 +19,10 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -45,13 +48,12 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentF
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public final class ProjectsTabFactory implements WelcomeTabFactory {
+final class ProjectsTabFactory implements WelcomeTabFactory {
   static final int PRIMARY_BUTTONS_NUM = 3;
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title")) {
-
       @Override
       protected JComponent buildComponent() {
         JPanel mainPanel;
@@ -87,7 +89,8 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
           .enableAsNativeTarget()
           .setTargetChecker(target)
           .setDropHandler(target)
-          .setDisposableParent(parentDisposable).install();
+          .setDisposableParent(parentDisposable)
+          .install();
         return mainPanel;
       }
 
@@ -193,11 +196,10 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
     };
   }
 
-  @NotNull
-  private static DnDNativeTarget createDropFileTarget() {
+  private static @NotNull DnDNativeTarget createDropFileTarget() {
     return new DnDNativeTarget() {
       @Override
-      public boolean update(DnDEvent event) {
+      public boolean update(@NotNull DnDEvent event) {
         if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
           return false;
         }
@@ -206,7 +208,7 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
       }
 
       @Override
-      public void drop(DnDEvent event) {
+      public void drop(@NotNull DnDEvent event) {
         List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
         if (files.isEmpty()) {
           ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
