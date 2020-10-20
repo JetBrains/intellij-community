@@ -17,6 +17,7 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.text.DateFormatUtil;
@@ -69,6 +70,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     mySettings.setKeepPluginsArchive(myPanel.myCheckForKeepPluginsArchive.isSelected());
+    mySettings.setShowWhatsNewEditor(myPanel.myShowWhatsNewEditor.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
       UpdateCheckerComponent checker = UpdateCheckerComponent.getInstance();
       if (checker != null) {
@@ -88,6 +90,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   public void reset() {
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myCheckForKeepPluginsArchive.setSelected(mySettings.isKeepPluginsArchive());
+    myPanel.myShowWhatsNewEditor.setSelected(mySettings.isShowWhatsNewEditor());
     myPanel.updateLastCheckedLabel();
     myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
@@ -97,6 +100,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     return myPanel != null &&
            (myPanel.myCheckForUpdates.isSelected() != mySettings.isCheckNeeded() ||
             myPanel.myCheckForKeepPluginsArchive.isSelected() != mySettings.isKeepPluginsArchive() ||
+            myPanel.myShowWhatsNewEditor.isSelected() != mySettings.isShowWhatsNewEditor() ||
             myPanel.myUpdateChannels.getSelectedItem() != mySettings.getSelectedActiveChannel());
   }
 
@@ -117,6 +121,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
     @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
+    private JBCheckBox myShowWhatsNewEditor;
 
     UpdatesSettingsPanel(boolean checkNowEnabled) {
       mySettings = UpdateSettings.getInstance();
@@ -128,6 +133,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
       if (manager != null) {
         myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
         myCheckForKeepPluginsArchive.setText(IdeBundle.message("updates.settings.keep.plugins.archive"));
+        myShowWhatsNewEditor.setText(IdeBundle.message("updates.settings.show.editor"));
         myUpdateChannels.setVisible(false);
         myChannelWarning.setText(IdeBundle.message("updates.settings.external", manager.toolName));
         myChannelWarning.setForeground(JBColor.GRAY);
