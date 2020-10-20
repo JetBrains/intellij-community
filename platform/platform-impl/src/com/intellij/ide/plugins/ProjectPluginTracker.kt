@@ -45,7 +45,8 @@ internal class ProjectPluginTracker(project: Project) : PersistentStateComponent
           project,
           setToAddTo(enable).findPluginById(),
           setToRemoveFrom(enable).findPluginById(),
-          null
+          null,
+          false,
         )
       }
 
