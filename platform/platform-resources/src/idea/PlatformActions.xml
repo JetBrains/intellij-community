@@ -771,6 +771,7 @@
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
+        <action id="Help.GettingStarted" class="com.intellij.ide.actions.GettingStartedAction"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <separator/>
         <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
@@ -938,6 +939,15 @@
       <separator/>
       <reference ref="CheckForUpdate"/>
     </group>
+
+    <group id="WelcomeScreen.LearnIdeHelp">
+      <reference ref="HelpTopics"/>
+      <reference ref="Help.GettingStarted"/>
+      <reference ref="Help.JetBrainsTV"/>
+      <reference ref="Help.KeymapReference"/>
+      <reference ref="ShowTips"/>
+    </group>
+
 
     <group id="WelcomeScreenRecentProjectActionGroup">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
