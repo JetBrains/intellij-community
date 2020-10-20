@@ -1041,4 +1041,14 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     });
   }
+
+  public void testTaskWithResultMustBeAbleToComputeException() throws Exception {
+    Exception result = ProgressManager.getInstance().run(new Task.WithResult<Exception, Exception>(null, "", true) {
+      @Override
+      protected Exception compute(@NotNull ProgressIndicator indicator) {
+        return new Exception("result");
+      }
+    });
+    assertEquals("result", result.getMessage());
+  }
 }
