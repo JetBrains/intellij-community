@@ -11,11 +11,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.IntPair;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,33 +125,7 @@ public abstract class LineStatusMarkerRenderer {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return emptyList();
 
-    int lineHeight = editor.getLineHeight();
-    int triangleGap = lineHeight / 3;
-
-    Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
-    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
-
-    List<Range> result = new ArrayList<>();
-    for (ChangesBlock<Unit> block : blocks) {
-      ChangedLines<Unit> firstChange = block.changes.get(0);
-      ChangedLines<Unit> lastChange = block.changes.get(block.changes.size() - 1);
-
-      int startY = firstChange.y1;
-      int endY = lastChange.y2;
-
-      // "empty" range for deleted block
-      if (firstChange.y1 == firstChange.y2) {
-        startY -= triangleGap;
-      }
-      if (lastChange.y1 == lastChange.y2) {
-        endY += triangleGap;
-      }
-
-      if (startY <= y && endY > y) {
-        result.addAll(block.ranges);
-      }
-    }
-    return result;
+    return LineStatusMarkerDrawUtil.getSelectedRanges(ranges, editor, y);
   }
 
   protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
@@ -176,21 +148,7 @@ public abstract class LineStatusMarkerRenderer {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return null;
 
-    int yStart = editor.visualLineToY(lineNum);
-    Rectangle clip = new Rectangle(bounds.x, yStart, bounds.width, editor.getLineHeight());
-
-    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
-    if (blocks.isEmpty()) return null;
-
-    List<ChangedLines<Unit>> changes = blocks.get(0).changes;
-    int y = changes.get(0).y1;
-    int endY = changes.get(changes.size() - 1).y2;
-    if (y == endY) {
-      endY += editor.getLineHeight();
-    }
-
-    IntPair area = LineStatusMarkerDrawUtil.getGutterArea(editor);
-    return new Rectangle(area.first, y, area.second - area.first, endY - y);
+    return LineStatusMarkerDrawUtil.calcBounds(ranges, editor, lineNum);
   }
 
   protected boolean shouldPaintGutter() {
