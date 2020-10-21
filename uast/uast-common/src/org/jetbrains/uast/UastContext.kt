@@ -19,6 +19,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.Contract
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 import org.jetbrains.uast.util.emptyClassSet
@@ -115,6 +116,7 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
  * to the given UAST element type.
  */
 @Suppress("UNCHECKED_CAST")
+@Contract("null, _ -> null")
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
 
 @Suppress("UNCHECKED_CAST")
