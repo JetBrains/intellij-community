@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -20,7 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -43,7 +44,7 @@ import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
@@ -249,7 +250,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     return new TextRange(startOffset, endOffset).shiftRight(-expression.getTextOffset());
   }
 
-  interface CallChainFix {
+  interface CallChainFix extends FileModifier {
     @IntentionName String getName();
     void applyFix(@NotNull Project project, PsiElement element);
   }
@@ -294,6 +295,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       myFix.applyFix(project, descriptor.getStartElement());
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      CallChainFix newFix = (CallChainFix)myFix.getFileModifierForPreview(target);
+      return newFix == myFix ? this : new SimplifyCallChainFix(newFix);
     }
   }
 
