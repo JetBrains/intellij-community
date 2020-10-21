@@ -80,7 +80,8 @@ class MavenCommandLineSetup(private val project: Project,
   @Throws(CantRunException::class)
   private fun setupExePath(generalSettings: MavenGeneralSettings) {
     if (defaultMavenRuntimeConfiguration == null) {
-      throw CantRunException(message("maven.target.message.cannot.find.maven.configuration.in.target", target.displayName))
+      commandLine.setExePath("mvn")
+      return
     }
 
     val homePath: String
@@ -92,7 +93,8 @@ class MavenCommandLineSetup(private val project: Project,
     }
 
     if (StringUtil.isEmptyOrSpaces(homePath)) {
-      throw CantRunException(message("maven.target.message.maven.home.not.configured.for.target", target.displayName))
+      commandLine.setExePath("mvn")
+      return
     }
 
     commandLine.addEnvironmentVariable("MAVEN_HOME", homePath)
