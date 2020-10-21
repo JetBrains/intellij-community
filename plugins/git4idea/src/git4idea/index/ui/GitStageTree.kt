@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
@@ -107,13 +108,20 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
   private fun getComponentBounds(path: TreePath, icon: Icon): Rectangle? {
     val bounds = getPathBounds(path) ?: return null
-    bounds.setLocation(getComponentXCoordinate(icon.iconWidth), bounds.y)
-    bounds.setSize(icon.iconWidth, bounds.height)
+    val componentWidth = getComponentWidth(icon)
+    bounds.setLocation(getComponentXCoordinate(componentWidth), bounds.y)
+    bounds.setSize(componentWidth, bounds.height)
     return bounds
   }
 
   private fun getComponentXCoordinate(componentWidth: Int): Int {
     return visibleRect.width + visibleRect.x - componentWidth
+  }
+
+  private fun getComponentWidth(icon: Icon): Int {
+    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } ?: false
+    if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
+    return icon.iconWidth
   }
 
   internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
@@ -407,7 +415,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       val foreground = if (hovered && hoverData!!.isOverOperationIcon) baseIcon
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
-      val background = ColorIcon(foreground.iconWidth, tree.getRowHeight(), foreground.iconWidth, tree.getRowHeight(),
+      val componentWidth = tree.getComponentWidth(foreground)
+      val background = ColorIcon(componentWidth, tree.getRowHeight(), componentWidth, tree.getRowHeight(),
                                  tree.getBackground(row, selected), false)
 
       val icon = LayeredIcon(2).apply {
@@ -415,7 +424,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         setIcon(foreground, 1, SwingConstants.WEST)
       }
 
-      val location = tree.getComponentXCoordinate(foreground.iconWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
+      val location = tree.getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
     }
