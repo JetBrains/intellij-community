@@ -80,6 +80,10 @@ class OptimizedImportsBuilder(
 
     private val importRules = HashSet<ImportRule>()
 
+    private val importPaths: Set<ImportPath> by lazy {
+        file.importDirectives.mapNotNull { it.importPath }.toSet()
+    }
+
     fun buildOptimizedImports(): List<ImportPath>? {
         val facade = file.getResolutionFacade()
         file.importDirectives
@@ -108,7 +112,7 @@ class OptimizedImportsBuilder(
             parent is KtQualifiedExpression && element == parent.selectorExpression -> parent
             parent is KtCallExpression && element == parent.calleeExpression -> getExpressionToAnalyze(parent)
             parent is KtOperationExpression && element == parent.operationReference -> parent
-            parent is KtUserType -> null //TODO: is it always correct?
+            parent is KtUserType -> null
             else -> element as? KtExpression //TODO: what if not expression? Example: KtPropertyDelegationMethodsReference
         }
     }
@@ -174,11 +178,14 @@ class OptimizedImportsBuilder(
         val originalFileScope = file.getFileResolutionScope()
         val newFileScope = buildScopeByImports(file, sortedImportsToGenerate)
 
-        var references = data.references
-        if (testLog != null) {
+        val references = data.references.let {
+            if (testLog != null)
             // to make log the same for all runs
-            references = references.sortedBy { it.toString() }
+                it.sortedBy { reference -> reference.toString() }
+            else
+                it
         }
+
         for ((names, refs) in references.groupBy { it.dependsOnNames }) {
             if (!areScopeSlicesEqual(originalFileScope, newFileScope, names)) {
                 for (ref in refs) {
@@ -186,27 +193,40 @@ class OptimizedImportsBuilder(
 
                     val element = ref.element
                     val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
-                    val expressionToAnalyze = getExpressionToAnalyze(element) ?: continue
                     val newScope = element.getResolutionScope(
                         bindingContext,
                         file.getResolutionFacade()
                     ).replaceImportingScopes(newFileScope)
 
-                    val newBindingContext = expressionToAnalyze.analyzeAsReplacement(
-                        expressionToAnalyze,
-                        bindingContext,
-                        newScope,
-                        trace = BindingTraceContext()
-                    )
+                    val parent = element.parent
+                    if (parent is KtUserType) {
+                        val qualifier: KtUserType = generateSequence(parent) { it.qualifier }.last()
+                        val name = qualifier.referencedName?.let { Name.identifier(it) } ?: continue
+                        val oldTarget = originalFileScope.findClassifier(name, NoLookupLocation.FROM_IDE) ?: continue
+                        val newTarget = newScope.findClassifier(name, NoLookupLocation.FROM_IDE)
+                        if (newTarget == null && !oldTarget.fromCurrentFile ||
+                            newTarget != null && !areTargetsEqual(oldTarget, newTarget)) {
+                            testLog?.append("Changed resolve type of $ref\n")
+                            lockImportForDescriptor(oldTarget, names)
+                        }
+                    } else {
+                        val expressionToAnalyze = getExpressionToAnalyze(element) ?: continue
+                        val newBindingContext = expressionToAnalyze.analyzeAsReplacement(
+                            expressionToAnalyze,
+                            bindingContext,
+                            newScope,
+                            trace = BindingTraceContext()
+                        )
 
-                    testLog?.append("Additional checking of reference $ref\n")
+                        testLog?.append("Additional checking of reference $ref\n")
 
-                    val oldTargets = ref.resolve(bindingContext)
-                    val newTargets = ref.resolve(newBindingContext)
-                    if (!areTargetsEqual(oldTargets, newTargets)) {
-                        testLog?.append("Changed resolve of $ref\n")
-                        (oldTargets + newTargets).forEach {
-                            lockImportForDescriptor(it, names)
+                        val oldTargets = ref.resolve(bindingContext)
+                        val newTargets = ref.resolve(newBindingContext)
+                        if (!areTargetsEqual(oldTargets, newTargets)) {
+                            testLog?.append("Changed resolve of $ref\n")
+                            (oldTargets + newTargets).forEach {
+                                lockImportForDescriptor(it, names)
+                            }
                         }
                     }
                 }
@@ -216,13 +236,13 @@ class OptimizedImportsBuilder(
         return sortedImportsToGenerate
     }
 
+    private val DeclarationDescriptor.fromCurrentFile: Boolean get() = importableFqName?.parent() == file.packageFqName
+
     private fun lockImportForDescriptor(descriptor: DeclarationDescriptor, existingNames: Collection<Name>) {
         val fqName = descriptor.importableFqName ?: return
         val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames)
 
         val starImportPath = ImportPath(fqName.parent(), true)
-        val importPaths = file.importDirectives.map { it.importPath }
-
         for (name in names) {
             val alias = if (name != fqName.shortName()) name else null
             val explicitImportPath = ImportPath(fqName, false, alias)

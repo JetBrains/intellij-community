@@ -48,6 +48,11 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
             runTest("testData/editor/optimizeImports/jvm/ClassFromSameFileImportAddedBug.kt");
         }
 
+        @TestMetadata("ConflictWithName.kt")
+        public void testConflictWithName() throws Exception {
+            runTest("testData/editor/optimizeImports/jvm/ConflictWithName.kt");
+        }
+
         @TestMetadata("DoNotTouchIfNoChanges.kt")
         public void testDoNotTouchIfNoChanges() throws Exception {
             runTest("testData/editor/optimizeImports/jvm/DoNotTouchIfNoChanges.kt");
@@ -185,6 +190,16 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict2.kt");
             }
 
+            @TestMetadata("ClassNameConflict3.kt")
+            public void testClassNameConflict3() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict3.kt");
+            }
+
+            @TestMetadata("ClassNameConflict4.kt")
+            public void testClassNameConflict4() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict4.kt");
+            }
+
             @TestMetadata("ClassNameConflictWithCurrentPackage.kt")
             public void testClassNameConflictWithCurrentPackage() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithCurrentPackage.kt");
@@ -203,6 +218,11 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
             @TestMetadata("ClassNameConflictWithinDefaultImports.kt")
             public void testClassNameConflictWithinDefaultImports() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithinDefaultImports.kt");
+            }
+
+            @TestMetadata("ConflictWithAnnotation.kt")
+            public void testConflictWithAnnotation() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/ConflictWithAnnotation.kt");
             }
 
             @TestMetadata("NameCountSetting.kt")
@@ -392,6 +412,21 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
         @TestMetadata("ProvideDelegate2.kt")
         public void testProvideDelegate2() throws Exception {
             runTest("testData/editor/optimizeImports/common/ProvideDelegate2.kt");
+        }
+
+        @TestMetadata("SeveralClasses.kt")
+        public void testSeveralClasses() throws Exception {
+            runTest("testData/editor/optimizeImports/common/SeveralClasses.kt");
+        }
+
+        @TestMetadata("SeveralClasses2.kt")
+        public void testSeveralClasses2() throws Exception {
+            runTest("testData/editor/optimizeImports/common/SeveralClasses2.kt");
+        }
+
+        @TestMetadata("SeveralClasses3.kt")
+        public void testSeveralClasses3() throws Exception {
+            runTest("testData/editor/optimizeImports/common/SeveralClasses3.kt");
         }
 
         @TestMetadata("TwoConstructors.kt")
