@@ -615,7 +615,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  source: ToolWindowEventSource? = null) {
     LOG.debug { "activateToolWindow($entry)" }
 
-    ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    if (source != null) {
+      ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    }
 
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
