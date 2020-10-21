@@ -34,7 +34,7 @@ class TargetEnvironmentsConfigurable(project: Project,
 
   override fun createComponent(): JComponent = editor.createComponent()
 
-  override fun getHelpTopic(): String? = "reference.remote.targets"
+  override fun getHelpTopic(): String = "reference.remote.targets"
 
   override fun apply() {
     editor.apply()
@@ -48,4 +48,6 @@ class TargetEnvironmentsConfigurable(project: Project,
     editor.disposeUIResources()
     super.disposeUIResources()
   }
+
+  val selectedTargetConfig: TargetEnvironmentConfiguration? get() = editor.selectedConfig
 }

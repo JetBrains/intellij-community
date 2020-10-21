@@ -22,6 +22,10 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val defaultLanguageRuntime: LanguageRuntimeType<*>?
 ) : MasterDetailsComponent() {
 
+  private var _lastSelectedConfig: TargetEnvironmentConfiguration? = null
+  internal val selectedConfig: TargetEnvironmentConfiguration?
+    get() = myCurrentConfigurable?.editableObject as? TargetEnvironmentConfiguration ?: _lastSelectedConfig
+
   init {
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
@@ -81,6 +85,11 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     val addedConfigs = getConfiguredTargets() - TargetEnvironmentsManager.instance.targets.resolvedConfigs()
     addedConfigs.forEach { TargetEnvironmentsManager.instance.addTarget(it) }
+  }
+
+  override fun disposeUIResources() {
+    _lastSelectedConfig = selectedObject as? TargetEnvironmentConfiguration
+    super.disposeUIResources()
   }
 
   private fun allTargets() = TargetEnvironmentsManager.instance.targets.resolvedConfigs()
