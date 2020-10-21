@@ -133,9 +133,11 @@ public final class ConfigImportHelper {
             tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false);
             Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
+            importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
             tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true);
+            importScenarioStatistics = RESTORE_DEFAULT_ACTION;
           }
         }
         catch (IOException e) {
