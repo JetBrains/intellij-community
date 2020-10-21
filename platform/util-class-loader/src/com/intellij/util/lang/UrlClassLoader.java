@@ -212,7 +212,12 @@ public class UrlClassLoader extends ClassLoader {
     @NotNull
     public Builder noPreload() { myPreload = false; return this; }
     @NotNull
-    public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    public Builder allowBootstrapResources() {
+      return allowBootstrapResources(true);
+    }
+
+    @NotNull
+    public Builder allowBootstrapResources(boolean allowBootstrapResources) { myAllowBootstrapResources = allowBootstrapResources; return this; }
     @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) { myErrorOnMissingJar = log; return this; }
 
@@ -257,12 +262,12 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urlsFromAppClassLoader(parent).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
+           .allowBootstrapResources(Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true")))
            .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
            .autoAssignUrlsWithProtectionDomain());
 
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
-      //noinspection JavaReflectionMemberAccess
       Field f = ClassLoader.class.getDeclaredField("classLoaderValueMap");
       f.setAccessible(true);
       f.set(this, f.get(parent));
