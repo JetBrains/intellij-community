@@ -32,7 +32,7 @@ internal class TargetEnvironmentDetailsConfigurable(
 
   override fun getBannerSlogan(): String = config.displayName
 
-  override fun getIcon(expanded: Boolean): Icon? = config.getTargetType().icon
+  override fun getIcon(expanded: Boolean): Icon = config.getTargetType().icon
 
   override fun isModified(): Boolean = allConfigurables().any { it.isModified }
 

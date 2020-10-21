@@ -7,10 +7,7 @@ import com.intellij.execution.RunOnTargetComboBox;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentsConfigurable;
-import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -521,7 +518,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
           TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
           if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
-            resetRunOnComboBox(selectedName);
+            TargetEnvironmentConfiguration lastEdited = configurable.getSelectedTargetConfig();
+            resetRunOnComboBox(lastEdited != null ? lastEdited.getDisplayName() : selectedName);
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);
