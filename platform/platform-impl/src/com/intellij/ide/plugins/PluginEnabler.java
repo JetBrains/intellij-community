@@ -4,14 +4,13 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static java.util.Collections.emptyList;
@@ -53,12 +52,20 @@ public final class PluginEnabler {
 
     Set<PluginId> pluginIdsToEnable = mapPluginId(pluginsToEnable);
     LOG.info(getLogMessage(pluginIdsToEnable, true));
+    updateEnabledState(
+      pluginsToEnable,
+      __ -> true
+    );
 
     Set<PluginId> pluginIdsToDisable = mapPluginId(pluginsToDisable);
     LOG.info(getLogMessage(pluginIdsToDisable, false));
+    updateEnabledState(
+      pluginsToDisable,
+      updateDisabledPluginsState ? __ -> false : getEnabledState(project)
+    );
 
     boolean requiresRestart =
-      updateDisabledPluginsState && !DisabledPluginsState.updateDisabledPluginsState(pluginsToEnable, pluginsToDisable) ||
+      updateDisabledPluginsState && !DisabledPluginsState.updateDisabledPluginsState(pluginIdsToEnable, pluginIdsToDisable) ||
       !DynamicPlugins.loadUnloadPlugins(pluginsToEnable, pluginsToDisable, project, parentComponent);
 
     if (requiresRestart) {
@@ -73,6 +80,24 @@ public final class PluginEnabler {
       .map(IdeaPluginDescriptor::getPluginId)
       .filter(Objects::nonNull)
       .collect(toSet());
+  }
+
+  private static @NotNull Predicate<PluginId> getEnabledState(@Nullable Project project) {
+    ProjectPluginTrackerManager manager = ProjectPluginTrackerManager.getInstance();
+
+    return pluginId -> Arrays
+      .stream(ProjectManager.getInstance().getOpenProjects())
+      .filter(openProject -> !openProject.equals(project))
+      .map(manager::createPluginTracker)
+      .anyMatch(pluginTracker -> pluginTracker.isEnabled(pluginId));
+  }
+
+  private static void updateEnabledState(@NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                                         @NotNull Predicate<PluginId> predicate) {
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      boolean enabled = predicate.test(descriptor.getPluginId());
+      descriptor.setEnabled(enabled);
+    }
   }
 
   private static @NotNull String getLogMessage(@NotNull Collection<PluginId> plugins,

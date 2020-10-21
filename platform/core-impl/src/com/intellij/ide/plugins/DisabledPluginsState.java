@@ -195,19 +195,12 @@ public final class DisabledPluginsState {
     trySaveDisabledPlugins(disabled);
   }
 
-  static boolean updateDisabledPluginsState(@NotNull List<? extends IdeaPluginDescriptor> pluginsToEnable,
-                                            @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
+  static boolean updateDisabledPluginsState(@NotNull Collection<PluginId> pluginIdsToEnable,
+                                            @NotNull Collection<PluginId> pluginIdsToDisable) {
     Set<PluginId> disabledIds = getDisabledIds();
 
-    for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
-      descriptor.setEnabled(true);
-      disabledIds.remove(descriptor.getPluginId());
-    }
-
-    for (IdeaPluginDescriptor descriptor : pluginsToDisable) {
-      descriptor.setEnabled(false);
-      disabledIds.add(descriptor.getPluginId());
-    }
+    pluginIdsToEnable.forEach(disabledIds::remove);
+    disabledIds.addAll(pluginIdsToDisable);
 
     return trySaveDisabledPlugins(disabledIds);
   }
