@@ -360,7 +360,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
-        assertTrue(!progress.isCanceled());
+        assertFalse(progress.isCanceled());
         progress.cancel();
         assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         assertTrue(progress.isCanceled());
@@ -685,21 +685,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     String msg = "expected message";
     try {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Title", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            throw new AssertionError(msg);
-          });
-          
-          // ensure previous runnable is executed during progress, not after it
-          ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
-        }
-      });
-      fail("should fail");
-    }
-    catch (Throwable e) {
-      assertTrue(e.getMessage(), e.getMessage().endsWith(msg));
+      assertThrows(AssertionError.class, () ->
+        ProgressManager.getInstance().run(new Task.Modal(getProject(), "Title", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              throw new AssertionError(msg);
+            });
+
+            // ensure previous runnable is executed during progress, not after it
+            ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+          }
+        }));
       assertSame(ModalityState.NON_MODAL, ModalityState.current());
     }
     finally {
@@ -805,22 +802,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       return "a";
     }));
 
-    assertThrows(ProcessCanceledException.class, () -> {
-      ProgressIndicatorUtils.withTimeout(1, () -> {
-        throw new ProcessCanceledException();
-      });
-    });
+    assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.withTimeout(1, () -> {
+      throw new ProcessCanceledException();
+    }));
 
     ProgressIndicatorBase outer = new ProgressIndicatorBase();
-    ProgressManager.getInstance().runProcess(() -> {
-      assertThrows(ProcessCanceledException.class, () -> {
-        ProgressIndicatorUtils.withTimeout(1, () -> {
-          outer.cancel();
-          ProgressManager.checkCanceled();
-          return null;
-        });
+    ProgressManager.getInstance().runProcess(() -> assertThrows(ProcessCanceledException.class, () -> {
+      ProgressIndicatorUtils.withTimeout(1, () -> {
+        outer.cancel();
+        ProgressManager.checkCanceled();
+        return null;
       });
-    }, outer);
+    }), outer);
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
@@ -969,17 +962,15 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressIndicatorEx p = new ProgressIndicatorBase();
     CountDownLatch run = new CountDownLatch(1);
     CountDownLatch exit = new CountDownLatch(1);
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          run.countDown();
-          exit.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }, p);
-    });
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        run.countDown();
+        exit.await();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }, p));
     run.await();
     boolean allowed = true;
     try {
