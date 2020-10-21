@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff;
 
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -10,11 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
 import com.intellij.ui.paint.LinePainter2D;
@@ -33,23 +27,6 @@ import java.util.List;
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public class LineStatusMarkerDrawUtil {
-  @NotNull
-  public static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
-                                                               @NotNull MarkupModel markupModel) {
-    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
-    TextAttributes attributes = new DiffStripeTextAttributes(range.getType());
-
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                   DiffDrawUtil.LST_LINE_MARKER_LAYER, attributes,
-                                                                   HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setThinErrorStripeMark(true);
-    highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
-
-    return highlighter;
-  }
-
-
   @NotNull
   public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();
