@@ -125,11 +125,9 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   private fun subscribeForModelChange(model: ComboBoxModel<E>) {
     model.addListDataListener(object : ListDataListener {
       override fun intervalAdded(e: ListDataEvent?) {
-        completionProvider.setItems(collectItems())
       }
 
       override fun intervalRemoved(e: ListDataEvent?) {
-        completionProvider.setItems(collectItems())
       }
 
       override fun contentsChanged(e: ListDataEvent?) {
@@ -138,10 +136,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
       private fun collectItems(): List<E> {
         val items = mutableListOf<E>()
-        if (model.size != 0) {
-          for (i in 0 until model.size) {
-            items += model.getElementAt(i)
-          }
+        for (i in 0 until model.size) {
+          items += model.getElementAt(i)
         }
         return items
       }
