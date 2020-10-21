@@ -35,7 +35,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -126,10 +125,11 @@ public final class PluginLogo {
       return icon;
     }
 
-    if (!JBColor.isBright()) {
-      String path = URLUtil.urlToFile(url).getAbsolutePath();
-      if (path.endsWith(".svg") && !path.endsWith("_dark.svg")) {
-        Path darkFile = Paths.get(path.substring(0, path.length() - 4) + "_dark.svg");
+    try {
+      if (!JBColor.isBright() && url.getPath().endsWith(".svg") && !url.getPath().endsWith("_dark.svg")) {
+        Path file = URLUtil.urlToFile(url).toPath();
+        String fileName = file.getFileName().toString();
+        Path darkFile = file.getParent().resolve(fileName.substring(0, fileName.length() - 4) + "_dark.svg");
         try (InputStream stream = Files.newInputStream(darkFile)) {
           return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
         }
@@ -142,11 +142,16 @@ public final class PluginLogo {
         }
       }
     }
+    catch (Exception e) {
+      if (logger != null) {
+        logger.warn(e);
+      }
+    }
 
     try {
       return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       if (logger != null) {
         logger.error(e);
       }
