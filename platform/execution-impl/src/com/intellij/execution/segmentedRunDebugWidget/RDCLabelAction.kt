@@ -4,29 +4,25 @@ package com.intellij.execution.segmentedRunDebugWidget
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction
 import com.intellij.openapi.wm.ToolWindowManager
 
-abstract class RDCLabelAction(val executorID: String) : AnAction() {
-  private val executorRegistry = ExecutorRegistry.getInstance()
-
+internal abstract class RDCLabelAction(private val executorID: String) : AnAction() {
   abstract fun isActive(state: RunDebugConfigManager.State): Boolean
 
-  override fun displayTextInToolbar(): Boolean {
-    return true
-  }
+  override fun displayTextInToolbar() = true
 
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isEnabledAndVisible = e.project?.let {
-      RunDebugConfigManager.getInstance(it)?.getState()?.let {
+    e.presentation.isEnabledAndVisible = e.project?.let { project ->
+      RunDebugConfigManager.getInstance(project).getState().let {
         if (isActive(it)) {
-          executorRegistry.getExecutorById(executorID)?.let { executor ->
+          ExecutorRegistry.getInstance().getExecutorById(executorID)?.let { executor ->
             e.presentation.text = executor.actionName
             true
           }
-        } else false
+        }
+        else false
       } ?: false
     } ?: false
   }
@@ -34,32 +30,27 @@ abstract class RDCLabelAction(val executorID: String) : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       val toolWindowManager = ToolWindowManager.getInstance(project)
-      executorRegistry.getExecutorById(executorID)?.let {
-        toolWindowManager.getToolWindow(it.toolWindowId)?.let{ toolWindow ->
-          toolWindow.show()
-        }
-
+      ExecutorRegistry.getInstance().getExecutorById(executorID)?.let {
+        toolWindowManager.getToolWindow(it.toolWindowId)?.show()
       }
     }
   }
 }
 
-class RunningRDCLabelAction : RDCLabelAction(RunDebugConfigManager.RUN_EXECUTOR_ID) {
+private class RunningRDCLabelAction : RDCLabelAction(RunDebugConfigManager.RUN_EXECUTOR_ID) {
   override fun isActive(state: RunDebugConfigManager.State): Boolean {
     return state.running
   }
 }
 
-class DebuggingRDCLabelAction : RDCLabelAction(RunDebugConfigManager.DEBUG_EXECUTOR_ID) {
+private class DebuggingRDCLabelAction : RDCLabelAction(RunDebugConfigManager.DEBUG_EXECUTOR_ID) {
   override fun isActive(state: RunDebugConfigManager.State): Boolean {
     return state.debugging
   }
 }
 
-class ProfilingRDCLabelAction : RDCLabelAction(RunDebugConfigManager.PROFILE_EXECUTOR_ID) {
+private class ProfilingRDCLabelAction : RDCLabelAction(RunDebugConfigManager.PROFILE_EXECUTOR_ID) {
   override fun isActive(state: RunDebugConfigManager.State): Boolean {
     return state.profiling
   }
 }
-
-
