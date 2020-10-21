@@ -5,15 +5,19 @@ import circlet.client.api.GitCommitChangeType
 import circlet.client.api.isDirectory
 import circlet.code.api.ChangeInReview
 import circlet.code.api.CodeReviewRecord
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
+import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
 
@@ -39,7 +43,7 @@ internal object SpaceReviewChangesTreeFactory {
             detailsDetailsVm.changesByRepos.forEach(detailsDetailsVm.lifetime) { map ->
               val builder = TreeModelBuilder(project, grouping)
 
-              map?.forEach { repoName, changes ->
+              map?.forEach { (repoName, changes) ->
                 val repoNode = RepositoryNode(repoName, detailsDetailsVm.reposInCurrentProject.value?.get(repoName) != null)
                 addChanges(builder, repoNode, changes)
               }
@@ -56,7 +60,21 @@ internal object SpaceReviewChangesTreeFactory {
       }
 
       override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+    }
+    tree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
 
+      val spaceDiffFile = SpaceDiffFile(detailsDetailsVm)
+      FileEditorManager.getInstance(project).openFile(spaceDiffFile, true)
+      true
+    }
+
+    tree.addSelectionListener {
+      VcsTreeModelData.selected(tree).userObjectsStream().findFirst().ifPresent {
+        if (it is ChangeInReview) {
+          detailsDetailsVm.selectedChange.value = it
+        }
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
@@ -80,8 +98,9 @@ internal object SpaceReviewChangesTreeFactory {
 private val addedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.ADDED.color)
 private val removedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.color)
 
-internal class RepositoryNode(@NlsSafe val repositoryName: String, val inCurrentProject: Boolean) : ChangesBrowserNode<String>(
-  repositoryName) {
+internal class RepositoryNode(@NlsSafe val repositoryName: String,
+                              val inCurrentProject: Boolean)
+  : ChangesBrowserNode<String>(repositoryName) {
   init {
     markAsHelperNode()
   }
@@ -115,7 +134,7 @@ private fun getFileStatus(changeInReview: ChangeInReview): FileStatus = when (ch
   GitCommitChangeType.MODIFIED -> FileStatus.MODIFIED
 }
 
-private fun getFilePath(changeInReview: ChangeInReview): FilePath {
+fun getFilePath(changeInReview: ChangeInReview): FilePath {
   val path = when (changeInReview.change.changeType) {
     GitCommitChangeType.ADDED, GitCommitChangeType.MODIFIED -> changeInReview.change.new!!.path
     GitCommitChangeType.DELETED -> changeInReview.change.old!!.path

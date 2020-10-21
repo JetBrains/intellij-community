@@ -29,7 +29,6 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
   private val reviewRef: Ref<R>,
   val client: KCircletClient
 ) : Lifetimed {
-
   val review: Property<R> = reviewRef.property()
 
   val projectKey: ProjectKey = review.value.project
@@ -48,6 +47,8 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
   val createdBy: Property<TD_MemberProfile> = cellProperty { review.live.createdBy!!.resolve() }
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
+
+  val selectedChange: MutableProperty<ChangeInReview?> = Property.createMutable(null)
 
   private val participantsProperty: Property<LoadingValue<Ref<CodeReviewParticipants>>> = load {
     client.arena.resolveRefsOrFetch {

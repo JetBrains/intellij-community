@@ -66,6 +66,8 @@
                  defaultValue="false"
                  description="Space Code Review"
                  restartRequired="true"/>
+
+    <fileEditorProvider implementation="com.intellij.space.vcs.review.details.diff.SpaceDiffEditorProvider"/>
   </extensions>
 
   <actions>
