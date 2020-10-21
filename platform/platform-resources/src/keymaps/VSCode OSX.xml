@@ -80,6 +80,7 @@
     </action>
     <action id="CommentByLineComment">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta c" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta u" />
         <keyboard-shortcut first-keystroke="meta slash" />
     </action>
     <action id="CompareClipboardWithSelection">
