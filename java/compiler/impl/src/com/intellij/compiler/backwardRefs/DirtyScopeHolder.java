@@ -39,7 +39,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -316,14 +315,6 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
       return myService.getFileIndex().getModuleForFile(parent);
     }
     return null;
-  }
-
-  @TestOnly
-  @NotNull
-  Set<Module> getAllDirtyModulesForTest() {
-    synchronized (myLock) {
-      return getAllDirtyModules();
-    }
   }
 
   @SuppressWarnings("unchecked")

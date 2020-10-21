@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.compiler;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.compiler.backwardRefs;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.compiler.CompilerReferencesTestBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -151,7 +151,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService
       .getInstance(myFixture.getProject());
     compilerReferenceService.getScopeWithoutCodeReferences(foo);
-    assertOneElement(compilerReferenceService.getAllDirtyModulesForTest());
+    assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules());
   }
 
   public void testReverseExtensionRename() {

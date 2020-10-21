@@ -559,12 +559,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
   }
-
-  @TestOnly
-  public Set<Module> getAllDirtyModulesForTest() {
-    return myDirtyScopeHolder.getAllDirtyModulesForTest();
-  }
-
+  
   @Nullable
   public CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
     if (!myReadDataLock.tryLock()) return null;
