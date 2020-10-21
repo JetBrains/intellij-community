@@ -84,6 +84,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
   }
 
   static class ReplaceWithLambdaAlternativeFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final @NotNull AnonymousLambdaAlternative myAlternative;
 
     ReplaceWithLambdaAlternativeFix(@NotNull AnonymousLambdaAlternative alternative) {
