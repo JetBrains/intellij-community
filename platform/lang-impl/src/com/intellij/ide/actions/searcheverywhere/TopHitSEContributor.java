@@ -251,7 +251,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
           append(text, attrs);
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId()); //NON-NLS
         }
         else {
           ItemPresentation presentation = null;
@@ -263,6 +263,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
           }
           if (presentation != null) {
             final String text = presentation.getPresentableText();
+            //noinspection HardCodedStringLiteral
             append(text == null ? value.toString() : text);
             Icon icon = presentation.getIcon(false);
             if (icon != null) setIcon(icon);
