@@ -29,11 +29,9 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -45,6 +43,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -113,7 +114,7 @@ final class UpdateCheckerComponent {
     if (future != null) future.cancel(false);
   }
 
-  private static void showWhatsNewNotification(@NotNull Project project) {
+  private static void showWhatsNewNotification(Project project) {
     PropertiesComponent properties = PropertiesComponent.getInstance();
     String updateHtmlMessage = properties.getValue(UPDATE_WHATS_NEW_MESSAGE);
     if (updateHtmlMessage == null) {
@@ -147,7 +148,7 @@ final class UpdateCheckerComponent {
     return true;
   }
 
-  private static void updateDefaultChannel(@NotNull UpdateSettings settings) {
+  private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
@@ -168,7 +169,7 @@ final class UpdateCheckerComponent {
     }
   }
 
-  private static void scheduleFirstCheck(@NotNull UpdateSettings settings) {
+  private static void scheduleFirstCheck(UpdateSettings settings) {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
@@ -191,7 +192,7 @@ final class UpdateCheckerComponent {
     UpdateChecker.updateAndShowResult().doWhenProcessed(() -> getInstance().queueNextCheck(CHECK_INTERVAL));
   }
 
-  private static void snapPackageNotification(@NotNull UpdateSettings settings) {
+  private static void snapPackageNotification(UpdateSettings settings) {
     if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) {
       return;
     }
@@ -242,7 +243,7 @@ final class UpdateCheckerComponent {
     UpdateSettings.getInstance().saveLastCheckedInfo(true);
   }
 
-  private static void showUpdatedPluginsNotification(@NotNull Project project) {
+  private static void showUpdatedPluginsNotification(Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -261,7 +262,7 @@ final class UpdateCheckerComponent {
         }
 
         try {
-          FileUtil.writeToFile(getUpdatedPluginsFile(), StringUtil.join(list, LineSeparator.getSystemLineSeparator().getSeparatorString()));
+          Files.write(getUpdatedPluginsFile(), list);
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -311,13 +312,12 @@ final class UpdateCheckerComponent {
     }, "plugins.updated.after.restart").notify(project);
   }
 
-  @NotNull
   private static Set<String> getUpdatedPlugins() {
     try {
-      File file = getUpdatedPluginsFile();
-      if (file.isFile()) {
-        List<String> list = FileUtil.loadLines(file);
-        FileUtil.delete(file);
+      Path file = getUpdatedPluginsFile();
+      if (Files.isRegularFile(file)) {
+        List<String> list = Files.readAllLines(file);
+        Files.delete(file);
         return new HashSet<>(list);
       }
     }
@@ -327,8 +327,7 @@ final class UpdateCheckerComponent {
     return new HashSet<>();
   }
 
-  @NotNull
-  private static File getUpdatedPluginsFile() {
-    return new File(PathManager.getConfigPath(), ".updated_plugins_list");
+  private static Path getUpdatedPluginsFile() {
+    return Paths.get(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 }
