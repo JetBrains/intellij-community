@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
+                                     private val headless: Boolean,
                                      private val build: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
@@ -89,6 +90,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
       it.event.addData("system_event_id", systemEventId)
       systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
+
+      if (headless) {
+        it.event.addData("system_headless", true)
+      }
       writer.log(it)
     }
     lastEvent = null

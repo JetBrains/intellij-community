@@ -64,7 +64,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
   }
 
   companion object {
-    private val SYSTEM_FIELDS = arrayOf("created", "last", "system_event_id")
+    private val SYSTEM_FIELDS = arrayOf("created", "last", "system_event_id", "system_headless")
 
     fun isEventsEquals(newEvent: LogEvent, oldEvent: LogEvent): Boolean {
       if (newEvent == oldEvent) return true
