@@ -366,7 +366,9 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
+            GeneralCommandLine cmd = new GeneralCommandLine("cmd", "/C", "mklink", link.toString(),
+                                                            target.getFileName().toString()).withRedirectErrorStream(true);
+            ExecUtil.execAndGetOutput(cmd, 30_000);
             return Boolean.FALSE;
           }
         }
