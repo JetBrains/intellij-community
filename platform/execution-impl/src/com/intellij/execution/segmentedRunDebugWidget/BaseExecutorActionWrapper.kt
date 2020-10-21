@@ -2,12 +2,17 @@
 package com.intellij.execution.segmentedRunDebugWidget
 
 import com.intellij.execution.Executor
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.project.DumbAware
 
 internal class BaseExecutorActionWrapper(val executor: Executor, val action: AnAction) : AnAction(), DumbAware, UpdateInBackground {
+  init {
+    //this class is instantiated programmatically
+    templatePresentation.text = ActionsBundle.message("action.BaseExecutorActionWrapper.text")
+  }
   override fun displayTextInToolbar(): Boolean {
     return true
   }
