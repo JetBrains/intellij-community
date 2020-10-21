@@ -59,9 +59,10 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
+    val isHeadless = app != null && app.isHeadlessEnvironment
     val config = EventLogConfiguration
     val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build), recorderId)
-    val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer,
+    val logger = StatisticsFileEventLogger(recorderId, config.sessionId, isHeadless, config.build, config.bucket.toString(), version.toString(), writer,
                                            UsageStatisticsPersistenceComponent.getInstance())
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
