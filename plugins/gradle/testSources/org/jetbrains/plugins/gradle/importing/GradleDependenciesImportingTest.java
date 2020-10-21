@@ -488,9 +488,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
-    String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
-    assertEquals(1, unresolvableEntryUrls.length);
-    assertUnresolvedEntryUrl(unresolvableEntryUrls[0], "some:unresolvable-lib:0.1");
+    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
 
     assertModuleLibDep("project.test", depName, depJar.getUrl());
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
@@ -514,12 +512,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       unresolvableEntry = unresolvableDep.iterator().next();
       assertTrue(unresolvableEntry.isModuleLevel());
     }
-    unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
-    assertEquals(0, unresolvableEntryUrls.length);
-  }
-
-  private static void assertUnresolvedEntryUrl(String entryUrl, String artifactNotation) {
-    assertTrue(entryUrl.contains("Could not find " + artifactNotation) || entryUrl.contains("Could not resolve " + artifactNotation));
+    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
   }
 
   @Test
