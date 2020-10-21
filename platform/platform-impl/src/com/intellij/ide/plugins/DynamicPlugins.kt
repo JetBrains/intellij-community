@@ -35,7 +35,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -249,15 +248,13 @@ object DynamicPlugins {
 
   private fun findMissingRequiredDependency(descriptor: IdeaPluginDescriptorImpl,
                                             context: List<IdeaPluginDescriptorImpl>): PluginId? {
-    descriptor.pluginDependencies?.let { pluginDependencies ->
-      for (pluginDependency in pluginDependencies) {
-        if (!pluginDependency.isOptional &&
-            !PluginManagerCore.isModuleDependency(pluginDependency.id) &&
-            PluginManagerCore.ourLoadedPlugins.none { it.pluginId == pluginDependency.id } &&
-            context.none { it.pluginId == pluginDependency.id }
-        ) {
-          return pluginDependency.id
-        }
+    for (dependency in (descriptor.pluginDependencies ?: return null)) {
+      if (!dependency.isOptional &&
+          !PluginManagerCore.isModuleDependency(dependency.id) &&
+          PluginManagerCore.getLoadedPlugins(null).none { it.pluginId == dependency.id } &&
+          context.none { it.pluginId == dependency.id }
+      ) {
+        return dependency.id
       }
     }
     return null
@@ -373,10 +370,11 @@ object DynamicPlugins {
     return checkNoComponentsOrServiceOverrides(pluginDescriptor.pluginId, pluginDescriptor) == null && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
   }
 
-  private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, pluginDescriptor: IdeaPluginDescriptorImpl): String? =
-    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.appContainerDescriptor) ?:
-    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.projectContainerDescriptor) ?:
-    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.moduleContainerDescriptor)
+  private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, pluginDescriptor: IdeaPluginDescriptorImpl): String? {
+    return checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.appContainerDescriptor)
+           ?: checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.projectContainerDescriptor)
+           ?: checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.moduleContainerDescriptor)
+  }
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
     if (!containerDescriptor.components.isNullOrEmpty()) {
@@ -453,7 +451,6 @@ object DynamicPlugins {
       }
     }
 
-    var forbidGettingServicesToken: AccessToken? = null
     var classLoaderUnloaded: Boolean
     try {
       if (options.save) {
@@ -464,9 +461,8 @@ object DynamicPlugins {
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
       // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
-      forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
-
       app.runWriteAction {
+        val forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
         try {
           processLoadedOptionalDependenciesOnPlugin(pluginId) { subDescriptor ->
             // must be before unloadPluginDescriptorNotRecursively as this method nullize classloader
@@ -520,7 +516,12 @@ object DynamicPlugins {
           }
         }
         finally {
-          app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, options.isUpdate)
+          try {
+            forbidGettingServicesToken.finish()
+          }
+          finally {
+            app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, options.isUpdate)
+          }
         }
       }
     }
@@ -528,7 +529,6 @@ object DynamicPlugins {
       logger<DynamicPlugins>().error(e)
     }
     finally {
-      forbidGettingServicesToken?.finish()
       IdeEventQueue.getInstance().flushQueue()
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
@@ -542,8 +542,9 @@ object DynamicPlugins {
       }
       else {
         classloadersFromUnloadedPlugins.put(pluginId, pluginDescriptor.pluginClassLoader as? PluginClassLoader)
-        val checkClassLoaderUnload = options.waitForClassloaderUnload || Registry.`is`(
-          "ide.plugins.snapshot.on.unload.fail") || options.requireMemorySnapshot
+        val checkClassLoaderUnload = options.waitForClassloaderUnload ||
+                                     options.requireMemorySnapshot ||
+                                     Registry.`is`("ide.plugins.snapshot.on.unload.fail")
         val timeout = if (checkClassLoaderUnload) {
           options.unloadWaitTimeout ?: Registry.intValue("ide.plugins.unload.timeout", 5000)
         }
@@ -632,14 +633,14 @@ object DynamicPlugins {
     // unregister plugin extension points
     processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
-    pluginDescriptor.app.extensionPoints?.clear()
-    pluginDescriptor.project.extensionPoints?.clear()
-    pluginDescriptor.module.extensionPoints?.clear()
+    pluginDescriptor.app.extensionPoints = null
+    pluginDescriptor.project.extensionPoints = null
+    pluginDescriptor.module.extensionPoints = null
 
     val pluginId = pluginDescriptor.pluginId
     app.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
     val appMessageBus = app.messageBus as MessageBusEx
-    pluginDescriptor.appContainerDescriptor.getListeners()?.let { appMessageBus.unsubscribeLazyListeners(pluginId, it) }
+    pluginDescriptor.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(pluginId, it) }
 
     for (project in openedProjects) {
       (project as ComponentManagerImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
@@ -974,10 +975,8 @@ private fun processLoadedOptionalDependenciesOnPlugin(dependencyPluginId: Plugin
   }
 
   val pluginDescriptor = dependency.subDescriptor ?: return true
-  if (dependency.id == dependencyPluginId) {
-    if (!processor(pluginDescriptor)) {
-      return false
-    }
+  if (dependency.id == dependencyPluginId && !processor(pluginDescriptor)) {
+    return false
   }
 
   for (subDependency in (pluginDescriptor.pluginDependencies ?: return true)) {
