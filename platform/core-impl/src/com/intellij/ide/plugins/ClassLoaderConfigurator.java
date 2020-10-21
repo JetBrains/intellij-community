@@ -15,10 +15,7 @@ import java.lang.invoke.MethodType;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 final class ClassLoaderConfigurator {
@@ -33,8 +30,9 @@ final class ClassLoaderConfigurator {
 
   private Optional<IdeaPluginDescriptorImpl> javaDep;
 
-  // temporary list to produce arrays (avoid allocation for each plugin)
-  private final ArrayList<ClassLoader> loaders = new ArrayList<>();
+  // temporary set to produce arrays (avoid allocation for each plugin)
+  // set to remove duplicated classloaders
+  private final Set<ClassLoader> loaders = new LinkedHashSet<>();
   private final boolean hasAllModules;
 
   private final UrlClassLoader.Builder urlClassLoaderBuilder;
@@ -121,7 +119,7 @@ final class ClassLoaderConfigurator {
           getLogger().error(PluginLoadingError.formatErrorMessage(mainDependent,
                                                                   "requires missing class loader for '" + dependencyDescriptor.getName() + "'"));
         }
-        else if (!usePluginClassLoader || loader != coreLoader) {
+        else if (loader != coreLoader || !usePluginClassLoader) {
           loaders.add(loader);
         }
       }
@@ -199,7 +197,7 @@ final class ClassLoaderConfigurator {
 
   private static void addLoaderOrLogError(@NotNull IdeaPluginDescriptorImpl dependent,
                                           @NotNull IdeaPluginDescriptorImpl dependency,
-                                          @NotNull List<ClassLoader> loaders) {
+                                          @NotNull Collection<ClassLoader> loaders) {
     ClassLoader loader = dependency.getClassLoader();
     if (loader == null) {
       getLogger().error(PluginLoadingError.formatErrorMessage(dependent,
