@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.*
+import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
 class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicitNullArgumentHintProvider.Settings> {
@@ -21,7 +22,7 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicit
   override fun createSettings(): Settings = Settings()
 
   override val name: String
-    get() = "Implicit null argument"
+    get() = GroovyBundle.message("settings.inlay.implicit.null.argument")
   override val key: SettingsKey<Settings> = ourKey
   override val previewText: String
     get() = """
@@ -33,6 +34,6 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicit
   override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 
-    override val mainCheckboxText: String = "Show hint for implicit null argument"
+    override val mainCheckboxText: String = GroovyBundle.message("settings.inlay.show.hints.for.implicit.null.argument")
   }
 }
