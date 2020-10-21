@@ -126,14 +126,17 @@ public enum Mutability {
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
       if (method != null) {
         int index = list.getParameterIndex((PsiParameter)owner);
-        MutationSignature signature = MutationSignature.fromMethod(method);
-        if (signature.mutatesArg(index)) {
-          return MUTABLE;
-        } else if (signature.preservesArg(index) &&
-                   PsiTreeUtil.findChildOfAnyType(method.getBody(), PsiLambdaExpression.class, PsiClass.class) == null) {
-          // If method preserves argument, it still may return a lambda which captures an argument and changes it
-          // TODO: more precise check (at least differentiate parameters which are captured by lambdas or not)
-          return UNMODIFIABLE_VIEW;
+        JavaMethodContractUtil.ContractInfo contractInfo = JavaMethodContractUtil.getContractInfo(method);
+        if (contractInfo.isExplicit()) {
+          MutationSignature signature = contractInfo.getMutationSignature();
+          if (signature.mutatesArg(index)) {
+            return MUTABLE;
+          } else if (signature.preservesArg(index) &&
+                     PsiTreeUtil.findChildOfAnyType(method.getBody(), PsiLambdaExpression.class, PsiClass.class) == null) {
+            // If method preserves argument, it still may return a lambda which captures an argument and changes it
+            // TODO: more precise check (at least differentiate parameters which are captured by lambdas or not)
+            return UNMODIFIABLE_VIEW;
+          }
         }
         return UNKNOWN;
       }
