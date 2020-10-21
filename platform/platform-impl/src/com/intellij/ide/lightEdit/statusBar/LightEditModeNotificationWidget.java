@@ -10,11 +10,13 @@ import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.TooltipWithClickableLinks;
@@ -36,6 +38,8 @@ import java.awt.event.ActionListener;
 import java.util.function.Supplier;
 
 public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
+
+  private static final String HELP_ID = "lightedit-mode";
 
   private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
 
@@ -113,13 +117,18 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
   @NotNull
   private static @Nls String getTooltipHtml() {
-    HtmlChunk.Element link = HtmlChunk.link("https://www.jetbrains.com/help/idea/lightedit-mode.html",
-                                            ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
+    HtmlChunk.Element link = HtmlChunk.link(getHelpPageUrl(), ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
     link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
     @NlsSafe String pTag = "<p>";
     String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link.toString();
     tooltipText = tooltipText.replace(pTag, HtmlChunk.tag("p").style("padding: " + JBUI.scale(3) + "px 0 0 0").toString());
     return tooltipText;
+  }
+
+  private static @NotNull String getHelpPageUrl() {
+    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+    String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
+    return StringUtil.trimEnd(info.getWebHelpUrl(), "/") + "/" + productVersion + "/" + HELP_ID + ".html";
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
