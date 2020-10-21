@@ -213,5 +213,10 @@ public class SensitiveDataValidator {
     public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventData;
     }
+
+    @Override
+    public boolean isGroupAllowed(@NotNull EventLogGroup group) {
+      return true;
+    }
   }
 }
