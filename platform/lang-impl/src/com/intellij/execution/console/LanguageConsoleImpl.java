@@ -448,6 +448,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void addPromptToHistoryImpl(@NotNull String prompt) {
+    flushDeferredText();
     DocumentEx document = getHistoryViewer().getDocument();
     RangeHighlighter highlighter =
       this.getHistoryViewer().getMarkupModel().addRangeHighlighter(null, document.getTextLength(), document.getTextLength(), 0,
