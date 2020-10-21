@@ -54,7 +54,7 @@ class GitStageTracker(val project: Project) : Disposable {
     val connection: MessageBusConnection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        markDirty(events)
+        handleIndexFileEvents(events)
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
@@ -113,15 +113,18 @@ class GitStageTracker(val project: Project) : Disposable {
     dirtyScopeManager.fileDirty(file.filePath())
   }
 
-  private fun markDirty(events: List<VFileEvent>) {
-    val gitRoots = gitRoots()
+  private fun handleIndexFileEvents(events: List<VFileEvent>) {
+    val pathsToDirty = mutableListOf<FilePath>()
+    for (event in events) {
+      if (event.isFromRefresh) continue
+      val file = event.file as? GitIndexVirtualFile ?: continue
+      pathsToDirty.add(file.filePath)
+    }
 
-    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.filter {
-      gitRoots.contains(it.root)
-    }.map { it.filePath }
-
-    LOG.debug("Mark dirty", files)
-    VcsDirtyScopeManager.getInstance(project).filePathsDirty(files, emptyList())
+    if (pathsToDirty.isNotEmpty()) {
+      LOG.debug("Mark dirty on index VFiles save: ", pathsToDirty)
+      VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToDirty, emptyList())
+    }
   }
 
   private fun doUpdateState(repository: GitRepository) {
