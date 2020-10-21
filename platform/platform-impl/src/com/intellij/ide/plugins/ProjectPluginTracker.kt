@@ -59,7 +59,11 @@ internal class ProjectPluginTracker(private val project: Project,
         }
       }
 
-      override fun runActivity(project: Project) = ProjectPluginTrackerManager.createPluginTracker(project).updatePluginEnabledState(true)
+      override fun runActivity(project: Project) {
+        ProjectPluginTrackerManager.getInstance()
+          .createPluginTracker(project)
+          .updatePluginEnabledState(true)
+      }
     }
   }
 
