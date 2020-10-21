@@ -63,7 +63,7 @@ internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<Proj
   }
 
   private fun createPluginTrackerImpl(project: Project): ProjectPluginTracker {
-    val key = project.stateStore.projectWorkspaceId ?: project.name
+    val key = if (project.isDefault) project.name else project.stateStore.projectWorkspaceId ?: project.name
     return ProjectPluginTracker(
       project,
       state.trackers.getOrPut(key) { ProjectPluginTrackerState() }
