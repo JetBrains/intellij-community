@@ -1202,11 +1202,13 @@
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
     <schemeExporter
-        name="IntelliJ IDEA inspection profile XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.inspection.profile.xml"
         schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
         implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeImporter
-        name="IntelliJ IDEA inspection profile XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.import.inspection.profile.xml"
         schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
         implementationClass="com.intellij.profile.codeInspection.ui.InspectionProfileImporter"/>
 
