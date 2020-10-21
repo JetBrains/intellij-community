@@ -30,10 +30,10 @@ interface StagingAreaOperation {
 }
 
 object GitAddOperation : StagingAreaOperation {
-  override val actionText get() = GitBundle.messagePointer("add.action.name")
-  override val progressTitle get() = GitBundle.message("add.adding")
+  override val actionText get() = GitBundle.messagePointer("stage.add.action.text")
+  override val progressTitle get() = GitBundle.message("stage.add.process")
   override val icon = AllIcons.General.Add
-  override val errorMessage: String get() = VcsBundle.message("error.adding.files.title")
+  override val errorMessage: String get() = GitBundle.message("stage.add.error.title")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
 
