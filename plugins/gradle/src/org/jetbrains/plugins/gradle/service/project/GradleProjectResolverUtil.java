@@ -759,9 +759,6 @@ public final class GradleProjectResolverUtil {
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, true);
         final String failureMessage = ((UnresolvedExternalDependency)mergedDependency).getFailureMessage();
-        if (failureMessage != null) {
-          library.addPath(LibraryPathType.BINARY, failureMessage);
-        }
 
         boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
         BuildIssue buildIssue = new UnresolvedDependencySyncIssue(libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork);
