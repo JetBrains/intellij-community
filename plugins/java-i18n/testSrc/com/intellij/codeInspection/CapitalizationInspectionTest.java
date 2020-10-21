@@ -98,7 +98,8 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
                    "property.choice.mixed=Hello {0,choice,0#World|1#universe}\n" +
                    "property.choice.lower=Hello {0,choice,0#world|1#universe}\n" +
                    "property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far\n" +
-                   "property.sentence.with.quote='return' is not allowed here";
+                   "property.sentence.with.quote='return' is not allowed here\n" +
+                   "property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}";
     myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
   }
