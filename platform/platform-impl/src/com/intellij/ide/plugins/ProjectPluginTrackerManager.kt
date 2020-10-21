@@ -23,13 +23,10 @@ internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<Proj
   companion object {
 
     @JvmStatic
-    fun createPluginTrackerOrNull(project: Project?): ProjectPluginTracker? = project?.let { createPluginTracker(it) }
+    fun getInstance() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
-    fun createPluginTracker(project: Project): ProjectPluginTracker {
-      return service<ProjectPluginTrackerManager>()
-        .createPluginTrackerImpl(project)
-    }
+    fun createPluginTrackerOrNull(project: Project?): ProjectPluginTracker? = project?.let { getInstance().createPluginTracker(it) }
 
     internal class ProjectPluginTrackerManagerState : BaseState() {
 
@@ -47,7 +44,7 @@ internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<Proj
       object : ProjectManagerListener {
         override fun projectClosing(project: Project) {
           if (applicationShuttingDown) return
-          createPluginTrackerImpl(project).updatePluginEnabledState(false)
+          createPluginTracker(project).updatePluginEnabledState(false)
         }
       }
     )
@@ -62,11 +59,11 @@ internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<Proj
     )
   }
 
-  private fun createPluginTrackerImpl(project: Project): ProjectPluginTracker {
-    val key = if (project.isDefault) project.name else project.stateStore.projectWorkspaceId ?: project.name
+  fun createPluginTracker(project: Project): ProjectPluginTracker {
+    val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
     return ProjectPluginTracker(
       project,
-      state.trackers.getOrPut(key) { ProjectPluginTrackerState() }
+      state.trackers.getOrPut(workspaceId ?: project.name) { ProjectPluginTrackerState() }
     )
   }
 }
