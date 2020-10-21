@@ -64,7 +64,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @NotNull
   @Override
   public String getFullGroupName() {
-    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
+    //noinspection HardCodedStringLiteral
+    @Nls String res = String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
+    return res;
   }
 
   @NotNull
