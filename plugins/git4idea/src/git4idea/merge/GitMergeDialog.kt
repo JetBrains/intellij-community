@@ -54,6 +54,8 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
+internal const val GIT_REF_PROTOTYPE_VALUE = "origin/long-enough-branch-name"
+
 internal fun createRepositoryField(repositories: List<GitRepository>,
                                    defaultRoot: VirtualFile? = null) = ComboBox(CollectionComboBoxModel(repositories)).apply {
   item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
@@ -337,6 +339,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun createBranchField() = ComboBoxWithAutoCompletion(MutableCollectionComboBoxModel(mutableListOf<String>()),
                                                                project).apply {
+    prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("merge.branch.field.placeholder"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
