@@ -55,7 +55,7 @@ open class KotlinUSimpleReferenceExpression(
         if (sourcePsi.parent.destructuringDeclarationInitializer != true) {
             visitAccessorCalls(visitor)
         }
-        annotations.acceptList(visitor)
+        uAnnotations.acceptList(visitor)
 
         visitor.afterVisitSimpleNameReferenceExpression(this)
     }
