@@ -15,8 +15,9 @@ import java.util.Map;
 /**
  * Computes element-specific factors that could be useful while reordering completion items. Newly added providers don't affect ordering
  * like {@link com.intellij.codeInsight.completion.CompletionWeigher} until ranking model that leverages new factors is trained.
+ * <p>
+ * See FAQ section in {@link MLFeatureValue}
  *
- * @see MLFeatureValue
  * @see ContextFeatureProvider
  * @see com.intellij.codeInsight.completion.CompletionWeigher
  */
@@ -36,8 +37,8 @@ public interface ElementFeatureProvider {
    *
    * @param element         {@link LookupElement} to compute features for
    * @param location        describes where and how code completion is triggered
-   * @param contextFeatures features computed in {@link ContextFeatureProvider}
-   * @return container with all features calculated
+   * @param contextFeatures all features and pre-computed information given by all {@link ContextFeatureProvider}
+   * @return container with element-features calculated
    */
   Map<@NonNls String, MLFeatureValue> calculateFeatures(@NotNull LookupElement element,
                                                         @NotNull CompletionLocation location,

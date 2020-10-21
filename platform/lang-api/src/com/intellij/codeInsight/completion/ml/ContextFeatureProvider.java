@@ -12,10 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Describes location (or context) with specific facts about completion session that could be useful to sort completion
- * items better.
+ * A context feature provider provides additional information about the completion context which can be used by lookup element
+ * feature providers or the ml algorithm later on to compute optimal proposal rankings.
+ * <p>
+ * See FAQ in {@link MLFeatureValue}
  *
- * @see MLFeatureValue
  * @see ElementFeatureProvider
  * @see com.intellij.codeInsight.completion.CompletionContributor
  */
