@@ -38,7 +38,10 @@ import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -54,7 +57,6 @@ import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandRe
  */
 public abstract class PydevConsoleCommunication extends AbstractConsoleCommunication implements PyFrameAccessor {
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class);
-  private static final int FRAME_CACHE_LIMIT = 3;
 
   protected volatile boolean keyboardInterruption;
   /**
@@ -76,9 +78,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Nullable private Pair<String, String> myPrevNameToDescription = null;
 
   private int myFullValueSeq = 0;
-  private int myCommandId = 0;
-  private final Object myFrameCacheObject = new Object();
-  private final HashMap<Integer, XValueChildrenList> myFrameCache = new HashMap<>();
   private final Map<Integer, List<PyFrameAccessor.PyAsyncValue<String>>> myCallbackHashMap = new ConcurrentHashMap<>();
 
   @Nullable private PythonConsoleView myConsoleView;
@@ -436,9 +435,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             if (indicator.isCanceled()) return;
-            synchronized (myFrameCacheObject) {
-              myCommandId += 1;
-            }
             Pair<String, Boolean> executed = exec(command);
             nextResponse = new InterpreterResponse(executed.second, false);
           }
@@ -511,33 +507,19 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  @Override
-  public synchronized boolean isCurrentFrameCached() {
-    synchronized (myFrameCacheObject) {
-      return myFrameCache.containsKey(myCommandId);
-    }
-  }
-
   @Nullable
   @Override
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      synchronized (myFrameCacheObject) {
-        if (!myFrameCache.containsKey(myCommandId)) {
-          XValueChildrenList result = executeBackgroundTask(
-            () -> {
-              List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
-              return parseVars(frame, null, this);
-            },
-            true,
-            createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
-            "Error in loadFrame():"
-          );
-          myFrameCache.put(myCommandId, result);
-          myFrameCache.remove(myCommandId - FRAME_CACHE_LIMIT);
-        }
-        return myFrameCache.get(myCommandId);
-      }
+      return executeBackgroundTask(
+        () -> {
+          List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
+          return parseVars(frame, null, this);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
+        "Error in loadFrame():"
+      );
     }
     else {
       return new XValueChildrenList();
