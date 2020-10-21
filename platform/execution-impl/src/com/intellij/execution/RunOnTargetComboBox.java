@@ -52,8 +52,13 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     }
   }
 
-  public void setDefaultLanguageRuntimeTime(@Nullable LanguageRuntimeType<?> defaultLanguageRuntimeType) {
+  public void setDefaultLanguageRuntimeType(@Nullable LanguageRuntimeType<?> defaultLanguageRuntimeType) {
     myDefaultRuntimeType = defaultLanguageRuntimeType;
+  }
+
+  @Nullable
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return myDefaultRuntimeType;
   }
 
   public void addTarget(@NotNull TargetEnvironmentConfiguration config, int index) {

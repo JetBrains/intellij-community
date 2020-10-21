@@ -445,7 +445,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
         LanguageRuntimeType<?> defaultRuntime = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType();
-        ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeTime(defaultRuntime);
+        ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeType(defaultRuntime);
         resetRunOnComboBox(defaultTargetName);
         setTargetName(defaultTargetName);
       }
@@ -518,7 +518,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myManageTargetsLabel =
         LinkLabel.create(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), () -> {
           String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
-          TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName);
+          LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
+          TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
           if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
             resetRunOnComboBox(selectedName);
           }
