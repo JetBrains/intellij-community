@@ -16,6 +16,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.PeekableIterator;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NotNull;
@@ -84,28 +87,55 @@ public abstract class LineStatusMarkerRenderer {
   private void updateHighlighters() {
     if (myDisposed) return;
 
-    for (RangeHighlighter highlighter : myTooltipHighlighters) {
+    List<? extends Range> ranges = shouldPaintErrorStripeMarkers() ? myTracker.getRanges() : null;
+    if (ContainerUtil.isEmpty(ranges)) {
+      for (RangeHighlighter highlighter : myTooltipHighlighters) {
+        disposeHighlighter(highlighter);
+      }
+      myTooltipHighlighters.clear();
+      return;
+    }
+
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
+    PeekableIterator<RangeHighlighter> highlighterIt = new PeekableIteratorWrapper<>(myTooltipHighlighters.iterator());
+    List<RangeHighlighter> newHighlighters = new ArrayList<>();
+    List<RangeHighlighter> oldHighlighters = new ArrayList<>();
+
+    for (Range range : ranges) {
+      TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
+
+      while (highlighterIt.hasNext() &&
+             highlighterIt.peek().getStartOffset() < textRange.getStartOffset()) {
+        oldHighlighters.add(highlighterIt.next());
+      }
+
+      RangeHighlighter oldHighlighter = highlighterIt.hasNext() ? highlighterIt.peek() : null;
+      MarkerData oldMarkerData = oldHighlighter != null ? oldHighlighter.getUserData(TOOLTIP_KEY) : null;
+      if (oldMarkerData != null && oldMarkerData.type == range.getType() &&
+          oldHighlighter.getStartOffset() == textRange.getStartOffset() &&
+          oldHighlighter.getEndOffset() == textRange.getEndOffset()) {
+        // reuse existing highlighter if possible
+        newHighlighters.add(oldHighlighter);
+        highlighterIt.next();
+      }
+      else {
+        newHighlighters.add(createTooltipRangeHighlighter(markupModel, textRange, range.getType()));
+      }
+    }
+
+    while (highlighterIt.hasNext()) {
+      oldHighlighters.add(highlighterIt.next());
+    }
+
+    for (RangeHighlighter highlighter : oldHighlighters) {
       disposeHighlighter(highlighter);
     }
     myTooltipHighlighters.clear();
-
-    if (shouldPaintErrorStripeMarkers()) {
-      List<? extends Range> ranges = myTracker.getRanges();
-      if (ranges != null) {
-        MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-        for (Range range : ranges) {
-          RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
-          myTooltipHighlighters.add(highlighter);
-        }
-      }
-    }
+    myTooltipHighlighters.addAll(newHighlighters);
   }
 
   @NotNull
-  private RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range, @NotNull MarkupModelEx markupModel) {
-    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
-    TextAttributes attributes = new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(range.getType());
-
+  private RangeHighlighter createTooltipRangeHighlighter(@NotNull MarkupModelEx markupModel, @NotNull TextRange textRange, byte diffType) {
     return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(),
                                                               DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                                               HighlighterTargetArea.LINES_IN_RANGE,
@@ -114,11 +144,11 @@ public abstract class LineStatusMarkerRenderer {
         it.setGreedyToLeft(true);
         it.setGreedyToRight(true);
 
-        it.setTextAttributes(attributes);
+        it.setTextAttributes(new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(diffType));
         if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
 
         // ensure key is there in MarkupModelListener.afterAdded event
-        it.putUserData(TOOLTIP_KEY, new MarkerData(range.getType()));
+        it.putUserData(TOOLTIP_KEY, new MarkerData(diffType));
       });
   }
 
