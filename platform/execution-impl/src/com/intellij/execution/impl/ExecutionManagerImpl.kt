@@ -57,6 +57,7 @@ import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -65,6 +66,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
+
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
 
@@ -684,18 +686,13 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   fun getRunning(executorIds: List<String>): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = HashMap<String, SmartList<RunnerAndConfigurationSettings>>()
+    val result = HashMap<String, MutableList<RunnerAndConfigurationSettings>>()
     for (entry in runningConfigurations) {
       val id = entry.executor.id
-      if(executorIds.contains(id)) {
+      if (executorIds.contains(id)) {
         val processHandler = entry.descriptor.processHandler
-        if (processHandler != null && !processHandler.isProcessTerminated) {
-          val list = result[id] ?: kotlin.run {
-            val smartList = SmartList<RunnerAndConfigurationSettings>()
-            result[id] = smartList
-            smartList
-          }
-          list.add(entry.settings)
+        if (processHandler != null && !processHandler.isProcessTerminated && entry.settings != null) {
+          result.computeIfAbsent(id, Function { SmartList() }).add(entry.settings)
         }
       }
     }

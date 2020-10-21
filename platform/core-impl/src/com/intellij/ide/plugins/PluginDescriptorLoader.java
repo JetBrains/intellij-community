@@ -409,8 +409,10 @@ public final class PluginDescriptorLoader {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        if (!PluginManagerCore.usePluginClassLoader) descriptor.setUseCoreClassLoader();
-        result.add(descriptor,  /* overrideUseIfCompatible = */ false);
+        if (!PluginManagerCore.usePluginClassLoader) {
+          descriptor.setUseCoreClassLoader();
+        }
+        result.add(descriptor, /* overrideUseIfCompatible = */ false);
       }
     }
   }
