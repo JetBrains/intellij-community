@@ -846,7 +846,9 @@ public final class IconLoader {
 
         ImageIcon icon = scaledIconCache.getOrScaleIcon(1f);
         if (icon != null) {
-          this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
+          if (!SVGLoader.isSelectionContext()) {
+            this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
+          }
           return icon;
         }
       }
