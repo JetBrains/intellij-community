@@ -39,8 +39,6 @@ import java.util.function.Supplier;
 
 public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
-  private static final String HELP_ID = "lightedit-mode";
-
   private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
 
   public LightEditModeNotificationWidget() {
@@ -128,7 +126,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   private static @NotNull String getHelpPageUrl() {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
     String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
-    return StringUtil.trimEnd(info.getWebHelpUrl(), "/") + "/" + productVersion + "/" + HELP_ID + ".html";
+    return StringUtil.trimEnd(info.getWebHelpUrl(), "/") + "/" + productVersion + "/lightedit-mode.html";
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
