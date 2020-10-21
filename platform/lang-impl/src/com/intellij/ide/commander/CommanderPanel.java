@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -518,7 +519,7 @@ public class CommanderPanel extends JPanel {
     }
 
     @Override
-    public void setText(String text) {
+    public void setText(@NlsContexts.Label String text) {
       if (text == null || text.isEmpty()) {
         text = " ";
       }
