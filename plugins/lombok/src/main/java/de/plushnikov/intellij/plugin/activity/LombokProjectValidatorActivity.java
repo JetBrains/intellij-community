@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
@@ -41,9 +39,6 @@ import java.util.regex.Pattern;
  * @author Alexej Kubarev
  */
 public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
-
-  private static final Pattern LOMBOK_VERSION_PATTERN = Pattern.compile("(.*:)([\\d.]+)(.*)");
-
   @Override
   public void runActivity(@NotNull Project project) {
     // If plugin is not enabled - no point to continue
@@ -67,9 +62,9 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
       if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
         final ModuleManager moduleManager = ModuleManager.getInstance(project);
         for (Module module : moduleManager.getModules()) {
-          String lombokVersion = parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
+          String lombokVersion = Version.parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
-          if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
+          if (null != lombokVersion && Version.compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
             return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
                                                              LombokBundle
                                                                .message("config.warn.dependency.outdated.message", project.getName(),
@@ -155,37 +150,5 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
       }
     }
     return null;
-  }
-
-  @Nullable
-  String parseLombokVersion(@Nullable OrderEntry orderEntry) {
-    String result = null;
-    if (null != orderEntry) {
-      final String presentableName = orderEntry.getPresentableName();
-      final Matcher matcher = LOMBOK_VERSION_PATTERN.matcher(presentableName);
-      if (matcher.find()) {
-        result = matcher.group(2);
-      }
-    }
-    return result;
-  }
-
-  int compareVersionString(@NotNull String firstVersionOne, @NotNull String secondVersion) {
-    String[] firstVersionParts = firstVersionOne.split("\\.");
-    String[] secondVersionParts = secondVersion.split("\\.");
-    int length = Math.max(firstVersionParts.length, secondVersionParts.length);
-    for (int i = 0; i < length; i++) {
-      int firstPart = i < firstVersionParts.length && !firstVersionParts[i].isEmpty() ?
-        Integer.parseInt(firstVersionParts[i]) : 0;
-      int secondPart = i < secondVersionParts.length && !secondVersionParts[i].isEmpty() ?
-        Integer.parseInt(secondVersionParts[i]) : 0;
-      if (firstPart < secondPart) {
-        return -1;
-      }
-      if (firstPart > secondPart) {
-        return 1;
-      }
-    }
-    return 0;
   }
 }
