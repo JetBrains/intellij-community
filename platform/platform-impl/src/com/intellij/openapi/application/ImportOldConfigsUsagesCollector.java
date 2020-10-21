@@ -5,26 +5,30 @@ import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
-import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario.NOT_INITIALIZED;
 
 public class ImportOldConfigsUsagesCollector {
   private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 4);
   private static final EventId2<ImportOldConfigType, Boolean> IMPORT_DIALOG_SHOWN_EVENT =
     EVENT_GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType.class), Boolean("config_folder_exists"));
-  private static final EventId1<ImportOldConfigsState.InitialImportScenario> INITIAL_IMPORT_SCENARIO =
-    EVENT_GROUP.registerEvent("import.initially", Enum("initial_import_scenario", ImportOldConfigsState.InitialImportScenario.class));
+  private static final EventId1<InitialImportScenario> INITIAL_IMPORT_SCENARIO =
+    EVENT_GROUP.registerEvent("import.initially", Enum("initial_import_scenario", InitialImportScenario.class));
 
   public static class Trigger implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
       ImportOldConfigsState state = ImportOldConfigsState.getInstance();
-      INITIAL_IMPORT_SCENARIO.log(state.getInitialImportScenario());
+      InitialImportScenario initialImportScenario = state.getInitialImportScenario();
+      if (initialImportScenario != null) {
+        INITIAL_IMPORT_SCENARIO.log(initialImportScenario);
+      }
       if (state.wasOldConfigPanelOpened()) {
         IMPORT_DIALOG_SHOWN_EVENT.log(state.getType(), state.doesSourceConfigFolderExist());
       }
@@ -38,7 +42,7 @@ public class ImportOldConfigsUsagesCollector {
       return ourInstance;
     }
 
-    private volatile @NotNull InitialImportScenario myInitialImportScenario = NOT_INITIALIZED;
+    private volatile @Nullable InitialImportScenario myInitialImportScenario = null;
     private volatile boolean myOldConfigPanelWasOpened = false;
     private volatile boolean mySourceConfigFolderExists = false;
     private volatile @NotNull ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
@@ -53,15 +57,14 @@ public class ImportOldConfigsUsagesCollector {
       SHOW_DIALOG_CONFIGS_ARE_TOO_OLD,
       SHOW_DIALOG_REQUESTED_BY_PROPERTY,
       IMPORT_SETTINGS_ACTION,
-      RESTORE_DEFAULT_ACTION,
-      NOT_INITIALIZED
+      RESTORE_DEFAULT_ACTION
     }
 
     public void reportImportScenario(@NotNull InitialImportScenario strategy) {
       myInitialImportScenario = strategy;
     }
 
-    private @NotNull InitialImportScenario getInitialImportScenario() {
+    private @Nullable InitialImportScenario getInitialImportScenario() {
       return myInitialImportScenario;
     }
 
