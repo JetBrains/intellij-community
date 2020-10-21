@@ -583,6 +583,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       try {
         processHandler.startNotify()
         val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+          var stopped = false
 
           override fun addText(text: String, key: Key<*>) {
             processHandler.notifyTextAvailable(text, key)
@@ -591,6 +592,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           override fun isCanceled(): Boolean {
             return false
           }
+
+          override fun stop() {
+            stopped = true
+          }
+
+          override fun isStopped(): Boolean = stopped
         }
         promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }

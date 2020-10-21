@@ -8,7 +8,6 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
@@ -82,6 +81,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     request.uploadVolumes += uploadRoot
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        result.stopProceeding()
+        return@then
+      }
       val volume = environment.uploadVolumes.getValue(uploadRoot)
       try {
         val upload = volume.upload(if (isDir) "." else uploadPath.fileName.toString(), targetProgressIndicator)
@@ -89,8 +92,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
       catch (t: Throwable) {
         LOG.warn(t)
-        targetProgressIndicator.addText(LangBundle.message("progress.message.failed.to.upload.0.1", volume.localRoot, t.localizedMessage), ProcessOutputType.STDERR)
-        targetProgressIndicator.addText("\n", ProcessOutputType.STDERR)
+        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.upload.0.1", volume.localRoot,
+                                                                        t.localizedMessage))
         result.resolveFailure(t)
       }
     }
