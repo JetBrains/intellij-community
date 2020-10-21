@@ -13,8 +13,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.*
 
 internal object MarkdownPsiUtil {
   /** Check if node is on a top-level -- meaning its parent is root of file   */
@@ -36,13 +35,14 @@ internal object MarkdownPsiUtil {
 
 
   @JvmField
-  val PRESENTABLE_TYPES: TokenSet = MarkdownTokenTypeSets.HEADERS
+  val PRESENTABLE_TYPES: TokenSet = TokenSet.orSet(
+    MarkdownTokenTypeSets.HEADERS,
+    TokenSet.create(MarkdownElementTypes.UNORDERED_LIST, MarkdownElementTypes.ORDERED_LIST)
+  )
 
   @JvmField
   val TRANSPARENT_CONTAINERS = TokenSet.create(
     MarkdownElementTypes.MARKDOWN_FILE,
-    MarkdownElementTypes.UNORDERED_LIST,
-    MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.LIST_ITEM,
     MarkdownElementTypes.BLOCK_QUOTE)
 
   private val HEADER_ORDER = listOf(
@@ -87,7 +87,7 @@ internal object MarkdownPsiUtil {
     val structureContainer = (if (myElement is MarkdownFile) findFirstChild(myElement)
     else getParentOfType(myElement, TRANSPARENT_CONTAINERS))
                              ?: return
-    val currentHeader: MarkdownPsiElement? = if (myElement is MarkdownHeaderImpl) myElement else null
+    val currentHeader: PsiElement? = if (myElement is MarkdownHeaderImpl || myElement is MarkdownListImpl) myElement else null
     processContainer(structureContainer, currentHeader, currentHeader, consumer, nextHeaderConsumer)
   }
 
@@ -97,16 +97,20 @@ internal object MarkdownPsiUtil {
 
   private fun processContainer(container: PsiElement,
                                sameLevelRestriction: PsiElement?,
-                               from: MarkdownPsiElement?,
+                               from: PsiElement?,
                                resultConsumer: Consumer<in PsiElement>,
                                nextHeaderConsumer: NullableConsumer<in PsiElement>) {
-    var nextSibling = if (from == null) container.firstChild else from.nextSibling
+    var nextSibling = when (from) {
+      null -> container.firstChild
+      is MarkdownListImpl -> from.firstChild
+      else -> from.nextSibling
+    }
     var maxContentLevel: PsiElement? = null
     while (nextSibling != null) {
       if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling)) && maxContentLevel == null) {
         processContainer(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
       }
-      else if (nextSibling is MarkdownHeaderImpl) {
+      else if (nextSibling is MarkdownHeaderImpl || nextSibling is MarkdownListImpl) {
         if (sameLevelRestriction != null && isSameLevelOrHigher(nextSibling, sameLevelRestriction)) {
           nextHeaderConsumer.consume(nextSibling)
           break
@@ -118,6 +122,8 @@ internal object MarkdownPsiUtil {
             resultConsumer.consume(nextSibling)
           }
         }
+      } else if (nextSibling is MarkdownListItemImpl) {
+        resultConsumer.consume(nextSibling)
       }
       nextSibling = nextSibling.nextSibling
       if (nextSibling == null) nextHeaderConsumer.consume(null)
