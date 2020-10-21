@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NonNls;
 
 public enum EmojiSkinTone {
   NO_TONE(""),
-  LIGHT("🏻"),
-  MEDIUM_LIGHT("🏼"),
-  MEDIUM("🏽"),
-  MEDIUM_DARK("🏾"),
-  DARK("🏿");
+  LIGHT("\uD83C\uDFFB"),
+  MEDIUM_LIGHT("\uD83C\uDFFC"),
+  MEDIUM("\uD83C\uDFFD"),
+  MEDIUM_DARK("\uD83C\uDFFE"),
+  DARK("\uD83C\uDFFF");
 
   @NonNls private final String myValue;
 
