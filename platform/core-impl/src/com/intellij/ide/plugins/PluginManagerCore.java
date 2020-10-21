@@ -79,7 +79,7 @@ public final class PluginManagerCore {
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
-  static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
+  private static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
   private static Map<PluginId, PluginLoadingError> ourPluginLoadingErrors;
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();

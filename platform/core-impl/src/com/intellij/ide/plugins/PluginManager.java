@@ -205,11 +205,7 @@ public final class PluginManager {
 
   @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
-    if (result == null) {
-      return null;
-    }
-
+    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {
       if (id == plugin.getPluginId()) {
         return plugin;
