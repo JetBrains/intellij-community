@@ -258,6 +258,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     public void onItemChosen() {
+      getChildComponent().hidePopup();
       createAndEditNewServer();
     }
 
