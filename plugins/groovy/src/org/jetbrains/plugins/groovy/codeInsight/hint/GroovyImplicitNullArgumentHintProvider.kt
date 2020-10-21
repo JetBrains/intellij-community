@@ -9,10 +9,10 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
 class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicitNullArgumentHintProvider.Settings> {
-  data class Settings(var showNullArgument: Boolean = true)
+  class Settings
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector {
-    return GroovyImplicitNullArgumentCollector(editor, settings)
+    return GroovyImplicitNullArgumentCollector(editor)
   }
 
   companion object {

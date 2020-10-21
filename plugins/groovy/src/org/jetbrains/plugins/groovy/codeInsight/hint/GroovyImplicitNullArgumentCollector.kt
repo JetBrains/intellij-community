@@ -5,18 +5,16 @@ import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
-class GroovyImplicitNullArgumentCollector(editor: Editor, val settings : GroovyImplicitNullArgumentHintProvider.Settings) :
+class GroovyImplicitNullArgumentCollector(editor: Editor) :
   FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-    if (!settings.showNullArgument) {
-      return false
-    }
     if (element !is GrArgumentList) {
       return true
     }
@@ -28,11 +26,11 @@ class GroovyImplicitNullArgumentCollector(editor: Editor, val settings : GroovyI
       return true
     }
     val resolvedMethod = methodCall.resolveMethod() ?: return true
-    if (resolvedMethod.parameterList.parametersCount == 1) {
-      // TODO: primitive types
-      // TODO: varargs
-      sink.addInlineElement(element.firstChild.endOffset, true, factory.roundWithBackground(factory.smallText("null")), false)
-    }
+    if (resolvedMethod.parameterList.parametersCount != 1) return true
+    if (resolvedMethod.isVarArgs) return true
+    val parameterTypeElement = resolvedMethod.parameterList.getParameter(0)?.typeElement
+    if (parameterTypeElement != null && parameterTypeElement.type is PsiPrimitiveType) return true
+    sink.addInlineElement(element.firstChild.endOffset, true, factory.roundWithBackground(factory.smallText("null")), false)
     return true
   }
 }
