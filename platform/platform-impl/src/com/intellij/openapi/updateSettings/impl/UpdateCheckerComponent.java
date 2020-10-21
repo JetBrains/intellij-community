@@ -200,7 +200,7 @@ final class UpdateCheckerComponent {
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     if (lastBuildChecked == null) {
       // first IDE start, just save info about build
-      UpdateSettings.getInstance().saveLastCheckedInfo();
+      UpdateSettings.getInstance().saveLastCheckedInfo(true);
       return;
     }
 
@@ -239,7 +239,7 @@ final class UpdateCheckerComponent {
     UpdateChecker.getNotificationGroup().createNotification(
       title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap").notify(null);
 
-    UpdateSettings.getInstance().saveLastCheckedInfo();
+    UpdateSettings.getInstance().saveLastCheckedInfo(true);
   }
 
   private static void showUpdatedPluginsNotification(@NotNull Project project) {
