@@ -11,9 +11,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Function;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -24,7 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +62,21 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
+      table.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          int row = table.getSelectedRow();
+          if (row == -1 || e.getKeyCode() != KeyEvent.VK_SPACE || table.isEditing()) return;
+          if (table.editCellAt(row, 0)) {
+            TableCellEditor editor = table.getCellEditor();
+            if (editor instanceof DefaultCellEditor) {
+              ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+            }
+            table.stopEditing();
+            e.consume();
+          }
+        }
+      });
     }
 
    boolean needTableHeader = false;
