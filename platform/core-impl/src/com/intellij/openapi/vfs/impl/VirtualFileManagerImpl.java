@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -227,6 +228,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       try {
         listener.beforeRefreshStart(asynchronous);
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -244,6 +248,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
       try {
         listener.afterRefreshFinish(asynchronous);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
