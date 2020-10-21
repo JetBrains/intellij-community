@@ -93,17 +93,20 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     val path = getClosestPathForLocation(point.x, point.y) ?: return null
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
     val operation = getFirstMatchingOperation(node) ?: return null
+    val componentBounds = operation.icon?.let { getComponentBounds(path, it)} ?: return null
 
-    val componentWidth = operation.icon?.iconWidth ?: return null
-    val componentBounds = getComponentBounds(path, componentWidth) ?: return null
     return HoverData(node, operation, componentBounds.contains(point))
   }
 
-  private fun getComponentBounds(path: TreePath, componentWidth: Int): Rectangle? {
+  private fun getComponentBounds(path: TreePath, icon: Icon): Rectangle? {
     val bounds = getPathBounds(path) ?: return null
-    bounds.setLocation(visibleRect.width + visibleRect.x - componentWidth, bounds.y)
-    bounds.setSize(componentWidth, bounds.height)
+    bounds.setLocation(getComponentXCoordinate(icon.iconWidth), bounds.y)
+    bounds.setSize(icon.iconWidth, bounds.height)
     return bounds
+  }
+
+  private fun getComponentXCoordinate(componentWidth: Int): Int {
+    return visibleRect.width + visibleRect.x - componentWidth
   }
 
   internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
@@ -373,23 +376,24 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       val foreground = if (hovered && hoverData!!.isOverOperationIcon) baseIcon
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
-      val treeFocused = tree.hasFocus()
-      val path = tree.getPathForRow(row)
-      val backgroundColor = if (selected || path == null) UIUtil.getTreeBackground(selected, treeFocused)
-                            else tree.getPathBackground(path, row)
-                                 ?: UIUtil.getTreeBackground(selected, treeFocused)
       val background = ColorIcon(foreground.iconWidth, tree.getRowHeight(), foreground.iconWidth, tree.getRowHeight(),
-                                 backgroundColor, false)
+                                 tree.getBackground(row, selected), false)
 
       val icon = LayeredIcon(2).apply {
         setIcon(background, 0)
-        setIcon(foreground, 1, SwingConstants.CENTER)
+        setIcon(foreground, 1, SwingConstants.WEST)
       }
 
-      val rowX = TreeUtil.getNodeRowX(tree, row) + tree.insets.left
-      val location = tree.visibleRect.x + tree.visibleRect.width - rowX - icon.iconWidth
+      val location = tree.getComponentXCoordinate(foreground.iconWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
+    }
+
+    private fun GitStageTree.getBackground(row: Int, selected: Boolean): Color {
+      val treeFocused = hasFocus()
+
+      if (selected) return UIUtil.getTreeBackground(selected, treeFocused)
+      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: UIUtil.getTreeBackground(selected, treeFocused)
     }
 
     override fun getAccessibleContext(): AccessibleContext {
