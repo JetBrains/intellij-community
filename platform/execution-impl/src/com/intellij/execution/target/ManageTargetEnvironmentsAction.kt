@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class ManageTargetEnvironmentsAction : DumbAwareAction(ExecutionBundle.message("action.manage.targets.text")) {
   override fun actionPerformed(e: AnActionEvent) {
-    ShowSettingsUtil.getInstance().editConfigurable(e.project, TargetEnvironmentsConfigurable(e.project!!, null))
+    ShowSettingsUtil.getInstance().editConfigurable(e.project, TargetEnvironmentsConfigurable(e.project!!))
   }
 
   override fun update(e: AnActionEvent) {

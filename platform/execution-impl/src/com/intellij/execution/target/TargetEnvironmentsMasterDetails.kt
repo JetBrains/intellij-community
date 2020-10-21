@@ -16,16 +16,18 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.ui.StatusText
 
-class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val project: Project,
-                                                                private val initialSelectedName: String? = null)
-  : MasterDetailsComponent() {
+class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
+  private val project: Project,
+  private val initialSelectedName: String? = null,
+  private val defaultLanguageRuntime: LanguageRuntimeType<*>?
+) : MasterDetailsComponent() {
 
   init {
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
     myTree.emptyText.text = "No targets added"
     myTree.emptyText.appendSecondaryText(ExecutionBundle.message("targets.details.status.text.add.new.target"),
-                                         SimpleTextAttributes.LINK_ATTRIBUTES) { _ ->
+                                         SimpleTextAttributes.LINK_ATTRIBUTES) {
       val popup = ActionManager.getInstance().createActionPopupMenu("TargetEnvironmentsConfigurable.EmptyListText", CreateNewTargetGroup())
       val size = myTree.emptyText.preferredSize
       val textY = myTree.height / if (myTree.emptyText.isShowAboveCenter) 3 else 2
@@ -37,7 +39,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
 
   override fun getDisplayName(): String = ExecutionBundle.message("targets.details.configurable.name.remote.targets")
 
-  override fun getEmptySelectionString(): String? {
+  override fun getEmptySelectionString(): String {
     return ExecutionBundle.message("targets.details.status.text.select.target.to.configure")
   }
 
@@ -104,7 +106,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(private val proj
     override fun actionPerformed(e: AnActionEvent) {
       val newConfig: TargetEnvironmentConfiguration
 
-      val wizard = TargetEnvironmentWizard.createWizard(project, type, null)
+      val wizard = TargetEnvironmentWizard.createWizard(project, type, defaultLanguageRuntime)
       if (wizard != null) {
         if (!wizard.showAndGet()) return
 

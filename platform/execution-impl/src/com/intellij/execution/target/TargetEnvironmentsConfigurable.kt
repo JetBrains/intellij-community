@@ -8,11 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DetailsComponent
 import javax.swing.JComponent
 
-class TargetEnvironmentsConfigurable(project: Project, initialSelectedName: String? = null) : SearchableConfigurable, MasterDetails {
-  @Suppress("unused")
-  constructor(project: Project) : this(project, null)
+class TargetEnvironmentsConfigurable(project: Project,
+                                     initialSelectedName: String? = null,
+                                     defaultLanguageRuntime: LanguageRuntimeType<*>? = null)
+  : SearchableConfigurable, MasterDetails {
 
-  private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName)
+  @Suppress("unused")
+  constructor(project: Project) : this(project, null, null)
+
+  private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName, defaultLanguageRuntime)
 
   override fun initUi() = editor.initUi()
 
