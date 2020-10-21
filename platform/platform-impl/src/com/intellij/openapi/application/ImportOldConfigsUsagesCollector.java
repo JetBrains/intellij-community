@@ -14,7 +14,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
 import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario.NOT_INITIALIZED;
 
 public class ImportOldConfigsUsagesCollector {
-  private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 1);
+  private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 4);
   private static final EventId2<ImportOldConfigType, Boolean> IMPORT_DIALOG_SHOWN_EVENT =
     EVENT_GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType.class), Boolean("config_folder_exists"));
   private static final EventId1<ImportOldConfigsState.InitialImportScenario> INITIAL_IMPORT_SCENARIO =
