@@ -150,6 +150,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
         return;
       }
       if (anObject instanceof Type) {
+        hidePopup();
         //noinspection unchecked,rawtypes
         TargetEnvironmentWizard wizard = ((Type)anObject).createWizard(myProject, myDefaultRuntimeType);
         if (wizard != null && wizard.showAndGet()) {
