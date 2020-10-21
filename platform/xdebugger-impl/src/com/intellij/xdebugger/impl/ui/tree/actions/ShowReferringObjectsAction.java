@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -13,11 +12,9 @@ import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.tree.TreeNode;
 
 public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
-  private static final Logger LOG = Logger.getInstance(ShowReferringObjectsAction.class);
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getValueContainer().getReferrersProvider() != null;
@@ -37,16 +34,11 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                    nodeName,
                                                    referringObjectsRoot,
                                                    tree.getValueMarkers(), session, false);
-        JComponent debuggerTree = dialog.getPreferredFocusedComponent();
-        if (debuggerTree instanceof XDebuggerTree) {
-          if (referringObjectsRoot instanceof XReferrersProvider.ShortestPathAware) {
-            if (((XReferrersProvider.ShortestPathAware)referringObjectsRoot).isShortestPathAvailable()) {
-              ((XDebuggerTree)debuggerTree).expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
-            }
+        XDebuggerTree debuggerTree = dialog.getTree();
+        if (referringObjectsRoot instanceof XReferrersProvider.ShortestPathAware) {
+          if (((XReferrersProvider.ShortestPathAware)referringObjectsRoot).isShortestPathAvailable()) {
+            debuggerTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
           }
-        }
-        else {
-          LOG.error("debugger tree unavailable");
         }
 
         dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));

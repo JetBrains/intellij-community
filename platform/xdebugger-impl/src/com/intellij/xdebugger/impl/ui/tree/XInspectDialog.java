@@ -108,6 +108,11 @@ public class XInspectDialog extends DialogWrapper {
     return "#xdebugger.XInspectDialog";
   }
 
+  @NotNull
+  public XDebuggerTree getTree() {
+    return myDebuggerTreePanel.getTree();
+  }
+
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
