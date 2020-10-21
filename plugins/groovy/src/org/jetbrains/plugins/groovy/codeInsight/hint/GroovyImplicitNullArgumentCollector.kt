@@ -5,14 +5,13 @@ import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-class GroovyImplicitNullArgumentCollector(editor: Editor) :
-  FactoryInlayHintsCollector(editor) {
+class GroovyImplicitNullArgumentCollector(editor: Editor) : FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
     if (element !is GrArgumentList) {
@@ -22,15 +21,9 @@ class GroovyImplicitNullArgumentCollector(editor: Editor) :
       return true
     }
     val methodCall = element.parentOfType<GrCall>()?.takeIf { it.argumentList === element } ?: return true
-    if (methodCall.hasClosureArguments()) {
-      return true
+    if (PsiUtil.isEligibleForInvocationWithNull(methodCall)) {
+      sink.addInlineElement(element.firstChild.endOffset, true, factory.roundWithBackground(factory.smallText("null")), false)
     }
-    val resolvedMethod = methodCall.resolveMethod() ?: return true
-    if (resolvedMethod.parameterList.parametersCount != 1) return true
-    if (resolvedMethod.isVarArgs) return true
-    val parameterTypeElement = resolvedMethod.parameterList.getParameter(0)?.typeElement
-    if (parameterTypeElement != null && parameterTypeElement.type is PsiPrimitiveType) return true
-    sink.addInlineElement(element.firstChild.endOffset, true, factory.roundWithBackground(factory.smallText("null")), false)
     return true
   }
 }

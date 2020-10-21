@@ -1457,4 +1457,31 @@ public final class PsiUtil {
 
     return GrLiteralImpl.getLiteralValue(element);
   }
+
+  public static boolean isEligibleForInvocationWithNull(@NotNull GrCall call) {
+    if (isCompileStatic(call) || call.hasClosureArguments()) {
+      return false;
+    }
+    var argumentList = call.getArgumentList();
+    if (argumentList == null || !argumentList.isEmpty()) {
+      return false;
+    }
+    PsiMethod method = call.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+    PsiParameterList parameterList = method.getParameterList();
+    if (parameterList.getParametersCount() != 1) {
+      return false;
+    }
+    PsiParameter parameter = parameterList.getParameter(0);
+    if (parameter == null || parameter.isVarArgs() || (parameter instanceof GrParameter && ((GrParameter)parameter).isOptional())) {
+      return false;
+    }
+    PsiTypeElement typeElement = parameter.getTypeElement();
+    if (typeElement != null && !(typeElement.getType() instanceof PsiClassType)) {
+      return false;
+    }
+    return true;
+  }
 }

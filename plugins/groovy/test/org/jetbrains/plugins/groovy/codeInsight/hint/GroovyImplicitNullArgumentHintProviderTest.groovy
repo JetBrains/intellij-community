@@ -1,11 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 @CompileStatic
 class GroovyImplicitNullArgumentHintProviderTest extends InlayHintsProviderTestCase {
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_2_5
+  }
 
   def doTest(String text) {
     testProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new GroovyImplicitNullArgumentHintProvider.Settings())
@@ -50,6 +57,17 @@ class Foo {
 }
 
 new Foo(<# null #>)
+"""
+  }
+
+  void 'test don\'t show hint with @CompileStatic'() {
+    doTest """
+@groovy.transform.CompileStatic
+class Foo {
+  def foo(String s) {}
+
+  def bar() { foo<error>()</error> }
+}
 """
   }
 }
