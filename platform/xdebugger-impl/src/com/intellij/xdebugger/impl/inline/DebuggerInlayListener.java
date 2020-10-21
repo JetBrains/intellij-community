@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class DebuggerInlayListener implements EditorMouseMotionListener, EditorMouseListener, @NotNull FocusChangeListener {
+public class DebuggerInlayListener implements EditorMouseMotionListener, EditorMouseListener {
   private final Project myProject;
   private Inlay lastHoveredInlay = null;
   private boolean myListening;
