@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DefaultFlagsProvider;
 import com.intellij.openapi.diff.DiffBundle;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -82,7 +84,7 @@ public abstract class LineStatusMarkerRenderer {
       if (ranges != null) {
         MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
         for (Range range : ranges) {
-          RangeHighlighter highlighter = LineStatusMarkerDrawUtil.createTooltipRangeHighlighter(range, markupModel);
+          RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
           if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
           myTooltipHighlighters.add(highlighter);
         }
@@ -90,10 +92,26 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
+  @NotNull
+  private static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
+                                                                @NotNull MarkupModel markupModel) {
+    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
+    TextAttributes attributes = new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(range.getType());
+
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                   DiffDrawUtil.LST_LINE_MARKER_LAYER, attributes,
+                                                                   HighlighterTargetArea.LINES_IN_RANGE);
+    highlighter.setThinErrorStripeMark(true);
+    highlighter.setGreedyToLeft(true);
+    highlighter.setGreedyToRight(true);
+
+    return highlighter;
+  }
+
   private void destroyHighlighters() {
     disposeHighlighter(myHighlighter);
 
-    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+    for (RangeHighlighter highlighter : myTooltipHighlighters) {
       disposeHighlighter(highlighter);
     }
     myTooltipHighlighters.clear();
