@@ -1,0 +1,20 @@
+<idea-plugin implementation-detail="true">
+  <id>com.intellij.externalSystem.dependencyUpdater</id>
+  <name>Dependency Management Api for External Build Tools</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides dependency management for external build tools
+    ]]>
+  </description>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.externalSystem.DependencyModifierService" />
+  </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.dependencyModifier" dynamic="true" interface="com.intellij.externalSystem.ExternalDependencyModificator" area="IDEA_PROJECT"/>
+  </extensionPoints>
+
+
+
+</idea-plugin>
