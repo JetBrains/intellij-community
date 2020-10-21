@@ -54,8 +54,26 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
 }
 
 internal fun joinTargetPaths(basePath: String, relativePath: String, fileSeparator: Char): String {
-  val resultCanonicalPath = FileUtil.toCanonicalPath("$basePath$fileSeparator$relativePath", fileSeparator)
-  // The method `FileUtil.toCanonicalPath()` returns the path with '/' no matter what `fileSeparator` is passed but let's make the result
-  // system-dependent
-  return FileUtil.toSystemDependentName(resultCanonicalPath, fileSeparator)
+  val normalizedBasePathForJoining = basePath
+    .normalizeFileSeparatorCharacter(fileSeparator)
+    .removeRepetitiveFileSeparators(fileSeparator)
+    .ensureEndsWithFileSeparator(fileSeparator)
+  val normalizedRelativePath = relativePath
+    .normalizeFileSeparatorCharacter(fileSeparator)
+    .removeRepetitiveFileSeparators(fileSeparator)
+    .normalizeRelativePath(fileSeparator)
+  return "$normalizedBasePathForJoining$normalizedRelativePath"
 }
+
+private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String = if (fileSeparator == '\\') replace('/', fileSeparator) else this
+
+private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String = replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+
+private fun String.normalizeRelativePath(fileSeparator: Char): String =
+  when {
+    length == 1 && this[0] == '.' -> ""
+    startsWith(prefix = ".$fileSeparator") -> substring(startIndex = 2)
+    else -> this
+  }.removeSuffix(fileSeparator.toString())
+
+private fun String.ensureEndsWithFileSeparator(fileSeparator: Char): String = if (endsWith(fileSeparator)) this else "$this$fileSeparator"
