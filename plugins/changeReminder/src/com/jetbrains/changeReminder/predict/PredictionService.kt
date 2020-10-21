@@ -154,7 +154,9 @@ internal class PredictionService(val project: Project) : Disposable {
   private fun calculatePrediction() = synchronized(LOCK) {
     nodeExpandedListener.tryToSubscribe()
 
-    Disposer.dispose(predictionRequestDisposable)
+    if (!Disposer.isDisposed(predictionRequestDisposable)) {
+      Disposer.dispose(predictionRequestDisposable)
+    }
     predictionRequestDisposable = Disposer.newDisposable()
 
     val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
@@ -194,6 +196,8 @@ internal class PredictionService(val project: Project) : Disposable {
   }
 
   private fun shutdownService() = synchronized(LOCK) {
+    Disposer.dispose(predictionRequestDisposable)
+
     nodeExpandedListener.unsubscribe()
 
     onTraverserDisposed()
