@@ -12,7 +12,6 @@ import com.intellij.util.NullableConsumer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.impl.*
 
 internal object MarkdownPsiUtil {
@@ -35,14 +34,18 @@ internal object MarkdownPsiUtil {
 
 
   @JvmField
-  val PRESENTABLE_TYPES: TokenSet = TokenSet.orSet(
-    MarkdownTokenTypeSets.HEADERS,
-    TokenSet.create(MarkdownElementTypes.UNORDERED_LIST, MarkdownElementTypes.ORDERED_LIST)
-  )
+  val PRESENTABLE_TYPES: TokenSet = MarkdownTokenTypeSets.HEADERS
+
+  @JvmField
+  val PRESENTABLE_CONTAINERS = TokenSet.create(
+    MarkdownElementTypes.UNORDERED_LIST,
+    MarkdownElementTypes.ORDERED_LIST)
 
   @JvmField
   val TRANSPARENT_CONTAINERS = TokenSet.create(
     MarkdownElementTypes.MARKDOWN_FILE,
+    MarkdownElementTypes.UNORDERED_LIST,
+    MarkdownElementTypes.ORDERED_LIST,
     MarkdownElementTypes.BLOCK_QUOTE)
 
   private val HEADER_ORDER = listOf(
@@ -87,30 +90,34 @@ internal object MarkdownPsiUtil {
     val structureContainer = (if (myElement is MarkdownFile) findFirstChild(myElement)
     else getParentOfType(myElement, TRANSPARENT_CONTAINERS))
                              ?: return
-    val currentHeader: PsiElement? = if (myElement is MarkdownHeaderImpl || myElement is MarkdownListImpl) myElement else null
-    processContainer(structureContainer, currentHeader, currentHeader, consumer, nextHeaderConsumer)
+
+    when (myElement) {
+      is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
+      is MarkdownListImpl -> processList(myElement, consumer)
+      else -> processHeader(structureContainer, null, null, consumer, nextHeaderConsumer)
+    }
   }
 
   private fun findFirstChild(myElement: PsiElement): PsiElement? {
     return myElement.children.asSequence().firstOrNull { it.language == MarkdownLanguage.INSTANCE }
   }
 
-  private fun processContainer(container: PsiElement,
-                               sameLevelRestriction: PsiElement?,
-                               from: PsiElement?,
-                               resultConsumer: Consumer<in PsiElement>,
-                               nextHeaderConsumer: NullableConsumer<in PsiElement>) {
-    var nextSibling = when (from) {
-      null -> container.firstChild
-      is MarkdownListImpl -> from.firstChild
-      else -> from.nextSibling
-    }
+  private fun processHeader(container: PsiElement,
+                            sameLevelRestriction: PsiElement?,
+                            from: PsiElement?,
+                            resultConsumer: Consumer<in PsiElement>,
+                            nextHeaderConsumer: NullableConsumer<in PsiElement>) {
+    var nextSibling = if (from == null) container.firstChild else from.nextSibling
     var maxContentLevel: PsiElement? = null
+
     while (nextSibling != null) {
       if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling)) && maxContentLevel == null) {
-        processContainer(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
+        if (PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(nextSibling))) {
+          resultConsumer.consume(nextSibling)
+        }
+        processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
       }
-      else if (nextSibling is MarkdownHeaderImpl || nextSibling is MarkdownListImpl) {
+      else if (nextSibling is MarkdownHeaderImpl) {
         if (sameLevelRestriction != null && isSameLevelOrHigher(nextSibling, sameLevelRestriction)) {
           nextHeaderConsumer.consume(nextSibling)
           break
@@ -122,11 +129,28 @@ internal object MarkdownPsiUtil {
             resultConsumer.consume(nextSibling)
           }
         }
-      } else if (nextSibling is MarkdownListItemImpl) {
-        resultConsumer.consume(nextSibling)
       }
       nextSibling = nextSibling.nextSibling
       if (nextSibling == null) nextHeaderConsumer.consume(null)
+    }
+  }
+
+  private fun processList(from: PsiElement,
+                          resultConsumer: Consumer<in PsiElement>) {
+    var listItem = from.firstChild
+
+    while (listItem != null) {
+      val itemChild = listItem.lastChild
+      if (TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(itemChild))) {
+        if (PRESENTABLE_CONTAINERS.contains(PsiUtilCore.getElementType(itemChild))) {
+          resultConsumer.consume(itemChild)
+        }
+      }
+      else if (listItem is MarkdownListItemImpl) {
+        resultConsumer.consume(listItem)
+      }
+
+      listItem = listItem.nextSibling
     }
   }
 
