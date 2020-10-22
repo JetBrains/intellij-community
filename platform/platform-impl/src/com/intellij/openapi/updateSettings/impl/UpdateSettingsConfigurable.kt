@@ -18,8 +18,8 @@ import com.intellij.util.text.DateFormatUtil
 import java.awt.event.ActionListener
 import javax.swing.JLabel
 
-class UpdateSettingsConfigurable(private val checkNowEnabled: Boolean) : BoundConfigurable(IdeBundle.message("updates.settings.title"), "preferences.updates") {
-  constructor() : this(true)
+class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNowEnabled: Boolean = true) :
+  BoundConfigurable(IdeBundle.message("updates.settings.title"), "preferences.updates") {
 
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
@@ -92,8 +92,7 @@ class UpdateSettingsConfigurable(private val checkNowEnabled: Boolean) : BoundCo
 
       row {
         row(IdeBundle.message("updates.settings.last.check")) { component(lastCheckedLabel).withLeftGap() }
-        row(IdeBundle.message("updates.settings.current.version")) { label(
-          ApplicationNamesInfo.getInstance().fullProductName + ' ' + appInfo.fullVersion).withLeftGap() }
+        row(IdeBundle.message("updates.settings.current.version")) { label(ApplicationNamesInfo.getInstance().fullProductName + ' ' + appInfo.fullVersion).withLeftGap() }
         row(IdeBundle.message("updates.settings.build.number")) { label(appInfo.build.asString()).withLeftGap() }
           .largeGapAfter()
       }
