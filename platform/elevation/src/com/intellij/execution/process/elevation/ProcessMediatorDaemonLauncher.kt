@@ -3,10 +3,7 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
+import com.intellij.execution.process.mediator.daemon.*
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -66,7 +63,9 @@ object ProcessMediatorDaemonLauncher {
         val daemonHello = helloIpc.readHello()
                           ?: throw ProcessCanceledException()
 
-        val credentials = DaemonClientCredentials.rsaDecrypt(daemonHello.token, keyPair.private)
+        val token = keyPair.private.rsaDecrypt(daemonHello.token)
+        val credentials = DaemonClientCredentials(token)
+
         ProcessMediatorDaemonImpl(daemonProcessHandler.process,
                                   daemonHello.port,
                                   credentials)
