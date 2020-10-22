@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.execution.wsl.WSLDistribution.UNC_PREFIX;
@@ -49,7 +50,6 @@ public class WslFileWatcher extends PluggableFileWatcher {
   private Path myExecutable;
   private final Map<String, VmData> myVMs = new ConcurrentHashMap<>();
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
-  private volatile List<String> myIgnoredRoots = Collections.emptyList();
   private volatile boolean myShuttingDown = false;
   private volatile boolean myTestStarted = false;
 
@@ -94,7 +94,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     List<String> ignored = new ArrayList<>();
     sortRoots(recursive, newVMs, ignored, true);
     sortRoots(flat, newVMs, ignored, false);
-    myIgnoredRoots = ignored;
+    myNotificationSink.notifyManualWatchRoots(this, ignored);
 
     for (Map.Entry<String, VmData> entry : newVMs.entrySet()) {
       VmData upcoming = entry.getValue(), vm = myVMs.computeIfAbsent(entry.getKey(), k -> upcoming);
@@ -106,6 +106,9 @@ public class WslFileWatcher extends PluggableFileWatcher {
         vm.reload(upcoming);
         setupProcess(vm);
       }
+      else {
+        myNotificationSink.notifyManualWatchRoots(this, vm.ignored);
+      }
     }
 
     for (Iterator<Map.Entry<String, VmData>> iterator = myVMs.entrySet().iterator(); iterator.hasNext(); ) {
@@ -115,8 +118,6 @@ public class WslFileWatcher extends PluggableFileWatcher {
         shutdownProcess(entry.getValue());
       }
     }
-
-    reportUnwatched();
   }
 
   private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<String> ignored, boolean recursive) {
@@ -205,17 +206,6 @@ public class WslFileWatcher extends PluggableFileWatcher {
     }
 
     vm.handler = null;
-  }
-
-  // race-y, but fsnotifier interactions are slow enough
-  private void reportUnwatched() {
-    if (mySettingRoots.get() == 0) {
-      List<String> unwatched = new ArrayList<>(myIgnoredRoots);
-      for (VmData wm : myVMs.values()) unwatched.addAll(wm.ignored);
-      if (mySettingRoots.get() == 0) {
-        myNotificationSink.notifyManualWatchRoots(unwatched);
-      }
-    }
   }
 
   private static final class VmData {
@@ -348,8 +338,8 @@ public class WslFileWatcher extends PluggableFileWatcher {
     private void processUnwatchable() {
       List<String> roots = new ArrayList<>(myLines.size());
       for (String line : myLines) roots.add(myVm.prefix + line.replace('/', '\\'));
-      myVm.ignored = roots;
-      reportUnwatched();
+      myVm.ignored = new CopyOnWriteArrayList<>(roots);
+      myNotificationSink.notifyManualWatchRoots(WslFileWatcher.this, roots);
     }
 
     private void processChange(String path, WatcherOp op) {
