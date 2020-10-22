@@ -237,6 +237,7 @@ class GitCommitOptionsUi(
     val repositoryManager = getRepositoryManager(project)
     val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRootQuick(it) != null }
 
-    return affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
+    return affectedRoots.isNotEmpty() &&
+           affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
   }
 }
