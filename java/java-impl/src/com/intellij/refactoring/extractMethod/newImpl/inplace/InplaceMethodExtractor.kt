@@ -27,6 +27,7 @@ import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
+import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.util.PsiNavigateUtil
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
@@ -140,6 +141,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     setActiveExtractor(editor, this)
 
     Disposer.register(templateState, preview)
+    Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
   }
 
   fun restartInDialog() {
