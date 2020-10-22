@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -160,9 +161,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, this) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this) {
     override val state
       get() = this@GitStagePanel.state
+    override val ignoredFilePaths
+      get() = this@GitStagePanel.tracker.ignoredPaths
     override val operations: List<StagingAreaOperation> = listOf(GitAddOperation, GitResetOperation)
 
     init {

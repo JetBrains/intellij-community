@@ -268,6 +268,7 @@
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
+    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -275,6 +276,9 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
       <reference id="Git.Stash.Silently"/>
+      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="Git.Stage.ToggleIgnored"/>
+      </group>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -544,6 +548,7 @@
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
                         displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"/>
+    <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>

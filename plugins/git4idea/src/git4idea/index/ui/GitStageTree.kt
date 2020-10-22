@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
@@ -25,6 +26,7 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.UIUtil
@@ -35,6 +37,7 @@ import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.actions.StagingAreaOperation
+import git4idea.index.ignoredStatus
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import git4idea.repo.GitConflict
@@ -56,7 +59,9 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
-abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
+abstract class GitStageTree(project: Project, private val settings: GitStageUiSettings, parentDisposable: Disposable) :
+  ChangesTree(project, false, true) {
+
   private var hoverData: HoverData? = null
     set(value) {
       if (field != value) {
@@ -65,6 +70,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       }
     }
   protected abstract val state: GitStageTracker.State
+  protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
   protected abstract val operations: List<StagingAreaOperation>
 
   init {
@@ -72,6 +78,11 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     addMouseMotionListener(MyMouseMotionListener())
     MyClickListener().installOn(this)
     MyDnDSupport().install(parentDisposable)
+    settings.addListener(object : GitStageUiSettingsListener {
+      override fun settingsChanged() {
+        update()
+      }
+    }, parentDisposable)
   }
 
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
@@ -127,12 +138,17 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       }
     }
 
+    if (settings.ignoredFilesShown()) {
+      builder.insertIgnoredPaths(ignoredFilePaths)
+    }
+
     updateTreeModel(builder.build())
   }
 
   override fun getData(dataId: String): Any? {
     return when {
       GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
+      GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
@@ -181,7 +197,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
-    private val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
+    private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
     private val untrackedFilesMap = mutableMapOf<VirtualFile, MutableCollection<GitFileStatus>>()
 
     fun insertStatus(root: VirtualFile, status: GitFileStatus, kind: NodeKind) {
@@ -201,9 +217,23 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       myModel.insertNodeInto(node, myRoot, myRoot.childCount)
     }
 
-    fun createKindNode(kind: NodeKind): ChangesBrowserKindNode {
+    fun createKindNode(kind: NodeKind): MyKindNode {
       return parentNodes.getOrPut(kind) {
         MyKindNode(kind).also { insertIntoRootNode(it) }
+      }
+    }
+
+    fun insertIgnoredPaths(ignoredFiles: Map<VirtualFile, List<FilePath>>) {
+      val allIgnored = ignoredFiles.values.flatten()
+      if (ContainerUtil.isEmpty(allIgnored)) return
+
+      val ignoredNode = MyIgnoredNode(project, allIgnored).also { insertIntoRootNode(it) }
+      if (!ignoredNode.isManyFiles) {
+        ignoredFiles.forEach { (root, ignoredInRoot) ->
+          ignoredInRoot.forEach {
+            insertFileStatusNode(GitFileStatusNode(root, ignoredStatus(it), NodeKind.IGNORED), ignoredNode)
+          }
+        }
       }
     }
 
@@ -298,6 +328,18 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     @Nls
     override fun getTextPresentation(): String = GitBundle.message(kind.key)
     override fun getSortWeight(): Int = sortOrder.getValue(kind)
+  }
+
+  private class MyIgnoredNode(project: Project, files: List<FilePath>) :
+    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.IGNORED, files, { IgnoredViewDialog(project).show() }) {
+    init {
+      markAsHelperNode()
+      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+    }
+
+    @Nls
+    override fun getTextPresentation(): String = GitBundle.message(NodeKind.IGNORED.key)
+    override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.IGNORED)
   }
 
   private class MyUntrackedNode(project: Project, files: List<FilePath>) :
