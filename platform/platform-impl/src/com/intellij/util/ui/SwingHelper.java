@@ -542,7 +542,7 @@ public class SwingHelper {
         }
       };
       textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
-      textPane.setContentType(UIUtil.HTML_MIME);
+      textPane.setEditorKit(UIUtil.getHTMLEditorKit());
       textPane.setEditable(false);
       if (myBackground != null) {
         textPane.setBackground(myBackground);
