@@ -2,15 +2,20 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @author yole
@@ -45,8 +50,12 @@ public final class PluginEnabler {
         pluginsToDisable.isEmpty()) {
       return true;
     }
-    LOG.info(getLogMessage(pluginsToEnable, true));
-    LOG.info(getLogMessage(pluginsToDisable, false));
+
+    Set<PluginId> pluginIdsToEnable = mapPluginId(pluginsToEnable);
+    LOG.info(getLogMessage(pluginIdsToEnable, true));
+
+    Set<PluginId> pluginIdsToDisable = mapPluginId(pluginsToDisable);
+    LOG.info(getLogMessage(pluginIdsToDisable, false));
 
     boolean requiresRestart =
       updateDisabledPluginsState && !DisabledPluginsState.updateDisabledPluginsState(pluginsToEnable, pluginsToDisable) ||
@@ -58,24 +67,32 @@ public final class PluginEnabler {
     return !requiresRestart;
   }
 
-  private static @NotNull String getLogMessage(@NotNull List<? extends IdeaPluginDescriptor> pluginsToEnable,
+  public static @NotNull Set<PluginId> mapPluginId(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+    return descriptors
+      .stream()
+      .map(IdeaPluginDescriptor::getPluginId)
+      .filter(Objects::nonNull)
+      .collect(toSet());
+  }
+
+  private static @NotNull String getLogMessage(@NotNull Collection<PluginId> plugins,
                                                boolean enable) {
     return getLogMessage(
       "Plugins to " + (enable ? "enable" : "disable"),
-      pluginsToEnable
+      plugins
     );
   }
 
   public static @NotNull String getLogMessage(@NotNull String message,
-                                              @NotNull List<? extends IdeaPluginDescriptor> pluginsToEnable) {
+                                              @NotNull Collection<PluginId> plugins) {
     StringBuilder buffer = new StringBuilder(message)
       .append(':')
       .append(' ')
       .append('[');
 
     join(
-      pluginsToEnable,
-      descriptor -> descriptor.getPluginId().getIdString(),
+      plugins,
+      PluginId::getIdString,
       ", ",
       buffer
     );
