@@ -343,6 +343,22 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   @NeedsIndex.Full
+  void testAssertEqualsJupiter() throws Throwable {
+    myFixture.addClass("package org.junit.jupiter.api;" +
+                       "public class Assertions { public static void assertEquals(Object expected, Object actual, String message) {} }")
+    checkPreferredItems(0, "boo", "bar")
+  }
+
+  @NeedsIndex.Full
+  void testAssertEqualsJupiterSupplier() throws Throwable {
+    myFixture.addClass("package java.util.function;public interface Supplier<T> {T get();}")
+    myFixture.addClass("package org.junit.jupiter.api;" +
+                       "public class Assertions { public static void assertEquals(Object expected, Object actual, " +
+                       "java.util.function.Supplier<String> message) {} }")
+    checkPreferredItems(0, "boo", "bar")
+  }
+
+  @NeedsIndex.Full
   void testAssertNotEquals() throws Throwable {
     myFixture.addClass("package org.junit; public class Assert { public static void assertNotEquals(Object a, Object b) {} }")
     checkPreferredItems(0, "boo", "bar")

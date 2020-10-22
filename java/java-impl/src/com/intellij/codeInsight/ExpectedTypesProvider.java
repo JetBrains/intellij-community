@@ -1200,10 +1200,16 @@ public final class ExpectedTypesProvider {
       int argCount = Math.max(index + 1, args.length);
       if (("assertEquals".equals(name) || "assertNotEquals".equals(name) || "assertSame".equals(name) || "assertNotSame".equals(name)) &&
           method.getParameterList().getParametersCount() == argCount) {
-        if (argCount == 2 ||
-            argCount == 3 && method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          int other = index == argCount - 1 ? index - 1 : index + 1;
-          if (args.length > other) {
+        int firstArgIndex = getAssertMethodFirstArgIndex(method, argCount);
+        if (firstArgIndex >= 0) {
+          int other = -1;
+          if (index == firstArgIndex) {
+            other = firstArgIndex + 1;
+          }
+          else if (index == firstArgIndex + 1) {
+            other = firstArgIndex;
+          }
+          if (other != -1 && args.length > other) {
             ExpectedTypeInfo info = getEqualsType(args[other]);
             if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
               return info.getDefaultType();
@@ -1226,6 +1232,40 @@ public final class ExpectedTypesProvider {
         }
       }
       return parameterType;
+    }
+
+    /**
+     * @param method method to test
+     * @param argCount argument count
+     * @return index of the first argument in (expected, actual) pair; -1 if this method doesn't look like an assertEquals-like method
+     */
+    private static int getAssertMethodFirstArgIndex(@NotNull PsiMethod method, int argCount) {
+      int firstArgIndex = -1;
+      if (argCount == 2 || argCount == 3) {
+        if (argCount == 2) {
+          firstArgIndex = 0;
+        }
+        else {
+          PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (isAssertionMessage(parameters[0])) {
+            firstArgIndex = 1;
+          }
+          else if (isAssertionMessage(parameters[2])) {
+            firstArgIndex = 0;
+          }
+        }
+      }
+      return firstArgIndex;
+    }
+
+    /**
+     * @param parameter parameter to check
+     * @return true if given parameter type looks like an assertion message
+     */
+    private static boolean isAssertionMessage(PsiParameter parameter) {
+      PsiType type = parameter.getType();
+      return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+             type.equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER+"<"+ CommonClassNames.JAVA_LANG_STRING+">");
     }
 
     private static PsiType getParameterType(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
