@@ -29,7 +29,7 @@ internal class ChangesViewCommitWorkflowHandler(
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
-  override val amendCommitHandler: ChangesViewAmendCommitHandler = ChangesViewAmendCommitHandler(this)
+  override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
@@ -94,8 +94,6 @@ internal class ChangesViewCommitWorkflowHandler(
     super.executionEnded()
     ui.endExecution()
   }
-
-  override fun isReady() = super.isReady() && !amendCommitHandler.isLoading
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
@@ -208,16 +206,6 @@ internal class ChangesViewCommitWorkflowHandler(
       if (isToggleCommitUi.asBoolean()) deactivate(true)
     }
   }
-
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
-    ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
-
-      isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
-      isEmptyMessage = getCommitMessage().isBlank()
-
-      !isEmptyChanges && !isEmptyMessage
-    }
 
   override fun updateWorkflow() {
     workflow.commitState = getCommitState()

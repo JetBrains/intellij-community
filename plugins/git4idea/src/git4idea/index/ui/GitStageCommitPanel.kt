@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
 import com.intellij.vcs.commit.CommitProgressUi
+import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.NonModalCommitPanel
 import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
@@ -55,6 +56,8 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   }
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
+
+  override var editedCommit: EditedCommitDetails? = null
 
   override fun activate(): Boolean = true
   override fun refreshData() = Unit

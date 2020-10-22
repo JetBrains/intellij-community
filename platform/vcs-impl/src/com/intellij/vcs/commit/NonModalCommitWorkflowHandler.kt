@@ -31,6 +31,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   AbstractCommitWorkflowHandler<W, U>(),
   DumbService.DumbModeListener {
 
+  abstract override val amendCommitHandler: NonModalAmendCommitHandler
+
   private var areCommitOptionsCreated = false
 
   private val uiDispatcher = AppUIExecutor.onUiThread().coroutineDispatchingContext()
@@ -83,7 +85,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     ui.isDefaultCommitActionEnabled = isReady()
   }
 
-  protected open fun isReady() = workflow.vcses.isNotEmpty() && !workflow.isExecuting
+  protected open fun isReady() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
 
@@ -93,6 +95,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
+
+  override fun checkCommit(executor: CommitExecutor?): Boolean =
+    ui.commitProgressUi.run {
+      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
+
+      isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
+      isEmptyMessage = getCommitMessage().isBlank()
+
+      !isEmptyChanges && !isEmptyMessage
+    }
 
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
     if (!Registry.`is`("vcs.background.commit.checks")) return super.doExecuteDefault(executor)

@@ -3,7 +3,6 @@ package git4idea.index
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.*
 
 class GitStageCommitWorkflowHandler(
@@ -13,7 +12,7 @@ class GitStageCommitWorkflowHandler(
     CommitAuthorTracker by ui {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
-  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
+  override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
 
   var state: GitStageTracker.State = GitStageTracker.State.EMPTY
 
@@ -31,15 +30,7 @@ class GitStageCommitWorkflowHandler(
     vcsesChanged()
   }
 
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
-    ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
-
-      isEmptyChanges = !executorWithoutChangesAllowed && !state.hasStagedRoots()
-      isEmptyMessage = getCommitMessage().isBlank()
-
-      !isEmptyChanges && !isEmptyMessage
-    }
+  override fun isCommitEmpty(): Boolean = !state.hasStagedRoots()
 
   override fun updateWorkflow() {
     workflow.trackerState = state
