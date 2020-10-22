@@ -14,6 +14,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.loadProjectAndCheckResults
+import com.intellij.util.CommonProcessors
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -60,10 +61,24 @@ class ReloadProjectTest {
     }
   }
 
+  @Test
+  fun `add module from subdirectory`() {
+    loadProjectAndCheckResults("addModuleFromSubDir/initial") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      assertThat(module.name).isEqualTo("foo")
+      copyFilesAndReload(project, "addModuleFromSubDir/update")
+      assertThat(ModuleManager.getInstance(project).modules).hasSize(2)
+    }
+  }
+
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {
     val base = Paths.get(project.basePath!!)
+    val projectDir = VfsUtil.findFile(base, true)!!
+    //process all files to ensure that they all are loaded in VFS and we'll get events when they are changed
+    VfsUtil.processFilesRecursively(projectDir, CommonProcessors.alwaysTrue())
+
     FileUtil.copyDir(testDataRoot.resolve(relativePath).toFile(), base.toFile())
-    VfsUtil.markDirtyAndRefresh(false, true, true, VfsUtil.findFile(base, true))
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
     StoreReloadManager.getInstance().reloadChangedStorageFiles()
   }
 
