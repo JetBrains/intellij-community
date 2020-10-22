@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -32,7 +31,6 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
-  internal val originalDirectoryPath: Path? = filePath?.parent
 
   init {
     // default project doesn't have modules
@@ -53,10 +51,6 @@ internal class ModuleBridgeImpl(
         }
       })
     }
-  }
-
-  override fun canStoreSettings(): Boolean {
-    return originalDirectoryPath?.systemIndependentPath != ModuleManagerComponentBridge.getInstance(project).outOfTreeModulesPath
   }
 
   override fun rename(newName: String, notifyStorage: Boolean) {

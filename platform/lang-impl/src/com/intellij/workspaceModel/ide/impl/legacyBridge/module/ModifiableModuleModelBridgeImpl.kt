@@ -171,8 +171,8 @@ internal class ModifiableModuleModelBridgeImpl(
       throw IOException("Failed to load module from $filePath")
     }
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
-      ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity))
+    val moduleFilePath = ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity)!!
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFilePath)
     return createModuleInstance(moduleEntity, false)
   }
 
