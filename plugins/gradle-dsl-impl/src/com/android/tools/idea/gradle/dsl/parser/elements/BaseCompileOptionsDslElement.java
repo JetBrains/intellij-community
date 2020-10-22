@@ -15,21 +15,22 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.elements;
 
-import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.android.CompileOptionsDslElement.COMPILE_OPTIONS;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
-
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
-import java.util.stream.Stream;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
+
+import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.SOURCE_COMPATIBILITY;
+import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.TARGET_COMPATIBILITY;
+import static com.android.tools.idea.gradle.dsl.parser.android.CompileOptionsDslElement.COMPILE_OPTIONS;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 /**
  * Base class for representing compileOptions block or other blocks which have sourceCompatibility / targetCompatibility fields.
@@ -54,10 +55,10 @@ public abstract class BaseCompileOptionsDslElement extends GradleDslBlockElement
   @Override
   @NotNull
   public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {

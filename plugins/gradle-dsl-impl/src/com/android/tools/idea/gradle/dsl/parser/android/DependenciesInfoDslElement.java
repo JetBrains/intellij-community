@@ -15,25 +15,25 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.DependenciesInfoModelImpl.INCLUDE_IN_APK;
-import static com.android.tools.idea.gradle.dsl.model.android.DependenciesInfoModelImpl.INCLUDE_IN_BUNDLE;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
-
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
-import java.util.stream.Stream;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
+
+import static com.android.tools.idea.gradle.dsl.model.android.DependenciesInfoModelImpl.INCLUDE_IN_APK;
+import static com.android.tools.idea.gradle.dsl.model.android.DependenciesInfoModelImpl.INCLUDE_IN_BUNDLE;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 public class DependenciesInfoDslElement extends GradleDslBlockElement {
   public static final PropertiesElementDescription<DependenciesInfoDslElement> DEPENDENCIES_INFO =
@@ -55,10 +55,10 @@ public class DependenciesInfoDslElement extends GradleDslBlockElement {
   @NotNull
   @Override
   public ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelMap;
     }
     else {

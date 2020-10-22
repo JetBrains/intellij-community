@@ -28,6 +28,11 @@ import com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescr
 import com.intellij.openapi.application.runReadAction
 
 interface KotlinDslNameConverter: GradleDslNameConverter {
+
+  override fun isGroovy() = false
+
+  override fun isKotlin() = true
+
   @JvmDefault
   override fun psiToName(element: PsiElement): String {
     return when (element) {

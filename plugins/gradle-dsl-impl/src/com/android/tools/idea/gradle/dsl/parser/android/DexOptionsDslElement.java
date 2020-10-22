@@ -15,25 +15,24 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
-
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
-import java.util.stream.Stream;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
+
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.ADD_AS_LIST;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 public class DexOptionsDslElement extends GradleDslBlockElement {
   @NotNull
@@ -81,10 +80,10 @@ public class DexOptionsDslElement extends GradleDslBlockElement {
   @Override
   @NotNull
   public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {

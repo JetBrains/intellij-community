@@ -15,26 +15,25 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.java;
 
+import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
+import com.android.tools.idea.gradle.dsl.parser.elements.BaseCompileOptionsDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.google.common.collect.ImmutableMap;
+import com.intellij.psi.PsiElement;
+import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
+
 import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.SOURCE_COMPATIBILITY;
 import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.TARGET_COMPATIBILITY;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
-
-import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.elements.BaseCompileOptionsDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
-import com.google.common.collect.ImmutableMap;
-import com.intellij.psi.PsiElement;
-import java.util.stream.Stream;
-import kotlin.Pair;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Holds the data in addition to the project element, which added by Java plugin
@@ -64,10 +63,10 @@ public class JavaDslElement extends BaseCompileOptionsDslElement {
   @Override
   @NotNull
   public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {
@@ -83,10 +82,10 @@ public class JavaDslElement extends BaseCompileOptionsDslElement {
   @Nullable
   public PsiElement create() {
     GradleDslNameConverter converter = getDslFile().getWriter();
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return super.create();
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       if (myParent == null) {
         return null;
       }
@@ -102,10 +101,10 @@ public class JavaDslElement extends BaseCompileOptionsDslElement {
   @Override
   public void setPsiElement(@Nullable PsiElement psiElement) {
     GradleDslNameConverter converter = getDslFile().getWriter();
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       super.setPsiElement(psiElement);
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       // do nothing
     }
     else {

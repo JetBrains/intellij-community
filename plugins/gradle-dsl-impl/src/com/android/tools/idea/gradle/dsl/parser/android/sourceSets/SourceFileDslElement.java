@@ -15,27 +15,24 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android.sourceSets;
 
+import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.google.common.collect.ImmutableMap;
+import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
+
 import static com.android.tools.idea.gradle.dsl.model.android.sourceSets.SourceFileModelImpl.SRC_FILE;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAL;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VWO;
-
-import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
-import com.google.common.collect.ImmutableMap;
-import java.util.stream.Stream;
-import kotlin.Pair;
-import org.jetbrains.annotations.NotNull;
 
 public class SourceFileDslElement extends GradleDslBlockElement {
   public static final PropertiesElementDescription<SourceFileDslElement> MANIFEST =
@@ -56,10 +53,10 @@ public class SourceFileDslElement extends GradleDslBlockElement {
   @Override
   @NotNull
   public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {

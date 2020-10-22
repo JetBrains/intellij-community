@@ -15,12 +15,6 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.files;
 
-import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
-import static com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory.EXTENSION_POINT_NAME;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-
 import com.android.tools.idea.gradle.dsl.api.BuildModelNotification;
 import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory;
@@ -35,11 +29,7 @@ import com.android.tools.idea.gradle.dsl.parser.dependencies.DependenciesDslElem
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslParser;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslWriter;
 import com.android.tools.idea.gradle.dsl.parser.java.JavaDslElement;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslParser;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslWriter;
 import com.android.tools.idea.gradle.dsl.parser.plugins.PluginsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.RepositoriesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
@@ -57,16 +47,21 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+
+import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
+import static com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory.EXTENSION_POINT_NAME;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * Provides Gradle specific abstraction over a {@link GroovyFile}.
@@ -291,6 +286,10 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
       buildFileParent = buildFileParent.getParent();
     }
     return null;
+  }
+
+  public boolean isKotlin() {
+    return myGradleDslParser.isKotlin();
   }
 
 }

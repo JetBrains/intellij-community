@@ -20,24 +20,23 @@ import com.android.tools.idea.gradle.dsl.parser.android.productFlavors.ExternalN
 import com.android.tools.idea.gradle.dsl.parser.android.productFlavors.NdkOptionsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.android.productFlavors.VectorDrawablesOptionsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.*;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslNameConverter;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
-import java.util.stream.Stream;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.android.tools.idea.gradle.dsl.model.android.ProductFlavorModelImpl.*;
 import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.followElement;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 /**
@@ -146,10 +145,10 @@ public abstract class AbstractProductFlavorDslElement extends AbstractFlavorType
   @Override
   @NotNull
   public ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
-    if (converter instanceof KotlinDslNameConverter) {
+    if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
-    else if (converter instanceof GroovyDslNameConverter) {
+    else if (converter.isGroovy()) {
       return groovyToModelNameMap;
     }
     else {
