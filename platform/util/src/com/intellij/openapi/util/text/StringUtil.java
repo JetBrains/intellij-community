@@ -103,8 +103,6 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
-
   public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
 
   public static final NotNullFunction<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
@@ -2020,7 +2018,7 @@ public class StringUtil extends StringUtilRt {
       return "";
     }
 
-    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : html2TextParser;
+    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : new MyHtml2Text(false);
     try {
       parser.parse(new StringReader(htmlString));
     }
