@@ -44,6 +44,12 @@ class GitStageTracker(val project: Project) : Disposable {
   @Volatile
   var state: State = State(gitRoots().associateWith { RootState.empty(it) })
     private set
+  val ignoredPaths: Map<VirtualFile, List<FilePath>>
+    get() {
+      return gitRoots().associateWith {
+        GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it)?.ignoredFilesHolder?.ignoredFilePaths?.toList() ?: emptyList()
+      }
+    }
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
