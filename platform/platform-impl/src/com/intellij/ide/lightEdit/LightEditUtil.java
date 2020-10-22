@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -193,8 +194,8 @@ public final class LightEditUtil {
   }
 
   @Nullable
-  public static EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
-    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
+  public static EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(fileEditor);
   }
 
   public static void setForceOpenInLightEditMode(boolean openInExistingProject) {
