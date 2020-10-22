@@ -218,7 +218,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     fun createKindNode(kind: NodeKind): ChangesBrowserKindNode {
       return parentNodes.getOrPut(kind) {
-        ChangesBrowserKindNode(kind).also { insertIntoRootNode(it) }
+        MyKindNode(kind).also { insertIntoRootNode(it) }
       }
     }
 
@@ -227,7 +227,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       if (allUntrackedStatuses.isEmpty()) return
 
       if (ChangesBrowserSpecificFilePathsNode.isManyFiles(allUntrackedStatuses)) {
-        ChangesBrowserUntrackedNode(project, allUntrackedStatuses.map { it.path }).also { insertIntoRootNode(it) }
+        MyUntrackedNode(project, allUntrackedStatuses.map { it.path }).also { insertIntoRootNode(it) }
       }
       else {
         val unstagedNode = createKindNode(NodeKind.UNSTAGED)
@@ -282,7 +282,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     }
   }
 
-  private open inner class ChangesBrowserKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+  private open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     internal val kind: NodeKind
       get() = userObject as NodeKind
 
@@ -315,7 +315,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     override fun getSortWeight(): Int = sortOrder.getValue(kind)
   }
 
-  private class ChangesBrowserUntrackedNode(project: Project, files: List<FilePath>) :
+  private class MyUntrackedNode(project: Project, files: List<FilePath>) :
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
     init {
       markAsHelperNode()
