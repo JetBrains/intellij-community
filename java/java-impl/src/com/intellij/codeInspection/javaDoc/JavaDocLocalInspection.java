@@ -798,16 +798,16 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   }
 
   private static class RemoveTagWithoutDescriptionFix implements LocalQuickFix {
-    private final String myTag;
+    private final String myTagName;
 
-    RemoveTagWithoutDescriptionFix(String tag) {
-      myTag = tag;
+    RemoveTagWithoutDescriptionFix(String tagName) {
+      myTagName = tagName;
     }
 
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.remove", myTag);
+      return CommonQuickFixBundle.message("fix.remove", myTagName);
     }
 
     @NotNull
@@ -818,9 +818,9 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
-      if (myTag != null) {
-        myTag.delete();
+      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (tag != null) {
+        tag.delete();
       }
     }
   }

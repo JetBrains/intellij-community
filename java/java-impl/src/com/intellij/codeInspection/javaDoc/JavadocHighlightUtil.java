@@ -454,9 +454,7 @@ public final class JavadocHighlightUtil {
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         if (emptyThrowsTag(tag)) {
           String tagText = "<code>" + tag.getName() + "</code>";
-          PsiDocTagValue valueElement = tag.getValueElement();
-          String tagTextForFix = "@" + tag.getName() + (valueElement != null ? " " + valueElement.getText() : "");
-          LocalQuickFix fix = holder.removeTagWithoutDescriptionFix(tagTextForFix);
+          LocalQuickFix fix = holder.removeTagWithoutDescriptionFix(tag.getName());
           holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }

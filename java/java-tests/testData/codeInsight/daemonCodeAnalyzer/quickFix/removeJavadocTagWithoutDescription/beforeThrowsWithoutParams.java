@@ -1,4 +1,4 @@
-// "Remove '@throws'" "true"
+// "Remove 'throws'" "true"
 
 class Foo {
   /**

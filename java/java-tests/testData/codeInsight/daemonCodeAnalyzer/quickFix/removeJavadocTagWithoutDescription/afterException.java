@@ -1,4 +1,4 @@
-// "Remove '@exception IllegalArgumentException'" "true"
+// "Remove 'exception'" "true"
 
 class Foo {
   /**
