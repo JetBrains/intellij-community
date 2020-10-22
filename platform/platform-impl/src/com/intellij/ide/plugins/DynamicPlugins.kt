@@ -191,7 +191,8 @@ object DynamicPlugins {
       }
     }
 
-    checkExtensionsCanUnloadWithoutRestart(descriptor, baseDescriptor, app, optionalDependencyPluginId, context)?.let {
+    val isSubDescriptor = baseDescriptor != null && descriptor !== baseDescriptor
+    checkExtensionsCanUnloadWithoutRestart(descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId, context)?.let {
       return it
     }
 
@@ -210,7 +211,7 @@ object DynamicPlugins {
     }
 
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
-    if (descriptor === baseDescriptor) {
+    if (isSubDescriptor) {
       return null
     }
 
@@ -344,9 +345,10 @@ object DynamicPlugins {
 
         val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
         val subDescriptor = IdeaPluginDescriptorImpl(contextDescriptor.pluginPath, newBasePath, contextDescriptor.isBundled)
+        // readExternal requires not-null id
+        subDescriptor.id = contextDescriptor.id
+        subDescriptor.name = contextDescriptor.name
         if (subDescriptor.readExternal(element, pathResolver, listContext, contextDescriptor)) {
-          subDescriptor.id = contextDescriptor.id
-          subDescriptor.name = contextDescriptor.name
           return subDescriptor
         }
 
@@ -995,6 +997,7 @@ private fun processLoadedOptionalDependenciesOnPlugin(dependencyPluginId: Plugin
 @Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 private fun checkExtensionsCanUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
                                                    baseDescriptor: IdeaPluginDescriptorImpl?,
+                                                   isSubDescriptor: Boolean,
                                                    app: Application,
                                                    optionalDependencyPluginId: PluginId?,
                                                    context: List<IdeaPluginDescriptorImpl>): String? {
@@ -1003,7 +1006,7 @@ private fun checkExtensionsCanUnloadWithoutRestart(descriptor: IdeaPluginDescrip
                             descriptor.project.extensions,
                             descriptor.module.extensions)) {
     if (extensions != null && !extensions.isEmpty()) {
-      doCheckExtensionsCanUnloadWithoutRestart(extensions, descriptor, baseDescriptor, app, optionalDependencyPluginId, context)?.let {
+      doCheckExtensionsCanUnloadWithoutRestart(extensions, descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId, context)?.let {
         return it
       }
     }
@@ -1014,6 +1017,7 @@ private fun checkExtensionsCanUnloadWithoutRestart(descriptor: IdeaPluginDescrip
 private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, List<Element>>,
                                                      descriptor: IdeaPluginDescriptorImpl,
                                                      baseDescriptor: IdeaPluginDescriptorImpl?,
+                                                     isSubDescriptor: Boolean,
                                                      app: Application,
                                                      optionalDependencyPluginId: PluginId?,
                                                      context: List<IdeaPluginDescriptorImpl>): String? {
@@ -1026,7 +1030,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
     if (pluginExtensionPoint != null) {
       // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
       // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
-      if (baseDescriptor != null && descriptor === baseDescriptor && !pluginExtensionPoint.isDynamic) {
+      if (baseDescriptor != null && !isSubDescriptor && !pluginExtensionPoint.isDynamic) {
         return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
                " in optional dependency on it: ${descriptor.pluginId}"
       }
