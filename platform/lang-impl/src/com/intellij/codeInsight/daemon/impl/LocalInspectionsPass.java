@@ -222,7 +222,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         Set<String> activeTools = new HashSet<>();
         for (LocalInspectionToolWrapper tool : toolWrappers) {
-          if (tool.isUnfair() || !tool.isApplicable(fileLanguage)) {
+          if (tool.isUnfair() || !tool.isApplicable(fileLanguage) || myProfileWrapper.getInspectionTool(tool.getShortName(), myFile) instanceof GlobalInspectionToolWrapper) {
             continue;
           }
           activeTools.add(tool.getID());

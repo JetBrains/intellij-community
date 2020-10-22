@@ -8,6 +8,7 @@ import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
@@ -33,6 +34,7 @@ public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTe
                           new FallthruInSwitchStatementInspection(),
                           new UnusedDeclarationInspection(true),
                           new RedundantLambdaCodeBlockInspection(),
+                          new VisibilityInspection(),
                           new AutoBoxingInspection(),
                           new RefusedBequestInspection());
   }
