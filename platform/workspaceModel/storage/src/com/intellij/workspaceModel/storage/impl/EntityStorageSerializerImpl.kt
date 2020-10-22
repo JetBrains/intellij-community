@@ -255,6 +255,12 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       recursiveClassFinder(kryo, property, simpleClasses, objectClasses)
 
       if (property is List<*>) {
+        // Get and register generic type of the list. This is required for kryo proper work
+        val genericType = it.returnType.arguments.firstOrNull()?.type?.jvmErasure
+        if (genericType != null) {
+          registerKClass(genericType, kryo, objectClasses, simpleClasses)
+        }
+
         property.filterNotNull().forEach { listItem ->
           recursiveClassFinder(kryo, listItem, simpleClasses, objectClasses)
         }
