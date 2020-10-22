@@ -348,7 +348,6 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" filepath="$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/intellij.ant.iml" filepath="$PROJECT_DIR$/plugins/ant/intellij.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" />

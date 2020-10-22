@@ -38,7 +38,6 @@
     <propertyref name="build.number"/>
     <propertyref prefix="intellij.build."/>
     <propertyref prefix="custom.project."/>
-    <propertyref name="ui.test.groups"/>
     <propertyref name="studio.sdk"/>
     <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
   </propertyset>
@@ -84,10 +83,6 @@
 
   <target name="test" depends="init">
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
-  </target>
-
-  <target name="uitest" depends="init">
-    <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
   <!-- Creates an updater-full.jar in ${intellij.build.output.root}/artifacts, it includes 'intellij.platform.updater' module with all its dependencies -->
