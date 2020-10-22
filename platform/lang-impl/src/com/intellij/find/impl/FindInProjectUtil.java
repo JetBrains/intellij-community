@@ -91,7 +91,16 @@ public final class FindInProjectUtil {
 
     if (directoryName == null) {
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-      if (virtualFile != null && virtualFile.isDirectory()) directoryName = virtualFile.getPresentableUrl();
+      if (virtualFile != null) {
+        if (virtualFile.isDirectory()) {
+          directoryName = virtualFile.getPresentableUrl();
+        } else {
+          VirtualFile parent = virtualFile.getParent();
+          if (parent != null && parent.isDirectory()) {
+            FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+          }
+        }
+      }
     }
 
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
