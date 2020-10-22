@@ -235,7 +235,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
-    if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
+    val classAlreadyRegistered = registerKClass(kClass, kryo, objectClasses, simpleClasses)
+    if (classAlreadyRegistered) return
     if (entity is VirtualFileUrl) return
 
     kClass.memberProperties.forEach {
