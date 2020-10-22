@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 
-interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi {
+interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAuthorTracker {
   val commitProgressUi: CommitProgressUi
 
   fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)

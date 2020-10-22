@@ -9,7 +9,8 @@ import com.intellij.vcs.commit.*
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
   override val ui: NonModalCommitWorkflowUi
-) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>() {
+) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>(),
+    CommitAuthorTracker by ui {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
@@ -20,7 +21,7 @@ class GitStageCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(createCommitStateCleaner(), this)
+    workflow.addCommitListener(GitStageCommitStateCleaner(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
@@ -48,4 +49,11 @@ class GitStageCommitWorkflowHandler(
   override fun addUnversionedFiles(): Boolean = true
   override fun saveCommitMessage(success: Boolean) = Unit
   override fun refreshChanges(callback: () -> Unit) = callback()
+
+  private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
+    override fun resetState() {
+      commitAuthor = null
+      super.resetState()
+    }
+  }
 }

@@ -48,6 +48,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     progressPanel.setup(this, commitMessage.editorField)
     bottomPanel = {
       add(progressPanel.apply { border = empty(6) })
+      add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
       add(commitActionsPanel)
     }
     buildLayout()
