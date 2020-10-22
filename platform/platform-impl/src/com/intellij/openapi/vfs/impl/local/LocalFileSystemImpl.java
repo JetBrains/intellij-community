@@ -114,14 +114,13 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {
-    boolean markDirty = storeRefreshStatusToFiles();
+    storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
       for (String root : myWatcher.getManualWatchRoots()) {
         VirtualFile suspiciousRoot = findFileByPathIfCached(root);
         if (suspiciousRoot != null) {
           ((NewVirtualFile)suspiciousRoot).markDirtyRecursively();
-          markDirty = true;
         }
       }
     }
@@ -129,12 +128,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       for (VirtualFile file : files) {
         if (file.getFileSystem() == this) {
           ((NewVirtualFile)file).markDirtyRecursively();
-          markDirty = true;
         }
       }
-    }
-    if (markDirty && myAfterMarkDirtyCallback != null) {
-      myAfterMarkDirtyCallback.run();
     }
   }
 
