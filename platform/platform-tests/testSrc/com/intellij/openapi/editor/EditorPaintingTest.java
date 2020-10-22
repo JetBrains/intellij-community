@@ -249,6 +249,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testEmptyBorderAtInlay1() throws Exception {
+    initText("ab");
+    getEditor().getInlayModel().addInlineElement(1, false, new MyInlayRenderer());
+    addBorderHighlighter(1, 1, 0, Color.red);
+    checkResult();
+  }
+
+  public void testEmptyBorderAtInlay2() throws Exception {
+    initText("ab");
+    getEditor().getInlayModel().addInlineElement(1, true, new MyInlayRenderer());
+    addBorderHighlighter(1, 1, 0, Color.red);
+    checkResult();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
