@@ -25,8 +25,8 @@ class EntityStorageSerializationTest {
     val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
     builder.addSampleEntity("MyEntity")
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
-    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     val stream = ByteArrayOutputStream()
@@ -40,7 +40,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serializer version`() {
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
 
     val kryo = serializer.createKryo()
 
