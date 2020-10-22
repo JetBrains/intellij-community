@@ -1475,7 +1475,7 @@ public abstract class DialogWrapper {
       for (JTable table : tables) {
         Dimension tablePreferredSize = table.getPreferredSize();
         size.width = Math.max(size.width, tablePreferredSize.width);
-        size.height = Math.max(size.height, size.height - table.getParent().getSize().height + tablePreferredSize.height);
+        size.height = Math.max(size.height, size.height - table.getParent().getHeight() + tablePreferredSize.height);
       }
       size.width = Math.min(1000, Math.max(600, size.width));
       size.height = Math.min(800, size.height);
