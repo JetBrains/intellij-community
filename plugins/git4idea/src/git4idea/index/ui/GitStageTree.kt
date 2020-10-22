@@ -8,7 +8,6 @@ import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -59,9 +58,6 @@ import javax.swing.SwingConstants
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import kotlin.streams.toList
-
-val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
-val GIT_STAGE_TREE = DataKey.create<GitStageTree>("GitStageTree")
 
 abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
   private var hoverData: HoverData? = null
@@ -152,8 +148,8 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
   override fun getData(dataId: String): Any? {
     return when {
-      GIT_STAGE_TREE.`is`(dataId) -> this
-      GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
+      GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
+      GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
