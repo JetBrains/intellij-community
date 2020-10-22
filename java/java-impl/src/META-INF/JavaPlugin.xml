@@ -1471,6 +1471,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      bundle="messages.JavaBundle" key="inspection.redundant.record.constructor.description"
                      implementationClass="com.intellij.codeInspection.RedundantRecordConstructorInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MeaninglessRecordAnnotationInspection" enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description"
+                     implementationClass="com.intellij.codeInspection.MeaninglessRecordAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RecordCanBeClass" enabledByDefault="true" level="INFORMATION"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
