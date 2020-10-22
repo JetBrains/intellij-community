@@ -532,6 +532,10 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void enableRestart() {
+    removeButtons(true);
+  }
+
+  private void removeButtons(boolean showRestart) {
     if (myInstallButton != null) {
       myLayout.removeButtonComponent(myInstallButton);
       myInstallButton = null;
@@ -544,7 +548,7 @@ public class ListPluginComponent extends JPanel {
       myLayout.removeButtonComponent(myEnableDisableButton);
       myEnableDisableButton = null;
     }
-    if (myRestartButton == null) {
+    if (showRestart && myRestartButton == null) {
       myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel), 0);
     }
     if (myAlignButton != null) {
@@ -573,9 +577,7 @@ public class ListPluginComponent extends JPanel {
   public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
     updateColors(mySelection);
-    if (needRestartForUninstall) {
-      enableRestart();
-    }
+    removeButtons(needRestartForUninstall);
   }
 
   public void updatePlugin() {
