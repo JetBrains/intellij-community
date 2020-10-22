@@ -7,6 +7,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.daemon.rsaDecrypt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -16,9 +17,11 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Path
+import java.security.KeyPair
+import java.security.KeyPairGenerator
 
 internal interface DaemonHelloIpc : Closeable {
-  fun getHelloOption(): DaemonLaunchOptions.HelloOption
+  fun getDaemonLaunchOptions(): DaemonLaunchOptions
   fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler
 
   /**
@@ -34,8 +37,33 @@ internal interface DaemonHelloIpc : Closeable {
   override fun close()
 }
 
+internal class EncryptedDaemonHelloIpc(private val delegate: DaemonHelloIpc) : DaemonHelloIpc by delegate {
+  private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
+    initialize(1024)
+  }.genKeyPair()
+
+  override fun getDaemonLaunchOptions(): DaemonLaunchOptions {
+    return delegate.getDaemonLaunchOptions().run {
+      check(tokenEncryptionOption == null) { "Already encrypted" }
+      copy(tokenEncryptionOption = DaemonLaunchOptions.TokenEncryptionOption(keyPair.public))
+    }
+  }
+
+  override fun readHello(): DaemonHello? {
+    return delegate.readHello()?.let { daemonHello ->
+      daemonHello.toBuilder().apply {
+        token = keyPair.private.rsaDecrypt(token)
+      }.build()
+    }
+  }
+}
+
+internal fun DaemonHelloIpc.encrypted(): DaemonHelloIpc = EncryptedDaemonHelloIpc(this)
+
 
 internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(protected val helloReader: R) : DaemonHelloIpc, ProcessAdapter() {
+  override fun getDaemonLaunchOptions() = DaemonLaunchOptions(helloOption = getHelloOption())
+  abstract fun getHelloOption(): DaemonLaunchOptions.HelloOption
 
   final override fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return createProcessHandler(daemonCommandLine).also {
