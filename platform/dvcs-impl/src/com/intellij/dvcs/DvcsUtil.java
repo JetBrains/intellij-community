@@ -255,21 +255,21 @@ public final class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, Object details) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOG.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + details, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
-        throw new RepoStateException("Couldn't load file " + fileToLoad, e);
+        throw new RepoStateException("Couldn't load file " + details, e);
       }
     }
-    throw new RepoStateException("Couldn't load file " + fileToLoad, cause);
+    throw new RepoStateException("Couldn't load file " + details, cause);
   }
 
   public static void visitVcsDirVfs(@NotNull VirtualFile vcsDir, @NotNull Collection<String> subDirs) {
