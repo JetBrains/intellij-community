@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -313,9 +312,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     @Nls
     override fun getTextPresentation(): String = GitBundle.message(kind.key)
-    override fun compareUserObjects(o2: NodeKind?): Int {
-      return Comparing.compare(sortOrder[kind], sortOrder[o2])
-    }
+    override fun getSortWeight(): Int = sortOrder.getValue(kind)
   }
 
   private class ChangesBrowserUntrackedNode(project: Project, files: List<FilePath>) :
@@ -327,9 +324,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     @Nls
     override fun getTextPresentation(): String = GitBundle.message(NodeKind.UNTRACKED.key)
-    override fun compareUserObjects(o2: NodeKind?): Int {
-      return Comparing.compare(sortOrder[NodeKind.UNTRACKED], sortOrder[o2])
-    }
+    override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
   }
 
   private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
