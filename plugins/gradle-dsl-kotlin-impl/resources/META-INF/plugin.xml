@@ -1,0 +1,18 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.gradle.dsl.kotlin.impl</id>
+  <name>Gradle DSL Implementation For Kotlin</name>
+  <vendor>JetBrains, Google</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides Gradle DSL API for Kotlin
+    ]]>
+  </description>
+
+  <depends>org.jetbrains.kotlin</depends>
+  <depends>org.jetbrains.idea.gradle.dsl.impl</depends>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.gradle.dsl">
+    <parserFactory implementation="com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslConverterFactory"/>
+  </extensions>
+
+</idea-plugin>
