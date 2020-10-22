@@ -156,14 +156,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     areCommitOptionsCreated = false
   }
 
-  protected fun createCommitStateCleaner(): CommitResultHandler = CommitStateCleaner()
-
-  private inner class CommitStateCleaner : CommitResultHandler {
+  protected open inner class CommitStateCleaner : CommitResultHandler {
     override fun onSuccess(commitMessage: String) = resetState()
     override fun onCancel() = Unit
     override fun onFailure(errors: List<VcsException>) = resetState()
 
-    private fun resetState() {
+    protected open fun resetState() {
       disposeCommitOptions()
 
       workflow.clearCommitContext()

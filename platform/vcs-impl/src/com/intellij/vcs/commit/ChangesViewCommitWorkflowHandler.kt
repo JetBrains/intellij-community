@@ -60,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(createCommitStateCleaner(), this)
+    workflow.addCommitListener(CommitStateCleaner(), this)
 
     addCommitAuthorListener(this, this)
 
