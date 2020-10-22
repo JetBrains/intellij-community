@@ -7,7 +7,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [--uitests]" > /dev/stderr
+  echo "Usage: $0" > /dev/stderr
   exit 1
 }
 
@@ -33,13 +33,10 @@ function get_absolute_path() {
   ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
 }
 
-UITESTS=false
 STUDIO_SDK=true
 while [[ -n "$1" ]]; do
   if [[ $1 == "--studio-sdk" ]]; then
     STUDIO_SDK=true
-  elif [[ $1 == "--uitests" ]]; then
-    UITESTS=true
   else
     die "[$0] Unknown parameter: $1"
   fi
@@ -70,7 +67,6 @@ echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## Out dir: $OUT"
 echo "## Prog dir: $PROG_DIR"
-echo "## UITESTS?: $UITESTS"
 echo "## STUDIO_SDK: $STUDIO_SDK"
 echo
 
@@ -90,7 +86,6 @@ declare -ar BUILD_PROPERTIES=(
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
   "-Dstudio.sdk=${STUDIO_SDK}"
-  "-Dbundle.ui.tests=${UITESTS}"
 )
 
 $ANT "${BUILD_PROPERTIES[@]}" build

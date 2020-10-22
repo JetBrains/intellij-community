@@ -21,7 +21,7 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 
 @CompileStatic
 class AndroidStudioLibraryLicenses {
-  public static final List<LibraryLicense> LICENSES_LIST = (([
+  public static final List<LibraryLicense> LICENSES_LIST = [
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Am Instrument Data proto", libraryName: "libam-instrumentation-data-proto",
                        license: "Apache 2.0", url: "http://source.android.com/"),
@@ -184,11 +184,5 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "xml-apis", libraryName: "xml-apis", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "http://xerces.apache.org/xml-commons/components/external"),
-  ] as List<LibraryLicense>) + (("true" == System.getProperty("bundle.ui.tests") ? [
-    new LibraryLicense(name: "truth", libraryName: "truth", version: "0.28", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "easymock-tools", libraryName: "easymock-tools", version: "3.1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "fest-reflect", libraryName: "fest-reflect-2.0-SNAPSHOT.jar", version: "2.0-SNAPSHOT", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "fest", libraryName: "fest", version: "0", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "jcip-annotations", libraryName: "jcip-annotations-1.0-1.jar", version: "1.0-1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
-    ] : []) as List<LibraryLicense>)) as List<LibraryLicense>
+  ] as List<LibraryLicense>
 }

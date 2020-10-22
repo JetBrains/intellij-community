@@ -134,25 +134,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         layoutlibPlugin(),
         layoutlibNativePlugin())
     }
-    if (buildOptions.includeUiTests) {
-      modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "intellij.android.testFramework"]
-      productLayout.allNonTrivialPlugins.add(uitestPlugin())
-      productLayout.bundledPluginModules += ["intellij.android.guiTestFramework"]
-    }
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
-  }
-
-  static PluginLayout uitestPlugin () {
-    plugin("intellij.android.guiTestFramework") {
-      withTestModule("intellij.android.guiTestFramework")
-      withTestModule("intellij.android.guiTests")
-      withModule("fest-swing")
-      withTestModule("android.sdktools.testutils")
-      withTestModule("intellij.android.testFramework")
-      withModule("intellij.platform.testFramework")
-      withTestModule("intellij.android.observable")
-      withModule("android.sdktools.fakeadbserver")
-    }
   }
 
   static PluginLayout androidPluginInStudio(Map<String, String> additionalModulesToJars) {
@@ -319,10 +301,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     def root = "$buildContext.paths.communityHome/../.."
 
-    if (buildContext.options.includeUiTests) {
-      bundleDependenciesForUiTests(buildContext, root, targetDirectory)
-    }
-
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
 
     // TODO: figure out if some of these misc resources can be included in a better way
@@ -396,34 +374,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     // Native debugger.
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
-    }
-
-    // UI test data directory
-    if (buildContext.options.includeUiTests) {
-      buildContext.ant.copy(todir: "$targetDirectory/plugins/uitest-framework/testData") {
-        fileset(dir: "$root/tools/adt/idea/android-uitests/testData")
-      }
-      buildContext.ant.copy(todir: "$targetDirectory/bin", overwrite: "true") {// BuildTasksImpl.copyLogXml copies a version of this without the CONSOLE-WARN appender, which we want for UI tests.
-        fileset(file: "$root/tools/idea/bin/log.xml")
-        fileset(file: "$root/tools/adt/idea/uitest-framework/testSrc/com/android/tools/idea/tests/gui/framework/run_uitests.py")
-      }
-    }
-  }
-
-  @CompileDynamic
-  private static void bundleDependenciesForUiTests(BuildContext buildContext, String root, String targetDirectory) {
-    def gradleVersion = getGradleVersionToBundle(buildContext)
-    buildContext.messages.block("Bundle dependencies for UI tests including zipped Gradle $gradleVersion") {
-      // when creating gradle wrappers for UI test projects, we need a zipped copy of gradle to point to
-      buildContext.ant.copy(todir: "$targetDirectory/gradle/gradle-$gradleVersion") {
-        fileset(file: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip")
-      }
-      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository/com/android/databinding") {
-        fileset(dir: "$root/out/repo/com/android/databinding")
-      }
-      buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/android/test_deps.zip", dest: "$targetDirectory/gradle/m2repository")
-      buildContext.ant.
-        unzip(src: "$root/bazel-bin/tools/adt/idea/uitest-framework/uitest_deps.zip", dest: "$targetDirectory/gradle/m2repository")
     }
   }
 

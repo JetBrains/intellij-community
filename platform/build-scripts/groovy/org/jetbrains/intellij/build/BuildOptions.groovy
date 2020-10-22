@@ -89,11 +89,6 @@ class BuildOptions {
   static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
 
   /**
-   * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.
-   */
-  boolean includeUiTests = SystemProperties.getBooleanProperty("bundle.ui.tests", false)
-
-  /**
    * Android Studio: If 'true' we are only building the platform, without the android plugins.
    * This is temporary and will be the default once the migration is complete.
    */

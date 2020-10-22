@@ -39,10 +39,7 @@
     <propertyref prefix="intellij.build."/>
     <propertyref prefix="custom.project."/>
     <propertyref name="ui.test.groups"/>
-    <propertyref name="bundle.ui.tests"/>
     <propertyref name="studio.sdk"/>
-    <propertyref name="idea.debug.mode"/>
-    <propertyref prefix="idea.gui.test."/>
     <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
   </propertyset>
 
