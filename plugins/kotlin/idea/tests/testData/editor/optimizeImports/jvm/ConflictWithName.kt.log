@@ -1,2 +1,0 @@
-Changed resolve type of KtSimpleNameReference: Test
-Trying to build import list again with import rules: +test1.*, +test2.*, +java.awt.*, +test2.Test

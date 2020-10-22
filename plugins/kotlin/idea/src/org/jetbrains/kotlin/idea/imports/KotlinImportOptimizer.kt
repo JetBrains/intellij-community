@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.imports
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.lang.ImportOptimizer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -149,6 +148,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
         override fun visitKtElement(element: KtElement) {
             super.visitKtElement(element)
+            if (element is KtLabelReferenceExpression) return
 
             val references = element.references.ifEmpty { return }
             val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
