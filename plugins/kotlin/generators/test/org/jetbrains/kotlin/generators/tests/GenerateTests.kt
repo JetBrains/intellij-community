@@ -244,6 +244,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractXCoroutinesStackTraceTest> {
             model("xcoroutines")
         }
+
+        testClass<AbstractClassNameCalculatorTest> {
+            model("classNameCalculator")
+        }
     }
 
     testGroup("idea") {
