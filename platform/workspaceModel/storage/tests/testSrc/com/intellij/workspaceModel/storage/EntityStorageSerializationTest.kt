@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.entities.MySource
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
@@ -47,6 +50,20 @@ class EntityStorageSerializationTest {
     val registration = (10..1_000).mapNotNull { kryo.getRegistration(it) }.joinToString(separator = "\n")
 
     assertEquals("Have you changed kryo registration? Update the version number! (And this test)", expectedKryoRegistration, registration)
+  }
+
+  @Test
+  fun `serialize empty lists`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+
+    // Do not replace ArrayList() with emptyList(). This must be a new object for this test
+    builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
+
+    val stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, builder.toStorage())
   }
 }
 
