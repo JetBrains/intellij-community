@@ -313,7 +313,7 @@ class EmojiListPanel extends JBScrollPane {
         g2.setComposite(saveComposite);
       }
       g.setColor(myStyle.myNoEmojiFoundTextColor);
-      g.setFont(myStyle.myLightFont);
+      g.setFont(myStyle.myFont);
       @Nls String message = EmojipickerBundle.message("message.EmojiPicker.NoEmojiFound");
       int x = (getWidth() - g.getFontMetrics().stringWidth(message)) / 2;
       int y = (getHeight() + NO_EMOJI_FOUND_IMAGE.getHeight(this)) / 2 + 25;

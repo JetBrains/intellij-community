@@ -11,8 +11,7 @@ import java.util.stream.Stream;
 
 
 class EmojiPickerStyle {
-  final Font myFont = JBUI.Fonts.label().deriveFont(Font.BOLD, JBUIScale.scale(13F));
-  final Font myLightFont = myFont.deriveFont(Font.PLAIN);
+  final Font myFont = JBUI.Fonts.label().deriveFont(Font.PLAIN, JBUIScale.scale(13F));
   final Font myEmojiFont = Stream.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
     .filter(f -> f.getName().toLowerCase(Locale.ENGLISH).contains("emoji"))
     .findFirst()
