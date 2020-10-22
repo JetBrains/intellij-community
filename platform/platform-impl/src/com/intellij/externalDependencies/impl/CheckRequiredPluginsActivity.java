@@ -158,12 +158,11 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
   private static void enablePlugins(@NotNull Project project,
                                     @NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    LOG.info(PluginEnabler.getLogMessage("Required plugins to enable", plugins));
+    Set<PluginId> pluginIds = PluginEnabler.mapPluginId(plugins);
+    LOG.info(PluginEnabler.getLogMessage("Required plugins to enable", pluginIds));
 
     ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
-    for (IdeaPluginDescriptor descriptor : plugins) {
-      pluginTracker.changeEnableDisable(descriptor.getPluginId(), PluginEnabledState.ENABLED);
-    }
+    pluginIds.forEach(id -> pluginTracker.changeEnableDisable(id, PluginEnabledState.ENABLED));
 
     PluginEnabler.enablePlugins(project, plugins, true);
   }
