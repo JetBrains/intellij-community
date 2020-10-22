@@ -167,7 +167,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   }
 
-  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? =
+  fun mapRangeToHostRange(host: PsiElement, rangeInPks: TextRange): TextRange? =
     mapRangeToHostRange(host, ElementManipulators.getValueTextRange(host), rangeInPks)
 
   /**
@@ -177,23 +177,25 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
+  fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
-      val escaper = host.createLiteralTextEscaper()
-      val decode = escaper.decode(segmentRange, StringBuilder())
-      if (decode) {
-        val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-        val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
-        if (start != -1 && end != -1)
-          return TextRange(start, end)
-        else {
-          logger<PartiallyKnownString>().warn("decoding of ${segmentRange} failed for ${host.text} : [$start, $end]")
-          return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+      if (host is PsiLanguageInjectionHost) {
+        val escaper = host.createLiteralTextEscaper()
+        val decode = escaper.decode(segmentRange, StringBuilder())
+        if (decode) {
+          val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
+          val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+          if (start != -1 && end != -1)
+            return TextRange(start, end)
+          else {
+            logger<PartiallyKnownString>().warn("decoding of ${segmentRange} failed for ${host.text} : [$start, $end]")
+            return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+          }
         }
       }
-      else
-        return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+
+      return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
     }
 
     var accumulated = 0
