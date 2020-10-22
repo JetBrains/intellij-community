@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
@@ -30,7 +31,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final ExtensionsAreaImpl myExtensionArea;
 
   private final Map<Class<?>, Object> myComponents = new HashMap<>();
-  private final Set<Object> myDisposableComponents = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
   private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {

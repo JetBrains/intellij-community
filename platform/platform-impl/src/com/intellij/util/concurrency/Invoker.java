@@ -9,13 +9,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -440,7 +440,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**

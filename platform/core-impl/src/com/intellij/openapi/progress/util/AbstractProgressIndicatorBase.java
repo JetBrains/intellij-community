@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -88,7 +89,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class<?>> ourReportedReuseExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;

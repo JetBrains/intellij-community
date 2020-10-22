@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -69,7 +70,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
       collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed =
-        Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        ContainerUtil.newConcurrentSet());
     }
     if (!processed.add(clazz)) return;
 

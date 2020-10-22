@@ -20,8 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
@@ -97,7 +99,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   public void inspectionStarted(@NotNull InspectionManager manager,
                                 @NotNull GlobalInspectionContext globalContext,
                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.putUserData(VISITED_BUNDLES_KEY, Collections.newSetFromMap(new ConcurrentHashMap<>()));
+    globalContext.putUserData(VISITED_BUNDLES_KEY, ContainerUtil.newConcurrentSet());
   }
 
   @Override

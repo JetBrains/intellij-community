@@ -20,8 +20,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -133,7 +135,7 @@ public class ReferenceChainLink {
   private void markExpensive(Project project) {
     Set<ReferenceChainLink> expensive = project.getUserData(EXPENSIVE_LINKS);
     if (expensive == null) {
-      project.putUserData(EXPENSIVE_LINKS, expensive = Collections.newSetFromMap(new ConcurrentHashMap<>()));
+      project.putUserData(EXPENSIVE_LINKS, expensive = ContainerUtil.newConcurrentSet());
     }
     expensive.add(this);
   }

@@ -164,7 +164,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -455,7 +455,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 

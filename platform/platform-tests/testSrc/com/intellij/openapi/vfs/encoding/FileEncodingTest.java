@@ -46,6 +46,7 @@ import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -978,7 +979,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() {
-    Set<Thread> detectThreads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
       private MyFT() {
         super(new Language("my") {

@@ -200,7 +200,7 @@ class FindInProjectTask {
       if (pair == null) return true;
 
       Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile,
-                                                                            __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+                                                                            __ -> ContainerUtil.newConcurrentSet());
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
       AtomicBoolean projectFileUsagesFound = new AtomicBoolean();

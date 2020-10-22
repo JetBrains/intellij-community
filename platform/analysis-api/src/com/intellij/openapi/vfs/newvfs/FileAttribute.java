@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class FileAttribute {
-  private static final Set<String> ourRegisteredIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> ourRegisteredIds = ContainerUtil.newConcurrentSet();
   private static final int UNDEFINED_VERSION = -1;
   private final String myId;
   private final int myVersion;

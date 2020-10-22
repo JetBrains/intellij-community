@@ -11,6 +11,7 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
@@ -42,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ImageLoader {
@@ -56,7 +56,7 @@ public final class ImageLoader {
   }
 
   private static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
-  private static final Set<String> IO_MISS_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> IO_MISS_CACHE = ContainerUtil.newConcurrentSet();
 
   private static final ConcurrentMap<CacheKey, Pair<Image, Dimension2DDouble>> imageCache = CollectionFactory.createConcurrentSoftValueMap();
   // https://github.com/JetBrains/intellij-community/pull/1242

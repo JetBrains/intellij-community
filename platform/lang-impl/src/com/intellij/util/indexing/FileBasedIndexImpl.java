@@ -105,7 +105,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
 
-  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   private final boolean myIsUnitTestMode;
@@ -115,7 +115,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
-  private final Set<Project> myProjectsBeingUpdated = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
 
   private final Lock myReadLock;
   final Lock myWriteLock;

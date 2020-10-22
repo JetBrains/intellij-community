@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -78,14 +79,14 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
 
   private class MyVfsEventsProcessor {
     private final AtomicReference<Set<EventWithType>> myEventQueue =
-      new AtomicReference<>(Collections.newSetFromMap(new ConcurrentHashMap<>()));
+      new AtomicReference<>(ContainerUtil.newConcurrentSet());
 
     private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
         @Override
         protected void execute(Update @NotNull [] updates) {
           final ReadTask task = new ReadTask() {
-            final Set<EventWithType> myEvents = myEventQueue.getAndSet(Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ContainerUtil.newConcurrentSet());
 
             @Nullable
             @Override

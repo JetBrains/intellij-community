@@ -105,7 +105,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private final Set<TaskRepository> myBadRepositories = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
   public TaskManagerImpl(@NotNull Project project) {
     myProject = project;

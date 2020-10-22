@@ -322,7 +322,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>(new ConcurrentHashMap<>()) {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return Collections.newSetFromMap(new ConcurrentHashMap<>());
+        return ContainerUtil.newConcurrentSet();
       }
 
       @Override

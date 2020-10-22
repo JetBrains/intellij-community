@@ -62,7 +62,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -301,7 +300,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
@@ -708,7 +707,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     final UserBinaryFileType stuffType = new UserBinaryFileType(){};
     stuffType.setName("stuffType");
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
 
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable

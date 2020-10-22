@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +53,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
 
   private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
-  private static final Set<String> LOGGED_RENDERERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> LOGGED_RENDERERS = ContainerUtil.newConcurrentSet();
 
   @NotNull private final Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
-  private static final Set<String> ourKnownIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> ourKnownIds = ContainerUtil.newConcurrentSet();
   private static final String ourPropertyName = "file.gist.reindex.count";
   private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
 
