@@ -110,14 +110,16 @@ public final class PluginInstaller {
     StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
   }
 
-  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
+                                               @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+                                               boolean isUpdate) {
     DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
       .withUpdate(isUpdate)
       .withWaitForClassloaderUnload(true);
 
-    boolean uninstalledWithoutRestart = parentComponent != null
-      ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, options)
-      : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, options);
+    boolean uninstalledWithoutRestart = parentComponent != null ?
+                                        DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                        DynamicPlugins.unloadPlugin(pluginDescriptor, options);
 
     if (uninstalledWithoutRestart) {
       try {

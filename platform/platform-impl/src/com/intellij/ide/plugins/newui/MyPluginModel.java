@@ -78,8 +78,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private Consumer<? super IdeaPluginDescriptor> myCancelInstallCallback;
 
   private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
-  private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
-  private final Set<IdeaPluginDescriptor> myPluginsToRemoveOnCancel = new HashSet<>();
+  private final Set<IdeaPluginDescriptorImpl> myDynamicPluginsToUninstall = new HashSet<>();
+  private final Set<IdeaPluginDescriptorImpl> myPluginsToRemoveOnCancel = new HashSet<>();
 
   private final @NotNull Map<IdeaPluginDescriptor, PluginEnabledState> myDiff = new HashMap<>();
 
@@ -143,12 +143,28 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
-    for (IdeaPluginDescriptor pluginDescriptor : myDynamicPluginsToUninstall) {
+    for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
+      myDiff.remove(pluginDescriptor);
+      PluginId pluginId = pluginDescriptor.getPluginId();
+
       if (!PluginInstaller.uninstallDynamicPlugin(parent, pluginDescriptor, false)) {
-        uninstallsRequiringRestart.add(pluginDescriptor.getPluginId());
+        uninstallsRequiringRestart.add(pluginId);
       }
       else {
-        getEnabledMap().remove(pluginDescriptor.getPluginId());
+        getEnabledMap().remove(pluginId);
+      }
+
+      ProjectPluginTracker pluginTracker = getPluginTracker();
+      if (pluginTracker != null) {
+        pluginTracker.changeEnableDisable(pluginId, PluginEnabledState.DISABLED);
+      }
+      else {
+        ProjectPluginTrackerManager
+          .getInstance()
+          .getState()
+          .getTrackers()
+          .values()
+          .forEach(state -> state.unregister(pluginId));
       }
     }
 
@@ -235,24 +251,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     UpdatePluginStateAction applyPerProjectAction = new UpdatePluginStateAction();
     UpdatePluginStateAction applyGloballyAction = new UpdatePluginStateAction();
 
-    ProjectPluginTracker pluginTracker = getPluginTracker();
     for (Map.Entry<IdeaPluginDescriptor, PluginEnabledState> entry : myDiff.entrySet()) {
       IdeaPluginDescriptor descriptor = entry.getKey();
-
       PluginId pluginId = descriptor.getPluginId();
+
+      if (descriptor.isImplementationDetail() || /* implementation detail plugins are never explicitly disabled */
+          !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
+        continue;
+      }
+
       PluginEnabledState newState = getState(pluginId);
+      ProjectPluginTracker pluginTracker = getPluginTracker();
       if (pluginTracker != null) {
         pluginTracker.changeEnableDisable(pluginId, newState);
-      }
-
-      if (myDynamicPluginsToUninstall.contains(descriptor) ||
-          descriptor.isImplementationDetail()) {
-        // implementation detail plugins are never explicitly disabled
-        continue;
-      }
-
-      if (!isLoaded(pluginId)) { // if enableMap contains null for id => enable/disable checkbox don't touch
-        continue;
       }
 
       boolean shouldEnable = newState.isEnabled();
