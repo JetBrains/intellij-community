@@ -11,6 +11,7 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -272,7 +273,7 @@ public final class ImageLoader {
 
     Image image;
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    if (resourceClass == null) {
+    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path))) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
         if (!descriptor.original) {
