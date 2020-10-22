@@ -9,6 +9,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
@@ -177,7 +178,7 @@ public class MavenRunnerPanel {
     if (myTargetName == null) {
       data.setJreName(myJdkCombo.getSelectedValue());
     } else {
-      data.setJreName(myTargetJdkCombo.getItem());
+      data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
     }
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
     data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());

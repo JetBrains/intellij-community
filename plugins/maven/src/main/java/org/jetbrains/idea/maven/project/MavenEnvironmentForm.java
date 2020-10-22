@@ -170,9 +170,12 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private void updateMavenVersionLabel() {
     boolean localTarget = myTargetName == null;
     String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
-    String versionText = version == null && !localTarget
-                         ? MavenProjectBundle.message("label.invalid.maven.home.directory")
-                         : !localTarget ? null : MavenProjectBundle.message("label.invalid.maven.home.version", version);
+    String versionText = null;
+    if (version != null) {
+      versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
+    } else if (localTarget) {
+      versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
+    }
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
   }
 
@@ -259,7 +262,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setHistory(targetMavenHomes));
     }
     String mavenHomeFieldText = mavenHomeField.getText();
-    if (!targetMavenHomes.isEmpty() && !StringUtil.isEmptyOrSpaces(mavenHomeFieldText) && !targetMavenHomes.contains(mavenHomeFieldText)) {
+    if (targetMavenHomes.isEmpty()) {
+      EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(""));
+    } else if (!targetMavenHomes.contains(mavenHomeFieldText)) {
       EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(targetMavenHomes.get(0)));
     }
   }
