@@ -99,7 +99,7 @@ public final class CompileDriver {
     }
   }
 
-  public boolean isUpToDate(CompileScope scope) {
+  public boolean isUpToDate(@NotNull CompileScope scope) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
@@ -114,6 +114,7 @@ public final class CompileDriver {
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
+
       final BuildManager buildManager = BuildManager.getInstance();
       try {
         buildManager.postponeBackgroundTasks();
@@ -145,7 +146,8 @@ public final class CompileDriver {
     if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
       // if called from background process on pooled thread, run synchronously
       task.run(compileWork, null, indicatorProvider.getProgressIndicator());
-    } else {
+    }
+    else {
       task.start(compileWork, null);
     }
 
@@ -565,7 +567,7 @@ public final class CompileDriver {
                : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
       }
       else {
-        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", 
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors",
                                              errorCount, warningCount, durationString);
       }
     }
