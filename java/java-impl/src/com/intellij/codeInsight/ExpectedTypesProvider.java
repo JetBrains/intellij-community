@@ -1240,22 +1240,13 @@ public final class ExpectedTypesProvider {
      * @return index of the first argument in (expected, actual) pair; -1 if this method doesn't look like an assertEquals-like method
      */
     private static int getAssertMethodFirstArgIndex(@NotNull PsiMethod method, int argCount) {
-      int firstArgIndex = -1;
-      if (argCount == 2 || argCount == 3) {
-        if (argCount == 2) {
-          firstArgIndex = 0;
-        }
-        else {
-          PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (isAssertionMessage(parameters[0])) {
-            firstArgIndex = 1;
-          }
-          else if (isAssertionMessage(parameters[2])) {
-            firstArgIndex = 0;
-          }
-        }
+      if (argCount == 2) return 0;
+      if (argCount == 3) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (isAssertionMessage(parameters[0])) return 1;
+        if (isAssertionMessage(parameters[2])) return 0;
       }
-      return firstArgIndex;
+      return -1;
     }
 
     /**
