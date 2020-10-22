@@ -23,7 +23,7 @@ abstract class GitConflictAction(text: Supplier<@Nls String>) :
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val statusInfoStream = e.getData(GIT_FILE_STATUS_NODES_STREAM)
+    val statusInfoStream = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)
     if (project == null || statusInfoStream == null || !statusInfoStream.anyMatch(this::matches)) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -31,7 +31,9 @@ abstract class GitConflictAction(text: Supplier<@Nls String>) :
 
     e.presentation.isVisible = true
     e.presentation.isEnabled = isEnabled(project,
-                                         e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).asSequence().mapNotNull { it.createConflict() })
+                                         e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).asSequence().mapNotNull {
+                                           it.createConflict()
+                                         })
   }
 
   override fun matches(statusNode: GitFileStatusNode): Boolean = statusNode.kind == NodeKind.CONFLICTED

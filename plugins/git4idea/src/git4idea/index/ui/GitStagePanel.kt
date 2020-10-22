@@ -44,8 +44,6 @@ import git4idea.status.GitChangeProvider
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
-
 internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffPreview: Boolean, disposableParent: Disposable) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
@@ -133,7 +131,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
   }
 
   override fun getData(dataId: String): Any? {
-    if (GIT_STAGE_TRACKER.`is`(dataId)) return tracker
+    if (GitStageDataKeys.GIT_STAGE_TRACKER.`is`(dataId)) return tracker
     return null
   }
 
