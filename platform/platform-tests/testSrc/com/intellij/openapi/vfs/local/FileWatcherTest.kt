@@ -710,7 +710,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
-    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }
+      .filterNot { FileUtil.startsWith(it.path, PathManager.getConfigPath()) || FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()

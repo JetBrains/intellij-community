@@ -671,7 +671,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("** done waiting")
 
     val events = VfsTestUtil.getEvents { fs.refresh(false) }.asSequence()
-      .filterNot { FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+      .filterNot { FileUtil.startsWith(it.path, PathManager.getConfigPath()) || FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
       .filterNot { it is VFilePropertyChangeEvent && it.propertyName == VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY }
       .toList()
 
