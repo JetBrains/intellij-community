@@ -13,16 +13,19 @@ import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvid
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeNode;
 import java.util.List;
 import java.util.function.Function;
 
-public class JavaReferringObjectsValue extends JavaValue implements XReferrersProvider.ShortestPathAware {
+public class JavaReferringObjectsValue extends JavaValue implements ShowReferringObjectsAction.ReferrersTreeCustomizer {
   private static final long MAX_REFERRING = 100;
   private final ReferringObjectsProvider myReferringObjectsProvider;
   private final Function<? super XValueNode, ? extends XValueNode> myNodeConfigurator;
@@ -58,8 +61,10 @@ public class JavaReferringObjectsValue extends JavaValue implements XReferrersPr
   }
 
   @Override
-  public boolean isShortestPathAvailable() {
-    return myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider;
+  public void customizeTree(@NotNull XDebuggerTree referrersTree) {
+    if (myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider) {
+      referrersTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
+    }
   }
 
   @Override
@@ -119,5 +124,16 @@ public class JavaReferringObjectsValue extends JavaValue implements XReferrersPr
   @Override
   public XValueModifier getModifier() {
     return null;
+  }
+
+  private static boolean isInTopSubTree(@NotNull TreeNode node) {
+    while (node.getParent() != null) {
+      if (node != node.getParent().getChildAt(0)) {
+        return false;
+      }
+      node = node.getParent();
+    }
+
+    return true;
   }
 }

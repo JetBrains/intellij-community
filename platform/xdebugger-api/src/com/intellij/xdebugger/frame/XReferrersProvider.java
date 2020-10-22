@@ -22,11 +22,4 @@ package com.intellij.xdebugger.frame;
  */
 public abstract class XReferrersProvider {
   public abstract XValue getReferringObjectsValue();
-
-  public interface ShortestPathAware {
-    /**
-     * @return true if first referrers lead to the closest GC root
-     */
-    boolean isShortestPathAvailable();
-  }
 }

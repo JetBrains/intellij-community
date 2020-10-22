@@ -10,9 +10,8 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.TreeNode;
 
 public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
   @Override
@@ -35,10 +34,8 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                    referringObjectsRoot,
                                                    tree.getValueMarkers(), session, false);
         XDebuggerTree debuggerTree = dialog.getTree();
-        if (referringObjectsRoot instanceof XReferrersProvider.ShortestPathAware) {
-          if (((XReferrersProvider.ShortestPathAware)referringObjectsRoot).isShortestPathAvailable()) {
-            debuggerTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
-          }
+        if (referringObjectsRoot instanceof ReferrersTreeCustomizer) {
+          ((ReferrersTreeCustomizer)referringObjectsRoot).customizeTree(debuggerTree);
         }
 
         dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
@@ -47,14 +44,11 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     }
   }
 
-  private static boolean isInTopSubTree(@NotNull TreeNode node) {
-    while (node.getParent() != null) {
-      if (node != node.getParent().getChildAt(0)) {
-        return false;
-      }
-      node = node.getParent();
-    }
-
-    return true;
+  /**
+   * Implement this interface by referring objects root to customize debugger tree.
+   */
+  @ApiStatus.Experimental
+  public interface ReferrersTreeCustomizer {
+    void customizeTree(XDebuggerTree referrersTree);
   }
 }
