@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.PsiTestUtil
+import org.intellij.lang.annotations.Language
 
 class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   private var moduleA: Module? = null
@@ -29,19 +30,19 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   }
 
   fun testNoChanges() {
-    myFixture.addFileToProject("BaseClass.java", "public interface BaseClass{}")
-    myFixture.addFileToProject("A/ClassA.java", "public class ClassA implements BaseClass{}")
-    myFixture.addFileToProject("B/ClassB.java", "public class ClassB implements BaseClass{}")
+    addClass("BaseClass.java", "public interface BaseClass{}")
+    addClass("A/ClassA.java", "public class ClassA implements BaseClass{}")
+    addClass("B/ClassB.java", "public class ClassB implements BaseClass{}")
     rebuildProject()
     assertEmpty(dirtyModules())
   }
 
   @Throws(Exception::class)
   fun testDirtyScopeCachedResults() {
-    val file1 = myFixture.addFileToProject("A/Foo.java", "public class Foo {" +
-                                                        "static class Bar extends Foo {} " +
-                                                        "}")
-    myFixture.addFileToProject("B/Unrelated.java", "public class Unrelated {}")
+    val file1 = addClass("A/Foo.java", """public class Foo { 
+                                       static class Bar extends Foo {} 
+                                       }""")
+    addClass("B/Unrelated.java", "public class Unrelated {}")
     rebuildProject()
     val foo = (file1 as PsiClassOwner).classes[0]
     assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
@@ -57,23 +58,26 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   }
 
   fun testLeafModuleTyping() {
-    myFixture.addFileToProject("BaseClass.java", "public interface BaseClass{}")
-    val classA = myFixture.addFileToProject("A/ClassA.java", "public class ClassA implements BaseClass{}")
-    myFixture.addFileToProject("B/ClassB.java", "public class ClassB implements BaseClass{}")
+    addClass("BaseClass.java", "public interface BaseClass{}")
+    val classA = addClass("A/ClassA.java", "public class ClassA implements BaseClass{}")
+    addClass("B/ClassB.java", "public class ClassB implements BaseClass{}")
     rebuildProject()
     myFixture.openFileInEditor(classA.virtualFile)
     myFixture.type("/*typing in module A*/")
-    assertEquals("A", assertOneElement(dirtyModules()).name)
+    assertEquals("A", assertOneElement(dirtyModules()))
     FileDocumentManager.getInstance().saveAllDocuments()
-    assertEquals("A", assertOneElement(dirtyModules()).name)
+    assertEquals("A", assertOneElement(dirtyModules()))
   }
 
+  private fun addClass(relativePath: String, @Language("JAVA") text: String) = myFixture.addFileToProject(relativePath, text)
+
   fun testModulePathRename() {
-    myFixture.addFileToProject("A/Foo.java", "class Foo { void m() {System.out.println(123);} }")
+    addClass("A/Foo.java", "class Foo { void m() {System.out.println(123);} }")
     rebuildProject()
-    myFixture.renameElement(PsiManager.getInstance(myFixture.project).findDirectory(myFixture.findFileInTempDir("A"))!!, "XXX")
-    assertEquals("A", assertOneElement(dirtyModules()).name)
-    myFixture.addFileToProject("XXX/Bar.java", "class Bar { void m() {System.out.println(123);} }")
+    val moduleARoot = PsiManager.getInstance(myFixture.project).findDirectory(myFixture.findFileInTempDir("A"))!!
+    myFixture.renameElement(moduleARoot, "XXX")
+    assertTrue(dirtyModules().contains("A"))
+    addClass("XXX/Bar.java", "class Bar { void m() {System.out.println(123);} }")
     rebuildProject()
     assertEmpty(dirtyModules())
     val javaLangSystem = myFixture.javaFacade.findClass("java.lang.System")!!
@@ -88,6 +92,6 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     ModuleRootModificationUtil.addDependency(moduleB!!, module)
   }
 
-  private fun dirtyModules() =
-    (CompilerReferenceService.getInstance(project) as CompilerReferenceServiceImpl).dirtyScopeHolder.allDirtyModules
+  private fun dirtyModules(): Collection<String> =
+    (CompilerReferenceService.getInstance(project) as CompilerReferenceServiceImpl).dirtyScopeHolder.allDirtyModules.map { module -> module.name }
 }
