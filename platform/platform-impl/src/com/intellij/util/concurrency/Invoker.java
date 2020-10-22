@@ -571,6 +571,11 @@ public abstract class Invoker implements Disposable {
   }
 
   @NotNull
+  public static Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
+    return new Background(parent, ThreeState.NO, 8);
+  }
+
+  @NotNull
   public static Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 1);
   }
