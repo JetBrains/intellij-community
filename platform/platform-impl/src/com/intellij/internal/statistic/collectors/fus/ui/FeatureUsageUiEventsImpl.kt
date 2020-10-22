@@ -58,7 +58,7 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   private fun logSettingsEvent(configurable: Configurable, event: EventId1<Class<*>?>) {
     val base: Any? = if (configurable is ConfigurableWrapper) configurable.configurable else configurable
     base?.let {
-      event.log(configurable::class.java)
+      event.log(base::class.java)
     }
   }
 
