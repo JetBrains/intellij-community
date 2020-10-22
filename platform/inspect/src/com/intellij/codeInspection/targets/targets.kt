@@ -194,7 +194,7 @@ fun InspectionApplication.runAnalysisByTargets(path: Path,
   TargetsRunner(this, path, project, baseProfile, scope).run()
 }
 
-private fun InspectionApplication.writeDescriptions(baseProfile: InspectionProfileImpl, converter: InspectionsReportConverter) {
+fun InspectionApplication.writeDescriptions(baseProfile: InspectionProfileImpl, converter: InspectionsReportConverter) {
   val descriptionsFile: Path = Paths.get(myOutPath).resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION)
   val profileName = if (myRunWithEditorSettings) null else baseProfile.name
   describeInspections(descriptionsFile, profileName, baseProfile)

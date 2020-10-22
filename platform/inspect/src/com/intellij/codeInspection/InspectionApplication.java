@@ -69,6 +69,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
+import static com.intellij.codeInspection.targets.QodanaKt.runAnalysisByQodana;
 import static com.intellij.codeInspection.targets.TargetsKt.runAnalysisByTargets;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -86,6 +87,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   public boolean myRunGlobalToolsOnly;
   boolean myAnalyzeChanges;
   boolean myPathProfiling;
+  boolean myQodanaRun;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -283,7 +285,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
       }
       LOG.info("Used scope: " + scope.toString());
-      if (myTargets != null) {
+      if (myQodanaRun) {
+        runAnalysisByQodana(this, projectPath, project, myInspectionProfile, scope, parentDisposable);
+      } else if (myTargets != null) {
         runAnalysisByTargets(this, projectPath, project, myInspectionProfile, scope);
       } else {
         runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
@@ -721,7 +725,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  private @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
