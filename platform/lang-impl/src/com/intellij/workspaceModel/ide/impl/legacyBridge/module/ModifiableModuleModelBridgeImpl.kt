@@ -27,10 +27,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -79,7 +79,7 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
-    val canonicalPath = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(filePath))
+    val canonicalPath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath))
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
@@ -102,6 +102,15 @@ internal class ModifiableModuleModelBridgeImpl(
     )
 
     return createModuleInstance(moduleEntity, true)
+  }
+
+  private fun resolveShortWindowsName(filePath: String): String {
+    return try {
+      FileUtil.resolveShortWindowsName(filePath)
+    }
+    catch (ignored: IOException) {
+      filePath
+    }
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
