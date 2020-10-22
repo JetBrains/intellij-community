@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("WeakerAccess")
@@ -58,7 +57,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
-  private final Set<String> myCompilationAffectedModules = Collections.newSetFromMap(new ConcurrentHashMap<>()); // used outside myLock
+  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
 
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
@@ -182,8 +181,11 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
   }
 
   @NotNull
-  public Set<Module> getAllDirtyModules() {
-    final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
+  Set<Module> getAllDirtyModules() {
+    final Set<Module> dirtyModules;
+    synchronized (myLock) {
+      dirtyModules = new THashSet<>(myVFSChangedModules);
+    }
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
       if (file == null) continue;
@@ -317,7 +319,6 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   DirtyScopeTestInfo getState() {
     synchronized (myLock) {
@@ -325,6 +326,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
       final List<Module> unsavedChangedModuleList = new ArrayList<>(getAllDirtyModules());
       ContainerUtil.removeAll(unsavedChangedModuleList, vfsChangedModules);
       final Module[] unsavedChangedModules = unsavedChangedModuleList.toArray(Module.EMPTY_ARRAY);
+      //noinspection unchecked
       final List<VirtualFile> excludedFiles = myExcludedFilesScope instanceof Iterable ? ContainerUtil.newArrayList((Iterable<VirtualFile>)myExcludedFilesScope) : Collections.emptyList();
       return new DirtyScopeTestInfo(vfsChangedModules, unsavedChangedModules, excludedFiles.toArray(VirtualFile.EMPTY_ARRAY), getDirtyScope());
     }
