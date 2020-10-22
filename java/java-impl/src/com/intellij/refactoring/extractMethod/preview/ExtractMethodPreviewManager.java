@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -14,9 +15,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
-/**
- * @author Pavel.Dolgov
- */
+@Service
 public final class ExtractMethodPreviewManager {
   private final Project myProject;
   private ContentManager myContentManager;

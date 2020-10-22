@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.module.ModuleManager
@@ -16,16 +17,17 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 import java.util.*
 
 @State(name = "ExternalCompilerConfiguration", storages = [(Storage("compiler.xml"))], externalStorageOnly = true)
+@Service
 internal class ExternalCompilerConfigurationStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
   var loadedState: Map<String, String>? = null
     private set
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ExternalCompilerConfigurationStorage = 
+    fun getInstance(project: Project): ExternalCompilerConfigurationStorage =
       project.getService(ExternalCompilerConfigurationStorage::class.java)
-  } 
-  
+  }
+
   override fun getState(): Element {
     val result = Element("state")
     if (!project.isExternalStorageEnabled) {
