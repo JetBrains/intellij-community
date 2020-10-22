@@ -20,7 +20,7 @@ fun main1() {
   val resFile = dir.resolve("Res_Store")
   val filterPattern = "111"
 
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
   val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
   val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
@@ -49,7 +49,7 @@ fun main() {
   val converterFile = dir.resolve("ClassToIntConverter")
   val resFile = dir.resolve("Res_Store")
 
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
   serializer.deserializeClassToIntConverter(converterFile.inputStream())
 

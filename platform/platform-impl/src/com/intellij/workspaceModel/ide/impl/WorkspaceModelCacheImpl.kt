@@ -33,8 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
   private val cacheFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
-                                                                                ApplicationManager.getApplication().isEAP)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {
     Disposer.register(parentDisposable, this)
