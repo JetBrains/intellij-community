@@ -7,7 +7,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [--enable-aswb] [--uitests]" > /dev/stderr
+  echo "Usage: $0 [--uitests]" > /dev/stderr
   exit 1
 }
 
@@ -33,15 +33,10 @@ function get_absolute_path() {
   ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
 }
 
-ASWB=
-ASWB_PROPERTY=
 UITESTS=false
 STUDIO_SDK=true
 while [[ -n "$1" ]]; do
-  if [[ $1 == "--enable-aswb" ]]; then
-      ASWB=true
-      ASWB_PROPERTY="-Dinclude.aswb=true"
-  elif [[ $1 == "--studio-sdk" ]]; then
+  if [[ $1 == "--studio-sdk" ]]; then
     STUDIO_SDK=true
   elif [[ $1 == "--uitests" ]]; then
     UITESTS=true
@@ -75,7 +70,6 @@ echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## Out dir: $OUT"
 echo "## Prog dir: $PROG_DIR"
-echo "## ASWB?: $ASWB"
 echo "## UITESTS?: $UITESTS"
 echo "## STUDIO_SDK: $STUDIO_SDK"
 echo
@@ -95,7 +89,6 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
-  "${ASWB_PROPERTY}"
   "-Dstudio.sdk=${STUDIO_SDK}"
   "-Dbundle.ui.tests=${UITESTS}"
 )
@@ -106,9 +99,5 @@ $ANT "-Dstudio.sdk=${STUDIO_SDK}" "-Dintellij.build.output.root=$OUT/updater" fu
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
-if [ "$ASWB" = true ]; then
-  cp -Rfv "$OUT"/artifacts/aswb* "$DIST"
-else
-  cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
-  cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar
-fi
+cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
+cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar

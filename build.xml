@@ -39,7 +39,6 @@
     <propertyref prefix="intellij.build."/>
     <propertyref prefix="custom.project."/>
     <propertyref name="ui.test.groups"/>
-    <propertyref name="include.aswb" />
     <propertyref name="bundle.ui.tests"/>
     <propertyref name="studio.sdk"/>
     <propertyref name="idea.debug.mode"/>
@@ -83,10 +82,6 @@
 
   <!-- build distribution archives for IntelliJ Community Edition in out/idea-ce/artifacts directory -->
   <target name="build" depends="init">
-    <bazel if:set="include.aswb"
-           action="build"
-           target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip"
-           config="release"/>
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 

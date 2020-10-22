@@ -26,7 +26,7 @@ class AndroidStudioBuilder {
   private final BuildContext buildContext
 
   AndroidStudioBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    def properties = Boolean.getBoolean("include.aswb") ? new AswbProperties(home, options) : new AndroidStudioProperties(home, options)
+    def properties = new AndroidStudioProperties(home, options)
     buildContext = BuildContext.createContext(home, projectHome, properties, ProprietaryBuildTools.DUMMY, options)
   }
 
