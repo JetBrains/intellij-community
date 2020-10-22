@@ -6,7 +6,10 @@ import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 
 open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
@@ -47,6 +50,50 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   }
 }
 
+private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder {
+  return ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+                        *ProcessMediatorDaemonRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
+                        "-cp", System.getProperty("java.class.path"),
+                        ProcessMediatorDaemonRuntimeClasspath.getMainClass().name,
+                        *args)
+}
+
+private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
+  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
+    val daemonOptions = launchOptions.copy(trampoline = false,
+                                           helloOption = DaemonLaunchOptions.HelloOption.Stdout)
+    val daemonProcess = createDaemonProcessCommandLine(*daemonOptions.asCmdlineArgs().toTypedArray())
+      .redirectOutput(ProcessBuilder.Redirect.PIPE)
+      .redirectError(ProcessBuilder.Redirect.INHERIT)
+      .start()
+    System.err.println("[trampoline] Started daemon process PID ${daemonProcess.pid()}")
+
+    daemonProcess.onExit().whenComplete { process, _ ->
+      val exitCode = process.exitValue()
+      System.err.println("[trampoline] Daemon process PID ${process.pid()} exited with code $exitCode before trampoline process")
+      exitProcess(exitCode)
+    }
+
+    try {
+      val daemonHello = daemonProcess.inputStream.use(DaemonHello::parseDelimitedFrom)
+                        ?: throw IOException("Premature EOF while reading daemon hello")
+
+      helloWriter.writeHello(daemonHello)
+    }
+    catch (e: Throwable) {
+      if (e is IOException) System.err.println("[trampoline] Unable to relay daemon hello: ${e.message}")
+      daemonProcess.run {
+        waitFor(3, TimeUnit.SECONDS)
+        destroy()
+        kotlin.runCatching { waitFor(10, TimeUnit.SECONDS) }
+        destroyForcibly()
+      }
+      throw e
+    }
+  }
+  exitProcess(0)
+}
+
 private fun openHelloWriter(helloOption: DaemonLaunchOptions.HelloOption?): DaemonHelloWriter? =
   when (helloOption) {
     null -> null
@@ -62,6 +109,10 @@ private fun DaemonHelloWriter?.writeHello(daemonHello: DaemonHello) {
 
 fun main(args: Array<String>) {
   val launchOptions = DaemonLaunchOptions.parseFromArgsOrDie("ProcessMediatorDaemonMain", args)
+
+  if (launchOptions.trampoline) {
+    trampoline(launchOptions)  // never returns
+  }
 
   val daemon: ProcessMediatorServerDaemon
 

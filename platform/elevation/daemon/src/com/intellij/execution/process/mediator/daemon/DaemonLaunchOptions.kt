@@ -12,6 +12,7 @@ import java.util.*
 import kotlin.system.exitProcess
 
 data class DaemonLaunchOptions(
+  val trampoline: Boolean = false,
   val helloOption: HelloOption? = null,
   val tokenEncryptionOption: TokenEncryptionOption? = null,
 ) {
@@ -46,6 +47,7 @@ data class DaemonLaunchOptions(
 
   fun asCmdlineArgs(): List<String> {
     return listOf(
+      "--trampoline".takeIf { trampoline },
       helloOption,
       tokenEncryptionOption,
     ).mapNotNull { it?.toString() }
@@ -57,7 +59,12 @@ data class DaemonLaunchOptions(
 
   companion object {
     private fun printUsage(programName: String) {
-      System.err.println("Usage: $programName [ --hello-file=file|- | --hello-port=port ] [ --token-encrypt-rsa=public-key ]")
+      System.err.println(
+        "Usage: $programName" +
+        " [ --trampoline ]" +
+        " [ --hello-file=file|- | --hello-port=port ]" +
+        " [ --token-encrypt-rsa=public-key ]"
+      )
     }
 
     fun parseFromArgsOrDie(programName: String, args: Array<String>): DaemonLaunchOptions {
@@ -72,11 +79,17 @@ data class DaemonLaunchOptions(
     }
 
     private fun parseFromArgs(args: Array<String>): DaemonLaunchOptions {
+      var trampoline = false
       var helloOption: HelloOption? = null
       var tokenEncryptionOption: TokenEncryptionOption? = null
 
       for ((option, value) in parseArgs(args)) {
-        requireNotNull(value) { "Missing '$option' value" }
+        when (option) {
+          "--trampoline" -> trampoline = true
+          "--no-trampoline" -> trampoline = false
+          else -> requireNotNull(value) { "Missing '$option' value" }
+        }
+        value ?: continue
 
         when (option) {
           "--hello-file" -> {
@@ -106,6 +119,7 @@ data class DaemonLaunchOptions(
       }
 
       return DaemonLaunchOptions(
+        trampoline = trampoline,
         helloOption = helloOption,
         tokenEncryptionOption = tokenEncryptionOption,
       )
