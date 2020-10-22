@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.sun.jna.Callback
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
@@ -41,17 +42,16 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
   abstract val syncFunction: Consumer<Boolean>
 
   override fun check() {
-    ApplicationManager.getApplication()?.let { application ->
-      application.executeOnPooledThread {
-        val isDark = isDark()
-        application.invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
-      }
+    NonUrgentExecutor.getInstance().execute {
+      val isDark = isDark()
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
     }
   }
 }
 
 private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
-  override val detectionSupported: Boolean = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
+  override val detectionSupported: Boolean
+    get() = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
 
   val themeChangedCallback = object : Callback {
     @Suppress("unused")
@@ -101,7 +101,8 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
 }
 
 private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
-  override val detectionSupported: Boolean = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
+  override val detectionSupported: Boolean
+    get() = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
 
   companion object {
     @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
@@ -120,7 +121,6 @@ private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : As
              Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) == 0
     }
     catch (e: Throwable) {}
-
     return false
   }
 }

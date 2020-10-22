@@ -9,12 +9,6 @@
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.intellij.ide.ui.LafManager</interface-class>
-      <implementation-class>com.intellij.ide.ui.laf.LafManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.ide.ui.laf.HeadlessLafManagerImpl</headless-implementation-class>
-    </component>
   </application-components>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -25,7 +19,36 @@
     </component>
   </project-components>
 
-  <xi:include href="/componentSets/UICore.xml"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
+                        serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
+                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
+                        serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
+                        headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
+                        serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
+                        headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.DataManager"
+                        serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
+                        testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
+
+    <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
+                    serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
+                    headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+  </extensions>
+  <extensionPoints>
+    <!-- only bundled plugin can define extension -->
+    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider"/>
+  </extensionPoints>
+
   <xi:include href="/componentSets/Editor.xml"/>
   <xi:include href="/componentSets/Lang.xml"/>
 
