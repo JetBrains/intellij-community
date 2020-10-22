@@ -6,14 +6,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiUtilCore;
-import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -47,14 +44,16 @@ public final class LombokBuildProcessParametersProvider extends BuildProcessPara
   }
 
   private boolean disableOptimisation() {
-    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(LombokClassNames.BUILDER, GlobalSearchScope.allScope(myProject));
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-    if (virtualFile != null) {
-      List<OrderEntry> entries = ProjectRootManager.getInstance(myProject).getFileIndex().getOrderEntriesForFile(virtualFile);
-      if (!entries.isEmpty()) {
-        String lombokVersion = Version.parseLombokVersion(entries.get(0));
-        if (lombokVersion != null && Version.compareVersionString(lombokVersion, "1.18.16") < 0) {
-          return true;
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("lombok.experimental");
+    if (aPackage != null) {
+      PsiDirectory[] directories = aPackage.getDirectories();
+      if (directories.length > 0) {
+        List<OrderEntry> entries = ProjectRootManager.getInstance(myProject).getFileIndex().getOrderEntriesForFile(directories[0].getVirtualFile());
+        if (!entries.isEmpty()) {
+          String lombokVersion = Version.parseLombokVersion(entries.get(0));
+          if (lombokVersion != null && Version.compareVersionString(lombokVersion, "1.18.16") < 0) {
+            return true;
+          }
         }
       }
     }
