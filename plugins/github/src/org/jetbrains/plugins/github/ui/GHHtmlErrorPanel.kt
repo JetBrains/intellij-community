@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.BR
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -74,13 +77,15 @@ object GHHtmlErrorPanel {
       val error = model.error
       if (error != null) {
         pane.isVisible = true
-        var errorText = paragraph(model.errorPrefix) + paragraph(getLoadingErrorText(error, BR))
+        val errorTextBuilder = HtmlBuilder()
+          .appendP(model.errorPrefix)
+          .appendP(getLoadingErrorText(error))
         val errorAction = model.errorAction
         if (errorAction != null) {
-          //language=HTML
-          errorText += BR + paragraph(a(ERROR_ACTION_HREF, errorAction.getName()))
+          errorTextBuilder.br()
+            .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
         }
-        pane.setBody(errorText)
+        pane.setBody(errorTextBuilder.toString())
       }
       else {
         pane.isVisible = false
@@ -90,37 +95,30 @@ object GHHtmlErrorPanel {
       pane.setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
 
-    //language=HTML
-    private fun paragraph(text: String): String = "<p align='$alignmentText'>${text}</p>"
+    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignmentText).child(chunk))
 
-    //language=HTML
-    private fun a(link: String, text: String): String = "<a href='$link'>$text</a>"
+    private fun HtmlBuilder.appendP(@Nls text: String): HtmlBuilder = appendP(HtmlChunk.text(text))
   }
 
-  private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
+  @Nls
+  private fun getLoadingErrorText(error: Throwable): String {
     if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
       val message = githubError.message!!.removePrefix("[").removeSuffix("]")
-      val builder = StringBuilder(message)
+      val builder = HtmlBuilder().append(message)
       if (message.startsWith("Could not resolve to a Repository", true)) {
-        builder.append(
-          " Either repository doesn't exist or you don't have access. The most probable cause is that OAuth App access restrictions are enabled in organization.")
+        @NlsSafe
+        val explanation = " Either repository doesn't exist or you don't have access. The most probable cause is that OAuth App access restrictions are enabled in organization."
+        builder.append(explanation)
       }
 
-      val errors = githubError.errors
-      if (!errors.isNullOrEmpty()) {
-        builder.append(": ").append(newLineSeparator)
-        for (e in errors) {
-
-          builder.append(e.message ?: GithubBundle.message("gql.error.in.field", e.code, e.resource, e.field.orEmpty()))
-            .append(newLineSeparator)
-        }
+      val errors = githubError.errors?.map { e ->
+        HtmlChunk.text(e.message ?: GithubBundle.message("gql.error.in.field", e.code, e.resource, e.field.orEmpty()))
       }
+      if (!errors.isNullOrEmpty()) builder.append(": ").append(HtmlChunk.br()).appendWithSeparators(HtmlChunk.br(), errors)
       return builder.toString()
     }
 
-    return error.message?.let { addDotIfNeeded(it) } ?: GithubBundle.message("unknown.loading.error")
+    return error.message ?: GithubBundle.message("unknown.loading.error")
   }
-
-  private fun addDotIfNeeded(line: String) = if (line.endsWith('.')) line else "$line."
 }
