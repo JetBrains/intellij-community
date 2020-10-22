@@ -8,10 +8,12 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.evaluation.AbsentInformationEvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 
@@ -108,6 +110,10 @@ fun LocalVariableProxyImpl.safeType(): Type? {
 
 fun Field.safeType(): Type? {
     return wrapClassNotLoadedException { type() }
+}
+
+fun ValueDescriptorImpl.safeCalcValue(context: EvaluationContextImpl): Value? {
+    return wrapEvaluateException { calcValue(context) }
 }
 
 private inline fun <T> wrapEvaluateException(block: () -> T): T? {

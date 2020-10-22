@@ -31,6 +31,11 @@ class ContinuationVariableValueDescriptorImpl(
         return continuation.getValue(field)
     }
 
+    fun updateValue(value: Value?) {
+        val field = continuation.referenceType()?.fieldByName(fieldName) ?: return
+        continuation.setValue(field, value)
+    }
+
     /**
      * @TODO implement
      */

@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
@@ -105,6 +108,12 @@ class VariableFinder(val context: ExecutionContext) {
                 val type = lazy(LazyThreadSafetyMode.PUBLICATION) { variable.safeType() }
                 val value = lazy(LazyThreadSafetyMode.PUBLICATION) { frameProxy.getValue(variable) }
                 return NamedEntity(variable.name(), type, value)
+            }
+
+            fun of(variable: JavaValue, context: EvaluationContextImpl): NamedEntity {
+                val type = lazy(LazyThreadSafetyMode.PUBLICATION) { variable.descriptor.type }
+                val value = lazy(LazyThreadSafetyMode.PUBLICATION) { variable.descriptor.safeCalcValue(context) }
+                return NamedEntity(variable.name, type, value)
             }
         }
     }
@@ -295,7 +304,8 @@ class VariableFinder(val context: ExecutionContext) {
             actualPredicate = namePredicate
         }
 
-        for (item in variables.namedEntitySequence()) {
+        val namedEntities = variables.namedEntitySequence() + getCoroutineStackFrameNamedEntities()
+        for (item in namedEntities) {
             if (!actualPredicate(item.name) || !kind.typeMatches(item.type)) {
                 continue
             }
@@ -313,6 +323,13 @@ class VariableFinder(val context: ExecutionContext) {
 
         return null
     }
+
+    private fun getCoroutineStackFrameNamedEntities() =
+         if (frameProxy is CoroutineStackFrameProxyImpl) {
+            frameProxy.spilledVariables.namedEntitySequence(context.evaluationContext)
+        } else {
+            emptySequence()
+        }
 
     private fun isInsideDefaultImpls(): Boolean {
         val declaringType = frameProxy.safeLocation()?.declaringType() ?: return false
@@ -462,6 +479,10 @@ class VariableFinder(val context: ExecutionContext) {
 
     private fun List<LocalVariableProxyImpl>.namedEntitySequence(): Sequence<NamedEntity> {
         return asSequence().map { NamedEntity.of(it, frameProxy) }
+    }
+
+    private fun List<JavaValue>.namedEntitySequence(context: EvaluationContextImpl): Sequence<NamedEntity> {
+        return asSequence().map { NamedEntity.of(it, context) }
     }
 
     private fun thisObject(): ObjectReference? {

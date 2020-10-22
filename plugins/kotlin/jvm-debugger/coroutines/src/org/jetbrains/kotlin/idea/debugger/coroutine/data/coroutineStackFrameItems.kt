@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
@@ -20,7 +21,7 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.LocationStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findPosition
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
@@ -37,7 +38,7 @@ class CreationCoroutineStackFrameItem(
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val locationFrame = LocationStackFrameProxyImpl(location, frame)
+            val locationFrame = CoroutineStackFrameProxyImpl(location, spilledVariables, frame)
             val position = location.findPosition(debugProcess.project)
             CreationCoroutineStackFrame(locationFrame, position, first)
         }
@@ -50,12 +51,12 @@ class CreationCoroutineStackFrameItem(
 class SuspendCoroutineStackFrameItem(
     val stackTraceElement: StackTraceElement,
     location: Location,
-    spilledVariables: List<XNamedValue> = emptyList()
+    spilledVariables: List<JavaValue> = emptyList()
 ) : CoroutineStackFrameItem(location, spilledVariables) {
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val locationFrame = LocationStackFrameProxyImpl(location, frame)
+            val locationFrame = CoroutineStackFrameProxyImpl(location, spilledVariables, frame)
             val position = location.findPosition(debugProcess.project)
             CoroutineStackFrame(locationFrame, position, spilledVariables, includeFrameVariables = false)
         }
@@ -66,13 +67,13 @@ class SuspendCoroutineStackFrameItem(
 /**
  * Restored from memory dump
  */
-class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<XNamedValue>) :
+class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<JavaValue>) :
     CoroutineStackFrameItem(location, spilledVariables) {
 
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val locationStackFrameProxyImpl = LocationStackFrameProxyImpl(location, frame)
+            val locationStackFrameProxyImpl = CoroutineStackFrameProxyImpl(location, spilledVariables, frame)
             val position = location.findPosition(debugProcess.project)
             CoroutineStackFrame(locationStackFrameProxyImpl, position, spilledVariables, false)
         }
@@ -93,7 +94,7 @@ class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<
  */
 open class RunningCoroutineStackFrameItem(
     val frame: StackFrameProxyImpl,
-    spilledVariables: List<XNamedValue> = emptyList()
+    spilledVariables: List<JavaValue> = emptyList()
 ) : CoroutineStackFrameItem(frame.location(), spilledVariables) {
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
@@ -103,14 +104,14 @@ open class RunningCoroutineStackFrameItem(
     }
 }
 
-sealed class CoroutineStackFrameItem(val location: Location, val spilledVariables: List<XNamedValue>) :
+sealed class CoroutineStackFrameItem(val location: Location, val spilledVariables: List<JavaValue>) :
     StackFrameItem(location, spilledVariables) {
     val log by logger
 
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val locationFrame = LocationStackFrameProxyImpl(location, frame)
+            val locationFrame = CoroutineStackFrameProxyImpl(location, spilledVariables, frame)
             val position = location.findPosition(debugProcess.project)
             CoroutineStackFrame(locationFrame, position)
         }
