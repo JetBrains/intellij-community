@@ -49,6 +49,8 @@ internal class ProjectPluginTracker(private val project: Project,
       private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
 
       private fun setToRemoveFrom(enable: Boolean) = if (enable) disabledPlugins else enabledPlugins
+
+      private fun Set<String>.findPluginById() = mapNotNull { PluginId.findId(it) }.mapNotNull { PluginManagerCore.getPlugin(it) }
     }
 
     internal class EnableDisablePluginsActivity : StartupActivity.RequiredForSmartMode {
@@ -82,5 +84,3 @@ internal class ProjectPluginTracker(private val project: Project,
 
   internal fun updatePluginEnabledState(enable: Boolean) = state.updatePluginEnabledState(project, enable)
 }
-
-private fun Set<String>.findPluginById() = mapNotNull { PluginId.findId(it) }.mapNotNull { PluginManagerCore.getPlugin(it) }
