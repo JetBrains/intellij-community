@@ -110,7 +110,27 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?
-  )
+  ) {
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || this.javaClass != other.javaClass) return false
+      val otherConnectorParams = other as ConnectorParams
+
+      // don't cache connections for not-yet-installed gradle versions
+      if (this.gradleHome == null || otherConnectorParams.gradleHome == null) return false
+
+      return this.projectPath == otherConnectorParams.projectPath &&
+             this.serviceDirectory == otherConnectorParams.serviceDirectory &&
+             this.distributionType == otherConnectorParams.distributionType &&
+             this.gradleHome == otherConnectorParams.gradleHome &&
+             this.javaHome == otherConnectorParams.javaHome &&
+             this.wrapperPropertyFile == otherConnectorParams.wrapperPropertyFile &&
+             this.verboseProcessing == otherConnectorParams.verboseProcessing &&
+             this.ttlMs == other.ttlMs
+    }
+    // default data class hashCode() implementation is fine: our equals() is strictly more
+    // stringent than the default equals()
+  }
 
   companion object {
     private val LOG = logger<GradleConnectorService>()
