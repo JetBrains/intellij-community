@@ -10,8 +10,6 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
 
   fun endExecution()
 
-  var editedCommit: EditedCommitDetails?
-
   var inclusionModel: InclusionModel?
 
   fun expand(item: Any)

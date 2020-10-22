@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAuthorTracker {
   val commitProgressUi: CommitProgressUi
 
+  var editedCommit: EditedCommitDetails?
+
   fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
 }
 

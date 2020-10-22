@@ -62,7 +62,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected fun getIncludedChanges() = ui.getIncludedChanges()
   protected fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
-  internal fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
+  open fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
 
   fun getCommitMessage(): String = ui.commitMessageUi.text
   fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)

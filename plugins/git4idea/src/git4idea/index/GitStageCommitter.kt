@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitter
+import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
@@ -20,7 +21,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
 
-internal class GitStageCommitState(val roots: Collection<VirtualFile>, val commitMessage: String)
+internal class GitStageCommitState(val roots: Set<VirtualFile>, val commitMessage: String)
 
 internal class GitStageCommitter(
   project: Project,
@@ -33,7 +34,9 @@ internal class GitStageCommitter(
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
 
   override fun commit() {
-    for (root in commitState.roots) {
+    val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
+
+    for (root in roots) {
       try {
         val toStageInRoot = toStage[root]
         if (toStageInRoot?.isNotEmpty() == true) {
