@@ -24,6 +24,7 @@ internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
+    CommitAuthorTracker by ui,
     CommitAuthorListener,
     ProjectManagerListener {
 
@@ -61,7 +62,8 @@ internal class ChangesViewCommitWorkflowHandler(
     workflow.addListener(this, this)
     workflow.addCommitListener(createCommitStateCleaner(), this)
 
-    ui.addCommitAuthorListener(this, this)
+    addCommitAuthorListener(this, this)
+
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
@@ -176,16 +178,14 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun changeListDataChanged() {
-    ui.commitAuthor = currentChangeList?.author
+    commitAuthor = currentChangeList?.author
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    val newAuthor = ui.commitAuthor
+    if (commitAuthor == changeList.author) return
 
-    if (newAuthor != changeList.author) {
-      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, changeList.authorDate))
-    }
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, changeList.authorDate))
   }
 
   override fun inclusionChanged() {
