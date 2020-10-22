@@ -2,7 +2,6 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -14,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class UpdatingScopeOnProjectStructureChangeListener implements ProjectComponent, ModuleListener {
-  public UpdatingScopeOnProjectStructureChangeListener(@NotNull Project project) {
+final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListener {
+  UpdatingScopeOnProjectStructureChangeListener(@NotNull Project project) {
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
   }
 

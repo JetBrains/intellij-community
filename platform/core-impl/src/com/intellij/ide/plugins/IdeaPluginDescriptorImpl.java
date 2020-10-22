@@ -192,6 +192,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @TestOnly
   public void readForTest(@NotNull Element element) {
+    id = PluginManagerCore.CORE_ID;
     doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this);
   }
 
