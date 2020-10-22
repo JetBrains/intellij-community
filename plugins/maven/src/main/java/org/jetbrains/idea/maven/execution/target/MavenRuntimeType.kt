@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -32,11 +33,11 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   override fun createConfigurable(project: Project,
                                   config: MavenRuntimeTargetConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
-    return MavenRuntimeTargetUI(config, target)
+    return UI_EP_NAME.computeSafeIfAny { it.createConfigurable(project, config, target) } ?: MavenRuntimeTargetUI(config, target)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): MavenRuntimeTargetConfiguration? {
-    return target.runtimes.findByType<MavenRuntimeTargetConfiguration>()
+    return target.runtimes.findByType()
   }
 
   override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector<MavenRuntimeTargetConfiguration>? {
@@ -87,5 +88,7 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
                                                        "")
+
+    private val UI_EP_NAME = ExtensionPointName.create<MavenRuntimeUIFactory>("org.jetbrains.idea.maven.targetRuntimeConfigurableFactory")
   }
 }

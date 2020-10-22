@@ -6,17 +6,18 @@ import com.intellij.execution.target.getRuntimeType
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import org.jetbrains.idea.maven.execution.RunnerBundle.message
 
 class MavenRuntimeTargetUI(private val config: MavenRuntimeTargetConfiguration, private val target: TargetEnvironmentConfiguration) :
   BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
 
   override fun createPanel(): DialogPanel {
     return panel {
-      row("Maven home path:") {
+      row(message("maven.target.configurable.home.path.label")) {
         textField(config::homePath)
-          .comment("The path to the Maven on the target")
+          .comment(message("maven.target.configurable.home.path.comment"))
       }
-      row("Maven version:") {
+      row(message("maven.target.configurable.version.label")) {
         textField(config::versionString)
       }
     }
