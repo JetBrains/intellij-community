@@ -120,9 +120,11 @@ fun main(args: Array<String>) {
     val credentials = DaemonClientCredentials.generate()
     daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
     try {
-      val token = when (val publicKey = launchOptions.tokenEncryptionOption?.publicKey) {
-        null -> credentials.token
-        else -> credentials.rsaEncrypt(publicKey)
+      val token = credentials.token.let {
+        when (val publicKey = launchOptions.tokenEncryptionOption?.publicKey) {
+          null -> it
+          else -> publicKey.rsaEncrypt(it)
+        }
       }
       val daemonHello = DaemonHello.newBuilder()
         .setPort(daemon.port)
