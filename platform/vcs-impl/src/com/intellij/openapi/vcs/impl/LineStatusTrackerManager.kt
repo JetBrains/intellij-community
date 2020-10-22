@@ -247,7 +247,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val isLoading = loader.hasRequestFor(document)
         if (isLoading) {
           log("checkIfTrackerCanBeReleased - isLoading", data.tracker.virtualFile)
-          return
+          if (data.tracker.hasPendingPartialState() ||
+              fileStatesAwaitingRefresh.containsKey(data.tracker.virtualFile)) {
+            log("checkIfTrackerCanBeReleased - has pending state", data.tracker.virtualFile)
+            return
+          }
         }
       }
 
