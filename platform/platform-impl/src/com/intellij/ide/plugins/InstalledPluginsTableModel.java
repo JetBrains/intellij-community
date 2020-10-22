@@ -26,9 +26,11 @@ public class InstalledPluginsTableModel {
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
   private final @Nullable Project myProject;
+  private final @Nullable ProjectPluginTracker myPluginTracker;
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
+    myPluginTracker = ProjectPluginTrackerManager.createPluginTrackerOrNull(myProject);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -53,7 +55,7 @@ public class InstalledPluginsTableModel {
   }
 
   protected final @Nullable ProjectPluginTracker getPluginTracker() {
-    return ProjectPluginTrackerManager.createPluginTrackerOrNull(myProject);
+    return myPluginTracker;
   }
 
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
@@ -80,11 +82,10 @@ public class InstalledPluginsTableModel {
 
   protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    ProjectPluginTracker pluginTracker = getPluginTracker();
 
-    PluginEnabledState enabled = (pluginTracker != null && pluginTracker.isEnabled(pluginId)) ?
+    PluginEnabledState enabled = (myPluginTracker != null && myPluginTracker.isEnabled(pluginId)) ?
                                  PluginEnabledState.ENABLED_FOR_PROJECT :
-                                 pluginTracker != null && pluginTracker.isDisabled(pluginId) ?
+                                 myPluginTracker != null && myPluginTracker.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED_FOR_PROJECT :
                                  ideaPluginDescriptor.isEnabled() ?
                                  PluginEnabledState.ENABLED :
