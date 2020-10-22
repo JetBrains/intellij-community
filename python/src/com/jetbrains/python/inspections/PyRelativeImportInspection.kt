@@ -19,8 +19,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFromImportStatement
+import com.jetbrains.python.psi.PyUtil
 
 class PyRelativeImportInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
