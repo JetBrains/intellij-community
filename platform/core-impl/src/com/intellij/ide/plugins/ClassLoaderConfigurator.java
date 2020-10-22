@@ -119,7 +119,7 @@ final class ClassLoaderConfigurator {
           getLogger().error(PluginLoadingError.formatErrorMessage(mainDependent,
                                                                   "requires missing class loader for '" + dependencyDescriptor.getName() + "'"));
         }
-        else if (loader != coreLoader || !usePluginClassLoader) {
+        else if (loader != coreLoader) {
           loaders.add(loader);
         }
       }
@@ -195,15 +195,15 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  private static void addLoaderOrLogError(@NotNull IdeaPluginDescriptorImpl dependent,
-                                          @NotNull IdeaPluginDescriptorImpl dependency,
-                                          @NotNull Collection<ClassLoader> loaders) {
+  private void addLoaderOrLogError(@NotNull IdeaPluginDescriptorImpl dependent,
+                                   @NotNull IdeaPluginDescriptorImpl dependency,
+                                   @NotNull Collection<ClassLoader> loaders) {
     ClassLoader loader = dependency.getClassLoader();
     if (loader == null) {
       getLogger().error(PluginLoadingError.formatErrorMessage(dependent,
                                                               "requires missing class loader for '" + dependency.getName() + "'"));
     }
-    else {
+    else if (loader != coreLoader) {
       loaders.add(loader);
     }
   }
