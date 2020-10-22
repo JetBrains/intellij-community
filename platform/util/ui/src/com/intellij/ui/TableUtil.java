@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
@@ -13,6 +14,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -215,6 +219,14 @@ public final class TableUtil {
     setupCheckboxColumn(cModel.getColumn(columnIndex), cModel.getColumnMargin());
   }
 
+  public static boolean setupCheckboxShortcut(@NotNull JTable table, int columnIndex) {
+    if (columnIndex >=0 && columnIndex < table.getColumnCount()) {
+      return SpaceKeyListener.install(table, columnIndex);
+    }
+    return false;
+  }
+
+
   /**
    * @deprecated doesn't take into account column margin.
    * Use {@link #setupCheckboxColumn(JTable, int)} instead.
@@ -238,6 +250,38 @@ public final class TableUtil {
     if (scrollPane != null) {
       scrollPane.revalidate();
       scrollPane.repaint();
+    }
+  }
+
+  private static class SpaceKeyListener extends KeyAdapter {
+    private final JTable myTable;
+    private final int myColumnIndex;
+
+    static boolean install(@NotNull JTable table, int columnIndex) {
+      for (KeyListener listener : table.getKeyListeners()) {
+        if (listener instanceof SpaceKeyListener) return false;
+      }
+      table.addKeyListener(new SpaceKeyListener(table, columnIndex));
+      return true;
+    }
+
+    private SpaceKeyListener(@NotNull JTable table, int columnIndex) {
+      myTable = table;
+      myColumnIndex = columnIndex;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      int row = myTable.getSelectedRow();
+      if (row == -1 || e.getKeyCode() != KeyEvent.VK_SPACE || myTable.isEditing()) return;
+      if (myTable.editCellAt(row, myColumnIndex)) {
+        TableCellEditor editor = myTable.getCellEditor();
+        if (editor instanceof DefaultCellEditor) {
+          ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+        }
+        stopEditing(myTable);
+        e.consume();
+      }
     }
   }
 }
