@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -517,7 +516,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
           LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
           TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
-          if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
+          if (configurable.openForEditing()) {
             TargetEnvironmentConfiguration lastEdited = configurable.getSelectedTargetConfig();
             resetRunOnComboBox(lastEdited != null ? lastEdited.getDisplayName() : selectedName);
           }

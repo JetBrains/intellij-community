@@ -4,11 +4,12 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.options.MasterDetails
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DetailsComponent
 import javax.swing.JComponent
 
-class TargetEnvironmentsConfigurable(project: Project,
+class TargetEnvironmentsConfigurable(private val project: Project,
                                      initialSelectedName: String? = null,
                                      defaultLanguageRuntime: LanguageRuntimeType<*>? = null)
   : SearchableConfigurable, MasterDetails {
@@ -49,5 +50,14 @@ class TargetEnvironmentsConfigurable(project: Project,
     super.disposeUIResources()
   }
 
+  fun openForEditing(): Boolean {
+    return ShowSettingsUtil.getInstance().editConfigurable(project, DIMENSION_KEY, this, true)
+  }
+
   val selectedTargetConfig: TargetEnvironmentConfiguration? get() = editor.selectedConfig
+
+  companion object {
+    @JvmStatic
+    private val DIMENSION_KEY = TargetEnvironmentsConfigurable::class.simpleName + ".size"
+  }
 }
