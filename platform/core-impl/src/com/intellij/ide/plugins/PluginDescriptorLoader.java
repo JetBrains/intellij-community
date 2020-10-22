@@ -482,13 +482,15 @@ public final class PluginDescriptorLoader {
   }
 
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (descriptor.isEnabled()) {
-      return descriptor;
-    }
-
-    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
-    return PluginManager
-      .loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
+    return isFull(descriptor) ?
+           descriptor :
+           PluginManager.loadDescriptor(
+             descriptor.getPluginPath(),
+             PluginManagerCore.PLUGIN_XML,
+             Collections.emptySet(),
+             descriptor.isBundled(),
+             createPathResolverForPlugin(descriptor, null)
+           );
   }
 
   static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
@@ -518,7 +520,13 @@ public final class PluginDescriptorLoader {
     return fullDescriptor;
   }
 
-  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+  private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    return PluginManagerCore.getLoadedPlugins().contains(descriptor) ||
+           !Arrays.asList(PluginManagerCore.getPlugins()).contains(descriptor);
+  }
+
+  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir,
+                                                                                                  @NotNull DescriptorLoadingContext context) {
     List<Path> pluginJarFiles = new ArrayList<>();
     List<Path> dirs = new ArrayList<>();
     if (!collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) {
