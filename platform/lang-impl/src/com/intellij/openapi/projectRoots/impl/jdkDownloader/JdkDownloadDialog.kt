@@ -26,14 +26,14 @@ import java.util.function.Function
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
-private class JdkDownloaderModel(
+class JdkDownloaderModel(
   val versionGroups: List<JdkVersionItem>,
   val defaultItem: JdkItem,
   val defaultVersion: JdkVersionItem,
   val defaultVersionVendor: JdkVersionVendorItem
 )
 
-private class JdkVersionItem(
+class JdkVersionItem(
   @NlsSafe
   val jdkVersion: String,
   /* we should prefer the default selected item from the JDKs.json feed,
@@ -59,10 +59,10 @@ private class JdkVersionItem(
   }
 }
 
-private sealed class JdkVersionVendorElement
-private object JdkVersionVendorGroupSeparator : JdkVersionVendorElement()
+sealed class JdkVersionVendorElement
+object JdkVersionVendorGroupSeparator : JdkVersionVendorElement()
 
-private class JdkVersionVendorItem(
+class JdkVersionVendorItem(
   val item: JdkItem
 ) : JdkVersionVendorElement() {
   var parent: JdkVersionItem? = null
@@ -132,7 +132,7 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
 
 private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
-private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
+fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
@@ -183,7 +183,8 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
                     ?: allItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                     ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
-  val defaultJdkVersionItem = versionItems.first { it.jdkVersion == defaultItem.jdkVersion }
+  val defaultJdkVersionItem = versionItems.firstOrNull { group -> group.includedItems.any { it.item == defaultItem } }
+                              ?: error("Default item is not found in the list")
 
   val defaultVersionVendor = defaultJdkVersionItem.includedItems.find { it.item == defaultItem }
                              ?: defaultJdkVersionItem.includedItems.first()
