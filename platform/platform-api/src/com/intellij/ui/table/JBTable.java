@@ -17,6 +17,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -43,6 +44,7 @@ import java.util.Comparator;
 import java.util.EventObject;
 import java.util.function.Predicate;
 
+import static com.intellij.ui.TableUtil.stopEditing;
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
@@ -1426,6 +1428,50 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         ((AbstractTableModel)getModel()).fireTableCellUpdated(rollOverCell.row, rollOverCell.column);
       }
       rollOverCell = null;
+    }
+  }
+  public static boolean setupCheckboxShortcut(@NotNull JTable table, int columnIndex) {
+    if (columnIndex >=0 && columnIndex < table.getColumnCount()) {
+      return SpaceKeyListener.install(table, columnIndex);
+    }
+    return false;
+  }
+
+  private static class SpaceKeyListener extends KeyAdapter {
+    private final JTable myTable;
+    private final int myColumnIndex;
+
+    static boolean install(@NotNull JTable table, int columnIndex) {
+      for (KeyListener listener : table.getKeyListeners()) {
+        if (listener instanceof SpaceKeyListener) return false;
+      }
+      table.addKeyListener(new SpaceKeyListener(table, columnIndex));
+      return true;
+    }
+
+    private SpaceKeyListener(@NotNull JTable table, int columnIndex) {
+      myTable = table;
+      myColumnIndex = columnIndex;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      int[] rows = myTable.getSelectedRows();
+      if (rows.length == 0 || e.getKeyCode() != KeyEvent.VK_SPACE || myTable.isEditing() || e.getModifiersEx() != 0) return;
+
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTable);
+      if (supply != null && supply.isPopupActive()) return;
+
+      for (int row : rows) {
+        if (myTable.editCellAt(row, myColumnIndex)) {
+          TableCellEditor editor = myTable.getCellEditor();
+          if (editor instanceof DefaultCellEditor) {
+            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          }
+          stopEditing(myTable);
+          e.consume();
+        }
+      }
     }
   }
 }
