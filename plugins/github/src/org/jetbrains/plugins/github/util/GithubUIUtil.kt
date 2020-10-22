@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
@@ -53,6 +54,7 @@ object GithubUIUtil {
       GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
     }
 
+  @NlsSafe
   fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): String =
     if (isDraft) GithubBundle.message("pull.request.state.draft")
     else when (state) {
@@ -67,6 +69,7 @@ object GithubUIUtil {
       GithubIssueState.closed -> GithubIcons.IssueClosed
     }
 
+  @NlsSafe
   fun getIssueStateText(state: GithubIssueState): String =
     when (state) {
       GithubIssueState.open -> GithubBundle.message("issue.state.open")

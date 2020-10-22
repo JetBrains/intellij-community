@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.UI
@@ -71,10 +74,15 @@ internal object GHPRTitleComponent {
     return layout(icon, title)
   }
 
-  private fun getTitleBody(title: String, number: String): String {
+  @NlsSafe
+  private fun getTitleBody(@NlsSafe title: String, @NlsSafe number: String): String {
     val contextHelpColorText = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())
     //language=html
-    return title + "&nbsp<span style='color: $contextHelpColorText'>#${number}</span>"
+    return HtmlBuilder()
+      .append(title)
+      .nbsp()
+      .append(HtmlChunk.span("color: $contextHelpColorText").addText("#${number}"))
+      .toString()
   }
 
   private fun layout(icon: JLabel, title: HtmlEditorPane, editButton: JComponent? = null): NonOpaquePanel {

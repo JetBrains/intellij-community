@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -109,7 +110,8 @@ object GHPRReviewCommentComponent {
 
       val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
       //language=HTML
-      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
+      @NlsSafe
+      val authorName = """<a $href>${model.authorUsername ?: GithubBundle.message("user.someone")}</a>"""
 
       when (model.state) {
         GHPullRequestReviewCommentState.PENDING -> {

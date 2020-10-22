@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 
-import java.awt.*;
-
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
@@ -175,20 +173,6 @@ public final class GithubNotifications {
                                                  NotificationListener.URL_OPENING_LISTENER);
   }
 
-  public static void showInfoDialog(@Nullable Project project,
-                                    @NotificationTitle @NotNull String title,
-                                    @NotificationContent @NotNull String message) {
-    LOG.info(title + "; " + message);
-    Messages.showInfoMessage(project, message, title);
-  }
-
-  public static void showInfoDialog(@NotNull Component component,
-                                    @NotificationTitle @NotNull String title,
-                                    @NotificationContent @NotNull String message) {
-    LOG.info(title + "; " + message);
-    Messages.showInfoMessage(component, message, title);
-  }
-
   public static void showWarningDialog(@Nullable Project project,
                                        @NotificationTitle @NotNull String title,
                                        @NotificationContent @NotNull String message) {
@@ -196,43 +180,11 @@ public final class GithubNotifications {
     Messages.showWarningDialog(project, message, title);
   }
 
-  public static void showWarningDialog(@NotNull Component component,
-                                       @NotificationTitle @NotNull String title,
-                                       @NotificationContent @NotNull String message) {
-    LOG.info(title + "; " + message);
-    Messages.showWarningDialog(component, message, title);
-  }
-
   public static void showErrorDialog(@Nullable Project project,
                                      @NotificationTitle @NotNull String title,
                                      @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showErrorDialog(project, message, title);
-  }
-
-  public static void showErrorDialog(@Nullable Project project,
-                                     @NotificationTitle @NotNull String title,
-                                     @NotNull Throwable e) {
-    LOG.warn(title, e);
-    if (isOperationCanceled(e)) return;
-    Messages.showErrorDialog(project, getErrorTextFromException(e), title);
-  }
-
-  public static void showErrorDialog(@NotNull Component component,
-                                     @NotificationTitle @NotNull String title,
-                                     @NotNull Throwable e) {
-    LOG.info(title, e);
-    if (isOperationCanceled(e)) return;
-    Messages.showErrorDialog(component, getErrorTextFromException(e), title);
-  }
-
-  public static void showErrorDialog(@NotNull Component component,
-                                     @NotificationTitle @NotNull String title,
-                                     @NotNull String prefix,
-                                     @NotNull Exception e) {
-    LOG.info(title, e);
-    if (isOperationCanceled(e)) return;
-    Messages.showErrorDialog(component, prefix + getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult
