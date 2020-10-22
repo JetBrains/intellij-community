@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
@@ -493,6 +494,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @NotNull
     static GlobalSearchScope create(GlobalSearchScope @NotNull [] scopes) {
+      if (scopes.length == 2) {
+        GlobalSearchScope unionScope = tryCreateUnionFor2Scopes(scopes);
+        if (unionScope != null) return unionScope;
+      }
       Set<GlobalSearchScope> result = new THashSet<>(scopes.length);
       Project project = null;
       for (GlobalSearchScope scope : scopes) {
@@ -509,6 +514,38 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       if (result.isEmpty()) return EMPTY_SCOPE;
       if (result.size() == 1) return result.iterator().next();
       return new UnionScope(project, result.toArray(EMPTY_ARRAY));
+    }
+
+    @Nullable
+    private static GlobalSearchScope tryCreateUnionFor2Scopes(GlobalSearchScope @NotNull [] scopes) {
+      assert scopes.length == 2;
+      GlobalSearchScope scope0 = scopes[0];
+      GlobalSearchScope scope1 = scopes[1];
+      if (scope0 == EMPTY_SCOPE) return scope1;
+      if (scope1 == EMPTY_SCOPE) return scope0;
+      if (scope0 instanceof UnionScope && scope1 instanceof UnionScope) return null;
+      Project project = ObjectUtils.chooseNotNull(scope0.getProject(), scope1.getProject());
+
+      if (scope0 instanceof UnionScope) {
+        return unionWithUnionScope(scope0, scope1, project);
+      }
+
+      if (scope1 instanceof UnionScope) {
+        return unionWithUnionScope(scope1, scope0, project);
+      }
+
+      return new UnionScope(project, scopes);
+    }
+
+    @NotNull
+    private static GlobalSearchScope unionWithUnionScope(GlobalSearchScope scope0, GlobalSearchScope scope1, Project project) {
+      GlobalSearchScope[] scopes0 = ((UnionScope)scope0).myScopes;
+      if (ArrayUtil.contains(scope1, scopes0)) {
+        return scope0;
+      }
+      else {
+        return new UnionScope(project, ArrayUtil.append(scopes0, scope1));
+      }
     }
 
     private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
