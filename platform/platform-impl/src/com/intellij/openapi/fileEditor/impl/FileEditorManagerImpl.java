@@ -660,14 +660,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+
+    FileEditor selectedEditor = getSelectedEditor();
+    EditorsSplitters splitters;
+    if (FileEditorManager.USE_MAIN_WINDOW.isIn(selectedEditor)) {
+      boolean useCurrentWindow = selectedEditor != null && !FileEditorManager.USE_MAIN_WINDOW.get(selectedEditor, false);
+      splitters = useCurrentWindow ? getSplitters() : getMainSplitters();
+    }
     else {
-      wndToOpenIn = getSplitters().getCurrentWindow();
+      splitters = getSplitters();
     }
 
-    EditorsSplitters splitters = getSplitters();
-
     if (wndToOpenIn == null) {
-      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+      EditorWindow currentWindow = splitters.getCurrentWindow();
+      wndToOpenIn = currentWindow != null ? currentWindow : splitters.getOrCreateCurrentWindow(file);
     }
 
     openAssociatedFile(file, wndToOpenIn, splitters);
