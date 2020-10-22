@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -16,6 +15,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -46,6 +46,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
       return;
     }
 
+    LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
@@ -82,20 +83,20 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
           .createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
                               LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
                               NotificationType.ERROR,
-                              ApplicationManager.getApplication().isUnitTestMode() ? null
-                                                                                   : (not, e) -> {
-                                                                                     if (e.getEventType() ==
-                                                                                         HyperlinkEvent.EventType.ACTIVATED) {
-                                                                                       enableAnnotations(project);
-                                                                                       not.expire();
-                                                                                     }
-                                                                                   });
+                              (not, e) -> {
+                                if (e.getEventType() ==
+                                    HyperlinkEvent.EventType.ACTIVATED) {
+                                  enableAnnotations(project);
+                                  not.expire();
+                                }
+                              });
       }
       return null;
-    }).expireWith(LombokProcessorProvider.getInstance(project))
+    }).expireWith(lombokProcessorProvider)
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
         if (notification != null) {
           Notifications.Bus.notify(notification, project);
+          Disposer.register(lombokProcessorProvider, () -> notification.expire());
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
