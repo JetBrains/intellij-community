@@ -4,6 +4,7 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.util.ExecUtil
@@ -46,10 +47,14 @@ object ProcessMediatorDaemonLauncher {
           initialize(1024)
         }.genKeyPair()
 
+        val daemonLaunchOptions = DaemonLaunchOptions(
+          helloOption = helloIpc.getHelloOption(),
+          tokenEncryptionOption = DaemonLaunchOptions.TokenEncryptionOption(keyPair.public)
+        )
+
         val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
           .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-          .withParameters("--token-encrypt-rsa", Base64.getEncoder().encodeToString(keyPair.public.encoded))
-          .let(helloIpc::patchDaemonCommandLine)
+          .withParameters(daemonLaunchOptions.asCmdlineArgs())
           .let {
             if (!sudo) it else ExecUtil.sudoCommand(it, "Elevation daemon")
           }

@@ -6,6 +6,7 @@ import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -17,7 +18,7 @@ import java.io.Reader
 import java.nio.file.Path
 
 internal interface DaemonHelloIpc : Closeable {
-  fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine): GeneralCommandLine
+  fun getHelloOption(): DaemonLaunchOptions.HelloOption
   fun createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler
 
   /**
@@ -69,15 +70,11 @@ internal abstract class AbstractDaemonHelloIpc<R : DaemonHelloReader>(protected 
 internal class DaemonHelloSocketIpc(
   port: Int = 0
 ) : AbstractDaemonHelloIpc<DaemonHelloSocketReader>(DaemonHelloSocketReader(port)) {
-  override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
-    addParameters("--hello-port", helloReader.port.toString())
-  }
+  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Port(helloReader.port)
 }
 
 internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutReader>(DaemonHelloStdoutReader()) {
-  override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
-    addParameters("--hello-file", "-")
-  }
+  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.Stdout
 
   override fun createProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
     return object : OSProcessHandler.Silent(daemonCommandLine) {
@@ -93,9 +90,7 @@ internal class DaemonHelloStdoutIpc : AbstractDaemonHelloIpc<DaemonHelloStdoutRe
 internal open class DaemonHelloFileIpc(
   helloReader: DaemonHelloFileReader
 ) : AbstractDaemonHelloIpc<DaemonHelloFileReader>(helloReader) {
-  override fun patchDaemonCommandLine(daemonCommandLine: GeneralCommandLine) = daemonCommandLine.apply {
-    addParameters("--hello-file", helloReader.path.toAbsolutePath().toString())
-  }
+  override fun getHelloOption() = DaemonLaunchOptions.HelloOption.File(helloReader.path.toAbsolutePath())
 }
 
 internal class DaemonHelloUnixFifoIpc(

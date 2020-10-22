@@ -6,9 +6,7 @@ import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.rpc.DaemonHello
 import io.grpc.Server
 import io.grpc.ServerBuilder
-import java.io.File
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 
 open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
@@ -49,14 +47,6 @@ open class ProcessMediatorServerDaemon(builder: ServerBuilder<*>,
   }
 }
 
-private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder {
-  return ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
-                        *ProcessMediatorDaemonRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
-                        "-cp", System.getProperty("java.class.path"),
-                        ProcessMediatorDaemonRuntimeClasspath.getMainClass().name,
-                        *args)
-}
-
 private fun openHelloWriter(helloOption: DaemonLaunchOptions.HelloOption?): DaemonHelloWriter? =
   when (helloOption) {
     null -> null
@@ -70,40 +60,8 @@ private fun DaemonHelloWriter?.writeHello(daemonHello: DaemonHello) {
 }
 
 
-private fun trampoline(launchOptions: DaemonLaunchOptions) {
-  openHelloWriter(launchOptions.helloOption).use { helloWriter ->
-    val daemonOptions = launchOptions.copy(trampoline = false,
-                                           helloOption = DaemonLaunchOptions.HelloOption.Stdout)
-    val daemonProcess = createDaemonProcessCommandLine(*daemonOptions.asCmdlineArgs().toTypedArray())
-      .redirectInput(ProcessBuilder.Redirect.DISCARD)
-      .redirectOutput(ProcessBuilder.Redirect.PIPE)
-      .redirectError(ProcessBuilder.Redirect.INHERIT)
-      .start()
-
-    try {
-      val daemonHello = daemonProcess.inputStream.use(DaemonHello::parseDelimitedFrom)
-                        ?: throw IOException("Unable to read daemon hello")
-
-      helloWriter.writeHello(daemonHello)
-    }
-    catch (e: Throwable) {
-      if (e is IOException) System.err.println("Unable to relay daemon hello: ${e.message}")
-      daemonProcess.run {
-        destroy()
-        kotlin.runCatching { waitFor(10, TimeUnit.SECONDS) }
-        destroyForcibly()
-      }
-      throw e
-    }
-  }
-}
-
 fun main(args: Array<String>) {
   val launchOptions = DaemonLaunchOptions.parseFromArgsOrDie("ProcessMediatorDaemonMain", args)
-
-  if (launchOptions.trampoline) {
-    return trampoline(launchOptions)
-  }
 
   val daemon: ProcessMediatorServerDaemon
 
@@ -111,7 +69,7 @@ fun main(args: Array<String>) {
     val credentials = DaemonClientCredentials.generate()
     daemon = ProcessMediatorServerDaemon(ServerBuilder.forPort(0), credentials)
     try {
-      val token = when (val publicKey = launchOptions.publicKeyOption?.publicKey) {
+      val token = when (val publicKey = launchOptions.tokenEncryptionOption?.publicKey) {
         null -> credentials.token
         else -> credentials.rsaEncrypt(publicKey)
       }

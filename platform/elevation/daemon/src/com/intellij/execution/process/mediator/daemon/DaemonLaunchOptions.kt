@@ -12,9 +12,8 @@ import java.util.*
 import kotlin.system.exitProcess
 
 data class DaemonLaunchOptions(
-  val trampoline: Boolean = false,
   val helloOption: HelloOption? = null,
-  val publicKeyOption: PublicKeyOption? = null,
+  val tokenEncryptionOption: TokenEncryptionOption? = null,
 ) {
   interface CmdlineOption {
     override fun toString(): String
@@ -34,10 +33,10 @@ data class DaemonLaunchOptions(
     }
   }
 
-  class PublicKeyOption(val publicKey: PublicKey) {
+  class TokenEncryptionOption(val publicKey: PublicKey) {
     constructor(s: String) : this(rsaPublicKeyFromBytes(Base64.getDecoder().decode(s)))
 
-    override fun toString(): String = Base64.getEncoder().encodeToString(publicKey.encoded)
+    override fun toString(): String = "--token-encrypt-rsa=${Base64.getEncoder().encodeToString(publicKey.encoded)}"
 
     companion object {
       private fun rsaPublicKeyFromBytes(bytes: ByteArray) =
@@ -48,7 +47,7 @@ data class DaemonLaunchOptions(
   fun asCmdlineArgs(): List<String> {
     return listOf(
       helloOption,
-      publicKeyOption,
+      tokenEncryptionOption,
     ).mapNotNull { it?.toString() }
   }
 
@@ -74,7 +73,7 @@ data class DaemonLaunchOptions(
 
     private fun parseFromArgs(args: Array<String>): DaemonLaunchOptions {
       var helloOption: HelloOption? = null
-      var publicKeyOption: PublicKeyOption? = null
+      var tokenEncryptionOption: TokenEncryptionOption? = null
 
       for ((option, value) in parseArgs(args)) {
         requireNotNull(value) { "Missing '$option' value" }
@@ -98,7 +97,7 @@ data class DaemonLaunchOptions(
           }
 
           "--token-encrypt-rsa" -> {
-            publicKeyOption = PublicKeyOption(value)
+            tokenEncryptionOption = TokenEncryptionOption(value)
           }
 
           null -> throw IllegalArgumentException("Unrecognized positional argument '$value'")
@@ -108,7 +107,7 @@ data class DaemonLaunchOptions(
 
       return DaemonLaunchOptions(
         helloOption = helloOption,
-        publicKeyOption = publicKeyOption,
+        tokenEncryptionOption = tokenEncryptionOption,
       )
     }
   }

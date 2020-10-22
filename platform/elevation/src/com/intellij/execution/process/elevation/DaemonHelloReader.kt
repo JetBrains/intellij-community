@@ -30,7 +30,9 @@ internal class DaemonHelloSocketReader(port: Int = 0) : AbstractDaemonHelloStrea
   private val cleanup = MultiCloseable()
 
   private val serverSocket = ServerSocket(port).also(cleanup::registerCloseable)
-  val port = serverSocket.localPort
+
+  @Suppress("EXPERIMENTAL_API_USAGE")
+  val port = serverSocket.localPort.toUShort()
 
   override val inputStream: InputStream by lazy { serverSocket.accept().getInputStream().also(cleanup::registerCloseable) }
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
