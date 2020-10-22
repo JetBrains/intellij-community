@@ -113,6 +113,30 @@ public class CellRendererPanel extends JPanel {
     return super.getPreferredSize();
   }
 
+  /**
+   * Calculate preferred size via layout manager every time.
+   *
+   * <p>
+   *   When running {@link Container#validateTree()} the flag {@link Component#valid}
+   * can change its value to {@code true}. But {@link CellRendererPanel#invalidate()} has empty body and never rewrites the flag value.
+   * Therefore {@link Component#preferredSize()} uses a cached value for preferred size and never changes it after.
+   * </p>
+   *
+   * <p>
+   *   To avoid that CellRendererPanel overrides default implementation to calculate preferred size via layout manager every time.
+   * </p>
+   *
+   * @deprecated do not this method directly, use {@link #getPreferredSize()} instead
+   */
+  @Deprecated
+  @Override
+  public final Dimension preferredSize() {
+    LayoutManager layoutMgr = getLayout();
+    return (layoutMgr != null) ?
+           layoutMgr.preferredLayoutSize(this) :
+           super.preferredSize();
+  }
+
   @Override
   public void reshape(int x, int y, int w, int h) {
     reshapeImpl(this, x, y, w, h);
