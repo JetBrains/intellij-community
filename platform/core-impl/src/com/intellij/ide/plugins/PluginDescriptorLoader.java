@@ -331,12 +331,19 @@ public final class PluginDescriptorLoader {
       return;
     }
 
-    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator + ","); t.hasMoreTokens(); ) {
+    String useCoreClassLoaderValue = System.getProperty("idea.use.core.classloader.for");
+    List<?> useCoreClassLoaderList =
+      useCoreClassLoaderValue == null ? Collections.emptyList() : Arrays.asList(useCoreClassLoaderValue.split(","));
+
+    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparatorChar + ","); t.hasMoreTokens(); ) {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
       if (descriptor != null) {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
         result.add(descriptor,  /* overrideUseIfCompatible = */ true);
+        if (descriptor.getPluginId() != null && useCoreClassLoaderList.contains(descriptor.getPluginId().getIdString())) {
+          descriptor.setUseCoreClassLoader();
+        }
       }
     }
   }
