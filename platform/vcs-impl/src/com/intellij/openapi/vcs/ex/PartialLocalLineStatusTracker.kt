@@ -472,6 +472,13 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
+  internal fun hasPendingPartialState(): Boolean {
+    return documentTracker.readLock {
+      initialExcludeState.isNotEmpty() ||
+      initialChangeListId != null && !affectedChangeListsIds.contains(initialChangeListId)
+    }
+  }
+
   override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
       affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
