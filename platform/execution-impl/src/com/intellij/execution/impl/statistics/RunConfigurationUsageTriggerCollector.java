@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -34,7 +35,8 @@ public final class RunConfigurationUsageTriggerCollector {
     final ConfigurationType configurationType = factory.getType();
     return new IdeActivity(project, GROUP).startedWithData(data -> {
       List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
-      eventPairs.add(EXECUTOR.with(executor.getId()));
+      ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
+      eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
       if (runConfiguration instanceof FusAwareRunConfiguration) {
         List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
         ObjectEventData objectEventData = new ObjectEventData(additionalData);
