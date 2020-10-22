@@ -1,5 +1,3 @@
-import java.util.ArrayList
-
 class TestMutableCollection {
     val list: MutableList<String> = ArrayList()
     fun test() {

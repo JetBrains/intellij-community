@@ -1,6 +1,6 @@
-import java.util.*
-import java.util.ArrayList
-import java.util.HashSet
+import foo.*
+import foo.ArrayList
+import foo.HashSet
 
 class Action {
     fun test(hash: HashSet<Int>) {

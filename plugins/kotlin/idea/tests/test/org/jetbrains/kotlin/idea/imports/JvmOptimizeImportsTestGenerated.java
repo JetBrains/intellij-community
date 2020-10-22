@@ -58,9 +58,19 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
             runTest("testData/editor/optimizeImports/jvm/DoNotTouchIfNoChanges.kt");
         }
 
+        @TestMetadata("DoNotTouchIfNoChanges2.kt")
+        public void testDoNotTouchIfNoChanges2() throws Exception {
+            runTest("testData/editor/optimizeImports/jvm/DoNotTouchIfNoChanges2.kt");
+        }
+
         @TestMetadata("DuplicatedImports.kt")
         public void testDuplicatedImports() throws Exception {
             runTest("testData/editor/optimizeImports/jvm/DuplicatedImports.kt");
+        }
+
+        @TestMetadata("DuplicatedImports2.kt")
+        public void testDuplicatedImports2() throws Exception {
+            runTest("testData/editor/optimizeImports/jvm/DuplicatedImports2.kt");
         }
 
         @TestMetadata("ExplicitImportOfDefault.kt")
@@ -81,6 +91,11 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
         @TestMetadata("JavaStaticField.kt")
         public void testJavaStaticField() throws Exception {
             runTest("testData/editor/optimizeImports/jvm/JavaStaticField.kt");
+        }
+
+        @TestMetadata("JavaUtil.kt")
+        public void testJavaUtil() throws Exception {
+            runTest("testData/editor/optimizeImports/jvm/JavaUtil.kt");
         }
 
         @TestMetadata("KDocReference.kt")
@@ -208,6 +223,11 @@ public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsT
             @TestMetadata("ClassNameConflictWithCurrentPackage2.kt")
             public void testClassNameConflictWithCurrentPackage2() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithCurrentPackage2.kt");
+            }
+
+            @TestMetadata("ClassNameConflictWithCurrentPackage3.kt")
+            public void testClassNameConflictWithCurrentPackage3() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithCurrentPackage3.kt");
             }
 
             @TestMetadata("ClassNameConflictWithDefault.kt")

@@ -1,8 +1,8 @@
 // NAME_COUNT_TO_USE_STAR_IMPORT: 1
 package ppp
 
-import java.util.*
-import java.util.ArrayList
+import foo.*
+import foo.ArrayList
 
 class ArrayList
 

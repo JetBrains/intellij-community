@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -37,7 +38,8 @@ import org.jetbrains.kotlin.resolve.scopes.utils.replaceImportingScopes
 class OptimizedImportsBuilder(
     private val file: KtFile,
     private val data: InputData,
-    private val options: Options
+    private val options: Options,
+    private val apiVersion: ApiVersion,
 ) {
     companion object {
         @get:TestOnly
@@ -117,6 +119,11 @@ class OptimizedImportsBuilder(
         }
     }
 
+    private val DeclarationDescriptor.importDescriptorWithMapping: FqName?
+        get() = importableFqName?.let { fqName ->
+            ImportMapper.findActualKotlinFqName(fqName, apiVersion) ?: fqName
+        }
+
     private fun tryBuildOptimizedImports(): List<ImportPath>? {
         val importsToGenerate = hashSetOf<ImportPath>()
         importRules.filterIsInstance<ImportRule.Add>().mapTo(importsToGenerate) { it.importPath }
@@ -127,11 +134,12 @@ class OptimizedImportsBuilder(
             for (name in data.namesToImport.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
-                val explicitImportPath = ImportPath(fqName, false, alias)
+                val resultFqName = ImportMapper.findActualKotlinFqName(fqName, apiVersion) ?: fqName
+                val explicitImportPath = ImportPath(resultFqName, false, alias)
                 if (explicitImportPath in importsToGenerate) continue
 
-                val parentFqName = fqName.parent()
-                if (alias == null && canUseStarImport(descriptor, fqName) && ImportPath(parentFqName, true).isAllowedByRules()) {
+                val parentFqName = resultFqName.parent()
+                if (alias == null && canUseStarImport(descriptor, resultFqName) && ImportPath(parentFqName, true).isAllowedByRules()) {
                     descriptorsByParentFqName.getOrPut(parentFqName) { hashSetOf() }.add(descriptor)
                 } else {
                     importsToGenerate.add(explicitImportPath)
@@ -147,7 +155,8 @@ class OptimizedImportsBuilder(
             if (starImportPath in importsToGenerate) continue
 
             val descriptors = descriptorsByParentFqName[parentFqName]!!
-            val fqNames = descriptors.map { it.importableFqName!! }.toSet()
+            val fqNames = descriptors.map { it.importDescriptorWithMapping!! }.toSet()
+
             val nameCountToUseStar = descriptors.first().nameCountToUseStar()
             val useExplicitImports = fqNames.size < nameCountToUseStar && !options.isInPackagesToUseStarImport(parentFqName)
                     || !starImportPath.isAllowedByRules()
@@ -157,7 +166,7 @@ class OptimizedImportsBuilder(
             } else {
                 descriptors.asSequence()
                     .filterIsInstance<ClassDescriptor>()
-                    .map { it.importableFqName!! }
+                    .map { it.importDescriptorWithMapping!! }
                     .filterTo(classNamesToCheck, this::needExplicitImport)
 
                 if (fqNames.all(this::needExplicitImport)) {
@@ -239,7 +248,7 @@ class OptimizedImportsBuilder(
     private val DeclarationDescriptor.fromCurrentFile: Boolean get() = importableFqName?.parent() == file.packageFqName
 
     private fun lockImportForDescriptor(descriptor: DeclarationDescriptor, existingNames: Collection<Name>) {
-        val fqName = descriptor.importableFqName ?: return
+        val fqName = descriptor.importDescriptorWithMapping ?: return
         val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames)
 
         val starImportPath = ImportPath(fqName.parent(), true)
@@ -374,8 +383,8 @@ class OptimizedImportsBuilder(
     private fun areTargetsEqual(first: DeclarationDescriptor, second: DeclarationDescriptor): Boolean {
         if (first == second) return true
 
-        val firstFqName = first.importableFqName
-        val secondFqName = second.importableFqName
+        val firstFqName = first.importDescriptorWithMapping
+        val secondFqName = second.importDescriptorWithMapping
 
         return firstFqName == secondFqName ||
                 (first.isAliasTo(second) && secondFqName != null && isImportedByLowPriorityDefault(secondFqName)) ||

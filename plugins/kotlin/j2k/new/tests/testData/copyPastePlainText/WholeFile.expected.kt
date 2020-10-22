@@ -1,7 +1,5 @@
 package to
 
-import java.util.ArrayList
-
 
 internal class JavaClass {
     fun foo() {

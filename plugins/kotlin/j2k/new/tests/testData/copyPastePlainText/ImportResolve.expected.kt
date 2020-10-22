@@ -2,8 +2,6 @@ import test.ToBeImportedJava
 import test.ToBeImportedJava.TO_BE_IMPORTED_CONST
 import test.ToBeImportedJava.staticMethod
 import test.ToBeImportedKotlin
-import java.util.ArrayList
-import java.util.HashMap
 
 
 class Target {

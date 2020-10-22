@@ -3,8 +3,6 @@ Comment 1
  */
 package sometest
 
-import java.util.ArrayList
-import java.util.HashSet
 import java.io.File as JavaFile
 import java.lang.Runnable as Task
 

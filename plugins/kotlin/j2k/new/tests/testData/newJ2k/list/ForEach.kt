@@ -1,6 +1,4 @@
 // ERROR: Unresolved reference: ELinkedList
-import java.util.ArrayList
-
 class ForEach {
     fun test() {
         val xs = ArrayList<Any>()

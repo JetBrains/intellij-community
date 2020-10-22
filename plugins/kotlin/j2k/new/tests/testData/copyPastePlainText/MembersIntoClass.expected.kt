@@ -1,7 +1,3 @@
-
-import java.util.ArrayList
-
-
 class A {
     fun foo() {
         val list = ArrayList<String>()

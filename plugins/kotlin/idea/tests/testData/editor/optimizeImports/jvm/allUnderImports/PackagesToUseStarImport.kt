@@ -4,7 +4,7 @@
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.io.File
-import java.util.ArrayList
+import java.foo.ArrayList
 
 val v1: File
 val v2: AtomicBoolean

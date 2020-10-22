@@ -1,8 +1,8 @@
 // NAME_COUNT_TO_USE_STAR_IMPORT: 2
 package ppp
 
-import java.util.HashMap
-import java.util.ArrayList
+import foo.HashMap
+import foo.ArrayList
 import java.io.File
 import java.io.PrintStream
 import dependency.*

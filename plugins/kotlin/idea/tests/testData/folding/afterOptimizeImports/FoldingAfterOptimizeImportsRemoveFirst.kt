@@ -9,4 +9,4 @@ val some2: HashMap<Int, Int>? = null
 
 // SET_TRUE: setCollapseImports
 // REGION BEFORE: 25:94
-// REGION AFTER: 25:67
+// REGION AFTER: 25:85

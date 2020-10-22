@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -267,7 +268,7 @@ class KotlinImportOptimizer : ImportOptimizer {
                 isInPackagesToUseStarImport = { fqName -> fqName.asString() in settings.PACKAGES_TO_USE_STAR_IMPORTS }
             )
 
-            return OptimizedImportsBuilder(file, data, options).buildOptimizedImports()
+            return OptimizedImportsBuilder(file, data, options, file.languageVersionSettings.apiVersion).buildOptimizedImports()
         }
 
         fun replaceImports(file: KtFile, imports: List<ImportPath>) {
