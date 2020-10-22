@@ -3,7 +3,9 @@ package com.intellij.execution.process.elevation
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.mediator.daemon.*
+import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
+import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -20,8 +22,6 @@ import io.grpc.stub.MetadataUtils
 import java.io.Closeable
 import java.io.File
 import java.net.InetAddress
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -37,18 +37,10 @@ object ProcessMediatorDaemonLauncher {
 
     val helloIpc = appExecutorService.submitAndAwaitCloseable { tryCreateHelloIpc() }
                    ?: throw ExecutionException(ElevationBundle.message("dialog.message.daemon.hello.failed"))
+    val daemonLaunchOptions = helloIpc.getDaemonLaunchOptions()
 
     return helloIpc.use {
       appExecutorService.submitAndAwait {
-        val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
-          initialize(1024)
-        }.genKeyPair()
-
-        val daemonLaunchOptions = DaemonLaunchOptions(
-          helloOption = helloIpc.getHelloOption(),
-          tokenEncryptionOption = DaemonLaunchOptions.TokenEncryptionOption(keyPair.public)
-        )
-
         val daemonCommandLine = createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
           .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
           .withParameters(daemonLaunchOptions.asCmdlineArgs())
@@ -63,12 +55,9 @@ object ProcessMediatorDaemonLauncher {
         val daemonHello = helloIpc.readHello()
                           ?: throw ProcessCanceledException()
 
-        val token = keyPair.private.rsaDecrypt(daemonHello.token)
-        val credentials = DaemonClientCredentials(token)
-
         ProcessMediatorDaemonImpl(daemonProcessHandler.process,
                                   daemonHello.port,
-                                  credentials)
+                                  DaemonClientCredentials(daemonHello.token))
       }
     }
   }
@@ -79,12 +68,12 @@ object ProcessMediatorDaemonLauncher {
         DaemonHelloStdoutIpc()
       }
       else {
-        DaemonHelloUnixFifoIpc()
+        DaemonHelloUnixFifoIpc().encrypted()
       }
     }.onFailure { e ->
       ElevationLogger.LOG.warn("Unable to create file-based hello channel; falling back to socket streams", e)
     }.recoverCatching {
-      DaemonHelloSocketIpc()
+      DaemonHelloSocketIpc().encrypted()
     }.getOrLogException(ElevationLogger.LOG)
 }
 
