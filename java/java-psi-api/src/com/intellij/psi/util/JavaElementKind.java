@@ -122,6 +122,9 @@ public enum JavaElementKind {
       }
       return FIELD;
     }
+    if (element instanceof PsiAnnotation) {
+      return ANNOTATION;
+    }
     if (element instanceof PsiRecordComponent) {
       return RECORD_COMPONENT;
     }
