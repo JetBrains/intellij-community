@@ -5,7 +5,6 @@ import com.ibm.icu.text.MessagePattern;
 import com.intellij.codeInspection.*;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -152,32 +151,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   private static Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
-      PsiElement psi = args.get(0).getSourcePsi();
-      if (psi != null) {
-        if (args.get(0).equals(UastContextKt.toUElement(psi.getParent()))) {
-          // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression) 
-          // to find the property reference
-          psi = psi.getParent();
-        }
-        return getProperty(psi);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Property getProperty(PsiElement psi) {
-    PsiReference[] references = psi.getReferences();
-    for (PsiReference reference : references) {
-      if (reference instanceof PropertyReference) {
-        ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
-        if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
-          PsiElement element = resolveResults[0].getElement();
-          if (element instanceof Property) {
-            return (Property)element;
-          }
-        }
-      }
+      return JavaI18nUtil.resolveProperty(args.get(0));
     }
     return null;
   }
@@ -242,7 +216,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     private static Property getPropertyArgument(PsiMethodCallExpression arg) {
       PsiExpression[] args = arg.getArgumentList().getExpressions();
       if (args.length > 0) {
-        return getProperty(args[0]);
+        return JavaI18nUtil.resolveProperty(args[0]);
       }
       return null;
     }

@@ -6,8 +6,10 @@ import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
+import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -440,5 +442,40 @@ public final class JavaI18nUtil extends I18nUtil {
   @NotNull
   static String composeParametersText(@NotNull List<? extends UExpression> args) {
     return args.stream().map(UExpression::getSourcePsi).filter(Objects::nonNull).map(psi -> psi.getText()).collect(Collectors.joining(","));
+  }
+
+  /**
+   * @param expression expression that refers to the property
+   * @return the resolved property; null if the property cannot be resolved
+   */
+  public static @Nullable Property resolveProperty(@NotNull UExpression expression) {
+    PsiElement psi = expression.getSourcePsi();
+    if (psi == null) return null;
+    if (expression.equals(UastContextKt.toUElement(psi.getParent()))) {
+      // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression) 
+      // to find the property reference
+      psi = psi.getParent();
+    }
+    return resolveProperty(psi);
+  }
+
+  /**
+   * @param psi expression that refers to the property
+   * @return the resolved property; null if the property cannot be resolved
+   */
+  public static @Nullable Property resolveProperty(PsiElement psi) {
+    PsiReference[] references = psi.getReferences();
+    for (PsiReference reference : references) {
+      if (reference instanceof PropertyReference) {
+        ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
+        if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
+          PsiElement element = resolveResults[0].getElement();
+          if (element instanceof Property) {
+            return (Property)element;
+          }
+        }
+      }
+    }
+    return null;
   }
 }
