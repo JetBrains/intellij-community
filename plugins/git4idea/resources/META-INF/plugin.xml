@@ -387,6 +387,8 @@
                               This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
+    <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
+                 description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.use.push.force.with.lease" defaultValue="true"
                  description="Use '--force-with-lease' to push from IDE instead of '--force'"/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
