@@ -89,7 +89,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
     }
 
-    if (zipPath != null && exePath != null) {
+    if (!buildContext.options.isInDevelopmentMode && zipPath != null && exePath != null) {
       if (SystemInfo.isLinux) {
         buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
 
@@ -122,7 +122,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.ant.delete(dir: tempExe)
       }
       else {
-        buildContext.messages.warning("Cannot compare .zip and .exe on ${SystemInfo.OS_NAME}")
+        buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfo.OS_NAME}")
       }
     }
   }
