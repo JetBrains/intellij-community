@@ -153,8 +153,14 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentOver != null) {
 
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
-      if (index >= 0 && index < myCurrentOver.getTabCount() - 1) {
-        dropInBetweenPinnedTabs = myCurrentOver.getTabAt(index).isPinned();
+      if (index >= 0 && index <= myCurrentOver.getTabCount()) {
+        TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
+        if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE && index > 0) {
+          dropInBetweenPinnedTabs = (tabInfo != null && tabInfo.isPinned()) || myCurrentOver.getTabAt(index - 1).isPinned();
+        }
+        else {
+          dropInBetweenPinnedTabs = tabInfo != null ? tabInfo.isPinned() : null;
+        }
       }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
