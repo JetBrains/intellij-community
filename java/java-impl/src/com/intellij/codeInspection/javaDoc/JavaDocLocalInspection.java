@@ -807,7 +807,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.remove", myTagName);
+      return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
     }
 
     @NotNull
