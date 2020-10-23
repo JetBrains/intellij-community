@@ -274,14 +274,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
   }
 
-  static String getGradleVersionToBundle(BuildContext buildContext) {
-    File sdkConstants = buildContext.findFileInModuleSources("android.sdktools.common", "com/android/SdkConstants.java")
-    if (sdkConstants != null && sdkConstants.exists()) {
-      return sdkConstants.readLines().find { line -> line =~ ".*GRADLE_MINIMUM_VERSION.*" }.split("\"")[1]
-    }
-    buildContext.messages.error("Cannot parse GRADLE_MINIMUM_VERSION in com/android/SdkConstants.java from module 'common'.")
-  }
-
   @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
