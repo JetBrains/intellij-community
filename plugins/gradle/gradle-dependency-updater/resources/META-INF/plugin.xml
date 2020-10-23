@@ -1,6 +1,5 @@
 <idea-plugin implementation-detail="true">
   <name>Gradle Dependency Updater Implementation</name>
-  <!-- "org.jetbrains.plugins.gradle" id has been reused to avoid dependant plugins breakage-->
   <id>org.jetbrains.plugins.gradle.dependency.updater</id>
   <description>
     Plugin provides Dependency Updater Implementation for gradle scripts

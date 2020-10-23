@@ -15,6 +15,12 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.files;
 
+import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
+import static com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory.EXTENSION_POINT_NAME;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 import com.android.tools.idea.gradle.dsl.api.BuildModelNotification;
 import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory;
@@ -47,21 +53,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
-import static com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory.EXTENSION_POINT_NAME;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * Provides Gradle specific abstraction over a {@link GroovyFile}.
