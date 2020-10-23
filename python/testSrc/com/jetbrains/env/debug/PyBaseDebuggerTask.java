@@ -26,6 +26,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
@@ -226,6 +227,17 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   @Nullable
   public static PyDebugValue findDebugValueByName(@NotNull List<PyDebugValue> debugValues, @NotNull String name) {
     for (PyDebugValue val : debugValues) {
+      if (val.getName().equals(name)) {
+        return val;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PydevCompletionVariant findCompletionVariantByName(@NotNull List<PydevCompletionVariant> completions,
+                                                                   @NotNull String name) {
+    for (PydevCompletionVariant val : completions) {
       if (val.getName().equals(name)) {
         return val;
       }
