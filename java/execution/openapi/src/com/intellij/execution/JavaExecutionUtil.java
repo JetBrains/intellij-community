@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -121,6 +122,7 @@ public final class JavaExecutionUtil {
 
   public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
+    TextRange elementTextRange = element.getTextRange();
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
@@ -129,7 +131,9 @@ public final class JavaExecutionUtil {
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
-    if (classes[0].getTextRange() == null) return location;
+    TextRange textRange = classes[0].getTextRange();
+    if (textRange == null) return location;
+    if (elementTextRange != null && textRange.contains(elementTextRange)) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 
