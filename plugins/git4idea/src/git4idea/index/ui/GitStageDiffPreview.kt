@@ -6,6 +6,7 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -40,30 +41,28 @@ class GitStageDiffPreview(project: Project, private val tree: ChangesTree, track
   fun getToolbarWrapper(): com.intellij.ui.components.panels.Wrapper = myToolbarWrapper
 
   override fun selectChange(change: Wrapper) {
-    if (change !is GitFileStatusNodeWrapper) return
-    val node = TreeUtil.findNodeWithObject(tree.root, change.node) ?: return
+    if (change !is GitFileStatusNodeWrapper && change !is ChangeWrapper) return
+    val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) ?: return
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper?> {
-    val hasSelection = tree.selectionModel.selectionCount != 0
-    return wrap(if (hasSelection) VcsTreeModelData.selected(tree) else VcsTreeModelData.all(tree))
-  }
+  override fun getSelectedChanges(): Stream<Wrapper> =
+    if (tree.isSelectionEmpty) allChanges else wrap(VcsTreeModelData.selected(tree))
 
-  override fun getAllChanges(): Stream<Wrapper?> {
-    return wrap(VcsTreeModelData.all(tree))
-  }
+  override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
 
-  private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper?> {
-    return modelData.userObjectsStream(GitFileStatusNode::class.java).map { info -> GitFileStatusNodeWrapper(info) }
-  }
+  private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =
+    Stream.concat(
+      modelData.userObjectsStream(GitFileStatusNode::class.java).map { GitFileStatusNodeWrapper(it) },
+      modelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
+    )
 
   private class GitFileStatusNodeWrapper(val node: GitFileStatusNode) : Wrapper() {
-    override fun getPresentableName(): String? = node.filePath.name
+    override fun getPresentableName(): String = node.filePath.name
 
     override fun getUserObject(): Any = node
 
-    override fun createProducer(project: Project?): DiffRequestProducer? {
+    override fun createProducer(project: Project?): DiffRequestProducer {
       return createTwoSidesDiffRequestProducer(project!!, node)
     }
   }
