@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -602,8 +603,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                                     @NotNull Runnable cancelAction,
                                                     @NotNull Runnable showDialogAndFindUsagesRunnable) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
-    String tooltip = shortcut == null ? FindBundle.message("show.usages.settings.tooltip")
-                                      : FindBundle.message("show.usages.settings.tooltip.shortcut", shortcut);
+    String tooltip = shortcut == null
+                     ? FindBundle.message("show.usages.settings.tooltip")
+                     : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
     return new InplaceButton(tooltip, AllIcons.General.Settings, __ -> {
       ApplicationManager.getApplication().invokeLater(showDialogAndFindUsagesRunnable, project.getDisposed());
       cancelAction.run();
