@@ -364,4 +364,13 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       }
     }
   }
+
+  // For serializing current model during the debug process
+  @Suppress("unused")
+  private fun serialize(path: String) {
+    val folder = File(path)
+    target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
+    diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
+    diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+  }
 }

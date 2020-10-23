@@ -33,3 +33,12 @@ internal fun createAttachment(path: String, bytes: ByteArray, displayText: Strin
   return attachment
 }
 
+internal fun WorkspaceEntityStorage.serializeTo(stream: OutputStream) {
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+  serializer.serializeCache(stream, this.makeSureItsStore())
+}
+
+internal fun WorkspaceEntityStorageBuilderImpl.serializeDiff(stream: OutputStream) {
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+  serializer.serializeDiffLog(stream, this.changeLog)
+}
