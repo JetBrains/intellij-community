@@ -252,7 +252,7 @@ public final class SearchUtil {
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
-    for (String option : words) {
+    for (@NlsSafe String option : words) {
       configurableOptions.add(new OptionDescription(option, title, path));
     }
   }

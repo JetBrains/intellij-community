@@ -25,6 +25,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
@@ -212,7 +213,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
   }
 
   private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
-    for (String word : registrar.getProcessedWordsWithoutStemming(text)) {
+    for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(text)) {
       options.add(new OptionDescription(word, text, path));
     }
   }
@@ -235,7 +236,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     Set<OptionDescription> result = new TreeSet<>();
     for (String opt : optionsPath) {
-      for (String word : registrar.getProcessedWordsWithoutStemming(opt)) {
+      for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(opt)) {
         if (word != null) {
           result.add(new OptionDescription(word, opt, path));
         }

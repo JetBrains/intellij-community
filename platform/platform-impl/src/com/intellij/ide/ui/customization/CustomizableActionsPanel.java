@@ -279,14 +279,15 @@ public class CustomizableActionsPanel {
         else if (userObject instanceof Pair) {
           String actionId = (String)((Pair)userObject).first;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          append(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String text = action != null ? action.getTemplatePresentation().getText() : null;
+          append(StringUtil.isNotEmpty(text) ? text : actionId);
           icon = (Icon)((Pair)userObject).second;
         }
         else if (userObject instanceof Separator) {
           append("-------------");
         }
         else if (userObject instanceof QuickList) {
-          append(((QuickList)userObject).getName());
+          append(((QuickList)userObject).getDisplayName());
           icon = null; // AllIcons.Actions.QuickList;
         }
         else if (userObject != null) {

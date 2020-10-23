@@ -15,8 +15,7 @@ import java.util.function.Consumer;
  * @author Konstantin Bulenkov
  */
 public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.CoveredByToggleActions {
-  private static final OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.appearance("Show Memory Indicator",
-                                                                                                       "showMemoryIndicator");
+  private static final OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.appearance(IdeBundle.message("label.show.memory.indicator"), "showMemoryIndicator");
   private static final OptionDescription HIDE_TOOL_STRIPES = AppearanceOptionsTopHitProvider.appearance(IdeBundle.message("option.hide.tool.window.bars"), "hideToolStripes");
   private static final OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.block.cursor"), "IS_BLOCK_CURSOR");
   private static final OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.whitespaces"), "IS_WHITESPACES_SHOWN");
