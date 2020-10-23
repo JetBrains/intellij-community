@@ -50,6 +50,6 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
 
   @Override
   public DisplayPriority getPriority() {
-    return DisplayPriority.COMMON_SETTINGS;
+    return DisplayPriority.GENERAL_SETTINGS;
   }
 }
