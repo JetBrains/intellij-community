@@ -358,6 +358,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       int parts = myPattern.countParts();
       int maxMsgCount = IntStreamEx.range(parts).map(i -> getMessagesForPart(i)).append(1).max().orElse(1);
       String string = myPattern.getPatternString();
+      // The idea is to replace ordinary parameters with _ (which is not reported in any case) 
+      // and choice/plural with one of the possible options in a loop till maximal option number is reached. 
+      // If all the artificial strings satisfy the capitalization, we assume that it's satisfied for the pattern as well.
       for (int curIndex = 0; curIndex < maxMsgCount; curIndex++) {
         StringBuilder sample = new StringBuilder();
         int msgIndex = 0;
