@@ -2,15 +2,18 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import java.util.function.Predicate
 
 /**
  * Represents created target environment. It might be local machine,
@@ -135,19 +138,34 @@ abstract class TargetEnvironment(
   abstract fun shutdown()
 
   companion object {
-    fun getExcludedFromUploadChildren(localRoot: File, project: Project?): List<File>? {
-      if (project == null) return null
-      val virtualFile = VfsUtil.findFileByIoFile(localRoot, false)
-      if (virtualFile == null) return null
+    private fun getExcludedFromProjectChildren(localRoot: VirtualFile, project: Project): List<File>? {
       val result = mutableListOf<File>()
       for (module in ModuleManager.getInstance(project).modules) {
         for (excludeRoot in ModuleRootManager.getInstance(module).excludeRoots) {
-          if (VfsUtil.isAncestor(virtualFile, excludeRoot, true)) {
+          if (VfsUtil.isAncestor(localRoot, excludeRoot, true)) {
             result.add(excludeRoot.toNioPath().toFile())
           }
         }
       }
       return if (result.isEmpty()) null else result
+    }
+
+    fun getUploadFileFilter(localRoot: File, project: Project?): Predicate<File>? {
+      if (project == null) return null
+      val virtualFile = VfsUtil.findFileByIoFile(localRoot, false)
+      if (virtualFile == null) return null
+      val result = getExcludedFromProjectChildren(virtualFile, project)
+      if (result == null) return null
+      return object : Predicate<File> {
+        val manager = FileTypeManager.getInstance()
+
+        override fun test(file: File): Boolean {
+          if (file == localRoot) return true
+          if (result.contains(file)) return false
+          if (manager.isFileIgnored(file.name)) return false
+          return true
+        }
+      }
     }
   }
 }
