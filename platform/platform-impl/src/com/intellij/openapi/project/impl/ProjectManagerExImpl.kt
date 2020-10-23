@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
@@ -11,6 +10,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -45,6 +45,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.function.BiFunction
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -63,13 +66,17 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    return openProjectAsync(projectStoreBaseDir, options).get(30, TimeUnit.MINUTES)
+  }
+
+  final override fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): CompletableFuture<Project?> {
     val app = ApplicationManager.getApplication()
     if (LOG.isDebugEnabled && !app.isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
 
     if (options.project != null && isProjectOpened(options.project)) {
-      return null
+      return CompletableFuture.completedFuture(null)
     }
 
     val activity = StartUpMeasurer.startMainActivity("project opening preparation")
@@ -88,48 +95,54 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
-          return null
+          return CompletableFuture.completedFuture(null)
         }
       }
     }
 
     val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options) else ProjectUiFrameAllocator(options, projectStoreBaseDir)
-    val result = runInAutoSaveDisabledMode {
-      frameAllocator.run {
-        activity.end()
-        val result: PrepareProjectResult
-        if (options.project == null) {
-          result = prepareProject(options, projectStoreBaseDir) ?: return@run null
+    val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
+    return frameAllocator.run {
+      activity.end()
+      val result: PrepareProjectResult
+      if (options.project == null) {
+        result = prepareProject(options, projectStoreBaseDir) ?: return@run null
+      }
+      else {
+        result = PrepareProjectResult(options.project, null)
+      }
+
+      val project = result.project
+      frameAllocator.projectLoaded(project)
+      if (doOpenProject(project)) {
+        frameAllocator.projectOpened(project)
+        result
+      }
+      else {
+        null
+      }
+    }
+      .handle(BiFunction { result, error ->
+        disableAutoSaveToken.finish()
+
+        if (error != null) {
+          throw error
         }
-        else {
-          result = PrepareProjectResult(options.project, null)
+
+        if (result == null) {
+          frameAllocator.projectNotLoaded(error = null)
+          if (options.showWelcomeScreen) {
+            WelcomeFrame.showIfNoProjectOpened()
+          }
+          return@BiFunction null
         }
 
         val project = result.project
-        frameAllocator.projectLoaded(project)
-        if (doOpenProject(project)) {
-          frameAllocator.projectOpened(project)
-          result
+        if (options.callback != null) {
+          options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
         }
-        else {
-          null
-        }
-      }
-    }
-
-    if (result == null) {
-      frameAllocator.projectNotLoaded(error = null)
-      if (options.showWelcomeScreen) {
-        WelcomeFrame.showIfNoProjectOpened()
-      }
-      return null
-    }
-
-    val project = result.project
-    if (options.callback != null) {
-      options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
-    }
-    return project
+        project
+      })
   }
 
   override fun openProject(project: Project): Boolean {

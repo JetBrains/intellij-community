@@ -654,12 +654,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
-  private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                                                       boolean canBeCanceled,
-                                                                                       boolean shouldShowModalWindow,
-                                                                                       @Nullable Project project,
-                                                                                       JComponent parentComponent,
-                                                                                       @NlsContexts.Button String cancelText) {
+  @ApiStatus.Internal
+  public final @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
+                                                                                            boolean canBeCanceled,
+                                                                                            boolean shouldShowModalWindow,
+                                                                                            @Nullable Project project,
+                                                                                            JComponent parentComponent,
+                                                                                            @NlsContexts.Button String cancelText) {
     if (SwingUtilities.isEventDispatchThread()) {
       return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText));
     }

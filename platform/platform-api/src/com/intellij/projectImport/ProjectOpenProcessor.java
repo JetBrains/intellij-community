@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
@@ -48,6 +49,13 @@ public abstract class ProjectOpenProcessor {
   }
 
   public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
+
+  /**
+   * Return null if not supported.
+   */
+  public @Nullable CompletableFuture<@Nullable Project> openProjectAsync(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    return null;
+  }
 
   /**
    * Allow opening a directory directly if the project files are located in that directory.
