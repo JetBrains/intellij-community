@@ -2,7 +2,10 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -186,7 +189,7 @@ class MavenWrapperSupport {
 
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
-      if (UseWrapperAction.canUseWrapper()) return null
+      if (!UseWrapperAction.canUseWrapper()) return null
       val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
 
       val properties = Properties()
