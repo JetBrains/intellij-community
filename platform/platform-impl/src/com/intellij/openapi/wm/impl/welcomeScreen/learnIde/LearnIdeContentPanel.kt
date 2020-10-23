@@ -3,9 +3,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.icons.AllIcons.Ide.External_link_arrow
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.GettingStartedAction
 import com.intellij.ide.actions.HelpTopicsAction
 import com.intellij.ide.actions.JetBrainsTvAction
+import com.intellij.ide.actions.OnlineDocAction
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -105,7 +105,7 @@ class LearnIdeContentPanel : JPanel() {
     val helpActions = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
     val anActionEvent = emptyWelcomeScreenEventFromAction(helpActions)
     helpActions.getChildren(anActionEvent).forEach {
-      if (setOf<String>(HelpTopicsAction::class.java.simpleName, GettingStartedAction::class.java.simpleName,
+      if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
                         JetBrainsTvAction::class.java.simpleName).any { simpleName ->  simpleName == it.javaClass.simpleName }) {
         helpAndResourcesPanel.add(linkLabelByAction(it).wrapWithUrlPanel())
       }
@@ -149,5 +149,3 @@ class LearnIdeContentPanel : JPanel() {
   }
 
 }
-
-

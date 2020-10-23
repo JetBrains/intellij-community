@@ -3,9 +3,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.JBFont
 import java.awt.Font
-import java.awt.font.TextAttribute
 import javax.swing.JLabel
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
@@ -13,8 +13,10 @@ import javax.swing.text.StyleConstants
 object LearnIdeContentColorsAndFonts {
 
   val InteractiveCoursesBorder = JBColor.namedColor("Button.startBorderColor", JBColor(0x87AFDA, 0x5E6060))
-  private val fontSize: Int by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) }
-  private val fontFace: String by lazy { UISettings.instance.fontFace ?: JLabel().font.fontName }
+
+  private val settings: UISettings by lazy { UISettings.instance }
+  private val fontSize: Int by lazy { if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size }
+  private val fontFace: String by lazy { settings.fontFace ?: JLabel().font.fontName }
 
   val HeaderFont: Font by lazy { Font(fontFace, Font.BOLD, fontSize + 5) }
   val HeaderColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
@@ -46,7 +48,6 @@ object LearnIdeContentColorsAndFonts {
     StyleConstants.setFontFamily(HEADER, UISettings.instance.fontFace)
     StyleConstants.setForeground(HEADER, HeaderColor)
     StyleConstants.setBold(HEADER, true)
-    HEADER.addAttribute(TextAttribute.TRACKING, -0.1)
 
     StyleConstants.setLeftIndent(PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setRightIndent(PARAGRAPH_STYLE, 0f)
@@ -74,10 +75,4 @@ object LearnIdeContentColorsAndFonts {
 
   }
 
-
-  private fun Int.ifZero(nonZeroValue: Int): Int =
-    if (this == 0) nonZeroValue else this
-
 }
-
-

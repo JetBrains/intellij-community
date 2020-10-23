@@ -12,7 +12,11 @@ import javax.swing.text.DefaultCaret
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
-class HeightLimitedPane(text: String, val relativeFontSize: Int, val style: SimpleAttributeSet, val _width: Int? = null) : JTextPane() {
+/**
+ * This panel has limited height by its preferred size and doesn't grow more. The maximum width
+ * could be limited as well by setting maximumWidth.
+ */
+class HeightLimitedPane(text: String, private val relativeFontSize: Int, private val style: SimpleAttributeSet, private val maximumWidth: Int? = null) : JTextPane() {
   init {
     isEditable = false
     document.insertString(0, text, style)
@@ -45,7 +49,7 @@ class HeightLimitedPane(text: String, val relativeFontSize: Int, val style: Simp
   }
 
   override fun getMaximumSize(): Dimension {
-    if (_width == null) {
+    if (maximumWidth == null) {
       return this.preferredSize
     }
     else {
@@ -66,6 +70,7 @@ class HeightLimitedPane(text: String, val relativeFontSize: Int, val style: Simp
 
   override fun updateUI() {
     super.updateUI()
+    @Suppress("SENSELESS_COMPARISON")
     if (font != null && style != null) {
       StyleConstants.setFontSize(style, font.size)
       styledDocument.setCharacterAttributes(0, text.length, style, true)
