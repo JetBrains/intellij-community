@@ -181,7 +181,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
-    String path = virtualFile.getPath();
+    String path = virtualFile.getPath(); //NON-NLS
     final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (i >= 0) {
       path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());

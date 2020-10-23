@@ -103,7 +103,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     @NlsSafe String words = strategy.splitIntoWords(getXmlElementName());
-    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
+    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true); //NON-NLS
   }
 
   @Override
