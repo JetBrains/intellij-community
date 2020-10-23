@@ -633,7 +633,8 @@ public final class EditorWindow {
                                                                      .withFocusEditor(focusNew)
                                                                      .withExactState()).first;
       syncCaretIfPossible(editors);
-      res.setFilePinned(nextFile, isFilePinned(file));
+      ObjectUtils.consumeIfNotNull(isFileOpen(nextFile) ? isFilePinned(nextFile) : nextFile.getUserData(DRAG_START_PINNED_KEY),
+                                   pinned -> res.setFilePinned(nextFile, pinned));
       if (!focusNew) {
         res.setSelectedEditor(selectedEditor, true);
         getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getFocusComponent(), true));
