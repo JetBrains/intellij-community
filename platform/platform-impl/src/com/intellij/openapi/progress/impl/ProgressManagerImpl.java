@@ -115,7 +115,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     }
     finally {
       if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
           .onTaskRunnableCreated(task, indicator, continuation);
       }
     }
@@ -154,7 +154,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.finishTask(task, canceled, error);
     }
     finally {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
         .onTaskFinished(task, canceled, error);
     }
   }
