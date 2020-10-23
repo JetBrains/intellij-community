@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
@@ -69,7 +70,9 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
 
   private fun updateCurrentFile() {
-    currentFile = findCurrentFile()
+    if (ClientId.isCurrentlyUnderLocalId) {
+      currentFile = findCurrentFile()
+    }
   }
 
   val currentRoot
