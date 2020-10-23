@@ -681,6 +681,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-php-exp"),
     jetbrainsLibrary("completion-ranking-python"),
     jetbrainsLibrary("completion-ranking-python-exp"),
+    jetbrainsLibrary("completion-ranking-ruby-exp"),
     jetbrainsLibrary("completion-ranking-rust-exp"),
     jetbrainsLibrary("completion-ranking-scala-exp"),
     jetbrainsLibrary("CoverageReport"),

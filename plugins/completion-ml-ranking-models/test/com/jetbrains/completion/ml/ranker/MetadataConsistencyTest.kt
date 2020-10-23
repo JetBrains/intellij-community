@@ -21,4 +21,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testPHPMetadata() = ExperimentPhpMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testRubyMetadata() = ExperimentRubyMLRankingProvider().assertModelMetadataConsistent()
 }
