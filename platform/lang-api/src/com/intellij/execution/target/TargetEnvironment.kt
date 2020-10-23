@@ -2,8 +2,13 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 
@@ -129,4 +134,20 @@ abstract class TargetEnvironment(
   //FIXME: document
   abstract fun shutdown()
 
+  companion object {
+    fun getExcludedFromUploadChildren(localRoot: File, project: Project?): List<File>? {
+      if (project == null) return null
+      val virtualFile = VfsUtil.findFileByIoFile(localRoot, false)
+      if (virtualFile == null) return null
+      val result = mutableListOf<File>()
+      for (module in ModuleManager.getInstance(project).modules) {
+        for (excludeRoot in ModuleRootManager.getInstance(module).excludeRoots) {
+          if (VfsUtil.isAncestor(virtualFile, excludeRoot, true)) {
+            result.add(excludeRoot.toNioPath().toFile())
+          }
+        }
+      }
+      return if (result.isEmpty()) null else result
+    }
+  }
 }
