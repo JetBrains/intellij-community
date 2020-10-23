@@ -585,7 +585,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       ShortcutSet set = openInRightSplit.getShortcutSet();
       new MyEnterAction(false).registerCustomShortcutSet(set, this);
     }
-    
+
     new MyEnterAction(enterAsOK).registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
     DumbAwareAction.create(__ -> processCtrlEnter()).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
@@ -1269,26 +1269,21 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
             myReplaceAllButton.setEnabled(occurrences > 0);
             myReplaceSelectedButton.setEnabled(occurrences > 0);
 
-            StringBuilder stringBuilder = new StringBuilder();
             if (occurrences > 0) {
-              stringBuilder.append(Math.min(ShowUsagesAction.getUsagesPageSize(), occurrences));
-              boolean foundAllUsages = occurrences < ShowUsagesAction.getUsagesPageSize();
-              myUsagesCount = String.valueOf(occurrences);
-              if (!foundAllUsages) {
-                stringBuilder.append("+");
-                myUsagesCount += "+";
+              if (occurrences < ShowUsagesAction.getUsagesPageSize()) {
+                myUsagesCount = String.valueOf(occurrences);
+                myFilesCount = String.valueOf(filesWithOccurrences);
+                myInfoLabel.setText(FindBundle.message("message.matches.in.files", occurrences, filesWithOccurrences));
               }
-              stringBuilder.append(UIBundle.message("message.matches", occurrences));
-              stringBuilder.append(" in ");
-              stringBuilder.append(filesWithOccurrences);
-              myFilesCount = String.valueOf(filesWithOccurrences);
-              if (!foundAllUsages) {
-                stringBuilder.append("+");
-                myFilesCount += "+";
+              else {
+                myUsagesCount = occurrences + "+";
+                myFilesCount = filesWithOccurrences + "+";
+                myInfoLabel.setText(FindBundle.message("message.matches.in.files.incomplete", occurrences, filesWithOccurrences));
               }
-              stringBuilder.append(UIBundle.message("message.files", filesWithOccurrences));
             }
-            myInfoLabel.setText(stringBuilder.toString());
+            else {
+              myInfoLabel.setText("");
+            }
           }, state);
 
           boolean continueSearch = resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
