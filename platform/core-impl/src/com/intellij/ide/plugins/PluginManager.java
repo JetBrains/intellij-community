@@ -231,13 +231,13 @@ public final class PluginManager {
                                                 boolean withOptionalDeps,
                                                 @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new HashMap<>();
-    IdeaPluginDescriptorImpl[] allPlugins = (IdeaPluginDescriptorImpl[])PluginManagerCore.getPlugins();
+    Collection<IdeaPluginDescriptorImpl> allPlugins = PluginManagerCore.getAllPlugins();
     for (IdeaPluginDescriptorImpl plugin : allPlugins) {
       idMap.put(plugin.getPluginId(), plugin);
     }
 
     CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = PluginManagerCore
-      .createPluginIdGraph(Arrays.asList(allPlugins),
+      .createPluginIdGraph(allPlugins,
                            idMap::get,
                            withOptionalDeps,
                            PluginManagerCore.findPluginByModuleDependency(PluginManagerCore.ALL_MODULES_MARKER) != null);

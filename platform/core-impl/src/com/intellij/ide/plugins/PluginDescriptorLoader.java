@@ -530,8 +530,8 @@ public final class PluginDescriptorLoader {
   }
 
   private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManagerCore.getLoadedPlugins().contains(descriptor) ||
-           !Arrays.asList(PluginManagerCore.getPlugins()).contains(descriptor);
+    return !PluginManagerCore.hasDescriptorByIdentity(descriptor) ||
+           PluginManagerCore.getLoadedPlugins().contains(descriptor);
   }
 
   private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir,
