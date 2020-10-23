@@ -239,7 +239,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList("kotlin.sequences.Sequence",
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList("kotlin.Function",
+                                                                                                          "kotlin.sequences.Sequence",
                                                                                                           "kotlin.Lazy", "kotlin.Unit",
                                                                                                           "kotlin.Pair", "kotlin.Triple",
                                                                                                           "kotlin.jvm.internal.DefaultConstructorMarker",
