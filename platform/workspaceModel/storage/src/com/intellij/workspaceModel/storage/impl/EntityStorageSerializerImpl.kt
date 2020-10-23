@@ -175,7 +175,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
-    kryo.register(VirtualFileIndex.VirtualFileUrlInfo::class.java)
 
     kryo.register(ChangeEntry.AddEntity::class.java)
     kryo.register(ChangeEntry.RemoveEntity::class.java)
@@ -316,8 +315,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Write indexes
       kryo.writeClassAndObject(output, storage.indexes.softLinks)
 
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrl)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2EntityId)
 
       kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
       kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
@@ -422,8 +421,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
 
-      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
-      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableMap<String, MutableSet<VirtualFileUrl>>>
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableMap<String, EntityId>>
       val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
 
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
@@ -507,6 +506,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   companion object {
     val logger = logger<EntityStorageSerializerImpl>()
 
-    const val SERIALIZER_VERSION = "v5"
+    const val SERIALIZER_VERSION = "v6"
   }
 }

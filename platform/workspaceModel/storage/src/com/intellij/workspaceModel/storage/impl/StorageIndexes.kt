@@ -165,7 +165,7 @@ internal class MutableStorageIndexes(
       persistentIdIndex.index(pid, persistentId)
     }
 
-    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", listOf(it)) }
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", it) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {
@@ -187,7 +187,6 @@ internal class MutableStorageIndexes(
   fun updateIndices(oldEntityId: EntityId, newEntityData: WorkspaceEntityData<*>, builder: AbstractEntityStorage) {
     val newEntityId = newEntityData.createEntityId()
     builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
-      .groupBy({ it.propertyName }, { it.vfu })
       .forEach { (property, vfus) ->
         virtualFileIndex.index(newEntityId, property, vfus)
       }

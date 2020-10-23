@@ -329,7 +329,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
             updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
             replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-              .groupBy({ it.propertyName }, { it.vfu })
               .forEach { (property, vfus) ->
                 this.indexes.virtualFileIndex.index(pid, property, vfus)
               }
@@ -359,7 +358,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
           replaceMap[newPid] = matchedEntityId
 
           replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-            .groupBy({ it.propertyName }, { it.vfu })
             .forEach { (property, vfus) ->
               this.indexes.virtualFileIndex.index(newPid, property, vfus)
             }
