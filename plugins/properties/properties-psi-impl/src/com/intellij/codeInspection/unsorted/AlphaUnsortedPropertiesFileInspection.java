@@ -14,13 +14,13 @@ import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -103,15 +103,19 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   private static void sortPropertiesFile(final PropertiesFile file) {
     final List<IProperty> properties = new ArrayList<>(file.getProperties());
 
-    properties.sort((p1, p2) -> Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER));
+    properties.sort(Comparator.comparing(IProperty::getKey, String.CASE_INSENSITIVE_ORDER));
+
+    final PropertiesList propertiesList = PsiTreeUtil.findChildOfType(file.getContainingFile(), PropertiesList.class);
+    if (propertiesList == null) return;
+
     final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).getDelimiter();
-    final StringBuilder rawText = new StringBuilder();
+    final StringBuilder rawText = new StringBuilder(propertiesList.getDocCommentText());
     for (int i = 0; i < properties.size(); i++) {
       IProperty property = properties.get(i);
       final String value = property.getValue();
       final String commentAboveProperty = property.getDocCommentText();
       if (commentAboveProperty != null) {
-        rawText.append(commentAboveProperty).append("\n");
+        rawText.append(commentAboveProperty);
       }
       final String key = property.getKey();
       final String propertyText;
@@ -126,10 +130,9 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
 
     final PropertiesFile fakeFile = PropertiesElementFactory.createPropertiesFile(file.getProject(), rawText.toString());
 
-    final PropertiesList propertiesList = PsiTreeUtil.findChildOfType(file.getContainingFile(), PropertiesList.class);
-    LOG.assertTrue(propertiesList != null);
     final PropertiesList fakePropertiesList = PsiTreeUtil.findChildOfType(fakeFile.getContainingFile(), PropertiesList.class);
     LOG.assertTrue(fakePropertiesList != null);
+
     propertiesList.replace(fakePropertiesList);
   }
 

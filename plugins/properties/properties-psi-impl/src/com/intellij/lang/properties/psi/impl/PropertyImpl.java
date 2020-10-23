@@ -21,9 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
   private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
+
+  private static final Pattern PROPERTIES_SEPARATOR = Pattern.compile("^\\s*" + System.lineSeparator() + "\\s*" + System.lineSeparator() + "\\s*$");
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
@@ -124,7 +127,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @Override
   public @Nullable PsiElement getNameIdentifier() {
-    return getKeyNode().getPsi();
+    final ASTNode node = getKeyNode();
+    if (node == null) return null;
+    return node.getPsi();
   }
 
 
@@ -382,20 +387,33 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return (PropertiesFile)containingFile;
   }
 
+  /**
+   * The method gets the upper edge of a {@link Property} instance which might either be
+   * the property itself or the first {@link PsiComment} node that is related to the property
+   *
+   * @param property the property to get the upper edge for
+   * @return the property itself or the first {@link PsiComment} node that is related to the property
+   */
+  static PsiElement getEdgeOfProperty(@NotNull final Property property) {
+    PsiElement prev = property;
+    for (PsiElement e = property.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      if (e instanceof Property) break;
+      if (e instanceof PsiWhiteSpace) {
+        if (PROPERTIES_SEPARATOR.matcher(e.getText()).find()) break;
+      }
+      prev = e;
+    }
+    return prev;
+  }
+
   @Override
   public String getDocCommentText() {
+    final PsiElement edge = getEdgeOfProperty(this);
     StringBuilder text = new StringBuilder();
-    for (PsiElement doc = getPrevSibling(); doc != null; doc = doc.getPrevSibling()) {
-      if (doc instanceof PsiWhiteSpace) {
-        doc = doc.getPrevSibling();
-      }
+    for(PsiElement doc = edge; doc != this; doc = doc.getNextSibling()) {
       if (doc instanceof PsiComment) {
-        if (text.length() != 0) text.insert(0, "\n");
-        String comment = doc.getText();
-        text.insert(0, comment);
-      }
-      else {
-        break;
+        text.append(doc.getText());
+        text.append("\n");
       }
     }
     if (text.length() == 0) return null;

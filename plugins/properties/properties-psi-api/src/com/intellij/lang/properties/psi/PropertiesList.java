@@ -19,7 +19,8 @@
  */
 package com.intellij.lang.properties.psi;
 
+import com.intellij.lang.properties.IPropertyList;
 import com.intellij.psi.StubBasedPsiElement;
 
-public interface PropertiesList extends StubBasedPsiElement<PropertiesListStub> {
+public interface PropertiesList extends StubBasedPsiElement<PropertiesListStub>, IPropertyList {
 }

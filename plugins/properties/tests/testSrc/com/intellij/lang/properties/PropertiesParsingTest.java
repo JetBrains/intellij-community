@@ -26,4 +26,5 @@ public class PropertiesParsingTest extends ParsingTestCase {
 
   public void testProp1() { doTest(true); }
   public void testComments() { doTest(true); }
+  public void testHeader() { doTest(true); }
 }
