@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import java.util.*
 
 class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
 

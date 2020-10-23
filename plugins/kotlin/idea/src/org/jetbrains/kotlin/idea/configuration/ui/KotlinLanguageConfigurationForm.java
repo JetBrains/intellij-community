@@ -8,10 +8,10 @@ package org.jetbrains.kotlin.idea.configuration.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinPluginUtil;
 import org.jetbrains.kotlin.idea.PlatformVersion;
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeaturesPanel;
-import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.util.VersioningKt;
 
 import javax.swing.*;

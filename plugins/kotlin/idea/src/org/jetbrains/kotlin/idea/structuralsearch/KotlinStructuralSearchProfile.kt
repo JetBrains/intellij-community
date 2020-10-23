@@ -22,6 +22,9 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.UIUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
 import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
@@ -30,9 +33,6 @@ import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinVarValOnlyPre
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinCompilingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinMatchingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

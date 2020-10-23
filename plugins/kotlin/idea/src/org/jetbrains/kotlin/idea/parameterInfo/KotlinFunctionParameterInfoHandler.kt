@@ -63,7 +63,6 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.containsError
 import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.awt.Color
-import java.util.*
 import kotlin.reflect.KClass
 
 class KotlinFunctionParameterInfoHandler :

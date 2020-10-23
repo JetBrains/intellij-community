@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.idea
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
 
 object KotlinPluginCompatibilityVerifier {

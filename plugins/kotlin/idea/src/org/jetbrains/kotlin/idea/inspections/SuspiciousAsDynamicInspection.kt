@@ -13,10 +13,10 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.types.DynamicType
 
 class SuspiciousAsDynamicInspection : AbstractKotlinInspection() {

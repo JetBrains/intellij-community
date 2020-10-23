@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.structuralsearch
 import com.intellij.structuralsearch.PatternContext
 import com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfiguration
 import com.intellij.structuralsearch.plugin.ui.Configuration
-import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
+import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
+import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
 
 object KotlinPredefinedConfigurations {
     private val CLASS_TYPE = KSSRBundle.message("category.class")

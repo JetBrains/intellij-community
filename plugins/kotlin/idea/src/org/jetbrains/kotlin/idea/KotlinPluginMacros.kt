@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.application.PathMacroContributor
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.utils.PathUtil
 
 /**
  * Some actions have to be performed before loading and opening any project.

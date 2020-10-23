@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import java.util.*
 import java.util.regex.Pattern
 
 // Based on com.intellij.testIntegration.JavaTestFinder.JavaTestFinder implementation

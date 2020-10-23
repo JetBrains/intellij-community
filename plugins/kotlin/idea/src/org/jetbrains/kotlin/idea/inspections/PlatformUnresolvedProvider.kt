@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.quickfix.detectPriority
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import java.util.*
 
 object PlatformUnresolvedProvider : KotlinIntentionActionFactoryWithDelegate<KtNameReferenceExpression, String>() {
     override fun getElementOfInterest(diagnostic: Diagnostic) =

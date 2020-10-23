@@ -11,7 +11,6 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.ItemPresentationProvider
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Iconable
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIconProviderBase
