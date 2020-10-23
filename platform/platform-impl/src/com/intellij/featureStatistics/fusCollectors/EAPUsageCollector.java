@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -21,9 +20,9 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 4);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
-  private static final StringEventField METADATA = EventFields.StringListValidatedByRegexp("metadata",
-                                                                                          "license_metadata");
-  private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA);
+  private static final StringEventField METADATA = EventFields.StringListValidatedByRegexp("metadata", "license_metadata");
+  private static final BooleanEventField IS_JB_TEAM = EventFields.Boolean("is_jb_team");
+  private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA, IS_JB_TEAM);
 
   @Override
   public EventLogGroup getGroup() {
@@ -51,10 +50,10 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
         if (facade != null) {
           // non-eap commercial version
           if (facade.isEvaluationLicense()) {
-            result.add(newLicencingMetric(LicenceType.evaluation, facade.metadata));
+            result.add(newLicencingMetric(LicenceType.evaluation, facade));
           }
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
-            result.add(newLicencingMetric(LicenceType.license, facade.metadata));
+            result.add(newLicencingMetric(LicenceType.license, facade));
           }
         }
         return result;
@@ -67,8 +66,13 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   }
 
   @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull LicenceType value, @Nullable String metadata) {
+  private static MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
+    String licensedToMessage = licensingFacade.getLicensedToMessage();
+    if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {
+      data.add(IS_JB_TEAM.with(true));
+    }
+    String metadata = licensingFacade.metadata;
     if (StringUtil.isNotEmpty(metadata)) {
       data.add(METADATA.with(metadata));
     }
