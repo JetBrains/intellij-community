@@ -85,5 +85,15 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-go-exp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-go:0.0.5" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.0.5/completion-ranking-go-0.0.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

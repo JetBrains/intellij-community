@@ -24,4 +24,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testRubyMetadata() = ExperimentRubyMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testGoMetadata() = ExperimentGoMLRankingProvider().assertModelMetadataConsistent()
 }
