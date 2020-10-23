@@ -763,7 +763,6 @@
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
-        <action id="Help.GettingStarted" class="com.intellij.ide.actions.GettingStartedAction"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <separator/>
         <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
@@ -934,7 +933,7 @@
 
     <group id="WelcomeScreen.LearnIdeHelp">
       <reference ref="HelpTopics"/>
-      <reference ref="Help.GettingStarted"/>
+      <reference ref="OnlineDocAction"/>
       <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>
       <reference ref="ShowTips"/>

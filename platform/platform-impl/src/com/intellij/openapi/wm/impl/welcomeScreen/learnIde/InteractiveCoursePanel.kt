@@ -65,9 +65,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
       isOpaque = false
       alignmentY = TOP_ALIGNMENT
       add(chevronLabel, BorderLayout.CENTER)
-      add(JPanel()
-            .apply { preferredSize = Dimension(chevronPanelWidth, 1); minimumSize = Dimension(chevronPanelWidth, 1); isOpaque = false },
-          BorderLayout.NORTH)
+      add(createUnshrinkablePanel(chevronPanelWidth), BorderLayout.NORTH)
     }
   }
 
@@ -78,10 +76,16 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
       isOpaque = false
       add(pluginLabel, BorderLayout.NORTH)
       alignmentY = TOP_ALIGNMENT
-      add(JPanel()
-            .apply { preferredSize = Dimension(pluginPanelWidth, 1); minimumSize = Dimension(pluginPanelWidth, 1); isOpaque = false },
-          BorderLayout.CENTER)
+      add(createUnshrinkablePanel(pluginPanelWidth), BorderLayout.CENTER)
     }
+  }
+
+  private fun createUnshrinkablePanel(_width: Int): JPanel {
+    return JPanel()
+      .apply { preferredSize = Dimension(_width, 1)
+        minimumSize = Dimension(_width, 1)
+        isOpaque = false
+      }
   }
 
   override fun getMaximumSize(): Dimension {
@@ -168,7 +172,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     background = LearnIdeContentColorsAndFonts.HoveredColor
     isOpaque = true
     repaint()
-    cursor = Cursor(Cursor.HAND_CURSOR);
+    cursor = Cursor(Cursor.HAND_CURSOR)
   }
 
   private fun deactivateLearnIdeFeaturesPanel(mouseLocationOnScreen: Point) {
