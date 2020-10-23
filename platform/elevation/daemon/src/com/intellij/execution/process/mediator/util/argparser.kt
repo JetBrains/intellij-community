@@ -7,7 +7,7 @@ internal data class Arg(val option: String?, val value: String?) {
   }
 }
 
-internal fun parseArgs(args: Array<String>): Sequence<Arg> {
+internal fun parseArgs(args: Array<out String>): Sequence<Arg> {
   return sequence {
     var skip = false
     var positional = false
@@ -16,23 +16,23 @@ internal fun parseArgs(args: Array<String>): Sequence<Arg> {
         skip = false
         continue
       }
-      if (!positional && arg == "--") {
-        positional = true
-        continue
+      if (!positional) {
+        if (arg == "--") {
+          positional = true
+          continue
+        }
+        if (!arg.startsWith("--")) {
+          positional = true
+        }
       }
 
-      val option = arg.takeIf { it.startsWith("--") }?.let {
-        if ("=" in it) it.substringBefore("=") else it
-      }
+      val option = arg.takeIf { !positional }?.substringBefore("=")
 
       val value = when {
-        positional || option == null -> arg
-        "=" in arg -> {
-          arg.substringAfter("=")
-        }
+        option == null -> arg
+        "=" in arg -> arg.substringAfter("=")
         else -> {
-          skip = true
-          args.getOrNull(i + 1)?.takeUnless { it.startsWith("--") }
+          args.getOrNull(i + 1)?.takeUnless { it.startsWith("--") }?.also { skip = true }
         }
       }
 
