@@ -1709,6 +1709,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
       }
     }
+    else if (file instanceof VirtualFileSystemEntry) {
+      ((VirtualFileSystemEntry)file).setFileIndexed(true);
+    }
   }
 
   @NotNull

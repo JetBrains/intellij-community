@@ -1173,6 +1173,28 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test every directory and file are marked as indexed in open project"() {
+    def file = myFixture.addFileToProject('src/main/a.java', 'class Foo {}').virtualFile
+    def dir1 = file.parent
+    def dir2 = dir1.parent
+
+    def scope = GlobalSearchScope.allScope(getProject())
+    assertEquals(file, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "a.java", scope)))
+    assertEquals(dir1, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "main", scope)))
+    assertEquals(dir2, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "src", scope)))
+
+    // content-less indexes has been passed
+    // now all directories are indexed
+
+    assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)dir1).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)dir2).isFileIndexed())
+
+    assert findClass("Foo") // ensure content dependent indexes are passed
+
+    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+  }
+
   void "test stub updating index stamp"() {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
