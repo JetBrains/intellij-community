@@ -826,7 +826,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof ComponentEvent && myWindowManager != null) {
+    if (e instanceof ComponentEvent && myWindowManager != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
 
