@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
 import groovy.xml.XmlUtil
@@ -72,9 +73,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
     }
 
+    String zipPath = null, exePath = null
+
     if (customizer.buildZipArchive) {
       def jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)] : []
-      buildWinZip(jreDirectoryPaths, ".win", winDistPath)
+      zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
@@ -82,8 +85,45 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
+      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
         .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
+    }
+
+    if (zipPath != null && exePath != null) {
+      if (SystemInfo.isLinux) {
+        buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
+
+        File tempZip = new File(buildContext.paths.temp, "__zip")
+        buildContext.ant.mkdir(dir: tempZip)
+        buildContext.ant.exec(executable: "unzip", dir: tempZip, failOnError: true) {
+          arg(value: "-qq")
+          arg(value: zipPath)
+        }
+
+        File tempExe = new File(buildContext.paths.temp, "__exe")
+        buildContext.ant.mkdir(dir: tempExe)
+        buildContext.ant.exec(executable: "7z", dir: tempExe, failOnError: true) {
+          arg(value: "x")
+          arg(value: "-bd")
+          arg(value: exePath)
+        }
+        if (new File("${tempExe}/\$PLUGINSDIR").exists()) {
+          buildContext.ant.delete(dir: "${tempExe}/\$PLUGINSDIR")
+        }
+
+        buildContext.ant.exec(executable: "diff", failOnError: true) {
+          arg(value: "-q")
+          arg(value: "-r")
+          arg(value: tempZip.path)
+          arg(value: tempExe.path)
+        }
+
+        buildContext.ant.delete(dir: tempZip)
+        buildContext.ant.delete(dir: tempExe)
+      }
+      else {
+        buildContext.messages.warning("Cannot compare .zip and .exe on ${SystemInfo.OS_NAME}")
+      }
     }
   }
 
@@ -222,7 +262,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+  private String buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
@@ -240,6 +280,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
+      return targetPath
     }
   }
 
