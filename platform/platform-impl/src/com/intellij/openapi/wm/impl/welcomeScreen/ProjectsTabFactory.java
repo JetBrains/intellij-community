@@ -53,7 +53,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title")) {
+    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"),
+                                                           WelcomeScreenEventCollector.TabType.TabNavProject) {
+
       @Override
       protected JComponent buildComponent() {
         JPanel mainPanel;
@@ -109,6 +111,14 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
             projectsList.setModel(model);
 
             projectSearch.addDocumentListener(new DocumentAdapter() {
+              @Override
+              public void insertUpdate(@NotNull DocumentEvent e) {
+                if (StringUtil.length(projectSearch.getText()) == 1) {
+                  WelcomeScreenEventCollector.logProjectSearchUsed();
+                }
+                super.insertUpdate(e);
+              }
+
               @Override
               protected void textChanged(@NotNull DocumentEvent e) {
                 speedSearch.updatePattern(projectSearch.getText());
