@@ -124,5 +124,5 @@ class CopyTBXReferenceProvider : CopyPathProvider() {
 }
 
 class CopyFileNameProvider : CopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? = virtualFile?.nameWithoutExtension
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? = virtualFile?.name
 }
