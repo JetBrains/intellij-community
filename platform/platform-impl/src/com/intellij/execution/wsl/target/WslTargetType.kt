@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentFactory
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
@@ -27,9 +27,9 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     return WslTargetEnvironmentFactory(config)
   }
 
-  override fun createConfigurable(project: Project, config: WslTargetEnvironmentConfiguration): Configurable {
-    return WslTargetConfigurable(config)
-  }
+  override fun createConfigurable(project: Project,
+                                  config: WslTargetEnvironmentConfiguration,
+                                  defaultLanguage: LanguageRuntimeType<*>?) = WslTargetConfigurable(config)
 
   companion object {
     const val TYPE_ID = "wsl"

@@ -24,10 +24,11 @@ import javax.swing.JPanel
 
 internal class TargetEnvironmentDetailsConfigurable(
   private val project: Project,
-  private val config: TargetEnvironmentConfiguration
+  private val config: TargetEnvironmentConfiguration,
+  defaultLanguage: LanguageRuntimeType<*>?
 ) : NamedConfigurable<TargetEnvironmentConfiguration>(true, null) {
 
-  private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config)
+  private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config, defaultLanguage)
   private val runtimeConfigurables = mutableListOf<Configurable>()
 
   override fun getBannerSlogan(): String = config.displayName
