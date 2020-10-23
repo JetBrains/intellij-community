@@ -19,11 +19,7 @@ import java.util.*;
  */
 public class EAPUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 4);
-  private static final EventId EAP = GROUP.registerEvent("eap");
-  private static final EventId RELEASE = GROUP.registerEvent("release");
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
-  private static final EventId EVALUATION = GROUP.registerEvent("evaluation");
-  private static final EventId LICENSE = GROUP.registerEvent("license");
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
   private static final StringEventField METADATA = EventFields.StringListValidatedByRegexp("metadata",
                                                                                           "license_metadata");
@@ -46,22 +42,18 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
       if (!Main.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
         if (ApplicationInfoEx.getInstanceEx().isEAP()) {
-          result.add(EAP.metric());
           result.add(BUILD.metric(BuildType.eap));
         }
         else {
-          result.add(RELEASE.metric());
           result.add(BUILD.metric(BuildType.release));
         }
         final LicensingFacade facade = LicensingFacade.getInstance();
         if (facade != null) {
           // non-eap commercial version
           if (facade.isEvaluationLicense()) {
-            result.add(EVALUATION.metric());
             result.add(newLicencingMetric(LicenceType.evaluation, facade.metadata));
           }
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
-            result.add(LICENSE.metric());
             result.add(newLicencingMetric(LicenceType.license, facade.metadata));
           }
         }
