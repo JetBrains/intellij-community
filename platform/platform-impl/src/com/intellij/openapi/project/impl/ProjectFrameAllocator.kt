@@ -99,7 +99,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
     }
 
-    if (ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(progressTask, getProgressTitle(), false, true, null, frameManager!!.getComponent(), null)) {
+    if (ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(progressTask, getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)) {
       return result
     }
     // cancelled
