@@ -29,6 +29,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
@@ -56,6 +57,7 @@ import java.util.function.Consumer;
 public class PluginDetailsPageComponent extends MultiPanel {
 
   private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+  private static final boolean IS_PER_PROJECT_ENABLED = SystemProperties.is("idea.classloader.per.descriptor");
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
@@ -880,7 +882,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null) ||
+                          myNewState.isPerProject() && (!IS_PER_PROJECT_ENABLED || myRequiresRestart || e.getProject() == null) ||
                           !myNewState.isEnabled() && myPluginIsRequired;
       e.getPresentation().setVisible(!invisible);
     }
