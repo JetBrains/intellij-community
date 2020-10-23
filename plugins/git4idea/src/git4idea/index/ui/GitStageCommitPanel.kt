@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -8,6 +9,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
 import com.intellij.vcs.commit.CommitProgressUi
@@ -29,6 +31,8 @@ private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<C
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
 class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
+  private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
+
   private val progressPanel = CommitProgressPanel()
 
   private var staged: Set<GitFileStatus> = emptySet()
@@ -57,7 +61,13 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
-  override var editedCommit: EditedCommitDetails? = null
+  override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
+    editedCommitListeners.forEach { it() }
+  }
+
+  fun addEditedCommitListener(listener: () -> Unit, parent: Disposable) {
+    editedCommitListeners.add(listener, parent)
+  }
 
   override fun activate(): Boolean = true
   override fun refreshData() = Unit

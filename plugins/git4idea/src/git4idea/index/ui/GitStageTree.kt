@@ -157,8 +157,11 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       builder.insertIgnoredPaths(ignoredFilePaths)
     }
 
+    customizeTreeModel(builder)
     updateTreeModel(builder.build())
   }
+
+  protected open fun customizeTreeModel(builder: TreeModelBuilder) = Unit
 
   override fun getData(dataId: String): Any? {
     return when {
