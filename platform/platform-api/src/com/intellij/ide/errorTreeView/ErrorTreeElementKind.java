@@ -18,6 +18,7 @@ package com.intellij.ide.errorTreeView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +36,10 @@ public enum ErrorTreeElementKind {
   GENERIC ("GENERIC", "", null);
 
   private final String myText;
-  private final String myPresentableText;
+  private final @Nls String myPresentableText;
   private final Icon myIcon;
 
-  ErrorTreeElementKind(@NonNls String text, @NotNull String presentableText, @Nullable Icon icon) {
+  ErrorTreeElementKind(@NonNls String text, @NotNull @Nls String presentableText, @Nullable Icon icon) {
     myText = text;
     myPresentableText = presentableText;
     myIcon = icon;
@@ -48,7 +49,7 @@ public enum ErrorTreeElementKind {
     return myText; // for debug purposes
   }
 
-  public String getPresentableText() {
+  public @Nls String getPresentableText() {
     return myPresentableText;
   }
 

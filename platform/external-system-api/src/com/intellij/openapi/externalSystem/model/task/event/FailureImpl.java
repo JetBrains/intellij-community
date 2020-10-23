@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -23,12 +24,12 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class FailureImpl implements Failure {
-  private final String myMessage;
-  private final String myDescription;
+  private final @Nls String myMessage;
+  private final @Nls String myDescription;
   private final List<? extends Failure> myCauses;
 
-  public FailureImpl(String message,
-                     String description,
+  public FailureImpl(@Nls String message,
+                     @Nls String description,
                      List<? extends Failure> causes) {
     myMessage = message;
     myDescription = description;
@@ -37,13 +38,13 @@ public class FailureImpl implements Failure {
 
   @Nullable
   @Override
-  public String getMessage() {
+  public @Nls String getMessage() {
     return myMessage;
   }
 
   @Nullable
   @Override
-  public String getDescription() {
+  public @Nls String getDescription() {
     return myDescription;
   }
 

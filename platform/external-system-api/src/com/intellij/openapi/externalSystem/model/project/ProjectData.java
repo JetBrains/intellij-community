@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 

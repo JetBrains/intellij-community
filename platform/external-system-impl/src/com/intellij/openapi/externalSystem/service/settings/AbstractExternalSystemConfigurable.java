@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -184,7 +185,7 @@ public abstract class AbstractExternalSystemConfigurable<
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
   @NotNull
-  protected String getProjectName(@NotNull String path) {
+  protected @NlsSafe String getProjectName(@NotNull String path) {
     File file = new File(path);
     return file.isDirectory() || file.getParentFile() == null ? file.getName() : file.getParentFile().getName();
   }

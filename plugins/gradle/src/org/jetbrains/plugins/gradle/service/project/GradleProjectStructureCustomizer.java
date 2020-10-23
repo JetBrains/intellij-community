@@ -25,9 +25,11 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -63,10 +65,11 @@ public class GradleProjectStructureCustomizer extends ExternalProjectStructureCu
 
   @NotNull
   @Override
-  public Couple<String> getRepresentationName(@NotNull DataNode node) {
+  public Couple<@Nls String> getRepresentationName(@NotNull DataNode node) {
     if (node.getKey().equals(GradleSourceSetData.KEY)) {
       final GradleSourceSetData data = (GradleSourceSetData)node.getData();
-      return Couple.of("Source Set", StringUtil.substringAfter(data.getExternalName(), ":"));
+      String comment = StringUtil.substringAfter(data.getExternalName(), ":");
+      return Couple.of(GradleBundle.message("gradle.project.structure.source.set"), comment);
     }
     if (node.getKey().equals(ProjectKeys.MODULE)) {
       ModuleData moduleData = (ModuleData)node.getData();

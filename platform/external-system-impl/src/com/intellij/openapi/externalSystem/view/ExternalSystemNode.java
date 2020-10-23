@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -107,7 +108,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     String displayName = getExternalProjectsView().getDisplayName(myDataNode);
     return displayName == null ? super.getName() : displayName;
   }

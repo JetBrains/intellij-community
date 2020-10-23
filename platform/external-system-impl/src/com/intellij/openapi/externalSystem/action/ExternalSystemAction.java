@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,15 +44,15 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
     return getProject(e) != null;
   }
 
-  protected void setText(String message) {
+  protected void setText(@NlsActions.ActionText String message) {
     getTemplatePresentation().setText(message);
   }
 
-  protected void setDescription(String message) {
+  protected void setDescription(@NlsActions.ActionDescription String message) {
     getTemplatePresentation().setDescription(message);
   }
 
-  protected void setText(@NotNull AnActionEvent e, String message) {
+  protected void setText(@NotNull AnActionEvent e, @NlsActions.ActionText String message) {
     e.getPresentation().setText(message);
   }
 }

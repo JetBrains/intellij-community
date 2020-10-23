@@ -366,7 +366,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       @Override
       protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName()));
+        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName())); //NON-NLS
         orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
         JScrollPane myModulesScrollPane =

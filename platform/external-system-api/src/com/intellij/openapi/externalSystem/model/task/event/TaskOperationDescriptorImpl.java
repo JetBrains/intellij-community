@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ public class TaskOperationDescriptorImpl extends OperationDescriptorImpl impleme
 
   private final String myTaskName;
 
-  public TaskOperationDescriptorImpl(String displayName, long eventTime, String taskName) {
+  public TaskOperationDescriptorImpl(@Nls String displayName, long eventTime, String taskName) {
     super(displayName, eventTime);
     myTaskName = taskName;
   }

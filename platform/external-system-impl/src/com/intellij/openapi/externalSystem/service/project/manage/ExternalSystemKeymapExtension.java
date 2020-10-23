@@ -34,6 +34,7 @@ import com.intellij.openapi.keymap.impl.ui.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -282,7 +283,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final String myGroup;
     private final TaskData myTaskData;
 
-    ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
+    ExternalSystemTaskAction(Project project, @NlsSafe String group, TaskData taskData) {
       myGroup = group;
       myTaskData = taskData;
       myId = getActionPrefix(project, taskData.getLinkedExternalProjectPath()) + taskData.getName();

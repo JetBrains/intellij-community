@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
@@ -41,7 +42,7 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
 
   @NotNull
   @Override
-  public String getExternalName() {
+  public @NlsSafe String getExternalName() {
     return externalName;
   }
 

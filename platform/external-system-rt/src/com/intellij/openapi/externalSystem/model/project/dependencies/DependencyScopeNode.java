@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DependencyScopeNode extends AbstractDependencyNode {
   private final String scope;
-  private final String displayName;
-  private final String description;
+  private final @Nls String displayName;
+  private final @Nls String description;
 
-  @PropertyMapping({"id", "scope", "displayName", "description"}) //NON-NLS
-  public DependencyScopeNode(long id, @NotNull String scope, @NotNull String displayName, @Nullable String description) {
+  @PropertyMapping({"id", "scope", "displayName", "description"})
+  public DependencyScopeNode(long id, @NotNull String scope, @NotNull @NlsSafe String displayName, @Nullable @NlsSafe String description) {
     super(id);
     this.displayName = displayName;
     this.scope = scope;
@@ -25,12 +27,12 @@ public class DependencyScopeNode extends AbstractDependencyNode {
 
   @NotNull
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return displayName;
   }
 
   @Nullable
-  public String getDescription() {
+  public @Nls String getDescription() {
     return description;
   }
 

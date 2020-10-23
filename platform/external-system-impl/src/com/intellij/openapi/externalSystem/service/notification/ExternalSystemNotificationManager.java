@@ -45,6 +45,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -420,8 +421,10 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static @NotNull String getContentDisplayName(final @NotNull NotificationSource notificationSource,
-                                                      final @NotNull ProjectSystemId externalSystemId) {
+  public static @NotNull @Nls String getContentDisplayName(
+    final @NotNull NotificationSource notificationSource,
+    final @NotNull ProjectSystemId externalSystemId
+  ) {
     final String contentDisplayName;
     switch (notificationSource) {
       case PROJECT_SYNC:

@@ -11,6 +11,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,7 +220,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   }
 
   @NotNull
-  public static String calcPrefix(@Nullable ErrorTreeElement element) {
+  public static @Nls String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       String prefix = element.getPresentableText();
 
