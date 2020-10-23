@@ -483,6 +483,8 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-dsl/intellij.gradle.dsl.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-dsl/intellij.gradle.dsl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-dsl-impl/intellij.gradle.dsl.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-dsl-impl/intellij.gradle.dsl.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-dsl-impl/intellij.gradle.dsl.impl.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-dsl-impl/intellij.gradle.dsl.impl.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-dsl-kotlin-impl/intellij.gradle.dsl.kotlin.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-dsl-kotlin-impl/intellij.gradle.dsl.kotlin.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-dsl-kotlin-impl/intellij.gradle.dsl.kotlin.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-dsl-kotlin-impl/intellij.gradle.dsl.kotlin.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle/java/intellij.gradle.java.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle/java/intellij.gradle.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle-maven/intellij.gradle.java.maven.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle-maven/intellij.gradle.java.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/gradle/java/intellij.gradle.java.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/gradle/java/intellij.gradle.java.tests.iml" />
