@@ -65,9 +65,10 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
   @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
   @NonNls String ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE = "EditorAddCaretPerSelectedLine";
-  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION= "EditorToggleStickySelection";
-  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE= "EditorToggleInsertState";
-  @NonNls String ACTION_EDITOR_TOGGLE_CASE= "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION = "EditorToggleStickySelection";
+  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE = "EditorToggleInsertState";
+  @NonNls String ACTION_EDITOR_TOGGLE_CASE = "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TRANSPOSE = "EditorTranspose";
 
   @NonNls String ACTION_EDITOR_SHOW_PARAMETER_INFO = "ParameterInfo";
   @NonNls String ACTION_EDITOR_NEXT_PARAMETER = "NextParameter";
