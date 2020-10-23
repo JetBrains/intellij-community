@@ -39,10 +39,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
@@ -65,6 +62,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1021,14 +1019,13 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Predicate<? super AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
-    AWTEvent event;
-    do {
+    while (!exitCondition.isDone()) {
       try {
-        event = getNextEvent();
+        AWTEvent event = getNextEvent();
         boolean consumed = consumeUnrelatedEvent(modalComponent, event);
         if (!consumed) {
           dispatchEvent(event);
@@ -1036,10 +1033,8 @@ public final class IdeEventQueue extends EventQueue {
       }
       catch (Throwable e) {
         LOG.error(e);
-        event = null;
       }
     }
-    while (!exitCondition.test(event));
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }

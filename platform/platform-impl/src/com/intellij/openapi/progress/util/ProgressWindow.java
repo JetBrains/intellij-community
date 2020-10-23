@@ -39,7 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
+import java.util.concurrent.CompletableFuture;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -169,7 +169,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
     Timer timer =
-      TimerUtil.createNamedTimer("Progress window timer", myDelayInMillis, e -> ApplicationManager.getApplication().invokeLater(() -> {
+      TimerUtil.createNamedTimer("Progress window timer", myDelayInMillis, __ -> ApplicationManager.getApplication().invokeLater(() -> {
         if (isRunning()) {
           showDialog();
         }
@@ -202,15 +202,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   @Deprecated
   public void startBlocking(@NotNull Runnable init) {
-    startBlocking(init, () -> wasStarted() && !isRunning());
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    Disposer.register(this, () -> future.complete(null));
+    startBlocking(init, future);
   }
 
   @Override
-  public void startBlocking(@NotNull Runnable init, @NotNull BooleanSupplier stopCondition) {
-    pumpEventsWhile(init, stopCondition);
-  }
-
-  private void pumpEventsWhile(@NotNull Runnable init, @NotNull BooleanSupplier stopCondition) {
+  public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
     EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
@@ -223,15 +221,19 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     try {
       ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
         initializeOnEdtIfNeeded();
-        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+        // guarantee AWT event after the future is done will be pumped and loop exited
+        stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, stopCondition, event -> {
           if (isCancellationEvent(event)) {
             cancel();
+            return true;
           }
-          return stopCondition.getAsBoolean();
+          return false;
         });
         return null;
       });
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       if (isRunning()) {
         LOG.warn("Exception while pumping messages in ProgressWindow#startBlocking. " +
                  "The dialog modality state message processing is finished. " + t.getMessage(), new RuntimeException(t));
@@ -264,7 +266,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     );
   }
 
-  final boolean isCancellationEvent(@Nullable AWTEvent event) {
+  final boolean isCancellationEvent(@NotNull AWTEvent event) {
     return myShouldShowCancel &&
            event instanceof KeyEvent &&
            event.getID() == KeyEvent.KEY_PRESSED &&

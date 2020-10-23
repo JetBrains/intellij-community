@@ -112,7 +112,8 @@ public final class ProgressRunner<R> {
 
   private ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation,
                          boolean sync,
-                         boolean modal, @NotNull ThreadToUse use,
+                         boolean modal,
+                         @NotNull ThreadToUse use,
                          @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
     myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
@@ -168,7 +169,7 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressResult<R> submitAndGet() {
-    CompletableFuture<ProgressResult<R>> future = sync().submit();
+    Future<ProgressResult<R>> future = sync().submit();
 
     try {
       return future.get();
@@ -291,7 +292,8 @@ public final class ProgressRunner<R> {
       //   but EDT is broken due an exception. Hence, initial task should be completed exceptionally
       CompletableFuture<Void> blockingRunFuture = progressFuture.thenAccept(progressIndicator -> {
         if (progressIndicator instanceof BlockingProgressIndicator) {
-          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up, ()->taskFuture.isDone());
+          //noinspection deprecation
+          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up, taskFuture);
         }
         else {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");

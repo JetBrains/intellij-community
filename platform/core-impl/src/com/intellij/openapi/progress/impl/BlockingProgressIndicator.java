@@ -5,12 +5,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BooleanSupplier;
+import java.util.concurrent.CompletableFuture;
 
 @ApiStatus.Internal
 public interface BlockingProgressIndicator extends ProgressIndicator {
   /**
-   * Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager}
+   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager} or {@link ProgressRunner}
    */
-  void startBlocking(@NotNull Runnable init, @NotNull BooleanSupplier stopCondition);
+  @Deprecated
+  void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition);
 }
