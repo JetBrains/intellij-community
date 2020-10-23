@@ -126,8 +126,6 @@
                  description="Enables some deprecated setting in the Gradle settings dialog for troubleshooting"/>
     <registryKey key="gradle.tooling.custom.serializer" defaultValue="true"
                  description="Enable custom serialization of custom tooling objects"/>
-    <registryKey key="gradle.build.errors.problems" defaultValue="true"
-                 description="Enable reporting of Project Problems from Build output toolwindow" />
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>

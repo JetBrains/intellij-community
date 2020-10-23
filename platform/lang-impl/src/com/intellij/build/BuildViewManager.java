@@ -7,7 +7,6 @@ import com.intellij.build.progress.BuildRootProgressImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +18,9 @@ public class BuildViewManager extends AbstractViewManager {
 
   public BuildViewManager(Project project) {
     super(project);
-    if (Registry.is("gradle.build.errors.problems", true)) {
-      @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
-      if (buildViewProblemsService != null) {
-        buildViewProblemsService.listenToBuildView(this);
-      }
+    @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
+    if (buildViewProblemsService != null) {
+      buildViewProblemsService.listenToBuildView(this);
     }
   }
 
