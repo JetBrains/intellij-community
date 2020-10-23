@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
@@ -10,7 +11,7 @@ typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
-data class ProjectIndexingHistory(val projectName: String) {
+data class ProjectIndexingHistory(val project: Project) {
   private val biggestContributorsPerFileTypeLimit = 10
 
   val times = IndexingTimes()

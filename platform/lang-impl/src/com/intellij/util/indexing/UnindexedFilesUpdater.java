@@ -368,7 +368,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject.getName());
+    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
     projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
     myIndex.filesUpdateStarted(myProject);
     try {
