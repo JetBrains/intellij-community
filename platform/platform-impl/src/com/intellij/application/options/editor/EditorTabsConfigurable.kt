@@ -91,6 +91,14 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
         row { checkBox(sortTabsAlphabetically) }
         row { checkBox(openTabsAtTheEnd) }
       }
+      titledRow(message("group.tab.opening.policy")) {
+        row {
+          checkBox(openInPreviewTabIfPossible)
+        }
+        row {
+          checkBox(reuseNotModifiedTabs)
+        }
+      }
       titledRow(message("group.tab.closing.policy")) {
         row {
           cell {
@@ -116,12 +124,6 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
           }
-        }
-        row {
-          checkBox(reuseNotModifiedTabs)
-        }
-        row {
-          checkBox(openInPreviewTabIfPossible)
         }
       }
     }
