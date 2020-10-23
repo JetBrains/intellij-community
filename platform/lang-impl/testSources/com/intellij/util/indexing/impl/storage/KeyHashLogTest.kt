@@ -75,6 +75,22 @@ class KeyHashLogTest {
   }
 
   @Test
+  fun testKeyMovedToAnotherFile() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 2)
+      it.addKeyHashToVirtualFileMapping("qwe", -1)
+
+      val hashes = it.getSuitableKeyHashes(setOf(2, 1).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes)
+
+      val hashes1 = it.getSuitableKeyHashes(setOf(2).toFilter(), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), hashes1)
+    }
+  }
+
+  @Test
   fun testCompaction() {
     val dir = temporaryDirectory.createDir()
     KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
