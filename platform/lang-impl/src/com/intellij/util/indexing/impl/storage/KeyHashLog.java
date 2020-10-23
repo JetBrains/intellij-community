@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * A data structure to store key hashes to virtual file id mappings.
@@ -38,7 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 class KeyHashLog<Key> implements Closeable {
   private static final Logger LOG = Logger.getInstance(KeyHashLog.class);
   private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.cashed.hashids", true);
-  private static final ConcurrentIntObjectMap<Boolean> ourInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
 
   @NotNull
   private final KeyDescriptor<Key> myKeyDescriptor;
@@ -46,6 +46,9 @@ class KeyHashLog<Key> implements Closeable {
   private final Path myBaseStorageFile;
   @NotNull
   private final AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
+  @NotNull
+  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
+
   private volatile int myLastScannedId;
 
   KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
@@ -90,7 +93,7 @@ class KeyHashLog<Key> implements Closeable {
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
     if (useCachedHashIds && id == myLastScannedId) {
-      if (ourInvalidatedSessionIds.remove(id) == null) {
+      if (myInvalidatedSessionIds.remove(id) == null) {
         try {
           hashMaskSet = loadProjectHashes(sessionProjectCacheFile);
         }
@@ -142,7 +145,7 @@ class KeyHashLog<Key> implements Closeable {
       myKeyHashToVirtualFileMapping.force();
     }, false);
 
-    IntSet hashMaskSet = new IntOpenHashSet(1000);
+    Int2ObjectMap<IntSet> hash2inputIds = new Int2ObjectOpenHashMap<>(1000);
     try {
       AtomicInteger uselessRecords = new AtomicInteger();
 
@@ -152,29 +155,36 @@ class KeyHashLog<Key> implements Closeable {
         myKeyHashToVirtualFileMapping.processAll(key -> {
           ProgressManager.checkCanceled();
           int inputId = key[1];
-          if (!idFilter.containsFileId(Math.abs(inputId))) return true;
+          int absInputId = Math.abs(inputId);
+          if (!idFilter.containsFileId(absInputId)) return true;
           int keyHash = key[0];
           if (inputId > 0) {
-            if (!hashMaskSet.add(keyHash)) {
+            if (!hash2inputIds.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId)) {
               uselessRecords.incrementAndGet();
             }
           }
           else {
-            hashMaskSet.remove(keyHash);
+            IntSet inputIds = hash2inputIds.get(keyHash);
+            if (inputIds != null) {
+              inputIds.remove(absInputId);
+              if (inputIds.isEmpty()) {
+                hash2inputIds.remove(keyHash);
+              }
+            }
             uselessRecords.incrementAndGet();
           }
           return true;
         });
       }, true);
 
-      if (uselessRecords.get() >= hashMaskSet.size()) {
+      if (uselessRecords.get() >= hash2inputIds.size()) {
         setRequiresCompaction();
       }
     }
     catch (IOException e) {
       throw new StorageException(e);
     }
-    return hashMaskSet;
+    return hash2inputIds.keySet();
   }
 
   void force() {
@@ -310,7 +320,7 @@ class KeyHashLog<Key> implements Closeable {
   private void invalidateKeyHashToVirtualFileMappingCache() {
     int lastScannedId = myLastScannedId;
     if (lastScannedId != 0) { // we have write lock
-      ourInvalidatedSessionIds.putIfAbsent(lastScannedId, Boolean.TRUE);
+      myInvalidatedSessionIds.putIfAbsent(lastScannedId, Boolean.TRUE);
       myLastScannedId = 0;
     }
   }
