@@ -19,6 +19,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
@@ -62,6 +63,7 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   @NotNull
+  @NlsSafe
   public String getJreName() {
     return jreName;
   }

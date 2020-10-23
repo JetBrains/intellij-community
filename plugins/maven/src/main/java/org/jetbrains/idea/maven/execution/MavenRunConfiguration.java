@@ -516,7 +516,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         return super.createTargetedCommandLine(request, configuration);
       }
       if (configuration == null) {
-        throw new CantRunException("Cannot find target environment configuration");
+        throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
       return new MavenCommandLineSetup(getProject(), myName, request, configuration)
         .setupCommandLine(mySettings)
