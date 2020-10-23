@@ -252,8 +252,23 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     "kotlin.jvm.internal.DefaultConstructorMarker",
     "kotlin.jvm.internal.ClassBasedDeclarationContainer",
     "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty"
+    "kotlin.properties.ReadOnlyProperty",
+    "kotlin.coroutines.ContinuationInterceptor",
+    "kotlinx.coroutines.CoroutineDispatcher",
+    "kotlin.coroutines.Continuation",
+    "kotlin.coroutines.CoroutineContext",
+    "kotlin.coroutines.CoroutineContext$Element",
+    "kotlin.coroutines.CoroutineContext$Key"
   ));
+
+  static {
+    String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
+    if (classes != null) {
+      for (StringTokenizer t = new StringTokenizer(classes, ","); t.hasMoreTokens(); ) {
+        KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.add(t.nextToken());
+      }
+    }
+  }
 
   private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
@@ -264,7 +279,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     // We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               className.startsWith("kotlin.coroutines.") ||
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
