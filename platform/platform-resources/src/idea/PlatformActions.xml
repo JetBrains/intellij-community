@@ -463,6 +463,7 @@
           <group id="CopyGroup" popup="true" class="com.intellij.ide.actions.SmartPopupActionGroup">
             <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
             <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
+            <separator/>
             <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" />
             <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
             <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
