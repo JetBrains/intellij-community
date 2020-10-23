@@ -95,7 +95,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private fun allTargets() = TargetEnvironmentsManager.instance.targets.resolvedConfigs()
 
   private fun addTargetNode(config: TargetEnvironmentConfiguration): MyNode {
-    val configurable = TargetEnvironmentDetailsConfigurable(project, config)
+    val configurable = TargetEnvironmentDetailsConfigurable(project, config, defaultLanguageRuntime)
     val node = MyNode(configurable)
     addNode(node, myRoot)
     selectNodeInTree(node)
