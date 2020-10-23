@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -15,9 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * @author maxim
- */
 public class ColorSampleLookupValue {
   private static final int NORMAL_PRIORITY = 0;
   private static final int HIGHER_PRIORITY = 1;
@@ -47,7 +44,7 @@ public class ColorSampleLookupValue {
     return myIsStandard;
   }
 
-  public Icon getIcon() {
+  private @Nullable Icon getIcon() {
     if (myColor == null) {
       if (myValue.startsWith("#")) {
         try {
@@ -60,7 +57,7 @@ public class ColorSampleLookupValue {
     }
 
     if (myColor != null) {
-      return ColorIconCache.getIconCache().getIcon(myColor, 32);
+      return ColorIconCache.getIconCache().getIcon(myColor, 16);
     }
 
     return null;
