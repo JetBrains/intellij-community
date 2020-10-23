@@ -10,13 +10,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -255,9 +255,7 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    UpdateSettings updateSettingsService = ServiceManager.getServiceIfCreated(UpdateSettings.class);
-    boolean deletePluginSource = updateSettingsService == null // means we're run before Application is initialized, likely from the initial setup Wizard in some IDEs, e.g. Rider, so we don't care about the archive
-            || !updateSettingsService.isKeepPluginsArchive();
+    boolean deletePluginSource = !Registry.is("ide.plugins.keep.archive", true);
     PluginInstaller.installAfterRestart(myFile.toPath(), deletePluginSource, myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
