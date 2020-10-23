@@ -69,7 +69,6 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     importProject();
     assertScriptChanged();
-    assertModuleLibDeps("project.main", "Gradle: group:artifact:2.0", "Gradle: another:artifact:2.0");
   }
 
   @Test
@@ -83,6 +82,5 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     importProject();
     assertScriptChanged();
-    assertModuleLibDeps("project.main", "Gradle: group:artifact:2.0", "Gradle: another:artifact:2.0");
   }
 }
