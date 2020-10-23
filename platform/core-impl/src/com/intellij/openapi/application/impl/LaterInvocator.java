@@ -84,24 +84,29 @@ public final class LaterInvocator {
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired, boolean onEdt) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return invokeLater(runnable, modalityState, expired, onEdt);
+    return invokeLater(runnable, modalityState, expired);
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
-    return invokeLater(runnable, modalityState, Conditions.alwaysFalse(), onEdt);
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    return invokeLater(runnable, modalityState, Conditions.alwaysFalse());
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, boolean onEdt) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable,
+                                    @NotNull ModalityState modalityState,
+                                    @NotNull Condition<?> expired) {
     ActionCallback callback = new ActionCallback();
-    invokeLaterWithCallback(runnable, modalityState, expired, callback, onEdt);
+    invokeLaterWithCallback(runnable, modalityState, expired, callback, true);
     return callback;
   }
 
-  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback,
+  static void invokeLaterWithCallback(@NotNull Runnable runnable,
+                                      @NotNull ModalityState modalityState,
+                                      @NotNull Condition<?> expired,
+                                      @Nullable ActionCallback callback,
                                       boolean onEdt) {
     if (expired.value(null)) {
       if (callback != null) {
@@ -110,10 +115,11 @@ public final class LaterInvocator {
       return;
     }
     FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
-    pushRunnableToQueue(onEdt, runnableInfo);
+    getRunnableQueue(onEdt).push(runnableInfo);
+    requestFlush();
   }
 
-  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
+  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -139,7 +145,7 @@ public final class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, onEdt);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, true);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -233,7 +239,8 @@ public final class LaterInvocator {
 
     if (index != -1) {
       removeModality(dialog, index);
-    } else if (project != null) {
+    }
+    else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
       int perProjectIndex = dialogs.indexOf(dialog);
       LOG.assertTrue(perProjectIndex >= 0);
@@ -322,6 +329,7 @@ public final class LaterInvocator {
     return ApplicationManager.getApplication().isWriteThread();
   }
 
+  @NotNull
   private static FlushQueue getRunnableQueue(boolean onEdt) {
     return onEdt ? ourEdtQueue : ourWtQueue;
   }
@@ -366,10 +374,10 @@ public final class LaterInvocator {
 
   /**
    * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances
-   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link UIUtil#dispatchAllInvocationEvents()} would
+   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link com.intellij.util.ui.UIUtil#dispatchAllInvocationEvents()} would
    * stop processing events too early and lead to spurious test failures.
    *
-   * @see IdeEventQueue#peekEvent()
+   * @see com.intellij.ide.IdeEventQueue#peekEvent()
    */
   public static boolean ensureFlushRequested() {
     if (ourEdtQueue.getNextEvent(false) != null) {
@@ -390,6 +398,7 @@ public final class LaterInvocator {
   private static final AtomicInteger THREAD_TO_FLUSH = new AtomicInteger(0);
 
   @TestOnly
+  @NotNull
   public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
@@ -398,11 +407,6 @@ public final class LaterInvocator {
   @NotNull
   public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorWtQueue() {
     return ourWtQueue.getQueue();
-  }
-
-  private static void pushRunnableToQueue(boolean onEdt, FlushQueue.RunnableInfo runnableInfo) {
-    getRunnableQueue(onEdt).push(runnableInfo);
-    requestFlush();
   }
 
   private static void reincludeSkippedItemsAndRequestFlush() {
@@ -423,7 +427,7 @@ public final class LaterInvocator {
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    invokeLater(semaphore::up, ModalityState.any(), true);
+    invokeLater(semaphore::up, ModalityState.any());
     while (!semaphore.isUp()) {
       EdtInvocationManager.dispatchAllInvocationEvents();
     }

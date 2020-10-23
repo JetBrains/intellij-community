@@ -473,7 +473,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(() -> runIntendedWriteActionOnCurrentThread(r), modalityState, true);
+    LaterInvocator.invokeAndWait(() -> runIntendedWriteActionOnCurrentThread(r), modalityState);
   }
 
   @Override
@@ -800,12 +800,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
     invokeLaterOnWriteThread(action, modal, getDisposed());
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
     // EDT == Write Thread in legacy mode
     LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, !USE_SEPARATE_WRITE_THREAD);

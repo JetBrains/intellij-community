@@ -1029,24 +1029,8 @@ public final class IdeEventQueue extends EventQueue {
     do {
       try {
         event = getNextEvent();
-        boolean eventOk = true;
-        if (event instanceof InputEvent) {
-          final Object s = event.getSource();
-          if (s instanceof Component) {
-            Component c = (Component)s;
-            Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
-            while (c != null && c != modalWindow) c = c.getParent();
-            if (c == null) {
-              eventOk = false;
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("pumpEventsForHierarchy.consumed: " + event);
-              }
-              ((InputEvent)event).consume();
-            }
-          }
-        }
-
-        if (eventOk) {
+        boolean consumed = consumeUnrelatedEvent(modalComponent, event);
+        if (!consumed) {
           dispatchEvent(event);
         }
       }
@@ -1059,6 +1043,27 @@ public final class IdeEventQueue extends EventQueue {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }
+  }
+
+  // return true if consumed
+  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+    boolean consumed = false;
+    if (event instanceof InputEvent) {
+      Object s = event.getSource();
+      if (s instanceof Component) {
+        Component c = (Component)s;
+        Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
+        while (c != null && c != modalWindow) c = c.getParent();
+        if (c == null) {
+          consumed = true;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+          }
+          ((InputEvent)event).consume();
+        }
+      }
+    }
+    return consumed;
   }
 
   @FunctionalInterface

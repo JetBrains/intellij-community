@@ -20,7 +20,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Modifier;
-import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -164,12 +163,12 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
     action.run();
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     action.run();
   }
 
