@@ -171,19 +171,19 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
-    for ((module, p) in sourceFoldersToChange) {
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        for ((eventFile, sourceFolders) in p) {
-          val (_, url, type, packagePrefix, generated) = sourceFolders
-          val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                             ?: model.addContentEntry(url)
-          val sourceFolder = contentEntry.addSourceFolder(url, type)
-          if (packagePrefix != null && packagePrefix.isNotEmpty()) {
-            sourceFolder.packagePrefix = packagePrefix
-          }
-          setForGeneratedSources(sourceFolder, generated)
+    ModuleRootModificationUtil.batchUpdateModels(sourceFoldersToChange.keys) { model ->
+      val p = sourceFoldersToChange[model.module] ?: return@batchUpdateModels false
+      for ((eventFile, sourceFolders) in p) {
+        val (_, url, type, packagePrefix, generated) = sourceFolders
+        val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
+                           ?: model.addContentEntry(url)
+        val sourceFolder = contentEntry.addSourceFolder(url, type)
+        if (packagePrefix != null && packagePrefix.isNotEmpty()) {
+          sourceFolder.packagePrefix = packagePrefix
         }
+        setForGeneratedSources(sourceFolder, generated)
       }
+      true
     }
   }
 
