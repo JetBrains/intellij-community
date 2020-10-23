@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.sure
-import java.util.*
 
 class KotlinFunctionCallUsage(
     element: KtCallElement,

@@ -5,9 +5,8 @@ import com.intellij.structuralsearch.Matcher
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
-import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.io.File
 import kotlin.random.Random

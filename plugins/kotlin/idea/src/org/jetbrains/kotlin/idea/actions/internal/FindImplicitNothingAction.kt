@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 import javax.swing.SwingUtilities
 
 class FindImplicitNothingAction : AnAction() {

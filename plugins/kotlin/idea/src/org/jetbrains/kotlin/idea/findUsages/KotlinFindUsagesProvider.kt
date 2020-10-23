@@ -5,18 +5,11 @@
 
 package org.jetbrains.kotlin.idea.findUsages
 
-import com.intellij.lang.cacheBuilder.WordsScanner
-import com.intellij.lang.findUsages.FindUsagesProvider
-import com.intellij.lang.java.JavaFindUsagesProvider
-import com.intellij.psi.*
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class KotlinFindUsagesProvider : KotlinFindUsagesProviderBase() {

@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.combineWhenConditions
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import java.util.*
 
 
 class CommaInWhenConditionWithoutArgumentFix(element: PsiElement) : KotlinQuickFixAction<PsiElement>(element), CleanupFix {

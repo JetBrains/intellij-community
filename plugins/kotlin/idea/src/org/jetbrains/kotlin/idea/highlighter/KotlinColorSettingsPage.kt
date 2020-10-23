@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension
 import java.lang.reflect.Modifier
-import java.util.*
 
 class KotlinColorSettingsPage : ColorSettingsPage, RainbowColorSettingsPage {
     override fun getLanguage() = KotlinLanguage.INSTANCE

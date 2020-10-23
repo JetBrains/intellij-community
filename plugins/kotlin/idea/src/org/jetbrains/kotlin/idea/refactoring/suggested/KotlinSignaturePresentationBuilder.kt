@@ -1,9 +1,9 @@
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
-import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.Leaf
 import com.intellij.refactoring.suggested.SignaturePresentationBuilder
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 
 internal class KotlinSignaturePresentationBuilder(
     signature: SuggestedRefactoringSupport.Signature,

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import java.util.*
 
 /**
  * Analyzes the rest of the loop and detects index variable manually incremented inside.

@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
-import java.util.*
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {
     abstract val expectedFileExt: String

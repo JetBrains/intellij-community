@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
-import java.util.*
 
 fun collectContainingClasses(methods: Collection<PsiMethod>): Set<PsiClass> {
     val classes = HashSet<PsiClass>()

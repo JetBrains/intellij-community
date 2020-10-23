@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.util.isDev
 import org.jetbrains.kotlin.idea.util.isEap
 import java.io.IOException

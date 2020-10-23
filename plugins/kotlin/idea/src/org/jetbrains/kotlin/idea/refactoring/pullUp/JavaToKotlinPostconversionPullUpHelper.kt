@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import java.util.*
 
 class JavaToKotlinPostconversionPullUpHelper(private val data: PullUpData) : PullUpHelper<MemberInfo> {
     override fun setCorrectVisibility(info: MemberInfo?) {}

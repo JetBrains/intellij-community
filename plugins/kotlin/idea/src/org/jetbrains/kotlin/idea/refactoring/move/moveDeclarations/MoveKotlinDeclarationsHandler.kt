@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import java.util.*
 
 private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerActions {
 

@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
 data class ExtractionOptions(
     val inferUnitTypeForUnusedValues: Boolean = true,

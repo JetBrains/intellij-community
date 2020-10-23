@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.awt.Color
-import java.util.*
 import javax.swing.JCheckBox
 
 class KotlinInplaceParameterIntroducer(

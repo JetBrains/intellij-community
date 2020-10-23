@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import java.util.*
 
 fun analyzePushDownConflicts(
     context: KotlinPushDownContext,

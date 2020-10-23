@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConfli
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
 
 class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
     private data class FileUsagesWrapper(

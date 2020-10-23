@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import java.util.*
 
 abstract class AbstractPullPushMembersHandler(
     @Nls private val refactoringName: String,

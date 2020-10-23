@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.util.*
 
 abstract class FilterTransformationBase : SequenceTransformation {
     abstract val effectiveCondition: Condition

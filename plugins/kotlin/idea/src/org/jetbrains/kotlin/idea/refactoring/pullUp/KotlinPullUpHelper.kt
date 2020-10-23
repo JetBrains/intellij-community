@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverVa
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.Variance
-import java.util.*
 
 class KotlinPullUpHelper(
     private val javaData: PullUpData,

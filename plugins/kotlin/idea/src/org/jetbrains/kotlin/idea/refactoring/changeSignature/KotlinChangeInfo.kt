@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.keysToMap
-import java.util.*
 
 open class KotlinChangeInfo(
     val methodDescriptor: KotlinMethodDescriptor,

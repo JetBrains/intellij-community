@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import java.util.*
 
 internal abstract class ReplacementPerformer<TElement : KtElement>(
     protected val codeToInline: MutableCodeToInline,

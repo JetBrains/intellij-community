@@ -8,8 +8,8 @@ package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.cases;
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.RefactoringCase
 import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.RandomMoveRefactoringResult
+import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.RefactoringCase
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.RefactoringConflictsFoundException

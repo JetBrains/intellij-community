@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.util.isAbstract
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
-import java.util.*
 
 open class CreateCallableFromUsageFix<E : KtElement>(
     originalExpression: E,

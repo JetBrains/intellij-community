@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.mapToIndex
-import java.util.*
 
 object J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
     private val myProcessings = ArrayList<J2kPostProcessing>()

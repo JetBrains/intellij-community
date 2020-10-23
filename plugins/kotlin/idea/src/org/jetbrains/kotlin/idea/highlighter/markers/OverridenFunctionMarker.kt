@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.JComponent
 
 private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {

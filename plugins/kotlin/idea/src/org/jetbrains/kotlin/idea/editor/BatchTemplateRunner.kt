@@ -29,7 +29,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import java.util.*
 
 class BatchTemplateRunner(private val project: Project) {
     private val elementsAndFactories = ArrayList<Pair<SmartPsiElementPointer<*>, () -> Template?>>()

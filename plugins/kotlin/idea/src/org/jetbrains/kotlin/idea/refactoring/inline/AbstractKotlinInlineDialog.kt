@@ -13,7 +13,6 @@ import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(

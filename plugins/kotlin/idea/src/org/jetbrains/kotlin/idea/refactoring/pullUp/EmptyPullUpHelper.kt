@@ -22,7 +22,6 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.memberPullUp.PullUpHelper
-import java.util.*
 
 object EmptyPullUpHelper : PullUpHelper<MemberInfoBase<PsiMember>> {
     override fun postProcessMember(member: PsiMember) {

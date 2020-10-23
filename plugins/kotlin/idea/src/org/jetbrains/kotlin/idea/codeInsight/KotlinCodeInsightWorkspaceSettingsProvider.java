@@ -9,12 +9,8 @@ import com.intellij.application.options.editor.AutoImportOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.statistics.FUSEventGroups;
-import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class KotlinCodeInsightWorkspaceSettingsProvider implements AutoImportOptionsProvider {
     private final Project project;

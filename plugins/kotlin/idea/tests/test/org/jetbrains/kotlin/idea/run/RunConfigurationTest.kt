@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.*
 
 private const val RUN_PREFIX = "// RUN:"
 

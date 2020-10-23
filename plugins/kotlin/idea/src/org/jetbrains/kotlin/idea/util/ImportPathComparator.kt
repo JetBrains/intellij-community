@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry.Companion.ALL
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry.Companion.ALL_OTHER_IMPORTS_ENTRY
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.util.Comparator
 
 internal class ImportPathComparator(private val packageTable: KotlinPackageEntryTable) : Comparator<ImportPath> {
 

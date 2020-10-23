@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import java.util.*
 
 object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
 

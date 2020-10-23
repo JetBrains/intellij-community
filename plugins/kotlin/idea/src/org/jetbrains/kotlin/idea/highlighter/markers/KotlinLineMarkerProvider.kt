@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.ListCellRenderer
 
 class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {

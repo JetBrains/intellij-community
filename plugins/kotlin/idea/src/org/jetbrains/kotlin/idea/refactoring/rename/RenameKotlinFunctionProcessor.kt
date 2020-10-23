@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import java.util.ArrayList
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 

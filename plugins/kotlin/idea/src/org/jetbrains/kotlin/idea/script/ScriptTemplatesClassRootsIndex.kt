@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.*
-import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH

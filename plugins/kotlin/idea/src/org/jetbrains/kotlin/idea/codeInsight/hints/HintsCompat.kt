@@ -10,7 +10,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
-import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
 

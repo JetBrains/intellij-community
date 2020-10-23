@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitution
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
-import java.util.*
 
 class KotlinPullUpData(
     val sourceClass: KtClassOrObject,

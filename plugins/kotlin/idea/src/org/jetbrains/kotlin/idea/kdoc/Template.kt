@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
-import java.util.*
-
 /**
  * A template that expands inside [TOuter]
  */

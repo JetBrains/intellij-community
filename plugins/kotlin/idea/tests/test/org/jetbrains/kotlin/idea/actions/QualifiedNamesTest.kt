@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.util.*
 
 @RunWith(JUnit38ClassRunner::class)
 class QualifiedNamesTest : KotlinLightCodeInsightFixtureTestCase() {

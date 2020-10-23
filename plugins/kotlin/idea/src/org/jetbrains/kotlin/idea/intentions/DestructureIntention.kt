@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import java.util.*
 
 class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
     DestructureIntention::class,

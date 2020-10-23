@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.memberPullUp.PullUpDialogBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinOrJavaClassCellRenderer;

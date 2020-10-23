@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.psi.psiUtil.contentRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import java.util.*
 
 class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpression>(
     KtForExpression::class.java,

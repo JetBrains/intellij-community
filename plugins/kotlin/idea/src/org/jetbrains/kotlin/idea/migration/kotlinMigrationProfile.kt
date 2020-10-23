@@ -17,7 +17,6 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
-import java.util.*
 
 fun createMigrationProfile(
     managerEx: InspectionManagerEx,

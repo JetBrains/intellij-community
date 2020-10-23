@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.HelpID
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperclassHandler
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo

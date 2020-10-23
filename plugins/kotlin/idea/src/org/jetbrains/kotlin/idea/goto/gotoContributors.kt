@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import java.util.*
 
 class KotlinGotoClassContributor : GotoClassContributor {
     override fun getQualifiedName(item: NavigationItem): String? {

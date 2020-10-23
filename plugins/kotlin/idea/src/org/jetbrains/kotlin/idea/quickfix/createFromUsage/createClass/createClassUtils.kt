@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitution
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import java.util.*
 import org.jetbrains.kotlin.descriptors.ClassKind as ClassDescriptorKind
 
 internal fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())

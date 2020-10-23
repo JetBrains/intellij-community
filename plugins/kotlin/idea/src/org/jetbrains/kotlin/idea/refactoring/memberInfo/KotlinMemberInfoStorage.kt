@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.resolve.OverloadChecker
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
-import java.util.*
 
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,

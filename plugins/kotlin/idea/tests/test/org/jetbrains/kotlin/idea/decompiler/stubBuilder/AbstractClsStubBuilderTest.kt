@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.junit.Assert
 import java.io.File
-import java.util.*
 
 abstract class AbstractClsStubBuilderTest : LightJavaCodeInsightFixtureTestCase() {
     fun doTest(sourcePath: String) {

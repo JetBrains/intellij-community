@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
-import java.util.*
 
 class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
     KtProperty::class.java,

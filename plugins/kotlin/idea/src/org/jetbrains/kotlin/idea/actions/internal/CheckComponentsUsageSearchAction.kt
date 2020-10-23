@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
 import javax.swing.SwingUtilities
 
 class CheckComponentsUsageSearchAction : AnAction() {

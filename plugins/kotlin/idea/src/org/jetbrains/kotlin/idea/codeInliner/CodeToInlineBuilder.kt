@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
-import java.util.*
 
 class CodeToInlineBuilder(
     private val targetCallable: CallableDescriptor,

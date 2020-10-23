@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import java.util.*
 
 class KotlinResolveSnapshotProvider : ResolveSnapshotProvider() {
     override fun createSnapshot(scope: PsiElement) = object : ResolveSnapshot() {

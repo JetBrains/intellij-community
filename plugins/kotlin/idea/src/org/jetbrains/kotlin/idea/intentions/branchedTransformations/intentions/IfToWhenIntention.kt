@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import java.util.*
 
 class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,

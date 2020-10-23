@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
-import java.util.*
 import kotlin.math.min
 
 object KotlinIntroduceVariableHandler : RefactoringActionHandler {

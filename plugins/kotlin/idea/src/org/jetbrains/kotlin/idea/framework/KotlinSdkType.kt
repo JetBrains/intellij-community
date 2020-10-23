@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
-import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.JComponent
 
 class KotlinSdkType : SdkType("KotlinSDK") {

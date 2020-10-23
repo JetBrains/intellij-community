@@ -28,7 +28,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PopupHandler
 import org.jetbrains.kotlin.psi.KtElement
-import java.util.*
 import javax.swing.JTree
 
 class KotlinCallHierarchyBrowser(element: PsiElement) :

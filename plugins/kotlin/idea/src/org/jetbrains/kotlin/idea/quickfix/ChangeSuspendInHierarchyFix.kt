@@ -38,8 +38,6 @@ import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.ifEmpty
-import java.util.*
-import kotlin.collections.filter
 
 class ChangeSuspendInHierarchyFix(
     element: KtNamedFunction,

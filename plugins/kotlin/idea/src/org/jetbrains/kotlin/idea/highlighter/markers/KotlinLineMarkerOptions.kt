@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.GutterIconDescriptor
 import com.intellij.icons.AllIcons
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinIcons
 
 internal object KotlinLineMarkerOptions {
     val overriddenOption = GutterIconDescriptor.Option(

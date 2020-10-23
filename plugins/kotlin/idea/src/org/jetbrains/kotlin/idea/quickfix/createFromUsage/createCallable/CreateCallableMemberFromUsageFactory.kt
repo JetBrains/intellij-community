@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.Callab
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 import org.jetbrains.kotlin.psi.KtElement
-import java.util.*
 
 abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     private val extensionsSupported: Boolean = true

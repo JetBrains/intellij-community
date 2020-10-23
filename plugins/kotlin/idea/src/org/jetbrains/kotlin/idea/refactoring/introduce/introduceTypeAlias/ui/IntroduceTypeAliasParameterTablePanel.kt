@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui
 
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.TypeParameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.AbstractParameterTablePanel
-import java.util.*
 
 open class IntroduceTypeAliasParameterTablePanel :
     AbstractParameterTablePanel<TypeParameter, IntroduceTypeAliasParameterTablePanel.TypeParameterInfo>() {

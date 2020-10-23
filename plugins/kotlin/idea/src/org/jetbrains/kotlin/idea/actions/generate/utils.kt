@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassOrAny
-import java.util.*
 
 tailrec fun ClassDescriptor.findDeclaredFunction(
     name: String,

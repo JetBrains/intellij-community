@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui
 
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.refactoring.BaseRefactoringProcessor
-import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MovedEntity
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination
+import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MovedEntity
 
 internal class ModelResultWithFUSData(
   val processor: BaseRefactoringProcessor,

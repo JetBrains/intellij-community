@@ -62,7 +62,6 @@ import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.Toolkit
 import java.awt.event.ItemEvent
-import java.util.*
 import javax.swing.*
 
 class KotlinChangeSignatureDialog(

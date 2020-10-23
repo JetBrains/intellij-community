@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.refactoring.safeDelete.removeOverrideModifier
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
-import java.util.*
 
 class JavaToKotlinPreconversionPullUpHelper(
     private val data: PullUpData,

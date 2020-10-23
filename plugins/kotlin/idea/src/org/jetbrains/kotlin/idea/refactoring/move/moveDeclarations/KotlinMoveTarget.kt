@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.getOrPutNullable
-import java.util.*
 
 interface KotlinMoveTarget {
     val targetContainerFqName: FqName?

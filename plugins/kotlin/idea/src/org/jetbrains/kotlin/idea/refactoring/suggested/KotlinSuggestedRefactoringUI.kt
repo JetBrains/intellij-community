@@ -1,12 +1,12 @@
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.psi.PsiCodeFragment
+import com.intellij.refactoring.suggested.SignaturePresentationBuilder
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested.SuggestedRefactoringUI
-import com.intellij.refactoring.suggested.SignaturePresentationBuilder
-import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtPsiFactory
 

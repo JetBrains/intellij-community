@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.utils.keysToMap
-import java.util.*
 
 class StringInjectionHostTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testRegular() {

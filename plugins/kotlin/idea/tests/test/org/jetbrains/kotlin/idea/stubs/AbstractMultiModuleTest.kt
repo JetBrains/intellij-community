@@ -33,7 +33,8 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.test.KotlinTestUtils.allowProjectRootAccess
+import org.jetbrains.kotlin.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.test.util.slashedPath
 import org.junit.Assert
 import java.io.File

@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.util.ArrayList
 
 abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
 

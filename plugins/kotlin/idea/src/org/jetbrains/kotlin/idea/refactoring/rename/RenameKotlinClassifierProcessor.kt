@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.SmartList
-import java.util.ArrayList
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 

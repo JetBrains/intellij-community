@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.utils.keysToMap
-import java.util.*
 
 class KotlinPushDownContext(
     val sourceClass: KtClass,

@@ -1,7 +1,8 @@
 package org.jetbrains.kotlin.idea.structuralsearch
 
 import com.intellij.psi.search.GlobalSearchScopes
-import com.intellij.structuralsearch.*
+import com.intellij.structuralsearch.Matcher
+import com.intellij.structuralsearch.PatternContext
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer

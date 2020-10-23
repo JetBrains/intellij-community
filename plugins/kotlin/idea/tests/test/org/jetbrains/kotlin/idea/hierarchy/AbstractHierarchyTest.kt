@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
-import java.util.*
 
 /*
 Test Hierarchy view

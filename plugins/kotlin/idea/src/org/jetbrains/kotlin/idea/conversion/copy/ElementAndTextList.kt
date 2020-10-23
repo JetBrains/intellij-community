@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.psi.PsiElement
-import java.util.*
 
 
 class ElementAndTextList() {
