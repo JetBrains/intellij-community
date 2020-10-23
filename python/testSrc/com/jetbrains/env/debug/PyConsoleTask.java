@@ -23,6 +23,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
@@ -408,6 +409,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
     return convertToList(myCommunication.loadFrame());
+  }
+
+  protected List<PydevCompletionVariant> getCompletions(String expression) throws Exception {
+    return myCommunication.gerCompletionVariants(expression, expression);
   }
 
   protected void input(String text) {
