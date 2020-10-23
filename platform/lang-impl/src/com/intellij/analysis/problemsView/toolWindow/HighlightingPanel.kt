@@ -65,14 +65,22 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     updateToolWindowContent()
   }
 
-  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
+  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
+  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFileIfLocalId()
+  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFileIfLocalId()
 
-  private fun updateCurrentFile() {
+  /**
+   * CWM-768: If a new editor is selected from a CodeWithMe client,
+   * then this view should ignore such event
+   */
+  private fun updateCurrentFileIfLocalId() {
     if (ClientId.isCurrentlyUnderLocalId) {
-      currentFile = findCurrentFile()
+      updateCurrentFile()
     }
+  }
+  
+  private fun updateCurrentFile() {
+    currentFile = findCurrentFile()
   }
 
   val currentRoot
