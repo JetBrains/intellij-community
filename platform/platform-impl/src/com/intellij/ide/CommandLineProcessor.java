@@ -52,7 +52,10 @@ public final class CommandLineProcessor {
     OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
-    Project project = ProjectUtil.openOrImport(file, openProjectOptions);
+    Project project = null;
+    if (!LightEditUtil.isForceOpenInLightEditMode()) {
+      project = ProjectUtil.openOrImport(file, openProjectOptions);
+    }
     if (project == null) {
       return doOpenFile(file, -1, -1, false, shouldWait);
     }
