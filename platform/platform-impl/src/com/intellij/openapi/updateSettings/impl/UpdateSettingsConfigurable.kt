@@ -110,7 +110,6 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }
       }.largeGapAfter()
 
-      row { checkBox(IdeBundle.message("updates.settings.keep.plugins.archive"), settings.state::isKeepPluginsArchive) }
       row { checkBox(IdeBundle.message("updates.settings.show.editor"), settings.state::isShowWhatsNewEditor) }
 
       onGlobalApply {

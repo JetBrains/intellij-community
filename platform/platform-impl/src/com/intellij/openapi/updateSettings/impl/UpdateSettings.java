@@ -56,14 +56,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setCheckNeeded(value);
   }
 
-  public boolean isKeepPluginsArchive() {
-    return myState.isKeepPluginsArchive();
-  }
-
-  public void setKeepPluginsArchive(boolean value) {
-    myState.setKeepPluginsArchive(value);
-  }
-
   public boolean isShowWhatsNewEditor() {
     return myState.isShowWhatsNewEditor();
   }
