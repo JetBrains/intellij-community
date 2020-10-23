@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.containers.reverse
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
@@ -54,14 +56,19 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           target.changeLog.addAddEvent(targetEntityId, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
-          val outdatedId = change.id
-          val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-          target.indexes.removeFromIndices(usedPid)
-          replaceMap.inverse().remove(usedPid)
-          if (target.entityDataById(usedPid) != null) {
-            target.removeEntity(usedPid)
+          val sourceEntityId = change.id
+
+          // This sourceEntityId is definitely not presented in replaceMap as a key, so we can just remove this entity from target
+          //   with this id. But there is a case when some different entity from source builder will get this id if there was a gup before.
+          //   So we should check if entity at this id was added in this transaction. If replaceMap has a value with this entity id
+          //   this means that this entity was added in this transaction and there was a gup before and we should not remove anything.
+          if (sourceEntityId !in replaceMap.reverse()) {
+            target.indexes.removeFromIndices(sourceEntityId)
+            if (target.entityDataById(sourceEntityId) != null) {
+              target.removeEntity(sourceEntityId)
+            }
+            target.changeLog.addRemoveEvent(sourceEntityId)
           }
-          target.changeLog.addRemoveEvent(entityId)
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
           replaceOperation(change)
