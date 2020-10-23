@@ -8,9 +8,13 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 
-class ProjectPluginTracker(private val project: Project,
-                                    private val state: ProjectPluginTrackerState) {
+@ApiStatus.Internal
+class ProjectPluginTracker(
+  private val project: Project,
+  private val state: ProjectPluginTrackerState
+) {
 
   companion object {
 
@@ -36,13 +40,14 @@ class ProjectPluginTracker(private val project: Project,
         }
       }
 
-      internal fun updatePluginEnabledState(project: Project, enable: Boolean) {
-        PluginEnabler.updatePluginEnabledState(
-          project,
+      internal fun loadUnloadPlugins(project: Project, enable: Boolean) {
+        ProjectPluginTrackerManager.loadPlugins(
           setToAddTo(enable).findPluginById(),
+        )
+
+        ProjectPluginTrackerManager.unloadPlugins(
           setToRemoveFrom(enable).findPluginById(),
-          null,
-          false,
+          project,
         )
       }
 
@@ -64,7 +69,7 @@ class ProjectPluginTracker(private val project: Project,
       override fun runActivity(project: Project) {
         ProjectPluginTrackerManager.getInstance()
           .createPluginTracker(project)
-          .updatePluginEnabledState(true)
+          .loadUnloadPlugins(true)
       }
     }
   }
@@ -82,5 +87,5 @@ class ProjectPluginTracker(private val project: Project,
 
   fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
 
-  internal fun updatePluginEnabledState(enable: Boolean) = state.updatePluginEnabledState(project, enable)
+  internal fun loadUnloadPlugins(enable: Boolean) = state.loadUnloadPlugins(project, enable)
 }
