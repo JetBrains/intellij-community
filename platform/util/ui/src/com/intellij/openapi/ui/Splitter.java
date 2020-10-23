@@ -461,10 +461,9 @@ public class Splitter extends JPanel implements Splittable {
       return;
     }
     if (proportion < .0f || proportion > 1.0f) {
-      throw new IllegalArgumentException("Wrong proportion: " + proportion);
+      LOG.warn("Wrong proportion: " + proportion);
     }
-    if (proportion < myMinProp) proportion = myMinProp;
-    if (proportion > myMaxProp) proportion = myMaxProp;
+    proportion = MathUtil.clamp(proportion, myMinProp, myMaxProp);
     float oldProportion = myProportion;
     myProportion = proportion;
     firePropertyChange(PROP_PROPORTION, new Float(oldProportion), new Float(myProportion));
