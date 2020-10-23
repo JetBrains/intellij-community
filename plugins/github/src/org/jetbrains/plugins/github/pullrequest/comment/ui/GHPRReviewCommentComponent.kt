@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -108,20 +108,19 @@ object GHPRReviewCommentComponent {
     private fun update() {
       bodyPane.setBody(model.body)
 
-      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
-      //language=HTML
-      @NlsSafe
-      val authorName = """<a $href>${model.authorUsername ?: GithubBundle.message("user.someone")}</a>"""
+      val authorLink = HtmlBuilder()
+        .appendLink(model.authorLinkUrl.orEmpty(), model.authorUsername ?: GithubBundle.message("user.someone"))
+        .toString()
 
       when (model.state) {
         GHPullRequestReviewCommentState.PENDING -> {
           pendingLabel.isVisible = true
-          titlePane.text = authorName
+          titlePane.setBody(authorLink)
         }
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
-          titlePane.text = GithubBundle.message("pull.request.review.commented", authorName,
-                                                GithubUIUtil.formatActionDate(model.dateCreated))
+          titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,
+                                                 GithubUIUtil.formatActionDate(model.dateCreated)))
         }
       }
 
