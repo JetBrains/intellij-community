@@ -29,7 +29,7 @@ public final class LombokBuildProcessParametersProvider extends BuildProcessPara
 
   @Override
   public @NotNull List<String> getVMArguments() {
-    if (ProjectSettings.isLombokEnabledInProject(myProject) && LombokProjectValidatorActivity.hasLombokLibrary(myProject)) {
+    if (ProjectSettings.isLombokEnabledInProject(myProject) && ReadAction.compute(() -> LombokProjectValidatorActivity.hasLombokLibrary(myProject))) {
       return CachedValuesManager.getManager(myProject).getCachedValue(myProject,
                                                                () -> {
                                                                  List<String> disableOptions =
