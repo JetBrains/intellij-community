@@ -477,16 +477,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void smartInvokeLater(final @NotNull Runnable runnable) {
+  public void smartInvokeLater(@NotNull Runnable runnable) {
     smartInvokeLater(runnable, ModalityState.defaultModalityState());
   }
 
   @Override
-  public void smartInvokeLater(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+  public void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (isDumb()) {
         runWhenSmart(() -> smartInvokeLater(runnable, modalityState));
-      } else {
+      }
+      else {
         runnable.run();
       }
     }, modalityState, myProject.getDisposed());
