@@ -31,7 +31,7 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   open fun initializeNewlyCreated(config: C) {}
 
-  fun duplicateConfig(config: C): C = createDefaultConfig().also {
+  open fun duplicateConfig(config: C): C = createDefaultConfig().also {
     XmlSerializerUtil.copyBean(config, it)
   }
 
