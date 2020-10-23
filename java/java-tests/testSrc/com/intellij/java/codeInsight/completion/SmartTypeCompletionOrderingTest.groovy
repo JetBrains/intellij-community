@@ -338,7 +338,10 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   @NeedsIndex.Full
   void testAssertEquals() throws Throwable {
-    myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }")
+    myFixture.addClass("package junit.framework; public class Assert { " +
+                       "public static void assertEquals(Object a, Object b) {} " +
+                       "public static void assertEquals(String a, String b) {} " +
+                       "}")
     checkPreferredItems(0, "boo", "bar")
   }
 
