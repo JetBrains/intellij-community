@@ -401,9 +401,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     List<Filter> predefinedFilters = myUsePredefinedMessageFilter ?
                                        ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope) :
                                        Collections.emptyList();
-    CompositeFilter compositeFilter = new CompositeFilter(myProject, predefinedFilters);
+    CompositeFilter compositeFilter = new CompositeFilter(myProject, myCustomFilters);
     compositeFilter.setForceUseAllFilters(true);
-    myCustomFilters.forEach(compositeFilter::addFilter);
+    predefinedFilters.forEach(compositeFilter::addFilter);
     return compositeFilter;
   }
 

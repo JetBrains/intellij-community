@@ -3,8 +3,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.ConsoleFolding;
-import com.intellij.execution.filters.ConsoleInputFilterProvider;
-import com.intellij.execution.filters.InputFilter;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.process.AnsiEscapeDecoderTest;
 import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -527,6 +526,33 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.waitAllRequests();
     assertEquals(expectedText.toString(), myConsole.getText());
     assertEquals(expectedRegisteredTokens, registered);
+  }
+
+  public void testCustomFiltersPrecedence() {
+    HyperlinkInfo predefinedHyperlink = project -> {};
+    Filter predefinedFilter = (line, entireLength) ->  new Filter.Result(0, 1, predefinedHyperlink);
+    HyperlinkInfo customHyperlink = project -> {};
+    Filter customFilter = (line, entireLength) ->  new Filter.Result(0, 10, customHyperlink);
+
+    Disposer.dispose(myConsole); // have to re-init extensions
+
+    ConsoleFilterProvider predefinedProvider = project -> new Filter[] { predefinedFilter };
+    ExtensionTestUtil.maskExtensions(
+      ConsoleFilterProvider.FILTER_PROVIDERS,
+      ContainerUtil.newArrayList(predefinedProvider),
+      getTestRootDisposable());
+
+    myConsole = createConsole(true, getProject());
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("foo bar buz test", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    myConsole.waitAllRequests();
+
+    EditorHyperlinkSupport hyperlinks = myConsole.getHyperlinks();
+    assertNotNull(hyperlinks.getHyperlinkAt(0));
+    assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(0));
+    assertNotNull(hyperlinks.getHyperlinkAt(10));
+    assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(10));
   }
 
   public void testBackspaceDeletesPreviousOutput() {
