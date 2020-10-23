@@ -384,4 +384,23 @@ class DiffBuilderTest {
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
+
+  @Test
+  fun `removing non-existing entity while adding the new one`() {
+    val initial = WorkspaceEntityStorageBuilderImpl.create()
+    val toBeRemoved = initial.addSampleEntity("En1")
+
+    val source = WorkspaceEntityStorageBuilderImpl.from(initial)
+
+    initial.removeEntity(toBeRemoved)
+    val target = WorkspaceEntityStorageBuilderImpl.from(initial.toStorage())
+
+    // In the incorrect implementation remove event will remove added entity
+    source.addSampleEntity("En2")
+    source.removeEntity(toBeRemoved)
+
+    target.addDiff(source)
+
+    assertOneElement(target.entities(SampleEntity::class.java).toList())
+  }
 }
