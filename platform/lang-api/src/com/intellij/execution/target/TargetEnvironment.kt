@@ -155,13 +155,13 @@ abstract class TargetEnvironment(
       val virtualFile = VfsUtil.findFileByIoFile(localRoot, false)
       if (virtualFile == null) return null
       val result = getExcludedFromProjectChildren(virtualFile, project)
-      if (result == null) return null
       return object : Predicate<File> {
         val manager = FileTypeManager.getInstance()
 
         override fun test(file: File): Boolean {
           if (file == localRoot) return true
-          if (result.contains(file)) return false
+          if (Project.DIRECTORY_STORE_FOLDER == file.name) return false
+          if (result != null && result.contains(file)) return false
           if (manager.isFileIgnored(file.name)) return false
           return true
         }
