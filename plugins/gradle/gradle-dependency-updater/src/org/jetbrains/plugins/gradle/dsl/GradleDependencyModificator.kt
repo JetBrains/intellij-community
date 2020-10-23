@@ -26,7 +26,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun addDependency(module: Module, descriptor: UnifiedDependency) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
     checkDescriptor(descriptor);
     val artifactSpec = ArtifactDependencySpec.create(descriptor.coordinates.artifactId!!, descriptor.coordinates.groupId,
                                                      descriptor.coordinates.version)
@@ -50,7 +49,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   override fun updateDependency(module: Module,
                                 oldDescriptor: UnifiedDependency,
                                 newDescriptor: UnifiedDependency) {
-    assertNonDispatchThread()
     checkDescriptor(newDescriptor);
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     val dependencies: DependenciesModel = model.dependencies()
@@ -84,7 +82,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun removeDependency(module: Module, descriptor: UnifiedDependency) {
-    assertNonDispatchThread()
     checkDescriptor(descriptor);
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     val dependencies: DependenciesModel = model.dependencies()
@@ -101,7 +98,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun addRepository(module: Module, repository: UnifiedDependencyRepository) {
-    assertNonDispatchThread()
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     val repositoryModel = model.repositories()
     val trimmedUrl = repository.url.trimLastSlash()
@@ -123,7 +119,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun deleteRepository(module: Module, repository: UnifiedDependencyRepository) {
-    assertNonDispatchThread()
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     val repositoryModel = model.repositories()
     repositoryModel.removeRepositoryByUrl(repository.url)
@@ -132,7 +127,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun declaredDependencies(module: Module): List<UnifiedDependency> {
-    assertNonDispatchThread()
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     return model.dependencies().artifacts().map {
       UnifiedDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName())
@@ -140,7 +134,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
-    assertNonDispatchThread()
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     return model.repositories().repositories()
       .mapNotNull { it as? UrlBasedRepositoryModelImpl }
@@ -149,10 +142,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
           UnifiedDependencyRepository(m.name().valueAsString(), m.name().valueAsString(), it)
         }
       }
-  }
-
-  private fun assertNonDispatchThread() {
-    //ApplicationManager.getApplication().assertIsNonDispatchThread();
   }
 
   private fun throwFailToModify(module: Module): Nothing {

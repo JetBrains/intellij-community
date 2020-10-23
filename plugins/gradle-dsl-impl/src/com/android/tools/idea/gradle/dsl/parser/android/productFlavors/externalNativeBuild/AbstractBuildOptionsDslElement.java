@@ -15,23 +15,27 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android.productFlavors.externalNativeBuild;
 
+import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.ABI_FILTERS;
+import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.ARGUMENTS;
+import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.CPP_FLAGS;
+import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.C_FLAGS;
+import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.TARGETS;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
+
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
+import java.util.stream.Stream;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.Stream;
-
-import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 public abstract class AbstractBuildOptionsDslElement extends GradleDslBlockElement {
   @NotNull

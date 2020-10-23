@@ -17,13 +17,13 @@ package com.android.tools.idea.gradle.dsl.parser
 
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME
+import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslClosure
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement
-import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement
@@ -31,7 +31,7 @@ import com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslEle
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 import com.intellij.psi.PsiElement
-import java.util.*
+import java.util.ArrayList
 
 /**
  * Set of classes whose properties should not be merged into each other.

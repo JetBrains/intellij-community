@@ -67,7 +67,7 @@ val elementsBeforeDependencies = elementsBefore("dependencies")
 val elementsBeforeRepositories = elementsBefore("repositories")
 
 fun elementsBefore(s: String): Set<String> {
-  return mavenTopLevelElementsOrder.takeWhile { it != "dependencies" }
+  return mavenTopLevelElementsOrder.takeWhile { it != s }
     .toSet()
 }
 
