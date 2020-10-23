@@ -478,20 +478,20 @@ class DynamicPluginsTest {
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginBuilder.id))!!
-    val success = PluginEnabler.enablePlugins(
-      null,
+
+    val disabled = ProjectPluginTrackerManager.updatePluginsState(
       listOf(pluginDescriptor),
-      false
+      PluginEnabledState.DISABLED,
     )
-    assertThat(success).isTrue()
+    assertThat(disabled).isTrue()
     assertThat(pluginDescriptor.isEnabled).isFalse()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
 
-    assertThat(PluginEnabler.enablePlugins(
-      null,
+    val enabled = ProjectPluginTrackerManager.updatePluginsState(
       listOf(pluginDescriptor),
-      true
-    )).isTrue()
+      PluginEnabledState.ENABLED,
+    )
+    assertThat(enabled).isTrue()
     assertThat(pluginDescriptor.isEnabled).isTrue()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
 

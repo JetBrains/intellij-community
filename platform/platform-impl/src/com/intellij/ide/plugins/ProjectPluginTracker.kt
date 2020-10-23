@@ -8,9 +8,12 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 
-class ProjectPluginTracker(private val project: Project,
-                           private val state: ProjectPluginTrackerState) {
+@ApiStatus.Internal
+class ProjectPluginTracker(
+  private val project: Project,
+  private val state: ProjectPluginTrackerState) {
 
   companion object {
 
@@ -19,7 +22,7 @@ class ProjectPluginTracker(private val project: Project,
       @get:XCollection
       internal var enabledPlugins by stringSet()
 
-      @get:XCollection
+    @get:XCollection
       internal var disabledPlugins by stringSet()
 
       fun register(id: PluginId, enable: Boolean) {
@@ -29,24 +32,25 @@ class ProjectPluginTracker(private val project: Project,
         }
       }
 
-      fun unregister(id: PluginId) {
-        val idString = id.idString
-        if (!enabledPlugins.remove(idString)) {
-          disabledPlugins.remove(idString)
-        }
+    fun unregister(id: PluginId) {
+      val idString = id.idString
+      if (!enabledPlugins.remove(idString)) {
+        disabledPlugins.remove(idString)
       }
+    }
 
-      internal fun updatePluginEnabledState(project: Project, enable: Boolean) {
-        PluginEnabler.updatePluginEnabledState(
-          project,
-          setToAddTo(enable).findPluginById(),
-          setToRemoveFrom(enable).findPluginById(),
-          null,
-          false,
-        )
-      }
+    internal fun loadUnloadPlugins(project: Project, enable: Boolean) {
+      ProjectPluginTrackerManager.loadPlugins(
+        setToAddTo(enable).findPluginById(),
+      )
 
-      private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
+      ProjectPluginTrackerManager.unloadPlugins(
+        setToRemoveFrom(enable).findPluginById(),
+        project,
+      )
+    }
+
+    private fun setToAddTo(enable: Boolean) = if (enable) enabledPlugins else disabledPlugins
 
       private fun setToRemoveFrom(enable: Boolean) = if (enable) disabledPlugins else enabledPlugins
 
@@ -64,7 +68,7 @@ class ProjectPluginTracker(private val project: Project,
       override fun runActivity(project: Project) {
         ProjectPluginTrackerManager.getInstance()
           .createPluginTracker(project)
-          .updatePluginEnabledState(true)
+          .loadUnloadPlugins(true)
       }
     }
   }
@@ -82,5 +86,5 @@ class ProjectPluginTracker(private val project: Project,
 
   fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
 
-  internal fun updatePluginEnabledState(enable: Boolean) = state.updatePluginEnabledState(project, enable)
+  internal fun loadUnloadPlugins(enable: Boolean) = state.loadUnloadPlugins(project, enable)
 }
