@@ -178,8 +178,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       preferLimitedContext && (selectedKind == NodeKind.UNSTAGED || selectedKind == NodeKind.UNTRACKED) -> {
         VcsTreeModelData.allUnderTag(this, NodeKind.UNSTAGED)
       }
-      preferLimitedContext && selectedKind == NodeKind.STAGED -> {
-        VcsTreeModelData.allUnderTag(this, NodeKind.STAGED)
+      preferLimitedContext && (selectedKind == NodeKind.STAGED || selectedKind == NodeKind.IGNORED || selectedKind == NodeKind.CONFLICTED) -> {
+        VcsTreeModelData.allUnderTag(this, selectedKind)
       }
       else -> {
         VcsTreeModelData.all(this)
