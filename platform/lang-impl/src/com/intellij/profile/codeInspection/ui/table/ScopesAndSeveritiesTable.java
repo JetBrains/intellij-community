@@ -369,6 +369,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           .map(state -> state.getScope(myProject))
           .filter(Objects::nonNull)
           .map(NamedScope::getScopeId)
+          .distinct()
           .sorted(myScopeComparator)
           .toArray(String[]::new);
     }
