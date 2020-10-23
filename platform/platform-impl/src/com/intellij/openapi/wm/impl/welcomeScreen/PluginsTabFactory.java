@@ -25,7 +25,8 @@ public class PluginsTabFactory implements WelcomeTabFactory {
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.plugins.title")) {
+    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.plugins.title"), WelcomeScreenEventCollector.TabType.TabNavPlugins) {
+
       @Override
       protected JComponent buildComponent() {
         PluginManagerConfigurable configurable = new PluginManagerConfigurable();
@@ -38,6 +39,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
             if (!configurable.isModified()) return;
             try {
               configurable.apply();
+              WelcomeScreenEventCollector.logPluginsModified();
               InstalledPluginsState.getInstance().runShutdownCallback();
             }
             catch (ConfigurationException exception) {
