@@ -221,7 +221,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       editorPane.setFont(font.deriveFont(Font.BOLD, 18));
     }
 
-    editorPane.setText("<html><span>Foo</span></html>");
+    @NlsSafe String text = "<html><span>Foo</span></html>";
+    editorPane.setText(text);
     editorPane.setMinimumSize(editorPane.getPreferredSize());
     editorPane.setText(null);
 
@@ -500,7 +501,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showPlugin() {
-    myNameComponent.setText("<html><span>" + myPlugin.getName() + "</span></html>");
+    @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
+    myNameComponent.setText(text);
     updateIcon();
 
     updateButtons();
@@ -508,7 +510,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
     String version = myPlugin.getVersion();
     if (bundled) {
-      version = "bundled" + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
+      version = IdeBundle.message("plugin.version.bundled") + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
       version = PluginManagerConfigurable.getVersion(myPlugin, myUpdateDescriptor);
@@ -826,7 +828,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @Nullable
-  private String getDescription() {
+  private @Nls String getDescription() {
     String description = myPlugin.getDescription();
     return StringUtil.isEmptyOrSpaces(description) ? null : description;
   }

@@ -18,6 +18,7 @@ import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import java.io.File
@@ -250,7 +251,7 @@ open class MarketplaceRequests {
     file: File?,
     url: String,
     indicator: ProgressIndicator?,
-    indicatorMessage: String,
+    @Nls indicatorMessage: String,
     parser: (Reader) -> T
   ): T {
     val eTag = if (file != null) loadEtagForFile(file) else null

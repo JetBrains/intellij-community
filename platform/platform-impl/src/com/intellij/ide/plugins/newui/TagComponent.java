@@ -34,7 +34,7 @@ public class TagComponent extends LinkComponent {
   }
 
   @Override
-  public void setText(@NotNull String name) {
+  public void setText(@NotNull @Nls String name) {
     String tooltip = null;
     myColor = BACKGROUND;
 

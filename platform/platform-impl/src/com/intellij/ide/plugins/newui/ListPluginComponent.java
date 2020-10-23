@@ -289,7 +289,7 @@ public class ListPluginComponent extends JPanel {
     myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(component));
   }
 
-  private void setTagTooltip(@Nullable String text) {
+  private void setTagTooltip(@Nullable @Nls String text) {
     if (myLayout.myTagComponent != null) {
       myLayout.myTagComponent.setToolTipText(text);
     }
@@ -855,14 +855,14 @@ public class ListPluginComponent extends JPanel {
   }
 
   @NotNull
-  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull String text, @Nullable Icon icon) {
+  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }
 
   @NotNull
   static JLabel createRatingLabel(@NotNull JPanel panel,
                                   @Nullable Object constraints,
-                                  @NotNull String text,
+                                  @NotNull @Nls String text,
                                   @Nullable Icon icon,
                                   @Nullable Color color,
                                   boolean tiny) {

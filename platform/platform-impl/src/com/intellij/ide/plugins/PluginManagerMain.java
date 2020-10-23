@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.xml.util.XmlStringUtil;
@@ -52,7 +53,7 @@ public abstract class PluginManagerMain {
   private static final String HTML_PREFIX = "<a href=\"";
   private static final String HTML_SUFFIX = "</a>";
 
-  private static String getTextPrefix() {
+  private static @NlsSafe String getTextPrefix() {
     int fontSize = JBUIScale.scale(12);
     int m1 = JBUIScale.scale(2);
     int m2 = JBUIScale.scale(5);
@@ -194,7 +195,8 @@ public abstract class PluginManagerMain {
     if (text != null) {
       text.insert(0, getTextPrefix());
       text.append(TEXT_SUFFIX);
-      pane.setText(SearchUtil.markup(text.toString(), filter).trim());
+      @NlsSafe String markup = SearchUtil.markup(text.toString(), filter);
+      pane.setText(markup.trim());
       pane.setCaretPosition(0);
     }
     else {

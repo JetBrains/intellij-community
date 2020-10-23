@@ -1285,7 +1285,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = null;
     if (plugin instanceof PluginNode) {
       downloads = ((PluginNode)plugin).getDownloads();
@@ -1311,7 +1311,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
     long date = 0;
     if (plugin instanceof PluginNode) {
       date = ((PluginNode)plugin).getDate();
@@ -1320,7 +1320,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static String getRating(@NotNull IdeaPluginDescriptor plugin) {
+  public static @NlsSafe String getRating(@NotNull IdeaPluginDescriptor plugin) {
     String rating = null;
     if (plugin instanceof PluginNode) {
       rating = ((PluginNode)plugin).getRating();
@@ -1354,7 +1354,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  public static String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
+  public static @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
     return StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown") +
            " " + UIUtil.rightArrow() + " " +
            StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown");

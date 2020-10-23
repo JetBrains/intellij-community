@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -30,7 +31,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
   private PluginUpdatesService myService;
   private SimpleTree myTree;
-  private String myCountValue;
+  private @NlsSafe String myCountValue;
 
   public PluginManagerConfigurableTreeRenderer() {
     myPanel.setLayout(new BorderLayout(getHGap(), 0));
