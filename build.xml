@@ -12,9 +12,6 @@
   <condition property="intellij.build.output.root" else="${project.home}/out/studio">
     <isset property="intellij.build.output.root"/>
   </condition>
-  <condition property="build.android">
-    <isfalse value="${studio.sdk}"/>
-  </condition>
 
   <!-- References to Bazel workspace and Bazel commandline to use -->
   <dirname property="workspace" file="${project.home}/../"/>
@@ -38,11 +35,10 @@
     <propertyref name="build.number"/>
     <propertyref prefix="intellij.build."/>
     <propertyref prefix="custom.project."/>
-    <propertyref name="studio.sdk"/>
     <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
   </propertyset>
 
-  <target name="init" if="${build.android}">
+  <target name="init">
     <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
                else="${project.home}/build/dependencies/gradlew">
       <os family="windows"/>
@@ -53,9 +49,6 @@
       <arg value="setupKotlinPlugin"/>
     </exec>
     <propertyset refid="intellij.build.properties"/>
-    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
-      <property name="config" value="release"/>
-    </ant>
   </target>
 
   <macrodef name="call_gant">

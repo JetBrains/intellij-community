@@ -305,23 +305,6 @@ TODO(b/118034991): generate product-info.json files (or not) */
           }
         }
 
-        // Android Studio: added by Change Idc07b110 / commit f20681e
-        // Bundle JDK
-        if (!buildContext.options.studioSdk) {
-          def binaries = ["Contents/Home/bin/*", "Contents/Home/lib/jspawnhelper", "Contents/Home/lib/*.dylib.*"]
-          zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {
-            binaries.each {
-              exclude(name: it)
-            }
-            exclude(name: "Contents/Home/src.zip")
-          }
-          zipfileset(dir: jdkDirectoryPath, filemode: "755", prefix: "$zipRoot/jre/jdk") {
-            binaries.each {
-              include(name: it)
-            }
-          }
-        }
-
         // the root directory must not have files other than Info.plist so files like NOTICE.TXT and LICENSE.txt are copied to Resources subfolder
         //todo specify paths to such files in ProductProperties and put them to dist.mac/Resources to get rid of this exclusion
         //todo remove code which does the same from tools/mac/scripts/signapp.sh

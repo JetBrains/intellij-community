@@ -89,12 +89,6 @@ class BuildOptions {
   static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
 
   /**
-   * Android Studio: If 'true' we are only building the platform, without the android plugins.
-   * This is temporary and will be the default once the migration is complete.
-   */
-  boolean studioSdk = SystemProperties.getBooleanProperty("studio.sdk", false)
-
-  /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"

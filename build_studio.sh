@@ -33,21 +33,7 @@ function get_absolute_path() {
   ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
 }
 
-STUDIO_SDK=true
-while [[ -n "$1" ]]; do
-  if [[ $1 == "--studio-sdk" ]]; then
-    STUDIO_SDK=true
-  else
-    die "[$0] Unknown parameter: $1"
-  fi
-  shift
-done
-
-BNUM="${BUILD_NUMBER/P/0}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
-BNUM="${BNUM:-SNAPSHOT}"
-if [[ "${STUDIO_SDK}" == "true" ]]; then
-  BNUM="__BUILD_NUMBER__"
-fi
+BNUM="__BUILD_NUMBER__"
 
 OUT="${OUT_DIR:-out/studio}"
 DIST="${DIST_DIR:-"${OUT}/dist"}"
@@ -67,7 +53,6 @@ echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## Out dir: $OUT"
 echo "## Prog dir: $PROG_DIR"
-echo "## STUDIO_SDK: $STUDIO_SDK"
 echo
 
 set_java_home
@@ -85,12 +70,11 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
-  "-Dstudio.sdk=${STUDIO_SDK}"
 )
 
 $ANT "${BUILD_PROPERTIES[@]}" build
 
-$ANT "-Dstudio.sdk=${STUDIO_SDK}" "-Dintellij.build.output.root=$OUT/updater" fullupdater
+$ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
