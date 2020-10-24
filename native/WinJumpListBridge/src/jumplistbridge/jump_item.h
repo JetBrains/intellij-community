@@ -1,0 +1,59 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+/**
+ * intellij::ui::win::JumpItem class implementation.
+ *
+ * See below for the documentation.
+ *
+ * @author Nikita Provotorov
+ */
+
+#ifndef WINJUMPLISTBRIDGE_JUMPITEM_H
+#define WINJUMPLISTBRIDGE_JUMPITEM_H
+
+#include "winapi.h"                 // IShellItemW
+#include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
+#include "COM_object_safe_ptr.h"    // COMObjectSafePtr
+#include <filesystem>               // std::filesystem::path
+
+
+namespace intellij::ui::win
+{
+
+    // TODO: docs
+    class JumpItem
+    {
+    public: // nested types
+        using SharedNativeHandle = COMObjectSafePtr<IShellItem>;
+
+    public: // ctors/dtor
+        JumpItem(std::filesystem::path path, COMIsInitializedInThisThreadTag) noexcept(false);
+
+        /// non-copyable
+        JumpItem(const JumpItem& src) = delete;
+        JumpItem(JumpItem&& src) noexcept;
+
+    public: // assignments
+        /// non-copyable
+        JumpItem& operator=(const JumpItem& rhs) = delete;
+        JumpItem& operator=(JumpItem&& rhs) noexcept(false);
+
+    public: // getters
+        [[nodiscard]] SharedNativeHandle shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false);
+
+        [[nodiscard]] const std::filesystem::path& getPath() const noexcept;
+
+    private:
+        [[nodiscard]] static COMObjectSafePtr<IShellItem> createHandleFrom(
+            const std::filesystem::path& path,
+            COMIsInitializedInThisThreadTag
+        ) noexcept(false);
+
+    private:
+        COMObjectSafePtr<IShellItem> handle_;
+        std::filesystem::path path_;
+    };
+
+} // namespace intellij::ui::win
+
+#endif // ndef WINJUMPLISTBRIDGE_JUMPITEM_H
