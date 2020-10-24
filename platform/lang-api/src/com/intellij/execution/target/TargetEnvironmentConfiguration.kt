@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.project.Project
 
@@ -29,8 +31,14 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
    */
   @Throws(RuntimeConfigurationException::class)
   open fun validateConfiguration() {
-    runtimes.resolvedConfigs().forEach {
-      it.validateConfiguration()
+    with(runtimes.resolvedConfigs()) {
+      if (isEmpty()) {
+        throw RuntimeConfigurationWarning(
+          ExecutionBundle.message("TargetEnvironmentConfiguration.error.language.runtime.not.configured"))
+      }
+      forEach {
+        it.validateConfiguration()
+      }
     }
   }
 }
