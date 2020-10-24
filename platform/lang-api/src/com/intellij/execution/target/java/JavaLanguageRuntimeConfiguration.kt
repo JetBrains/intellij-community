@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.java
 
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.target.LanguageRuntimeConfiguration
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.TargetEnvironmentType
@@ -35,6 +37,14 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     loadVolumeState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, state.applicationFolder)
     loadVolumeState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, state.classpathFolder)
     loadVolumeState(JavaLanguageRuntimeType.AGENTS_VOLUME, state.agentFolder)
+  }
+
+  @Throws(RuntimeConfigurationException::class)
+  override fun validateConfiguration() {
+    super.validateConfiguration()
+    if (homePath.isBlank()) {
+      throw RuntimeConfigurationException(ExecutionBundle.message("JavaLanguageRuntimeConfiguration.error.java.home.is.required"))
+    }
   }
 
   private fun MyState.saveInState(volumeDescriptor: VolumeDescriptor, doSave: MyState.(VolumeState?) -> Unit) {
