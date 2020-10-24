@@ -35,8 +35,21 @@ add_executable(jumplisttests
     "COM_object_safe_ptr.h"
     "COM_guard.h"
     "COM_guard.cpp"
+    "COM_is_initialized.h"
     "jump_task.h"
     "jump_task.cpp"
+    "jump_item.h"
+    "jump_item.cpp"
+    "jump_list.h"
+    "jump_list.cpp"
+    "app_user_model_id.h"
+    "application.h"
+    "application.cpp"
     "testsmain.cpp"
 )
+
 enable_target_compile_extra_warnings(jumplisttests)
+
+target_link_libraries(jumplisttests
+    Shell32.lib
+)
