@@ -53,7 +53,9 @@ internal class ChangeMethodParameters(target: PsiMethod, override val request: C
       val psiType = helper.convertType(expectedHead.expectedTypes.first().theType)
       val newParameter = factory.createParameter(name, psiType)
 
-      for (annotationRequest in expectedHead.expectedAnnotations) {
+      // #addAnnotationToModifierList adds annotations to the start of the modifier list instead of its end,
+      // reversing the list "nullifies" this behaviour, thus preserving the original annotations order
+      for (annotationRequest in expectedHead.expectedAnnotations.reversed()) {
         CreateAnnotationAction.addAnnotationToModifierList(newParameter.modifierList!!, annotationRequest)
       }
 
