@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.project.Project
 
@@ -21,6 +22,11 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
   fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
 
   fun createEnvironmentFactory(project: Project): TargetEnvironmentFactory = getTargetType().createEnvironmentFactory(project, this)
+
+  companion object {
+    @Throws(RuntimeConfigurationException::class)
+    fun TargetEnvironmentConfiguration.checkConfiguration(): Unit = this.getTargetType().checkConfiguration(this)
+  }
 }
 
 fun <C : TargetEnvironmentConfiguration, T : TargetEnvironmentType<C>> C.getTargetType(): T = this.getTypeImpl()
