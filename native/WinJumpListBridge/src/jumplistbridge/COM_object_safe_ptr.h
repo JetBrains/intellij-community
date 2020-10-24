@@ -6,6 +6,8 @@
  * @author Nikita Provotorov
  */
 
+// TODO: replace it by WinAPI CComPtr
+
 #ifndef WINJUMPLISTBRIDGE_COM_OBJECT_SAFE_PTR_H
 #define WINJUMPLISTBRIDGE_COM_OBJECT_SAFE_PTR_H
 
