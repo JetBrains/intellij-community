@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
@@ -19,12 +20,14 @@ import java.util.concurrent.CompletableFuture
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
 
-  @Nls
+  @NlsSafe
   override val displayName = "Java"
 
-  override val configurableDescription = "Configure Java"
+  @Nls
+  override val configurableDescription = ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
 
-  override val launchDescription = "Run Java application"
+  @Nls
+  override val launchDescription = ExecutionBundle.message("JavaLanguageRuntimeType.launch.description.run.java.application")
 
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
