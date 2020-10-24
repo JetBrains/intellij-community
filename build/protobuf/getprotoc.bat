@@ -18,6 +18,9 @@ if not defined PROTOC_CACHE_DIR (
 )
 if not exist "%PROTOC_CACHE_DIR%" mkdir "%PROTOC_CACHE_DIR%"
 
+call:getprotoc 3.5.1 || goto :exit
+move /y "%PROTOC_BIN_DIR%\protoc-3.5.1.exe" "%PROTOC_BIN_DIR%\protoc-java6.exe" >nul
+
 call:getprotoc || goto :exit
 
 set PATH=%PROTOC_BIN_DIR%;%PATH%
@@ -27,10 +30,15 @@ exit /b %errorlevel%
 
 
 :getprotoc
-  set "_protoc_zip_name=protoc-%PROTOC_VERSION%-win32.zip"
+  if "%~1" == "" (
+    set "_protoc_version=%PROTOC_VERSION%"
+  ) else (
+    set "_protoc_version=%~1"
+  )
+  set "_protoc_zip_name=protoc-%_protoc_version%-win32.zip"
   if not exist "%PROTOC_CACHE_DIR%\%_protoc_zip_name%" (
     curl.exe -L --output "%PROTOC_CACHE_DIR%\%_protoc_zip_name%" ^
-      "https://github.com/protocolbuffers/protobuf/releases/download/v%PROTOC_VERSION%/%_protoc_zip_name%" || goto :exit
+      "https://github.com/protocolbuffers/protobuf/releases/download/v%_protoc_version%/%_protoc_zip_name%" || goto :exit
   )
 
   set "_protoc_exe=%PROTOC_BIN_DIR%\protoc.exe"
@@ -43,5 +51,10 @@ exit /b %errorlevel%
     goto :exit
   )
 
-  if exist "%_protoc_exe%.tmp" del "%_protoc_exe%.tmp"
+  if "%~1" == "" (
+    if exist "%_protoc_exe%.tmp" del "%_protoc_exe%.tmp"
+  ) else (
+    if exist "%_protoc_exe%" move /y "%_protoc_exe%" "%PROTOC_BIN_DIR%\protoc-%_protoc_version%.exe" >nul
+    if exist "%_protoc_exe%.tmp" move /y "%_protoc_exe%.tmp" "%_protoc_exe%" >nul
+  )
 goto :eof

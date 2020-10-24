@@ -14,7 +14,8 @@ case "$(uname -s)" in
 esac
 
 getprotoc() {
-  _protoc_zip_name="protoc-$PROTOC_VERSION-$PROTOC_OS_NAME.zip"
+  _protoc_version="${1:-"$PROTOC_VERSION"}"
+  _protoc_zip_name="protoc-$_protoc_version-$PROTOC_OS_NAME.zip"
   test -f "$PROTOC_CACHE_DIR/$_protoc_zip_name" || \
   wget -O "$PROTOC_CACHE_DIR/$_protoc_zip_name" \
     "https://github.com/protocolbuffers/protobuf/releases/download/v$_protoc_version/$_protoc_zip_name"
@@ -29,9 +30,16 @@ getprotoc() {
     exit 1
   )
 
-  rm -f "$_protoc_exe.tmp"
+  if [ "$1" = "" ] ; then
+    rm -f "$_protoc_exe.tmp"
+  else
+    test -f "$_protoc_exe" && mv -f "$_protoc_exe" "$PROTOC_BIN_DIR/protoc-$_protoc_version"
+    test -f "$_protoc_exe.tmp" && mv -f "$_protoc_exe.tmp" "$_protoc_exe"
+  fi
 }
 
+getprotoc 3.5.1
+mv -f "$PROTOC_BIN_DIR/protoc-3.5.1" "$PROTOC_BIN_DIR/protoc-java6"
 getprotoc
 
 export PATH="$PROTOC_BIN_DIR:$PATH"

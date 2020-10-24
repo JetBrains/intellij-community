@@ -19,6 +19,9 @@ class JavaPluginLayout {
       withModule("intellij.java.resources", "resources.jar")
       withModule("intellij.java.resources.en", "resources.jar")
 
+      // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
+      withArtifact("jps-javac-rt-rpc", "rt")
+
       ["intellij.java.compiler.antTasks",
        "intellij.java.guiForms.compiler",
        "intellij.java.guiForms.rt",

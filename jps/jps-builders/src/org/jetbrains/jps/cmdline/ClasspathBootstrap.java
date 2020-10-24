@@ -31,9 +31,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -45,13 +45,14 @@ public final class ClasspathBootstrap {
   private ClasspathBootstrap() { }
 
   private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
-    Message.class, // protobuf
     NetUtil.class, // netty common
     EventLoopGroup.class, // netty transport
     AddressResolverGroup.class, // netty resolver
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class,  // netty codec
   };
+
+  private static final String EXTERNAL_JAVAC_JAR_ARTIFACT_NAME = "jps-javac-rt-rpc";
 
   public static List<String> getBuildProcessApplicationClasspath() {
     final Set<String> cp = new HashSet<>();
@@ -66,6 +67,7 @@ public final class ClasspathBootstrap {
       cp.add(getResourcePath(aClass));
     }
 
+    cp.add(getResourcePath(Message.class));  // protobuf
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
@@ -101,7 +103,6 @@ public final class ClasspathBootstrap {
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<>();
-    cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
 
     // util
@@ -112,6 +113,11 @@ public final class ClasspathBootstrap {
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
     }
+    String externalJavacClassesRoot = getResourcePath(ExternalJavacProcess.class);
+    cp.add(new File(externalJavacClassesRoot));
+    Path jarArtifactPath = PathManager.getJarArtifactPath(externalJavacClassesRoot,
+                                                          EXTERNAL_JAVAC_JAR_ARTIFACT_NAME);
+    cp.add(jarArtifactPath.toFile());
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
