@@ -31,14 +31,12 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   /**
    * Description of type's Configurable, e.g : "Configure GO"
    */
-  @get: Nls
-  abstract val configurableDescription: String
+  abstract val configurableDescription: String @Nls get
 
   /**
    * Description of the launch of the given run configuration, e.g : "Run Java application"
    */
-  @get: Nls
-  abstract val launchDescription: String
+  abstract val launchDescription: String @Nls get
 
   /**
    * Defines the *target-independent* introspection protocol executed over *target-specific* [Introspectable].
@@ -100,7 +98,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
                               @Nls val description: String,
                               @NonNls val defaultPath: String) {
 
-    constructor(typeId: String, wizardLabel: String, description: String, defaultPath: String) :
+    constructor(typeId: String, @Nls wizardLabel: String, @Nls description: String, defaultPath: String) :
       this(VolumeType(typeId), wizardLabel, description, defaultPath)
   }
 }
