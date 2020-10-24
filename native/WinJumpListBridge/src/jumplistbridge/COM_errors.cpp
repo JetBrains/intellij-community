@@ -20,15 +20,15 @@ namespace intellij::ui::win::errors
             {
                 // TODO: return good string description instead of "HRESULT=..."
 
-                const auto hResult = static_cast<HRESULT>(condition);
+                const auto hResult = static_cast<std::make_unsigned<HRESULT>::type>(condition);
 
                 std::array<char, 51> buf;   // NOLINT(cppcoreguidelines-pro-type-member-init)
 
-                const auto [pastTheEnd, errC] = std::to_chars(&buf.front(), &buf.back(), hResult);
+                const auto [pastTheEnd, errC] = std::to_chars(&buf.front(), &buf.back(), hResult, 16);
                 if ( errC != std::errc() )
                     return "HRESULT=<unknown>";
 
-                std::string result = "HRESULT=";
+                std::string result = "HRESULT=0x";
                 result.append(&buf.front(), pastTheEnd);
 
                 return result;

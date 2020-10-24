@@ -58,14 +58,14 @@ namespace intellij::ui::win::errors
 
 
     // TODO: docs
-    void throwCOMException(
+    [[noreturn]] void throwCOMException(
         HRESULT comReturned,
         std::string_view description,
         // __func__
         std::string_view pass_func_here) noexcept(false);
 
     // TODO: docs
-    void throwCOMException(
+    [[noreturn]] void throwCOMException(
         HRESULT comReturned,
         std::string_view description,
         // __func__
