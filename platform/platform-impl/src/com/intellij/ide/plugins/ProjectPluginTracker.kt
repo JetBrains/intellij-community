@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.xmlb.annotations.XCollection
 
-internal class ProjectPluginTracker(private val project: Project,
+class ProjectPluginTracker(private val project: Project,
                                     private val state: ProjectPluginTrackerState) {
 
   companion object {
 
-    internal class ProjectPluginTrackerState : BaseState() {
+    class ProjectPluginTrackerState : BaseState() {
 
       @get:XCollection
       internal var enabledPlugins by stringSet()

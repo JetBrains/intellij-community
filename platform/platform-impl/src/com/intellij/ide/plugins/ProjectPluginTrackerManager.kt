@@ -15,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XCollection
   name = "ProjectPluginTrackerManager",
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
 )
-internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManager.Companion.ProjectPluginTrackerManagerState>(
+class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManager.Companion.ProjectPluginTrackerManagerState>(
   ProjectPluginTrackerManagerState()) {
 
   companion object {
@@ -26,7 +26,7 @@ internal class ProjectPluginTrackerManager : SimplePersistentStateComponent<Proj
     @JvmStatic
     fun createPluginTrackerOrNull(project: Project?): ProjectPluginTracker? = project?.let { getInstance().createPluginTracker(it) }
 
-    internal class ProjectPluginTrackerManagerState : BaseState() {
+    class ProjectPluginTrackerManagerState : BaseState() {
 
       @get:XCollection
       var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
