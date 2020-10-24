@@ -15,9 +15,8 @@ namespace intellij::ui::win
     //  JumpTask
     // ================================================================================================================
 
-    JumpTask::JumpTask(COMGuard comGuard, COMObjectSafePtr<IShellLinkW>&& nativeHandle) noexcept
-        : comGuard_(std::move(comGuard))
-        , handle_(std::move(nativeHandle))
+    JumpTask::JumpTask(COMObjectSafePtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept
+        : handle_(std::move(nativeHandle))
     {}
 
     JumpTask::JumpTask(JumpTask &&other) noexcept = default;
@@ -28,7 +27,7 @@ namespace intellij::ui::win
     JumpTask& JumpTask::operator=(JumpTask&& lhs) = default;
 
 
-    JumpTask::SharedNativeHandle JumpTask::shareNativeHandle() const noexcept(false)
+    JumpTask::SharedNativeHandle JumpTask::shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false)
     {
         return handle_;
     }
@@ -40,9 +39,8 @@ namespace intellij::ui::win
 
     static constexpr std::string_view builderCtxStr = "intellij::ui::win::JumpTask::Builder";
 
-    JumpTask::Builder::Builder(COMGuard comGuard, std::filesystem::path appPath, WideString title) noexcept(false)
-        : comGuard_(std::move(comGuard))
-        , appPath_(std::move(appPath))
+    JumpTask::Builder::Builder(std::filesystem::path appPath, WideString title) noexcept(false)
+        : appPath_(std::move(appPath))
         , title_(std::move(title))
     {
         if (appPath_.empty())
@@ -103,9 +101,9 @@ namespace intellij::ui::win
     }
 
 
-    JumpTask JumpTask::Builder::buildTask() const noexcept(false)
+    JumpTask JumpTask::Builder::buildTask(COMIsInitializedInThisThreadTag com) const noexcept(false)
     {
-        auto result = createJumpTask();
+        auto result = createJumpTask(com);
 
         this->copyAppPathToJumpTask(result)
               .copyAppArgsToJumpTask(result)
@@ -116,7 +114,7 @@ namespace intellij::ui::win
         return result;
     }
 
-    JumpTask JumpTask::Builder::createJumpTask() const noexcept(false)
+    JumpTask JumpTask::Builder::createJumpTask(COMIsInitializedInThisThreadTag com) const noexcept(false)
     {
         IShellLinkW* nativeHandle = nullptr;
 
@@ -130,18 +128,16 @@ namespace intellij::ui::win
             // The code that creates and manages objects of this class
             //  is a DLL that runs in the same process as the caller of
             //  the function specifying the class context.
-            CLSCTX_INPROC_SERVER,
+            CLSCTX_INPROC,
 
-            // Request exactly Wide (not ANSI) version
-            IID_IShellLinkW,
-
-            reinterpret_cast<LPVOID*>(&nativeHandle)
+            // Pass pointer to the result and its real type
+            IID_PPV_ARGS(&nativeHandle)
         );
 
         if (comResult != S_OK)
             errors::throwCOMException(comResult, "CoCreateInstance failed", __func__, builderCtxStr);
 
-        return JumpTask{ comGuard_, COMObjectSafePtr{nativeHandle} };
+        return JumpTask{ COMObjectSafePtr{nativeHandle}, com };
     }
 
     const JumpTask::Builder& JumpTask::Builder::copyAppPathToJumpTask(JumpTask& task) const noexcept(false)

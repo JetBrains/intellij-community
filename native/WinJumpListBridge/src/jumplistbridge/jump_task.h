@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
- * JumpTasks implementation. See below for the documentation.
+ * intellij::ui::win::JumpTask class implementation.
+ *
+ * See below for the documentation.
  *
  * @author Nikita Provotorov
  */
@@ -10,7 +12,7 @@
 #define WINJUMPLISTBRIDGE_JUMPTASK_H
 
 #include "winapi.h"                 // IShellLinkW
-#include "COM_guard.h"              // COMGuard
+#include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
 #include "wide_string.h"            // WideString, WideStringView
 #include "COM_object_safe_ptr.h"    // COMObjectSafePtr
 #include <filesystem>               // std::filesystem
@@ -21,6 +23,7 @@ namespace intellij::ui::win
 {
 
     // TODO: docs
+    // TODO: merge JumpTask::Builder into JumpTask
     class JumpTask
     {
     public: // nested types
@@ -48,14 +51,13 @@ namespace intellij::ui::win
         JumpTask& operator=(JumpTask&& lhs);
 
     public: // getters
-        [[nodiscard]] SharedNativeHandle shareNativeHandle() const noexcept(false);
+        [[nodiscard]] SharedNativeHandle shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false);
 
     private:
         /// Use JumpTask::Builder to create a task
-        explicit JumpTask(COMGuard comGuard, COMObjectSafePtr<IShellLinkW>&& nativeHandle) noexcept;
+        explicit JumpTask(COMObjectSafePtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept;
 
     private:
-        COMGuard comGuard_;
         COMObjectSafePtr<IShellLinkW> handle_;
     };
 
@@ -64,19 +66,18 @@ namespace intellij::ui::win
     class JumpTask::Builder
     {
     public: // ctors/dtor
-        /// @param comGuard [in] - makes sure you initialized the COM library before using this class.
         /// @param appPath [in] - must be not empty. See setTasksApplicationPath method for more info.
         /// @param title [in] - must be not empty. See setTasksTitle method for more info.
         ///
         /// @exception std::runtime_error - if appPath is empty
         /// @exception std::runtime_error - if title is empty
-        Builder(COMGuard comGuard, std::filesystem::path appPath, WideString title) noexcept(false);
+        Builder(std::filesystem::path appPath, WideString title) noexcept(false);
         /// Copies all parameters of the passed JumpTask to *this
         Builder(const JumpTask& src) noexcept(false);
 
     public: // modifiers
         /// Copies all parameters of the passed JumpTask to *this
-        Builder& takeSettingsFrom(const JumpTask& jumpTask) noexcept(false);
+        Builder& takeSettingsFrom(const JumpTask& jumpTask, COMIsInitializedInThisThreadTag) noexcept(false);
 
         /// Sets the path to the application.
         /// Each JumpTask must have non-empty application path: what to execute otherwise?
@@ -98,7 +99,7 @@ namespace intellij::ui::win
     public: // getters
         /// @throws std::system_error
         // TODO: docs
-        [[nodiscard]] JumpTask buildTask() const noexcept(false);
+        [[nodiscard]] JumpTask buildTask(COMIsInitializedInThisThreadTag) const noexcept(false);
 
         /// Returns the path to the application.
         [[nodiscard]] const std::filesystem::path& getTasksApplicationPath() const noexcept;
@@ -118,7 +119,7 @@ namespace intellij::ui::win
         [[nodiscard]] const WideString* getTasksDescription() const noexcept;
 
     private:
-        [[nodiscard]] JumpTask createJumpTask() const noexcept(false);
+        [[nodiscard]] JumpTask createJumpTask(COMIsInitializedInThisThreadTag) const noexcept(false);
         const Builder& copyAppPathToJumpTask(JumpTask& task) const noexcept(false);
         const Builder& copyAppArgsToJumpTask(JumpTask& task) const noexcept(false);
         const Builder& copyWorkDirToJumpTask(JumpTask& task) const noexcept(false);
@@ -126,7 +127,6 @@ namespace intellij::ui::win
         const Builder& copyDescriptionToJumpTask(JumpTask& task) const noexcept(false);
 
     private:
-        COMGuard comGuard_;
         std::filesystem::path appPath_;
         std::optional<WideString> appArguments_;
         std::optional<std::filesystem::path> appWorkDir_;
