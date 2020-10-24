@@ -52,19 +52,19 @@ int main(/*int argc, char* argv[]*/)
         std::getline(std::cin, s);
 
         std::clog << "Creating User's \"Tasks\"..." << std::endl;
-        auto userJumpTask1 = ui::JumpTask::Builder{
-                L"C:\\Separated\\Soft\\JetBrains\\IntellijIDEA203.4449.2\\bin\\idea64.exe",
-                L"Open Intellij IDEA"
-            }//.setTasksApplicationArguments(L"")
-             .setTasksDescription(L"Run IDEA 64-bit launcher")
-             .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
-        auto userJumpTask2 = ui::JumpTask::Builder{
-                L"notepad.exe",
-                L"Open MyDocument.txt"
-            }.setTasksApplicationWorkingDirectory(L"C:\\Separated")
-             .setTasksApplicationArguments(L"MyDocument.txt")
-             .setTasksDescription(L"Open MyDocument.txt via notepad.exe")
-             .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto userJumpTask1 =
+            ui::JumpTask::startBuilding(L"C:\\Separated\\Soft\\JetBrains\\IntellijIDEA203.4449.2\\bin\\idea64.exe",
+                                        L"Open Intellij IDEA")
+                                        //.setApplicationArguments(L"")
+                                        .setDescription(L"Run IDEA 64-bit launcher")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto userJumpTask2 =
+            ui::JumpTask::startBuilding(L"notepad.exe",
+                                        L"Open MyDocument.txt")
+                                        .setApplicationWorkingDirectory(L"C:\\Separated")
+                                        .setApplicationArguments(L"MyDocument.txt")
+                                        .setDescription(L"Open MyDocument.txt via notepad.exe")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
         std::clog << "User's \"Tasks\" have been created successfully.\n" << std::endl;
 
 
@@ -72,34 +72,34 @@ int main(/*int argc, char* argv[]*/)
         std::getline(std::cin, s);
 
         std::clog << "Creating tasks for Custom Category 1..." << std::endl;
-        auto cc1task1 = ui::JumpTask::Builder{
-                L"explorer.exe",
-                L"Program Files x86"
-            }.setTasksApplicationArguments(L"\"C:\\Program Files (x86)\"")
-            .setTasksDescription(L"Open Program Files x86")
-            .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
-        auto cc1task2 = ui::JumpTask::Builder{
-                L"explorer.exe",
-                L"Program Files"
-            }.setTasksApplicationArguments(L"\"C:\\Program Files\"")
-            .setTasksDescription(L"Open Program Files")
-            .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto cc1task1 =
+            ui::JumpTask::startBuilding(L"explorer.exe",
+                                        L"Program Files x86")
+                                        .setApplicationArguments(L"\"C:\\Program Files (x86)\"")
+                                        .setDescription(L"Open Program Files x86")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto cc1task2 =
+            ui::JumpTask::startBuilding(L"explorer.exe",
+                                        L"Program Files")
+                                        .setApplicationArguments(L"\"C:\\Program Files\"")
+                                        .setDescription(L"Open Program Files")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
         std::clog << "The tasks for Custom Category 1 have been created successfully.\n" << std::endl;
 
 
         std::clog << "Creating tasks for Custom Category 2..." << std::endl;
-        auto cc2task1 = ui::JumpTask::Builder{
-                L"explorer.exe",
-                L"Windows"
-            }.setTasksApplicationArguments(L"\"C:\\Windows\\\"")
-             .setTasksDescription(L"Open Windows")
-             .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
-        auto cc2task2 = ui::JumpTask::Builder{
-                L"explorer.exe",
-                L"Users"
-            }.setTasksApplicationArguments(L"\"C:\\Users\"")
-             .setTasksDescription(L"Open Users")
-             .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto cc2task1 =
+            ui::JumpTask::startBuilding(L"explorer.exe",
+                                        L"Windows")
+                                        .setApplicationArguments(L"\"C:\\Windows\\\"")
+                                        .setDescription(L"Open Windows")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
+        auto cc2task2 =
+            ui::JumpTask::startBuilding(L"explorer.exe",
+                                        L"Users")
+                                        .setApplicationArguments(L"\"C:\\Users\"")
+                                        .setDescription(L"Open Users")
+                                        .buildTask(ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
         std::clog << "The tasks for Custom Category 2 have been created successfully.\n" << std::endl;
 
 
@@ -108,7 +108,7 @@ int main(/*int argc, char* argv[]*/)
 
         std::clog << "Creating a JumpList..." << std::endl;
         ui::JumpList jumpList;
-        jumpList.setRecentCategoryVisible(false);
+        jumpList.setRecentCategoryVisible(true);
         jumpList.setFrequentCategoryVisible(false);
         jumpList.appendToUserTasks(std::move(userJumpTask1), ui::COM_IS_INITIALIZED_IN_THIS_THREAD);
         jumpList.appendToUserTasks(std::move(userJumpTask2), ui::COM_IS_INITIALIZED_IN_THIS_THREAD);

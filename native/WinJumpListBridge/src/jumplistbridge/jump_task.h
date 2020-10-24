@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
- * intellij::ui::win::JumpTask class implementation.
+ * intellij::ui::win::JumpTask and intellij::ui::win::JumpTask::BuildSession classes implementation.
  *
  * See below for the documentation.
  *
@@ -17,44 +17,54 @@
 #include "COM_object_safe_ptr.h"    // COMObjectSafePtr
 #include <filesystem>               // std::filesystem
 #include <optional>                 // std::optional
+#include <utility>                  // std::forward
 
 
 namespace intellij::ui::win
 {
 
     // TODO: docs
-    // TODO: merge JumpTask::Builder into JumpTask
     class JumpTask
     {
     public: // nested types
         using SharedNativeHandle = COMObjectSafePtr<IShellLinkW>;
 
         // see declaration below
-        class Builder;
+        class BuildSession;
 
     public: // ctors/dtor
         /// JumpTask is non-copyable.
-        /// If you really need to copy a task, use JumpTask::Builder::takeSettingsFrom + JumpTask::Builder::buildTask
         JumpTask(const JumpTask&) = delete;
 
-        /// @param [in,out] other - is in valid but unspecified state afterwards
         JumpTask(JumpTask&& other) noexcept;
+
+
+        /// Starts the process of JumpTask building.
+        ///
+        /// @param[in] appPath - the path to the application to execute. Must not be empty.
+        /// @param[in] title - the text displayed for the task in the Jump List. Must not be empty;
+        ///                    the task will be unclickable otherwise.
+        ///
+        /// @exception std::runtime_error in case of empty one of the passed parameters
+        [[nodiscard]] static BuildSession startBuilding(
+            std::filesystem::path appPath,
+            WideString title
+        ) noexcept(false);
+
 
         ~JumpTask() noexcept;
 
     public: // assignments
         /// JumpTask is non-copyable.
-        /// If you really need to copy a task, use JumpTask::Builder::takeSettingsFrom + JumpTask::Builder::buildTask
         JumpTask& operator=(const JumpTask&) = delete;
 
-        /// @param [in] lhs - is in valid but unspecified state afterwards
         JumpTask& operator=(JumpTask&& lhs);
 
     public: // getters
         [[nodiscard]] SharedNativeHandle shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false);
 
     private:
-        /// Use JumpTask::Builder to create a task
+        /// Use JumpTask::startBuilding to create a task
         explicit JumpTask(COMObjectSafePtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept;
 
     private:
@@ -63,74 +73,99 @@ namespace intellij::ui::win
 
 
     // TODO: docs
-    class JumpTask::Builder
+    class JumpTask::BuildSession
     {
+        friend class JumpTask;
+
     public: // ctors/dtor
-        /// @param appPath [in] - must be not empty. See setTasksApplicationPath method for more info.
-        /// @param title [in] - must be not empty. See setTasksTitle method for more info.
-        ///
-        /// @exception std::runtime_error - if appPath is empty
-        /// @exception std::runtime_error - if title is empty
-        Builder(std::filesystem::path appPath, WideString title) noexcept(false);
-        /// Copies all parameters of the passed JumpTask to *this
-        Builder(const JumpTask& src) noexcept(false);
+        // non-copyable
+        BuildSession(const BuildSession&) = delete;
+        // non-movable
+        BuildSession(BuildSession&&) = delete;
 
-    public: // modifiers
-        /// Copies all parameters of the passed JumpTask to *this
-        Builder& takeSettingsFrom(const JumpTask& jumpTask, COMIsInitializedInThisThreadTag) noexcept(false);
+    public: // assignments
+        // non-copyable
+        BuildSession& operator=(const BuildSession&) = delete;
+        // non-movable
+        BuildSession& operator=(BuildSession&&) = delete;
 
-        /// Sets the path to the application.
-        /// Each JumpTask must have non-empty application path: what to execute otherwise?
-        ///
-        /// @exception std::runtime_error - if appPath is empty
-        Builder& setTasksApplicationPath(std::filesystem::path appPath) noexcept(false);
+    public: // modifiers of optional parameters
         /// Sets the arguments passed to the application on startup.
-        Builder& setTasksApplicationArguments(WideString allArgs) noexcept;
-        /// Sets the working directory of the application on startup.
-        Builder& setTasksApplicationWorkingDirectory(std::filesystem::path wdPath) noexcept;
-        /// Sets the text displayed for the tasks in the Jump List.
-        /// Each JumpTask must have non-empty title: it will be unclickable otherwise.
+        /// @returns *this
+        BuildSession& setApplicationArguments(WideString allArgs) noexcept;
+        /// Conditionally sets the arguments passed to the application on startup.
         ///
-        /// @exception std::runtime_error - if title is empty
-        Builder& setTasksTitle(WideString title) noexcept(false);
+        /// @param[in] condition - if true then this invokes setApplicationArguments({std::forward<Ts>(allArgs)...});
+        ///                        nothing will be performed otherwise.
+        ///
+        /// @returns *this
+        template<typename... Ts>
+        BuildSession& setApplicationArgumentsIf(bool condition, Ts&&... allArgs)
+        {
+            if (condition)
+                return setApplicationArguments({std::forward<Ts>(allArgs)...});
+            return *this;
+        }
+
+        /// Sets the working directory of the application on startup.
+        /// @returns *this
+        BuildSession& setApplicationWorkingDirectory(std::filesystem::path wdPath) noexcept;
+        /// Conditionally sets the working directory of the application on startup.
+        ///
+        /// @param[in] condition - if true then this invokes setApplicationWorkingDirectory({std::forward<Ts>(allArgs)...});
+        ///                        nothing will be performed otherwise.
+        ///
+        /// @returns *this
+        template<typename... Ts>
+        BuildSession& setApplicationWorkingDirectoryIf(bool condition, Ts&&... allArgs)
+        {
+            if (condition)
+                return setApplicationWorkingDirectory({std::forward<Ts>(allArgs)...});
+            return *this;
+        }
+
         /// Sets the text displayed in the tooltip for the tasks in the Jump List.
-        Builder& setTasksDescription(WideString description) noexcept;
+        /// @returns *this
+        BuildSession& setDescription(WideString description) noexcept;
+        /// Conditionally sets the text displayed in the tooltip for the tasks in the Jump List.
+        ///
+        /// @param[in] condition - if true then this invokes setDescription({std::forward<Ts>(allArgs)...});
+        ///                        nothing will be performed otherwise.
+        ///
+        /// @returns *this
+        template<typename... Ts>
+        BuildSession& setDescriptionIf(bool condition, Ts&&... allArgs)
+        {
+            if (condition)
+                return setDescription({std::forward<Ts>(allArgs)...});
+            return *this;
+        }
 
     public: // getters
-        /// @throws std::system_error
-        // TODO: docs
         [[nodiscard]] JumpTask buildTask(COMIsInitializedInThisThreadTag) const noexcept(false);
 
-        /// Returns the path to the application.
-        [[nodiscard]] const std::filesystem::path& getTasksApplicationPath() const noexcept;
-        /// Returns the arguments passed to the application on startup.
-        /// @returns nullptr if no arguments will be passed to the application on startup.
-        ///          You can set the passing arguments via getTasksApplicationArguments method.
-        [[nodiscard]] const WideString* getTasksApplicationArguments() const noexcept;
-        /// Returns the working directory of the application on startup.
-        /// @returns nullptr if the working directory will not be set (via setTasksWorkingDirectory).
-        ///          You can set it via setTasksWorkingDirectory method.
-        [[nodiscard]] const std::filesystem::path* getTasksApplicationWorkingDirectory() const noexcept;
-        /// Returns the text displayed for the tasks in the Jump List.
-        [[nodiscard]] WideStringView getTasksTitle() const noexcept;
-        /// Returns the text displayed in the tooltip for the tasks in the Jump List.
-        /// @returns nullptr if the tooltip text will not be set for the tasks.
-        ///          You can set it via setTasksDescription method.
-        [[nodiscard]] const WideString* getTasksDescription() const noexcept;
-
     private:
+        /// Use JumpTask::startBuilding method
+        ///
+        /// @exception std::runtime_error in case of empty one of the passed parameters
+        BuildSession(std::filesystem::path appPath, WideString title) noexcept(false);
+
+        //BuildSession(BuildSession&&) noexcept;
+        //BuildSession& operator=(BuildSession&&) noexcept;
+
+    private: // helpers
         [[nodiscard]] JumpTask createJumpTask(COMIsInitializedInThisThreadTag) const noexcept(false);
-        const Builder& copyAppPathToJumpTask(JumpTask& task) const noexcept(false);
-        const Builder& copyAppArgsToJumpTask(JumpTask& task) const noexcept(false);
-        const Builder& copyWorkDirToJumpTask(JumpTask& task) const noexcept(false);
-        const Builder& copyTitleToJumpTask(JumpTask& task) const noexcept(false);
-        const Builder& copyDescriptionToJumpTask(JumpTask& task) const noexcept(false);
+        void copyAppPathToJumpTask(JumpTask& task) const noexcept(false);
+        void copyAppArgsToJumpTask(JumpTask& task) const noexcept(false);
+        void copyWorkDirToJumpTask(JumpTask& task) const noexcept(false);
+        void copyTitleToJumpTask(JumpTask& task) const noexcept(false);
+        void copyDescriptionToJumpTask(JumpTask& task) const noexcept(false);
 
     private:
-        std::filesystem::path appPath_;
+        const std::filesystem::path appPath_;
+        const WideString title_;
         std::optional<WideString> appArguments_;
         std::optional<std::filesystem::path> appWorkDir_;
-        WideString title_;
         std::optional<WideString> description_;
     };
 
