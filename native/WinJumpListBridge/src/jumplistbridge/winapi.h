@@ -6,8 +6,23 @@
  * @author Nikita Provotorov
  */
 
+// TODO: make all defines in CMake
+
 #ifndef WINJUMPLISTBRIDGE_WINAPI_H
 #define WINJUMPLISTBRIDGE_WINAPI_H
+
+// Force Unicode version of WinAPI.
+// It is necessary for:
+//  * fixing of WinAPI SHARDAPPIDINFOLINK structure.
+#ifndef UNICODE
+    #define UNICODE
+#endif // ndef UNICODE
+#ifndef _UNICODE
+    #define _UNICODE
+#endif // ndef _UNICODE
+
+// Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN
 
 // Make the project supports Windows 8 and later.
 // See https://docs.microsoft.com/ru-ru/cpp/porting/modifying-winver-and-win32-winnt for more info.
@@ -18,12 +33,10 @@
 #define _WIN32_WINNT    0x0602  // 0x0602 is Windows 8
 #include <sdkddkver.h>
 
-// Exclude rarely-used stuff from Windows headers
-#define WIN32_LEAN_AND_MEAN
-
 // Used WinAPI headers
 #include <Windows.h>
 #include <Shobjidl.h>       // COM
+#include <Shlobj.h>         // SHAddToRecentDocs, SHCreateItemFromParsingName ; to link with Shell32.lib
 #include <propsys.h>        // IPropertyStore
 #include <Propidl.h>        // PROPVARIANT
 #include <propkey.h>        // PKEY_Title
