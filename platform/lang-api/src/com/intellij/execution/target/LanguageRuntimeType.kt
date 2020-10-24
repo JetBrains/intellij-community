@@ -2,7 +2,6 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
@@ -56,18 +55,12 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   abstract fun findLanguageRuntime(target: TargetEnvironmentConfiguration): C?
 
-  @Throws(RuntimeConfigurationException::class)
-  open fun checkConfiguration(config: C) = Unit
-
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
 
     fun LanguageRuntimeType<*>.findVolumeDescriptor(type: VolumeType): VolumeDescriptor? =
       this.volumeDescriptors().firstOrNull { it.type == type }
-
-    @Throws(RuntimeConfigurationException::class)
-    fun LanguageRuntimeConfiguration.checkConfiguration() = this.getRuntimeType().checkConfiguration(this)
   }
 
   /**
