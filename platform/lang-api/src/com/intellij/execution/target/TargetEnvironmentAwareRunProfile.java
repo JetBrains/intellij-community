@@ -1,7 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,4 +44,27 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
   String getDefaultTargetName();
 
   void setDefaultTargetName(@Nullable String targetName);
+
+  default void validateRunTarget(@SuppressWarnings("unused") @NotNull Project project) throws RuntimeConfigurationException {
+    String targetName = getDefaultTargetName();
+    if (targetName == null) {
+      return;
+    }
+
+    TargetEnvironmentConfiguration target = ContainerUtil.find(
+      TargetEnvironmentsManager.getInstance(/*project*/).getTargets().resolvedConfigs(),
+      next -> targetName.equals(next.getDisplayName()));
+
+    if (target == null) {
+      throw new RuntimeConfigurationError(
+        ExecutionBundle.message("TargetEnvironmentAwareRunProfile.error.cannot.find.run.target", targetName));
+    }
+    try {
+      target.validateConfiguration();
+    }
+    catch (RuntimeConfigurationException e) {
+      throw new RuntimeConfigurationError(
+        ExecutionBundle.message("TargetEnvironmentAwareRunProfile.error.run.target.error.0", e.getMessage()));
+    }
+  }
 }
