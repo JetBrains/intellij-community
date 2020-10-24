@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-javac-rt-rpc">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps_javac_rt_rpc</output-path>
+    <root id="archive" name="jps-javac-rt-rpc.jar">
+      <element id="module-output" name="intellij.platform.jps.build.javac.rt.rpc" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.5.1/protobuf-java-3.5.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

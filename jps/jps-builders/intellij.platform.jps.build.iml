@@ -10,7 +10,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
@@ -42,5 +41,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
   </component>
 </module>
