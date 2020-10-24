@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -45,6 +46,9 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
   fun setTargetPath(volumeDescriptor: VolumeDescriptor, targetPath: String?) {
     volumePaths.putOrClear(volumeDescriptor.type, targetPath)
   }
+
+  @Throws(RuntimeConfigurationException::class)
+  open fun validateConfiguration() = Unit
 
   companion object {
     private fun <K, V> MutableMap<K, V>.putOrClear(key: K, value: V?) {

@@ -23,9 +23,15 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
 
   fun createEnvironmentFactory(project: Project): TargetEnvironmentFactory = getTargetType().createEnvironmentFactory(project, this)
 
-  companion object {
-    @Throws(RuntimeConfigurationException::class)
-    fun TargetEnvironmentConfiguration.checkConfiguration(): Unit = this.getTargetType().checkConfiguration(this)
+  /**
+   * Validates this configuration. By default delegates validation to each of the attached language runtimes.
+   * Subclasses may override.
+   */
+  @Throws(RuntimeConfigurationException::class)
+  open fun validateConfiguration() {
+    runtimes.resolvedConfigs().forEach {
+      it.validateConfiguration()
+    }
   }
 }
 
