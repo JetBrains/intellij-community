@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -38,6 +39,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
@@ -47,7 +49,9 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -189,15 +193,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
     GradleVersion gradleVersion = null;
 
+    boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
     boolean isCompositeBuildsSupported = false;
     if (buildEnvironment != null) {
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
       isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
+      if (!isCompositeBuildsSupported && !GradleUtil.isCustomSerializationEnabled(gradleVersion)) {
+        useCustomSerialization = false;
+      }
     }
-    boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    final ProjectImportAction projectImportAction =
-      new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported, useCustomSerialization);
+    final ProjectImportAction projectImportAction = useCustomSerialization ?
+      new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported) :
+      new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -267,6 +275,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
+      if(gradleVersion != null && DeprecatedGradleVersionIssue.isDeprecated(gradleVersion)) {
+        resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
+      }
       performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
     catch (Exception e) {
@@ -283,7 +294,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
       assert gradleVersion != null;
-      allModels.initToolingSerializer(gradleVersion);
+      allModels.initToolingSerializer(new IdeaProjectSerializationService(gradleVersion));
     }
 
     allModels.setBuildEnvironment(buildEnvironment);

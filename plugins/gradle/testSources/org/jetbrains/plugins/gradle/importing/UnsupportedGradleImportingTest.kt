@@ -14,10 +14,14 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     importProject("")
     val expectedExecutionTree: String
     when {
-      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
+      currentGradleVersion < GradleVersion.version("2.6") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  Unsupported Gradle"
+      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
+        "-\n" +
+        " -finished\n" +
+        "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
       else -> expectedExecutionTree = "-\n" +
                                       " finished"
     }
@@ -33,7 +37,7 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     private val OLD_GRADLE_VERSIONS = arrayOf(
       arrayOf<Any>("0.9"), /*..., */arrayOf<Any>("0.9.2"),
       arrayOf<Any>("1.0"), /*arrayOf<Any>("1.1"), arrayOf<Any>("1.2"), ..., */arrayOf<Any>("1.12"),
-      arrayOf<Any>("2.0"), /*arrayOf<Any>("2.1"), arrayOf<Any>("2.2"), ..., */arrayOf<Any>("2.5"))
+      arrayOf<Any>("2.0"), /*arrayOf<Any>("2.1"), arrayOf<Any>("2.2"), ..., */arrayOf<Any>("2.5"), arrayOf<Any>("2.6"), arrayOf<Any>("2.14.1"))
 
     /**
      * Run the test against very old not-supported Gradle versions also

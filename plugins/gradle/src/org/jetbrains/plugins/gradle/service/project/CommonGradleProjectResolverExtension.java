@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
@@ -54,6 +53,7 @@ import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCach
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -184,6 +184,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
         mainModuleData.internalSetSdkName(jdkName);
       }
+      // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
       catch (UnsupportedMethodException ignore) {
         // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11
       }
@@ -207,9 +208,14 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   }
 
   private static void populateModuleSdkModel(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> moduleNode) {
-    String sdkName = resolveJdkName(ideaModule.getJdkName());
-    ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
-    moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
+    try {
+      String jdkName = ideaModule.getJdkName();
+      String sdkName = resolveJdkName(jdkName);
+      ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
+      moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
+    }
+    // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
+    catch (UnsupportedMethodException ignore) { }
   }
 
   private static @Nullable String resolveJdkName(@Nullable String jdkNameOrVersion) {
@@ -247,7 +253,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
     GradleExtensions gradleExtensions = resolverCtx.getExtraProject(gradleModule, GradleExtensions.class);
     if (gradleExtensions != null) {
-      boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
+      String gradleVersion = resolverCtx.getProjectGradleVersion();
+      boolean useCustomSerialization = gradleVersion == null ||
+                                       GradleUtil.isCustomSerializationEnabled(GradleVersion.version(gradleVersion));
       DefaultGradleExtensions extensions = useCustomSerialization ? (DefaultGradleExtensions)gradleExtensions
                                                                   : new DefaultGradleExtensions(gradleExtensions);
       ExternalProject externalProject = getExternalProject(gradleModule, resolverCtx);

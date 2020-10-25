@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandle
 import org.jetbrains.plugins.gradle.util.*
 import java.io.File
 import java.util.*
-import java.util.function.BiPredicate
 import java.util.function.Consumer
 
 /**
@@ -40,15 +39,19 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()
     var gradleVersionUsed: GradleVersion? = null
+    var buildEnvironmentJavaHome: File? = null
     if (issueData.buildEnvironment != null) {
       gradleVersionUsed = GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
+      buildEnvironmentJavaHome = issueData.buildEnvironment.java.javaHome
     }
 
-    val couldNotDetermineJavaIssue = couldNotDetermineJavaIssue(rootCauseText)
+    val couldNotDetermineJavaIssue = couldNotDetermineJavaIssue(rootCause, rootCauseText)
     val isUnsupportedJavaRuntimeIssue = rootCause.javaClass.simpleName == UnsupportedJavaRuntimeException::class.java.simpleName || couldNotDetermineJavaIssue
-    val javaVersionUsed = detectJavaVersion(couldNotDetermineJavaIssue, rootCauseText, issueData)
+    val javaVersionUsed = detectJavaVersion(couldNotDetermineJavaIssue, rootCauseText, issueData, buildEnvironmentJavaHome)
     val isRemovedUnsafeDefineClassMethodInJDK11Issue = causedByUnsafeDefineClassApiUsage(gradleVersionUsed, javaVersionUsed,
                                                                                          rootCause, rootCauseText)
+    val isUnsupportedClassVersionErrorIssue = rootCause.javaClass.name == UnsupportedClassVersionError::class.java.name &&
+                                              javaVersionUsed != null && javaVersionUsed.feature < 7
     var unableToStartDaemonProcessForJDK9 = false
     var unableToStartDaemonProcessForJDK11 = false
     if (!isRemovedUnsafeDefineClassMethodInJDK11Issue &&
@@ -63,10 +66,14 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       }
     }
 
-    if (!isUnsupportedJavaRuntimeIssue && !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
-        !unableToStartDaemonProcessForJDK11 && !unableToStartDaemonProcessForJDK9 &&
-        rootCauseText != "java.lang.RuntimeException: Could not determine Java version.") {
-      return null
+    var isSupportedGradleJava: Boolean? = null
+    if (!isUnsupportedClassVersionErrorIssue &&
+        !isUnsupportedJavaRuntimeIssue && !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
+        !unableToStartDaemonProcessForJDK11 && !unableToStartDaemonProcessForJDK9) {
+      if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
+        isSupportedGradleJava = false
+      }
+      else return null
     }
 
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
@@ -75,14 +82,27 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     val versionSuggestion = getSuggestedGradleVersion(newestCompatibleGradleVersion, oldestCompatibleGradleVersion)
 
     val issueDescription = StringBuilder()
-    if (couldNotDetermineJavaIssue || isRemovedUnsafeDefineClassMethodInJDK11Issue &&
-        oldestCompatibleGradleVersion != null && newestCompatibleGradleVersion != null) {
-      issueDescription
-        .append("Unsupported Java. \n") // title
-        .append("Your build is currently configured to use Java $javaVersionUsed. It's recommended to use Gradle $versionSuggestion.")
-    }
-    else {
-      issueDescription.append(rootCause.message)
+    val incompatibleJavaVersion = if (javaVersionUsed != null) "Java $javaVersionUsed" else "incompatible Java"
+    when {
+      couldNotDetermineJavaIssue || isRemovedUnsafeDefineClassMethodInJDK11Issue &&
+      newestCompatibleGradleVersion != null -> {
+        issueDescription
+          .append("Unsupported Java. \n") // title
+          .append("Your build is currently configured to use $incompatibleJavaVersion. It's recommended to use Gradle $versionSuggestion.")
+      }
+      isUnsupportedClassVersionErrorIssue -> {
+        issueDescription
+          .append("Unsupported Java. \n") // title
+          .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
+      }
+      isSupportedGradleJava != null && !isSupportedGradleJava -> {
+        issueDescription
+          .append("Unsupported Java. \n") // title
+          .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
+      }
+      else -> {
+        issueDescription.append(rootCause.message)
+      }
     }
 
     val gradleVersionString = if (gradleVersionUsed != null) gradleVersionUsed.version else "version"
@@ -94,31 +114,17 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
         "\n\nThe project uses Gradle $gradleVersionString which is incompatible with Java 9 or newer.\n")
       unableToStartDaemonProcessForJDK11 -> issueDescription.clear().append("Unable to start the daemon process.").append(
         "\n\nThe project uses Gradle $gradleVersionString which is incompatible with Java 11 or newer.\n")
-      isUnsupportedJavaRuntimeIssue -> issueDescription.append("\n")
+      else -> issueDescription.append("\n")
     }
-    issueDescription.append("\nPossible solution:\n")
-    val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
-    if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < oldestCompatibleGradleVersion) {
-      val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion, true)
-      issueDescription.append(
-        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${oldestCompatibleGradleVersion.version} version " +
-        "and re-import the project</a>\n")
-      quickFixes.add(gradleVersionFix)
+
+    val isAndroidStudio = "AndroidStudio" == getPlatformPrefix()
+    if (!isAndroidStudio || !isUnsupportedClassVersionErrorIssue) {
+      issueDescription.append("\nPossible solution:\n")
     }
-    else {
-      val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
-      val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
-      issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
-                              "change `distributionUrl` property to use compatible Gradle version and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
-      quickFixes.add(wrapperSettingsOpenQuickFix)
-      quickFixes.add(reimportQuickFix)
-    }
-    if ("AndroidStudio" != getPlatformPrefix()) { // Android Studio doesn't have Gradle JVM setting
+    if (!isAndroidStudio) { // Android Studio doesn't have Gradle JVM setting
       val gradleSettingsFix = GradleSettingsQuickFix(
         issueData.projectPath, true,
-        BiPredicate { oldSettings, currentSettings ->
-          oldSettings.gradleJvm != currentSettings.gradleJvm
-        },
+        { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
         GradleBundle.message("gradle.settings.text.jvm.path")
       )
       quickFixes.add(gradleSettingsFix)
@@ -126,6 +132,25 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       val suggestedJavaVersion: String = getSuggestedJavaVersion(gradleVersionUsed, javaVersionUsed)
       issueDescription.append(
         " - Use Java $suggestedJavaVersion as Gradle JVM: <a href=\"${gradleSettingsFix.id}\">Open Gradle settings</a> \n")
+    }
+
+    if (!isUnsupportedClassVersionErrorIssue) {
+      val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
+      if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < oldestCompatibleGradleVersion) {
+        val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion, true)
+        issueDescription.append(
+          " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${oldestCompatibleGradleVersion.version} version " +
+          "and re-import the project</a>\n")
+        quickFixes.add(gradleVersionFix)
+      }
+      else {
+        val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
+        val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
+        issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
+                                "change `distributionUrl` property to use compatible Gradle version and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
+        quickFixes.add(wrapperSettingsOpenQuickFix)
+        quickFixes.add(reimportQuickFix)
+      }
     }
 
     val description = issueDescription.toString()
@@ -150,8 +175,10 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
   }
 
   companion object {
-    private const val couldNotDetermineJavaPrefix = "org.gradle.api.GradleException: Could not determine Java version using executable "
-    private fun couldNotDetermineJavaIssue(rootCauseText: String) = rootCauseText.startsWith(couldNotDetermineJavaPrefix)
+    private const val couldNotDetermineJavaUsingExecutablePrefix = "org.gradle.api.GradleException: Could not determine Java version using executable "
+    private fun couldNotDetermineJavaIssue(rootCause: Throwable, rootCauseText: String) =
+      rootCauseText.startsWith(couldNotDetermineJavaUsingExecutablePrefix) ||
+      rootCause.message == "Could not determine Java version."
 
     // https://github.com/gradle/gradle/issues/4860
     private fun causedByUnsafeDefineClassApiUsage(gradleVersionUsed: GradleVersion?,
@@ -170,9 +197,10 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
 
     private fun detectJavaVersion(couldNotDetermineJavaIssue: Boolean,
                                   rootCauseText: String,
-                                  issueData: GradleIssueData) = if (couldNotDetermineJavaIssue) {
-      val javaExeCandidate = rootCauseText.substringAfter(couldNotDetermineJavaPrefix).trimEnd('.')
-      val javaHomeCandidate = File(javaExeCandidate).parentFile?.parentFile
+                                  issueData: GradleIssueData,
+                                  javaHome: File?) = if (couldNotDetermineJavaIssue) {
+      val javaExeCandidate = rootCauseText.substringAfter(couldNotDetermineJavaUsingExecutablePrefix).trimEnd('.')
+      val javaHomeCandidate = File(javaExeCandidate).parentFile?.parentFile ?: javaHome
       javaHomeCandidate?.let {
         if (it.isDirectory) JdkVersionDetector.getInstance().detectJdkVersionInfo(it.path)?.version else null
       }
