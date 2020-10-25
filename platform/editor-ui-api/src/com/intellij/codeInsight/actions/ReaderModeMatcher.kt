@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -14,5 +15,5 @@ interface ReaderModeMatcher {
    *
    * @return null if unable to decide
    */
-  fun matches(project: Project, file: VirtualFile, mode: ReaderMode): Boolean?
+  fun matches(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean?
 }
