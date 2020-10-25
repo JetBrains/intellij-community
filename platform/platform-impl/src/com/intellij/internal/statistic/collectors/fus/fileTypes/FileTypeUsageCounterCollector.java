@@ -83,13 +83,13 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
     OPEN.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
                                        IS_WRITABLE.with(file.isWritable())),
-                                       IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file))));
+                                       IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file, null))));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
     CLOSE.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
                                         IS_WRITABLE.with(file.isWritable())),
-                                        IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file))));
+                                        IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file, null))));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {

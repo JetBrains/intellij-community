@@ -48,7 +48,7 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
           else {
             if (project.isInitialized) {
               val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = matchMode(project, file)
+              e.presentation.isEnabledAndVisible = matchMode(project, file, editor)
             }
             else {
               e.presentation.isEnabledAndVisible = false
