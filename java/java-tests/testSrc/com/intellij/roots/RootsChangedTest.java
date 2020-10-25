@@ -99,7 +99,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     // when the existing root is renamed, it remains a root
     rename(vDir2, "dir2");
-    assertNoEvents();
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
 
     // and event if it is moved, it's still a root

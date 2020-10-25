@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -335,7 +335,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     WriteAction.runAndWait(() -> getVirtualFile(file).rename(this, "f2"));
     assertTrue(pointer.isValid());
-    assertEquals("[]", listener.log.toString());
+    assertEquals("[before:true, after:true]", listener.log.toString());
   }
 
   @Test
@@ -367,7 +367,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
     assertTrue(pointer1.isValid());
     assertTrue(pointer2.isValid());
-    assertEquals("[]", listener1.log.toString());
+    assertEquals("[before:true, after:true]", listener1.log.toString());
     assertEquals("[before:false, after:true]", listener2.log.toString());
   }
 
@@ -557,7 +557,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {

@@ -139,7 +139,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       }
     })
     project.messageBus.connect().subscribe(VirtualFilePointerListener.TOPIC, object : VirtualFilePointerListener {
-      override fun beforeUrlChanged(pointers: Array<out VirtualFilePointer>) {
+      override fun beforeValidityChanged(pointers: Array<out VirtualFilePointer>) {
         val virtualFileUrlIndex = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
         pointers.forEach { virtualFileUrlIndex.findEntitiesByUrl(it as VirtualFileUrl).forEach { sourcesToSave.add(it.first.entitySource) } }
       }
