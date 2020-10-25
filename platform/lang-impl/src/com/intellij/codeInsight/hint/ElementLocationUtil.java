@@ -44,6 +44,7 @@ public final class ElementLocationUtil {
       final Module module = fileIndex.getModuleForFile(vfile);
 
       if (module != null) {
+        if (ModuleType.isInternal(module)) return "";
         icon.set(ModuleType.get(module).getIcon());
         return module.getName();
       }
