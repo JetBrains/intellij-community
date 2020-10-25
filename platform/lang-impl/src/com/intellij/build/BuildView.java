@@ -111,8 +111,6 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   private void onStartBuild(@NotNull Object buildId, @NotNull StartBuildEvent startBuildEvent) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
     if (startBuildEvent instanceof StartBuildEventImpl) {
       myViewSettingsProvider = ((StartBuildEventImpl)startBuildEvent).getBuildViewSettingsProvider();
     }
@@ -133,7 +131,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     }
     ExecutionConsole executionConsole = myExecutionConsole;
     if (executionConsole != null) {
-      executionConsole. getComponent(); //create editor to be able to add console editor actions
+      executionConsole.getComponent(); //create editor to be able to add console editor actions
       if (myViewSettingsProvider.isExecutionViewHidden()) {
         addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
       }
