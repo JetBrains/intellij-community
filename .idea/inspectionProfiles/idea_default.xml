@@ -918,6 +918,9 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="c" maxCount="32000" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.newConcurrentSet()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
         <constraint name="s" within="" contains="" />
         <constraint name="e" within="" contains="" />
