@@ -5,16 +5,14 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.*;
@@ -97,7 +95,7 @@ final class UpdateCheckerComponent {
     @Override
     public void runActivity(@NotNull Project project) {
       if (Experiments.getInstance().isFeatureEnabled("whats.new.notification") && !updateFailed.getValue()) {
-        showWhatsNewNotification(project);
+        showWhatsNew(project);
       }
 
       showUpdatedPluginsNotification(project);
@@ -114,26 +112,12 @@ final class UpdateCheckerComponent {
     if (future != null) future.cancel(false);
   }
 
-  private static void showWhatsNewNotification(Project project) {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    String updateHtmlMessage = properties.getValue(UPDATE_WHATS_NEW_MESSAGE);
-    if (updateHtmlMessage == null) {
-      LOG.warn("Cannot show what's new notification: no content found.");
-      return;
-    }
-
-    String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.getNotificationGroup().createNotification(title, NotificationType.INFORMATION, "ide.update.installed")
-      .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
-          HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage, updateHtmlMessage);
-          IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
-          notification.expire();
-        }
-      }).notify(project);
-    properties.setValue(UPDATE_WHATS_NEW_MESSAGE, null);
+  private static void showWhatsNew(@NotNull Project project) {
+    String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
+    String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    String url = whatsNewUrl + WhatsNewAction.getEmbeddedSuffix();
+    HTMLEditorProvider.Companion.openEditor(project, title, url, null, WhatsNewAction.getTimeoutCallbackHTML(whatsNewUrl));
+    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
   }
 
   private static boolean checkIfPreviousUpdateFailed() {

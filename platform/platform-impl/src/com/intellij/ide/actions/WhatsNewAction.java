@@ -21,7 +21,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       BrowserUtil.browse(whatsNewUrl);
     } else {
       String url = whatsNewUrl + getEmbeddedSuffix();
-      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, url, null, getTimeoutCallback(whatsNewUrl));
+      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, url, null, getTimeoutCallbackHTML(whatsNewUrl));
     }
   }
 
@@ -43,7 +43,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static String getTimeoutCallback(@NotNull String whatsNewUrl) {
+  public static String getTimeoutCallbackHTML(@NotNull String whatsNewUrl) {
     return "<!DOCTYPE html>\n" +
            "<html lang=\"en\">\n" +
            "    <head>\n" +
