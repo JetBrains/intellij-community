@@ -31,7 +31,7 @@ class HighlightingReaderModeProvider : ReaderModeProvider {
     if (!fileIsOpenAlready) return
 
     val highlighting =
-      if (readerMode && !ReaderModeSettings.instance(project).showWarnings) FileHighlightingSetting.SKIP_INSPECTION
+      if (readerMode && !ReaderModeSettings.instance(project).showWarnings) FileHighlightingSetting.SKIP_HIGHLIGHTING
       else FileHighlightingSetting.FORCE_HIGHLIGHTING
 
     HighlightLevelUtil.forceRootHighlighting(PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return, highlighting)
@@ -43,7 +43,7 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
     if (ReaderModeSettings.instance(project).enabled
         && !ReaderModeSettings.instance(project).showWarnings
         && ReaderModeSettings.matchMode(project, file)) {
-      return FileHighlightingSetting.SKIP_INSPECTION
+      return FileHighlightingSetting.SKIP_HIGHLIGHTING
     }
 
     return null
