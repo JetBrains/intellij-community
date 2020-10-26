@@ -179,4 +179,20 @@ void mapConstructorTest() {
     final o0 = new MapConstructorTestClass(number:333)
 }"""
   }
+
+  @Test
+  void 'inner class'() {
+    doTest """
+class A {
+  @MapConstructor
+  class B {
+    String rr
+  }
+  
+  def foo() {
+    new B(rr : "")
+  }
+}
+"""
+  }
 }

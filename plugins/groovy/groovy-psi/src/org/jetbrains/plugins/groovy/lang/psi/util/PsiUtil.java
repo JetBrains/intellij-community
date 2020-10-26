@@ -78,6 +78,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -1253,10 +1254,12 @@ public final class PsiUtil {
       PsiClass containingClass = ((PsiMethod)method).getContainingClass();
       if (containingClass == null) return false;
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
-      if (parameters.length == 1 &&
-          containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) &&
-          TypesUtil.isAssignableByMethodCallConversion(parameters[0].getType(), factory.createTypeByFQClassName(JAVA_UTIL_MAP), method)) {
-        return true;
+      if (parameters.length <= 2 && containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR)) {
+        if (parameters.length == 2 && !(parameters[0] instanceof ConstructorAnnotationsProcessor.EnclosingClassParameter)) {
+          return false;
+        }
+        PsiType lastParameterType = parameters[parameters.length - 1].getType();
+        return TypesUtil.isAssignableByMethodCallConversion(lastParameterType, factory.createTypeByFQClassName(JAVA_UTIL_MAP), method);
       }
     }
     return false;
