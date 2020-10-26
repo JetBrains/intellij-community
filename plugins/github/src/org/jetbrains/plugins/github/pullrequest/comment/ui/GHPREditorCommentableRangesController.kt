@@ -14,12 +14,14 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
 import gnu.trove.TIntHashSet
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
 
 class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<List<LineRange>>,
-                                            private val gutterIconRendererFactory: GHPRDiffEditorGutterIconRendererFactory,
+                                            private val gutterIconRendererFactory: DiffEditorGutterIconRendererFactory,
                                             private val editor: EditorEx) {
 
   private val commentableLines = TIntHashSet()
@@ -29,7 +31,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
     val listenerDisposable = Disposer.newDisposable()
     editor.markupModel.addMarkupModelListener(listenerDisposable, object : MarkupModelListener {
       override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-        val iconRenderer = highlighter.gutterIconRenderer as? GHPRAddCommentGutterIconRenderer ?: return
+        val iconRenderer = highlighter.gutterIconRenderer as? AddCommentGutterIconRenderer ?: return
         Disposer.dispose(iconRenderer)
         commentableLines.remove(iconRenderer.line)
         highlighters.remove(highlighter)
@@ -67,7 +69,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
     override fun mouseExited(e: EditorMouseEvent) = doUpdate(e.editor, -1)
 
     private fun doUpdate(editor: Editor, line: Int) {
-      highlighters.mapNotNull { it.gutterIconRenderer as? GHPRAddCommentGutterIconRenderer }.forEach {
+      highlighters.mapNotNull { it.gutterIconRenderer as? AddCommentGutterIconRenderer }.forEach {
         val visible = it.line == line
         val needUpdate = it.iconVisible != visible
         if (needUpdate) {

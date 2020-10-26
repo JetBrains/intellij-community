@@ -4,7 +4,6 @@ package com.intellij.space.vcs.review.details
 import circlet.client.api.GitCommitChangeType
 import circlet.client.api.isDirectory
 import circlet.code.api.ChangeInReview
-import circlet.code.api.CodeReviewRecord
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -13,45 +12,35 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
+import runtime.reactive.Property
 import javax.swing.JComponent
 
 internal object SpaceReviewChangesTreeFactory {
   fun create(project: Project,
-             detailsDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
+             changesVm: SpaceReviewChangesVm,
+             spaceDiffVm: Property<SpaceDiffVm>): JComponent {
 
     val tree = object : ChangesTree(project, false, false) {
       init {
-        when (detailsDetailsVm) {
-          is MergeRequestDetailsVm -> {
-            detailsDetailsVm.changes.forEach(detailsDetailsVm.lifetime) { changes ->
-              val builder = TreeModelBuilder(project, grouping)
-              val repoNode = RepositoryNode(detailsDetailsVm.repository.value, detailsDetailsVm.repoInfo != null)
+        changesVm.changes.forEach(changesVm.lifetime) {
+          it ?: return@forEach
+          val builder = TreeModelBuilder(project, grouping)
 
-              changes?.let { addChanges(builder, repoNode, it) }
-              updateTreeModel(builder.build())
+          it.forEach { (repo, changesWithDiscussion) ->
+            val repoNode = RepositoryNode(repo, true)
 
-              if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
-            }
-          }
-          is CommitSetReviewDetailsVm -> {
-            detailsDetailsVm.changesByRepos.forEach(detailsDetailsVm.lifetime) { map ->
-              val builder = TreeModelBuilder(project, grouping)
+            val changes = changesWithDiscussion.changesInReview
+            addChanges(builder, repoNode, changes)
+            updateTreeModel(builder.build())
 
-              map?.forEach { (repoName, changes) ->
-                val repoNode = RepositoryNode(repoName, detailsDetailsVm.reposInCurrentProject.value?.get(repoName) != null)
-                addChanges(builder, repoNode, changes)
-              }
-
-              updateTreeModel(builder.build())
-
-              if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
-            }
+            if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
           }
         }
       }
@@ -64,7 +53,7 @@ internal object SpaceReviewChangesTreeFactory {
     tree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
 
-      val spaceDiffFile = SpaceDiffFile(detailsDetailsVm)
+      val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm)
       FileEditorManager.getInstance(project).openFile(spaceDiffFile, true)
       true
     }
@@ -72,7 +61,7 @@ internal object SpaceReviewChangesTreeFactory {
     tree.addSelectionListener {
       VcsTreeModelData.selected(tree).userObjectsStream().findFirst().ifPresent {
         if (it is ChangeInReview) {
-          detailsDetailsVm.selectedChange.value = it
+          changesVm.selectedChange.value = it
         }
       }
     }

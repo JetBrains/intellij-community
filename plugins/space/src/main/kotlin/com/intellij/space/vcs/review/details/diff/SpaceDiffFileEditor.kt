@@ -21,23 +21,26 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
 import com.intellij.space.vcs.review.details.getFileContent
 import com.intellij.space.vcs.review.details.getFilePath
 import kotlinx.coroutines.asCoroutineDispatcher
+import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.runBlocking
+import runtime.reactive.SequentialLifetimes
 import javax.swing.JComponent
 
 internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFile) : FileEditorBase() {
   private val diffEditorLifeTime = LifetimeSource()
 
-  private val diffProcessor = DiffProcessor(project, spaceDiffFile)
+  private val diffProcessor = DiffProcessor(project, spaceDiffFile, diffEditorLifeTime)
 
   init {
     Disposer.register(this, Disposable { diffEditorLifeTime.terminate() })
 
-    val detailsDetailsVm = spaceDiffFile.detailsDetailsVm
-    detailsDetailsVm.selectedChange.forEach(diffEditorLifeTime) {
+    val diffVm = spaceDiffFile.diffVm
+    diffVm.selectedChange.forEach(diffEditorLifeTime) {
       diffProcessor.updateRequest()
     }
   }
@@ -60,7 +63,13 @@ internal class SpaceDiffEditorProvider : FileEditorProvider, DumbAware {
 }
 
 
-internal class DiffProcessor(project: Project, val spaceDiffFile: SpaceDiffFile) : CacheDiffRequestProcessor.Simple(project) {
+internal class DiffProcessor(project: Project,
+                             spaceDiffFile: SpaceDiffFile,
+                             lifetime: LifetimeSource) : CacheDiffRequestProcessor.Simple(project) {
+  val spaceDiffVm = spaceDiffFile.diffVm
+  val changesVm = spaceDiffFile.changesVm
+  val codeViewService = spaceDiffVm.client.codeView
+  val seqLifetimeSource = SequentialLifetimes(lifetime)
 
   override fun getCurrentRequestProvider(): DiffRequestProducer {
 
@@ -70,18 +79,14 @@ internal class DiffProcessor(project: Project, val spaceDiffFile: SpaceDiffFile)
       override fun getName(): String = "DiffRequestProducer"
 
       override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-        val detailsDetailsVm = spaceDiffFile.detailsDetailsVm
-
-        val change = detailsDetailsVm.selectedChange.value ?: return LoadingDiffRequest("")
-        val codeViewService = detailsDetailsVm.client.codeView
-        val projectKey = detailsDetailsVm.projectKey
-        val selectedCommitHashes = detailsDetailsVm.commits.value
-          ?.map { it.commitWithGraph }
-          ?.filter { it.repositoryName == change.repository }
-          ?.map { it.commit.id }
-        if (selectedCommitHashes != null) {
-
-          return runBlocking(detailsDetailsVm.lifetime, coroutineContext) {
+        val nextLifetime = seqLifetimeSource.next()
+        val change = changesVm.selectedChange.value ?: return LoadingDiffRequest("")
+        val projectKey = spaceDiffVm.projectKey
+        val selectedCommitHashes = spaceDiffVm.selectedCommits.value
+          .filter { it.commitWithGraph.repositoryName == change.repository }
+          .map { it.commitWithGraph.commit.id }
+        if (selectedCommitHashes.isNotEmpty()) {
+          return runBlocking(nextLifetime, coroutineContext) {
             val sideBySideDiff = codeViewService.getSideBySideDiff(projectKey,
                                                                    change.repository,
                                                                    change.change, false, selectedCommitHashes)
@@ -102,7 +107,11 @@ internal class DiffProcessor(project: Project, val spaceDiffFile: SpaceDiffFile)
             val titles = listOf(selectedCommitHashes.first(),
                                 selectedCommitHashes.last())
 
-            return@runBlocking SimpleDiffRequest(getFilePath(change).toString(), contents, titles)
+            val diffRequestData = DiffRequestData(nextLifetime, spaceDiffVm, changesVm)
+
+            return@runBlocking SimpleDiffRequest(getFilePath(change).toString(), contents, titles).apply {
+              putUserData(SpaceDiffKeys.DIFF_REQUEST_DATA, diffRequestData)
+            }
           }
         }
         else return LoadingDiffRequest("")
@@ -110,3 +119,7 @@ internal class DiffProcessor(project: Project, val spaceDiffFile: SpaceDiffFile)
     }
   }
 }
+
+data class DiffRequestData(val lifetime: Lifetime,
+                           val spaceDiffVm: SpaceDiffVm,
+                           val changesVm: SpaceReviewChangesVm)

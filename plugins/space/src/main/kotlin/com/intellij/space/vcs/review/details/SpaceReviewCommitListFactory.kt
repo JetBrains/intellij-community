@@ -36,11 +36,17 @@ object SpaceReviewCommitListFactory {
       listModel.removeAll()
       if (commits != null) {
         listModel.add(commits)
+        commitList.setSelectionInterval(0, commits.size - 1)
       }
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommitIndices.value = commitList.selectedIndices.toList()
+      val selectedCommitIndices = if (commitList.selectedIndices.isNotEmpty()) {
+        commitList.selectedIndices.toList()
+      } else {
+        (0 until commitList.itemsCount).toList()
+      }
+      reviewDetailsVm.selectedCommitIndices.value = selectedCommitIndices
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {

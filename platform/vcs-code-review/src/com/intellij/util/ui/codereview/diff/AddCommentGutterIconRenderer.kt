@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.comment.ui
+package com.intellij.util.ui.codereview.diff
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
-abstract class GHPRAddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
+abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
 
   abstract val line: Int
 
@@ -28,7 +28,7 @@ abstract class GHPRAddCommentGutterIconRenderer : GutterIconRenderer(), DumbAwar
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is GHPRAddCommentGutterIconRenderer) return false
+    if (other !is AddCommentGutterIconRenderer) return false
 
     if (line != other.line) return false
 

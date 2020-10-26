@@ -8,6 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -17,12 +20,12 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
                                                   private val inlaysManager: EditorComponentInlaysManager,
                                                   private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
                                                   private val lineLocationCalculator: (Int) -> Pair<Side, Int>?)
-  : GHPRDiffEditorGutterIconRendererFactory {
+  : DiffEditorGutterIconRendererFactory {
 
-  override fun createCommentRenderer(line: Int): GHPRAddCommentGutterIconRenderer = CreateCommentIconRenderer(line)
+  override fun createCommentRenderer(line: Int): AddCommentGutterIconRenderer = CreateCommentIconRenderer(line)
 
   private inner class CreateCommentIconRenderer(override val line: Int)
-    : GHPRAddCommentGutterIconRenderer() {
+    : AddCommentGutterIconRenderer() {
 
     private var reviewState = ReviewState(false, null)
 

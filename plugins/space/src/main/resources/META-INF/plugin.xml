@@ -63,6 +63,7 @@
                  restartRequired="true"/>
 
     <fileEditorProvider implementation="com.intellij.space.vcs.review.details.diff.SpaceDiffEditorProvider"/>
+    <diff.DiffExtension implementation="com.intellij.space.vcs.review.details.diff.SpaceReviewCommentsDiffExtension"/>
   </extensions>
 
   <actions>
