@@ -767,10 +767,10 @@ public final class FindManagerImpl extends FindManager {
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
-        String content = stringToFind + " produced stack overflow when matching content of the file";
+        String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file.getPresentableUrl());
         LOG.info(content);
         GROUP.createNotification(FindBundle.message("notification.title.regular.expression.failed.to.match"),
-                                     content + " " + file.getPresentableUrl(),
+                                 content,
                                  NotificationType.ERROR,
                                  null
                                    ).notify(myProject);
