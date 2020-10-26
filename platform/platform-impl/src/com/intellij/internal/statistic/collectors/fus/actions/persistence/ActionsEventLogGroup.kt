@@ -14,7 +14,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 58)
+    val GROUP = EventLogGroup("actions", 59)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
@@ -24,6 +24,9 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
 
     @JvmField
     val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", "class_name")
+
+    @JvmField
+    val TOGGLE_ACTION = EventFields.Boolean("enable")
 
     @JvmField
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
@@ -45,6 +48,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.InputEvent,
         EventFields.ActionPlace,
         EventFields.CurrentFile,
+        TOGGLE_ACTION,
         CONTEXT_MENU,
         DUMB,
         ACTION_ID,
