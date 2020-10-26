@@ -311,7 +311,7 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  private static String getTitleForScope(@NotNull final FindModel findModel) {
+  private static @Nls String getTitleForScope(@NotNull final FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -359,8 +359,8 @@ public final class FindInProjectUtil {
       if (!scope.isEmpty()) {
         scope = Character.toLowerCase(scope.charAt(0)) + scope.substring(1);
       }
-      presentation.setTabText("Files");
-      presentation.setToolwindowTitle("Files in " + scope);
+      presentation.setTabText(FindBundle.message("tab.title.files"));
+      presentation.setToolwindowTitle(FindBundle.message("tab.title.files.in.scope", scope));
       presentation.setUsagesString("files");
     }
     else {
