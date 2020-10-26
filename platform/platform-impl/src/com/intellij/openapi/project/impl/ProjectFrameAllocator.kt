@@ -146,7 +146,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       runActivity("project frame assigning") {
-        frameManager!!.projectLoaded(frameHelper, project)
         windowManager.assignFrame(frameHelper, project)
       }
       runActivity("tool window pane creation") {
@@ -230,9 +229,6 @@ internal interface ProjectUiFrameManager {
   fun init(allocator: ProjectUiFrameAllocator)
 
   fun getComponent(): JComponent
-
-  fun projectLoaded(frameHelper: ProjectFrameHelper, project: Project) {
-  }
 
   fun projectOpened(project: Project) {
   }
