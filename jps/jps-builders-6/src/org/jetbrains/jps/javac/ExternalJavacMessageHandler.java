@@ -157,6 +157,7 @@ public class ExternalJavacMessageHandler {
           }
           buf.append(failure.getStacktrace());
         }
+        //noinspection HardCodedStringLiteral
         myDiagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, buf.toString()));
         return true;
       }
@@ -246,6 +247,7 @@ public class ExternalJavacMessageHandler {
 
     @Override
     public String getMessage(Locale locale) {
+      //noinspection HardCodedStringLiteral
       return myCompileMessage.hasText()? myCompileMessage.getText() : null;
     }
   }
