@@ -7,6 +7,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -161,6 +162,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
       AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
+
+      checkContainingClass(context, fieldsConstructor);
+
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
@@ -181,5 +185,21 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
     fieldsConstructor.setOriginInfo(originInfo);
     return fieldsConstructor;
+  }
+
+  private static void checkContainingClass(@NotNull TransformationContext context,@NotNull GrLightMethodBuilder constructor) {
+    GrTypeDefinition codeClass = context.getCodeClass();
+    var modifierList = codeClass.getModifierList();
+    if (modifierList == null || context.hasModifierProperty(modifierList, PsiModifier.STATIC)) {
+      return;
+    }
+    PsiClass containingClass = codeClass.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    var factory = GroovyPsiElementFactory.getInstance(context.getProject());
+    PsiClassType classType = factory.createType(containingClass);
+    var justTypeParameter = new GrLightParameter("_containingClass", classType, containingClass);
+    constructor.addParameter(justTypeParameter);
   }
 }
