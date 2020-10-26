@@ -16,6 +16,8 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -43,6 +45,11 @@ class DiffRequestProcessorEditor(
   private val panel = MyPanel(processor.component)
 
   init {
+    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
+      Disposer.register(this, Disposable {
+        Disposer.dispose(processor)
+      })
+    }
     Disposer.register(processor, Disposable {
       propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
