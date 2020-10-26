@@ -44,7 +44,7 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction implements Dumb
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile psiFile = documentManager.getCachedPsiFile(document);
     if (psiFile == null) return editor;
-    if (!forUpdate) documentManager.commitAllDocuments();
+    if (!forUpdate) documentManager.commitDocument(document);
     int startLineOffset = DocumentUtil.getLineStartOffset(editor.getSelectionModel().getSelectionStart(), document);
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, startLineOffset);
   }
