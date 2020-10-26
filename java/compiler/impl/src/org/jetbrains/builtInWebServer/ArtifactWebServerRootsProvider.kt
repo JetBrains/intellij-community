@@ -28,7 +28,7 @@ internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider
     
     for (artifact in ArtifactManager.getInstance(project).artifacts) {
       val root = artifact.outputFile ?: continue
-      return resolver.resolve(path, root, pathQuery = pathQuery)
+      return resolver.resolve(path, root, pathQuery = pathQuery) ?: continue
     }
     return null
   }
