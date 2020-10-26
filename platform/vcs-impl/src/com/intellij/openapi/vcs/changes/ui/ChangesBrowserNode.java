@@ -34,14 +34,14 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
-  public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
-  public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
-  public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
-  public static final Object UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
-  public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
-  public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
-  public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+  public static final Tag IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
+  public static final Tag LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
+  public static final Tag LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
+  public static final Tag UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
+  public static final Tag MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
+  public static final Tag SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
+  public static final Tag SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
+  public static final Tag LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
@@ -105,7 +105,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
-    return new ChangesBrowserLockedFoldersNode(project, LOCKED_FOLDERS_TAG);
+    return new ChangesBrowserLockedFoldersNode(project);
   }
 
   @NotNull
@@ -131,7 +131,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
       return new ChangesBrowserFilePathNode((FilePath) userObject);
     }
     if (userObject == LOCKED_FOLDERS_TAG) {
-      return new ChangesBrowserLockedFoldersNode(project, userObject);
+      return new ChangesBrowserLockedFoldersNode(project);
     }
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
@@ -406,13 +406,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return true;
   }
 
-  private static class Tag {
+  public static class Tag {
     @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
 
-    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
+    private Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 
+    @Nls
     @Override
     public String toString() {
       return VcsBundle.message(myKey);

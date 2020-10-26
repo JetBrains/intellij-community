@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.Nls;
 
 import java.util.Comparator;
 
@@ -12,8 +13,11 @@ import java.util.Comparator;
 public interface ChangeListGroupingStrategy {
   void beforeStart();
   boolean changedSinceApply();
+  @Nls
   String getGroupName(CommittedChangeList changeList);
   Comparator<CommittedChangeList> getComparator();
+  @Nls
+  String toString();
 
   ChangeListGroupingStrategy USER = new ChangeListGroupingStrategy() {
     public String toString() {

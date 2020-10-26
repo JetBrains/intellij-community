@@ -19,8 +19,8 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<Object> 
 
   @NotNull private final Project myProject;
 
-  public ChangesBrowserLockedFoldersNode(@NotNull Project project, @NotNull Object userObject) {
-    super(userObject);
+  public ChangesBrowserLockedFoldersNode(@NotNull Project project) {
+    super(LOCKED_FOLDERS_TAG);
     myProject = project;
   }
 
@@ -32,7 +32,7 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<Object> 
 
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(userObject.toString(), REGULAR_ATTRIBUTES);
+    renderer.append(LOCKED_FOLDERS_TAG.toString(), REGULAR_ATTRIBUTES);
     renderer.append(getCountText(), GRAY_ITALIC_ATTRIBUTES);
     renderer.append(spaceAndThinSpace(), REGULAR_ATTRIBUTES);
     renderer.append(VcsBundle.message("changes.do.cleanup"), CLEANUP_LINK_ATTRIBUTES, new CleanupWorker(myProject, this));

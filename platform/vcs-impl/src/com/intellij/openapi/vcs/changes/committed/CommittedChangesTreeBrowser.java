@@ -193,7 +193,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     myGroupingStrategy.beforeStart();
     DefaultMutableTreeNode lastGroupNode = null;
     String lastGroupName = null;
-    for(CommittedChangeList list: filteredChangeLists) {
+    for(CommittedChangeList list : filteredChangeLists) {
       String groupName = StringUtil.notNullize(myGroupingStrategy.getGroupName(list));
       if (!Objects.equals(groupName, lastGroupName)) {
         lastGroupName = groupName;
