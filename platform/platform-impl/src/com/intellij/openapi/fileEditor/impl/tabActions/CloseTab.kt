@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ShadowAction
@@ -38,9 +39,11 @@ class CloseTab(c: JComponent,
     }
     else {
       if (pinned) {
+        setShortcutSet(KeymapUtil.getActiveKeymapShortcuts("PinActiveEditorTab"));
         e.presentation.setText(IdeBundle.message("action.unpin.tab.tooltip"))
       }
       else {
+        setShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE));
         e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
       }
     }
