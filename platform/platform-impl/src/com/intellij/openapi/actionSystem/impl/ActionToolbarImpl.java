@@ -1473,6 +1473,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @TestOnly
+  public static ActionToolbarImpl findToolbar(ActionGroup group) {
+    for (ActionToolbarImpl toolbar : ourToolbars) {
+      if (toolbar.myActionGroup.equals(group)) {
+        return toolbar;
+      }
+    }
+    return null;
+  }
+
+  @TestOnly
   public Presentation getPresentation(AnAction action) {
     return myPresentationFactory.getPresentation(action);
   }
