@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.Disposable;
@@ -133,7 +133,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  public static Element writeScope(@NotNull NamedScope scope) {
+  private static Element writeScope(@NotNull NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
     setElement.setAttribute(NAME_ATT, scope.getScopeId());
     PackageSet packageSet = scope.getValue();

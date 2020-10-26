@@ -5,35 +5,47 @@ import com.google.gson.Gson
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.scope.packageSet.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isAncestor
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 private const val QODANA_GLOBAL_SCOPE = "qodana.global"
+private const val QODANA_CONFIG_FILENAME = "qodana.json"
+
 
 class QodanaConfig(val profile: String = "", val excludes: List<ExclusionFilter> = emptyList()) {
   companion object {
-    fun read(path: Path): QodanaConfig {
-      if (!path.exists()) return QodanaConfig("", emptyList())
+    @JvmField
+    val EMPTY = QodanaConfig()
+
+    fun load(projectPath: Path): QodanaConfig {
+      val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
+      if (!path.exists()) return EMPTY
+      val logTarget = Paths.get(PathManager.getLogPath(), QODANA_CONFIG_FILENAME);
+      Files.copy(path, logTarget, StandardCopyOption.REPLACE_EXISTING)
       return Gson().fromJson(path.toFile().readText(), QodanaConfig::class.java)
     }
   }
 
-  fun getGlobalScope(project: Project, baseScope: AnalysisScope): AnalysisScope {
+  fun getGlobalScope(project: Project): GlobalSearchScope? {
     val sets = excludes.filter { it.inspections.isEmpty() }.map { it.getScope(project) }.toTypedArray()
-    if (sets.isEmpty()) return baseScope
+    if (sets.isEmpty()) return null
     val scopeManager = NamedScopeManager.getInstance(project)
     val globalScope = NamedScope(QODANA_GLOBAL_SCOPE, ComplementPackageSet(UnionPackageSet.create(*sets)))
     scopeManager.addScope(globalScope)
-    return AnalysisScope(GlobalSearchScopesCore.filterScope(project, globalScope), project)
+    return GlobalSearchScopesCore.filterScope(project, globalScope)
   }
 
-  fun updateScope(profile: InspectionProfileImpl, project: Project) {
+  fun updateToolsScopes(profile: InspectionProfileImpl, project: Project) {
     val inspections = excludes.flatMap { it.inspections }.distinct()
     inspections.forEach {
       val tools = profile.getTools(it, project)
