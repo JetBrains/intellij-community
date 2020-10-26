@@ -1,5 +1,5 @@
 # Usage: . "$(git rev-parse --show-toplevel)/build/protobuf/getprotoc.sh"
-PROTOC_VERSION=${PROTOC_VERSION:-3.5.1}
+PROTOC_VERSION=${PROTOC_VERSION:-3.13.0}
 
 PROTOC_BIN_DIR="${PROTOC_BIN_DIR:-$(git rev-parse --show-toplevel)/build/protobuf/bin}"
 PROTOC_CACHE_DIR="${PROTOC_CACHE_DIR:-$(dirname "$PROTOC_BIN_DIR")/cache}"
