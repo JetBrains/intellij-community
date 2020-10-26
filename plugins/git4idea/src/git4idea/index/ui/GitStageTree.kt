@@ -4,7 +4,6 @@ package git4idea.index.ui
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -74,13 +73,14 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   protected abstract val operations: List<StagingAreaOperation>
 
   init {
+    isKeepTreeState = true
     setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
     addMouseMotionListener(MyMouseMotionListener())
     MyClickListener().installOn(this)
     MyDnDSupport().install(parentDisposable)
     settings.addListener(object : GitStageUiSettingsListener {
       override fun settingsChanged() {
-        update()
+        rebuildTree()
       }
     }, parentDisposable)
   }
@@ -113,13 +113,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
                      ?: return null
     return operations.find { it.matches(statusNode) }
-  }
-
-  fun update() {
-    val state = TreeState.createOn(this, root)
-    state.setScrollToSelection(false)
-    rebuildTree()
-    state.applyTo(this)
   }
 
   override fun rebuildTree() {
