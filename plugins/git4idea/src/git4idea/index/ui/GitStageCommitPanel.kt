@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -15,6 +16,7 @@ import com.intellij.vcs.commit.CommitProgressPanel
 import com.intellij.vcs.commit.CommitProgressUi
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.NonModalCommitPanel
+import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
@@ -33,7 +35,7 @@ private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<C
 class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
 
-  private val progressPanel = CommitProgressPanel()
+  private val progressPanel = GitStageCommitProgressPanel()
 
   private var staged: Set<GitFileStatus> = emptySet()
   private val stagedChanges = ClearableLazyValue.create { state.rootStates.values.flatMap { it.getStagedChanges(project) } }
@@ -81,4 +83,14 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
     if (isFromToolbar) popup.showAbove(toolbar.component) else popup.showInBestPositionFor(dataContext)
+}
+
+private class GitStageCommitProgressPanel : CommitProgressPanel() {
+  override fun buildErrorText(): String? =
+    when {
+      isEmptyChanges && isEmptyMessage -> GitBundle.message("error.no.staged.changes.no.commit.message")
+      isEmptyChanges -> GitBundle.message("error.no.staged.changes.to.commit")
+      isEmptyMessage -> VcsBundle.message("error.no.commit.message")
+      else -> null
+    }
 }
