@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -18,6 +19,9 @@ public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
   public void setUp() throws Exception {
     super.setUp();
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   @NotNull
