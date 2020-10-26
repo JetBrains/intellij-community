@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 public final class BitUtil {
   @Contract(pure = true)
@@ -55,10 +56,16 @@ public final class BitUtil {
     assertOneBitMask(mask & 0xFFL);
   }
   public static void assertOneBitMask(int mask) {
-    assertOneBitMask(mask & 0xFFFFFFFFL);
+    assert (mask & mask - 1) == 0 : invalidMaskError(mask);
   }
+
   private static void assertOneBitMask(long mask) {
-    assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
+    assert (mask & mask - 1) == 0 : invalidMaskError(mask);
+  }
+
+  @NotNull
+  private static String invalidMaskError(long mask) {
+    return "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 
   public static boolean isPowerOfTwo(int i) {
