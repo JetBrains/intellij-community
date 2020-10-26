@@ -3,11 +3,13 @@ package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.devkit.DevKitJpsBundle;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
@@ -30,12 +32,12 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Threading Model annotations instrumentation";
+    return DevKitJpsBundle.message("tmh.instrumenting.builder.name");
   }
 
   @Override
   protected String getProgressMessage() {
-    return "Adding Threading Model assertions...";
+    return DevKitJpsBundle.message("tmh.instrumenting.builder.progress");
   }
 
   @Override
@@ -62,7 +64,7 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
     } catch (Throwable e) {
       LOG.error(e);
       final Collection<File> sourceFiles = compiledClass.getSourceFiles();
-      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, File::getName) + ": " + e.getMessage();
+      String msg = DevKitJpsBundle.message("tmh.cannot.instrument", StringUtil.join(sourceFiles, File::getName, ", "), e.getMessage());
       String firstFile = ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths());
       context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, msg, firstFile));
     }
