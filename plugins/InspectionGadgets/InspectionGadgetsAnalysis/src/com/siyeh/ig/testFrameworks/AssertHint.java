@@ -2,6 +2,7 @@
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,19 @@ public final class AssertHint {
     return myMessage;
   }
 
+  /**
+   * @param expression argument to assertEquals-like method (either expected or actual value)
+   * @return other argument (either actual or expected); null if the supplied expression is neither expected, nor actual value
+   */
+  public @Nullable PsiExpression getOtherExpression(PsiExpression expression) {
+    return getFirstArgument() == expression ? getSecondArgument() : 
+           getSecondArgument() == expression ? getFirstArgument() :
+           null;
+  }
+
   public static @Nullable AssertHint createAssertEqualsLikeHintForCompletion(PsiExpression[] args, PsiMethod method, int index) {
     String name = method.getName();
+    if (args.length == 0) return null;
     int argCount = Math.max(index + 1, args.length);
     if (argCount != 2 && argCount != 3) return null;
     if (!"assertEquals".equals(name) && !"assertNotEquals".equals(name) && !"assertSame".equals(name) && !"assertNotSame".equals(name)) {
@@ -79,14 +91,16 @@ public final class AssertHint {
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (argCount != parameters.length) return null;
-    if (argCount == 2 && args.length > 0) {
-      return new AssertHint(0, false, null, method, args[0]);
+    PsiMethodCallExpression call = ObjectUtils.tryCast(args[0].getParent().getParent(), PsiMethodCallExpression.class);
+    if (call == null) return null;
+    if (argCount == 2) {
+      return new AssertHint(0, false, null, method, call);
     }
     if (isAssertionMessage(parameters[0]) && args.length > 1) {
-      return new AssertHint(1, true, args[0], method, args[1]);
+      return new AssertHint(1, true, args[0], method, call);
     }
     if (isAssertionMessage(parameters[2]) && args.length > 2) {
-      return new AssertHint(0, false, args[2], method, args[0]);
+      return new AssertHint(0, false, args[2], method, call);
     }
     return null;
   }

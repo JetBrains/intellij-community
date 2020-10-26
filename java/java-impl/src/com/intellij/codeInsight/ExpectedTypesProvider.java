@@ -1199,19 +1199,9 @@ public final class ExpectedTypesProvider {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(args, method, index);
       if (assertHint != null) {
-        int firstArgIndex = assertHint.getArgIndex();
-        int other;
-        if (index == firstArgIndex) {
-          other = firstArgIndex + 1;
-        }
-        else if (index == firstArgIndex + 1) {
-          other = firstArgIndex;
-        }
-        else {
-          return null;
-        }
-        if (args.length > other) {
-          ExpectedTypeInfo info = getEqualsType(args[other]);
+        PsiExpression other = assertHint.getOtherExpression(argument);
+        if (other != null) {
+          ExpectedTypeInfo info = getEqualsType(other);
           if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
             return info.getDefaultType();
           }
