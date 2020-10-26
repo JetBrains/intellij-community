@@ -52,6 +52,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   private final int instanceId;
 
+  private volatile int state = ACTIVE;
+
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
@@ -88,6 +90,16 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         libDirectories.add(libDir.toAbsolutePath().toString());
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public int getState() {
+    return state;
+  }
+
+  @ApiStatus.Internal
+  public void setState(int state) {
+    this.state = state;
   }
 
   @Override
