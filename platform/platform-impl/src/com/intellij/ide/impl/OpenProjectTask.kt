@@ -57,6 +57,9 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
   @ApiStatus.Internal
   fun withRunConfigurators() = copy(runConfigurators = true)
 
+  @ApiStatus.Internal
+  fun withForceOpenInNewFrame(value: Boolean) = copy(forceOpenInNewFrame = value)
+
   companion object {
     @JvmStatic
     @JvmOverloads
