@@ -27,4 +27,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testGoMetadata() = ExperimentGoMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testJSMetadata() = ExperimentJSMLRankingProvider().assertModelMetadataConsistent()
 }
