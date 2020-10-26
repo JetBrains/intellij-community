@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
@@ -158,7 +159,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val vcsNotifier = project.service<VcsNotifier>()
     val pullRequestAuthor = ghPullRequest.author
     if (pullRequestAuthor == null) {
-      vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+      vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
                               GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
                               GithubBundle.message("pull.request.branch.checkout.resolve.author.failed"))
       return
@@ -175,7 +176,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       if (sshForkUrl != null) {
         failedMessage += "\n$sshForkUrl"
       }
-      vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+      vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
                               GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"), failedMessage)
       return
     }
@@ -185,7 +186,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     if (fetchResult.showNotificationIfFailed(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"))) {
       val setUpstream = git.setUpstream(repository, forkBranchName, branchName)
       if (!setUpstream.success()) {
-        vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+        vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
                                 GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
                                 setUpstream.errorOutputAsJoinedString)
       }
