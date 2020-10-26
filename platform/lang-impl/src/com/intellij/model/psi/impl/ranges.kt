@@ -26,7 +26,13 @@ internal fun <X> chooseByRange(items: List<X>, offset: Int, itemRange: (X) -> Te
   }
 
   if (containingOffset.isNotEmpty()) {
-    return containingOffset.minimalElements(Comparator.comparing(Function(itemRange), RANGE_CONTAINS_COMPARATOR))
+    try {
+      return containingOffset.minimalElements(Comparator.comparing(Function(itemRange), RANGE_CONTAINS_COMPARATOR))
+    }
+    catch (e: RangeOverlapException) {
+      LOG.error("Range overlap", e, buildDiagnostic(items, itemRange))
+      return emptyList()
+    }
   }
   else {
     return toTheLeftOfOffset.minimalElements(Comparator.comparing(Function(itemRange), RANGE_START_COMPARATOR_INVERTED))
@@ -52,3 +58,9 @@ private class RangeOverlapException(
   range1: TextRange,
   range2: TextRange
 ) : IllegalArgumentException("Overlapping ranges: $range1 and $range2")
+
+private fun <T> buildDiagnostic(items: List<T>, itemRange: (T) -> TextRange): String {
+  return items.joinToString(separator = "\n") { item ->
+    "${itemRange(item)} : ${(item as? Any)?.javaClass} : ${item}"
+  }
+}
