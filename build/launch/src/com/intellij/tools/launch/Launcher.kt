@@ -53,7 +53,7 @@ object Launcher {
       "-Dsun.io.useCanonCaches=false",
       "-Dteamcity.build.tempDir=${paths.tempFolder.canonicalPath}",
       "-Xmx${options.xmx}m",
-      "-XX:+UseConcMarkSweepGC",
+      "-XX:+UseG1GC",
       "-XX:-OmitStackTraceInFastThrow",
       "-XX:CICompilerCount=2",
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
