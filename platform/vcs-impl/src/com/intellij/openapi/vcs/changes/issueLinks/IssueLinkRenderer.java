@@ -48,7 +48,7 @@ public class IssueLinkRenderer {
     return appendTextWithLinks(text, baseStyle, s -> append(s, baseStyle));
   }
 
-  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle, final Consumer<? super String> consumer) {
+  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle, final Consumer<? super @Nls String> consumer) {
     final List<String> pieces = new ArrayList<>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;

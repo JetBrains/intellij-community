@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -237,7 +238,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
   }
 
   @Override
-  public String getCurrentPath() {
+  public @NlsSafe String getCurrentPath() {
     return myStrippable.getCurrentPath();
   }
 
