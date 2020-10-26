@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -34,7 +35,7 @@ public final class NotificationCollector {
   private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
   private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
   private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
-  private static final String UNKNOWN = "unknown";
+  public static final String UNKNOWN = "unknown";
 
   private NotificationCollector() {
     NotificationWhitelistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
@@ -131,7 +132,7 @@ public final class NotificationCollector {
                                                                     @Nullable String displayId) {
     ArrayList<EventPair<?>> data = new ArrayList<>();
     data.add(ID.with(id));
-    data.add(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN));
+    data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
     data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
     data.add(EventFields.PluginInfo.with(getPluginInfo(groupId)));
     return data;
