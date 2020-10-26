@@ -33,7 +33,3 @@ class EventsRateWindowThrottle(private var threshold: Int, private val periodMs:
     lastPeriod = period
   }
 }
-
-enum class EventRateThrottleResult {
-  ACCEPT, DENY_AND_REPORT, DENY
-}

@@ -26,7 +26,12 @@ public interface EventLogSystemEvents {
    */
   String STATE_COLLECTOR_FAILED = "invocation.failed";
 
+  /**
+   * Indicates that too many events were reported from a group or in total
+   */
+  String TOO_MANY_EVENTS = "validation.too_many_events";
+
   Set<String> SYSTEM_EVENTS = ContainerUtil.newHashSet(
-    COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED
+    COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED, TOO_MANY_EVENTS
   );
 }
