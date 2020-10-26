@@ -1108,7 +1108,7 @@
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.util.PsiTreeUtil &#10;&#10;def member = PsiTreeUtil.getParentOfType(__context__, PsiMember)&#10;if ((member instanceof PsiClassInitializer || member instanceof PsiField) &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)) {&#10;  def clazz = member.parent&#10;  def target = C.resolve()&#10;  def targetName = target?.qualifiedName&#10;  target != null &amp;&amp; clazz != target &amp;&amp; !target.qualifiedName.startsWith(&quot;java.&quot;)&#10;}&#10;else false&quot;" within="" contains="" />
         <constraint name="C" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="new String($b$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="new String($b$, com.intellij.openapi.vfs.CharsetToolkit.UTF8_CHARSET)">
+      <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="new String($b$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="new String($b$, java.nio.charset.StandardCharsets.UTF_8)">
         <constraint name="b" nameOfExprType="byte\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="non-static JamAnnotationMeta" created="1523014327447" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA">
