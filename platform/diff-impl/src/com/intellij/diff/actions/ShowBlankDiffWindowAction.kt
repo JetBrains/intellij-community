@@ -78,6 +78,7 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
     }
     chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
     chain.putUserData(BLANK_KEY, true)
+    chain.putUserData(DiffUserDataKeysEx.PREFERRED_FOCUS_SIDE, Side.LEFT)
 
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT)
   }
