@@ -397,7 +397,7 @@ public final class IconLoader {
             resolver = new ImageDataResolverImpl(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
           }
           else {
-            URL url = doResolve(originalPath, classLoader1, null, HandleNotFound.IGNORE);
+            URL url = doResolve(path, classLoader1, null, HandleNotFound.IGNORE);
             if (url == null) {
               return null;
             }
