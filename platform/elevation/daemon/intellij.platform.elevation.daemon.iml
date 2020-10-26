@@ -11,6 +11,13 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="library" name="grpc-core" level="project" />
+    <orderEntry type="library" name="grpc-stub" level="project" />
+    <orderEntry type="library" name="grpc-protobuf" level="project" />
+    <orderEntry type="library" name="grpc-netty-shaded" level="project" />
+    <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="module" module-name="intellij.platform.elevation.rpc" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
