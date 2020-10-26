@@ -5,18 +5,19 @@ import com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfigura
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
 import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
 
 object KotlinPredefinedConfigurations {
-    private val CLASS_TYPE get() = KSSRBundle.message("category.class")
-    private val EXPRESSION_TYPE get() = KSSRBundle.message("category.expressions")
-    private val FUNCTION_TYPE get() = KSSRBundle.message("category.functions")
-    private val OPERATOR_TYPE get() = KSSRBundle.message("category.operators")
-    private val COMMENT_TYPE get() = KSSRBundle.message("category.comments")
-    private val INTERESTING_TYPE get() = KSSRBundle.message("category.interesting")
+    private val CLASS_TYPE get() = KotlinBundle.message("category.class")
+    private val EXPRESSION_TYPE get() = KotlinBundle.message("category.expressions")
+    private val FUNCTION_TYPE get() = KotlinBundle.message("category.functions")
+    private val OPERATOR_TYPE get() = KotlinBundle.message("category.operators")
+    private val COMMENT_TYPE get() = KotlinBundle.message("category.comments")
+    private val INTERESTING_TYPE get() = KotlinBundle.message("category.interesting")
 
     private fun searchTemplate(
         @Nls name: String,
@@ -29,7 +30,7 @@ object KotlinPredefinedConfigurations {
     fun createPredefinedTemplates(): Array<Configuration> = arrayOf(
         // Classes
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.all.vars.of.the.class"),
+            KotlinBundle.message("predefined.configuration.all.vars.of.the.class"),
             "all vars/vals of a class",
             """
                 class '_Class {  
@@ -39,7 +40,7 @@ object KotlinPredefinedConfigurations {
             CLASS_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.all.methods.of.the.class"),
+            KotlinBundle.message("predefined.configuration.all.methods.of.the.class"),
             "all methods of a class",
             """
                 class '_Class {  
@@ -49,7 +50,7 @@ object KotlinPredefinedConfigurations {
             CLASS_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.all.vars.of.the.object"),
+            KotlinBundle.message("predefined.configuration.all.vars.of.the.object"),
             "all vars/vals of an object or companion object",
             """
                 object '_Object {  
@@ -59,12 +60,12 @@ object KotlinPredefinedConfigurations {
             CLASS_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.anonymous.class"),
+            KotlinBundle.message("predefined.configuration.anonymous.class"),
             "anonymous class",
             "fun '_Function() = object { }", CLASS_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.class.annotation"),
+            KotlinBundle.message("predefined.configuration.class.annotation"),
             "annotated classes",
             """
                 @'_Annotation class 'Name
@@ -74,81 +75,81 @@ object KotlinPredefinedConfigurations {
 
         // Expressions
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.assignments"),
+            KotlinBundle.message("predefined.configuration.assignments"),
             "assignments",
             "'_Inst = '_Expr",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.method.calls"),
+            KotlinBundle.message("predefined.configuration.method.calls"),
             "method calls",
             "'_Before?.'MethodCall('_Parameter*)",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.string.literals"),
+            KotlinBundle.message("predefined.configuration.string.literals"),
             "string literals", "\"'_String\"", EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.array.access"),
+            KotlinBundle.message("predefined.configuration.array.access"),
             "array access", "'_Array['_Index]", EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.casts"),
+            KotlinBundle.message("predefined.configuration.casts"),
             "casts", "'_Expr as '_Type", EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.instance"),
+            KotlinBundle.message("predefined.configuration.instance"),
             "instances", "'_Expr is '_Type", EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.elvis"),
+            KotlinBundle.message("predefined.configuration.elvis"),
             "elvis operators", "'_Expr ?: '_Fallback", EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.safe.call.operator"),
+            KotlinBundle.message("predefined.configuration.safe.call.operator"),
             "safe call operators",
             "\$Expr\$?.'_Property",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.assert.not.null"),
+            KotlinBundle.message("predefined.configuration.assert.not.null"),
             "not-null assertion operators",
             "'_Expr!!",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.lambda"),
+            KotlinBundle.message("predefined.configuration.lambda"),
             "lambda expressions",
             "{ '_Parameter* -> '_Expr* }",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.strings"),
+            KotlinBundle.message("predefined.configuration.strings"),
             "strings",
             """ "$$'_Entry*" """,
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.strings.with.long.template"),
+            KotlinBundle.message("predefined.configuration.strings.with.long.template"),
             "strings containing a long template",
             """ "$$'_EntryBefore*${'$'}{ '_LongTemplateExpr }$$'_EntryAfter*" """,
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.vars.only"),
+            KotlinBundle.message("predefined.configuration.vars.only"),
             "vars only",
             """var '_Variable:[_${VarOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.vals.only"),
+            KotlinBundle.message("predefined.configuration.vals.only"),
             "vals only",
             """val '_Value:[_${ValOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.vars.of.given.type"),
+            KotlinBundle.message("predefined.configuration.vars.of.given.type"),
             "vars and vals of given type",
             """var '_Variable:[exprtype(Int)] = '_Init""",
             EXPRESSION_TYPE
@@ -156,13 +157,13 @@ object KotlinPredefinedConfigurations {
 
         // Methods
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.function.signature"),
+            KotlinBundle.message("predefined.configuration.function.signature"),
             "function signature",
             "fun '_Name('_Param*) : '_Type",
             FUNCTION_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.function.annotation"),
+            KotlinBundle.message("predefined.configuration.function.annotation"),
             "annotated functions",
             "@'_Annotation fun 'Name('_Param*)",
             FUNCTION_TYPE
@@ -170,13 +171,13 @@ object KotlinPredefinedConfigurations {
 
         // Comments, KDoc and Metadata
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.comments.containing.word"),
+            KotlinBundle.message("predefined.configuration.comments.containing.word"),
             "comments containing a given word",
             "// '_before bug '_after",
             COMMENT_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.kdoc.tag"),
+            KotlinBundle.message("predefined.configuration.kdoc.tag"),
             "KDoc tags",
             """
                 /**
@@ -186,7 +187,7 @@ object KotlinPredefinedConfigurations {
             COMMENT_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.annotations"),
+            KotlinBundle.message("predefined.configuration.annotations"),
             "annotations",
             "@'Annotation",
             COMMENT_TYPE
@@ -194,7 +195,7 @@ object KotlinPredefinedConfigurations {
 
         // Operators
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.trys"),
+            KotlinBundle.message("predefined.configuration.trys"),
             "try's",
             """
                 try {
@@ -206,7 +207,7 @@ object KotlinPredefinedConfigurations {
             OPERATOR_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.ifs"),
+            KotlinBundle.message("predefined.configuration.ifs"),
             "if's",
             """
                 if ('_Condition) {
@@ -218,7 +219,7 @@ object KotlinPredefinedConfigurations {
             OPERATOR_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.when"),
+            KotlinBundle.message("predefined.configuration.when"),
             "when expressions",
             """
                 when ('_Argument?) {
@@ -228,7 +229,7 @@ object KotlinPredefinedConfigurations {
             OPERATOR_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.for"),
+            KotlinBundle.message("predefined.configuration.for"),
             "for loops",
             """
                 for ('_Item in '_Collection) {
@@ -238,7 +239,7 @@ object KotlinPredefinedConfigurations {
             OPERATOR_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.while"),
+            KotlinBundle.message("predefined.configuration.while"),
             "while loops",
             """
                 while ('_Condition) {
@@ -248,7 +249,7 @@ object KotlinPredefinedConfigurations {
             OPERATOR_TYPE
         ),
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.do.while"),
+            KotlinBundle.message("predefined.configuration.do.while"),
             "do...while loops",
             """
                 do {
@@ -260,7 +261,7 @@ object KotlinPredefinedConfigurations {
 
         // Interesting
         searchTemplate(
-            KSSRBundle.message("predefined.configuration.properties.getter"),
+            KotlinBundle.message("predefined.configuration.properties.getter"),
             "Properties with explicit getter",
             "var '_Inst = '_Expr\n\tget() = '_Getter",
             INTERESTING_TYPE,

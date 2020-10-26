@@ -22,6 +22,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.UIUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
@@ -105,7 +106,7 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 if (elements.first() !is KtProperty) return PsiElement.EMPTY_ARRAY
             } catch (e: Exception) {
                 return arrayOf(factory.createComment("//").apply {
-                    putUserData(PATTERN_ERROR, KSSRBundle.message("error.context.getter.or.setter"))
+                    putUserData(PATTERN_ERROR, KotlinBundle.message("error.context.getter.or.setter"))
                 })
             }
         } else {
@@ -166,8 +167,8 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
         val description = error.errorDescription
         val parent = error.parent
         return when {
-            parent is KtTryExpression && KSSRBundle.message("error.expected.catch.or.finally") == description -> false //naked try
-            parent is KtAnnotatedExpression && KSSRBundle.message("error.expected.an.expression") == description -> false
+            parent is KtTryExpression && KotlinBundle.message("error.expected.catch.or.finally") == description -> false //naked try
+            parent is KtAnnotatedExpression && KotlinBundle.message("error.expected.an.expression") == description -> false
             else -> true
         }
     }
@@ -353,8 +354,8 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
 
     companion object {
         const val TYPED_VAR_PREFIX: String = "_____"
-        val DEFAULT_CONTEXT: PatternContext = PatternContext("default", KSSRBundle.message("context.default"))
-        val PROPERTY_CONTEXT: PatternContext = PatternContext("property", KSSRBundle.message("context.property.getter.or.setter"))
+        val DEFAULT_CONTEXT: PatternContext = PatternContext("default", KotlinBundle.lazyMessage("context.default"))
+        val PROPERTY_CONTEXT: PatternContext = PatternContext("property", KotlinBundle.lazyMessage("context.property.getter.or.setter"))
         private val PATTERN_CONTEXTS: MutableList<PatternContext> = mutableListOf(DEFAULT_CONTEXT, PROPERTY_CONTEXT)
         private val PATTERN_ERROR: Key<String> = Key("patternError")
 

@@ -11,11 +11,11 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.allScope
-import org.jetbrains.kotlin.idea.structuralsearch.KSSRBundle
 import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -52,7 +52,7 @@ class KotlinExprTypePredicate(
             }
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
-            else -> throw IllegalStateException(KSSRBundle.message("error.type.filter.node"))
+            else -> throw IllegalStateException(KotlinBundle.message("error.type.filter.node"))
         } ?: return false
 
         val project = node.project

@@ -1,12 +1,12 @@
 package org.jetbrains.kotlin.idea.structuralsearch.filters
 
-import org.jetbrains.kotlin.idea.structuralsearch.KSSRBundle
+import org.jetbrains.kotlin.idea.KotlinBundle
 
 @Suppress("ComponentNotRegistered")
 class VarOnlyFilter : OneStateFilter(
-  KSSRBundle.messagePointer("filter.match.only.vars"),
-  KSSRBundle.message("label.match.only.vars"),
-  CONSTRAINT_NAME
+    KotlinBundle.lazyMessage("filter.match.only.vars"),
+    KotlinBundle.message("label.match.only.vars"),
+    CONSTRAINT_NAME
 ) {
 
     companion object {
@@ -17,9 +17,9 @@ class VarOnlyFilter : OneStateFilter(
 
 @Suppress("ComponentNotRegistered")
 class ValOnlyFilter : OneStateFilter(
-  KSSRBundle.messagePointer("filter.match.only.vals"),
-  KSSRBundle.message("label.match.only.vals"),
-  CONSTRAINT_NAME
+    KotlinBundle.lazyMessage("filter.match.only.vals"),
+    KotlinBundle.message("label.match.only.vals"),
+    CONSTRAINT_NAME
 ) {
 
     companion object {

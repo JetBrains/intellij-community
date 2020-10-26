@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.fir.builder.toUnaryName
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -494,7 +495,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 i++
             } else {
                 val curParam = params[i] ?: throw IllegalStateException(
-                    KSSRBundle.message("error.param.can.t.be.null.at.index.0.in.1", i, params.map { it?.text })
+                    KotlinBundle.message("error.param.can.t.be.null.at.index.0.in.1", i, params.map { it?.text })
                 )
                 params[i] = null
                 if (curParam.isVarArg) {
