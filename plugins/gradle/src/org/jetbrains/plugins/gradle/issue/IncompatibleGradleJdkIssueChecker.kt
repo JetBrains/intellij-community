@@ -66,12 +66,12 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       }
     }
 
-    var isSupportedGradleJava: Boolean? = null
+    var isJavaGroovyCompatibilityIssue = false
     if (!isUnsupportedClassVersionErrorIssue &&
         !isUnsupportedJavaRuntimeIssue && !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         !unableToStartDaemonProcessForJDK11 && !unableToStartDaemonProcessForJDK9) {
       if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
-        isSupportedGradleJava = false
+        isJavaGroovyCompatibilityIssue = if (isJavaGroovyCompatibilityIssue(rootCauseText)) true else return null
       }
       else return null
     }
@@ -95,7 +95,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
       }
-      isSupportedGradleJava != null && !isSupportedGradleJava -> {
+      isJavaGroovyCompatibilityIssue -> {
         issueDescription
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
@@ -161,6 +161,10 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       override val quickFixes = quickFixes
       override fun getNavigatable(project: Project): Navigatable? = null
     }
+  }
+
+  private fun isJavaGroovyCompatibilityIssue(rootCauseText: String): Boolean {
+    return rootCauseText.startsWith("java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.")
   }
 
   override fun consumeBuildOutputFailureMessage(message: String,
