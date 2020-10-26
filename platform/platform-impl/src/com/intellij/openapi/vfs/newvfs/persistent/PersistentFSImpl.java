@@ -46,6 +46,8 @@ import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -58,7 +60,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
-  private final Object myInputLock = new Object();
+  private final ReadWriteLock myInputLock = new ReentrantReadWriteLock();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
@@ -544,11 +546,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int fileId;
     long length;
 
-    synchronized (myInputLock) {
+    myInputLock.readLock().lock();
+    try {
       fileId = getFileId(file);
       length = getLengthIfUpToDate(file);
       outdated = length == -1 || mustReloadContent(file);
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
+    }
+    finally {
+      myInputLock.readLock().unlock();
     }
 
     if (reloadFromDelegate) {
@@ -575,9 +581,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            // do not cache archive content unless asked
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-        synchronized (myInputLock) {
+
+        myInputLock.writeLock().lock();
+        try {
           writeContent(file, new ByteArraySequence(content), delegate.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
+        }
+        finally {
+          myInputLock.writeLock().unlock();
         }
       }
 
@@ -601,21 +612,36 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    synchronized (myInputLock) {
-      InputStream contentStream;
+    InputStream contentStream;
+    boolean useReplicator = false;
+    long len = 0L;
+    boolean readOnly = false;
+
+    myInputLock.readLock().lock();
+    try {
       long storedLength = getLengthIfUpToDate(file);
       boolean mustReloadLength = storedLength == -1;
 
       if (mustReloadLength || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
-        long len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
-        InputStream nativeStream = delegate.getInputStream(file);
+        len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
+        contentStream = delegate.getInputStream(file);
 
-        if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-        return createReplicatorAndStoreContent(file, nativeStream, len, delegate.isReadOnly());
+        if (len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
+          useReplicator = true;
+          readOnly = delegate.isReadOnly();
+        }
       }
-      return contentStream;
     }
+    finally {
+      myInputLock.readLock().unlock();
+    }
+
+    if (useReplicator) {
+      contentStream = createReplicatorAndStoreContent(file, contentStream, len, readOnly);
+    }
+
+    return contentStream;
   }
 
   private static boolean mustReloadContent(@NotNull VirtualFile file) {
@@ -676,7 +702,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
                                      boolean readOnly, byte @NotNull [] bytes, int bytesLength) {
-    synchronized (myInputLock) {
+    myInputLock.writeLock().lock();
+    try {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
@@ -685,6 +712,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       else {
         doCleanPersistedContent(getFileId(file));
       }
+    }
+    finally {
+      myInputLock.writeLock().unlock();
     }
   }
 
