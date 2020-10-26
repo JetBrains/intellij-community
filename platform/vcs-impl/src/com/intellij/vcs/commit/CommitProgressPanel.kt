@@ -104,7 +104,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   }
 
   @NlsContexts.Label
-  private fun buildErrorText(): String? =
+  protected open fun buildErrorText(): String? =
     when {
       isEmptyChanges && isEmptyMessage -> message("error.no.changes.no.commit.message")
       isEmptyChanges -> message("error.no.changes.to.commit")
