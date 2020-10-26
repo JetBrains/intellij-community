@@ -35,12 +35,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
-  /**
-   * Marker flag for viewers embedded into FileEditor tab.
-   * Ex: such viewers might encounter conflicting shortcuts.
-   */
-  Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
-
   //
   // DiffRequest
   //
@@ -96,6 +90,17 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
 
   Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
+
+  /**
+   * Marker flag for viewers embedded into FileEditor tab.
+   * Ex: such viewers might encounter conflicting shortcuts.
+   */
+  Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
+
+  /**
+   * Marker flag for viewers embedded into FileEditor tab, that should not be disposed on tab close.
+   */
+  Key<Boolean> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
 
   //
   // MergeContext / MergeRequest
