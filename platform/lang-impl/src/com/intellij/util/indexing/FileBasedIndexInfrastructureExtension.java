@@ -24,11 +24,6 @@ public interface FileBasedIndexInfrastructureExtension {
    */
   void processIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
 
-  /**
-   * This notification is sent when the indexing is started and there are no files detected to index
-   */
-  void noFilesFoundToProcessIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
-
   interface FileIndexingStatusProcessor {
     /**
      * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(VirtualFile, int, ID)}
