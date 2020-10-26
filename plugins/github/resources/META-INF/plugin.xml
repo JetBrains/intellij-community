@@ -51,6 +51,7 @@
       implementation="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$ProjectState"/>
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
+    <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
