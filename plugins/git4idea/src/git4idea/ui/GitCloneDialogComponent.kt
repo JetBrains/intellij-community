@@ -101,7 +101,6 @@ class GitCloneDialogComponent(project: Project,
     }
 
     try {
-      executableManager.dropExecutableCache()
       val executable = executableManager.getExecutable(null)
       val gitVersion = executableManager.identifyVersion(executable)
 
