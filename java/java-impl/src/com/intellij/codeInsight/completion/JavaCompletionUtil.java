@@ -306,8 +306,8 @@ public final class JavaCompletionUtil {
         item.putUserData(QUALIFIER_TYPE_ATTR, plainQualifier);
         final Object o = item.getObject();
         if (o instanceof PsiClass) {
-          PsiClass superClass = javaReference.isQualified() ? qualifierClass : ((PsiClass)o).getSuperClass();
-          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext, superClass)) {
+          PsiClass specifiedQualifierClass = javaReference.isQualified() ? qualifierClass : ((PsiClass)o).getContainingClass();
+          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext, specifiedQualifierClass)) {
             continue;
           }
         }

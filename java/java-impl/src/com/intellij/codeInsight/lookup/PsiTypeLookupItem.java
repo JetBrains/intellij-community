@@ -311,8 +311,8 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
       PsiElement qualifier = ref.getQualifier();
       PsiClass outer = aClass.getContainingClass();
       if (!Objects.equals(aClass.getName(), ref.getReferenceName())) {
-        if (!JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().isAccessible(aClass, ref, aClass.getContainingClass())) {
-          // Non-public superclass is accessed via public subclass: do not rationalize qualifier in this case
+        if (!JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().isAccessible(aClass, ref, outer)) {
+          // An inner class of non-public superclass is accessed via public subclass: do not rationalize qualifier in this case
           return;
         }
         break;
