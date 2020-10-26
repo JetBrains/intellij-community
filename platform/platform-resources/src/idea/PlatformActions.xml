@@ -1349,5 +1349,7 @@
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
+    <action id="CloseAllProjects" class="com.intellij.ide.actions.CloseAllProjectsAction"/>
+    <action id="CloseOtherProjects" class="com.intellij.ide.actions.CloseOtherProjectsAction"/>
   </actions>
 </idea-plugin>
