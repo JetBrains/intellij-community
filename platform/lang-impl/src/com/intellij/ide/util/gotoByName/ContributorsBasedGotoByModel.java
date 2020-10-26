@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.ChooseByNameContributorEx2;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,7 +115,15 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                       @NotNull FindSymbolParameters parameters,
                                       @NotNull Processor<? super String> nameProcessor) {
     IntSet filter = new IntOpenHashSet(1000);
-    if (contributor instanceof ChooseByNameContributorEx) {
+    if (contributor instanceof ChooseByNameContributorEx2) {
+      ((ChooseByNameContributorEx2)contributor).processNames(s -> {
+        if (nameProcessor.process(s)) {
+          filter.add(s.hashCode());
+        }
+        return true;
+      }, parameters);
+    }
+    else if (contributor instanceof ChooseByNameContributorEx) {
       ((ChooseByNameContributorEx)contributor).processNames(s -> {
         if (nameProcessor.process(s)) {
           filter.add(s.hashCode());
