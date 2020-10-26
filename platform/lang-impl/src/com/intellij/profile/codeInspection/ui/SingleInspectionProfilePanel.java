@@ -1019,7 +1019,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title"), false,
-                                                                   JBUI.insetsLeft(12)).setShowLine(false));
+                                                                   JBUI.insetsLeft(UIUtil.DEFAULT_HGAP)).setShowLine(false));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
     JBSplitter rightSplitter =
@@ -1027,7 +1027,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     rightSplitter.setFirstComponent(descriptionPanel);
 
     myOptionsPanel = new JPanel(new GridBagLayout());
-    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(12));
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
     rightSplitter.setHonorComponentsMinimumSize(true);
@@ -1035,7 +1035,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JScrollPane tree = initTreeScrollPane();
 
     final JPanel northPanel = new JPanel(new GridBagLayout());
-    northPanel.setBorder(JBUI.Borders.empty(2, 0));
+    northPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0));
     myProfileFilter.setPreferredSize(new Dimension(20, myProfileFilter.getPreferredSize().height));
     northPanel.add(myProfileFilter, new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL,
                                                            JBUI.emptyInsets(), 0, 0));
@@ -1052,11 +1052,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
     inspectionTreePanel.add(mainSplitter, BorderLayout.CENTER);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(inspectionTreePanel, BorderLayout.CENTER);
     final JBCheckBox disableNewInspectionsCheckBox = new JBCheckBox(
       AnalysisBundle.message("inspections.settings.disable.new.inspections.by.default.checkbox"),
       getProfile().isProfileLocked());
+
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    panel.add(inspectionTreePanel, BorderLayout.CENTER);
     panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
     disableNewInspectionsCheckBox.addItemListener(__ -> {
       final boolean enabled = disableNewInspectionsCheckBox.isSelected();
