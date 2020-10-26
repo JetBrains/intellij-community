@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -61,7 +63,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new LangFilterCollector(), onChanged);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

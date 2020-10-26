@@ -825,55 +825,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   };
 
-  protected static class FiltersAction extends ShowFilterAction {
-    final PersistentSearchEverywhereContributorFilter<?> filter;
-    final Runnable rebuildRunnable;
-
-    public FiltersAction(@NotNull PersistentSearchEverywhereContributorFilter<?> filter,
-                  @NotNull Runnable rebuildRunnable) {
-      this.filter = filter;
-      this.rebuildRunnable = rebuildRunnable;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return true;
-    }
-
-    @Override
-    protected boolean isActive() {
-      return filter.getAllElements().size() != filter.getSelectedElements().size();
-    }
-
-    @Override
-    protected ElementsChooser<?> createChooser() {
-      return createChooser(filter, rebuildRunnable);
-    }
-
-    private static <T> ElementsChooser<T> createChooser(@NotNull PersistentSearchEverywhereContributorFilter<T> filter,
-                                                        @NotNull Runnable rebuildRunnable) {
-      ElementsChooser<T> res = new ElementsChooser<>(filter.getAllElements(), false) {
-        @Override
-        protected String getItemText(@NotNull T value) {
-          return filter.getElementText(value);
-        }
-
-        @Nullable
-        @Override
-        protected Icon getItemIcon(@NotNull T value) {
-          return filter.getElementIcon(value);
-        }
-      };
-      res.markElements(filter.getSelectedElements());
-      ElementsChooser.ElementsMarkListener<T> listener = (element, isMarked) -> {
-        filter.setSelected(element, isMarked);
-        rebuildRunnable.run();
-      };
-      res.addElementsMarkListener(listener);
-      return res;
-    }
-  }
-
   private class ShowInFindToolWindowAction extends DumbAwareAction {
 
     ShowInFindToolWindowAction() {
