@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -56,7 +55,7 @@ public final class GroovyInlineMethodUtil {
   private GroovyInlineMethodUtil() {
   }
 
-  @Nullable
+  @NotNull
   public static InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
 
     final Project project = method.getProject();
@@ -160,7 +159,7 @@ public final class GroovyInlineMethodUtil {
   /**
    * Shows dialog with question to inline
    */
-  @Nullable
+  @NotNull
   private static InlineHandler.Settings inlineMethodDialogResult(GrMethod method, Project project, boolean invokedOnReference) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
@@ -237,26 +236,6 @@ public final class GroovyInlineMethodUtil {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
   }
 
-  static boolean isStaticMethod(@NotNull GrMethod method) {
-    return method.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  static boolean areInSameClass(PsiElement element, GrMethod method) {
-    PsiElement parent = element;
-    while (!(parent == null || parent instanceof PsiClass || parent instanceof PsiFile)) {
-      parent = parent.getParent();
-    }
-    if (parent instanceof PsiClass) {
-      PsiClass methodClass = method.getContainingClass();
-      return parent == methodClass;
-    }
-    if (parent instanceof GroovyFile) {
-      PsiElement mParent = method.getParent();
-      return mParent instanceof GroovyFile && mParent == parent;
-    }
-    return false;
-  }
-
   public static Collection<ReferenceExpressionInfo> collectReferenceInfo(GrMethod method) {
     ArrayList<ReferenceExpressionInfo> list = new ArrayList<>();
     collectReferenceInfoImpl(list, method, method);
@@ -295,7 +274,7 @@ public final class GroovyInlineMethodUtil {
     public final PsiClass containingClass;
 
     @Nullable
-    public String getPresentation() {
+    public @Nls String getPresentation() {
       return declaration.getName();
     }
 
@@ -435,9 +414,6 @@ public final class GroovyInlineMethodUtil {
     final GroovyResolveResult resolveResult = call.advancedResolve();
     GrSignature signature = GrClosureSignatureUtil.createSignature(method, resolveResult.getSubstitutor());
 
-    if (signature == null) {
-      return;
-    }
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] infos = GrClosureSignatureUtil.mapParametersToArguments(
       signature,
       call.getNamedArguments(),
@@ -592,7 +568,7 @@ public final class GroovyInlineMethodUtil {
           if (!isFinal) {
             final PsiReference lastRef =
               Collections.max(ReferencesSearch.search(resolved).findAll(),
-                              (o1, o2) -> o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset());
+                              Comparator.comparingInt(o -> o.getElement().getTextRange().getStartOffset()));
             return lastRef.getElement() == expression;
           }
         }

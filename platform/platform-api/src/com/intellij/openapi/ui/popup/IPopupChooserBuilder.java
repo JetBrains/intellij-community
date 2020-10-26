@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll);
 
-  IPopupChooserBuilder<T> setAccessibleName(String title);
+  IPopupChooserBuilder<T> setAccessibleName(@Nls String title);
 
   IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c);
 

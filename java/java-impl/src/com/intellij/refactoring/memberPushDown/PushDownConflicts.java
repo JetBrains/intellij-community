@@ -190,7 +190,8 @@ public class PushDownConflicts {
       String name = movedMember.getName();
       final PsiField field = targetClass.findFieldByName(name, false);
       if (field != null) {
-        String message = JavaRefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
+        String message = JavaRefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), 
+                                                       CommonRefactoringUtil.htmlEmphasize(name));
         myConflicts.putValue(field, StringUtil.capitalize(message));
       }
     }

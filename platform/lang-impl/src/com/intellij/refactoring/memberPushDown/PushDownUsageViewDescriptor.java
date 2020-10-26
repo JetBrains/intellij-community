@@ -2,6 +2,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -16,7 +17,7 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
                                         Member extends PsiElement,
                                         Klass extends PsiElement> implements UsageViewDescriptor {
   private final PsiElement[] myMembers;
-  private final String myProcessedElementsHeader;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
 
   public PushDownUsageViewDescriptor(Klass aClass) {
     this(aClass, null);

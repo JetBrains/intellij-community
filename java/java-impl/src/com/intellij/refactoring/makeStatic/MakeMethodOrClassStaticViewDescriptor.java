@@ -3,6 +3,7 @@
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
 
   private final PsiMember myMember;
-  private final String myProcessedElementsHeader;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
 
   public MakeMethodOrClassStaticViewDescriptor(PsiMember member
   ) {

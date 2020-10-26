@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal class HighlightingPanel(project: Project, state: ProblemsViewState)
@@ -159,4 +160,4 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 }
 
-private data class Status(val title: String, val details: String = "", val request: Boolean = false)
+private data class Status(@Nls val title: String, @Nls val details: String = "", val request: Boolean = false)

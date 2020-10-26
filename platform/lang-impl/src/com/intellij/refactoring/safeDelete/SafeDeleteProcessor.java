@@ -240,7 +240,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void showUsages(final UsageInfo[] conflictUsages, final UsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText("Safe Delete Conflicts");
+    presentation.setTabText(LangBundle.message("tab.title.safe.delete.conflicts"));
     presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);

@@ -261,14 +261,14 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
         final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
         final String expressionText = CommonRefactoringUtil.htmlEmphasize(expression.getText());
         final String classText = RefactoringUIUtil.getDescription(junit3Class, false);
+        final @Nls String problem;
         if (superMethods.length > 0) {
-          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.semantics", expressionText, classText);
-          conflicts.putValue(expression, problem);
+          problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.semantics", expressionText, classText);
         }
         else {
-          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile", expressionText, classText);
-          conflicts.putValue(expression, problem);
+          problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile", expressionText, classText);
         }
+        conflicts.putValue(expression, problem);
       }
     });
     if (className != null) {

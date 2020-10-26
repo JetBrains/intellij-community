@@ -21,6 +21,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +87,7 @@ public final class CommonRefactoringUtil {
     });
   }
 
-  public static String htmlEmphasize(@NotNull String text) {
+  public static String htmlEmphasize(@NotNull @Nls String text) {
     return StringUtil.htmlEmphasize(text);
   }
 
