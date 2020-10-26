@@ -45,6 +45,7 @@ internal class StatisticsLogFilterModel : LogFilterModel() {
   private fun defineContentType(line: String): ProcessOutputType {
     return when {
       StatisticsEventLogToolWindow.rejectedValidationTypes.any { line.contains(it.description) } -> ProcessOutputType.STDERR
+      StatisticsEventLogToolWindow.alertEvents.any { line.contains(it) } -> ProcessOutputType.STDERR
       else -> ProcessOutputType.STDOUT
     }
   }
