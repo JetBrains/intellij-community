@@ -414,6 +414,8 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
+    <registryKey key="scroll.to.first.trace" defaultValue="true" 
+                 description="In tests view: if 'scrollToStackTrace' is enabled and node with multiple children is selected, scroll to the trace of the first child"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
