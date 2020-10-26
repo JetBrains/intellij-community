@@ -179,16 +179,9 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
             return true;
           }
         });
-        UExpression lastItem = ContainerUtil.getLastItem(((UBlockExpression)body).getExpressions());
-        if (!(lastItem instanceof UReturnExpression)) {
-          direct.add(lastItem);
-        }
       }
       else if (body instanceof UReturnExpression) {
         direct.add(((UReturnExpression)body).getReturnExpression());
-      }
-      else {
-        direct.add(body);
       }
       return direct;
     }
