@@ -76,7 +76,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test consecutive events by different keys in one period`() {
-    val throttle = EventsIdentityWindowThrottle(3, 10)
+    val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("foo", 103))
     assertAccept(throttle.tryPass("foo", 105))
@@ -88,7 +88,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test events by different keys merged in one period`() {
-    val throttle = EventsIdentityWindowThrottle(3, 10)
+    val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("bar", 101))
     assertAccept(throttle.tryPass("foo", 104))
@@ -99,7 +99,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test too many events by different keys in one period`() {
-    val throttle = EventsIdentityWindowThrottle(3, 10)
+    val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("bar", 101))
     assertAccept(throttle.tryPass("foo", 104))
@@ -118,7 +118,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test too many events by one key`() {
-    val throttle = EventsIdentityWindowThrottle(5, 10)
+    val throttle = EventsIdentityWindowThrottle(5, 5, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("bar", 101))
     assertAccept(throttle.tryPass("foo", 104))
@@ -137,7 +137,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test counter by different keys reset in new period`() {
-    val throttle = EventsIdentityWindowThrottle(3, 10)
+    val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("bar", 101))
     assertAccept(throttle.tryPass("bar", 102))
@@ -158,7 +158,7 @@ class FeatureEventRateThrottleTest {
 
   @Test
   fun `test counter by different keys dont reach limit`() {
-    val throttle = EventsIdentityWindowThrottle(3, 10)
+    val throttle = EventsIdentityWindowThrottle(3, 3, 10)
     assertAccept(throttle.tryPass("foo", 100))
     assertAccept(throttle.tryPass("foo", 103))
     assertAccept(throttle.tryPass("bar", 105))
@@ -180,8 +180,47 @@ class FeatureEventRateThrottleTest {
     assertDeny(throttle.tryPass("foo", 119))
   }
 
+  @Test
+  fun `test alert threshold is reached`() {
+    val throttle = EventsIdentityWindowThrottle(5, 3, 10)
+    assertAccept(throttle.tryPass("foo", 103))
+    assertAccept(throttle.tryPass("foo", 104))
+    assertAccept(throttle.tryPass("foo", 104))
+
+    assertAlert(throttle.tryPass("foo", 106))
+    assertAccept(throttle.tryPass("foo", 108))
+
+    assertDenyAndReport(throttle.tryPass("foo", 108))
+    assertDeny(throttle.tryPass("foo", 109))
+  }
+
+  @Test
+  fun `test alert by different keys threshold is reached`() {
+    val throttle = EventsIdentityWindowThrottle(5, 3, 10)
+    assertAccept(throttle.tryPass("bar", 100))
+    assertAccept(throttle.tryPass("bar", 101))
+    assertAccept(throttle.tryPass("foo", 101))
+    assertAccept(throttle.tryPass("bar", 103))
+    assertAccept(throttle.tryPass("foo", 104))
+    assertAccept(throttle.tryPass("foo", 104))
+
+    assertAlert(throttle.tryPass("foo", 106))
+    assertAlert(throttle.tryPass("bar", 107))
+    assertAccept(throttle.tryPass("bar", 107))
+    assertAccept(throttle.tryPass("foo", 108))
+
+    assertDenyAndReport(throttle.tryPass("foo", 108))
+    assertDenyAndReport(throttle.tryPass("bar", 109))
+    assertDeny(throttle.tryPass("foo", 109))
+    assertDeny(throttle.tryPass("bar", 109))
+  }
+
   private fun assertAccept(result: EventRateThrottleResult) {
     assertEquals(EventRateThrottleResult.ACCEPT, result)
+  }
+
+  private fun assertAlert(result: EventRateThrottleResult) {
+    assertEquals(EventRateThrottleResult.ALERT, result)
   }
 
   private fun assertDenyAndReport(result: EventRateThrottleResult) {
