@@ -223,9 +223,9 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
     assertEquals("3.0", getSuggestedGradle(9)!!.version)
     assertEquals("3.0", getSuggestedGradle(10)!!.version)
     assertEquals("4.8", getSuggestedGradle(11)!!.version)
-    assertEquals("4.8", getSuggestedGradle(12)!!.version)
-    assertEquals("4.8", getSuggestedGradle(13)!!.version)
-    assertEquals("4.8", getSuggestedGradle(14)!!.version)
+    assertEquals("5.4.1", getSuggestedGradle(12)!!.version)
+    assertEquals("6.0", getSuggestedGradle(13)!!.version)
+    assertEquals("6.3", getSuggestedGradle(14)!!.version)
     assertEquals("6.7", getSuggestedGradle(15)!!.version)
     assertEquals("6.7", getSuggestedGradle(24)!!.version)
   }
