@@ -542,7 +542,7 @@ public final class UpdateHighlightersUtil {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (info == null) continue;
       boolean contains = !DaemonCodeAnalyzerEx
-        .processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(),
+        .processHighlights((MarkupModelEx)markup, project, null, info.getActualStartOffset(), info.getActualEndOffset(),
                            highlightInfo -> BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0);
       assert contains: info;
     }

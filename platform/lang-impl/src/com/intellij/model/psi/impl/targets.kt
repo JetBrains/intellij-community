@@ -40,15 +40,15 @@ fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Colle
 private val emptyData = DeclaredReferencedData(null, null)
 
 internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {
-  val allDeclarationsOrReferences = declarationsOrReferences(file, offset)
+  val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
     return emptyData
   }
 
-  val withMinimalRanges = chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
+  val withMinimalRanges: Collection<DeclarationOrReference> = chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
 
   var declaration: PsiSymbolDeclaration? = null
-  val references = ArrayList<PsiSymbolReference>()
+  val references: MutableList<PsiSymbolReference> = ArrayList()
   var evaluatorData: TargetData.Evaluator? = null
 
   for (dr in withMinimalRanges) {
@@ -68,7 +68,7 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
         }
       }
       is DeclarationOrReference.Reference -> {
-        references += dr.reference
+        references.add(dr.reference)
       }
       is DeclarationOrReference.Evaluator -> {
         LOG.assertTrue(evaluatorData == null)
