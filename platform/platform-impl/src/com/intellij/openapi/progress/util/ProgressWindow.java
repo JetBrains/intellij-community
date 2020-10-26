@@ -245,27 +245,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Override
-  public void initStateFrom(@NotNull ProgressIndicator indicator) {
-    var wasRunning = isRunning();
-    super.initStateFrom(indicator);
-    var newIsRunning = isRunning();
-    if (wasRunning == newIsRunning) return;
-
-    String extra = "";
-    if (wasRunning) {
-      extra = "It may cause the messages processing with the dialog ModalityState " +
-              "to exit faster and provoke deadlocks, especially when invokeLaterAndWait() alike " +
-              "methods were used under the progress. ";
-    }
-
-    LOG.warn("Calling ProgressWindow#initStateFrom() changed the isRunning() from " +
-             wasRunning + " to " + newIsRunning + ". " + extra +
-             "this=" + this + ", " +
-             "indicator=" + indicator, new RuntimeException()
-    );
-  }
-
   final boolean isCancellationEvent(@NotNull AWTEvent event) {
     return myShouldShowCancel &&
            event instanceof KeyEvent &&
