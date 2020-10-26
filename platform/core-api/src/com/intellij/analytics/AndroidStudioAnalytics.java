@@ -16,6 +16,10 @@
 package com.intellij.analytics;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.util.PlatformUtils;
+
+import java.awt.GraphicsEnvironment;
+
 import org.jetbrains.annotations.NotNull;
 
 abstract public class AndroidStudioAnalytics {
@@ -30,7 +34,11 @@ abstract public class AndroidStudioAnalytics {
       // Android Studio Developers: If you hit this exception, you're trying to find out the status
       // of AnalyticsSettings before the system has been initialized. Please reach out the the owners
       // of this code to figure out how best to do these checks instead of getting null values.
-      throw new RuntimeException("call to AndroidStudioAnalytics before initialization");
+      if (PlatformUtils.isAndroidStudio() && !GraphicsEnvironment.isHeadless()) {
+        throw new RuntimeException("call to AndroidStudioAnalytics before initialization");
+      } else {
+        initialize(new NullAndroidStudioAnalytics());
+      }
     }
     return INSTANCE;
   }
