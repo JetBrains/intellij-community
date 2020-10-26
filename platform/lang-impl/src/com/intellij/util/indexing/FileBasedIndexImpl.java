@@ -475,7 +475,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   private static <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(FileBasedIndexExtension<K, V> extension) throws IOException {
     if (USE_IN_MEMORY_INDEX) {
-      return new InMemoryIndexStorage<>();
+      return new InMemoryIndexStorage<>(extension.getKeyDescriptor());
     }
     boolean createSnapshotStorage = VfsAwareMapReduceIndex.hasSnapshotMapping(extension) && extension instanceof SingleEntryFileBasedIndexExtension;
     return createSnapshotStorage ? new SnapshotSingleValueIndexStorage<>(extension.getCacheSize()) : new VfsAwareMapIndexStorage<>(

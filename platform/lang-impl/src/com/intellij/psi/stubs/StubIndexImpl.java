@@ -203,7 +203,7 @@ public final class StubIndexImpl extends StubIndexEx {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final VfsAwareIndexStorage<K, Void> storage = FileBasedIndex.USE_IN_MEMORY_INDEX
-                                                      ? new InMemoryIndexStorage<>()
+                                                      ? new InMemoryIndexStorage<>(wrappedExtension.getKeyDescriptor())
                                                       : new VfsAwareMapIndexStorage<>(
           IndexInfrastructure.getStorageFile(indexKey).toPath(),
           wrappedExtension.getKeyDescriptor(),
