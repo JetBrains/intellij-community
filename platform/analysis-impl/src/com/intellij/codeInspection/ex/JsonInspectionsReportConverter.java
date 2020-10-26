@@ -8,7 +8,6 @@ import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     for (File inspectionDataFile : inspectionsResults) {
       String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionDataFile);
       File jsonFile = new File(outputPath, fileNameWithoutExt + JSON_EXTENSION);
-      try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), CharsetToolkit.UTF8_CHARSET);
+      try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
         Document doc = builder.build(inspectionDataFile);
         if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {

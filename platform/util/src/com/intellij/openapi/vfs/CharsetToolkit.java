@@ -46,15 +46,28 @@ import java.util.Map;
  */
 public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
-
+  /**
+   * @deprecated use {@link StandardCharsets#UTF_8} instead
+   */
+  @Deprecated
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
-  public static final Charset UTF_16_CHARSET = StandardCharsets.UTF_16;
+  /**
+   * @deprecated use {@link StandardCharsets#UTF_16LE} instead
+   */
+  @Deprecated
   public static final Charset UTF_16LE_CHARSET = StandardCharsets.UTF_16LE;
+  /**
+   * @deprecated use {@link StandardCharsets#UTF_16BE} instead
+   */
+  @Deprecated
   public static final Charset UTF_16BE_CHARSET = StandardCharsets.UTF_16BE;
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
+  /**
+   * @deprecated use {@link StandardCharsets#US_ASCII} instead
+   */
+  @Deprecated
   public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
-  public static final Charset ISO_8859_1_CHARSET = StandardCharsets.ISO_8859_1;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
 
   private static final byte FF = (byte)0xff;
@@ -77,8 +90,8 @@ public final class CharsetToolkit {
 
   private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new HashMap<>(4);
   static {
-    CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
-    CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(StandardCharsets.UTF_16LE, UTF16LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(StandardCharsets.UTF_16BE, UTF16BE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
   }
@@ -412,8 +425,8 @@ public final class CharsetToolkit {
     if (hasUTF8Bom(buffer)) return StandardCharsets.UTF_8;
     if (hasUTF32BEBom(buffer)) return UTF_32BE_CHARSET;
     if (hasUTF32LEBom(buffer)) return UTF_32LE_CHARSET;
-    if (hasUTF16LEBom(buffer)) return UTF_16LE_CHARSET;
-    if (hasUTF16BEBom(buffer)) return UTF_16BE_CHARSET;
+    if (hasUTF16LEBom(buffer)) return StandardCharsets.UTF_16LE;
+    if (hasUTF16BEBom(buffer)) return StandardCharsets.UTF_16BE;
 
     return null;
   }

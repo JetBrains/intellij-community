@@ -2,11 +2,9 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +20,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
@@ -93,7 +92,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     VirtualFile jdkOpts = mvn.findChild("jvm.config");
     if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
     try {
-      return new String(jdkOpts.contentsToByteArray(true), CharsetToolkit.UTF8_CHARSET);
+      return new String(jdkOpts.contentsToByteArray(true), StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

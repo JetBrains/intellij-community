@@ -146,105 +146,105 @@ public class FileAdapterGetPageTextTest4 {
       },
       { // case number 9
         "ыыы1\nstr2\n",
-        CharsetToolkit.UTF_16LE_CHARSET, false,
+        StandardCharsets.UTF_16LE, false,
         8, 0,
         new String[]{
           "ыыы1", "\nstr", "2\n"}
       },
       { // case number 10
         "ыыы1\nstr2\n",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 0,
         new String[]{
           "ыыы1", "\nstr", "2\n"}
       },
       { // case number 11
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         5, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00", ""}
       },
       { // case number 12
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         6, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 13
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         7, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 14
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00" + "1\nstr2\n",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00" + "1\n", "str2", "\n"}
       },
       { // case number 15
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         2, 0,
         new String[]{
           "\uD840\uDC00", "", "\uD840\uDC00", "", "\uD840\uDC00", ""}
       },
       { // case number 16
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16LE_CHARSET, false,
+        StandardCharsets.UTF_16LE, false,
         5, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00", ""}
       },
       { // case number 17
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16LE_CHARSET, false,
+        StandardCharsets.UTF_16LE, false,
         6, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 18
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00",
-        CharsetToolkit.UTF_16LE_CHARSET, false,
+        StandardCharsets.UTF_16LE, false,
         7, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00"}
       },
       { // case number 19
         "\uD840\uDC00" + "\uD840\uDC00" + "\uD840\uDC00" + "1\nstr2\n",
-        CharsetToolkit.UTF_16LE_CHARSET, false,
+        StandardCharsets.UTF_16LE, false,
         8, 0,
         new String[]{
           "\uD840\uDC00" + "\uD840\uDC00", "\uD840\uDC00" + "1\n", "str2", "\n"}
       },
       { // case number 20
         "ыыы1\nstr2\n",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 0,
         new String[]{
           "ыыы1", "\nstr", "2\n"}
       },
       { // case number 21
         "ыыы1\nstr2\n",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 6,
         new String[]{
           "ыыы1\n", "str2\n", ""}
       },
       { // case number 22
         "ыыы1\rstr2\r",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 6,
         new String[]{
           "ыыы1\r", "str2\r", ""}
       },
       { // case number 23
         "ыыы1\r\nstr2\r\n",
-        CharsetToolkit.UTF_16BE_CHARSET, false,
+        StandardCharsets.UTF_16BE, false,
         8, 6,
         new String[]{
           "ыыы1\r\n", "str2\r", "\n"}

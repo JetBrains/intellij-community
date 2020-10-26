@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.editorconfig.Utils;
@@ -37,8 +36,8 @@ public class ConfigEncodingManager implements FileDocumentManagerListener {
     map.put("latin1", StandardCharsets.ISO_8859_1);
     map.put("utf-8", StandardCharsets.UTF_8);
     map.put(UTF8_BOM_ENCODING, StandardCharsets.UTF_8);
-    map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);
-    map.put("utf-16le", CharsetToolkit.UTF_16LE_CHARSET);
+    map.put("utf-16be", StandardCharsets.UTF_16BE);
+    map.put("utf-16le", StandardCharsets.UTF_16LE);
     encodingMap = Collections.unmodifiableMap(map);
   }
 

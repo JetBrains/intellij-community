@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public final class IOUtil {
 
       byte[] bytes = new byte[length * 2];
       stream.readFully(bytes);
-      return new String(bytes, 0, length * 2, CharsetToolkit.UTF_16BE_CHARSET);
+      return new String(bytes, 0, length * 2, StandardCharsets.UTF_16BE);
     }
     catch (IOException e) {
       throw e;

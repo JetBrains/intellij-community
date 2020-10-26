@@ -5,7 +5,6 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -214,7 +214,7 @@ public final class Foundation {
         return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
+      byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
       return invoke(invoke(invoke(nsStringCls, allocSel),
                            initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
                     autoreleaseSel);

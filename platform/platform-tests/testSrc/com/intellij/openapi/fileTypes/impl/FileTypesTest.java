@@ -856,11 +856,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
@@ -868,11 +868,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();

@@ -198,7 +198,7 @@ class FileAdapter {
     if (substringLength != -1) {
       int substringLengthInBytes;
       if (charset.equals(StandardCharsets.UTF_16)) {
-        substringLengthInBytes = text1.substring(0, substringLength).getBytes(CharsetToolkit.UTF_16BE_CHARSET).length;
+        substringLengthInBytes = text1.substring(0, substringLength).getBytes(StandardCharsets.UTF_16BE).length;
       }
       else {
         substringLengthInBytes = text1.substring(0, substringLength).getBytes(charset).length;
@@ -213,12 +213,12 @@ class FileAdapter {
   private static int findNextSymbolBeginningOffsetFrom(long numberOfStartByte,
                                                        RandomAccessFile randomAccessFile,
                                                        Charset charset) throws IOException {
-    if (charset.compareTo(CharsetToolkit.UTF8_CHARSET) == 0) {
+    if (charset.compareTo(StandardCharsets.UTF_8) == 0) {
       return findNextSymbolBeginningOffsetFrom_UTF8(numberOfStartByte, randomAccessFile);
     }
     else if (charset.compareTo(StandardCharsets.UTF_16) == 0
-             || charset.compareTo(CharsetToolkit.UTF_16BE_CHARSET) == 0
-             || charset.compareTo(CharsetToolkit.UTF_16LE_CHARSET) == 0) {
+             || charset.compareTo(StandardCharsets.UTF_16BE) == 0
+             || charset.compareTo(StandardCharsets.UTF_16LE) == 0) {
       return findNextSymbolBeginningOffsetFrom_UTF16(numberOfStartByte, randomAccessFile, charset);
     }
     else if (charset.compareTo(CharsetToolkit.UTF_32BE_CHARSET) == 0
@@ -272,7 +272,7 @@ class FileAdapter {
     long offset = numberOfStartByte % 2;
 
     // taking the HIGH byte of the word
-    if (charset.compareTo(StandardCharsets.UTF_16) == 0 || charset.compareTo(CharsetToolkit.UTF_16BE_CHARSET) == 0) {
+    if (charset.compareTo(StandardCharsets.UTF_16) == 0 || charset.compareTo(StandardCharsets.UTF_16BE) == 0) {
       randomAccessFile.seek(numberOfStartByte + offset);
     }
     else {

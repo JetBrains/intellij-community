@@ -7,7 +7,6 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -44,7 +44,7 @@ public class JsonSingleFileInspectionsReportConverter extends JsonInspectionsRep
     }
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     try {
-      try (Writer writer = Files.newBufferedWriter(Paths.get(outputPath), CharsetToolkit.UTF8_CHARSET);
+      try (Writer writer = Files.newBufferedWriter(Paths.get(outputPath), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
         jsonWriter.beginObject();
 

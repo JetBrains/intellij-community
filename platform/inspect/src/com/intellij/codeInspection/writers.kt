@@ -8,18 +8,18 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.vfs.CharsetToolkit
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE
 import org.jetbrains.jps.model.java.JavaResourceRootType.TEST_RESOURCE
 import org.jetbrains.jps.model.java.JavaSourceRootType.SOURCE
 import org.jetbrains.jps.model.java.JavaSourceRootType.TEST_SOURCE
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
 fun writeProjectDescription(path: Path, project: Project) {
   val gson = GsonBuilder().setPrettyPrinting().create()
-  val writer = Files.newBufferedWriter(path, CharsetToolkit.UTF8_CHARSET)
+  val writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)
   writer.use {
     val jsonWriter = gson.newJsonWriter(writer)
     writeProjectDescription(project, jsonWriter)

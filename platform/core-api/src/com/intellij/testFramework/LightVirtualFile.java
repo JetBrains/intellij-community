@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * In-memory implementation of {@link VirtualFile}.
@@ -62,7 +62,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);
-    setCharset(CharsetToolkit.UTF8_CHARSET);
+    setCharset(StandardCharsets.UTF_8);
   }
 
   public Language getLanguage() {
