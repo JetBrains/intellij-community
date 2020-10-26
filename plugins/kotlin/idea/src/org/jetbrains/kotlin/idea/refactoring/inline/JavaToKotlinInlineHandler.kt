@@ -170,7 +170,7 @@ internal class J2KInlineCache(private val strategy: UsageReplacementStrategy, pr
             return createUsageReplacementStrategyForNamedDeclaration(
                 declaration,
                 javaMember.findExistingEditor(),
-                fallbackToSuperCall = javaMember.containingClass?.hasModifier(JvmModifier.FINAL) ?: false,
+                fallbackToSuperCall = javaMember.containingClass?.hasModifier(JvmModifier.FINAL) == true,
             )?.also { javaMember.setUsageReplacementStrategy(it) }
         }
     }
