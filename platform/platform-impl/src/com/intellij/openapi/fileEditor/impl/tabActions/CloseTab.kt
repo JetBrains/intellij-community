@@ -13,11 +13,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.BitUtil
+import com.intellij.util.ObjectUtils
 import java.awt.event.InputEvent
 import javax.swing.JComponent
 
+@Suppress("ComponentNotRegistered")
 class CloseTab(c: JComponent,
                val file: VirtualFile,
                val project: Project,
@@ -35,15 +38,15 @@ class CloseTab(c: JComponent,
     e.presentation.hoveredIcon = if (!pinned) AllIcons.Actions.CloseHovered else AllIcons.Actions.PinTab
     e.presentation.isVisible = instance.showCloseButton || pinned
     if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
-      e.presentation.setText("")
+      e.presentation.text = ""
     }
     else {
       if (pinned) {
-        setShortcutSet(KeymapUtil.getActiveKeymapShortcuts("PinActiveEditorTab"));
-        e.presentation.setText(IdeBundle.message("action.unpin.tab.tooltip"))
+        shortcutSet = ObjectUtils.notNull(KeymapUtil.getActiveKeymapShortcuts ("PinActiveEditorTab"), CustomShortcutSet.EMPTY)
+        e.presentation.text = TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).text
       }
       else {
-        setShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE));
+        shortcutSet = ObjectUtils.notNull(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE), CustomShortcutSet.EMPTY)
         e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
       }
     }
@@ -67,7 +70,7 @@ class CloseTab(c: JComponent,
       window = mgr.currentWindow
     }
     if (window != null) {
-      if (BitUtil.isSet(e.modifiers, InputEvent.ALT_MASK)) {
+      if (BitUtil.isSet(e.modifiers, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {
