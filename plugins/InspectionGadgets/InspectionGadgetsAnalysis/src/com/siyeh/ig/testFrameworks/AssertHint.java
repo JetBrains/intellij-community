@@ -4,6 +4,7 @@ package com.siyeh.ig.testFrameworks;
 import com.intellij.psi.*;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -14,15 +15,15 @@ import java.util.function.Function;
 public final class AssertHint {
   private final int myArgIndex;
   private final boolean myMessageOnFirstPosition;
-  private final PsiExpression myMessage;
-  private final PsiMethod myMethod;
-  private final PsiExpression myOriginalExpression;
+  private final @Nullable PsiExpression myMessage;
+  private final @NotNull PsiMethod myMethod;
+  private final @NotNull PsiExpression myOriginalExpression;
 
   private AssertHint(int index,
                      boolean messageOnFirstPosition,
-                     PsiExpression message,
-                     PsiMethod method,
-                     PsiExpression originalExpression) {
+                     @Nullable PsiExpression message,
+                     @NotNull PsiMethod method,
+                     @NotNull PsiExpression originalExpression) {
     myArgIndex = index;
     myMessageOnFirstPosition = messageOnFirstPosition;
     myMessage = message;
@@ -34,37 +35,70 @@ public final class AssertHint {
     return myMessageOnFirstPosition;
   }
 
+  /**
+   * @return index of the first (left) argument in expected/actual pair.
+   */
   public int getArgIndex() {
     return myArgIndex;
   }
 
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return myMethod;
   }
 
-  public PsiExpression getFirstArgument() {
+  public @NotNull PsiExpression getFirstArgument() {
     return ((PsiMethodCallExpression)myOriginalExpression).getArgumentList().getExpressions()[myArgIndex];
   }
 
-  public PsiExpression getSecondArgument() {
+  public @NotNull PsiExpression getSecondArgument() {
     return ((PsiMethodCallExpression)myOriginalExpression).getArgumentList().getExpressions()[myArgIndex + 1];
   }
 
-  public PsiExpression getExpected() {
+  public @NotNull PsiExpression getExpected() {
     return isMessageOnFirstPosition() ? getFirstArgument() : getSecondArgument();
   }
 
-  public PsiExpression getActual() {
+  public @NotNull PsiExpression getActual() {
     return isMessageOnFirstPosition() ? getSecondArgument() : getFirstArgument();
   }
 
-  public PsiExpression getOriginalExpression() {
+  public @NotNull PsiExpression getOriginalExpression() {
     return myOriginalExpression;
   }
 
-  @Nullable
-  public PsiExpression getMessage() {
+  public @Nullable PsiExpression getMessage() {
     return myMessage;
+  }
+
+  public static @Nullable AssertHint createAssertEqualsLikeHintForCompletion(PsiExpression[] args, PsiMethod method, int index) {
+    String name = method.getName();
+    int argCount = Math.max(index + 1, args.length);
+    if (argCount != 2 && argCount != 3) return null;
+    if (!"assertEquals".equals(name) && !"assertNotEquals".equals(name) && !"assertSame".equals(name) && !"assertNotSame".equals(name)) {
+      return null;
+    }
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (argCount != parameters.length) return null;
+    if (argCount == 2 && args.length > 0) {
+      return new AssertHint(0, false, null, method, args[0]);
+    }
+    if (isAssertionMessage(parameters[0]) && args.length > 1) {
+      return new AssertHint(1, true, args[0], method, args[1]);
+    }
+    if (isAssertionMessage(parameters[2]) && args.length > 2) {
+      return new AssertHint(0, false, args[2], method, args[0]);
+    }
+    return null;
+  }
+
+  /**
+   * @param parameter parameter to check
+   * @return true if given parameter type looks like an assertion message
+   */
+  private static boolean isAssertionMessage(PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+           type.equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER + "<" + CommonClassNames.JAVA_LANG_STRING + ">");
   }
 
   public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression) {
@@ -115,7 +149,9 @@ public final class AssertHint {
     final int argumentIndex;
     PsiExpression message = null;
     if (messageOnFirstPosition) {
-      if (parameters.length > 0 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) && parameters.length > minimumParamCount) {
+      if (parameters.length > 0 &&
+          parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+          parameters.length > minimumParamCount) {
         argumentIndex = 1;
         message = arguments[0];
       }

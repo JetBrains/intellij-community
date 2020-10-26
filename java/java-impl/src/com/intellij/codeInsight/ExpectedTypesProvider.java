@@ -32,6 +32,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.testFrameworks.AssertHint;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1195,25 +1196,24 @@ public final class ExpectedTypesProvider {
       PsiType hardcoded = HardcodedDefaultTypesKt.getDefaultType(method, substitutor, index, argument);
       if (hardcoded != null) return hardcoded;
 
-      @NonNls final String name = method.getName();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-      int argCount = Math.max(index + 1, args.length);
-      if (("assertEquals".equals(name) || "assertNotEquals".equals(name) || "assertSame".equals(name) || "assertNotSame".equals(name)) &&
-          method.getParameterList().getParametersCount() == argCount) {
-        int firstArgIndex = getAssertMethodFirstArgIndex(method, argCount);
-        if (firstArgIndex >= 0) {
-          int other = -1;
-          if (index == firstArgIndex) {
-            other = firstArgIndex + 1;
-          }
-          else if (index == firstArgIndex + 1) {
-            other = firstArgIndex;
-          }
-          if (other != -1 && args.length > other) {
-            ExpectedTypeInfo info = getEqualsType(args[other]);
-            if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
-              return info.getDefaultType();
-            }
+      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(args, method, index);
+      if (assertHint != null) {
+        int firstArgIndex = assertHint.getArgIndex();
+        int other;
+        if (index == firstArgIndex) {
+          other = firstArgIndex + 1;
+        }
+        else if (index == firstArgIndex + 1) {
+          other = firstArgIndex;
+        }
+        else {
+          return null;
+        }
+        if (args.length > other) {
+          ExpectedTypeInfo info = getEqualsType(args[other]);
+          if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
+            return info.getDefaultType();
           }
         }
       }
@@ -1232,31 +1232,6 @@ public final class ExpectedTypesProvider {
         }
       }
       return parameterType;
-    }
-
-    /**
-     * @param method method to test
-     * @param argCount argument count
-     * @return index of the first argument in (expected, actual) pair; -1 if this method doesn't look like an assertEquals-like method
-     */
-    private static int getAssertMethodFirstArgIndex(@NotNull PsiMethod method, int argCount) {
-      if (argCount == 2) return 0;
-      if (argCount == 3) {
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (isAssertionMessage(parameters[0])) return 1;
-        if (isAssertionMessage(parameters[2])) return 0;
-      }
-      return -1;
-    }
-
-    /**
-     * @param parameter parameter to check
-     * @return true if given parameter type looks like an assertion message
-     */
-    private static boolean isAssertionMessage(PsiParameter parameter) {
-      PsiType type = parameter.getType();
-      return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-             type.equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER+"<"+ CommonClassNames.JAVA_LANG_STRING+">");
     }
 
     private static PsiType getParameterType(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
