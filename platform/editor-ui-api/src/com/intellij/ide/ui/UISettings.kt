@@ -91,6 +91,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.reuseNotModifiedTabs = value
     }
 
+  var openTabsInMainWindow: Boolean
+    get() = state.openTabsInMainWindow
+    set(value) {
+      state.openTabsInMainWindow = value
+    }
+
   var openInPreviewTabIfPossible: Boolean
     get() = state.openInPreviewTabIfPossible
     set(value) {

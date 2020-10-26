@@ -98,6 +98,9 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
         row {
           checkBox(reuseNotModifiedTabs)
         }
+        row {
+          checkBox(openTabsInMainWindow)
+        }
       }
       titledRow(message("group.tab.closing.policy")) {
         row {

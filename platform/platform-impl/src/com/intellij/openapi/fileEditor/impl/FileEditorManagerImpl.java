@@ -668,7 +668,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       splitters = useCurrentWindow ? getSplitters() : getMainSplitters();
     }
     else {
-      splitters = getSplitters();
+      splitters = UISettings.getInstance().getOpenTabsInMainWindow() ? getMainSplitters() : getSplitters();
     }
 
     if (wndToOpenIn == null) {
