@@ -396,24 +396,19 @@ private fun toCanonicalName(filePath: String): Path {
 }
 
 private fun removeProjectConfigurationAndCaches(projectFile: Path) {
-  if (Files.isRegularFile(projectFile)) {
-    try {
+  try {
+    if (Files.isRegularFile(projectFile)) {
       Files.deleteIfExists(projectFile)
     }
-    catch (ignored: IOException) {
-    }
-  }
-  else {
-    try {
+    else {
       Files.newDirectoryStream(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER)).use { directoryStream ->
         for (file in directoryStream) {
           file!!.delete()
         }
       }
     }
-    catch (ignore: IOException) {
-    }
+    getProjectDataPathRoot(projectFile).delete()
   }
-  val dataPathRoot = getProjectDataPathRoot(projectFile)
-  dataPathRoot.delete()
+  catch (ignored: IOException) {
+  }
 }
