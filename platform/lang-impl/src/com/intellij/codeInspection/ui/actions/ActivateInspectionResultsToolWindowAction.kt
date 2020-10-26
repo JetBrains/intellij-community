@@ -36,6 +36,7 @@ class ActivateInspectionResultsToolWindowAction : ToolWindowEmptyStateAction(Too
         else -> text.appendText(fragment)
       }
     }
+    text.appendLine("")
     text.appendLine(AllIcons.General.ContextHelp, InspectionsBundle.message("inspections.empty.state.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.inspecting.running")
     }
