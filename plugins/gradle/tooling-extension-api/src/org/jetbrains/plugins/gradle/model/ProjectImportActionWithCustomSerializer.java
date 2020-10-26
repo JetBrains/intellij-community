@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ExceptionUtilRt;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
@@ -55,9 +54,9 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
     @Override
     public Object adapt(Object object) {
       try {
-        Pair<Object, ? extends Class<?>> preparedObject = prepare(object);
-        if (preparedObject != null) {
-          return mySerializerWriteMethod.invoke(mySerializer, preparedObject.first, preparedObject.second);
+        Object unpackedObject = unpackIfNeeded(object);
+        if (unpackedObject != null) {
+          return mySerializerWriteMethod.invoke(mySerializer, unpackedObject, unpackedObject.getClass());
         }
       }
       catch (Exception e) {
@@ -102,24 +101,20 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
     }
 
     @Nullable
-    private Pair<Object, ? extends Class<?>> prepare(Object object) {
-      Class<?> modelClazz;
-      if (object instanceof IdeaProject) { // support custom serialization of the gradle built-in IdeaProject model
-        modelClazz = IdeaProject.class;
-      }
-      else {
+    private Object unpackIfNeeded(Object object) {
+      if (!(object instanceof IdeaProject)) { // support custom serialization of the gradle built-in IdeaProject model
         try {
           object = new ProtocolToModelAdapter().unpack(object);
         }
         catch (IllegalArgumentException ignore) {
         }
-        modelClazz = object.getClass();
+        Class<?> modelClazz = object.getClass();
         if (modelClazz.getClassLoader() != myModelBuildersClassLoader) {
           //The object has not been created by custom model builders
           return null;
         }
       }
-      return Pair.pair(object, modelClazz);
+      return object;
     }
   }
 }
