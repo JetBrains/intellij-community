@@ -1179,26 +1179,28 @@
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
     </group>
 
-    <action id="OpenBlankEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToBlankEditorAction">
-      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
-    </action>
-    <action id="OpenFileEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToFileEditorAction">
-      <add-to-group group-id="Diff.EditorPopupMenu" relative-to-action="OpenBlankEditorInBlankDiffWindow" anchor="after"/>
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="OpenBlankEditorInBlankDiffWindow" anchor="after"/>
-    </action>
+    <action id="OpenBlankEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToBlankEditorAction"/>
+    <action id="OpenFileEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToFileEditorAction"/>
+    <group id="OpenRecentEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToRecentEditorActionGroup" popup="true"/>
     <action id="SwapSidesInDiffWindow" class="com.intellij.diff.actions.impl.SwapDiffSidesAction" icon="AllIcons.Actions.SwapPanels">
       <add-to-group group-id="Diff.ViewerToolbar"/>
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="OpenFileEditorInBlankDiffWindow" anchor="after"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="BlankDiffViewerEditorPopupMenu" anchor="after"/>
     </action>
-    <action id="ToggleThreeSideInBlankDiffWindow" class="com.intellij.diff.actions.BlankToggleThreeSideModeAction">
-      <add-to-group group-id="Diff.EditorPopupMenu" relative-to-action="OpenFileEditorInBlankDiffWindow" anchor="after"/>
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="SwapSidesInDiffWindow" anchor="after"/>
-    </action>
+    <action id="ToggleThreeSideInBlankDiffWindow" class="com.intellij.diff.actions.BlankToggleThreeSideModeAction"/>
     <action id="SwapThreeWayColorModeInDiffWindow" class="com.intellij.diff.actions.impl.SwapThreeWayColorModeAction">
       <add-to-group group-id="Diff.ViewerToolbar"/>
-      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ToggleThreeSideInBlankDiffWindow" anchor="after"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="BlankDiffViewerEditorPopupMenu" anchor="after"/>
     </action>
+
+    <group id="BlankDiffViewerEditorPopupMenu">
+      <reference id="OpenBlankEditorInBlankDiffWindow"/>
+      <reference id="OpenFileEditorInBlankDiffWindow"/>
+      <reference id="OpenRecentEditorInBlankDiffWindow"/>
+      <reference id="ToggleThreeSideInBlankDiffWindow"/>
+
+      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
+    </group>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction"/>
     <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>

@@ -10,6 +10,7 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -17,6 +18,8 @@ import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diff.DiffBundle
@@ -25,17 +28,24 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.map2Array
+import com.intellij.util.text.DateFormatUtil
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
 import javax.swing.JComponent
 
 private val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
+private val BLANK_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
 
 class ShowBlankDiffWindowAction : DumbAwareAction() {
   init {
@@ -88,7 +98,7 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
 internal class SwitchToBlankEditorAction : BlankSwitchContentActionBase() {
   override fun isEnabled(currentContent: DiffContent): Boolean = currentContent is FileContent
 
-  override fun createNewContent(project: Project?, contextComponent: JComponent): DiffContent? {
+  override fun createNewContent(project: Project?, contextComponent: JComponent): DiffContent {
     return createEditableContent(project, "")
   }
 }
@@ -103,6 +113,34 @@ internal class SwitchToFileEditorAction : BlankSwitchContentActionBase() {
     val file = FileChooser.chooseFile(descriptor, contextComponent, project, null) ?: return null
 
     return createFileContent(project, file)
+  }
+}
+
+internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    return RecentContentHandler.getRecentFiles().map2Array { MySwitchAction(it) }
+  }
+
+  @Suppress("DialogTitleCapitalization")
+  private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
+    init {
+      val text = content.text
+      val dateAppendix = DateFormatUtil.formatPrettyDateTime(content.timestamp)
+      val presentable = when {
+        text.length < 40 -> DiffBundle.message("blank.diff.recent.content.summary.text.date", text.trim(), dateAppendix)
+        else -> {
+          val shortenedText = StringUtil.shortenTextWithEllipsis(text.trim(), 30, 0)
+          DiffBundle.message("blank.diff.recent.content.summary.text.length.date", shortenedText, text.length, dateAppendix)
+        }
+      }
+      templatePresentation.text = presentable
+    }
+
+    override fun isEnabled(currentContent: DiffContent): Boolean = true
+
+    override fun createNewContent(project: Project?, contextComponent: JComponent): DiffContent {
+      return createEditableContent(project, content.text)
+    }
   }
 }
 
@@ -207,11 +245,13 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
     if (viewer is TwosideTextDiffViewer) {
       DnDHandler2(viewer, helper, Side.LEFT).install()
       DnDHandler2(viewer, helper, Side.RIGHT).install()
+      RecentContentHandler(viewer, helper).install()
     }
     else if (viewer is ThreesideTextDiffViewer) {
       DnDHandler3(viewer, helper, ThreeSide.LEFT).install()
       DnDHandler3(viewer, helper, ThreeSide.BASE).install()
       DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
+      RecentContentHandler(viewer, helper).install()
     }
   }
 }
@@ -292,8 +332,56 @@ private class DnDHandler3(val viewer: ThreesideTextDiffViewer,
   }
 }
 
+private class RecentContentHandler(val viewer: DiffViewerBase,
+                                   val helper: MutableDiffRequestChain.Helper) {
+  companion object {
+    private const val MAX_RECENT_FILES = 10
+    private val recentFiles = mutableListOf<RecentBlankContent>()
+
+    fun getRecentFiles() = recentFiles.toList()
+  }
+
+  fun install() {
+    viewer.addListener(MyListener())
+  }
+
+  @RequiresEdt
+  private fun saveRecentContent(content: DocumentContent) {
+    val text = content.document.text
+    if (text.isBlank()) return
+
+    val oldValue = recentFiles.find { it.text == text }
+    if (oldValue != null) {
+      recentFiles.remove(oldValue)
+      recentFiles.add(0, oldValue)
+    }
+    else {
+      val timestamp = System.currentTimeMillis()
+      recentFiles.add(0, RecentBlankContent(text, timestamp))
+      while (recentFiles.size > MAX_RECENT_FILES) {
+        recentFiles.removeAt(recentFiles.lastIndex)
+      }
+    }
+  }
+
+  private inner class MyListener : DiffViewerListener() {
+    override fun onDispose() {
+      for (content in viewer.request.contents) {
+        if (content is DocumentContent &&
+            content.getUserData(BLANK_CONTENT_KEY) == true) {
+          saveRecentContent(content)
+        }
+      }
+    }
+  }
+}
+
+private data class RecentBlankContent(val text: @NlsSafe String, val timestamp: Long)
+
 private fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
-  return DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
+  val content = DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
+  content.putUserData(BLANK_CONTENT_KEY, true)
+  return content
 }
 
 private fun createFileContent(project: Project?, file: File): DocumentContent? {
