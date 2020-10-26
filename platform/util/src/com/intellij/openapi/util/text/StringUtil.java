@@ -732,7 +732,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Pluralize English word. Could be used when e.g. generating collection name by element type.
    * Do not use this method in localized context, as it works for English language only.
-   * 
+   *
    * @param word word to pluralize
    * @return word in plural form
    */
@@ -1443,7 +1443,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** 
+  /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -1453,7 +1453,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatDuration(duration);
   }
 
-  /** 
+  /**
    * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -2049,7 +2049,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String htmlEmphasize(@NotNull @Nls String text) {
+  public static @NlsSafe @NotNull String htmlEmphasize(@NotNull @Nls String text) {
     return HtmlChunk.tag("code").addText(text)
       .wrapWith("b").toString();
   }

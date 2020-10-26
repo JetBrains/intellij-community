@@ -87,7 +87,7 @@ public final class CommonRefactoringUtil {
     });
   }
 
-  public static String htmlEmphasize(@NotNull @Nls String text) {
+  public static @NlsSafe String htmlEmphasize(@NotNull @Nls String text) {
     return StringUtil.htmlEmphasize(text);
   }
 
