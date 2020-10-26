@@ -67,7 +67,7 @@ public class ProcessBuilder {
   //
   // If either of these becomes an issue, please refer to [util] CommandLineUtil.addToWindowsCommandLine() for a possible implementation.
   public Process createProcess() throws IOException {
-    if (myParameters.size() < 1) {
+    if (myParameters.isEmpty()) {
       throw new IllegalArgumentException("Executable name not specified");
     }
 

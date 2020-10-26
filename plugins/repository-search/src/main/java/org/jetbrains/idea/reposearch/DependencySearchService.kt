@@ -88,7 +88,7 @@ class DependencySearchService(private val myProject: Project) {
     localResultSet.forEach(consumer)
 
 
-    if (parameters.isLocalOnly || remoteProviders.size == 0) {
+    if (parameters.isLocalOnly || remoteProviders.isEmpty()) {
       return resolvedPromise(0)
     }
 

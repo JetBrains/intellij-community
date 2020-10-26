@@ -945,7 +945,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
                                                                          @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
         List<PsiStatement> statements = Arrays.asList(terminalBlock.getStatements());
-        if (statements.size() < 1) return null;
+        if (statements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(statements.get(0));
         if(!(targetBuilder instanceof PsiLocalVariable)) return null;
         List<PsiExpression> joinParts = extractJoinParts(statements);

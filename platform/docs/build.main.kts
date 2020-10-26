@@ -35,7 +35,7 @@ Files.newDirectoryStream(Paths.get(".").toAbsolutePath(), "*.puml").use { inFile
 
     val sourceFileReader = SourceFileReader(inFile.toFile(), outDir.toFile(), svgFileFormat)
     val result = sourceFileReader.getGeneratedImages()
-    if (result.size == 0) {
+    if (result.isEmpty()) {
       System.err.println("warning: no image in $inFile")
       continue
     }

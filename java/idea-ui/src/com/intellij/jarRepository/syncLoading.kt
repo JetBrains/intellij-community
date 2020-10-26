@@ -28,7 +28,7 @@ internal class LoadResult(val artifacts: Collection<Artifact>?,
 
 internal fun loadDependenciesSync(project: Project) {
   val toSync = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
-  if (toSync.size == 0) return
+  if (toSync.isEmpty()) return
   val queue = ArrayBlockingQueue<LoadResult>(toSync.size)
   val submitted = submitLoadJobs(project, toSync, queue)
   LOG.info("Submitted $submitted jobs for downloading maven dependencies")

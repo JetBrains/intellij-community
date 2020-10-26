@@ -56,7 +56,7 @@ class GithubGitHelper {
     fun findGitRepository(project: Project, file: VirtualFile? = null): GitRepository? {
       val manager = GitUtil.getRepositoryManager(project)
       val repositories = manager.repositories
-      if (repositories.size == 0) {
+      if (repositories.isEmpty()) {
         return null
       }
       if (repositories.size == 1) {

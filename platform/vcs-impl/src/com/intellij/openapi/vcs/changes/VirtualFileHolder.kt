@@ -46,7 +46,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 
-      if (scope.recursivelyDirtyDirectories.size == 0) {
+      if (scope.recursivelyDirtyDirectories.isEmpty()) {
         val dirtyFiles = scope.dirtyFiles
         var cleanDroppedFiles = false
 

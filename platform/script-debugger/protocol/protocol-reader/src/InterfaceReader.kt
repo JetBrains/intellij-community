@@ -173,7 +173,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         var argumentType = type.actualTypeArguments[if (isList) 0 else 1]
         if (argumentType is WildcardType) {
           val wildcard = argumentType
-          if (wildcard.lowerBounds.size == 0 && wildcard.upperBounds.size == 1) {
+          if (wildcard.lowerBounds.isEmpty() && wildcard.upperBounds.size == 1) {
             argumentType = wildcard.upperBounds[0]
           }
         }

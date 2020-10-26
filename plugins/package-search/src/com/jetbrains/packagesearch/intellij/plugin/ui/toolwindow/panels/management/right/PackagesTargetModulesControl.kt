@@ -348,7 +348,7 @@ class PackagesTargetModulesControl(private val viewModel: PackageSearchToolWindo
 
         // Compare previous packageOperationTargets with current.
         // If the underlying dependencies have not changed, there is no need to update them.
-        val shouldUpdateItems = items.size == 0 ||
+        val shouldUpdateItems = items.isEmpty() ||
             items.size != projectModules.size ||
             items.any { it.packageSearchDependency != selectedDependency } ||
             installationSummary != selectedDependency?.buildInstallationSummary()

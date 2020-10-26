@@ -44,7 +44,7 @@ class FilePathHolder(private val project: Project) : FileHolder {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 
-      if (scope.recursivelyDirtyDirectories.size == 0) {
+      if (scope.recursivelyDirtyDirectories.isEmpty()) {
         // `files` set is case-sensitive depending on OS, `scope.dirtyFiles` set is always case-sensitive
         // `AbstractSet.removeAll()` chooses collection to iterate through depending on its size
         // so we explicitly iterate through `scope.dirtyFiles` here

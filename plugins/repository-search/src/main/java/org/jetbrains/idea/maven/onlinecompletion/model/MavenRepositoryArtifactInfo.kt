@@ -27,7 +27,7 @@ class MavenRepositoryArtifactInfo(private val groupId: String,
 
   @NlsSafe
   override fun getVersion(): String? {
-    return if (items.size < 1) {
+    return if (items.isEmpty()) {
       null
     }
     else items[0].version!!

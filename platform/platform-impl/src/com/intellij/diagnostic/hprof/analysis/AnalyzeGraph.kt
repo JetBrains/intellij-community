@@ -341,7 +341,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
       toVisit2 = tmp
 
       // Handle state transitions
-      while (toVisit.size == 0 && phase != WalkGraphPhase.Finished) {
+      while (toVisit.isEmpty && phase != WalkGraphPhase.Finished) {
         // Next state
         phase = WalkGraphPhase.values()[phase.ordinal + 1]
 
