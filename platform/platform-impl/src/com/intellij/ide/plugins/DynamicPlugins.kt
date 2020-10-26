@@ -149,6 +149,13 @@ object DynamicPlugins {
                                    optionalDependencyPluginId: PluginId? = null,
                                    context: List<IdeaPluginDescriptorImpl> = emptyList(),
                                    checkImplementationDetailDependencies: Boolean = true): String? {
+    if (descriptor.isRequireRestart) {
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
+    }
+    if (descriptor.productCode != null && !descriptor.isBundled && !PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
+      return "Plugin ${descriptor.pluginId} is a paid plugin"
+    }
+
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
     }
@@ -165,10 +172,6 @@ object DynamicPlugins {
         return "ide.plugins.allow.unload is disabled and synchronous load/unload is not possible for ${descriptor.pluginId}"
       }
       return null
-    }
-
-    if (descriptor.isRequireRestart) {
-      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
     }
 
     val app = ApplicationManager.getApplication()
