@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
 import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
 
 object KotlinPredefinedConfigurations {
-    private val CLASS_TYPE = KSSRBundle.message("category.class")
-    private val EXPRESSION_TYPE = KSSRBundle.message("category.expressions")
-    private val FUNCTION_TYPE = KSSRBundle.message("category.functions")
-    private val OPERATOR_TYPE = KSSRBundle.message("category.operators")
-    private val COMMENT_TYPE = KSSRBundle.message("category.comments")
-    private val INTERESTING_TYPE = KSSRBundle.message("category.interesting")
+    private val CLASS_TYPE get() = KSSRBundle.message("category.class")
+    private val EXPRESSION_TYPE get() = KSSRBundle.message("category.expressions")
+    private val FUNCTION_TYPE get() = KSSRBundle.message("category.functions")
+    private val OPERATOR_TYPE get() = KSSRBundle.message("category.operators")
+    private val COMMENT_TYPE get() = KSSRBundle.message("category.comments")
+    private val INTERESTING_TYPE get() = KSSRBundle.message("category.interesting")
 
     private fun searchTemplate(
         @Nls name: String,
