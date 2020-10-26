@@ -93,6 +93,9 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
                                             CLASS_PATH_VOLUME,
                                             AGENTS_VOLUME)
 
+  override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
+    duplicatePersistentComponent(this, config)
+
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"

@@ -31,7 +31,7 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   open fun initializeNewlyCreated(config: C) {}
 
-  open fun duplicateConfig(config: C): C = createDefaultConfig().also {
+  open fun duplicateConfig(config: C): C = createDefaultConfig().also { //todo[lene] make it abstract in 21.1
     XmlSerializerUtil.copyBean(config, it)
   }
 
@@ -39,4 +39,19 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   @Suppress("UNCHECKED_CAST")
   internal fun castConfiguration(config: ContributedConfigurationBase) = config as C
+
+  companion object {
+    @JvmStatic
+    protected fun <B, T, State> duplicatePersistentComponent(base: B, config: T): T
+      where T : PersistentStateComponent<State>,
+            T : ContributedConfigurationBase,
+            B : ContributedTypeBase<T> {
+      return base.createDefaultConfig().also {
+        val state = config.state
+        if (state != null) {
+          it.loadState(state)
+        }
+      }
+    }
+  }
 }

@@ -73,6 +73,9 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
     }
   }
 
+  override fun duplicateConfig(config: MavenRuntimeTargetConfiguration): MavenRuntimeTargetConfiguration =
+    duplicatePersistentComponent(this, config)
+
   companion object {
     @JvmStatic
     val TYPE_ID = "MavenRuntime"
