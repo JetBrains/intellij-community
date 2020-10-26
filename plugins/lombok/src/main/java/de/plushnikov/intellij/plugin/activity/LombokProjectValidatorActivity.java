@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.awt.RelativePoint;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import javax.swing.event.HyperlinkEvent;
+import java.util.List;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
@@ -138,8 +141,35 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean hasLombokLibrary(Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> new CachedValueProvider.Result<>(JavaPsiFacade.getInstance(project).findPackage("lombok.experimental"),
-                                                                                                                  ProjectRootManager.getInstance(project))) != null;
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage("lombok.experimental"));
+      return new CachedValueProvider.Result<>(aPackage, ProjectRootManager.getInstance(project));
+    }) != null;
+  }
+
+  public static boolean isVersionLessThan1_18_16(Project project) {
+    if (ProjectSettings.isLombokEnabledInProject(project) && hasLombokLibrary(project)) {
+      return CachedValuesManager.getManager(project)
+        .getCachedValue(project, () -> {
+          Boolean isVersionLessThan = ReadAction.compute(() -> isVersionLessThan1_18_16_Internal(project));
+          return new CachedValueProvider.Result<>(isVersionLessThan, ProjectRootManager.getInstance(project));
+        });
+    }
+    return false;
+  }
+
+  private static boolean isVersionLessThan1_18_16_Internal(@NotNull Project project) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
+    if (aPackage != null) {
+      PsiDirectory[] directories = aPackage.getDirectories();
+      if (directories.length > 0) {
+        List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(directories[0].getVirtualFile());
+        if (!entries.isEmpty()) {
+          return Version.isLessThan(entries.get(0), "1.18.16");
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
