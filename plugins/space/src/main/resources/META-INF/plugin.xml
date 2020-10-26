@@ -22,7 +22,7 @@
     <applicationConfigurable
       groupId="tools"
       groupWeight="239"
-      displayName="Space"
+      key="configurable.name"
       instance="com.intellij.space.settings.SpaceSettingsPanel"/>
 
     <toolWindow id="Space Automation"
