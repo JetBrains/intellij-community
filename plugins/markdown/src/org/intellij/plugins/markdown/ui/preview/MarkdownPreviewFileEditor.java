@@ -5,12 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -23,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
-import org.intellij.plugins.markdown.settings.MarkdownCssSettings;
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
@@ -35,9 +32,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
@@ -294,7 +289,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     myPanel = retrievePanelProvider(settings).createHtmlPanel();
     myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
     myHtmlPanelWrapper.repaint();
-    updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
     myLastRenderedHtml = "";
     updateHtmlPooled();
   }
@@ -302,46 +296,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   private void updateHtmlPooled() {
     myPooledAlarm.cancelAllRequests();
     myPooledAlarm.addRequest(() -> updateHtml(), 0);
-  }
-
-  @SuppressWarnings("deprecation")
-  private void updatePanelCssSettings(MarkdownHtmlPanel panel, MarkdownCssSettings cssSettings) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    String styles = getCustomStyles();
-    if (styles != null) {
-      panel.setCSS(styles, MarkdownCssSettings.DEFAULT.getCustomStylesheetPath());
-    }
-    else {
-      String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getCustomStylesheetText() : null;
-      String customCssURI = cssSettings.isCustomStylesheetEnabled()
-                            ? cssSettings.getCustomStylesheetPath()
-                            : MarkdownCssSettings.DEFAULT.getCustomStylesheetPath();
-      panel.setCSS(inlineCss, customCssURI);
-    }
-  }
-
-  private @Nullable String getCustomStyles() {
-    ExtensionPointName<MarkdownPreviewStylesProvider> epName = MarkdownPreviewStylesProvider.Companion.getExtensionPointName();
-    List<String> styles = epName.extensions()
-      .map(provider -> provider.getStyles(myFile))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
-
-    if (styles.isEmpty()) return null;
-
-    if (styles.size() > 1) {
-      String providerClasses = epName.extensions()
-        .filter(provider -> provider.getStyles(myFile) != null)
-        .map(MarkdownPreviewStylesProvider::getClass)
-        .map(Class::getName)
-        .collect(Collectors.joining(", "));
-
-      Logger.getInstance(MarkdownPreviewFileEditor.class).warn(
-        String.format("Two or more extensions trying to apply custom Markdown preview styles in '%s': %s", myFile.getName(), providerClasses));
-    }
-
-    return styles.get(0);
   }
 
   private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
@@ -374,7 +328,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
           }
 
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
-          updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));
     }

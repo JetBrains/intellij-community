@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.EventListener;
@@ -14,10 +13,6 @@ public interface MarkdownHtmlPanel extends Disposable {
   void setHtml(@NotNull String html, int initialScrollOffset);
 
   void reloadWithOffset(int offset);
-
-  @Deprecated
-  @SuppressWarnings("ALL")
-  default void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) { }
 
   void scrollToMarkdownSrcOffset(int offset);
 
