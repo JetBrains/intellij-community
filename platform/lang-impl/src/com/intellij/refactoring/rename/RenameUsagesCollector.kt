@@ -10,7 +10,6 @@ class RenameUsagesCollector : CounterUsagesCollector() {
 
   companion object {
     private val GROUP = EventLogGroup("rename.refactoring", 4)
-    private val GROUP_INPLACE = EventLogGroup("rename.inplace.popup", 0)
 
     @JvmField val scopeType = EventFields.Enum("scope_type", RenameScopeType::class.java) { it.fusName }
     @JvmField val searchInComments = EventFields.Boolean("search_in_comments")
@@ -25,17 +24,6 @@ class RenameUsagesCollector : CounterUsagesCollector() {
 
     private fun registerRenameProcessorEvent(eventId: String) =
       GROUP.registerVarargEvent(eventId, scopeType, searchInComments, searchInTextOccurrences, renameProcessor, EventFields.Language)
-
-    @JvmField val changedOnHide = EventFields.Boolean("changedOnHide")
-    @JvmField val linkUsed = EventFields.Boolean("linkUsed")
-
-    @JvmField val show = registerInplacePopupEventEvent("show");
-    @JvmField val hide = registerInplacePopupEventEvent("hide");
-    @JvmField val openRenameDialog = registerInplacePopupEventEvent("openRenameDialog");
-    @JvmField val settingsChanged = registerInplacePopupEventEvent("settingsChanged");
-
-    private fun registerInplacePopupEventEvent(eventId: String) =
-      GROUP_INPLACE.registerVarargEvent(eventId, EventFields.InputEvent, searchInComments, searchInTextOccurrences, changedOnHide, linkUsed)
   }
 }
 
