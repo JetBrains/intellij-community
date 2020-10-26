@@ -327,7 +327,7 @@ class InspectionPopupManager {
                                 FeatureUsageData data = new FeatureUsageData().
                                   addProject(myEditor.getProject()).
                                   addLanguage(level.getLangID()).
-                                  addData("level", inspectionsLevel.toString());
+                                  addData("level", inspectionsLevel.name());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },
