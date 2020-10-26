@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
@@ -218,6 +219,10 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void showNotificationOrphanMavenProject(final Project project) {
     final NotificationSettings notificationSettings = NotificationsConfigurationImpl.getSettings(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
     if (!notificationSettings.isShouldLog() && notificationSettings.getDisplayType().equals(NotificationDisplayType.NONE)) {
+      return;
+    }
+
+    if (Boolean.TRUE.equals(project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT))) {
       return;
     }
 
