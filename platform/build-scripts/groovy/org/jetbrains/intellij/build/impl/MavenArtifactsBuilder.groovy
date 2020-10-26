@@ -32,13 +32,11 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 @CompileStatic
 class MavenArtifactsBuilder {
   /** second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId */
-  private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds", "gradle", "compiler-plugins"] as Set<String>
-  private final BuildContext buildContext
-  private final boolean forKotlin
+  private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds"] as Set<String>
+  protected final BuildContext buildContext
 
-  MavenArtifactsBuilder(BuildContext buildContext, boolean forKotlin = false) {
+  MavenArtifactsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
-    this.forKotlin = forKotlin
   }
 
   void generateMavenArtifacts(List<String> namesOfModulesToPublish, String outputDir) {
@@ -126,20 +124,17 @@ class MavenArtifactsBuilder {
     dependency
   }
 
-  static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version, boolean forKotlin = false) {
+  static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version) {
     def names = moduleName.split("\\.")
     if (names.size() < 2) {
       messages.error("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
     }
-    String groupId = forKotlin ? "org.jetbrains.kotlin" : "org.jetbrains.${names.take(2).join(".")}"
+    String groupId = "com.jetbrains.${names.take(2).join(".")}"
     def firstMeaningful = names.size() > 2 && COMMON_GROUP_NAMES.contains(names[1]) ? 2 : 1
-    String[] artifactIds = names.drop(firstMeaningful)
-    if (!forKotlin) {
-      artifactIds = artifactIds.collectMany {
-        splitByCamelHumpsMergingNumbers(it).collect {it.toLowerCase(Locale.US)}
-      }
-    }
-    return new MavenCoordinates(groupId, artifactIds.join("-"), version)
+    String artifactId = names.drop(firstMeaningful).collectMany {
+      splitByCamelHumpsMergingNumbers(it).collect {it.toLowerCase(Locale.US)}
+    }.join("-")
+    return new MavenCoordinates(groupId, artifactId, version)
   }
 
   private static List<String> splitByCamelHumpsMergingNumbers(String s) {
@@ -208,7 +203,7 @@ class MavenArtifactsBuilder {
                                                       Set<JpsModule> computationInProgress) {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
-    if (!forKotlin && !module.name.startsWith("intellij.")) {
+    if (shouldSkipModule(module.name, false)) {
       buildContext.messages.warning("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
       return null
     }
@@ -224,7 +219,7 @@ class MavenArtifactsBuilder {
     scopedDependencies(module).each { dependency, scope ->
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
-        if (forKotlin && depModule.name.startsWith("intellij.")) return
+        if (shouldSkipModule(depModule.name, true)) return
         if (computationInProgress.contains(depModule)) {
           /*
            It's forbidden to have compile-time circular dependencies in IntelliJ project, but there are some cycles with runtime scope
@@ -261,9 +256,18 @@ class MavenArtifactsBuilder {
       nonMavenizableModules << module
       return null
     }
-    def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber, forKotlin), dependencies)
+    def artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  protected boolean shouldSkipModule(String moduleName, boolean moduleIsDependency) {
+    if (moduleIsDependency) return false
+    return !moduleName.startsWith("intellij.")
+  }
+
+  protected MavenCoordinates generateMavenCoordinatesForModule(JpsModule module) {
+    return generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber)
   }
 
   static boolean isOptionalDependency(JpsLibrary library) {
