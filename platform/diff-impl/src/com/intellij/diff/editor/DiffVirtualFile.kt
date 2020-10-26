@@ -23,4 +23,6 @@ abstract class DiffVirtualFile(name: String) : LightVirtualFile(name, DiffFileTy
   abstract fun createProcessor(project: Project): DiffRequestProcessor
 
   override fun isWritable(): Boolean = false
+
+  override fun toString(): String = "${javaClass.name}@${Integer.toHexString(hashCode())}"
 }
