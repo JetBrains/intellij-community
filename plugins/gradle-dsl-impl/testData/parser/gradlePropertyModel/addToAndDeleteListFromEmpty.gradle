@@ -1,4 +1,0 @@
-ext {
-  def six = 6
-  prop1 = []
-}

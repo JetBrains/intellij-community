@@ -1,7 +1,0 @@
-android {
-  sourceSets {
-    set1 {
-    }
-    set2 {}
-  }
-}

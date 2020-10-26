@@ -1,2 +1,0 @@
-apply plugin: 'org.jetbrains.kotlin.android'
-apply plugin: 'org.jetbrains.kotlin.plugin-extensions'

@@ -1,5 +1,0 @@
-android {
-  defaultConfig {
-    setProguardFiles(['proguard-rules.pro', 'value'])
-  }
-}

@@ -1,8 +1,0 @@
-ext.ANDROID = "android"
-ext.SDK_VERSION = 23
-android {
-  compileSdkVersion = "$ANDROID-${SDK_VERSION}"
-  defaultConfig {
-    targetSdkVersion "$compileSdkVersion"
-  }
-}

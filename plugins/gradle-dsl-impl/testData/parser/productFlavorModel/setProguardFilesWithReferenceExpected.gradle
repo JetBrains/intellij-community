@@ -1,6 +1,0 @@
-ext.list = ['proguard-rules.pro', 'value']
-android {
-  defaultConfig {
-    setProguardFiles(list)
-  }
-}

@@ -1,3 +1,0 @@
-def vars = [:]
-vars.one = 1
-ext.value = vars.one

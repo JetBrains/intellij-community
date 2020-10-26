@@ -1,4 +1,0 @@
-subprojects {
-  sourceCompatibility = 1.5
-  targetCompatibility = 1.6
-}

@@ -1,4 +1,0 @@
-ext {
-  prop2 = 'ref'
-  prop1 = 'value'
-}

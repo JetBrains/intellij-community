@@ -1,5 +1,0 @@
-ext {
-  prop3 = true
-  prop2 = "swap around me :)"
-  prop1 = ['one', 'two', 'three']
-}

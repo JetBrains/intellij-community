@@ -1,8 +1,0 @@
-android {
-  testOptions {
-    reportDir 'reportDirectory'
-    resultsDir 'resultsDirectory'
-    unitTests.returnDefaultValues true
-    execution 'ANDROID_TEST_ORCHESTRATOR'
-  }
-}

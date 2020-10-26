@@ -1,7 +1,0 @@
-buildscript {
-  ext.version = '1.0'
-}
-
-subprojects {
-  apply from: 'versions.gradle'
-}

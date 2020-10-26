@@ -1,9 +1,0 @@
-android {
-  sourceSets {
-    main {
-      manifest {
-        srcFile 'mainSource.xml'
-      }
-    }
-  }
-}

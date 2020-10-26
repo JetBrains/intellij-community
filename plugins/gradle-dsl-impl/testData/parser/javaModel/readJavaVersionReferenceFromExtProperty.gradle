@@ -1,3 +1,0 @@
-ext.JAVA_VERSION = JavaVersion.VERSION_1_5
-sourceCompatibility = JAVA_VERSION
-targetCompatibility = JAVA_VERSION

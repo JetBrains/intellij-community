@@ -1,3 +1,0 @@
-buildscript {
-  ext.hello = 'boo'
-}

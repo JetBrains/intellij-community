@@ -1,3 +1,0 @@
-ext {
-  def var1 = 'hello'
-}

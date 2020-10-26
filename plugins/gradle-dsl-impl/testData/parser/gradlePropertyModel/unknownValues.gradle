@@ -1,5 +1,0 @@
-ext {
-  prop1 = z(1)
-  prop2 = 1 + 2
-  prop3 = obj.getName()
-}

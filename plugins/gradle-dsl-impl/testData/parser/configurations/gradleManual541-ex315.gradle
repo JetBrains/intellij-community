@@ -1,8 +1,0 @@
-configurations {
-    smokeTest.extendsFrom testImplementation
-}
-
-dependencies {
-    testImplementation 'junit:junit:4.12'
-    smokeTest 'org.apache.httpcomponents:httpclient:4.5.5'
-}

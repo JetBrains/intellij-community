@@ -1,9 +1,0 @@
-android {
-  flavorDimensions 'tier'
-  productFlavors {
-    demo {
-      dimension 'tier'
-      matchingFallbacks = ['trial']
-    }
-  }
-}

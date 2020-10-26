@@ -1,3 +1,0 @@
-dependencies {
-  runtime 'org.springframework:spring-core:2.5', 'org.springframework:spring-aop:2.5'
-}

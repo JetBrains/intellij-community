@@ -1,7 +1,0 @@
-android {
-  externalNativeBuild {
-    cmake {
-      path new File("foo/bar")
-    }
-  }
-}

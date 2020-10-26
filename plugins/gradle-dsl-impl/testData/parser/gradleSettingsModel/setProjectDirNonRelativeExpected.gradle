@@ -1,5 +1,0 @@
-include ':app'
-include ':lib'
-project(":lib").projectDir = new File(rootDir, "mylibrary")
-project(':app').projectDir = file('/cool/app')
-rootProject.name='My Application'
