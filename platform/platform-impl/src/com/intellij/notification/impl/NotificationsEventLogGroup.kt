@@ -11,13 +11,14 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationCollector.NotificationPlace
+import java.util.stream.Collectors
 
 class NotificationsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 58)
+    val GROUP = EventLogGroup("notifications", 59)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
@@ -35,7 +36,20 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     }
 
     @JvmField
-    val NOTIFICATION_ID = StringValidatedByCustomRule("display_id", "notification_display_id")
+    val NOTIFICATION_ID = object : StringEventField("display_id") {
+      override val validationRule: List<String>
+        get() {
+          val validationRules = NotificationIdsHolder.EP_NAME.extensionList.stream()
+            .flatMap { holder: NotificationIdsHolder -> holder.notificationIds.stream() }
+            .collect(Collectors.toList())
+          validationRules.add(NotificationCollector.UNKNOWN)
+          validationRules.add("{util#notification_display_id}")
+          return validationRules
+        }
+    }
+
+    @JvmField
+    val ADDITIONAL = ObjectEventField("additional", NOTIFICATION_ID)
 
     @JvmField
     val NOTIFICATION_GROUP_ID = StringValidatedByCustomRule("notification_group", "notification_group")
