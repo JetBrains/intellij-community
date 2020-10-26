@@ -17,6 +17,10 @@ package com.jetbrains.python;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -25,7 +29,13 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author yole
@@ -143,6 +153,26 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false);
     myTestFileName = PLAIN_DIR + "/mod.py";
     assertUnresolved();
+  }
+
+  // PY-45115
+  public void testSameDirectoryImportsNotCached() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    PsiManager psiManager = myFixture.getPsiManager();
+
+    PsiFile pkgOrigin = psiManager.findFile(myFixture.findFileInTempDir("pkg/main.py"));
+    PyQualifiedNameResolveContext pkgContext = PyResolveImportUtil.fromFoothold(pkgOrigin).copyWithRelative(0);
+    List<PsiElement> pkgResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), pkgContext);
+    PsiElement pkgOsModule = assertOneElement(pkgResults);
+    assertEquals(myFixture.findFileInTempDir("pkg/os.py"), pkgOsModule.getContainingFile().getVirtualFile());
+    assertTrue(psiManager.isInProject(pkgOsModule));
+
+    PsiFile absOrigin = psiManager.findFile(myFixture.findFileInTempDir("main.py"));
+    PyQualifiedNameResolveContext absContext = PyResolveImportUtil.fromFoothold(absOrigin).copyWithRelative(0);
+    List<PsiElement> absResults = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("os"), absContext);
+    PsiElement absOsModule = assertOneElement(absResults);
+    assertNotEquals(myFixture.findFileInTempDir("pkg/os.py"), absOrigin.getContainingFile().getVirtualFile());
+    assertFalse(psiManager.isInProject(absOsModule));
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {
