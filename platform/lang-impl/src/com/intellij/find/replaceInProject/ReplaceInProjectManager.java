@@ -40,6 +40,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,9 +172,8 @@ public final class ReplaceInProjectManager {
       super(project, findModel);
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
       return StringUtil.decapitalize(presentation.getToolwindowTitle());
     }

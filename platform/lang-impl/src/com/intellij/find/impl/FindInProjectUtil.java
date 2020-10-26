@@ -50,10 +50,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -492,9 +489,8 @@ public final class FindInProjectUtil {
       return presentation.getToolwindowTitle();
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       return getPresentableText();
     }
 
