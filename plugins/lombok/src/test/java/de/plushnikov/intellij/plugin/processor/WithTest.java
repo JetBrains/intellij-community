@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.util.RecursionManager;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 public class WithTest extends AbstractLombokParsingTestCase {
@@ -62,8 +61,6 @@ public class WithTest extends AbstractLombokParsingTestCase {
   }
 
   public void testWith$WithAndBuilderDefaultOnFieldAndValueOnClass() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
     doTest(true);
   }
 

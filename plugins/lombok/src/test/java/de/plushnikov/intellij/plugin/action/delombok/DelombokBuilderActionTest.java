@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.RecursionManager;
 import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 
 public class DelombokBuilderActionTest extends LombokLightActionTestCase {
@@ -13,14 +12,6 @@ public class DelombokBuilderActionTest extends LombokLightActionTestCase {
   @Override
   protected String getBasePath() {
     return super.getBasePath() + "/action/delombok/builder";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testBuilderSimple() throws Exception {

@@ -84,7 +84,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass &&
       psiField.hasModifierProperty(PsiModifier.FINAL) && !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE) &&
-      psiField.getInitializer() != null && !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.BUILDER_DEFAULT)) {
+      psiField.hasInitializer() && !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.BUILDER_DEFAULT)) {
       builder.addWarning("Not generating wither for this field: Withers cannot be generated for final, initialized fields.",
         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       return false;
@@ -152,7 +152,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       if (classField.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
-      if (classField.hasModifierProperty(PsiModifier.FINAL) && null != classField.getInitializer()) {
+      if (classField.hasModifierProperty(PsiModifier.FINAL) && classField.hasInitializer()) {
         continue;
       }
 

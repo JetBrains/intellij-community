@@ -53,7 +53,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
           PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
         result = false;
       }
-      if (null == psiField.getInitializer()) {
+      if (!psiField.hasInitializer()) {
         builder.addError("'lazy' requires field initialization.");
         result = false;
       }
