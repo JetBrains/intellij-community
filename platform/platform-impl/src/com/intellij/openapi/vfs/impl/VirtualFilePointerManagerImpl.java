@@ -81,7 +81,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assertAllPointersDisposed();
   }
 
-  private static final class EventDescriptor {
+  private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
     private final VirtualFilePointer @NotNull [] myPointers;
 
@@ -422,13 +422,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static class CollectedEvents {
     private final @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers;
     private final List<? extends NodeToUpdate> toUpdateNodes;
-    private final List<EventDescriptor> eventList;
+    private final List<? extends EventDescriptor> eventList;
     private final long startModCount;
     private final long prepareElapsedMs;
 
     CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
                     @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                    @NotNull List<EventDescriptor> eventList,
+                    @NotNull List<? extends EventDescriptor> eventList,
                     long startModCount,
                     long prepareElapsedMs) {
       this.toFirePointers = toFirePointers;
