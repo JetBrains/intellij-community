@@ -352,7 +352,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   public void reset() {
     myModel.data.clear();
     for (Map.Entry<VirtualFile, T> e : myMappings.getMappings().entrySet()) {
-      if (myMappings instanceof LanguagePerFileMappings && e.getKey() == null) continue;
+      if (e.getKey() == null) continue;
       myModel.data.add(pair(e.getKey(), e.getValue()));
     }
     for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
