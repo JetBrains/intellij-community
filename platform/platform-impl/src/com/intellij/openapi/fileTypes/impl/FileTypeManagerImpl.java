@@ -705,7 +705,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       unregisterFileTypeWithoutNotification(fileType);
       myStandardFileTypes.remove(fileType.getName());
       if (fileType instanceof LanguageFileType) {
-        Language.unregisterLanguage(((LanguageFileType) fileType).getLanguage());
+        Language language = ((LanguageFileType)fileType).getLanguage();
+        if (fileType.getClass().getClassLoader().equals(language.getClass().getClassLoader())) {
+          Language.unregisterLanguage(language);
+        }
       }
       fireFileTypesChanged(null, fileType);
     });
