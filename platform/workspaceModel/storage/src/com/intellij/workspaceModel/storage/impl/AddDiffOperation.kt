@@ -286,7 +286,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         val newParent = modifiedParentsMap.getValue(connectionId)
         if (newParent == null) {
           // target child doesn't have a parent anymore
-          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannrt restore some dependencies; $connectionId",
+          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
                                                                        initialStorage,
                                                                        diff, target)
           else target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
