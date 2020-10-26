@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -279,19 +280,22 @@ public final class EnvironmentUtil {
 
       Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
       try {
+        List<@NonNls String> callArgs = new ArrayList<>();
+        if (batchFile != null) {
+          callArgs.add("call");
+          callArgs.add(batchFile.toString());
+          if (args != null)
+            callArgs.addAll(args);
+          callArgs.add("&&");
+        }
+        callArgs.addAll(getReadEnvCommand());
+        callArgs.add(envFile.toString());
+        callArgs.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
+        
         List<@NonNls String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
-        if (batchFile != null) {
-          cl.add("call");
-          cl.add(batchFile.toString());
-          if (args != null)
-            cl.addAll(args);
-          cl.add("&&");
-        }
-        cl.addAll(getReadEnvCommand());
-        cl.add(envFile.toString());
-        cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
+        cl.add(prepareCallArgs(callArgs));
         return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, null, envFile);
       }
       finally {
@@ -304,6 +308,19 @@ public final class EnvironmentUtil {
           LOG.warn("Cannot delete temporary file", e);
         }
       }
+    }
+
+    @NotNull
+    private static String prepareCallArgs(@NotNull List<String> callArgs) {
+      List<String> preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
+      String firstArg = preparedCallArgs.remove(0);
+      preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));
+      // for CMD we would like to add extra double quotes for the actual command in call
+      // to mitigate possible JVM issue when argument contains spaces and the first word
+      // starts with double quote and the last ends with double quote and JVM does not
+      // wrap the argument with double quotes
+      // Example: callArgs = ["\"C:\\New Folder\aa\"", "\"C:\\New Folder\aa\""]
+      return StringUtil.wrapWithDoubleQuote(String.join(" ", preparedCallArgs));
     }
 
     private static @NotNull List<String> getReadEnvCommand() {
