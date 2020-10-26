@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.google.common.collect.Lists;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -36,6 +37,7 @@ import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 public class SearchEverywhereHeader {
@@ -146,11 +148,12 @@ public class SearchEverywhereHeader {
     });
     List<SETab> res = new ArrayList<>();
 
+    ElementsChooser.StatisticsCollector<String> filterStatisticsCollector = new ContributorFilterCollector();
     if (myProject != null && !projectContributors.isEmpty()) {
       PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(myProject, projectContributors);
       List<AnAction> projectActions = Arrays.asList(
         new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
-        new SearchEverywhereUI.FiltersAction(projectContributorsFilter, myScopeChangedCallback)
+        new SearchEverywhereFiltersAction<>(projectContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
       );
       res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"),
                         projectContributors, projectActions, projectContributorsFilter));
@@ -178,7 +181,7 @@ public class SearchEverywhereHeader {
             myScopeChangedCallback.run();
           }
         },
-        new SearchEverywhereUI.FiltersAction(ideContributorsFilter, myScopeChangedCallback)
+        new SearchEverywhereFiltersAction<>(ideContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
       );
       res.add(createTab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
                         ideContributors, ideActions, ideContributorsFilter));
@@ -214,7 +217,7 @@ public class SearchEverywhereHeader {
           });
           onChanged.run();
         }
-      }, new SearchEverywhereUI.FiltersAction(filter, onChanged));
+      }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
       SETab allTab = createTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                                IdeBundle.message("searcheverywhere.allelements.tab.name"),
                                contributors, actions, filter);
