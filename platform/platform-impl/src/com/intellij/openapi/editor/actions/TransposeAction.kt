@@ -24,7 +24,7 @@ class TransposeAction : EditorAction(TransposeHandler()) {
         val codepointBeforeCaret = document.charsSequence.subSequence(offsetBeforeCaret, caret.offset)
         val codepointAfterCaret = document.charsSequence.subSequence(caret.offset, offsetAfterCaret)
         document.replaceString(offsetBeforeCaret, offsetAfterCaret, "$codepointAfterCaret$codepointBeforeCaret")
-        caret.moveToOffset(caret.offset + 1)
+        caret.moveToOffset(offsetAfterCaret)
       }
       else {
         // when the caret is at EOL, swap two last characters of the line and don't move caret
