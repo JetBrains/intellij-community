@@ -420,6 +420,10 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
         }
       }
     }
+  }
+  catch (ignored: IOException) {
+  }
+  try {
     getProjectDataPathRoot(projectFile).delete()
   }
   catch (ignored: IOException) {
