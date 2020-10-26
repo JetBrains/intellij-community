@@ -236,6 +236,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
+  protected void addTmpFileToKeep(@NotNull Path file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
