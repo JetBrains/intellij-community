@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
@@ -61,7 +62,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     myScopes.setUsageView(false);
 
     JPanel chooserPanel = new JPanel(new GridBagLayout());
-    final JLabel scopesLabel = new JLabel("Scope:");
+    final JLabel scopesLabel = new JLabel(IdeBundle.message("label.scope"));
     scopesLabel.setDisplayedMnemonic('S');
     scopesLabel.setLabelFor(myScopes);
     final GridBagConstraints gc =
