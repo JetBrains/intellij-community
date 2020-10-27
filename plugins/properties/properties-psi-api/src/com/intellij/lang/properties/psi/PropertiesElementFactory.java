@@ -5,6 +5,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
@@ -17,8 +18,9 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class PropertiesElementFactory {
-  private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
+  private static final Key<PropertiesFile> SYSTEM_PROPERTIES_KEY = Key.create("system.properties.file");
 
+  private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<>("system.properties.file") {
     @Override
     protected PropertiesFile compute(Project project, Void p) {
       return createPropertiesFile(project, System.getProperties(), "system");
@@ -89,8 +91,12 @@ public class PropertiesElementFactory {
   }
 
   @NotNull
-  public static PropertiesFile getSystemProperties(@NotNull Project project) {
-    return PROPERTIES.get(project, null);
+  public static synchronized PropertiesFile getSystemProperties(@NotNull Project project) {
+    PropertiesFile systemPropertiesFile = project.getUserData(SYSTEM_PROPERTIES_KEY);
+    if (systemPropertiesFile == null) {
+      project.putUserData(SYSTEM_PROPERTIES_KEY, systemPropertiesFile = createPropertiesFile(project, System.getProperties(), "system"));
+    }
+    return systemPropertiesFile;
   }
 
   @NotNull

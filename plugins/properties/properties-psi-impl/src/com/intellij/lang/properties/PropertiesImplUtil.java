@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
@@ -110,7 +111,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   public static boolean canBePropertyFile(PsiFile file) {
-    return file instanceof PropertiesFile || file instanceof XmlFile && file.getFileType() == StdFileTypes.XML;
+    return file instanceof PropertiesFile || file instanceof XmlFile && file.getFileType() == XmlFileType.INSTANCE;
   }
 
   @Nullable
