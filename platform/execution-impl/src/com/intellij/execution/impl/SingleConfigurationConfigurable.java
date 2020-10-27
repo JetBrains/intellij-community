@@ -423,6 +423,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
           setModified(true);
           setTargetName(chosenTarget);
+          SingleConfigurationConfigurable.this.updateWarning();
         }
       });
     }
@@ -518,7 +519,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
           if (configurable.openForEditing()) {
             TargetEnvironmentConfiguration lastEdited = configurable.getSelectedTargetConfig();
-            resetRunOnComboBox(lastEdited != null ? lastEdited.getDisplayName() : selectedName);
+            String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
+            resetRunOnComboBox(chosenTargetName);
+            setTargetName(chosenTargetName);
+            SingleConfigurationConfigurable.this.updateWarning();
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);
