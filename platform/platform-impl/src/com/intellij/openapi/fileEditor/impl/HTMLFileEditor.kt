@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.Alarm
 import com.intellij.util.AlarmFactory
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -24,7 +25,7 @@ import java.beans.PropertyChangeListener
 internal class HTMLFileEditor private constructor() : FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null)
-  private val alarm = AlarmFactory.getInstance().create()
+  private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int) = when (key) {
@@ -90,7 +91,7 @@ internal class HTMLFileEditor private constructor() : FileEditor {
   override fun <T : Any?> putUserData(key: Key<T>, value: T?) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
   override fun getCurrentLocation(): FileEditorLocation? = null
-  override fun dispose() = alarm.dispose()
+  override fun dispose() { }
 
   companion object {
     private const val LOADING_KEY = 1
