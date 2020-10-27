@@ -19,7 +19,7 @@ class EventsIdentityWindowThrottle(private var threshold: Int, private var alert
     }
 
     if (descriptor.count < threshold) {
-      val alert = descriptor.count == alertThreshold
+      val alert = isAlert(descriptor)
       descriptor.incrementCounter()
       return if (alert) EventRateThrottleResult.ALERT else EventRateThrottleResult.ACCEPT
     }
@@ -29,6 +29,8 @@ class EventsIdentityWindowThrottle(private var threshold: Int, private var alert
     }
     return EventRateThrottleResult.DENY
   }
+
+  private fun isAlert(descriptor: EventDescriptor) = alertThreshold > 0 && descriptor.count == alertThreshold
 }
 
 private data class EventDescriptor(var count: Int = 1, var lastPeriod: Long) {
