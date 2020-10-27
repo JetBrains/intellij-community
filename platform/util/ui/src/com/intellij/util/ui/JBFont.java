@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,4 +79,13 @@ public class JBFont extends Font {
       super(font);
     }
   }
+
+  public static JBFont h0() { return label().biggerOn(12).asBold(); }
+  public static JBFont h1() { return label().biggerOn(9).asBold(); }
+  public static JBFont h2() { return label().biggerOn(5); }
+  public static JBFont h3() { return label().biggerOn(3); }
+  public static JBFont h4() { return label().asBold(); }
+  public static JBFont regular() { return label(); }
+  public static JBFont medium() { return SystemInfo.isWindows ? label() : label().lessOn(1); }
+  public static JBFont small() { return SystemInfo.isWindows ? label() : label().lessOn(2); }
 }
