@@ -257,20 +257,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
     // A workaround to suppress editor-specific TabAction
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
+    new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
+    new TransferFocusBackwardAction()
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
   }
 
   public void resetUndoRedoActions() {
@@ -851,6 +840,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         return ((SearchTextArea)wrapped).getTextArea();
       }
       throw new AssertionError();
+    }
+  }
+
+  private class TransferFocusAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
+    }
+  }
+
+  private class TransferFocusBackwardAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
     }
   }
 }
