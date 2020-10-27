@@ -136,7 +136,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   @Override
   public void mark() {
     if (TestConsoleProperties.SCROLL_TO_STACK_TRACE.value(myProperties)) {
-      if (myMarkOffset == 0 || Registry.is("scroll.to.first.trace", true)) {
+      if (myMarkOffset == 0 || !Registry.is("scroll.to.first.trace", true)) {
         myMarkOffset = myConsole.getContentSize();
       }
     }
