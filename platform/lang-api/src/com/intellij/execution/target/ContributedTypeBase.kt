@@ -31,9 +31,7 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   open fun initializeNewlyCreated(config: C) {}
 
-  open fun duplicateConfig(config: C): C = createDefaultConfig().also { //todo[lene] make it abstract in 21.1
-    XmlSerializerUtil.copyBean(config, it)
-  }
+  abstract fun duplicateConfig(config: C): C
 
   open val helpTopic: String? = null
 
