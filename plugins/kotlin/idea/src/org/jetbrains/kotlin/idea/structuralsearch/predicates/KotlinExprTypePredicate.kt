@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.idea.structuralsearch.predicates
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
@@ -48,6 +49,7 @@ class KotlinExprTypePredicate(
             node is KtExpression -> try {
                 node.resolveType()
             } catch (e: Exception) {
+                if (e is ControlFlowException) throw e
                 null
             }
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
