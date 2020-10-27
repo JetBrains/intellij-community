@@ -94,6 +94,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     val addedConfigs = getConfiguredTargets() - TargetEnvironmentsManager.instance.targets.resolvedConfigs()
     addedConfigs.forEach { TargetEnvironmentsManager.instance.addTarget(it) }
+
+    TREE_UPDATER.run()
   }
 
   override fun disposeUIResources() {
@@ -104,7 +106,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private fun allTargets() = TargetEnvironmentsManager.instance.targets.resolvedConfigs()
 
   private fun addTargetNode(target: TargetEnvironmentConfiguration): MyNode {
-    val node = TargetEnvironmentNode.forTarget(project, target, defaultLanguageRuntime)
+    val configurable = TargetEnvironmentDetailsConfigurable(project, target, defaultLanguageRuntime, TREE_UPDATER)
+    val node = TargetEnvironmentNode(target, configurable)
     addNode(node, myRoot)
     selectNodeInTree(node)
     return myRoot
@@ -210,11 +213,6 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
         false
       }
       return if (valid) rawIcon else LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer)
-    }
-
-    companion object {
-      fun forTarget(project: Project, target: TargetEnvironmentConfiguration, defaultLanguage: LanguageRuntimeType<*>?) =
-        TargetEnvironmentNode(target, TargetEnvironmentDetailsConfigurable(project, target, defaultLanguage))
     }
   }
 
