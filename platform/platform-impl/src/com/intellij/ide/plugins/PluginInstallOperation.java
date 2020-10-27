@@ -66,48 +66,44 @@ public class PluginInstallOperation {
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    synchronized (ourInstallLock) {
       for (PluginNode node : pluginsToInstall) {
         PluginId id = node.getPluginId();
-        ActionCallback callback = getInstallCallback(id);
+        ActionCallback callback = ourInstallCallbacks.get(id);
         if (callback == null) {
-          setInstallCallback(id);
+          createInstallCallback(id);
         }
         else {
           myLocalWaitInstallCallbacks.put(id, callback);
         }
       }
-    }, ModalityState.any());
+    }
   }
 
-  private static final Map<PluginId, ActionCallback> myInstallCallbacks = new IdentityHashMap<>();
+  private static final Map<PluginId, ActionCallback> ourInstallCallbacks = new IdentityHashMap<>();
   private final Map<PluginId, ActionCallback> myLocalInstallCallbacks = new IdentityHashMap<>();
   private final Map<PluginId, ActionCallback> myLocalWaitInstallCallbacks = new IdentityHashMap<>();
-  private static final Object myInstallLock = new Object();
+  private static final Object ourInstallLock = new Object();
 
-  @Nullable
-  private static ActionCallback getInstallCallback(@NotNull PluginId id) {
-    synchronized (myInstallLock) {
-      return myInstallCallbacks.get(id);
-    }
-  }
-
-  private static void removeInstallCallback(@NotNull PluginId id, @NotNull ActionCallback callback) {
-    synchronized (myInstallLock) {
-      ActionCallback oldValue = myInstallCallbacks.get(id);
+  private static void removeInstallCallback(@NotNull PluginId id, @NotNull ActionCallback callback, boolean isDone) {
+    synchronized (ourInstallLock) {
+      ActionCallback oldValue = ourInstallCallbacks.get(id);
       if (oldValue == callback) {
-        myInstallCallbacks.remove(id);
+        ourInstallCallbacks.remove(id);
       }
     }
+    if (isDone) {
+      callback.setDone();
+    }
+    else {
+      callback.setRejected();
+    }
   }
 
-  private void setInstallCallback(@NotNull PluginId id) {
+  private void createInstallCallback(@NotNull PluginId id) {
     ActionCallback callback = new ActionCallback();
+    ourInstallCallbacks.put(id, callback);
     myLocalInstallCallbacks.put(id, callback);
-
-    synchronized (myInstallLock) {
-      myInstallCallbacks.put(id, callback);
-    }
   }
 
   public void setAllowInstallWithoutRestart(boolean allowInstallWithoutRestart) {
@@ -216,18 +212,11 @@ public class PluginInstallOperation {
     else {
       try {
         boolean result = prepareToInstall(pluginNode, pluginIds);
-        removeInstallCallback(id, localCallback);
-        if (result) {
-          localCallback.setDone();
-        }
-        else {
-          localCallback.setRejected();
-        }
+        removeInstallCallback(id, localCallback, result);
         return result;
       }
       catch (IOException | RuntimeException e) {
-        removeInstallCallback(id, localCallback);
-        localCallback.setRejected();
+        removeInstallCallback(id, localCallback, false);
         throw e;
       }
     }
@@ -369,37 +358,39 @@ public class PluginInstallOperation {
     final boolean[] proceed = new boolean[1];
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        List<PluginNode> dependsToShow = new ArrayList<>();
-        for (Iterator<PluginNode> I = depends.iterator(); I.hasNext(); ) {
-          PluginNode node = I.next();
-          PluginId id = node.getPluginId();
-          ActionCallback callback = getInstallCallback(id);
-          if (callback == null || callback.isRejected()) {
-            if (InstalledPluginsState.getInstance().wasInstalled(id) ||
-                InstalledPluginsState.getInstance().wasInstalledWithoutRestart(id)) {
-              I.remove();
-              continue;
+        synchronized (ourInstallLock) {
+          List<PluginNode> dependsToShow = new ArrayList<>();
+          for (Iterator<PluginNode> I = depends.iterator(); I.hasNext(); ) {
+            PluginNode node = I.next();
+            PluginId id = node.getPluginId();
+            ActionCallback callback = ourInstallCallbacks.get(id);
+            if (callback == null || callback.isRejected()) {
+              if (InstalledPluginsState.getInstance().wasInstalled(id) ||
+                  InstalledPluginsState.getInstance().wasInstalledWithoutRestart(id)) {
+                I.remove();
+                continue;
+              }
+              dependsToShow.add(node);
             }
-            dependsToShow.add(node);
+            else {
+              myLocalWaitInstallCallbacks.put(id, callback);
+            }
           }
-          else {
-            myLocalWaitInstallCallbacks.put(id, callback);
+          if (dependsToShow.isEmpty()) {
+            proceed[0] = true;
+            return;
           }
-        }
-        if (dependsToShow.isEmpty()) {
-          proceed[0] = true;
-          return;
-        }
 
-        String title = IdeBundle.message(titleKey);
-        String deps = getPluginsText(depends);
-        String message = IdeBundle.message(messageKey, pluginNode.getName(), deps);
-        proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
-                                              Messages.getWarningIcon()) == Messages.YES;
+          String title = IdeBundle.message(titleKey);
+          String deps = getPluginsText(depends);
+          String message = IdeBundle.message(messageKey, pluginNode.getName(), deps);
+          proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                Messages.getWarningIcon()) == Messages.YES;
 
-        if (proceed[0]) {
-          for (PluginNode depend : dependsToShow) {
-            setInstallCallback(depend.getPluginId());
+          if (proceed[0]) {
+            for (PluginNode depend : dependsToShow) {
+              createInstallCallback(depend.getPluginId());
+            }
           }
         }
       }, ModalityState.any());
