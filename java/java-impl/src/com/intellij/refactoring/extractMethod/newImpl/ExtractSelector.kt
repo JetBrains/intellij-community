@@ -45,6 +45,7 @@ class ExtractSelector {
     }
     return when {
       alignedElements.isEmpty() -> emptyList()
+      alignedElements.all { it is PsiComment } -> emptyList()
       alignedElements.first() !== elements.first() || alignedElements.last() !== elements.last() -> alignElements(alignedElements)
       else -> alignedElements
     }
