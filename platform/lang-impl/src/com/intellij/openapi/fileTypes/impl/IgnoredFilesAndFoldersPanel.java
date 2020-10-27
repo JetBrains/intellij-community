@@ -66,6 +66,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
   private void removePattern() {
     int index = myPatternList.getSelectedIndex();
     if (index >= 0) {
+      FileTypeConfigurableInteractions.ignorePatternRemoved.log();
       myModel.remove(index);
       if (myModel.size() > 0) {
         if (index >= myModel.size()) index = myModel.size() - 1;
@@ -75,10 +76,12 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
   }
 
   private void editPattern() {
+    FileTypeConfigurableInteractions.ignorePatternEdited.log();
     myEditField.startEdit(myPatternList.getSelectedValue());
   }
 
   private void addPattern() {
+    FileTypeConfigurableInteractions.ignorePatternAdded.log();
     myEditField.startEdit("");
   }
 
