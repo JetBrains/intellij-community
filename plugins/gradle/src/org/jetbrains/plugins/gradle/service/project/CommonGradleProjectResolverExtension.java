@@ -52,6 +52,7 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -651,12 +652,10 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       ExternalSystemTaskId taskId = resolverCtx.getExternalSystemTaskId();
       Project project = taskId.findProject();
       if (project != null) {
-        String msg =
-          "Can't find the following module" + (orphanModules.size() > 1 ? "s" : "") + ": " + join(orphanModules, ", ")
-          + "\nIt can be caused by composite build configuration inside your *.gradle scripts with Gradle version older than 3.3." +
-          "\nTry Gradle 3.3 or better or enable 'Create separate module per source set' option";
-        NotificationData notification = new NotificationData(
-          "Gradle project structure problems", msg, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+        String title = GradleBundle.message("gradle.project.resolver.orphan.modules.error.title");
+        String message =
+          GradleBundle.message("gradle.project.resolver.orphan.modules.error.description", orphanModules.size(), join(orphanModules, ", "));
+        NotificationData notification = new NotificationData(title, message, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
         ExternalSystemNotificationManager.getInstance(project).showNotification(taskId.getProjectSystemId(), notification);
       }
     }

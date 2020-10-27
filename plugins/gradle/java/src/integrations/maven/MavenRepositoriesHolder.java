@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationSour
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
@@ -74,9 +75,10 @@ public class MavenRepositoriesHolder {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
 
+    @NlsSafe String lineBreak = "\n<br>";
     final NotificationData notificationData = new NotificationData(
       GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.title"),
-      "\n<br>" + GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.text"),
+      lineBreak + GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.text"),
       NotificationCategory.INFO,
       NotificationSource.PROJECT_SYNC);
     notificationData.setBalloonNotification(true);

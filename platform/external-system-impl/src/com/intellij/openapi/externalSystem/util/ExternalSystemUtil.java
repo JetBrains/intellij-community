@@ -97,6 +97,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +108,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ExternalSystemUtil {
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
@@ -663,7 +665,7 @@ public final class ExternalSystemUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull String title,
+  public static FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
                                                       @NotNull Exception exception,
                                                       @NotNull ProjectSystemId externalSystemId,
                                                       @NotNull Project project,

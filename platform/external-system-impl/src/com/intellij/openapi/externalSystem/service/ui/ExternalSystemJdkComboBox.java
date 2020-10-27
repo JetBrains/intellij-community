@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,8 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author Sergey Evdokimov
@@ -100,14 +103,14 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
   public void setSetupButton(@NotNull JButton setUpButton,
                              @NotNull ProjectSdksModel jdksModel,
-                             @Nullable String actionGroupTitle,
+                             @Nullable @Nls(capitalization = Title) String actionGroupTitle,
                              @Nullable Condition<? super SdkTypeId> creationFilter) {
     setSetupButton(setUpButton, jdksModel, actionGroupTitle, creationFilter, null);
   }
 
   public void setSetupButton(@NotNull JButton setUpButton,
                              @NotNull ProjectSdksModel jdksModel,
-                             @Nullable String actionGroupTitle,
+                             @Nullable @Nls(capitalization = Title) String actionGroupTitle,
                              @Nullable Condition<? super SdkTypeId> creationFilter,
                              @Nullable WizardContext wizardContext) {
     Arrays.stream(setUpButton.getActionListeners()).forEach(setUpButton::removeActionListener);

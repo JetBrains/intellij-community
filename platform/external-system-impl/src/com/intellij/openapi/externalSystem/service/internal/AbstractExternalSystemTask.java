@@ -205,7 +205,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     catch (NotSupportedException e) {
       NotificationData notification =
-        new NotificationData("Cancellation failed", e.getMessage(), NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+        new NotificationData(ExternalSystemBundle.message("progress.cancel.failed"), e.getMessage(),
+                             NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
       notification.setBalloonNotification(true);
       ExternalSystemNotificationManager.getInstance(getIdeProject()).showNotification(getExternalSystemId(), notification);
     }

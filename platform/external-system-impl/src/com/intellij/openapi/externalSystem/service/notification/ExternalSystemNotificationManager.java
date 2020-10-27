@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,11 +94,11 @@ public class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull String title,
-                                             @NotNull Throwable error,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project,
-                                             @NotNull DataProvider dataProvider) {
+  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
+                                                       @NotNull Throwable error,
+                                                       @NotNull ProjectSystemId externalSystemId,
+                                                       @NotNull Project project,
+                                                       @NotNull DataProvider dataProvider) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }

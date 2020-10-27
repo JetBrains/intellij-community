@@ -38,7 +38,7 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
   private ProjectData myResult;
 
   public SelectExternalProjectDialog(@NotNull ProjectSystemId systemId, Project project, final ProjectData current) {
-    super(systemId, project, String.format("Select %s Project", systemId.getReadableName()), ProjectNode.class,
+    super(systemId, project, ExternalSystemBundle.message("dialog.title.select.project", systemId.getReadableName()), ProjectNode.class,
           node -> node instanceof ProjectNode && ((ProjectNode)node).getData() == current);
     assert current == null || current.getOwner().equals(systemId);
     init();

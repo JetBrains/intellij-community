@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationSour
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.cli.CommandLineArgumentException;
@@ -27,6 +28,7 @@ import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.ArrayList;
@@ -71,15 +73,16 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   public static void runGradle(@NotNull Project project,
                                @Nullable Executor executor,
                                @NotNull String workDirectory,
-                               @NotNull String fullCommandLine) {
+                               @NotNull @NlsSafe String fullCommandLine) {
     final ExternalTaskExecutionInfo taskExecutionInfo;
     try {
       taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine, executor);
     }
     catch (CommandLineArgumentException ex) {
+      @NlsSafe String italicFormat = "<i>%s</i> \n";
       final NotificationData notificationData = new NotificationData(
-        "<b>Command-line arguments cannot be parsed</b>",
-        "<i>" + fullCommandLine + "</i> \n" + ex.getMessage(),
+        GradleBundle.message("gradle.command.line.parse.error.invalid.arguments"),
+        String.format(italicFormat, fullCommandLine) + ex.getMessage(),
         NotificationCategory.WARNING, NotificationSource.TASK_EXECUTION
       );
       notificationData.setBalloonNotification(true);

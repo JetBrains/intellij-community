@@ -389,7 +389,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final CheckedTreeNode root = new CheckedTreeNode(null);
     final DataNodeCheckedTreeNode projectNode = treeNodeMap.get(myProjectInfo.getExternalProjectStructure());
 
-    String rootModuleComment = "root module";
+    String rootModuleComment = ExternalSystemBundle.message("external.project.structure.project.root.module");
     if (rootModuleNode[0] != null && projectNode != null) {
       rootModuleNode[0].comment = rootModuleComment;
       if (!projectNode.isNodeChild(rootModuleNode[0])) {

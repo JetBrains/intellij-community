@@ -13,6 +13,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 /**
  * The general idea of 'external system' integration is to provide management facilities for the project structure defined in
  * terms over than IntelliJ (e.g. maven, gradle, eclipse etc).
@@ -26,14 +28,14 @@ public final class ProjectSystemId implements Serializable {
   public static final @NotNull ProjectSystemId IDE = new ProjectSystemId("IDE");
 
   private final @NotNull @NonNls String id;
-  private final @NotNull @Nls String readableName;
+  private final @NotNull @Nls(capitalization = Title) String readableName;
 
   public ProjectSystemId(@NotNull @NlsSafe String id) {
     this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
   }
 
   @PropertyMapping({"id", "readableName"})
-  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls String readableName) {
+  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Title) String readableName) {
     this.id = id;
     this.readableName = readableName;
     ourExistingIds.putIfAbsent(id, this);
@@ -58,7 +60,7 @@ public final class ProjectSystemId implements Serializable {
     return id;
   }
 
-  public @NotNull @Nls String getReadableName() {
+  public @NotNull @Nls(capitalization = Title) String getReadableName() {
     return readableName;
   }
 
