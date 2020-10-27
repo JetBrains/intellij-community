@@ -135,8 +135,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       .showInEditor(templateState.editor, offset)
   }
 
-  private fun showChangeSignatureGotIt(editor: Editor, offset: Int){
+  private fun showChangeSignatureGotIt(){
     gotItBalloon?.hide()
+    val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
     val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
@@ -214,6 +215,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     connection.subscribe(AnActionListener.TOPIC, object: AnActionListener {
       override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         if (action is GotoDeclarationAction){
+          showChangeSignatureGotIt()
           templateState.gotoEnd(false)
         }
       }
@@ -280,8 +282,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       if (file != null) {
         navigate(myProject, file, methodNameRange.endOffset)
       }
-      val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
-      showChangeSignatureGotIt(editor, offset)
+      showChangeSignatureGotIt()
       template.gotoEnd(false)
     }
   }
