@@ -2,17 +2,23 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -28,7 +34,9 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
+import com.intellij.ui.GotItTooltip
 import com.intellij.util.PsiNavigateUtil
+import java.awt.Point
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -56,6 +64,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
 
   private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
+
+  private lateinit var methodNameRange: RangeMarker
+
+  private var gotItBalloon: Balloon? = null
 
   private lateinit var preview: EditorCodePreview
 
@@ -87,6 +99,8 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     setElementToRename(method)
 
+    methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+
     preview = EditorCodePreview.create(editor)
 
     val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
@@ -96,9 +110,54 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
-    val methodNavigatableRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
-    Disposer.register(preview, Disposable { methodNavigatableRange.dispose() })
-    preview.addPreview(methodLines) { navigate(project, file, methodNavigatableRange.endOffset) }
+    preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
+  }
+
+  private fun showNavigationGotIt(templateState: TemplateState){
+    val selectedRange = templateState.currentVariableRange ?: return
+    val offset = minOf(selectedRange.startOffset + 3, selectedRange.endOffset)
+    val gotoDeclarationShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
+    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation", gotoDeclarationShortcut)
+    gotItBalloon = GotItTooltip("extract.method.gotit.navigate", message, templateState)
+      .andShowCloseShortcut()
+      .withMaxWidth(250)
+      .showInEditor(templateState.editor, offset)
+  }
+
+  private fun showChangeSignatureGotIt(editor: Editor, offset: Int){
+    gotItBalloon?.hide()
+    val disposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, disposable)
+    val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
+    val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
+    val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
+    val message = JavaRefactoringBundle.message("extract.method.gotit.signature", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
+    GotItTooltip("extract.method.signature.change", message, disposable)
+      .andShowCloseShortcut()
+      .withMaxWidth(250)
+      .showInEditor(editor, offset)
+  }
+
+  private fun GotItTooltip.showInEditor(editor: Editor, offset: Int): Balloon? {
+    fun getPosition(): Point {
+      return editor.offsetToXY(offset)
+    }
+    fun isVisible(): Boolean {
+      val position = getPosition()
+      val visibleArea = EditorCodePreview.getActivePreview(editor)?.editorVisibleArea ?: editor.scrollingModel.visibleArea
+      return visibleArea.contains(position)
+    }
+    val balloon = if (isVisible()) showAt(Balloon.Position.above, editor.contentComponent) { getPosition() } else null
+    if (balloon != null) {
+      editor.scrollingModel.addVisibleAreaListener({
+        if (isVisible()) {
+          balloon.revalidate()
+        } else {
+          balloon.hide()
+        }
+     }, balloon)
+    }
+    return balloon
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
@@ -128,8 +187,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       val template = TemplateManagerImpl.getTemplateState(editor)
       if (template != null) {
         IdeEventQueue.getInstance().popupManager.closeAllPopups()
-        template.gotoEnd(false)
         PsiNavigateUtil.navigate(myElementToRename.navigationElement)
+        val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
+        showChangeSignatureGotIt(editor, offset)
+        template.gotoEnd(false)
       }
     }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
@@ -140,8 +201,11 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
+    showNavigationGotIt(templateState)
+
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
+    Disposer.register(templateState, { methodNameRange.dispose() })
   }
 
   fun restartInDialog() {
