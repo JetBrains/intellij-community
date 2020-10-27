@@ -4,8 +4,6 @@ package com.intellij.openapi.project;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,7 +56,7 @@ public class DumbServiceBalloon {
     if (LightEdit.owns(myProject)) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myService.isDumb()) {
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonWasNotNeeded, new FeatureUsageData().addProject(myProject));
+      UIEventLogger.DumbModeBalloonWasNotNeeded.log(myProject);
       runWhenSmartAndBalloonStillShowing.run();
       return;
     }
@@ -73,7 +71,7 @@ public class DumbServiceBalloon {
                                            @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
     LOG.assertTrue(myBalloon == null);
     long startTimestamp = System.nanoTime();
-    UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
+    UIEventLogger.DumbModeBalloonRequested.log(myProject);
     myBalloon = JBPopupFactory.getInstance().
       createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
       setBorderColor(JBColor.border()).
@@ -87,8 +85,7 @@ public class DumbServiceBalloon {
         if (myBalloon == null) {
           return;
         }
-        FeatureUsageData data = new FeatureUsageData().addProject(myProject);
-        UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonCancelled, data);
+        UIEventLogger.DumbModeBalloonCancelled.log(myProject);
         myBalloon = null;
       }
     });
@@ -96,9 +93,7 @@ public class DumbServiceBalloon {
       if (myBalloon == null) {
         return;
       }
-      FeatureUsageData data = new FeatureUsageData().addProject(myProject).
-        addData("duration_ms", TimeoutUtil.getDurationMillis(startTimestamp));
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonProceededToActions, data);
+      UIEventLogger.DumbModeBalloonProceededToActions.log(myProject, TimeoutUtil.getDurationMillis(startTimestamp));
       runWhenSmartAndBalloonNotHidden.run();
       Balloon balloon = myBalloon;
       myBalloon = null;
@@ -111,7 +106,7 @@ public class DumbServiceBalloon {
       if (myBalloon == null) {
         return;
       }
-      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonShown, new FeatureUsageData().addProject(myProject));
+      UIEventLogger.DumbModeBalloonShown.log(myProject);
       myBalloon.show(getDumbBalloonPopupPoint(myBalloon, context), Balloon.Position.above);
     });
   }
