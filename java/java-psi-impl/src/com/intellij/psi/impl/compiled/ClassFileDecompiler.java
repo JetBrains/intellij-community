@@ -30,6 +30,7 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
       }
       catch (ClassFileDecompilers.Light.CannotDecompileException e) {
         LOG.warn("decompiler: " + decompiler.getClass(), e);
+        return ClsFileImpl.decompile(file);
       }
     }
 
