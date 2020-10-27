@@ -215,6 +215,16 @@ class FeatureEventRateThrottleTest {
     assertDeny(throttle.tryPass("bar", 109))
   }
 
+  @Test
+  fun `test alert disabled`() {
+    val throttle = EventsIdentityWindowThrottle(3, -1, 10)
+    assertAccept(throttle.tryPass("bar", 100))
+    assertAccept(throttle.tryPass("bar", 102))
+    assertAccept(throttle.tryPass("bar", 105))
+    assertDenyAndReport(throttle.tryPass("bar", 106))
+    assertDeny(throttle.tryPass("bar", 109))
+  }
+
   private fun assertAccept(result: EventRateThrottleResult) {
     assertEquals(EventRateThrottleResult.ACCEPT, result)
   }
