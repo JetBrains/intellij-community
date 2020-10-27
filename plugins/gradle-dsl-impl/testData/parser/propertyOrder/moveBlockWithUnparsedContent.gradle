@@ -1,0 +1,11 @@
+ext {
+  prop1 = 3 + 5
+  prop2 = var.invokeMethod()
+  prop2 = hello("goodbye")
+  def var = System.out.println("Boo")
+  prop4 = true
+}
+android {
+  compileSdkVersion 19
+  buildToolsVersion "19.1.0"
+}

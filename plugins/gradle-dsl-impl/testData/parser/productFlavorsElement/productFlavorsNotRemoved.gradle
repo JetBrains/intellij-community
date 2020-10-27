@@ -1,0 +1,11 @@
+android {
+  productFlavors {
+    x {
+      externalNativeBuild {
+        cmake {
+          arguments '-DANDROID_STL=c++_static'
+        }
+      }
+    }
+  }
+}

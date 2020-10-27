@@ -1,0 +1,6 @@
+val pd by extra(projectDir)
+val pd1 by extra(project.projectDir)
+val pd2 by extra(parent.projectDir)
+val pd3 by extra(rootProject.projectDir)
+val pd4 by extra(project(":<SUB_MODULE_NAME>").projectDir)
+val pd5 by extra(project(":").projectDir)

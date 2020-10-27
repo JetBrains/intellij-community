@@ -1,0 +1,14 @@
+android {
+  productFlavors {
+    flavor1 {
+      applicationId "com.example.myFlavor1"
+      proguardFiles 'proguard-android-1.txt', 'proguard-rules-1.txt'
+      testInstrumentationRunnerArguments key1: "value1", key2: "value2"
+    }
+    flavor2 {
+      applicationId "com.example.myFlavor2"
+      proguardFiles 'proguard-android-2.txt', 'proguard-rules-2.txt'
+      testInstrumentationRunnerArguments key3: "value3", key4: "value4"
+    }
+  }
+}

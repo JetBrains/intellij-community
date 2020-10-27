@@ -1,0 +1,6 @@
+var prop1 by extra("value")
+var prop2 by extra(25)
+var prop3 by extra(true)
+var prop4 by extra(mapOf("key" to "val"))
+var prop5 by extra(listOf("val1", "val2", "val3"))
+var prop6 by extra(25.3)

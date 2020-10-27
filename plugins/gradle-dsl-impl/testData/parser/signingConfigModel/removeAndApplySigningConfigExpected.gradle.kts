@@ -1,0 +1,6 @@
+android {
+  signingConfigs {
+    create("release") {
+    }
+  }
+}

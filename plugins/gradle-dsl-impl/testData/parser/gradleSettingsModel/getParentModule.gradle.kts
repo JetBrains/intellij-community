@@ -1,0 +1,6 @@
+include("app")
+include(":libs")
+include("libs:mylibrary")
+include(":olibs")
+include("olibs:mylibrary")
+include(":notamodule:deepmodule")

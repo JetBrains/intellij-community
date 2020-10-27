@@ -1,0 +1,6 @@
+android {
+  defaultConfig {
+    consumerProguardFiles 'proguard-android.txt'
+    proguardFiles = ['proguard-rules.pro']
+  }
+}

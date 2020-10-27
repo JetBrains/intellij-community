@@ -1,0 +1,7 @@
+ext {
+  prop1 = prop
+  prop3 = "${prop2}"
+  prop6 = prop
+  prop4 = prop3
+  prop5 = prop4
+}

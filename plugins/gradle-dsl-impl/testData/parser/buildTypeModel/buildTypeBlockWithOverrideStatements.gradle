@@ -1,0 +1,43 @@
+android {
+  buildTypes {
+    xyz {
+      applicationIdSuffix "mySuffix"
+      consumerProguardFiles = ['proguard-android.txt', 'proguard-rules.pro']
+      debuggable true
+      embedMicroApp = false
+      jniDebuggable true
+      manifestPlaceholders = [activityLabel1: "defaultName1", activityLabel2: "defaultName2"]
+      minifyEnabled false
+      multiDexEnabled = true
+      proguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+      pseudoLocalesEnabled = false
+      renderscriptDebuggable true
+      renderscriptOptimLevel = 1
+      shrinkResources false
+      testCoverageEnabled = true
+      useJack false
+      versionNameSuffix = "abc"
+      zipAlignEnabled true
+    }
+  }
+}
+android.buildTypes.xyz {
+  applicationIdSuffix = "mySuffix-1"
+  consumerProguardFiles = ['proguard-android-1.txt', 'proguard-rules-1.pro']
+  debuggable = false
+  embedMicroApp true
+  jniDebuggable = false
+  manifestPlaceholders activityLabel3: "defaultName3", activityLabel4: "defaultName4"
+  minifyEnabled = true
+  multiDexEnabled false
+  proguardFiles = ['proguard-android-1.txt', 'proguard-rules-1.pro']
+  pseudoLocalesEnabled true
+  renderscriptDebuggable = false
+  renderscriptOptimLevel 2
+  shrinkResources = true
+  testCoverageEnabled false
+  useJack true
+  versionNameSuffix = "abc-1"
+  zipAlignEnabled = false
+}
+android.buildTypes.xyz.applicationIdSuffix = "mySuffix-3"

@@ -1,0 +1,5 @@
+ext {
+  def val1 = "hello"
+  def otherVal = "goodbye"
+  prop1 = [key1: otherVal, key2: 'newValue', key3: false, key4: 32, newKey: 'meerkats']
+}

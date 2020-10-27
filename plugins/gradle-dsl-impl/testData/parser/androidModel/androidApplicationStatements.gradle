@@ -1,0 +1,8 @@
+android.buildToolsVersion "23.0.0"
+android.compileSdkVersion 23
+android.defaultPublishConfig "debug"
+android.dynamicFeatures = [":f1", ":f2"]
+android.flavorDimensions "abi", "version"
+android.generatePureSplits true
+android.publishNonDefault false
+android.resourcePrefix "abcd"

@@ -1,0 +1,8 @@
+dependencies {
+  androidTest fileTree("libs")
+  api (fileTree(dir: "xyz"))
+  compile (fileTree("klm"))
+  testImplementation(fileTree(dir: "a", include: ["*.jar"])) {
+    exclude module: 'module1'
+  }
+}

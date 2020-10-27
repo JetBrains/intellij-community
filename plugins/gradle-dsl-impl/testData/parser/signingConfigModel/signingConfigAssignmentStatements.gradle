@@ -1,0 +1,5 @@
+android.signingConfigs.release.storeFile = file("release.keystore")
+android.signingConfigs.release.storePassword = "password"
+android.signingConfigs.release.storeType = "type"
+android.signingConfigs.release.keyAlias = "myReleaseKey"
+android.signingConfigs.release.keyPassword = "releaseKeyPassword"

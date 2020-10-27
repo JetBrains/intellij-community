@@ -1,0 +1,5 @@
+ext {
+  prop1 = [1, 2]
+  prop2 = ["a", 'b', "b", 'd']
+  prop3 = [true, true, false, true]
+}

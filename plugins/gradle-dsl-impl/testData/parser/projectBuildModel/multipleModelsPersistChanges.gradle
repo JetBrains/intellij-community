@@ -1,0 +1,5 @@
+def var1 = true
+
+ext {
+  prop = "Hello i am ${var1}!"
+}

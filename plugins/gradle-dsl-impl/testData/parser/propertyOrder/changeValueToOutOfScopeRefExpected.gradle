@@ -1,0 +1,5 @@
+ext {
+  prop = 24
+  prop1 = prop
+  prop2 = prop1
+}

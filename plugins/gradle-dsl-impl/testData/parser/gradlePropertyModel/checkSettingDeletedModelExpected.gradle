@@ -1,0 +1,4 @@
+ext {
+  prop2 = "Other Value"
+  prop1 = 'New Value'
+}

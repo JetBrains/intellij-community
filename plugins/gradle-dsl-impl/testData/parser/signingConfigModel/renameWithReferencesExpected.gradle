@@ -1,0 +1,20 @@
+android {
+  signingConfigs {
+    newRelease {
+      storeFile file('release.keystore')
+      storePassword 'storePassword'
+      storeType 'PKCS12'
+      keyAlias 'myReleaseKey'
+      keyPassword 'keyPassword'
+    }
+  }
+  defaultConfig {
+    signingConfig signingConfigs.newRelease
+    // all of the following are terrible ideas
+    multiDexKeepFile signingConfigs.newRelease.storeFile
+    applicationIdSuffix signingConfigs.newRelease.storePassword
+    testInstrumentationRunner signingConfigs.newRelease.storeType
+    testApplicationId signingConfigs.newRelease.keyAlias
+    versionName signingConfigs.newRelease.keyPassword
+  }
+}

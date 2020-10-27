@@ -1,0 +1,10 @@
+android {
+  buildTypes {
+    '\u006fne' { }
+    "tw\u006f" { }
+    '''th\u0072ee''' { }
+    """fou\u0072""" { }
+    /f\u0069ve/ { }
+    $/s\u0069x/$ { }
+  }
+}

@@ -1,0 +1,10 @@
+android {
+  buildTypes {
+    xyz {
+      debuggable = true
+    }
+    release {
+      jniDebuggable = android.buildTypes.xyz.debuggable
+    }
+  }
+}

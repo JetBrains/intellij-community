@@ -1,0 +1,4 @@
+ext {
+  def val1 = 'value'
+  prop1 = val1
+}

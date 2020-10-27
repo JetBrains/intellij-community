@@ -1,0 +1,22 @@
+android.defaultConfig {
+  proguardFiles = ['pro-1.txt', 'pro-2.txt']
+  resConfigs "abcd", "efgh"
+  resValue "abcd", "efgh", "ijkl"
+  testInstrumentationRunnerArguments = [key1: "value1", key2: "value2"]
+  testInstrumentationRunnerArgument "key3", "value3"
+}
+android {
+  defaultConfig {
+    manifestPlaceholders activityLabel1: "defaultName1", activityLabel2: "defaultName2"
+    proguardFile 'pro-3.txt'
+    resConfigs "ijkl", "mnop"
+    resValue "mnop", "qrst", "uvwx"
+    testInstrumentationRunnerArguments key4: "value4", key5: "value5"
+  }
+}
+android.defaultConfig.manifestPlaceholders.activityLabel3 "defaultName3"
+android.defaultConfig.manifestPlaceholders.activityLabel4 = "defaultName4"
+android.defaultConfig.proguardFiles 'pro-4.txt', 'pro-5.txt'
+android.defaultConfig.resConfig "qrst"
+android.defaultConfig.testInstrumentationRunnerArguments.key6 "value6"
+android.defaultConfig.testInstrumentationRunnerArguments.key7 = "value7"

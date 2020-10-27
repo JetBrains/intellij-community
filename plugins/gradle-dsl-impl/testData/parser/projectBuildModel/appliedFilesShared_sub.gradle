@@ -1,0 +1,5 @@
+apply from: "../b.gradle"
+
+ext {
+  childProperty = greeting
+}

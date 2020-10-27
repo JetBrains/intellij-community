@@ -1,0 +1,8 @@
+dependencies {
+  test fileTree("libs")
+  compile (fileTree(dir: "xyz"))
+  api (fileTree("klm"))
+  testCompile(fileTree(dir: "a", include: ["*.jar"])) {
+    exclude module: 'module1'
+  }
+}

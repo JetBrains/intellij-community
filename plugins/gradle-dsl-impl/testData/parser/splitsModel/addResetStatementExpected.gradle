@@ -1,0 +1,12 @@
+android {
+  splits {
+    abi {
+      reset()
+      include 'abi-include-1', 'abi-include-2'
+    }
+    density {
+      reset()
+      include 'density-include-1', 'density-include-2'
+    }
+  }
+}
