@@ -1405,7 +1405,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
       else if (usedOptions.size() > 1) {
         emptyText.appendLine(FindBundle.message("message.nothingFound.used.options"));
-        StringBuilder sb = new StringBuilder();
+        @NlsSafe StringBuilder sb = new StringBuilder();
         for (Object option : usedOptions) {
           if (sb.length() > 0) sb.append("  ");
           String optionText = getOptionText(option, true);
