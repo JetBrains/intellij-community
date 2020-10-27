@@ -69,7 +69,34 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
         return true;
       }
       PsiInstanceOfExpression instanceOfExpression = PsiTreeUtil.getParentOfType(parent, PsiInstanceOfExpression.class);
-      if (instanceOfExpression != null && instanceOfExpression.getCheckType() == parent) return true;
+      if (instanceOfExpression != null && instanceOfExpression.getCheckType() == parent) {
+        PsiType type = instanceOfExpression.getOperand().getType();
+        if (type instanceof PsiArrayType) {
+          return false;
+        }
+
+        if (type != null && (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD)) {
+          return type.accept(new PsiTypeVisitor<>() {
+            @Override
+            public Boolean visitType(@NotNull PsiType type) {
+              return false;
+            }
+
+            @Override
+            public Boolean visitClassType(@NotNull PsiClassType classType) {
+              PsiClass aClass = classType.resolve();
+              return aClass != null && aClass.isInterface();
+            }
+
+            @Override
+            public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+              PsiType bound = wildcardType.getBound();
+              return bound == null || bound.accept(this);
+            }
+          });
+        }
+        return true;
+      }
     }
     else if (parent instanceof PsiReferenceList) {
       if (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD) return false;
