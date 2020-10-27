@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
@@ -56,7 +55,6 @@ final class UpdateCheckerComponent {
   }
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
-  static final String UPDATE_WHATS_NEW_MESSAGE = "ide.update.whats.new.message";
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
@@ -112,10 +110,7 @@ final class UpdateCheckerComponent {
   }
 
   private static void showWhatsNew(@NotNull Project project) {
-    String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
-    String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
-    String url = whatsNewUrl + WhatsNewAction.getEmbeddedSuffix();
-    HTMLEditorProvider.openEditor(project, title, url, WhatsNewAction.getTimeoutCallbackHTML(whatsNewUrl));
+    WhatsNewAction.openWhatsNewFile(project, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), null);
     IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
   }
 
