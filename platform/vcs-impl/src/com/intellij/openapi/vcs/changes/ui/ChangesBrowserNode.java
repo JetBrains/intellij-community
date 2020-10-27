@@ -32,16 +32,17 @@ import java.util.stream.Stream;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
-  @NonNls private static final String ROOT_NODE_VALUE = "root";
+  @NonNls
+  private static final String ROOT_NODE_VALUE = "root";
 
-  public static final Tag IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
-  public static final Tag LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
-  public static final Tag LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
-  public static final Tag UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
-  public static final Tag MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
-  public static final Tag SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
-  public static final Tag SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
-  public static final Tag LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+  public static final Tag IGNORED_FILES_TAG = new VcsBundleTag("changes.nodetitle.ignored.files");
+  public static final Tag LOCKED_FOLDERS_TAG = new VcsBundleTag("changes.nodetitle.locked.folders");
+  public static final Tag LOGICALLY_LOCKED_TAG = new VcsBundleTag("changes.nodetitle.logicallt.locked.folders");
+  public static final Tag UNVERSIONED_FILES_TAG = new VcsBundleTag("changes.nodetitle.unversioned.files");
+  public static final Tag MODIFIED_WITHOUT_EDITING_TAG = new VcsBundleTag("changes.nodetitle.modified.without.editing");
+  public static final Tag SWITCHED_FILES_TAG = new VcsBundleTag("changes.nodetitle.switched.files");
+  public static final Tag SWITCHED_ROOTS_TAG = new VcsBundleTag("changes.nodetitle.switched.roots");
+  public static final Tag LOCALLY_DELETED_NODE_TAG = new VcsBundleTag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
@@ -406,10 +407,32 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return true;
   }
 
-  public static class Tag {
-    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
+  public interface Tag {
+    @Nls
+    @Override
+    String toString();
+  }
 
-    private Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
+  public static class TagImpl implements Tag {
+    private final @NotNull @Nls String myValue;
+
+    public TagImpl(@NotNull @Nls String value) {
+      myValue = value;
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return myValue;
+    }
+  }
+
+  public static class VcsBundleTag implements Tag {
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE)
+    @NotNull
+    private final String myKey;
+
+    public VcsBundleTag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 

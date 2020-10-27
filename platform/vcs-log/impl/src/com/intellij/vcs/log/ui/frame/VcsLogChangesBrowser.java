@@ -432,11 +432,12 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class RootTag {
-    @NotNull private final Hash myCommit;
-    @NotNull private final String myText;
+  private static class RootTag implements ChangesBrowserNode.Tag {
+    private final @NotNull Hash myCommit;
 
-    RootTag(@NotNull Hash commit, @NotNull String text) {
+    private final @NotNull @Nls String myText;
+
+    RootTag(@NotNull Hash commit, @NotNull @Nls String text) {
       myCommit = commit;
       myText = text;
     }
@@ -450,7 +451,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      RootTag tag = (RootTag)o;
+      RootTag tag = (RootTag) o;
       return Objects.equals(myCommit, tag.myCommit);
     }
 

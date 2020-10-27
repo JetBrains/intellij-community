@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
@@ -101,8 +102,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   @Override
-  public @Nullable Object getPopupTag() {
-    return myChangeContext.get(TAG_KEY);
+  public @Nullable ChangesBrowserNode.Tag getPopupTag() {
+    return tryCast(myChangeContext.get(TAG_KEY), ChangesBrowserNode.Tag.class);
   }
 
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
