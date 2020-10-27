@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.isInjectedFragment
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
@@ -225,7 +226,12 @@ class FunctionNameInspection : NamingConventionInspection(
                     if (typeReference != null) {
                         typeReference.text != functionName
                     } else {
-                        function.resolveToDescriptorIfAny()?.returnType?.fqName?.shortName()?.asString() != functionName
+                        function.resolveToDescriptorIfAny()
+                            ?.returnType
+                            ?.fqName
+                            ?.takeUnless(FqName::isRoot)
+                            ?.shortName()
+                            ?.asString() != functionName
                     }
                 }
             }
