@@ -278,7 +278,6 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
   </extensions>
