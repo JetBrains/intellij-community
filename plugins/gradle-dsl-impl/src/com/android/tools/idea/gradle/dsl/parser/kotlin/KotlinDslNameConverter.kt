@@ -62,15 +62,6 @@ interface KotlinDslNameConverter: GradleDslNameConverter {
     }
   }
 
-  @JvmDefault
-  override fun convertReferenceToExternalText(context: GradleDslElement, referenceText: String, forInjection: Boolean): String {
-    return when (context) {
-      is GradleDslSimpleExpression -> convertToExternalTextValue(context, context.dslFile, referenceText, forInjection)
-      else -> referenceText
-    }
-  }
-
-  @JvmDefault
   override fun externalNameForParent(modelName: String, context: GradleDslElement): ExternalNameInfo {
     val map = context.getExternalToModelMap(this)
     val defaultResult = ExternalNameInfo(modelName, null)

@@ -15,11 +15,7 @@
  */
 package com.android.tools.idea.gradle.dsl.model;
 
-import static com.android.SdkConstants.FN_GRADLE_PROPERTIES;
-import static com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement.SUBPROJECTS;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
-
+import com.android.tools.idea.gradle.dsl.GradleDslBuildScriptUtil;
 import com.android.tools.idea.gradle.dsl.api.BuildModelNotification;
 import com.android.tools.idea.gradle.dsl.api.GradleBuildModel;
 import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;
@@ -29,26 +25,27 @@ import com.android.tools.idea.gradle.dsl.parser.DependencyManager;
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement;
 import com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.files.GradleBuildFile;
-import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
-import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFileCache;
-import com.android.tools.idea.gradle.dsl.parser.files.GradlePropertiesFile;
-import com.android.tools.idea.gradle.dsl.parser.files.GradleSettingsFile;
-import com.android.utils.BuildScriptUtil;
+import com.android.tools.idea.gradle.dsl.parser.files.*;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.MutableClassToInstanceMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+
+import static com.android.tools.idea.gradle.dsl.GradleUtil.FN_GRADLE_PROPERTIES;
+import static com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement.SUBPROJECTS;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 /**
  * A context object used to hold information relevant to each unique instance of the project/build model.
@@ -317,7 +314,7 @@ public final class BuildModelContext {
    */
   @Nullable
   public VirtualFile getGradleBuildFile(@NotNull File dirPath) {
-    File gradleBuildFilePath = BuildScriptUtil.findGradleBuildFile(dirPath);
+    File gradleBuildFilePath = GradleDslBuildScriptUtil.findGradleBuildFile(dirPath);
     VirtualFile result = findFileByIoFile(gradleBuildFilePath, false);
     return (result != null && result.isValid()) ? result : null;
   }
@@ -334,7 +331,7 @@ public final class BuildModelContext {
    */
   @Nullable
   public VirtualFile getGradleSettingsFile(@NotNull File dirPath) {
-    File gradleSettingsFilePath = BuildScriptUtil.findGradleSettingsFile(dirPath);
+    File gradleSettingsFilePath = GradleDslBuildScriptUtil.findGradleSettingsFile(dirPath);
     VirtualFile result = findFileByIoFile(gradleSettingsFilePath, false);
     return (result != null && result.isValid()) ? result : null;
   }

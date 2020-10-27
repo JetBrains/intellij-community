@@ -19,14 +19,9 @@ import com.android.tools.idea.gradle.dsl.parser.elements.*;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
-import static com.android.tools.idea.gradle.dsl.parser.dependencies.GradleDependenciesComparatorKt.CONFIGURATION_ORDERING;
+import java.util.*;
 
 public class DependenciesDslElement extends GradleDslBlockElement {
   public static final PropertiesElementDescription<DependenciesDslElement> DEPENDENCIES =
