@@ -1245,19 +1245,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
-    final Map<String, PyTargetExpression> declarationsInMethod = new HashMap<>();
     final PyFunction instanceMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
     if (instanceMethod != null && containingClass != null && CompletionUtilCoreImpl.getOriginalElement(containingClass) == this) {
-      collectInstanceAttributes(instanceMethod, declarationsInMethod);
-      for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
-        if (!processor.execute(targetExpression, ResolveState.initial())) {
+      for (PyTargetExpression target : getTargetExpressions(instanceMethod)) {
+        if (PyUtil.isInstanceAttribute(target) && !processor.execute(target, ResolveState.initial())) {
           return false;
         }
       }
     }
     for (PyTargetExpression expr : getInstanceAttributes()) {
-      if (declarationsInMethod.containsKey(expr.getName())) {
+      if (instanceMethod != null && ScopeUtil.getScopeOwner(expr) == instanceMethod) {
         continue;
       }
       if (!processor.execute(expr, ResolveState.initial())) return false;

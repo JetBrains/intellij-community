@@ -2487,7 +2487,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-21175
   public void testLazyAttributeInitialization() {
-    doTest("int",
+    doTest("Union[int, Any]",
            "class C:\n" +
            "    def __init__(self):\n" +
            "        self.attr = None\n" +

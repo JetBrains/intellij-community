@@ -29,7 +29,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   private final boolean myLocalResolve;
   @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
   @NotNull private final Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
-  @Nullable private ScopeOwner myOwner;
+  @Nullable protected ScopeOwner myOwner;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -99,21 +99,25 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return definer.multiResolveName(myName);
   }
 
-  private boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
+  protected boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(definer != null ? definer : element);
     if (myOwner == null) {
       myOwner = owner;
     }
     final boolean sameScope = owner == myOwner;
     if (sameScope) {
-      // XXX: In 'from foo import foo' inside __init__.py the preferred result is explicitly imported 'foo'
-      if (definer instanceof PyFromImportStatement) {
-        myImplicitlyImportedResults.put(element, definer);
-      }
-      else {
-        myResults.put(element, definer);
-      }
+      addResult(element, definer);
     }
     return sameScope;
+  }
+
+  protected final void addResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
+    // XXX: In 'from foo import foo' inside __init__.py the preferred result is explicitly imported 'foo'
+    if (definer instanceof PyFromImportStatement) {
+      myImplicitlyImportedResults.put(element, definer);
+    }
+    else {
+      myResults.put(element, definer);
+    }
   }
 }

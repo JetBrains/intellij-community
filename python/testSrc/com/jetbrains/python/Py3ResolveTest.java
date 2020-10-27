@@ -17,6 +17,8 @@ package com.jetbrains.python;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -774,5 +776,58 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-25832
   public void testTypeVarClassObjectBoundAttribute() {
     assertNull(doResolve());
+  }
+
+  public void testInstanceAttrAbove() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testNoResolveInstanceAttrBelow() {
+    assertUnresolved();
+  }
+
+  public void testNoResolveInstanceAttrSameLine() {
+    assertUnresolved();
+  }
+
+  public void testInstanceAttrOtherMethod() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrOtherMethodAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertNotNull(function);
+    assertEquals("f", function.getName());
+  }
+
+  public void testInstanceAttrOtherMethodAndBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertNotNull(function);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertNotNull(function);
+    assertEquals("f", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertNotNull(function);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowEarlierByControlFlow() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrBothEarlierAndLater() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    assertEquals("self.foo = 1", target.getParent().getText());
   }
 }

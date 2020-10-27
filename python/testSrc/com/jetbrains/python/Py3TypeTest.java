@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -1071,9 +1072,43 @@ public class Py3TypeTest extends PyTestCase {
            "        expr = m");
   }
 
+  /**
+   * @see #testRecursiveDictTopDown()
+   * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()
+   */
+  public void testRecursiveDictBottomUp() {
+    String text = "class C:\n" +
+                  "    def f(self, x):\n" +
+                  "        self.foo = x\n" +
+                  "        self.foo = {'foo': self.foo}\n" +
+                  "        expr = self.foo\n";
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
+    assertExpressionType("Dict[str, Any]", dict);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    assertExpressionType("Dict[str, Any]", expr);
+  }
+
+  public void testRecursiveDictTopDown() {
+    String text = "class C:\n" +
+                  "    def f(self, x):\n" +
+                  "        self.foo = x\n" +
+                  "        self.foo = {'foo': self.foo}\n" +
+                  "        expr = self.foo\n";
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    assertExpressionType("Dict[str, Any]", expr);
+    PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
+    assertExpressionType("Dict[str, Any]", dict);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    assertExpressionType(expectedType, expr);
+  }
+
+  private void assertExpressionType(String expectedType, PyExpression expr) {
     final Project project = expr.getProject();
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));

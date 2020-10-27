@@ -137,7 +137,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return false;
     }
     for (PyExpression ex : collectAssignedAttributes(qName, qualifier)) {
-      if (referencedName.equals(ex.getName())) {
+      if (referencedName.equals(ex.getName()) && !PyUtil.isInstanceAttribute(ex)) {
         ret.poke(ex, RatedResolveResult.RATE_NORMAL);
         return true;
       }
