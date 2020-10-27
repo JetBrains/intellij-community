@@ -215,7 +215,8 @@ public class MavenRunnerPanel {
         .collect(Collectors.toList());
 
       List<String> targetItems = new ArrayList<>();
-      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
+        .getTargets().findByName(targetName);
       if (targetEnvironmentConfiguration != null) {
         for (LanguageRuntimeConfiguration runtimeConfiguration : targetEnvironmentConfiguration.getRuntimes().resolvedConfigs()) {
           if (runtimeConfiguration instanceof JavaLanguageRuntimeConfiguration) {

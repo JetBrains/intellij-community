@@ -6,6 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -221,7 +222,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   @ApiStatus.Internal
-  void apply(@Nullable String targetName) {
+  void apply(@NotNull Project project, @Nullable String targetName) {
     boolean localTarget = targetName == null;
     boolean targetChanged = !Objects.equals(myTargetName, targetName);
     if (targetChanged) {
@@ -233,7 +234,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
         mavenHomeInputLabel = MavenConfigurableBundle.message("maven.settings.environment.home.directory");
       }
       else {
-        TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+        TargetEnvironmentsManager targetManager = TargetEnvironmentsManager.getInstance(project);
+        TargetEnvironmentConfiguration targetEnvironmentConfiguration = targetManager.getTargets().findByName(targetName);
         String typeId = targetEnvironmentConfiguration != null ? targetEnvironmentConfiguration.getTypeId() : null;
         TargetEnvironmentType<?> targetEnvironmentType = null;
         if (typeId != null) {
@@ -249,27 +251,28 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
         }
       }
       mavenHomeComponent.setText(mavenHomeInputLabel);
-      reloadMavenHomeComponents(targetName);
+      reloadMavenHomeComponents(project, targetName);
     }
     else if (!localTarget) {
-      reloadMavenHomeComponents(targetName);
+      reloadMavenHomeComponents(project, targetName);
     }
   }
 
-  private void reloadMavenHomeComponents(@Nullable String targetName) {
-    List<String> targetMavenHomes = findTargetMavenHomes(targetName);
+  private void reloadMavenHomeComponents(@NotNull Project project, @Nullable String targetName) {
+    List<String> targetMavenHomes = findTargetMavenHomes(project, targetName);
     if (!mavenHomeField.getHistory().equals(targetMavenHomes)) {
       EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setHistory(targetMavenHomes));
     }
     String mavenHomeFieldText = mavenHomeField.getText();
     if (targetMavenHomes.isEmpty()) {
       EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(""));
-    } else if (!targetMavenHomes.contains(mavenHomeFieldText)) {
+    }
+    else if (!targetMavenHomes.contains(mavenHomeFieldText)) {
       EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(targetMavenHomes.get(0)));
     }
   }
 
-  private static List<String> findTargetMavenHomes(@Nullable String targetName) {
+  private static List<String> findTargetMavenHomes(@NotNull Project project, @Nullable String targetName) {
     List<String> mavenHomes = new ArrayList<>();
     boolean localTarget = targetName == null;
     if (localTarget) {
@@ -281,7 +284,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     else {
       TargetEnvironmentConfiguration targetEnvironmentConfiguration =
-        TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+        TargetEnvironmentsManager.getInstance(project).getTargets().findByName(targetName);
       if (targetEnvironmentConfiguration != null) {
         mavenHomes = targetEnvironmentConfiguration.getRuntimes().resolvedConfigs().stream()
           .filter(runtimeConfiguration -> runtimeConfiguration instanceof MavenRuntimeTargetConfiguration)

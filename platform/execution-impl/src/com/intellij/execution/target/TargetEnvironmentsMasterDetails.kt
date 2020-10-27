@@ -34,6 +34,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   internal val selectedConfig: TargetEnvironmentConfiguration?
     get() = myCurrentConfigurable?.editableObject as? TargetEnvironmentConfiguration ?: _lastSelectedConfig
 
+  private val targetManager: TargetEnvironmentsManager get() = TargetEnvironmentsManager.getInstance(project)
+
   init {
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
@@ -79,12 +81,12 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
   override fun processRemovedItems() {
     val deletedTargets = deletedTargets()
-    deletedTargets.forEach { TargetEnvironmentsManager.instance.targets.removeConfig(it) }
+    deletedTargets.forEach { targetManager.targets.removeConfig(it) }
     super.processRemovedItems()
   }
 
   override fun wasObjectStored(editableObject: Any?): Boolean {
-    return TargetEnvironmentsManager.instance.targets.resolvedConfigs().contains(editableObject)
+    return targetManager.targets.resolvedConfigs().contains(editableObject)
   }
 
   private fun deletedTargets(): Set<TargetEnvironmentConfiguration> = allTargets().toSet() - getConfiguredTargets()
@@ -92,8 +94,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   override fun apply() {
     super.apply()
 
-    val addedConfigs = getConfiguredTargets() - TargetEnvironmentsManager.instance.targets.resolvedConfigs()
-    addedConfigs.forEach { TargetEnvironmentsManager.instance.addTarget(it) }
+    val addedConfigs = getConfiguredTargets() - targetManager.targets.resolvedConfigs()
+    addedConfigs.forEach { targetManager.addTarget(it) }
 
     TREE_UPDATER.run()
   }
@@ -103,7 +105,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     super.disposeUIResources()
   }
 
-  private fun allTargets() = TargetEnvironmentsManager.instance.targets.resolvedConfigs()
+  private fun allTargets() = targetManager.targets.resolvedConfigs()
 
   private fun addTargetNode(target: TargetEnvironmentConfiguration): MyNode {
     val configurable = TargetEnvironmentDetailsConfigurable(project, target, defaultLanguageRuntime, TREE_UPDATER)
@@ -143,7 +145,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
         }
       }
       // there may be not yet stored names
-      TargetEnvironmentsManager.instance.ensureUniqueName(newConfig)
+      targetManager.ensureUniqueName(newConfig)
       val newNode = addTargetNode(newConfig)
       selectNodeInTree(newNode, true, true)
     }
@@ -180,7 +182,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
     override fun actionPerformed(e: AnActionEvent) {
       duplicateSelected()?.let { copy ->
-        TargetEnvironmentsManager.instance.addTarget(copy)
+        targetManager.addTarget(copy)
         val newNode = addTargetNode(copy)
         selectNodeInTree(newNode, true, true)
       }
