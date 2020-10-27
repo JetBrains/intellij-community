@@ -539,12 +539,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
     val frameHelper = windowManager.getFrameHelper(project)
     if (frameHelper == null) {
-      LOG.warn("Cannot find frameHelper for ${project.name} to update frame info")
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
       return
     }
+
     val frame = frameHelper.frame
     if (frame == null) {
-      LOG.warn("frameHelper.frame is null, cannot  ${project.name} to update frame info")
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame is null)")
       return
     }
 
