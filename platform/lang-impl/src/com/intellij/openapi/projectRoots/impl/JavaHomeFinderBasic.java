@@ -36,6 +36,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findInPATH);
     myFinders.add(() -> findInSpecifiedPaths(paths));
     myFinders.add(this::findJavaInstalledBySdkMan);
+    myFinders.add(this::findJavaInstalledByGradle);
 
     if (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false)) {
       myFinders.add(() -> scanAll(getJavaHome(), false));
@@ -218,4 +219,19 @@ public class JavaHomeFinderBasic {
     // no chances
     return null;
   }
+
+  private @NotNull Set<String> findJavaInstalledByGradle() {
+    // TODO: Decide if this is good enough. We actually want the configured GradleSystemSettings
+    //       but that would introduce a cycle 
+    //File gradleHome = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    String homePath = System.getProperty("user.home");
+    if(homePath != null) {
+      File homeDir = new File(homePath);
+      File gradleHome = new File(homeDir, ".gradle");
+      File jdks = new File(gradleHome, "jdks");
+      return jdks.isDirectory() ? scanAll(jdks.toPath(), true) : Collections.emptySet();  
+    }
+    return Collections.emptySet();
+  }
+  
 }
