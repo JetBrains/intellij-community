@@ -5,9 +5,6 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +29,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
@@ -80,9 +76,6 @@ import java.util.stream.Collectors;
 public final class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
   private static final int IMPORT_DELAY = 1000;
-  private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
-  private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
-    NotificationGroup.balloonGroup(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
 
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
@@ -575,21 +568,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     else {
       myWatcher.addManagedFilesWithProfiles(files, profiles);
     }
-
-    MavenUtil.invokeLater(myProject, () -> {
-      Project project = myProject;
-      if (project == null || !project.isDefault() && !project.isDisposed()) {
-        for (Notification notification : (project == null ? EventLog.getLogModel(null).getNotifications() : EventLog.getNotifications(project))) {
-          if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
-            for (VirtualFile file : files) {
-              if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
-                notification.expire();
-              }
-            }
-          }
-        }
-      }
-    });
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
