@@ -35,7 +35,6 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.ui.GotItTooltip
-import com.intellij.util.PsiNavigateUtil
 import java.awt.Point
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
@@ -56,6 +55,8 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   init {
     setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"))
   }
+
+  private val file = extractOptions.elements.first().containingFile
 
   private val fragmentsToRevert = mutableListOf<FragmentState>()
 
@@ -183,16 +184,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     super.afterTemplateStart()
     popupProvider.setChangeListener { restartInplace() }
     popupProvider.setShowDialogAction { restartInDialog() }
-    popupProvider.setNavigateMethodAction {
-      val template = TemplateManagerImpl.getTemplateState(editor)
-      if (template != null) {
-        IdeEventQueue.getInstance().popupManager.closeAllPopups()
-        PsiNavigateUtil.navigate(myElementToRename.navigationElement)
-        val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
-        showChangeSignatureGotIt(editor, offset)
-        template.gotoEnd(false)
-      }
-    }
+    popupProvider.setNavigateMethodAction { finishAndGotoDeclaration() }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
@@ -206,6 +198,17 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
     Disposer.register(templateState, { methodNameRange.dispose() })
+  }
+
+  private fun finishAndGotoDeclaration() {
+    val template = TemplateManagerImpl.getTemplateState(editor)
+    if (template != null) {
+      IdeEventQueue.getInstance().popupManager.closeAllPopups()
+      navigate(myProject, file.virtualFile, methodNameRange.endOffset)
+      val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
+      showChangeSignatureGotIt(editor, offset)
+      template.gotoEnd(false)
+    }
   }
 
   fun restartInDialog() {
