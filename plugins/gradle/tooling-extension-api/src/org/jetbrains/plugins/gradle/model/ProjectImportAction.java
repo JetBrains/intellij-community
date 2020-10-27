@@ -32,7 +32,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
-  private static final ModelAdapter NOOP_ADAPTER = new NoopAdapter();
+  private static final ModelConverter NOOP_CONVERTER = new NoopConverter();
 
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
@@ -43,7 +43,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private AllModels myAllModels = null;
   @Nullable
   private transient GradleBuild myGradleBuild;
-  private ModelAdapter myModelAdapter;
+  private ModelConverter myModelConverter;
 
   public ProjectImportAction(boolean isPreviewMode, boolean isCompositeBuildsSupported) {
     myIsPreviewMode = isPreviewMode;
@@ -76,8 +76,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   @NotNull
-  protected ModelAdapter getToolingAdapter(@NotNull BuildController controller) {
-    return NOOP_ADAPTER;
+  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
+    return NOOP_CONVERTER;
   }
 
   @Nullable
@@ -95,11 +95,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       allModels.setBuildEnvironment(buildEnvironment);
       allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
       myAllModels = allModels;
-      myModelAdapter = getToolingAdapter(controller);
+      myModelConverter = getToolingModelConverter(controller);
     }
 
     assert myGradleBuild != null;
-    assert myModelAdapter != null;
+    assert myModelConverter != null;
     controller = new MyBuildController(controller, myGradleBuild);
     for (BasicGradleProject gradleProject : myGradleBuild.getProjects()) {
       addProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
@@ -181,7 +181,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
           public void consume(@NotNull Object object, @NotNull Class clazz) {
-            object = myModelAdapter.adapt(object);
+            object = myModelConverter.convert(object);
             allModels.addModel(object, clazz, project);
             obtainedModels.add(clazz.getName());
           }
@@ -214,15 +214,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
           @Override
           public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
-            object = myModelAdapter.adapt(object);
+            object = myModelConverter.convert(object);
             allModels.addModel(object, clazz, projectModel);
             obtainedModels.add(clazz.getName());
           }
 
           @Override
           public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
-            if (myModelAdapter != null) {
-              object = myModelAdapter.adapt(object);
+            if (myModelConverter != null) {
+              object = myModelConverter.convert(object);
             }
             allModels.addModel(object, clazz, buildModel);
             obtainedModels.add(clazz.getName());
@@ -271,8 +271,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   @ApiStatus.Experimental
-  public interface ModelAdapter extends Serializable {
-    Object adapt(Object object);
+  public interface ModelConverter extends Serializable {
+    Object convert(Object object);
   }
 
   public static class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
@@ -481,9 +481,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private static class NoopAdapter implements ModelAdapter {
+  private static class NoopConverter implements ModelConverter {
     @Override
-    public Object adapt(Object object) {
+    public Object convert(Object object) {
       return object;
     }
   }

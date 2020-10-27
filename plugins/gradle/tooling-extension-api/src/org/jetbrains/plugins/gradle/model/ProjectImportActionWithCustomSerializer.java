@@ -28,16 +28,16 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
 
   @NotNull
   @Override
-  protected ModelAdapter getToolingAdapter(@NotNull BuildController controller) {
-    return new ToolingSerializerAdapter(controller);
+  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
+    return new ToolingSerializerConverter(controller);
   }
 
-  private static final class ToolingSerializerAdapter implements ModelAdapter {
+  private static final class ToolingSerializerConverter implements ModelConverter {
     private final Object mySerializer;
     private final Method mySerializerWriteMethod;
     private final ClassLoader myModelBuildersClassLoader;
 
-    private ToolingSerializerAdapter(@NotNull BuildController controller) {
+    private ToolingSerializerConverter(@NotNull BuildController controller) {
       Object unpacked = new ProtocolToModelAdapter().unpack(controller.getModel(DummyModel.class));
       myModelBuildersClassLoader = unpacked.getClass().getClassLoader();
       try {
@@ -52,7 +52,7 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
     }
 
     @Override
-    public Object adapt(Object object) {
+    public Object convert(Object object) {
       try {
         Object unpackedObject = unpackIfNeeded(object);
         if (unpackedObject != null) {
