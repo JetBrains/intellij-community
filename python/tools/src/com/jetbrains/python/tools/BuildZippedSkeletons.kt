@@ -21,7 +21,7 @@ fun main() {
   println("App started: ${app}")
 
   try {
-    val root = System.getenv(PYCHARM_PYTHONS)
+    val root = System.getenv(PYCHARM_PYTHONS) ?: error("$PYCHARM_PYTHONS environment variable is undefined")
     val workingDir = System.getProperty("user.dir")
     val cacheDir = File(workingDir, "cache")
     println("Skeletons will share a common cache at $cacheDir")
