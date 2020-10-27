@@ -25,6 +25,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -224,6 +225,13 @@ abstract class Cell : BaseBuilder {
             fontColor: UIUtil.FontColor? = null,
             bold: Boolean = false): CellBuilder<JLabel> {
     val label = Label(text, style, fontColor, bold)
+    return component(label)
+  }
+
+  fun label(@Label text: String,
+            font: JBFont,
+            fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
+    val label = Label(text, fontColor = fontColor, font = font)
     return component(label)
   }
 
