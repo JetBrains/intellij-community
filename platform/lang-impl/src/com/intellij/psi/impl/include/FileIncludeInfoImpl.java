@@ -57,4 +57,15 @@ class FileIncludeInfoImpl extends FileIncludeInfo {
     result = 31 * result + (runtimeOnly ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "FileIncludeInfoImpl{" +
+           "fileName='" + fileName + '\'' +
+           ", path='" + path + '\'' +
+           ", offset=" + offset +
+           ", runtimeOnly=" + runtimeOnly +
+           ", providerId='" + providerId + '\'' +
+           '}';
+  }
 }
