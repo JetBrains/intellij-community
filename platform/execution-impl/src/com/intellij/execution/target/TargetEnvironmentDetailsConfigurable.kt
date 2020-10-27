@@ -60,7 +60,7 @@ internal class TargetEnvironmentDetailsConfigurable(
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
     config.runtimes.resolvedConfigs().forEach {
-      panel.add(createRuntimePanel(it))
+      panel.add(createRuntimePanel(config, it))
     }
     panel.add(createAddRuntimeHyperlink())
     return JBScrollPane(panel).also {
@@ -68,12 +68,12 @@ internal class TargetEnvironmentDetailsConfigurable(
     }
   }
 
-  private fun createRuntimePanel(runtime: LanguageRuntimeConfiguration): JPanel {
+  private fun createRuntimePanel(target: TargetEnvironmentConfiguration, runtime: LanguageRuntimeConfiguration): JPanel {
     return panel {
       row {
         val separator = TitledSeparator(runtime.getRuntimeType().configurableDescription)
         separator(CCFlags.growX, CCFlags.pushX)
-        gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(runtime))
+        gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(target, runtime))
       }
       row {
         val languageUI = runtime.getRuntimeType().createConfigurable(project, runtime, config)
@@ -124,11 +124,16 @@ internal class TargetEnvironmentDetailsConfigurable(
     }
   }
 
-  private inner class RemoveRuntimeAction(runtime: LanguageRuntimeConfiguration)
+  private inner class RemoveRuntimeAction(private val target: TargetEnvironmentConfiguration, runtime: LanguageRuntimeConfiguration)
     : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.remove.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       config.runtimes.removeConfig(runtime)
       forceRefreshUI()
+    }
+
+    override fun update(e: AnActionEvent) {
+      val lastLanguage = target.runtimes.resolvedConfigs().filter { it != runtime }.isEmpty()
+      e.presentation.isEnabled = !lastLanguage
     }
   }
 }
