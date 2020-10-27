@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBFont
 class LabelSizeDemoAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val text = "Lorem ipsum 1234567890"
-    val panel = panel() {
+    val panel = panel {
       row("H0")           {  label(text, JBFont.h0().asBold())  }
       row("H1")           {  label(text, JBFont.h1().asBold())  }
       row("H2")           {  label(text, JBFont.h2())  }
