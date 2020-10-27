@@ -70,7 +70,7 @@ class CloseTab(c: JComponent,
       window = mgr.currentWindow
     }
     if (window != null) {
-      if (BitUtil.isSet(e.modifiers, InputEvent.ALT_DOWN_MASK)) {
+      if (BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {
