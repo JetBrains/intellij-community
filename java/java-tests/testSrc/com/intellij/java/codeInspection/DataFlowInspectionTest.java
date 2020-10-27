@@ -682,4 +682,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableAliasing() { doTest(); }
   public void testReapplyTypeArguments() { doTest(); }
   public void testDoubleArrayDiff() { doTest(); }
+  public void testInferenceInPrivateOrLocalClass() { doTest(); }
 }

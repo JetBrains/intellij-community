@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -280,6 +281,10 @@ public final class JavaSourceInference {
       return contract;
     });
   }
+  
+  public static boolean canInferFromSource(@NotNull PsiMethodImpl method) {
+    return getInferenceMode(method) == InferenceMode.ENABLED;
+  }
 
   private static InferenceMode getInferenceMode(@NotNull PsiMethodImpl method) {
     if (isLibraryCode(method) ||
@@ -289,7 +294,17 @@ public final class JavaSourceInference {
     }
 
     if (((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) return InferenceMode.ENABLED;
-    if (PsiUtil.canBeOverridden(method)) return InferenceMode.PARAMETERS;
+    if (PsiUtil.canBeOverridden(method)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && (PsiUtil.isLocalClass(containingClass) || 
+                                      !containingClass.isInterface() && containingClass.hasModifierProperty(PsiModifier.PRIVATE))) {
+        if (ClassInheritorsSearch.search(containingClass, new LocalSearchScope(containingClass.getContainingFile()), false)
+              .findFirst() == null) {
+          return InferenceMode.ENABLED;
+        }
+      }
+      return InferenceMode.PARAMETERS;
+    }
     if (isUnusedInAnonymousClass(method)) return InferenceMode.DISABLED;
 
     return InferenceMode.ENABLED;

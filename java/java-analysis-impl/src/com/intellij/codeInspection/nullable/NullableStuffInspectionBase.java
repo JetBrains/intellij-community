@@ -715,12 +715,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private boolean isNonAnnotatedOverridingNotNull(PsiMethod method, PsiMethod superMethod) {
-    return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL &&
-           !(method.getReturnType() instanceof PsiPrimitiveType) &&
-           !method.isConstructor() &&
-           !getNullityManager(method).hasNullability(method) &&
-           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) &&
-           !hasInheritableNotNull(superMethod);
+    if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL &&
+        !(method.getReturnType() instanceof PsiPrimitiveType) &&
+        !method.isConstructor()) {
+      NullabilityAnnotationInfo info = getNullityManager(method).findEffectiveNullabilityInfo(method);
+      if ((info == null || info.isInferred() || 
+           (!info.isContainer() && !info.isExternal() && !PsiTreeUtil.isAncestor(method, info.getAnnotation(), true))) &&
+          isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) &&
+          !hasInheritableNotNull(superMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean hasInheritableNotNull(PsiModifierListOwner owner) {
