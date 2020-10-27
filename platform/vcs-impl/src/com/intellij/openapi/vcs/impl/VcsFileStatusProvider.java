@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -158,6 +159,19 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       if (diffProvider != null) {
         VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
         return currentRevision == null ? null : new HijackedBaseContent(myProject, diffProvider, file, currentRevision);
+      }
+    }
+
+    if (status == FileStatus.NOT_CHANGED ||
+        status == FileStatus.MODIFIED ||
+        status == ChangelistConflictFileStatusProvider.MODIFIED_OUTSIDE) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      if (vcs != null) {
+        DiffProvider diffProvider = vcs.getDiffProvider();
+        if (diffProvider != null) {
+          ContentRevision beforeRevision = diffProvider.createCurrentFileContent(file);
+          if (beforeRevision != null) return createBaseContent(myProject, beforeRevision);
+        }
       }
     }
 
