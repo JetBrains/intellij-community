@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryToStringCallInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnnecessaryToStringCallInspection()};
+    UnnecessaryToStringCallInspection inspection = new UnnecessaryToStringCallInspection();
+    inspection.notNullQualifierOnly = false;
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override
