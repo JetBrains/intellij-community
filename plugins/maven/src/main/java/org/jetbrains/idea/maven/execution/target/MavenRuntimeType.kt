@@ -84,12 +84,14 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
     val PROJECT_FOLDER_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":projectFolder",
                                                  RunnerBundle.message("maven.target.execution.project.folder.label"),
                                                  RunnerBundle.message("maven.target.execution.project.folder.description"),
+                                                 RunnerBundle.message("maven.target.execution.project.folder.browsing.title"),
                                                  "/project")
 
     @JvmStatic
     val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
                                                        RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
+                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.browsing.title"),
                                                        "")
 
     private val UI_EP_NAME = ExtensionPointName.create<MavenRuntimeUIFactory>("org.jetbrains.idea.maven.targetRuntimeConfigurableFactory")

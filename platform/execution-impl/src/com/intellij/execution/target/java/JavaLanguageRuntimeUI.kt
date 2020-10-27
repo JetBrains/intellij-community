@@ -2,17 +2,24 @@
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.target.BrowsableTargetEnvironmentConfiguration
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeContributionUI
 import com.intellij.execution.target.getRuntimeType
 import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 
-class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration, private val target: TargetEnvironmentConfiguration) :
+class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
+                            private val target: TargetEnvironmentConfiguration,
+                            private val project: Project) :
   BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
 
   private val targetVolumeContributions = mutableMapOf<VolumeDescriptor, TargetSpecificVolumeContributionUI>()
@@ -20,8 +27,16 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
   override fun createPanel(): DialogPanel {
     return panel {
       row(ExecutionBundle.message("java.language.runtime.jdk.home.path")) {
-        textField(config::homePath)
-          .comment(ExecutionBundle.message("java.language.runtime.text.path.to.jdk.on.target"))
+        val cellBuilder: CellBuilder<*>
+        if (target is BrowsableTargetEnvironmentConfiguration) {
+          cellBuilder = textFieldWithBrowseButton(target, project,
+                                                  ExecutionBundle.message("java.language.runtime.jdk.home.path.title"),
+                                                  config::homePath.toBinding())
+        }
+        else {
+          cellBuilder = textField(config::homePath)
+        }
+        cellBuilder.comment(ExecutionBundle.message("java.language.runtime.text.path.to.jdk.on.target"))
       }
       row(ExecutionBundle.message("java.language.runtime.jdk.version")) {
         textField(config::javaVersionString)
@@ -35,6 +50,21 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
         addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
       }
     }
+  }
+
+  internal fun Row.textFieldWithBrowseButton(target: BrowsableTargetEnvironmentConfiguration,
+                                             project: Project,
+                                             @NlsContexts.DialogTitle title: String,
+                                             property: PropertyBinding<String>): CellBuilder<TextFieldWithBrowseButton> {
+    val textFieldWithBrowseButton = TextFieldWithBrowseButton()
+    val browser = target.createBrowser(project,
+                                       title,
+                                       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                       textFieldWithBrowseButton.textField)
+    textFieldWithBrowseButton.addActionListener(browser)
+    textFieldWithBrowseButton.text = property.get()
+    return component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText,
+                                                            property)
   }
 
   override fun apply() {
@@ -53,9 +83,16 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
 
   private fun RowBuilder.addVolumeUI(volumeDescriptor: VolumeDescriptor) {
     row(volumeDescriptor.wizardLabel) {
-      textField(getter = { config.getTargetPathValue(volumeDescriptor).nullize(true) ?: volumeDescriptor.defaultPath },
-                setter = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
-        .comment(volumeDescriptor.description)
+      val propertyBinding = PropertyBinding(
+        get = { config.getTargetPathValue(volumeDescriptor).nullize(true) ?: volumeDescriptor.defaultPath },
+        set = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
+
+      if (target is BrowsableTargetEnvironmentConfiguration) {
+        textFieldWithBrowseButton(target, project, volumeDescriptor.browsingTitle, propertyBinding).comment(volumeDescriptor.description)
+      }
+      else {
+        textField(propertyBinding).comment(volumeDescriptor.description)
+      }
     }
 
     target.getTargetType().createVolumeContributionUI()?.let {
