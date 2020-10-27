@@ -22,10 +22,14 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
 
     @JvmStatic
     fun create(editor: Editor): EditorCodePreview {
-      require(editor.getUserData(EDITOR_PREVIEW_KEY) == null)
+      require(getActivePreview(editor) == null)
       val codePreview = EditorCodePreview(editor)
       editor.putUserData(EDITOR_PREVIEW_KEY, codePreview)
       return codePreview
+    }
+
+    fun getActivePreview(editor: Editor): EditorCodePreview? {
+      return editor.getUserData(EDITOR_PREVIEW_KEY)
     }
   }
 
@@ -39,6 +43,9 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
       updatePopupPositions()
     }
   }
+
+  var editorVisibleArea: Rectangle = editor.scrollingModel.visibleArea
+  private set
 
   init {
     tracker.subscribe { updatePopupPositions() }
@@ -68,7 +75,12 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
         position
       }
       .reversed()
-    if (visibleArea.height < 0) positions = popups.map { RelativePosition.Inside }
+    if (visibleArea.height < 0) {
+      positions = popups.map { RelativePosition.Inside }
+      editorVisibleArea = editor.scrollingModel.visibleArea
+    } else {
+      editorVisibleArea = visibleArea
+    }
     val popupsAndPositions = popups.zip(positions)
 
     popupsAndPositions
