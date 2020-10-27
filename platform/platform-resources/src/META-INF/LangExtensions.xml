@@ -709,7 +709,7 @@
     <experimentalFeature id="edit.run.configurations.while.dumb" percentOfUsers="100">
       <description>Enables editing of Run Configurations during indexing</description>
     </experimentalFeature>
-    <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
+    <projectService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>

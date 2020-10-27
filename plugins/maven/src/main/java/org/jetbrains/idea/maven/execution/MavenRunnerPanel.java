@@ -20,8 +20,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -211,7 +211,8 @@ public class MavenRunnerPanel {
         .collect(Collectors.toList());
 
       List<String> targetItems = new ArrayList<>();
-      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
+        .getTargets().findByName(targetName);
       if (targetEnvironmentConfiguration != null) {
         for (LanguageRuntimeConfiguration runtimeConfiguration : targetEnvironmentConfiguration.getRuntimes().resolvedConfigs()) {
           if (runtimeConfiguration instanceof JavaLanguageRuntimeConfiguration) {

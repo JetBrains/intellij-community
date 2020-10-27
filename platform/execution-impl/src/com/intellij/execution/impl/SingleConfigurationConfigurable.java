@@ -456,7 +456,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
       ((RunOnTargetComboBox)myRunOnComboBox).initModel();
-      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance().getTargets().resolvedConfigs());
+      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs());
       ((RunOnTargetComboBox)myRunOnComboBox).selectTarget(targetNameToChoose);
     }
 

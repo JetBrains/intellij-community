@@ -52,7 +52,7 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
     }
 
     TargetEnvironmentConfiguration target = ContainerUtil.find(
-      TargetEnvironmentsManager.getInstance(/*project*/).getTargets().resolvedConfigs(),
+      TargetEnvironmentsManager.getInstance(project).getTargets().resolvedConfigs(),
       next -> targetName.equals(next.getDisplayName()));
 
     if (target == null) {
