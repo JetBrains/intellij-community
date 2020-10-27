@@ -2,6 +2,8 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.IdeEventQueue
@@ -40,6 +42,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import java.awt.Point
 
@@ -71,6 +74,8 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
 
   private lateinit var methodNameRange: RangeMarker
+
+  private lateinit var methodCallExpressionRange: RangeMarker
 
   private var gotItBalloon: Balloon? = null
 
@@ -105,6 +110,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     setElementToRename(method)
 
     methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+    methodCallExpressionRange = editor.document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
 
     preview = EditorCodePreview.create(editor)
 
@@ -202,6 +208,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
     Disposer.register(templateState, { methodNameRange.dispose() })
+    Disposer.register(templateState, { methodCallExpressionRange.dispose() })
 
     val connection = myProject.messageBus.connect(templateState)
     connection.subscribe(AnActionListener.TOPIC, object: AnActionListener {
@@ -209,6 +216,58 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
         if (action is GotoDeclarationAction){
           templateState.gotoEnd(false)
         }
+      }
+    })
+
+    installMethodNameValidation(templateState)
+  }
+
+  private fun setMethodName(methodName: String) {
+    editor.document.replaceString(methodCallExpressionRange.startOffset, methodCallExpressionRange.endOffset, methodName)
+    editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
+  }
+
+  private fun installMethodNameValidation(templateState: TemplateState) {
+    templateState.addTemplateStateListener(object: TemplateEditingListener {
+
+      var restartAction: () -> Unit = { }
+
+      override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) { }
+
+      override fun waitingForInput(template: Template?) { }
+
+      override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
+        val methodName = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
+        fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
+        fun hasSingleResolve(): Boolean {
+          val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return false
+          val methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, methodCallExpressionRange.startOffset, PsiMethodCallExpression::class.java, true)
+          return methodCall?.methodExpression?.multiResolve(false)?.size == 1
+        }
+        val errorMessage = when {
+          ! isValidName() -> JavaRefactoringBundle.message("extract.method.error.invalid.name")
+          ! hasSingleResolve() -> JavaRefactoringBundle.message("extract.method.error.method.conflict")
+          else -> null
+        }
+        if (errorMessage != null) {
+          val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic).copy(methodName = "extracted")
+          restartAction = {
+              WriteCommandAction.runWriteCommandAction(myProject) {
+                val extractor = InplaceMethodExtractor(editor, newOptions, popupProvider)
+                extractor.performInplaceRefactoring(linkedSetOf())
+                extractor.setMethodName(methodName)
+                CommonRefactoringUtil.showErrorHint(myProject, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+              }
+            }
+        }
+      }
+
+      override fun templateFinished(template: Template, brokenOff: Boolean) {
+        if (! brokenOff) ApplicationManager.getApplication().invokeLater { restartAction() }
+      }
+
+      override fun templateCancelled(template: Template?) {
+        ApplicationManager.getApplication().invokeLater { restartAction() }
       }
     })
   }
