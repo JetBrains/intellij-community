@@ -169,10 +169,12 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
+        //noinspection HardCodedStringLiteral
         append(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
+      //noinspection HardCodedStringLiteral
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
