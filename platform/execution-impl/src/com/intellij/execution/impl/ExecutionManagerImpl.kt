@@ -583,6 +583,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       try {
         processHandler.startNotify()
         val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+          @Volatile
           var stopped = false
 
           override fun addText(text: String, key: Key<*>) {
