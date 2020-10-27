@@ -58,6 +58,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
 
@@ -651,8 +653,7 @@ public final class FindInProjectUtil {
     );
   }
 
-  @NotNull
-  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+  public static @Nls(capitalization = Title) @NotNull String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
     @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
     switch (searchContext) {
       case ANY:
