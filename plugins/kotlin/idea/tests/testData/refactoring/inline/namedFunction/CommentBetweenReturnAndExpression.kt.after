@@ -1,3 +1,4 @@
+
 fun b(): Int {
-    return 42// MY COMMENT
+    return 42
 }

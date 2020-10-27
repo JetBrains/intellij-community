@@ -1,5 +1,4 @@
 fun t() {
-    // above function
     // after open brace
     // eol comment in body
     /* block comment in body
@@ -8,10 +7,9 @@ fun t() {
     println(4) // test
     // above return
     // after return
-    val c = Unit // after close brace
+    val c = Unit
 
 
-    // above function
     // after open brace
     // eol comment in body
     /* block comment in body
@@ -20,6 +18,4 @@ fun t() {
     println(4) // test
     // above return
     // after return
-    // after close brace
 }
-

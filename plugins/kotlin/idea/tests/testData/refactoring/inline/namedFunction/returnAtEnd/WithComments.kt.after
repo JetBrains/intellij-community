@@ -1,5 +1,4 @@
 fun t() {
-    // above function
     // after open brace
 // eol comment in body
     /* block comment in body
@@ -11,6 +10,4 @@ fun t() {
     val c =
         // above return
         4 // after return
-    // after close brace
 }
-

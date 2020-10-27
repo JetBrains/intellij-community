@@ -1,16 +1,13 @@
 fun t() {
-    val c = // above function
-    // after open brace
+    val c =  // after open brace
     // eol comment in body
             /* block comment in body
     * second line */
     // topTest
         // above return
         Unit // after return
-    // after close brace
 
 
-    // above function
     // after open brace
     // eol comment in body
     /* block comment in body
@@ -18,6 +15,4 @@ fun t() {
     // topTest
     // above return
 // after return
-    // after close brace
 }
-

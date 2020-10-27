@@ -1,4 +1,3 @@
 fun t() {
-    val b =     // before getter
-        (4/*tete*/) // after
+    val b = (4/*tete*/)
 }

@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
@@ -14,7 +12,6 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.CommentNode.Companion.mergeComments
-import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.Companion.collectComments
 import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
@@ -154,41 +151,8 @@ class CodeToInlineBuilder(
     ): CodeToInline = prepareMutableCodeToInline(mainExpression, statementsBefore, analyze, reformat).toNonMutable()
 
     private fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {
-        val topLevelLeadingComments = contextDeclaration.collectDescendantsOfType<PsiComment>(
-            canGoInside = { it == contextDeclaration || it !is KtExpression },
-            predicate = { it.parent != contextDeclaration || it.getNextSiblingIgnoringWhitespaceAndComments() != null }
-        ).map { CommentHolder.CommentNode.create(it) }
-
-        val topLevelTrailingComments = contextDeclaration.children
-            .lastOrNull { it !is PsiComment && it !is PsiWhiteSpace }
-            ?.siblings(forward = true, withItself = false)
-            ?.collectComments()
-            ?: emptyList()
-
         val bodyBlockExpression = contextDeclaration.safeAs<KtDeclarationWithBody>()?.bodyBlockExpression
-        if (bodyBlockExpression != null) {
-            addCommentHoldersForStatements(codeToInline, bodyBlockExpression)
-
-            val expressions = codeToInline.expressions
-            if (expressions.isEmpty()) {
-                codeToInline.addExtraComments(CommentHolder(topLevelLeadingComments, topLevelTrailingComments))
-            } else {
-                expressions.first().mergeComments(CommentHolder(topLevelLeadingComments, emptyList()))
-                codeToInline.addCommentHolderToExpressionOrToThis(
-                    codeToInline.mainExpression,
-                    CommentHolder(emptyList(), topLevelTrailingComments)
-                )
-            }
-        } else {
-            codeToInline.addCommentHolderToExpressionOrToThis(
-                codeToInline.mainExpression,
-                CommentHolder(topLevelLeadingComments, topLevelTrailingComments)
-            )
-        }
-    }
-
-    private fun MutableCodeToInline.addCommentHolderToExpressionOrToThis(expression: KtExpression?, commentHolder: CommentHolder) {
-        expression?.mergeComments(commentHolder) ?: this.addExtraComments(commentHolder)
+        if (bodyBlockExpression != null) addCommentHoldersForStatements(codeToInline, bodyBlockExpression)
     }
 
     private fun addCommentHoldersForStatements(mutableCodeToInline: MutableCodeToInline, blockExpression: KtBlockExpression) {
