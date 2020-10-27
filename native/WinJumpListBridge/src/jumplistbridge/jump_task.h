@@ -11,10 +11,9 @@
 #ifndef WINJUMPLISTBRIDGE_JUMPTASK_H
 #define WINJUMPLISTBRIDGE_JUMPTASK_H
 
-#include "winapi.h"                 // IShellLinkW
+#include "winapi.h"                 // IShellLinkW, CComPtr
 #include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
 #include "wide_string.h"            // WideString, WideStringView
-#include "COM_object_safe_ptr.h"    // COMObjectSafePtr
 #include <filesystem>               // std::filesystem
 #include <optional>                 // std::optional
 #include <utility>                  // std::forward
@@ -27,7 +26,7 @@ namespace intellij::ui::win
     class JumpTask
     {
     public: // nested types
-        using SharedNativeHandle = COMObjectSafePtr<IShellLinkW>;
+        using SharedNativeHandle = CComPtr<IShellLinkW>;
 
         // see declaration below
         class BuildSession;
@@ -65,10 +64,10 @@ namespace intellij::ui::win
 
     private:
         /// Use JumpTask::startBuilding to create a task
-        explicit JumpTask(COMObjectSafePtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept;
+        explicit JumpTask(CComPtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept;
 
     private:
-        COMObjectSafePtr<IShellLinkW> handle_;
+        CComPtr<IShellLinkW> handle_;
     };
 
 

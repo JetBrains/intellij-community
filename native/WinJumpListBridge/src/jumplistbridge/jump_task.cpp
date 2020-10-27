@@ -14,7 +14,7 @@ namespace intellij::ui::win
     //  JumpTask
     // ================================================================================================================
 
-    JumpTask::JumpTask(COMObjectSafePtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept
+    JumpTask::JumpTask(CComPtr<IShellLinkW>&& nativeHandle, COMIsInitializedInThisThreadTag) noexcept
         : handle_(std::move(nativeHandle))
     {}
 
@@ -100,9 +100,9 @@ namespace intellij::ui::win
 
     JumpTask JumpTask::BuildSession::createJumpTask(COMIsInitializedInThisThreadTag com) const noexcept(false)
     {
-        IShellLinkW* nativeHandle = nullptr;
+        CComPtr<IShellLinkW> nativeHandle;
 
-        auto comResult = CoCreateInstance(
+        auto comResult = nativeHandle.CoCreateInstance(
             // request IShellLink instance
             CLSID_ShellLink,
 
@@ -112,16 +112,13 @@ namespace intellij::ui::win
             // The code that creates and manages objects of this class
             //  is a DLL that runs in the same process as the caller of
             //  the function specifying the class context.
-            CLSCTX_INPROC,
-
-            // Pass pointer to the result and its real type
-            IID_PPV_ARGS(&nativeHandle)
+            CLSCTX_INPROC
         );
 
         if (comResult != S_OK)
             errors::throwCOMException(comResult, "CoCreateInstance failed", __func__, buildSessionCtxName);
 
-        return JumpTask{ COMObjectSafePtr{nativeHandle}, com };
+        return JumpTask{ std::move(nativeHandle), com };
     }
 
     void JumpTask::BuildSession::copyAppPathToJumpTask(JumpTask& task) const noexcept(false)
@@ -154,7 +151,19 @@ namespace intellij::ui::win
 
     void JumpTask::BuildSession::copyTitleToJumpTask(JumpTask& task) const noexcept(false)
     {
-        const auto properties = task.handle_.COMCast<IPropertyStore>();
+        constexpr std::string_view funcName = __func__;
+
+        const auto properties = [&task, funcName] {
+            CComPtr<IPropertyStore> result;
+            if (const auto comResult = task.handle_.QueryInterface(&result); comResult != S_OK)
+                errors::throwCOMException(
+                    comResult,
+                    "QueryInterface failed",
+                    funcName,
+                    buildSessionCtxName
+                );
+            return result;
+        }();
         assert( (properties != nullptr) );
 
         const struct TitleProperty
@@ -179,10 +188,10 @@ namespace intellij::ui::win
         } titleProperty(title_);
 
         if (const auto comResult = properties->SetValue(PKEY_Title, titleProperty.value); comResult != S_OK)
-            errors::throwCOMException(comResult, "IPropertyStore::SetValue failed", __func__, buildSessionCtxName);
+            errors::throwCOMException(comResult, "IPropertyStore::SetValue failed", funcName, buildSessionCtxName);
 
         if (const auto comResult = properties->Commit(); comResult != S_OK)
-            errors::throwCOMException(comResult, "IPropertyStore::Commit failed", __func__, buildSessionCtxName);
+            errors::throwCOMException(comResult, "IPropertyStore::Commit failed", funcName, buildSessionCtxName);
     }
 
     void JumpTask::BuildSession::copyDescriptionToJumpTask(JumpTask& task) const noexcept(false)

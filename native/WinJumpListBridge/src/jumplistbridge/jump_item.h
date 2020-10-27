@@ -11,9 +11,8 @@
 #ifndef WINJUMPLISTBRIDGE_JUMPITEM_H
 #define WINJUMPLISTBRIDGE_JUMPITEM_H
 
-#include "winapi.h"                 // IShellItemW
+#include "winapi.h"                 // IShellItemW, CComPtr
 #include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
-#include "COM_object_safe_ptr.h"    // COMObjectSafePtr
 #include <filesystem>               // std::filesystem::path
 
 
@@ -24,7 +23,7 @@ namespace intellij::ui::win
     class JumpItem
     {
     public: // nested types
-        using SharedNativeHandle = COMObjectSafePtr<IShellItem>;
+        using SharedNativeHandle = CComPtr<IShellItem>;
 
     public: // ctors/dtor
         JumpItem(std::filesystem::path path, COMIsInitializedInThisThreadTag) noexcept(false);
@@ -36,7 +35,7 @@ namespace intellij::ui::win
     public: // assignments
         /// non-copyable
         JumpItem& operator=(const JumpItem& rhs) = delete;
-        JumpItem& operator=(JumpItem&& rhs) noexcept(false);
+        JumpItem& operator=(JumpItem&& rhs) noexcept;
 
     public: // getters
         [[nodiscard]] SharedNativeHandle shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false);
@@ -44,13 +43,13 @@ namespace intellij::ui::win
         [[nodiscard]] const std::filesystem::path& getPath() const noexcept;
 
     private:
-        [[nodiscard]] static COMObjectSafePtr<IShellItem> createHandleFrom(
+        [[nodiscard]] static CComPtr<IShellItem> createHandleFrom(
             const std::filesystem::path& path,
             COMIsInitializedInThisThreadTag
         ) noexcept(false);
 
     private:
-        COMObjectSafePtr<IShellItem> handle_;
+        CComPtr<IShellItem> handle_;
         std::filesystem::path path_;
     };
 

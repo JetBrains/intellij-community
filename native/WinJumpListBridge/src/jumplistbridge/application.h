@@ -11,12 +11,11 @@
 #ifndef WINJUMPLISTBRIDGE_APPLICATION_H
 #define WINJUMPLISTBRIDGE_APPLICATION_H
 
-#include "app_user_model_id.h"          // AppUserModelId
-#include "COM_object_safe_ptr.h"        // COMObjectSafePtr
-#include "COM_is_initialized.h"    // COMIsInitializedInThisThreadTag
-#include <optional>                     // std::optional
-#include <filesystem>                   // std::filesystem::path
-#include <utility>                      // std::pair
+#include "app_user_model_id.h"      // AppUserModelId
+#include "COM_is_initialized.h"     // COMIsInitializedInThisThreadTag
+#include <optional>                 // std::optional
+#include <filesystem>               // std::filesystem::path
+#include <utility>                  // std::pair
 
 
 struct ICustomDestinationList;  // forward declaration
@@ -145,7 +144,7 @@ namespace intellij::ui::win
         void refreshJumpListHandle() noexcept(false);
 
     private:
-        std::pair< std::optional<UserModelId>, COMObjectSafePtr<ICustomDestinationList> > idAndJumpListHandle_;
+        std::pair< std::optional<UserModelId>, CComPtr<ICustomDestinationList> > idAndJumpListHandle_;
     };
 
 } // namespace intellij::ui::win

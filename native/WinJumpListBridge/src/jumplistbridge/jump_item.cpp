@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "jump_item.h"
+#include "COM_errors.h" // errors::throwCOMException
 
 
 namespace intellij::ui::win
@@ -16,7 +17,7 @@ namespace intellij::ui::win
     JumpItem::JumpItem(JumpItem&& src) noexcept = default;
 
 
-    JumpItem& JumpItem::operator=(JumpItem&& rhs) noexcept(false) = default;
+    JumpItem& JumpItem::operator=(JumpItem&& rhs) noexcept = default;
 
 
     JumpItem::SharedNativeHandle JumpItem::shareNativeHandle(COMIsInitializedInThisThreadTag) const noexcept(false)
@@ -30,18 +31,24 @@ namespace intellij::ui::win
     }
 
 
-    COMObjectSafePtr<IShellItem> JumpItem::createHandleFrom(
+    CComPtr<IShellItem> JumpItem::createHandleFrom(
         const std::filesystem::path& path,
         COMIsInitializedInThisThreadTag) noexcept(false)
     {
         static_assert(std::is_same_v<std::filesystem::path::value_type, WCHAR>, "std::filesystem::path must use WCHARs");
 
-        IShellItem* result;
+        CComPtr<IShellItem> result;
 
-        if (const auto hr = SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&result)); hr != S_OK)
-            errors::throwCOMException(hr, "SHCreateItemFromParsingName failed", __func__, jumpItemCtxName);
+        auto comResult = SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&result));
 
-        return COMObjectSafePtr{result};
+        if (comResult != S_OK)
+            errors::throwCOMException(comResult,
+                "SHCreateItemFromParsingName failed",
+                __func__,
+                jumpItemCtxName
+            );
+
+        return result;
     }
 
 } // namespace intellij::ui::win

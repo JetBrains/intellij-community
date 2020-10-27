@@ -32,16 +32,14 @@ namespace intellij::ui::win
             static constexpr std::string_view jumpListTransactionCtxName = "intellij::ui::win::Application::JumpListTransaction";
 
             UINT maxSlots;
-            COMObjectSafePtr<IObjectArray> removedObjects;
+            CComPtr<IObjectArray> removedObjects;
 
         public: // ctors/dtor
             explicit JumpListTransaction(ICustomDestinationList* jumpListHandle) noexcept(false)
                 : handle_(nullptr)
                 , maxSlots(0)
             {
-                IObjectArray *removedObjectsLocal;
-
-                auto hr = jumpListHandle->BeginList(&maxSlots, IID_PPV_ARGS(&removedObjectsLocal));
+                auto hr = jumpListHandle->BeginList(&maxSlots, IID_PPV_ARGS(&removedObjects));
 
                 if (hr != S_OK)
                     errors::throwCOMException(
@@ -51,7 +49,8 @@ namespace intellij::ui::win
                         jumpListTransactionCtxName
                     );
 
-                removedObjects.reset(removedObjectsLocal);
+                assert( (removedObjects != nullptr) );
+
                 handle_ = jumpListHandle;
             }
 
@@ -132,17 +131,16 @@ namespace intellij::ui::win
     namespace
     {
 
-        COMObjectSafePtr<IObjectCollection> createCategoryNativeContainer(
+        CComPtr<IObjectCollection> createCategoryNativeContainer(
             const std::string_view callerFuncName,
             const std::string_view callerCtxName) noexcept(false)
         {
-            IObjectCollection* result = nullptr;
+            CComPtr<IObjectCollection> result;
 
-            auto hr = CoCreateInstance(
+            auto hr = result.CoCreateInstance(
                 CLSID_EnumerableObjectCollection,
                 nullptr,
-                CLSCTX_INPROC,
-                IID_PPV_ARGS(&result)
+                CLSCTX_INPROC
             );
 
             if (hr != S_OK)
@@ -155,7 +153,7 @@ namespace intellij::ui::win
 
             assert( (result != nullptr) );
 
-            return COMObjectSafePtr{result};
+            return result;
         }
 
         void insertToCategoryNativeContainer(
@@ -167,7 +165,8 @@ namespace intellij::ui::win
         {
             std::visit(
                 [&nativeContainer, callerFuncName, callerCtxName, com](const auto& unwrappedItem) {
-                    if (const auto hr = nativeContainer.AddObject(unwrappedItem.shareNativeHandle(com).get()); hr != S_OK)
+                    auto hr = nativeContainer.AddObject(unwrappedItem.shareNativeHandle(com));
+                    if (hr != S_OK)
                         errors::throwCOMException(
                             hr,
                             "IObjectCollection::AddObject failed",
@@ -181,18 +180,17 @@ namespace intellij::ui::win
         }
 
 
-        [[nodiscard]] COMObjectSafePtr<ICustomDestinationList> createJumpListHandle(
+        [[nodiscard]] CComPtr<ICustomDestinationList> createJumpListHandle(
             const Application::UserModelId* appId,
             const std::string_view callerFuncName,
             const std::string_view callerCtxName) noexcept(false)
         {
-            ICustomDestinationList* result = nullptr;
+            CComPtr<ICustomDestinationList> result = nullptr;
 
-            auto hr = CoCreateInstance(
+            auto hr = result.CoCreateInstance(
                 CLSID_DestinationList,
                 nullptr,
-                CLSCTX_INPROC,
-                IID_PPV_ARGS(&result)
+                CLSCTX_INPROC
             );
 
             if (hr != S_OK)
@@ -205,11 +203,9 @@ namespace intellij::ui::win
 
             assert( (result != nullptr) );
 
-            COMObjectSafePtr wrapped{result};
-
             if (appId != nullptr)
             {
-                if (hr = wrapped->SetAppID(appId->c_str()); hr != S_OK)
+                if (hr = result->SetAppID(appId->c_str()); hr != S_OK)
                     errors::throwCOMException(
                         hr,
                         "ICustomDestinationList::SetAppID failed",
@@ -218,21 +214,20 @@ namespace intellij::ui::win
                     );
             }
 
-            return wrapped;
+            return result;
         }
 
-        [[nodiscard]] COMObjectSafePtr<IApplicationDestinations> createRecentsAndFrequentsHandle(
+        [[nodiscard]] CComPtr<IApplicationDestinations> createRecentsAndFrequentsHandle(
             const Application::UserModelId* appId,
             const std::string_view callerFuncName,
             const std::string_view callerCtxName) noexcept(false)
         {
-            IApplicationDestinations* result = nullptr;
+            CComPtr<IApplicationDestinations> result = nullptr;
 
-            auto hr = CoCreateInstance(
+            auto hr = result.CoCreateInstance(
                 CLSID_ApplicationDestinations,
                 nullptr,
-                CLSCTX_INPROC,
-                IID_PPV_ARGS(&result)
+                CLSCTX_INPROC
             );
 
             if (hr != S_OK)
@@ -245,11 +240,9 @@ namespace intellij::ui::win
 
             assert( (result != nullptr) );
 
-            COMObjectSafePtr wrapped{result};
-
             if (appId != nullptr)
             {
-                if (hr = wrapped->SetAppID(appId->c_str()); hr != S_OK)
+                if (hr = result->SetAppID(appId->c_str()); hr != S_OK)
                     errors::throwCOMException(
                         hr,
                         "IApplicationDestinations::SetAppID failed",
@@ -258,7 +251,7 @@ namespace intellij::ui::win
                     );
             }
 
-            return wrapped;
+            return result;
         }
 
 
@@ -278,7 +271,7 @@ namespace intellij::ui::win
             for (const auto& item: items)
                 insertToCategoryNativeContainer(*nativeContainer, item, callerFuncName, callerCtxName, com);
 
-            if (const auto hr = jumpListHandle.AppendCategory(categoryName.c_str(), nativeContainer.get()); hr != S_OK)
+            if (const auto hr = jumpListHandle.AppendCategory(categoryName.c_str(), nativeContainer); hr != S_OK)
                 errors::throwCOMException(
                     hr,
                     "ICustomDestinationList::AppendCategory failed",
@@ -302,7 +295,7 @@ namespace intellij::ui::win
             for (const auto& item: items)
                 insertToCategoryNativeContainer(*nativeContainer, item, callerFuncName, callerCtxName, com);
 
-            if (const auto hr = jumpListHandle.AddUserTasks(nativeContainer.get()); hr != S_OK)
+            if (const auto hr = jumpListHandle.AddUserTasks(nativeContainer); hr != S_OK)
                 errors::throwCOMException(
                     hr,
                     "ICustomDestinationList::AddUserTasks failed",
@@ -362,14 +355,14 @@ namespace intellij::ui::win
         if (appId_.has_value())
         {
             SHARDAPPIDINFO jumpItemInfo{};
-            jumpItemInfo.psi = itemHandle.get();
+            jumpItemInfo.psi = itemHandle;
             jumpItemInfo.pszAppID = appId_->c_str();
 
             SHAddToRecentDocs(SHARD_APPIDINFO, &jumpItemInfo);
         }
         else
         {
-            SHAddToRecentDocs(SHARD_SHELLITEM, itemHandle.get());
+            SHAddToRecentDocs(SHARD_SHELLITEM, itemHandle);
         }
     }
 
@@ -385,14 +378,14 @@ namespace intellij::ui::win
         if (appId_.has_value())
         {
             SHARDAPPIDINFOLINK jumpTaskInfo{};
-            jumpTaskInfo.psl = taskHandle.get();
+            jumpTaskInfo.psl = taskHandle;
             jumpTaskInfo.pszAppID = appId_->c_str();
 
             SHAddToRecentDocs(SHARD_APPIDINFOLINK, &jumpTaskInfo);
         }
         else
         {
-            SHAddToRecentDocs(SHARD_LINK, taskHandle.get());
+            SHAddToRecentDocs(SHARD_LINK, taskHandle);
         }
     }
 
@@ -430,7 +423,7 @@ namespace intellij::ui::win
         if (jumpListHandle_ == nullptr)
             throw std::logic_error("Application::setJumpList: jumpListHandle_ can not be nullptr");
 
-        JumpListTransaction tr{jumpListHandle_.get()};
+        JumpListTransaction tr{jumpListHandle_};
 
         appendUserTasksTo(*tr, jumpList.getUserTasksCategory(), __func__, applicationCtxName, com);
 

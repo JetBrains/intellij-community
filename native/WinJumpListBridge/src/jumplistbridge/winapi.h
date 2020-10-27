@@ -41,5 +41,6 @@
 #include <Propidl.h>        // PROPVARIANT
 #include <propkey.h>        // PKEY_Title
 #include <propvarutil.h>    // InitPropVariantFromString
+#include <atlbase.h>        // CComPtr
 
 #endif // ndef WINJUMPLISTBRIDGE_WINAPI_H
