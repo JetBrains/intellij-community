@@ -106,7 +106,15 @@ class GitStageTracker(val project: Project) : Disposable {
     dirtyScopeManager.filesDirty(emptyList(), gitRoots)
   }
 
+  /**
+   * Update tree on [FileDocumentManager#unsavedDocuments] state change.
+   *
+   * We can refresh only [doUpdateState], but this introduces blinking in some cases.
+   *   Ex: when unsaved unstaged changes are saved on disk. We remove file from tree immediately,
+   *   but CLM is slow to notice new saved unstaged changes - so file is removed from thee and added again in a second.
+   */
   private fun markDirty(file: VirtualFile) {
+    if (!isStagingAreaAvailable(project)) return
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
     LOG.debug("Mark dirty ${file.filePath()}")
