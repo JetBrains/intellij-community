@@ -9,10 +9,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -260,6 +257,7 @@ public final class VfsData {
     }
 
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
+      BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
     }
@@ -270,13 +268,7 @@ public final class VfsData {
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = BitUtil.set(oldInt, mask, value);
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
     void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
       if (LOG.isTraceEnabled()) {
@@ -286,13 +278,7 @@ public final class VfsData {
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
                                                     Integer.toHexString(combinedMask)+")";
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = oldInt & ~combinedMask | combinedValue;
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
     long getModificationStamp(int id) {
@@ -301,13 +287,7 @@ public final class VfsData {
 
     void setModificationStamp(int id, long stamp) {
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK);
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
@@ -331,6 +311,7 @@ public final class VfsData {
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
+    volatile boolean myAllChildrenLoaded;
 
     // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
@@ -347,6 +328,13 @@ public final class VfsData {
         children[i] = child;
       }
       return children;
+    }
+
+    boolean allChildrenLoaded() {
+      return myAllChildrenLoaded;
+    }
+    void setAllChildrenLoaded() {
+      myAllChildrenLoaded = true;
     }
 
     boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
