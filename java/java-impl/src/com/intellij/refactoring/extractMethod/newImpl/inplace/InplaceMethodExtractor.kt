@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -55,8 +56,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   init {
     setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"))
   }
-
-  private val file = extractOptions.elements.first().containingFile
 
   private val fragmentsToRevert = mutableListOf<FragmentState>()
 
@@ -204,7 +203,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val template = TemplateManagerImpl.getTemplateState(editor)
     if (template != null) {
       IdeEventQueue.getInstance().popupManager.closeAllPopups()
-      navigate(myProject, file.virtualFile, methodNameRange.endOffset)
+      val file = FileDocumentManager.getInstance().getFile(editor.document)
+      if (file != null) {
+        navigate(myProject, file, methodNameRange.endOffset)
+      }
       val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
       showChangeSignatureGotIt(editor, offset)
       template.gotoEnd(false)
