@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -52,7 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver implements Disposable {
   private final Map<VirtualFile, ProblemFileInfo> myProblems = new ConcurrentHashMap<>();
   private final Map<VirtualFile, Set<Object>> myProblemsFromExternalSources = new ConcurrentHashMap<>();
-  private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10); // guarded by myCheckingQueue
+  private final Collection<VirtualFile> myCheckingQueue = new HashSet<>(10); // guarded by myCheckingQueue
 
   private final Project myProject;
 

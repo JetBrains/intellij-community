@@ -25,7 +25,8 @@ object WebServiceStatusManager {
         register(AnalyticsPlatformServiceStatus(registry.asString()))
         return
       }
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       LOG.error("No url for Analytics Platform web status. Set registry: $ANALYTICS_PLATFORM_URL_REGISTRY")
     }
     register(AnalyticsPlatformServiceStatus.withDefaultUrl())

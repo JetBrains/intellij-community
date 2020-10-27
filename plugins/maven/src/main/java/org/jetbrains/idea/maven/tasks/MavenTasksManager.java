@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.google.common.collect.Sets;
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -33,10 +32,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
@@ -75,10 +71,10 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   @Override
   public synchronized MavenTasksManagerState getState() {
     MavenTasksManagerState result = new MavenTasksManagerState();
-    result.afterCompileTasks = new THashSet<>(myState.afterCompileTasks);
-    result.beforeCompileTasks = new THashSet<>(myState.beforeCompileTasks);
-    result.afterRebuildTask = new THashSet<>(myState.afterRebuildTask);
-    result.beforeRebuildTask = new THashSet<>(myState.beforeRebuildTask);
+    result.afterCompileTasks = new HashSet<>(myState.afterCompileTasks);
+    result.beforeCompileTasks = new HashSet<>(myState.beforeCompileTasks);
+    result.afterRebuildTask = new HashSet<>(myState.afterRebuildTask);
+    result.beforeRebuildTask = new HashSet<>(myState.beforeRebuildTask);
     return result;
   }
 

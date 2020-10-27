@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
@@ -271,8 +270,8 @@ public final class GradleBuildSrcProjectsResolver {
       }
     }
     if (buildSrcModuleNode != null) {
-      Set<String> buildSrcRuntimeSourcesPaths = new THashSet<>();
-      Set<String> buildSrcRuntimeClassesPaths = new THashSet<>();
+      Set<String> buildSrcRuntimeSourcesPaths = new HashSet<>();
+      Set<String> buildSrcRuntimeClassesPaths = new HashSet<>();
 
       addSourcePaths(buildSrcRuntimeSourcesPaths, buildSrcModuleNode);
 
@@ -303,8 +302,8 @@ public final class GradleBuildSrcProjectsResolver {
           List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>(copyFrom.getClasspathEntries().size() + 1);
           classpathEntries.addAll(copyFrom.getClasspathEntries());
           classpathEntries.add(BuildScriptClasspathData.ClasspathEntry.create(
-            new THashSet<>(buildSrcRuntimeClassesPaths),
-            new THashSet<>(buildSrcRuntimeSourcesPaths),
+            new HashSet<>(buildSrcRuntimeClassesPaths),
+            new HashSet<>(buildSrcRuntimeSourcesPaths),
             Collections.emptySet()
           ));
 

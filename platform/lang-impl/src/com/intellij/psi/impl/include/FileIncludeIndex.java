@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.include;
 
@@ -13,23 +13,18 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Avdeev
  */
-public class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
-
+public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
   public static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   private static final int BASE_VERSION = 6;
@@ -108,7 +103,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileI
   @NotNull
   @Override
   public DataExternalizer<List<FileIncludeInfoImpl>> getValueExternalizer() {
-    return new DataExternalizer<List<FileIncludeInfoImpl>>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
@@ -191,7 +186,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileI
     @Override
     public Set<String> read(@NotNull DataInput in) throws IOException {
       int size = DataInputOutputUtil.readINT(in);
-      THashSet<String> result = new THashSet<>(size);
+      Set<String> result = new HashSet<>(size);
       for (int i = 0; i < size; i++) {
         result.add(IOUtil.readUTF(in));
       }

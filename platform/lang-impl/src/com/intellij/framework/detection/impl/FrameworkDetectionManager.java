@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -163,7 +162,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
     Set<String> detectorsToProcess;
     synchronized (myLock) {
-      detectorsToProcess = new OpenTHashSet<>(myDetectorsToProcess);
+      detectorsToProcess = new HashSet<>(myDetectorsToProcess);
       myDetectorsToProcess.clear();
     }
     if (detectorsToProcess.isEmpty()) {
@@ -288,12 +287,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   @TestOnly
   public List<? extends DetectedFrameworkDescription> getDetectedFrameworks() {
     return getValidDetectedFrameworks();
-  }
-
-  private static void ensureIndexIsUpToDate(@NotNull Project project, String[] detectors) {
-    for (String detectorId : detectors) {
-      FileBasedIndex.getInstance().getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
-    }
   }
 
   private static void ensureIndexIsUpToDate(@NotNull Project project, Collection<String> detectors) {

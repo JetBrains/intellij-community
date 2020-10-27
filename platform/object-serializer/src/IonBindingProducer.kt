@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.amazon.ion.Timestamp
-import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashMap
 import java.io.File
 import java.lang.reflect.*
 import java.nio.file.FileSystems
@@ -15,8 +13,8 @@ internal typealias RootBindingFactory = () -> Binding
 
 internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer() {
   companion object {
-    private val classToNestedBindingFactory = THashMap<Class<*>, NestedBindingFactory>(32, ContainerUtil.identityStrategy())
-    private val classToRootBindingFactory = THashMap<Class<*>, RootBindingFactory>(32, ContainerUtil.identityStrategy())
+    private val classToNestedBindingFactory = IdentityHashMap<Class<*>, NestedBindingFactory>(32)
+    private val classToRootBindingFactory = IdentityHashMap<Class<*>, RootBindingFactory>(32)
 
     init {
       // for root resolved factory doesn't make sense because root bindings will be cached
@@ -31,9 +29,8 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
 
       registerPrimitiveBindings(classToRootBindingFactory, classToNestedBindingFactory)
 
-      classToRootBindingFactory.forEachEntry { key, factory ->
+      for ((key, factory) in classToRootBindingFactory) {
         classToNestedBindingFactory.put(key) { factory() }
-        true
       }
     }
   }

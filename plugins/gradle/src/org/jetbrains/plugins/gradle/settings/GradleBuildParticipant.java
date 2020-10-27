@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -19,11 +19,11 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleBuildParticipant implements Serializable {
+public final class GradleBuildParticipant implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final String myProjectPath;
-  private final Map<File, ModuleData> moduleArtifactMap = new THashMap<>(new TObjectHashingStrategy<File>() {
+  private final Map<File, ModuleData> moduleArtifactMap = new THashMap<>(new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(File file) {
       return ExternalSystemUtil.fileHashCode(file);

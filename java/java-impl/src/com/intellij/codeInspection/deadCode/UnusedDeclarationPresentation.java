@@ -66,7 +66,7 @@ import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
-    ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+    ConcurrentCollectionFactory.createConcurrentIdentityMap();
   private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
 
   private final WeakUnreferencedFilter myFilter;

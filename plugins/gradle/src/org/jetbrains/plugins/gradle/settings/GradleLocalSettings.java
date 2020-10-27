@@ -5,17 +5,17 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 @State(name = "GradleLocalSettings", storages = @Storage(StoragePathMacros.CACHE_FILE))
-public class GradleLocalSettings extends AbstractExternalSystemLocalSettings<GradleLocalSettings.MyState>
+public final class GradleLocalSettings extends AbstractExternalSystemLocalSettings<GradleLocalSettings.MyState>
   implements PersistentStateComponent<GradleLocalSettings.MyState> {
 
   public GradleLocalSettings(@NotNull Project project) {
@@ -39,11 +39,11 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings<Gra
 
   public void setGradleHome(@NotNull String linkedProjectPath, @NotNull String gradleHome) {
     if (state.myGradleHomes == null) {
-      state.myGradleHomes = new THashMap<>();
+      state.myGradleHomes = new HashMap<>();
     }
     state.myGradleHomes.put(linkedProjectPath, gradleHome);
     if (state.myGradleVersions == null) {
-      state.myGradleVersions = new THashMap<>();
+      state.myGradleVersions = new HashMap<>();
     }
     state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
   }

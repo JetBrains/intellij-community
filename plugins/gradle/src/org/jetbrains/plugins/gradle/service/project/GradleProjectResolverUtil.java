@@ -22,8 +22,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
@@ -380,12 +378,12 @@ public final class GradleProjectResolverUtil {
       // skip already processed libraries
       Set<LibraryData> libsCache = context.getUserData(LIBRARIES_CACHE);
       if (libsCache == null) {
-        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, new THashSet<>(ContainerUtil.identityStrategy()));
+        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, Collections.newSetFromMap(new IdentityHashMap<>()));
       }
       if (!libsCache.add(libraryData)) return;
 
       pathsCache = context.getUserData(PATHS_CACHE);
-      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new THashMap<>());
+      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new HashMap<>());
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
@@ -394,7 +392,7 @@ public final class GradleProjectResolverUtil {
       // take already processed paths from cache
       Map<LibraryPathType, List<String>> collectedPaths = pathsCache == null ? null : pathsCache.get(path);
       if (collectedPaths == null) {
-        collectedPaths = new THashMap<>();
+        collectedPaths = new HashMap<>();
         if (pathsCache != null) {
           pathsCache.put(path, collectedPaths);
         }
@@ -439,7 +437,7 @@ public final class GradleProjectResolverUtil {
     final boolean[] sourceFound = {sourceResolved};
     final boolean[] docFound = {docResolved};
 
-    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (binaryFileParent.equals(dir)) {
