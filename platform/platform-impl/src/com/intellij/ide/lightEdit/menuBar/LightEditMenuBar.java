@@ -48,6 +48,8 @@ public final class LightEditMenuBar extends IdeMenuBar {
     );
     topGroup.add(
       createActionGroup(ActionsBundle.message("group.ViewMenu.text"),
+                        standardAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS),
+                        Separator.create(),
                         standardAction("EditorToggleShowWhitespaces"),
                         standardAction("EditorToggleShowLineNumbers")
       )
