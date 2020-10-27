@@ -6,6 +6,7 @@ import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAM
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
@@ -64,7 +65,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   }
 
   /**
-   * Defines the set of actions available for [introspector] on the remote machine. Instances of this class are remote target specific.
+   * Defines the set of actions available for [Introspector] on the remote machine. Instances of this class are remote target specific.
    * Currently only static inspection of the remote environment variables and launching and inspecting the output of the shell scripts is supported.
    */
   abstract class Introspectable {
@@ -96,9 +97,14 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   data class VolumeDescriptor(val type: VolumeType,
                               @Nls val wizardLabel: String,
                               @Nls val description: String,
+                              @NlsContexts.DialogTitle val browsingTitle: String,
                               @NonNls val defaultPath: String) {
 
-    constructor(typeId: String, @Nls wizardLabel: String, @Nls description: String, defaultPath: String) :
-      this(VolumeType(typeId), wizardLabel, description, defaultPath)
+    constructor(typeId: String,
+                @Nls wizardLabel: String,
+                @Nls description: String,
+                @NlsContexts.DialogTitle browsingTitle: String,
+                defaultPath: String) :
+      this(VolumeType(typeId), wizardLabel, description, browsingTitle, defaultPath)
   }
 }

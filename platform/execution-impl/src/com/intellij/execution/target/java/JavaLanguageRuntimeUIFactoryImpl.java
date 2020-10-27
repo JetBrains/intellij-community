@@ -3,12 +3,15 @@ package com.intellij.execution.target.java;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.options.BoundConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
   @Override
   @NotNull
-  public BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config, @NotNull TargetEnvironmentConfiguration target) {
-    return new JavaLanguageRuntimeUI(config, target);
+  public BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
+                                  @NotNull TargetEnvironmentConfiguration target,
+                                  @NotNull Project project) {
+    return new JavaLanguageRuntimeUI(config, target, project);
   }
 }
