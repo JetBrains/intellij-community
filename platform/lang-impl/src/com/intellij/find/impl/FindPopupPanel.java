@@ -718,7 +718,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myUsagePreviewTitle = new SimpleColoredComponent();
     myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
     myUsageViewPresentation = new UsageViewPresentation();
-    myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, Registry.is("ide.find.as.popup.editable.code")) {
       @Override
       public Dimension getPreferredSize() {
@@ -748,7 +747,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         }
         myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
         FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-        myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
         myUsagePreviewPanel.updateLayout(selectedUsages);
         myUsagePreviewTitle.clear();
         if (myUsagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
@@ -1215,7 +1213,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     final Ref<Integer> resultsCount = Ref.create(0);
     final AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
-    myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
 
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject,
                                                                                                FindBundle.message("find.usages.progress.title")) {

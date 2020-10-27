@@ -380,7 +380,6 @@ public final class FindInProjectUtil {
         presentation.setToolwindowTitle(FindBundle.message("replace.usage.view.toolwindow.title", stringToFind, stringToReplace, scope, contextText));
       }
       presentation.setSearchString(FindBundle.message("find.occurrences.search.string", stringToFind, searchContext.ordinal()));
-      presentation.setUsagesWord(FindBundle.message("occurrence"));
       presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
