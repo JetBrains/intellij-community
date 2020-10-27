@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -162,9 +161,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       }
     }
 
-    if (status == FileStatus.NOT_CHANGED ||
-        status == FileStatus.MODIFIED ||
-        status == ChangelistConflictFileStatusProvider.MODIFIED_OUTSIDE) {
+    if (status == FileStatus.NOT_CHANGED) {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
       if (vcs != null) {
         DiffProvider diffProvider = vcs.getDiffProvider();
