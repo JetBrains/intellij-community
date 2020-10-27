@@ -115,7 +115,7 @@ final class UpdateCheckerComponent {
     String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
     String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     String url = whatsNewUrl + WhatsNewAction.getEmbeddedSuffix();
-    HTMLEditorProvider.Companion.openEditor(project, title, url, null, WhatsNewAction.getTimeoutCallbackHTML(whatsNewUrl));
+    HTMLEditorProvider.openEditor(project, title, url, WhatsNewAction.getTimeoutCallbackHTML(whatsNewUrl));
     IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
   }
 

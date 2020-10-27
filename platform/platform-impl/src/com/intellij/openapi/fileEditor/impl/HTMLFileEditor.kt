@@ -21,31 +21,39 @@ import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 
-class HTMLFileEditor(url: String? = null, html: String? = null,
-                     var timeoutCallback: String? = EditorBundle.message("message.html.editor.timeout") ) : FileEditor {
-  private val htmlPanelComponent = JCEFHtmlPanel(null)
-  private val loadingPanel = JBLoadingPanel(BorderLayout(), this).apply { setLoadingText(CommonBundle.getLoadingTreeNodeText()) }
+internal class HTMLFileEditor private constructor() : FileEditor {
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
+  private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create()
 
-  private val multiPanel: MultiPanel = object : MultiPanel() {
+  private val multiPanel = object : MultiPanel() {
     override fun create(key: Int) = when (key) {
       LOADING_KEY -> loadingPanel
-      CONTENT_KEY -> htmlPanelComponent.component
-      else -> throw UnsupportedOperationException("Unknown key")
+      CONTENT_KEY -> contentPanel.component
+      else -> throw IllegalArgumentException("Unknown key: ${key}")
     }
   }
 
-  init {
-    if (url != null) { htmlPanelComponent.loadURL(url) }
-    if (html != null) { htmlPanelComponent.loadHTML(html) }
-    multiPanel.select(CONTENT_KEY, true)
+  private lateinit var fallback: String
+
+  constructor(html: String) : this() {
+    contentPanel.loadHTML(html)
+    fallback = ""
+  }
+
+  constructor(url: String, timeoutHtml: String? = null) : this() {
+    contentPanel.loadURL(url)
+    fallback = timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
   }
 
   init {
-    htmlPanelComponent.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
+    loadingPanel.setLoadingText(CommonBundle.getLoadingTreeNodeText())
+
+    contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: CefRequest.TransitionType?) {
-        alarm.addRequest({ htmlPanelComponent.setHtml(timeoutCallback!!)},
-                         Registry.intValue("html.editor.timeout", 10000))
+        if (fallback.isNotEmpty()) {
+          alarm.addRequest({ contentPanel.setHtml(fallback)}, Registry.intValue("html.editor.timeout", 10000))
+        }
       }
 
       override fun onLoadEnd(browser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
@@ -66,23 +74,23 @@ class HTMLFileEditor(url: String? = null, html: String? = null,
           }
         }
       }
-    }, htmlPanelComponent.cefBrowser)
+    }, contentPanel.cefBrowser)
+
+    multiPanel.select(CONTENT_KEY, true)
   }
 
-  override fun getComponent() = multiPanel
-  override fun getPreferredFocusedComponent() = multiPanel
-  override fun getName() = IdeBundle.message("tab.title.html.preview")
-  override fun setState(state: FileEditorState) {}
+  override fun getComponent(): MultiPanel = multiPanel
+  override fun getPreferredFocusedComponent(): MultiPanel = multiPanel
+  override fun getName(): String = IdeBundle.message("tab.title.html.preview")
+  override fun setState(state: FileEditorState) { }
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
   override fun <T : Any?> getUserData(key: Key<T>): T? = null
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) {}
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
+  override fun <T : Any?> putUserData(key: Key<T>, value: T?) { }
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
   override fun getCurrentLocation(): FileEditorLocation? = null
-  override fun dispose() {
-    alarm.dispose()
-  }
+  override fun dispose() = alarm.dispose()
 
   companion object {
     private const val LOADING_KEY = 1

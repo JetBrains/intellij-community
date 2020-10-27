@@ -97,7 +97,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
       public void actionPerformed(ActionEvent e) {
         String title = "What's new in " + ApplicationInfo.getInstance().getFullVersion();
         String url = myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix();
-        HTMLEditorProvider.Companion.openEditor(project, title, url, null, myNewBuild.getMessage());
+        HTMLEditorProvider.openEditor(project, title, url, myNewBuild.getMessage());
         close(OK_EXIT_CODE);
       }
     };

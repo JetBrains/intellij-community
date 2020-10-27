@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.fileEditor.FileEditor
@@ -8,35 +8,47 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DetailedDescription
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
-    HTMLFileEditor(file.getUserData(URL_KEY), file.getUserData(HTML_KEY), file.getUserData(TIMEOUT_CALLBACK))
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+    val html = file.getUserData(HTML_KEY)
+    val url = file.getUserData(URL_KEY)
+    val timeoutHtml = file.getUserData(TIMEOUT_HTML_KEY)
+    return if (html != null) HTMLFileEditor(html) else HTMLFileEditor(url!!, timeoutHtml)
+  }
 
-  override fun accept(project: Project, file: VirtualFile) = isHTMLEditor(file)
+  override fun accept(project: Project, file: VirtualFile): Boolean = isHTMLEditor(file)
 
-  override fun getEditorTypeId() = "html-editor"
+  override fun getEditorTypeId(): String = "html-editor"
 
-  override fun getPolicy() = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   companion object {
-    private val URL_KEY: Key<String> = Key.create("URL_KEY")
-    private val HTML_KEY: Key<String> = Key.create("HTML_KEY")
+    private val HTML_KEY: Key<String> = Key.create("html.editor.html.key")
+    private val URL_KEY: Key<String> = Key.create("html.editor.url.key")
+    private val TIMEOUT_HTML_KEY: Key<String> = Key.create("html.editor.timeout.text.key")
 
-    val TIMEOUT_CALLBACK: Key<String> = Key.create("TIMEOUT_CALLBACK")
-
-    fun openEditor(project: Project, title: String, url: String? = null, html: String? = null, timeoutCallback: String? = null) {
+    @JvmStatic
+    fun openEditor(project: Project, @DialogTitle title: String, @DetailedDescription html: String) {
       val file = LightVirtualFile(title)
-      if (url == null && html == null) return
-      if (url != null) { file.putUserData(URL_KEY, url) }
-      if (html != null) { file.putUserData(HTML_KEY, html) }
-      if (timeoutCallback != null) { file.putUserData(TIMEOUT_CALLBACK, timeoutCallback) }
-
+      file.putUserData(HTML_KEY, html)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
 
-    fun isHTMLEditor(file: VirtualFile) = file.getUserData(URL_KEY) != null || file.getUserData(HTML_KEY) != null
+    @JvmStatic
+    fun openEditor(project: Project, @DialogTitle title: String, url: String, @DetailedDescription timeoutHtml: String? = null) {
+      val file = LightVirtualFile(title)
+      file.putUserData(URL_KEY, url)
+      if (timeoutHtml != null) file.putUserData(TIMEOUT_HTML_KEY, timeoutHtml)
+      FileEditorManager.getInstance(project).openFile(file, true)
+    }
+
+    @JvmStatic
+    fun isHTMLEditor(file: VirtualFile): Boolean =
+      file.getUserData(URL_KEY) != null || file.getUserData(HTML_KEY) != null
   }
 }
