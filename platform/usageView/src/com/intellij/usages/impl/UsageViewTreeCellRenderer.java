@@ -123,7 +123,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+          append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
         }
         else {
           append(node.getGroup().getText(myView),
@@ -133,7 +133,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         int count = node.getRecursiveUsageCount();
         SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
-        append(FontUtil.spaceAndThinSpace() + myPresentation.formatUsageCount(count),
+        append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
       else if (treeNode instanceof UsageNode) {
