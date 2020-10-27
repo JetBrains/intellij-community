@@ -100,7 +100,7 @@ private val removedLinesTextAttributes = SimpleTextAttributes(SimpleTextAttribut
 
 internal class RepositoryNode(@NlsSafe val repositoryName: String,
                               val inCurrentProject: Boolean)
-  : ChangesBrowserNode<String>(repositoryName) {
+  : ChangesBrowserStringNode(repositoryName) {
   init {
     markAsHelperNode()
   }

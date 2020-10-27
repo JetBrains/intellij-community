@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,5 +54,10 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   @Nullable
   public String getTooltip() {
     return getUserObject().getDescription();
+  }
+
+  @Override
+  public @Nls String getTextPresentation() {
+    return getUserObject().toString();
   }
 }

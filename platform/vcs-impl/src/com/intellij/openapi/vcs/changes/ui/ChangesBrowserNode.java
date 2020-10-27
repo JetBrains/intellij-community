@@ -31,10 +31,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
-  @NonNls
-  private static final String ROOT_NODE_VALUE = "root";
-
+public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
   public static final Tag IGNORED_FILES_TAG = new VcsBundleTag("changes.nodetitle.ignored.files");
   public static final Tag LOCKED_FOLDERS_TAG = new VcsBundleTag("changes.nodetitle.locked.folders");
   public static final Tag LOGICALLY_LOCKED_TAG = new VcsBundleTag("changes.nodetitle.logicallt.locked.folders");
@@ -74,7 +71,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public static ChangesBrowserNode createRoot() {
-    ChangesBrowserNode root = createObject(ROOT_NODE_VALUE);
+    ChangesBrowserNode root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
@@ -114,11 +111,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
-  @NotNull
-  public static ChangesBrowserNode createObject(@NotNull Object userObject) {
-    return new ChangesBrowserNode<>(userObject);
-  }
-
   @Deprecated
   @NotNull
   public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
@@ -137,7 +129,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
     }
-    return new ChangesBrowserNode<>(userObject);
+    return new ChangesBrowserUserObjectNode(userObject);
   }
 
   @Override
@@ -301,9 +293,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @Nls
-  public String getTextPresentation() {
-    return userObject == null ? "" : userObject.toString();
-  }
+  public abstract String getTextPresentation();
 
   @Override
   public T getUserObject() {

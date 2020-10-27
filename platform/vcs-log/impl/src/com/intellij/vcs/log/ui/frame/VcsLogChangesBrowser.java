@@ -15,10 +15,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
@@ -406,7 +403,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
+  private class ChangesBrowserParentNode extends ChangesBrowserStringNode {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
     }
@@ -434,7 +431,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   private static class RootTag implements ChangesBrowserNode.Tag {
     private final @NotNull Hash myCommit;
-
     private final @NotNull @Nls String myText;
 
     RootTag(@NotNull Hash commit, @NotNull @Nls String text) {

@@ -62,6 +62,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1006,6 +1007,11 @@ public class ShelvedChangesViewManager implements Disposable {
       appendCount(renderer);
       String date = DateFormatUtil.formatPrettyDateTime(myList.DATE);
       renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+
+    @Override
+    public @Nls String getTextPresentation() {
+      return getUserObject().toString();
     }
   }
 

@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   @NonNls private static final String ELEMENT_BINARY = "binary";
 
   public Path path;
-  public String DESCRIPTION;
+  public @NlsSafe String DESCRIPTION;
   public Date DATE;
   private volatile List<ShelvedChange> myChanges;
   private List<ShelvedBinaryFile> myBinaryFiles;
@@ -48,14 +50,14 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   public ShelvedChangeList(@NotNull Path path,
-                           String description,
+                           @NlsSafe String description,
                            List<ShelvedBinaryFile> binaryFiles,
                            @NotNull List<ShelvedChange> shelvedChanges) {
     this(path, description, binaryFiles, shelvedChanges, System.currentTimeMillis());
   }
 
   ShelvedChangeList(@NotNull Path path,
-                    String description,
+                    @NlsSafe String description,
                     List<ShelvedBinaryFile> binaryFiles,
                     @NotNull List<ShelvedChange> shelvedChanges,
                     long time) {
@@ -130,6 +132,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
     }
   }
 
+  @Nls
   @Override
   public String toString() {
     return DESCRIPTION;
