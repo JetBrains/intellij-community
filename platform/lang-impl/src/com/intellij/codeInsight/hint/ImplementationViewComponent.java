@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -147,6 +148,7 @@ public class ImplementationViewComponent extends JPanel {
         int index1 = myFileChooser.getSelectedIndex();
         if (myIndex != index1) {
           myIndex = index1;
+          UIEventLogger.ImplementationViewComboBoxSelected.log(project);
           updateControls();
         }
       });
@@ -485,7 +487,8 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   public UsageView showInUsageView() {
-    return FindUtil.showInUsageView(null, collectElementsForShowUsages(), myTitle, myEditor.getProject());
+    UIEventLogger.ImplementationViewToolWindowOpened.log(project);
+    return FindUtil.showInUsageView(null, collectElementsForShowUsages(), myTitle, project);
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
