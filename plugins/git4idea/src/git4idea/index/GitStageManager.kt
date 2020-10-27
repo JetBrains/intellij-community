@@ -57,8 +57,9 @@ interface GitStagingAreaSettingsListener {
 
   companion object {
     @JvmField
-    val TOPIC: Topic<GitStagingAreaSettingsListener> = Topic.create("Git Staging Area Settings Changes",
-                                                                    GitStagingAreaSettingsListener::class.java)
+    val TOPIC: Topic<GitStagingAreaSettingsListener> = Topic(GitStagingAreaSettingsListener::class.java,
+                                                             Topic.BroadcastDirection.TO_DIRECT_CHILDREN,
+                                                             true)
   }
 }
 
