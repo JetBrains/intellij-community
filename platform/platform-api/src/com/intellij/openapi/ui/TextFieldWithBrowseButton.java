@@ -15,10 +15,13 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> implements TextAccessor {
@@ -118,6 +121,31 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
     @Override
     protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleTextFieldWithBrowseButton(super.getAccessibleContext());
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleTextFieldWithBrowseButton extends AccessibleContextDelegate {
+
+    AccessibleTextFieldWithBrowseButton(AccessibleContext context) {
+      super(context);
+    }
+
+    @Override
+    public void setAccessibleName(String s) {
+      getTextField().getAccessibleContext().setAccessibleName(s);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return TextFieldWithBrowseButton.this.getParent();
     }
   }
 }
