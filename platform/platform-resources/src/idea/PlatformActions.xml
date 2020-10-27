@@ -1047,6 +1047,9 @@
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
       </group>
       <group id="Internal.UI" popup="true">
+        <group id="Internal.UI.Demos" popup="true">
+          <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction" />
+        </group>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
