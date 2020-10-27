@@ -1212,7 +1212,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (renderer == null) renderer = new UsageTableCellRenderer(scope);
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
 
-    final AtomicInteger resultsCount = new AtomicInteger();
+    final Ref<Integer> resultsCount = Ref.create(0);
     final AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
     myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
@@ -1230,6 +1230,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           if(isCancelled()) {
             onStop(hash);
             return false;
+          }
+
+          synchronized (resultsCount) {
+            if (resultsCount.get() >= ShowUsagesAction.getUsagesPageSize()) {
+              onStop(hash);
+              return false;
+            }
+            resultsCount.set(resultsCount.get() + 1);
           }
 
           String file = lastUsageFileRef.get();
@@ -1263,7 +1271,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
             if (model.getRowCount() == 1) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
-            int occurrences = resultsCount.get();
+            int occurrences;
+            synchronized (resultsCount) {
+              occurrences = resultsCount.get();
+            }
             int filesWithOccurrences = resultsFilesCount.get();
             myCodePreviewComponent.setVisible(occurrences > 0);
             myReplaceAllButton.setEnabled(occurrences > 0);
@@ -1286,11 +1297,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
             }
           }, state);
 
-          boolean continueSearch = resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
-          if (!continueSearch) {
-            onStop(hash);
-          }
-          return continueSearch;
+          return true;
         });
       }
 
@@ -1309,7 +1316,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       public void onFinished() {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!isCancelled()) {
-            if (resultsCount.get() == 0) {
+            boolean isEmpty;
+            synchronized (resultsCount) {
+              isEmpty = resultsCount.get() == 0;
+            }
+            if (isEmpty) {
               showEmptyText(null);
             }
           }
