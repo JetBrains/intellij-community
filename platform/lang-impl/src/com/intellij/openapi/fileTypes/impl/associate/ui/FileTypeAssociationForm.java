@@ -99,12 +99,18 @@ public class FileTypeAssociationForm {
       }
     });
     myFileTypesList = checkBoxList;
+    if (!myFileTypesList.isEmpty()) myFileTypesList.setSelectedIndex(0);
     // noinspection rawtypes,unchecked,unchecked
     new ListSpeedSearch<>(myFileTypesList, (Function<Object, String>)o -> ((MyFileTypeItem)o).getText());
   }
 
   public JPanel getTopPanel() {
     return myTopPanel;
+  }
+
+  @Nullable
+  JComponent getPreferredFocusedComponent() {
+    return myFileTypesList;
   }
 
   public List<MyFileTypeItem> createItems() {
