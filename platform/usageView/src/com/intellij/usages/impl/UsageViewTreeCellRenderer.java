@@ -216,14 +216,13 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          result.append(StringUtil.capitalize(myPresentation.getUsagesWord()));
+          result.append("<root>");
         }
         else {
           result.append(node.getGroup().getText(myView));
         }
 
-        int count = node.getRecursiveUsageCount();
-        result.append(" (").append(myPresentation.formatUsageCount(count)).append(")");
+        result.append(" (").append(node.getRecursiveUsageCount()).append(")");
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
