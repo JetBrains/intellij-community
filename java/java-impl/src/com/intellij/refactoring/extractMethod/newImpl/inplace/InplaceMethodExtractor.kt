@@ -1,13 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -197,6 +202,15 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
     Disposer.register(templateState, { methodNameRange.dispose() })
+
+    val connection = myProject.messageBus.connect(templateState)
+    connection.subscribe(AnActionListener.TOPIC, object: AnActionListener {
+      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        if (action is GotoDeclarationAction){
+          templateState.gotoEnd(false)
+        }
+      }
+    })
   }
 
   private fun finishAndGotoDeclaration() {
