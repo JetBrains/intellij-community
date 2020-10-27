@@ -72,6 +72,8 @@ public final class IfConditionalModel extends ConditionalModel {
     if (model != null) return model;
     model = extractFromImplicitAssignment(ifStatement);
     if (model != null) return model;
+    model = extractFromOverwrittenDeclaration(ifStatement);
+    if (model != null) return model;
     model = extractFromImplicitReturn(ifStatement, allowOuterControlFlow);
     if (model != null) return model;
     model = extractFromReturn(ifStatement);
@@ -81,6 +83,33 @@ public final class IfConditionalModel extends ConditionalModel {
     model = extractFromImplicitYield(ifStatement);
     if (model != null) return model;
     return extractFromMethodCall(ifStatement);
+  }
+
+  private static @Nullable IfConditionalModel extractFromOverwrittenDeclaration(PsiIfStatement ifStatement) {
+    if (ifStatement.getElseBranch() != null) return null;
+    PsiStatement thenStatement = ifStatement.getThenBranch();
+    if (thenStatement == null) return null;
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
+    if (condition == null) return null;
+    PsiExpressionStatement thenBranch = tryCast(stripBraces(thenStatement), PsiExpressionStatement.class);
+    if (thenBranch == null) return null;
+    PsiDeclarationStatement prevStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(ifStatement), PsiDeclarationStatement.class);
+    if (prevStatement == null) return null;
+    PsiElement[] elements = prevStatement.getDeclaredElements();
+    if (elements.length != 1) return null;
+    PsiLocalVariable local = tryCast(elements[0], PsiLocalVariable.class);
+    if (local == null) return null;
+    PsiExpression initializer = local.getInitializer();
+    if (initializer == null || !ExpressionUtils.isSafelyRecomputableExpression(initializer)) return null;
+    PsiAssignmentExpression thenExpression = tryCast(thenBranch.getExpression(), PsiAssignmentExpression.class);
+    if (thenExpression == null || thenExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
+    PsiExpression thenRhs = thenExpression.getRExpression();
+    if (thenRhs == null) return null;
+    if (ExpressionUtils.resolveLocalVariable(thenExpression.getLExpression()) != local) return null;
+    PsiType elseType = initializer.getType();
+    PsiType thenType = thenExpression.getType();
+    if (elseType == null || !elseType.equals(thenType)) return null;
+    return new IfConditionalModel(condition, thenRhs, initializer, thenBranch, prevStatement, local.getType());
   }
 
   private static @Nullable IfConditionalModel extractFromImplicitAssignment(@NotNull PsiIfStatement ifStatement) {
