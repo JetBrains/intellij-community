@@ -10,18 +10,17 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
-import org.jetbrains.annotations.NotNull
 
 internal class ModuleIndexableFilesIterator(val module: Module) : IndexableFilesIterator {
   override fun getDebugName() = "Module '${module.name}'"
 
-  override fun getIndexingProgressText(): @NotNull String {
+  override fun getIndexingProgressText(): String {
     if (ModuleType.isInternal(module))
       return IndexingBundle.message("indexable.files.provider.indexing.internal.module.name")
     return IndexingBundle.message("indexable.files.provider.indexing.module.name", module.name)
   }
 
-  override fun getRootsScanningProgressText(): @NotNull String {
+  override fun getRootsScanningProgressText(): String {
     if (ModuleType.isInternal(module))
       return IndexingBundle.message("indexable.files.provider.scanning.internal.module.name")
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
