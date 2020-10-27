@@ -4,14 +4,12 @@ package com.intellij.ide.plugins
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.project.stateStore
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Predicate
 import javax.swing.JComponent
 
 @Service
@@ -54,7 +52,9 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         unloadPlugins(descriptors, project, parentComponent)
     }
 
-    /*
+    @JvmStatic
+    internal fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
+      /*
       model: enabled (descriptor, disabledList, load), enabled per project (descriptor, load)
       project opening: enabled per project (descriptor, load)
       project closing: disabled per project (descriptor, load iff not is disabled globally)
@@ -63,10 +63,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       try to open P2 (new window)
       how to enable the plugin?
       */
-    @JvmStatic
-    internal fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
-      descriptors.isEmpty() ||
-      DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
+
+      return descriptors.isEmpty() ||
+             DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
+    }
 
     @JvmStatic
     @JvmOverloads
@@ -75,22 +75,18 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       project: Project? = null,
       parentComponent: JComponent? = null,
     ): Boolean {
-      if (descriptors.isEmpty()) {
-        return true
-      }
-
       /*
       model: disabled (descriptor, disabledList, unload iff not is used), enabled per project (descriptor, unload if not is used)
       project opening: disabled per project (descriptor, unload if not is used)
       project closing: enabled per project (descriptor, unload ???)
        */
 
-      val predicate = enabledState(project)
-      return DynamicPlugins.unloadPlugins(
-        descriptors.filter { descriptor -> !predicate.test(descriptor.pluginId) },
-        project,
-        parentComponent,
-      ).requireRestartIfNecessary()
+      return descriptors.isEmpty() ||
+             DynamicPlugins.unloadPlugins(
+               descriptors.filter(shouldUnload(project)),
+               project,
+               parentComponent,
+             ).requireRestartIfNecessary()
     }
 
     class ProjectPluginTrackerManagerState : BaseState() {
@@ -99,14 +95,19 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
     }
 
-    // todo enabled globally
-    private fun enabledState(project: Project?) = Predicate { pluginId: PluginId ->
-      ProjectManager
+    private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
+      val managers = ProjectManager
         .getInstance()
         .openProjects
         .filterNot { it == project }
         .mapNotNull { createPluginTrackerOrNull(it) }
-        .any { it.isEnabled(pluginId) }
+        .toList()
+
+      return { descriptor ->
+        val pluginId = descriptor.pluginId
+        managers.all { !it.isEnabled(pluginId) } &&
+        (DisabledPluginsState.disabledPlugins().contains(pluginId) || managers.all { it.isDisabled(pluginId) })
+      }
     }
 
     private fun Boolean.requireRestartIfNecessary(): Boolean {
