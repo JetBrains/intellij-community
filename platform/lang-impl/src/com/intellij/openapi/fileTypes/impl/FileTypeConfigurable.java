@@ -249,6 +249,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (ftToEdit == null) ftToEdit = userFileType.clone();
     @SuppressWarnings({"unchecked", "rawtypes"}) TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     if (editor.showAndGet()) {
+      FileTypeConfigurableInteractions.fileTypeEdited.log();
       myOriginalToEditedMap.put(userFileType, ftToEdit);
     }
   }
@@ -256,6 +257,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeFileType() {
     FileType fileType = myRecognizedFileType.getSelectedFileType();
     if (fileType == null) return;
+    FileTypeConfigurableInteractions.fileTypeRemoved.log();
 
     myTempFileTypes.remove(fileType);
     if (fileType instanceof UserFileType) {
@@ -276,6 +278,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
     TypeEditor<AbstractFileType> editor = new TypeEditor<>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
     if (editor.showAndGet()) {
+      FileTypeConfigurableInteractions.fileTypeAdded.log();
       myTempFileTypes.add(type);
       updateFileTypeList();
       updateExtensionList();
@@ -293,6 +296,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editPattern(@Nullable String item) {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+
+    if (item == null) {
+      FileTypeConfigurableInteractions.patternAdded.log(type.getName());
+    }
+    else {
+      FileTypeConfigurableInteractions.patternEdited.log(type.getName());
+    }
 
     String title = item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
 
@@ -370,6 +380,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removePattern() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+    FileTypeConfigurableInteractions.patternRemoved.log(type.getName());
     String extension = myPatterns.removeSelected();
     if (extension == null) return;
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
@@ -381,6 +392,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeHashBang() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+    FileTypeConfigurableInteractions.hashbangRemoved.log(type.getName());
     String extension = myHashBangs.removeSelected();
     if (extension == null) return;
 
@@ -665,6 +677,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editHashBang(@Nullable("null means new") String oldHashBang) {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+
+    if (oldHashBang == null) {
+      FileTypeConfigurableInteractions.hashbangAdded.log(type.getName());
+    }
+    else {
+      FileTypeConfigurableInteractions.hashbangEdited.log(type.getName());
+    }
 
     String title = FileTypesBundle.message("filetype.edit.hashbang.title");
 
