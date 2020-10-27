@@ -19,7 +19,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
-  @NotNull private final String myProductCode;
+  private final @NotNull String myProductCode;
   private final int @NotNull [] myComponents;
 
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
@@ -35,8 +35,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return "__BUILD_NUMBER__".equals(value) || "__BUILD__".equals(value);
   }
 
-  @NotNull
-  public String getProductCode() {
+  public @NotNull String getProductCode() {
     return myProductCode;
   }
 
@@ -57,31 +56,24 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return false;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public BuildNumber withoutProductCode() {
+  public @NotNull BuildNumber withoutProductCode() {
     return myProductCode.isEmpty() ? this : new BuildNumber("", myComponents);
   }
 
-  @NotNull
-  @NlsSafe
-  public String asString() {
+  public @NotNull @NlsSafe String asString() {
     return asString(true, true);
   }
 
-  @NotNull
-  @NlsSafe
-  public String asStringWithoutProductCode() {
+  public @NotNull @NlsSafe String asStringWithoutProductCode() {
     return asString(false, true);
   }
 
-  @NotNull
-  public String asStringWithoutProductCodeAndSnapshot() {
+  public @NotNull String asStringWithoutProductCodeAndSnapshot() {
     return asString(false, false);
   }
 
-  @NotNull
-  private String asString(boolean includeProductCode, boolean withSnapshotMarker) {
+  private @NotNull String asString(boolean includeProductCode, boolean withSnapshotMarker) {
     StringBuilder builder = new StringBuilder();
 
     if (includeProductCode && !myProductCode.isEmpty()) {
@@ -107,19 +99,17 @@ public final class BuildNumber implements Comparable<BuildNumber> {
    * Attempts to parse build number from the specified string.
    * Returns {@code null} if the string is not a valid build number.
    */
-  @Nullable
-  public static BuildNumber fromStringOrNull(@NotNull @NonNls String version) {
+  public static @Nullable BuildNumber fromStringOrNull(@NotNull @NonNls String version) {
     try {
       return fromString(version);
-    } catch (RuntimeException ignored) {
+    }
+    catch (RuntimeException ignored) {
       return null;
     }
   }
 
   public static @Nullable BuildNumber fromString(@Nullable @NonNls String version) {
-    if (version == null) {
-      return null;
-    }
+    if (version == null) return null;
     version = version.trim();
     return version.isEmpty() ? null : fromString(version, null, null);
   }
@@ -292,8 +282,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
    * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static BuildNumber currentVersion() {
+  public static @NotNull BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
   }
 }

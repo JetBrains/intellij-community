@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -15,40 +15,34 @@ public interface Url {
   /**
    * System-independent path
    */
-  @NotNull
-  String getPath();
+  @NotNull String getPath();
 
   @Contract(pure = true)
   boolean isInLocalFileSystem();
 
   @NlsSafe String toDecodedForm();
 
-  @NotNull
-  String toExternalForm();
+  @NotNull String toExternalForm();
 
-  @Nullable
-  String getScheme();
+  @Nullable String getScheme();
 
-  @Nullable
-  String getAuthority();
+  @Nullable String getAuthority();
 
-  @Nullable
-  String getParameters();
+  @Nullable String getParameters();
 
   boolean equalsIgnoreParameters(@Nullable Url url);
 
   boolean equalsIgnoreCase(@Nullable Url url);
 
-  @NotNull
-  Url trimParameters();
+  @NotNull Url trimParameters();
 
   int hashCodeCaseInsensitive();
 
-  Url resolve(@NotNull String subPath);
+  @NotNull Url resolve(@NotNull String subPath);
 
   /**
    * Creates a new url with added parameters.
    */
-  @NotNull
-  Url addParameters(@NotNull Map<String, String> parameters);
+  @Contract(pure = true)
+  @NotNull Url addParameters(@NotNull Map<String, String> parameters);
 }
