@@ -35,11 +35,11 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   override fun createConfigurable(project: Project,
                                   config: JavaLanguageRuntimeConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
-    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
+    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target, project)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): JavaLanguageRuntimeConfiguration? {
-    return target.runtimes.findByType<JavaLanguageRuntimeConfiguration>()
+    return target.runtimes.findByType()
   }
 
   override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector<JavaLanguageRuntimeConfiguration>? {
@@ -101,18 +101,21 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     val APPLICATION_FOLDER_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":appFolder",
                                                      ExecutionBundle.message("java.language.runtime.application.folder.label"),
                                                      ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                                                     ExecutionBundle.message("java.language.runtime.application.folder.browsing.title"),
                                                      "/app")
 
     @JvmStatic
     val CLASS_PATH_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
                                              ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
                                              ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+                                             ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
                                              "")
 
     @JvmStatic
     val AGENTS_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
                                          ExecutionBundle.message("java.language.runtime.agents.volume.label"),
                                          ExecutionBundle.message("java.language.runtime.agents.volume.description"),
+                                         ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
                                          "")
   }
 }
