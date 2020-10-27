@@ -98,6 +98,8 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         editor.project?.let { p ->
+          if (!ReaderModeSettings.instance(p).enabled) return@let
+
           val connection = p.messageBus.connect(p)
           val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
                               .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
