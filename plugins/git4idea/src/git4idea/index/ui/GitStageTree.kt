@@ -74,6 +74,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
   init {
     isKeepTreeState = true
+    isScrollToSelection = false
     setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
     addMouseMotionListener(MyMouseMotionListener())
     MyClickListener().installOn(this)
