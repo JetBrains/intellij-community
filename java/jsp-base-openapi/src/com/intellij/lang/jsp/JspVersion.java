@@ -72,7 +72,7 @@ public interface JspVersion {
     }
   };
 
-  JspVersion MAX_VERSION = JSP_3_0;
+  JspVersion MAX_VERSION = JSP_2_3;
 
   String getNumber();
 
