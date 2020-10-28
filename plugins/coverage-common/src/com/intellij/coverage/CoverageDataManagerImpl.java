@@ -113,7 +113,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<>();
+  private final Map<Editor, SrcFileAnnotatorBase> myAnnotators = new HashMap<>();
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -487,7 +487,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotator annotator;
+          SrcFileAnnotatorBase annotator;
           synchronized (ANNOTATORS_LOCK) {
             annotator = myAnnotators.remove(textEditor);
           }
@@ -501,9 +501,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotator annotator = getAnnotator(textEditor);
+          SrcFileAnnotatorBase annotator = getAnnotator(textEditor);
           if (annotator == null) {
-            annotator = new SrcFileAnnotator(psiFile, textEditor);
+            annotator = engine.createSrcFileAnnotator(psiFile, textEditor);
             synchronized (ANNOTATORS_LOCK) {
               myAnnotators.put(textEditor, annotator);
             }
@@ -611,7 +611,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Nullable
-  public SrcFileAnnotator getAnnotator(Editor editor) {
+  public SrcFileAnnotatorBase getAnnotator(Editor editor) {
     synchronized (ANNOTATORS_LOCK) {
       return myAnnotators.get(editor);
     }
@@ -619,7 +619,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   public void disposeAnnotators() {
     synchronized (ANNOTATORS_LOCK) {
-      for (SrcFileAnnotator annotator : myAnnotators.values()) {
+      for (SrcFileAnnotatorBase annotator : myAnnotators.values()) {
         if (annotator != null) {
           Disposer.dispose(annotator);
         }
@@ -694,12 +694,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             return;
           }
 
-          SrcFileAnnotator annotator = manager.getAnnotator(editor);
+          SrcFileAnnotatorBase annotator = manager.getAnnotator(editor);
           if (annotator == null) {
-            annotator = new SrcFileAnnotator(psiFile, editor);
+            annotator = engine.createSrcFileAnnotator(psiFile, editor);
           }
 
-          final SrcFileAnnotator finalAnnotator = annotator;
+          final SrcFileAnnotatorBase finalAnnotator = annotator;
 
           synchronized (manager.ANNOTATORS_LOCK) {
             manager.myAnnotators.put(editor, finalAnnotator);
@@ -728,7 +728,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
       try {
         if (manager == null) return;
-        final SrcFileAnnotator fileAnnotator;
+        final SrcFileAnnotatorBase fileAnnotator;
         synchronized (manager.ANNOTATORS_LOCK) {
           fileAnnotator = manager.myAnnotators.remove(editor);
         }
