@@ -348,7 +348,7 @@ public final class PythonSdkType extends SdkType {
     else {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
-    PythonSdkUpdater.updateOrShowError(sdk, null, project, ownerComponent);
+    PythonSdkUpdater.updateOrShowError(sdk, project, ownerComponent);
   }
 
   @Override
@@ -442,7 +442,7 @@ public final class PythonSdkType extends SdkType {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     final String binaryPath = sdk.getHomePath();
-    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, new ArrayList<String>());
+    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, new ArrayList<>());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                PySdkUtil.activateVirtualEnv(sdk), MINUTE);
     if (!runResult.checkSuccess(LOG)) {

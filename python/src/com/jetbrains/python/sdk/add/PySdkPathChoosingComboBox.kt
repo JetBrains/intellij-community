@@ -50,7 +50,7 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: Vi
 
   init {
     childComponent.apply {
-      renderer = PySdkListCellRenderer(null)
+      renderer = PySdkListCellRenderer()
       ComboboxSpeedSearch(this)
     }
     addActionListener {
