@@ -74,7 +74,6 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -1886,6 +1885,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public void invalidateCaches() {
     CorruptionMarker.requestInvalidation();
+  }
+
+  @Override
+  public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
+    if (!file.isValid() ||
+        !(file instanceof VirtualFileSystemEntry) ||
+        !(((VirtualFileSystemEntry)file).isFileIndexed())) return false;
+
+    return IndexingStamp.getNontrivialFileIndexedStates(((VirtualFileSystemEntry)file).getId()).contains(indexId);
   }
 
   @Override
