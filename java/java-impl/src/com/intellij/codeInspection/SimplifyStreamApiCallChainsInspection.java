@@ -2230,12 +2230,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_MAP, mapCall -> {
-        final PsiMethodCallExpression candidateToRemove = findCandidateToRemove(mapCall);
-        if (candidateToRemove == null) return null;
+        if (mapCall.getTypeArguments().length != 0) return null;
+        final PsiMethodCallExpression filterCall = getQualifierMethodCall(mapCall);
+        if (filterCall == null || filterCall.getTypeArguments().length != 0) return null;
         final PsiExpression mapArg = skipParenthesizedExprDown(mapCall.getArgumentList().getExpressions()[0]);
         final PsiMethodReferenceExpression mapMethodRef = tryCast(mapArg, PsiMethodReferenceExpression.class);
         if (mapMethodRef != null) {
-          final PsiMethod resolvedCandidateToRemove = candidateToRemove.resolveMethod();
+          final PsiMethod resolvedCandidateToRemove = findAndResolveCandidateToRemove(mapCall);
           if (resolvedCandidateToRemove == null) return null;
           boolean isStatic = resolvedCandidateToRemove.hasModifierProperty(PsiModifier.STATIC);
           boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(mapMethodRef);
@@ -2249,7 +2250,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         final PsiElement body = skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
         final PsiMethodCallExpression calledMethodInMap = findSingleCalledMethod(mapArg);
         if (calledMethodInMap == null || body != calledMethodInMap) return null;
-        final PsiMethod resolvedCandidateToRemove = candidateToRemove.resolveMethod();
+        final PsiMethod resolvedCandidateToRemove = findAndResolveCandidateToRemove(mapCall);
         if (resolvedCandidateToRemove == null) return null;
         final PsiManager manager = resolvedCandidateToRemove.getManager();
         if (manager.areElementsEquivalent(resolvedCandidateToRemove, calledMethodInMap.resolveMethod())) {
@@ -2257,6 +2258,19 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         }
         return null;
       });
+    }
+
+    private static PsiMethod findAndResolveCandidateToRemove(PsiMethodCallExpression mapCall) {
+      final PsiMethodCallExpression candidateToRemove = findCandidateToRemove(mapCall);
+      if (candidateToRemove == null) return null;
+      final PsiType type = StreamApiUtil.getStreamElementType(mapCall.getType());
+      if (type == null) return null;
+      final PsiMethod resolvedCandidateToRemove = candidateToRemove.resolveMethod();
+      if (resolvedCandidateToRemove == null) return null;
+      final PsiType candidateToRemoveType = resolvedCandidateToRemove.getReturnType();
+      if (candidateToRemoveType == null) return null;
+      if (!type.equals(candidateToRemoveType) && !candidateToRemoveType.equals(PsiPrimitiveType.getUnboxedType(type))) return null;
+      return resolvedCandidateToRemove;
     }
 
     private static PsiMethodCallExpression findCandidateToRemove(PsiMethodCallExpression mapCall) {

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 class X {
-  void test2(List<List<String>> list) {
+  void test(List<List<String>> list) {
     list.stream().filter((List<String> l) -> l.toString().isEmpty()).map<caret>(l -> l.toString()).collect(Collectors.toList());
   }
 }
