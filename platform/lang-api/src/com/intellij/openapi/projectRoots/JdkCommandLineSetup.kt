@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.target.LanguageRuntimeType.VolumeType
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -61,8 +62,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
-  private val projectHomeOnTarget = VolumeDescriptor(
-    LanguageRuntimeType.VolumeType("projectHomeOnTarget"), "", "", "", "/app")
+  private val projectHomeOnTarget = VolumeDescriptor(VolumeType(JdkCommandLineSetup::class.java.simpleName + ":projectHomeOnTarget"),
+                                                     "", "", "",
+                                                     target?.projectRootOnTarget ?: "")
 
   /**
    * @param uploadPathIsFile
@@ -267,7 +269,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
-      
+
     }
     catch (e: IOException) {
       throwUnableToCreateTempFile(e)
