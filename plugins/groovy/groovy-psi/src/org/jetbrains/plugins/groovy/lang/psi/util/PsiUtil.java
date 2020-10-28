@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -74,13 +75,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.NullArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
@@ -1469,22 +1468,14 @@ public final class PsiUtil {
     if (argumentList == null || !argumentList.isEmpty()) {
       return false;
     }
-    PsiMethod method = call.resolveMethod();
-    if (method == null) {
+    GroovyResolveResult result = call.advancedResolve();
+    if (!(result instanceof GroovyMethodResult)) {
       return false;
     }
-    PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 1) {
+    GroovyMethodCandidate candidate = ((GroovyMethodResult)result).getCandidate();
+    if (candidate == null) {
       return false;
     }
-    PsiParameter parameter = parameterList.getParameter(0);
-    if (parameter == null || parameter.isVarArgs() || (parameter instanceof GrParameter && ((GrParameter)parameter).isOptional())) {
-      return false;
-    }
-    PsiTypeElement typeElement = parameter.getTypeElement();
-    if (typeElement != null && !(typeElement.getType() instanceof PsiClassType)) {
-      return false;
-    }
-    return true;
+    return candidate.getArgumentMapping() instanceof NullArgumentMapping<?>;
   }
 }
