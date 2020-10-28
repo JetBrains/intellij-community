@@ -105,7 +105,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     boolean hasErrors = false;
     if (selected instanceof Target) {
       Target target = (Target)selected;
-      target.revalidate();
+      target.revalidateConfiguration();
       hasErrors = target.hasErrors();
     }
     putClientProperty("JComponent.outline", hasErrors ? "error" : null);
@@ -143,10 +143,10 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     private Target(TargetEnvironmentConfiguration config) {
       super(config.getDisplayName(), TargetEnvironmentConfigurationKt.getTargetType(config).getIcon());
       myConfig = config;
-      revalidate();
+      revalidateConfiguration();
     }
 
-    public void revalidate() {
+    public void revalidateConfiguration() {
       try {
         myConfig.validateConfiguration();
         myValidationInfo = null;
