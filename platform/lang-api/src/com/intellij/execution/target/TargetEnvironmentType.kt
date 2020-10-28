@@ -4,6 +4,7 @@ package com.intellij.execution.target
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.execution.target.TargetEnvironmentType.Companion.EXTENSION_NAME
 import com.intellij.ide.wizard.AbstractWizardStepEx
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -43,6 +44,19 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<TargetEnvironmentType<*>>("com.intellij.executionTargetType")
+
+    @JvmStatic
+    fun <Type, Config, State> duplicateTargetConfiguration(type: Type, template: Config): Config
+      where Config : PersistentStateComponent<State>,
+            Config : TargetEnvironmentConfiguration,
+            Type : TargetEnvironmentType<Config> {
+
+      return duplicatePersistentComponent(type, template).also { copy ->
+        template.runtimes.resolvedConfigs().map { next ->
+          copy.runtimes.addConfig(next.getRuntimeType().duplicateConfig(next))
+        }
+      }
+    }
   }
 
   /**

@@ -32,7 +32,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                   defaultLanguage: LanguageRuntimeType<*>?) = WslTargetConfigurable(config)
 
   override fun duplicateConfig(config: WslTargetEnvironmentConfiguration): WslTargetEnvironmentConfiguration =
-    duplicatePersistentComponent(this, config)
+    duplicateTargetConfiguration(this, config)
 
   companion object {
     const val TYPE_ID = "wsl"
