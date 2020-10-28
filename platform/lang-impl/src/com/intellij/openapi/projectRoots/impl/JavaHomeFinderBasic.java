@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -26,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.util.Collections.emptySet;
 
@@ -181,12 +184,14 @@ public class JavaHomeFinderBasic {
   /**
    * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
    */
-  private @NotNull Set<String> findJavaInstalledBySdkMan() {
+  private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
     Path candidatesDir = findSdkManCandidatesDir();
     if (candidatesDir == null) return emptySet();
     Path javasDir = candidatesDir.resolve("java");
     if (!isDirectory(javasDir)) return emptySet();
-    return scanAll(javasDir, true);
+    //noinspection UnnecessaryLocalVariable
+    var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
+    return homes;
   }
 
   @Nullable
@@ -222,4 +227,38 @@ public class JavaHomeFinderBasic {
     // no chances
     return null;
   }
+
+  private @NotNull Set<@NotNull String> listJavaHomeDirsInstalledBySdkMan(@NotNull Path javasDir) {
+    var mac = SystemInfo.isMac;
+    var result = new HashSet<@NotNull String>();
+
+    try {
+      var innerDirectories = Files.list(javasDir).filter(d -> isDirectory(d)).collect(Collectors.toList());
+      for (Path innerDir: innerDirectories) {
+        var home = innerDir;
+        var releaseFile = home.resolve("release");
+        if (!exists(releaseFile)) continue;
+        if (mac && Files.isSymbolicLink(releaseFile) && home.getFileName().toString().contains("zulu")) {
+          try {
+            var realReleaseFile = releaseFile.toRealPath();
+            if (!exists(realReleaseFile)) { log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile.toString()); continue; }
+            var realHome = realReleaseFile.getParent();
+            if (realHome == null) { log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile.toString()); continue; }
+            home = realHome;
+          }
+          catch (IOException ioe) {
+            log.warn("Failed to resolve the target file (exception) for: " + releaseFile.toString() + ": " + ioe.getMessage());
+          }
+        }
+        result.add(home.toString());
+      }
+    }
+    catch (IOException ioe) {
+      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: "+ioe.getMessage(), ioe);
+      return emptySet();
+    }
+
+    return result;
+  }
+
 }
