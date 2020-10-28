@@ -36,17 +36,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     }
 
     @JvmField
-    val NOTIFICATION_ID = object : StringEventField("display_id") {
-      override val validationRule: List<String>
-        get() {
-          val validationRules = NotificationIdsHolder.EP_NAME.extensionList.stream()
-            .flatMap { holder: NotificationIdsHolder -> holder.notificationIds.stream() }
-            .collect(Collectors.toList())
-          validationRules.add(NotificationCollector.UNKNOWN)
-          validationRules.add("{util#notification_display_id}")
-          return validationRules
-        }
-    }
+    val NOTIFICATION_ID = NotificationIdField()
 
     @JvmField
     val ADDITIONAL = ObjectEventField("additional", NOTIFICATION_ID)
@@ -89,11 +79,22 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
       return GROUP.registerVarargEvent(
         eventId,
         ID,
-        NOTIFICATION_ID,
+        ADDITIONAL,
         NOTIFICATION_GROUP_ID,
         EventFields.PluginInfo,
         *extraFields
       )
     }
+  }
+
+  class NotificationIdField : StringEventField("display_id") {
+    override val validationRule: List<String>
+      get() {
+        val validationRules = NotificationIdsHolder.EP_NAME.extensionList.stream()
+          .flatMap { holder: NotificationIdsHolder -> holder.notificationIds.stream() }
+          .collect(Collectors.toList())
+        validationRules.add(NotificationCollector.UNKNOWN)
+        return listOf("{enum:${validationRules.joinToString("|")}}", "{util#notification_display_id}")
+      }
   }
 }
