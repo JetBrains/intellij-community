@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -101,6 +102,46 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             task(d, componentManager.getContainerDescriptor(d))
             assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
           }
+        }
+      }
+    }
+
+    // not as file level function to avoid scope cluttering
+    @ApiStatus.Internal
+    fun createAllServices(componentManager: ComponentManagerImpl) {
+      @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+      val badServices = java.util.Set.of(
+        "com.intellij.usageView.impl.UsageViewContentManagerImpl",
+        "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
+        "org.jetbrains.plugins.grails.runner.GrailsConsole"
+      )
+      for (o in componentManager.picoContainer.unsafeGetAdapters()) {
+        if (o !is ServiceComponentAdapter) {
+          continue
+        }
+
+        val implementation = o.descriptor.serviceImplementation
+        try {
+          if (implementation == "org.jetbrains.plugins.groovy.mvc.MvcConsole") {
+            // NPE in RunnerContentUi.setLeftToolbar
+            continue
+          }
+          if (implementation == "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService") {
+            // requires read action
+            continue
+          }
+
+          if (badServices.contains(implementation)) {
+            invokeAndWaitIfNeeded {
+              o.getInstance<Any>(componentManager, null)
+            }
+          }
+          else {
+            o.getInstance<Any>(componentManager, null)
+          }
+        }
+        catch (e: Throwable) {
+          LOG.error("Cannot create $implementation", e)
         }
       }
     }
@@ -674,6 +715,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return result
   }
 
+  final override fun <T : Any> loadClass(className: String, pluginDescriptor: PluginDescriptor): Class<T> {
+    @Suppress("UNCHECKED_CAST")
+    return resolveClass(className, pluginDescriptor) as Class<T>
+  }
+
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
     checkCanceledIfNotInClassInit()
 
@@ -684,7 +730,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         return constructor.newInstance()
       }
       else {
-        val constructors = aClass.declaredConstructors
+        val constructors: Array<Constructor<*>> = aClass.declaredConstructors
         var constructor: Constructor<*>? = if (constructors.size > 1) {
           // see ConfigurableEP - prefer constructor that accepts our instance
           constructors.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0].isAssignableFrom(javaClass) }
@@ -695,7 +741,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
         if (constructor == null) {
           constructors.sortBy { it.parameterCount }
-          constructor = constructors.first()!!
+          constructor = constructors.first()
         }
 
         constructor.isAccessible = true
@@ -717,7 +763,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         throw e
       }
 
-      val message = "Cannot create class ${aClass.name}"
+      val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
       if (pluginId == null) {
         throw PluginException.createByClass(message, e, aClass)
       }
@@ -736,53 +782,27 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
     get() = true
 
-  final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
-    val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")
-    if (className == null) {
-      throw PluginException("implementation class is not specified", pluginId)
-    }
-
-    val aClass = try {
-      @Suppress("UNCHECKED_CAST")
-      Class.forName(className, true, pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader) as Class<T>
-    }
-    catch (e: Throwable) {
-      throw PluginException(e, pluginId)
-    }
-
+  final override fun <T : Any> instantiateClass(className: String, pluginDescriptor: PluginDescriptor): T {
+    val pluginId = pluginDescriptor.pluginId!!
     try {
-      return instantiateClass(aClass, pluginId)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: ExtensionNotApplicableException) {
-      throw e
+      @Suppress("UNCHECKED_CAST")
+      return instantiateClass(resolveClass(className, pluginDescriptor) as Class<T>, pluginId)
     }
     catch (e: Throwable) {
       when {
+        e is PluginException || e is ExtensionNotApplicableException || e is ProcessCanceledException -> throw e
         e.cause is NoSuchMethodException || e.cause is IllegalArgumentException -> {
-          val exception = PluginException("Class constructor must not have parameters: $className", pluginId)
-          if ((pluginDescriptor?.isBundled == true) || getApplication()?.isUnitTestMode == true) {
-            LOG.error(exception)
-          }
-          else {
-            LOG.warn(exception)
-          }
+          throw PluginException("Class constructor must not have parameters: $className", e, pluginId)
         }
-        e is PluginException -> throw e
-        else -> throw if (pluginDescriptor == null) PluginException.createByClass(e, aClass)
-        else PluginException(e, pluginDescriptor.pluginId)
+        else -> throw PluginException(e, pluginDescriptor.pluginId)
       }
     }
-
-    return instantiateClassWithConstructorInjection(aClass, aClass, pluginId)
   }
 
   final override fun createListener(descriptor: ListenerDescriptor): Any {
     val pluginDescriptor = descriptor.pluginDescriptor
     val aClass = try {
-      Class.forName(descriptor.listenerClassName, true, pluginDescriptor.pluginClassLoader)
+      resolveClass(descriptor.listenerClassName, pluginDescriptor)
     }
     catch (e: Throwable) {
       throw PluginException("Cannot create listener ${descriptor.listenerClassName}", e, pluginDescriptor.pluginId)
@@ -1074,4 +1094,15 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
 
 internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
   return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
+}
+
+private fun resolveClass(className: String, pluginDescriptor: PluginDescriptor): Class<*> {
+  // maybe null in unit tests
+  val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
+  if (classLoader is PluginAwareClassLoader.SubClassLoader) {
+    return classLoader.loadOrDelegate(className)
+  }
+  else {
+    return Class.forName(className, true, classLoader)
+  }
 }

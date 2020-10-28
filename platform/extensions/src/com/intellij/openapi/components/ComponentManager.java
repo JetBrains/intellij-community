@@ -167,12 +167,13 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
     return new RuntimeException(message);
   }
 
-  // todo make pluginDescriptor as not-null
   @ApiStatus.Internal
-  default @NotNull <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+  <@NotNull T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+
+  @ApiStatus.Internal
+  default <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     try {
-      //noinspection unchecked
-      return (T)ReflectionUtil.newInstance(Class.forName(name));
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);

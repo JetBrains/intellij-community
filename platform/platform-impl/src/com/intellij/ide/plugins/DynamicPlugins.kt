@@ -69,6 +69,7 @@ import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.WeakList
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
@@ -519,6 +520,7 @@ object DynamicPlugins {
     }
 
     var classLoaderUnloaded: Boolean
+    val classLoaders = WeakList<PluginClassLoader>()
     try {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
@@ -531,31 +533,35 @@ object DynamicPlugins {
         // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
         val forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
         try {
+          (pluginDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
+            classLoaders.add(it)
+          }
           // https://youtrack.jetbrains.com/issue/IDEA-245031
           // mark plugin classloaders as being unloaded to ensure that new extension instances will be not created during unload
           setClassLoaderState(pluginDescriptor, PluginClassLoader.UNLOAD_IN_PROGRESS)
 
           processLoadedOptionalDependenciesOnPlugin(pluginId) { mainDescriptor, subDescriptor ->
-            // must be before unloadPluginDescriptorNotRecursively as this method nullize classloader
-            val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader as? PluginClassLoader
+            val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader
             subDescriptor?.let { unloadPluginDescriptorNotRecursively(it) }
-
-            var detached: Boolean? = false
-            if (pluginDescriptor.pluginClassLoader is PluginClassLoader) {
-              detached = classLoader?.detachParent(pluginDescriptor.pluginClassLoader)
+            // this additional code is required because in unit tests PluginClassLoader is not used
+            if (subDescriptor != null && mainDescriptor !== subDescriptor) {
+              subDescriptor.classLoader = null
             }
-            if (detached != true) {
-              LOG.info("Failed to detach classloader of $pluginId from classloader of ${(subDescriptor ?: mainDescriptor).pluginId}")
+
+            if (pluginDescriptor.pluginClassLoader is PluginClassLoader && classLoader is PluginClassLoader) {
+              LOG.info("Detach classloader ${pluginDescriptor.pluginClassLoader} from ${classLoader}")
+              if (subDescriptor != null && mainDescriptor != subDescriptor && classLoader is ClassLoaderConfigurator.SubPluginClassLoader) {
+                classLoaders.add(classLoader)
+                classLoader.state = PluginClassLoader.UNLOAD_IN_PROGRESS
+              }
+              else if (!classLoader.detachParent(pluginDescriptor.pluginClassLoader)) {
+                LOG.warn("Classloader ${pluginDescriptor.pluginClassLoader} doesn't have ${classLoader} as parent")
+              }
             }
             true
           }
 
-          if (pluginDescriptor.pluginClassLoader is PluginClassLoader) {
-            IconLoader.detachClassLoader(pluginDescriptor.pluginClassLoader)
-            Language.unregisterLanguages(pluginDescriptor.pluginClassLoader)
-          }
-
-          pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker()) }
+          pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker(), classLoaders) }
           unloadPluginDescriptorNotRecursively(pluginDescriptor)
 
           app.extensionArea.clearUserCache()
@@ -573,6 +579,10 @@ object DynamicPlugins {
           DecodeDefaultsUtil.clearResourceCache()
           LaterInvocator.purgeExpiredItems()
 
+          for (classLoader in classLoaders) {
+            IconLoader.detachClassLoader(classLoader)
+            Language.unregisterLanguages(classLoader)
+          }
           serviceIfCreated<IconDeferrer>()?.clearCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
@@ -612,7 +622,12 @@ object DynamicPlugins {
         classLoaderUnloaded = true
       }
       else {
-        classloadersFromUnloadedPlugins.put(pluginId, pluginDescriptor.pluginClassLoader as? PluginClassLoader)
+        for (classLoader in classLoaders) {
+          classloadersFromUnloadedPlugins.put(pluginId, classLoader)
+        }
+        ClassLoaderTreeChecker(pluginDescriptor, classLoaders).checkThatClassLoaderNotReferencedByPluginClassLoader()
+        classLoaders.clear()
+
         val checkClassLoaderUnload = options.waitForClassloaderUnload ||
                                      options.requireMemorySnapshot ||
                                      Registry.`is`("ide.plugins.snapshot.on.unload.fail")
@@ -655,13 +670,25 @@ object DynamicPlugins {
     return classLoaderUnloaded
   }
 
-  private fun unloadDependencyDescriptors(pluginDependencies: List<PluginDependency>, pluginStateChecker: PluginStateChecker) {
+  private fun unloadDependencyDescriptors(pluginDependencies: List<PluginDependency>,
+                                          pluginStateChecker: PluginStateChecker,
+                                          classLoaders: WeakList<PluginClassLoader>) {
     for (dependency in pluginDependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
-      if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
-        unloadPluginDescriptorNotRecursively(subDescriptor)
-        unloadDependencyDescriptors(subDescriptor.pluginDependencies ?: continue, pluginStateChecker)
+      if (!pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
+        LOG.assertTrue(subDescriptor.classLoader == null)
+        continue
       }
+
+      (subDescriptor.classLoader as? ClassLoaderConfigurator.SubPluginClassLoader)?.let {
+        classLoaders.add(it)
+      }
+
+      subDescriptor.pluginDependencies?.let {
+        unloadDependencyDescriptors(it, pluginStateChecker, classLoaders)
+      }
+      unloadPluginDescriptorNotRecursively(subDescriptor)
+      subDescriptor.classLoader = null
     }
   }
 
@@ -1170,7 +1197,7 @@ private fun unloadClassLoader(pluginDescriptor: IdeaPluginDescriptorImpl, timeou
   }
 
   val watcher = GCWatcher.tracking(pluginDescriptor.classLoader)
-  ClassLoaderConfigurator.setPluginClassLoaderForMainAndSubPlugins(pluginDescriptor, null)
+  pluginDescriptor.classLoader = null
   return watcher.tryCollect(timeoutMs)
 }
 

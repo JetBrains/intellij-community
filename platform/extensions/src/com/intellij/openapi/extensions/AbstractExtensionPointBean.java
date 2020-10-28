@@ -52,7 +52,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     }
   }
 
-  public static @NotNull <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+  private static @NotNull <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     ClassLoader classLoader = pluginDescriptor == null ? AbstractExtensionPointBean.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
     //noinspection unchecked
     return (Class<T>)Class.forName(className, true, classLoader);

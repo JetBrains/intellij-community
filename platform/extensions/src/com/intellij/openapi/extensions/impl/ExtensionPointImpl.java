@@ -552,7 +552,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (int i = adapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = adapters.get(i);
       try {
-        adapter.getImplementationClass();
+        adapter.getImplementationClass(componentManager);
       }
       catch (Throwable e) {
         if (adapters == myAdapters) {
@@ -906,9 +906,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     Class<T> extensionClass = myExtensionClass;
     if (extensionClass == null) {
       try {
-        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-        //noinspection unchecked
-        extensionClass = (Class<T>)(pluginClassLoader == null ? Class.forName(myClassName) : Class.forName(myClassName, true, pluginClassLoader));
+        extensionClass = componentManager.loadClass(myClassName, pluginDescriptor);
         myExtensionClass = extensionClass;
       }
       catch (ClassNotFoundException e) {
@@ -1049,7 +1047,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
         // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
         try {
-          if (aClass.isAssignableFrom(adapter.getImplementationClass())) {
+          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
             //noinspection unchecked
             return (V)processAdapter(adapter);
           }

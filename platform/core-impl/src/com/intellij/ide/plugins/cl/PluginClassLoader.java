@@ -8,18 +8,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
@@ -28,11 +31,41 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+@ApiStatus.Internal
+@ApiStatus.NonExtendable
+public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+  private static final @Nullable BufferedWriter logStream;
+
   static {
     if (registerAsParallelCapable()) {
       markParallelCapable(PluginClassLoader.class);
     }
+
+    BufferedWriter logStreamCandidate = null;
+    String debugFilePath = System.getProperty("plugin.classloader.debug", "");
+    if (!debugFilePath.isEmpty()) {
+      try {
+        logStreamCandidate = Files.newBufferedWriter(Paths.get(debugFilePath));
+        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              if (logStream != null) {
+                logStream.close();
+              }
+            }
+            catch (IOException e) {
+              Logger.getInstance(PluginClassLoader.class).error(e);
+            }
+          }
+        });
+      }
+      catch (IOException e) {
+        Logger.getInstance(PluginClassLoader.class).error(e);
+      }
+    }
+
+    logStream = logStreamCandidate;
   }
 
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -92,38 +125,39 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     }
   }
 
+  @Override
   @ApiStatus.Internal
-  public int getState() {
+  public final int getState() {
     return state;
   }
 
   @ApiStatus.Internal
-  public void setState(int state) {
+  public final void setState(int state) {
     this.state = state;
   }
 
   @Override
-  public int getInstanceId() {
+  public final int getInstanceId() {
     return instanceId;
   }
 
   @Override
-  public long getEdtTime() {
+  public final long getEdtTime() {
     return edtTime.get();
   }
 
   @Override
-  public long getBackgroundTime() {
+  public final long getBackgroundTime() {
     return backgroundTime.get();
   }
 
   @Override
-  public long getLoadedClassCount() {
+  public final long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
 
   @Override
-  public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
+  public final Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class<?> c = tryLoadingClass(name, resolve, null, true);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
@@ -233,11 +267,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   // a different version of which is used in IDEA.
   private @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited, boolean withRoot) {
     long startTime = StartUpMeasurer.getCurrentTime();
-    Class<?> c = null;
-    if (!mustBeLoadedByPlatform(name)) {
-      c = loadClassInsideSelf(name);
-    }
-
+    Class<?> c = mustBeLoadedByPlatform(name) ? null : loadClassInsideSelf(name, false);
     if (c == null) {
       c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null, withRoot);
     }
@@ -246,13 +276,33 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       resolveClass(c);
     }
 
+    reportClassLoadEnd(startTime);
+    return c;
+  }
+
+  public final @NotNull Class<?> loadOrDelegate(@NotNull String name) throws ClassNotFoundException {
+    long startTime = StartUpMeasurer.getCurrentTime();
+    Class<?> c = mustBeLoadedByPlatform(name) ? null : loadClassInsideSelf(name, true);
+    if (c == null) {
+      c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, null, null, true);
+      if (c == null) {
+        throw new ClassNotFoundException(name + " " + this);
+      }
+    }
+
+    resolveClass(c);
+
+    reportClassLoadEnd(startTime);
+    return c;
+  }
+
+  private void reportClassLoadEnd(long startTime) {
     if (StartUpMeasurer.measuringPluginStartupCosts) {
       Application app = ApplicationManager.getApplication();
       // JDK impl is not so fast as ours, use it only if no application
       boolean isEdt = app == null ? EventQueue.isDispatchThread() : app.isDispatchThread();
       (isEdt ? edtTime : backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime);
     }
-    return c;
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -296,7 +346,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
-  private @Nullable Class<?> loadClassInsideSelf(@NotNull String name) {
+  protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean force) {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -307,10 +357,20 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         c = _findClass(name);
       }
       catch (LinkageError e) {
-        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, getPluginId());
+        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, pluginId);
       }
+
       if (c != null) {
         loadedClassCounter.incrementAndGet();
+        BufferedWriter logStream = PluginClassLoader.logStream;
+        if (logStream != null) {
+          try {
+            // must be as one write call since write is performed from multiple threads
+            logStream.write(name + " [" + (getClass() == PluginClassLoader.class ? 'm' : 's') + "] " + pluginId.getIdString() + '\n');
+          }
+          catch (IOException ignored) {
+          }
+        }
       }
 
       return c;
@@ -332,7 +392,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   };
 
   @Override
-  public URL findResource(String name) {
+  public final URL findResource(String name) {
     URL resource = findOwnResource(name);
     if (resource != null) {
       return resource;
@@ -360,7 +420,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   };
 
   @Override
-  public InputStream getResourceAsStream(String name) {
+  public final InputStream getResourceAsStream(String name) {
     InputStream stream = getOwnResourceAsStream(name);
     if (stream != null) return stream;
 
@@ -400,7 +460,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   };
 
   @Override
-  public Enumeration<URL> findResources(String name) throws IOException {
+  public final Enumeration<URL> findResources(String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(findOwnResources(name));
     processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, resources);
@@ -412,12 +472,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void addLibDirectories(@NotNull Collection<String> libDirectories) {
+  public final void addLibDirectories(@NotNull Collection<String> libDirectories) {
     this.libDirectories.addAll(libDirectories);
   }
 
   @Override
-  protected String findLibrary(String libName) {
+  protected final String findLibrary(String libName) {
     if (!libDirectories.isEmpty()) {
       String libFileName = System.mapLibraryName(libName);
       ListIterator<String> i = libDirectories.listIterator(libDirectories.size());
@@ -432,18 +492,21 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public @NotNull PluginId getPluginId() {
+  public final @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
   @Override
-  public @NotNull PluginDescriptor getPluginDescriptor() {
+  public final @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
 
   @Override
-  public String toString() {
-    return "PluginClassLoader[" + pluginDescriptor + "] " + super.toString();
+  public final String toString() {
+    return getClass().getSimpleName() + "(" + pluginDescriptor +
+           ", instanceId=" + instanceId +
+           ", state=" + (state == ACTIVE ? "active" : "unload in progress")
+           + ")";
   }
 
   private static final class DeepEnumeration implements Enumeration<URL> {
@@ -477,25 +540,25 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @TestOnly
   @ApiStatus.Internal
-  public @NotNull List<ClassLoader> _getParents() {
+  public final @NotNull List<ClassLoader> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
   }
 
   @ApiStatus.Internal
-  public void attachParent(@NotNull ClassLoader classLoader) {
+  public final void attachParent(@NotNull ClassLoader classLoader) {
     parents = ArrayUtil.append(parents, classLoader);
   }
 
   @ApiStatus.Internal
-  public boolean detachParent(@NotNull ClassLoader classLoader) {
+  public final boolean detachParent(@NotNull ClassLoader classLoader) {
     int oldSize = parents.length;
     parents = ArrayUtil.remove(parents, classLoader);
     return parents.length == oldSize - 1;
   }
 
   @Override
-  protected ProtectionDomain getProtectionDomain(URL url) {
+  protected final ProtectionDomain getProtectionDomain(URL url) {
     // avoid capturing reference to classloader in AccessControlContext
     return new ProtectionDomain(new CodeSource(url, (Certificate[])null), null);
   }

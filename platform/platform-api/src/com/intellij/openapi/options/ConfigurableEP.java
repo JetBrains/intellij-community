@@ -309,7 +309,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Nullable
   public final ConfigurableProvider instantiateConfigurableProvider() {
     return providerClass != null
-           ? componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(providerClass, pluginDescriptor)
+           ? componentManager.instantiateClass(providerClass, pluginDescriptor)
            : null;
   }
 
@@ -341,7 +341,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return null;
     }
     try {
-      return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(treeRendererClass, pluginDescriptor);
+      return componentManager.instantiateClass(treeRendererClass, pluginDescriptor);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
@@ -422,7 +422,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected Object createElement() {
       try {
-        return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(className, pluginDescriptor);
+        return componentManager.instantiateClass(className, pluginDescriptor);
       }
       catch (ProcessCanceledException exception) {
         throw exception;

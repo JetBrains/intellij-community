@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -121,4 +122,10 @@ public final class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   public void dispose() { }
+
+  @Override
+  public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    //noinspection unchecked
+    return (Class<T>)Class.forName(className);
+  }
 }

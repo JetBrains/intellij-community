@@ -446,6 +446,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @Override
   public void dispose() {
     myQueuedConfigurable = null;
+    // help GC and avoid leak on dynamic plugin reload (if some configurable hold language or something plugin-specific)
+    myConfigurableToNodeMap.clear();
   }
 
   @NotNull

@@ -28,7 +28,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
     if (ourInitializedStubs) {
       LOG.error("All stub element types should be created before index initialization is complete.\n" +
                 "Please add the class containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
-                "Registered extensions: " + Arrays.toString(StubElementTypeHolderEP.EP_NAME.getExtensions()));
+                "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
   }
 
@@ -49,12 +49,12 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   }
 
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
-    List<StubFieldAccessor> result = new ArrayList<>();
-    for (StubElementTypeHolderEP bean : StubElementTypeHolderEP.EP_NAME.getExtensionList()) {
-      result.addAll(bean.initializeOptimized());
-    }
+    List<StubFieldAccessor> result = new ArrayList<>(StubElementTypeHolderEP.EP_NAME.getPoint().size());
+    StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      result.addAll(bean.initializeOptimized(pluginDescriptor));
+    });
 
-    Set<String> lazyIds = new HashSet<>();
+    Set<String> lazyIds = new HashSet<>(result.size());
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }

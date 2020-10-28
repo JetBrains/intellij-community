@@ -22,8 +22,7 @@ public final class LibraryDependentToolWindow extends ToolWindowEP {
   public LibrarySearchHelper getLibrarySearchHelper() {
     if (myLibrarySearchHelper == null) {
       try {
-        myLibrarySearchHelper =
-          ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(librarySearchClass, getPluginDescriptor());
+        myLibrarySearchHelper = ApplicationManager.getApplication().instantiateClass(librarySearchClass, getPluginDescriptor());
       }
       catch (ProcessCanceledException e) {
         throw e;

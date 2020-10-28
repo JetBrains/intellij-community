@@ -57,14 +57,13 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   };
 
   @Override
-  public <T> @NotNull T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name,
-                                                                          @Nullable PluginDescriptor pluginDescriptor) {
-    return getDelegate().instantiateExtensionWithPicoContainerOnlyIfNeeded(name, pluginDescriptor);
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+    return getDelegate().instantiateClass(aClass, pluginId);
   }
 
   @Override
-  public <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
-    return getDelegate().instantiateClass(aClass, pluginId);
+  public <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    return getDelegate().instantiateClass(className, pluginDescriptor);
   }
 
   @Override
@@ -75,6 +74,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   @Override
   public @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
     return getDelegate().createError(message, pluginId);
+  }
+
+  @Override
+  public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    return getDelegate().loadClass(className, pluginDescriptor);
   }
 
   @Override

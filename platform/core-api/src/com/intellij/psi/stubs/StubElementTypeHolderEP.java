@@ -2,11 +2,13 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -26,7 +28,7 @@ import java.util.List;
  *
  * @author yole
  */
-public final class StubElementTypeHolderEP extends AbstractExtensionPointBean {
+public final class StubElementTypeHolderEP {
   private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
 
   public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = new ExtensionPointName<>("com.intellij.stubElementTypeHolder");
@@ -55,11 +57,11 @@ public final class StubElementTypeHolderEP extends AbstractExtensionPointBean {
   @Nullable
   public String externalIdPrefix;
 
-  List<StubFieldAccessor> initializeOptimized() {
+  @NotNull List<StubFieldAccessor> initializeOptimized(@NotNull PluginDescriptor pluginDescriptor) {
     try {
+      Class<?> aClass = ApplicationManager.getApplication().loadClass(holderClass, pluginDescriptor);
       if (externalIdPrefix != null) {
         List<StubFieldAccessor> result = new ArrayList<>();
-        Class<?> aClass = Class.forName(holderClass, false, getLoaderForClass());
         assert aClass.isInterface();
         for (Field field : aClass.getDeclaredFields()) {
           if (!field.isSynthetic()) {
@@ -68,23 +70,14 @@ public final class StubElementTypeHolderEP extends AbstractExtensionPointBean {
         }
         return result;
       }
-      else {
-        findExtensionClass(holderClass);
-      }
     }
     catch (ClassNotFoundException e) {
-      LOG.error(new PluginException(e, getPluginId()));
+      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+    }
+    catch (PluginException e) {
+      LOG.error(e);
     }
     return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated please don't use this extension to ensure something is initialized as a side effect of stub element type loading,
-   * create your own narrow-scoped extension instead
-   */
-  @Deprecated
-  public void initialize() {
-    findClassNoExceptions(holderClass);
   }
 
   @Override

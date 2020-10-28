@@ -2,10 +2,17 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +25,17 @@ import java.nio.file.Path;
 import java.util.*;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
+@ApiStatus.Internal
 final class ClassLoaderConfigurator {
   private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
-  private static final boolean SEPARATE_CLASSLOADER_FOR_SUB =
-    Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "false"));
+  static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
+  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
+
+  // this list doesn't duplicate of PluginXmlFactory.CLASS_NAMES - interface related must be not here
+  private static final @NonNls Set<String> IMPL_CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
+    "implementation", "implementationClass",
+    "serviceImplementation", "class", "className",
+    "instance", "implementation-class"));
 
   // grab classes from platform loader only if nothing is found in any of plugin dependencies
   private final boolean usePluginClassLoader;
@@ -34,9 +48,35 @@ final class ClassLoaderConfigurator {
   // temporary set to produce arrays (avoid allocation for each plugin)
   // set to remove duplicated classloaders
   private final Set<ClassLoader> loaders = new LinkedHashSet<>();
+  // temporary list to produce arrays (avoid allocation for each plugin)
+  private final List<String> packagePrefixes = new ArrayList<>();
+
   private final boolean hasAllModules;
 
   private final UrlClassLoader.Builder urlClassLoaderBuilder;
+
+  static {
+    String value = System.getProperty("idea.classloader.per.descriptor.only");
+    if (value == null) {
+      //noinspection SSBasedInspection
+      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new HashSet<>(Arrays.asList(
+        PluginId.getId("com.intellij.thymeleaf"),
+        PluginId.getId("org.jetbrains.plugins.ruby"),
+        PluginId.getId("org.jetbrains.plugins.slim"),
+        PluginId.getId("com.intellij.lang.puppet"),
+        PluginId.getId("org.jetbrains.plugins.yaml"),
+        PluginId.getId("org.jetbrains.plugins.vue"),
+        PluginId.getId("org.jetbrains.plugins.go-template"),
+        PluginId.getId("com.intellij.kubernetes")
+      ));
+    }
+    else {
+      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new HashSet<>();
+      for (String id : value.split(",")) {
+        SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(id));
+      }
+    }
+  }
 
   ClassLoaderConfigurator(boolean usePluginClassLoader,
                           @NotNull ClassLoader coreLoader,
@@ -109,7 +149,7 @@ final class ClassLoaderConfigurator {
     // no need to process dependencies recursively because dependency will use own classloader
     // (that in turn will delegate class searching to parent class loader if needed)
     for (PluginDependency dependency : pluginDependencies) {
-      if (dependency.isDisabledOrBroken || (SEPARATE_CLASSLOADER_FOR_SUB && dependency.subDescriptor != null)) {
+      if (dependency.isDisabledOrBroken || (isClassloaderPerDescriptorEnabled(mainDependent) && dependency.subDescriptor != null)) {
         continue;
       }
 
@@ -142,13 +182,17 @@ final class ClassLoaderConfigurator {
     }
 
     // second, set class loaders for sub descriptors
-    if (SEPARATE_CLASSLOADER_FOR_SUB && usePluginClassLoader) {
+    if (usePluginClassLoader && isClassloaderPerDescriptorEnabled(mainDependent)) {
       mainDependent.setClassLoader(mainDependentClassLoader);
       configureSubPlugins(mainDependentClassLoader, pluginDependencies, urlClassLoaderBuilder);
     }
     else {
       setPluginClassLoaderForMainAndSubPlugins(mainDependent, mainDependentClassLoader);
     }
+  }
+
+  private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {
+    return SEPARATE_CLASSLOADER_FOR_SUB && SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
   }
 
   private void configureSubPlugins(@NotNull ClassLoader mainDependentClassLoader,
@@ -161,17 +205,102 @@ final class ClassLoaderConfigurator {
       }
 
       assert !dependent.isUseIdeaClassLoader();
+      IdeaPluginDescriptorImpl dependency = idMap.get(dependencyInfo.id);
+      if (dependency == null || !dependency.isEnabled()) {
+        continue;
+      }
+
+      packagePrefixes.clear();
+      collectPackagePrefixes(dependent, packagePrefixes);
+      if (packagePrefixes.isEmpty()) {
+        getLogger().error("Optional descriptor " + dependencyInfo + " doesn't define extra classes");
+      }
 
       loaders.clear();
       // add main descriptor classloader as parent
       loaders.add(mainDependentClassLoader);
+      addLoaderOrLogError(dependent, dependency, loaders);
 
-      IdeaPluginDescriptorImpl dependency = idMap.get(dependencyInfo.id);
-      if (dependency != null) {
-        addLoaderOrLogError(dependent, dependency, loaders);
+      dependent.setClassLoader(new SubPluginClassLoader(dependent,
+                                                        urlClassLoaderBuilder,
+                                                        loaders.toArray(EMPTY_CLASS_LOADER_ARRAY),
+                                                        packagePrefixes.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                        coreLoader));
+    }
+  }
+
+  private static void collectPackagePrefixes(@NotNull IdeaPluginDescriptorImpl dependent, @NotNull List<String> packagePrefixes) {
+    // from extensions
+    dependent.getUnsortedEpNameToExtensionElements().values().forEach(elements -> {
+      for (Element element : elements) {
+        if (!element.hasAttributes()) {
+          continue;
+        }
+
+        for (String attributeName : IMPL_CLASS_NAMES) {
+          String className = element.getAttributeValue(attributeName);
+          if (className != null && !className.isEmpty()) {
+            addPackageByClassNameIfNeeded(className, packagePrefixes);
+            break;
+          }
+        }
       }
+    });
 
-      dependent.setClassLoader(new PluginClassLoader(urlClassLoaderBuilder, loaders.toArray(EMPTY_CLASS_LOADER_ARRAY), dependent, dependent.getPluginPath(), coreLoader));
+    // from services
+    collectFromServices(dependent.appContainerDescriptor, packagePrefixes);
+    collectFromServices(dependent.projectContainerDescriptor, packagePrefixes);
+    collectFromServices(dependent.moduleContainerDescriptor, packagePrefixes);
+  }
+
+  private static void addPackageByClassNameIfNeeded(@NotNull String name, @NotNull List<String> packagePrefixes) {
+    for (String packagePrefix : packagePrefixes) {
+      if (name.startsWith(packagePrefix)) {
+        return;
+      }
+    }
+
+    int lastPackageDot = name.lastIndexOf('.');
+    if (lastPackageDot > 0 && lastPackageDot != name.length()) {
+      addPackagePrefixIfNeeded(packagePrefixes, name.substring(0, lastPackageDot + 1));
+    }
+  }
+
+  private static void addPackagePrefixIfNeeded(@NotNull List<String> packagePrefixes, @NotNull String packagePrefix) {
+    for (int i = 0; i < packagePrefixes.size(); i++) {
+      String existingPackagePrefix = packagePrefixes.get(i);
+      if (packagePrefix.startsWith(existingPackagePrefix)) {
+        return;
+      }
+      else if (existingPackagePrefix.startsWith(packagePrefix)) {
+        packagePrefixes.set(i, packagePrefix);
+        for (int j = packagePrefixes.size() - 1; j > i; j--) {
+          existingPackagePrefix = packagePrefixes.get(i);
+          if (existingPackagePrefix.startsWith(packagePrefix)) {
+            packagePrefixes.remove(j);
+          }
+        }
+        return;
+      }
+    }
+
+    packagePrefixes.add(packagePrefix);
+  }
+
+  private static void collectFromServices(@NotNull ContainerDescriptor containerDescriptor, @NotNull List<String> packagePrefixes) {
+    List<ServiceDescriptor> services = containerDescriptor.services;
+    if (services == null) {
+      return;
+    }
+
+    for (ServiceDescriptor service : services) {
+      // testServiceImplementation is ignored by intention
+      if (service.serviceImplementation != null) {
+        addPackageByClassNameIfNeeded(service.serviceImplementation, packagePrefixes);
+      }
+      if (service.headlessImplementation != null) {
+        addPackageByClassNameIfNeeded(service.headlessImplementation, packagePrefixes);
+      }
     }
   }
 
@@ -209,11 +338,14 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  static void setPluginClassLoaderForMainAndSubPlugins(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @Nullable ClassLoader classLoader) {
+  private void setPluginClassLoaderForMainAndSubPlugins(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @Nullable ClassLoader classLoader) {
     rootDescriptor.setClassLoader(classLoader);
     for (PluginDependency dependency : rootDescriptor.getPluginDependencies()) {
       if (dependency.subDescriptor != null) {
-        setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor, classLoader);
+        IdeaPluginDescriptorImpl descriptor = idMap.get(dependency.id);
+        if (descriptor != null && descriptor.isEnabled()) {
+          setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor, classLoader);
+        }
       }
     }
   }
@@ -225,6 +357,46 @@ final class ClassLoaderConfigurator {
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
+    }
+  }
+
+  @ApiStatus.Internal
+  public static final class SubPluginClassLoader extends PluginClassLoader implements PluginAwareClassLoader.SubClassLoader {
+    private final String[] packagePrefixes;
+
+    SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+                         @NotNull Builder urlClassLoaderBuilder,
+                         @NotNull ClassLoader @NotNull [] parents,
+                         @NotNull String @NotNull[] packagePrefixes,
+                         @NotNull ClassLoader coreLoader) {
+      super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader);
+
+      this.packagePrefixes = packagePrefixes;
+    }
+
+    @Override
+    protected @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean force) {
+      if (force) {
+        return super.loadClassInsideSelf(name, true);
+      }
+
+      for (String packagePrefix : packagePrefixes) {
+        if (name.startsWith(packagePrefix)) {
+          return super.loadClassInsideSelf(name, true);
+        }
+      }
+
+      int subIndex = name.indexOf('$');
+      if (subIndex > 0) {
+        // load inner classes
+        // we check findLoadedClass because classNames doesn't have full set of suitable names - PluginAwareClassLoader.SubClassLoader is used to force loading classes from sub classloader
+        Class<?> loadedClass = findLoadedClass(name.substring(0, subIndex));
+        if (loadedClass != null && loadedClass.getClassLoader() == this) {
+          return super.loadClassInsideSelf(name, true);
+        }
+      }
+
+      return null;
     }
   }
 }

@@ -29,4 +29,11 @@ public interface PluginAwareClassLoader {
 
   @MagicConstant(intValues = {ACTIVE, UNLOAD_IN_PROGRESS})
   int getState();
+
+  interface SubClassLoader {
+    /**
+     * Loads class by name from this classloader and delegates loading to parent classloaders if and only if not found.
+     */
+    @NotNull Class<?> loadOrDelegate(@NotNull String name) throws ClassNotFoundException;
+  }
 }

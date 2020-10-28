@@ -34,7 +34,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   public @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
     Class<T> aClass;
     try {
-      aClass = getImplementationClass();
+      aClass = getImplementationClass(componentManager);
     }
     catch (ClassNotFoundException e) {
       throw componentManager.createError(e, pluginDescriptor.getPluginId());
@@ -65,14 +65,10 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     return pluginDescriptor;
   }
 
-  public final @NotNull <T> Class<T> getImplementationClass() throws ClassNotFoundException {
+  public final @NotNull <T> Class<T> getImplementationClass(@NotNull ComponentManager componentManager) throws ClassNotFoundException {
     Object implementationClassOrName = this.implementationClassOrName;
     if (implementationClassOrName instanceof String) {
-      ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
-      if (classLoader == null) {
-        classLoader = getClass().getClassLoader();
-      }
-      implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      implementationClassOrName = componentManager.loadClass((String)implementationClassOrName, pluginDescriptor);
       this.implementationClassOrName = implementationClassOrName;
     }
     //noinspection unchecked

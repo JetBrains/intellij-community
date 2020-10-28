@@ -381,6 +381,12 @@ public class ExtensionPointImplTest {
     }
 
     @Override
+    public <T> Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+      //noinspection unchecked
+      return (Class<T>)Class.forName(className);
+    }
+
+    @Override
     public void dispose() {
     }
 

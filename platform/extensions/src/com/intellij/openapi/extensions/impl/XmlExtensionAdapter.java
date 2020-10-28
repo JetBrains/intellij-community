@@ -7,17 +7,10 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.DefaultPicoContainer;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   private @Nullable Element myExtensionElement;
@@ -81,39 +74,6 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
     }
     return instance;
-  }
-
-  boolean isLoadedFromAnyElement(@NotNull List<? extends Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
-    SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
-    if (myExtensionElement == null && extensionInstance == null) {
-      // dummy extension with no data; unload based on PluginDescriptor check in calling method
-      return true;
-    }
-
-    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
-    Map<String, String> serializedData = getSerializedDataMap(serializedElement);
-
-    for (Element candidateElement : candidateElements) {
-      Map<String, String> candidateData = getSerializedDataMap(candidateElement);
-      candidateData.entrySet().removeIf(entry -> Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue()));
-      if (serializedData.equals(candidateData)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static Map<String, String> getSerializedDataMap(Element serializedElement) {
-    Map<String, String> data = new HashMap<>();
-    for (Attribute attribute : serializedElement.getAttributes()) {
-      if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {
-        data.put(attribute.getName(), attribute.getValue());
-      }
-    }
-    for (Element child : serializedElement.getChildren()) {
-      data.put(child.getName(), child.getText());
-    }
-    return data;
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {

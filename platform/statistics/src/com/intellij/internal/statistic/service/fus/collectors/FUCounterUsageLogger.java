@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,6 +46,9 @@ import java.util.concurrent.TimeUnit;
  */
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
+  private static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
+    new ExtensionPointName<>("com.intellij.statistics.counterUsagesCollector");
+
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
@@ -61,10 +64,10 @@ public final class FUCounterUsageLogger {
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
+    for (CounterUsageCollectorEP ep : EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
-    Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(EP_NAME).addExtensionPointListener(
       new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -88,13 +91,13 @@ public final class FUCounterUsageLogger {
     }
   }
 
-  public static List<FeatureUsagesCollector> instantiateCounterCollectors() {
-    List<FeatureUsagesCollector> result = new ArrayList<>();
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensions()) {
+  public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
+    List<FeatureUsagesCollector> result = new ArrayList<>(EP_NAME.getPoint().size());
+    EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
       if (ep.implementationClass != null) {
-        result.add(ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+        result.add(ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor));
       }
-    }
+    });
     return result;
   }
 
