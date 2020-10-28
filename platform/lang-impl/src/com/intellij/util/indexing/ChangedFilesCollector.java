@@ -270,6 +270,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     myWorkersFinishedSync.register();
     int phase = myWorkersFinishedSync.getPhase();
     try {
+      myManager.waitUntilIndicesAreInitialized();
       getEventMerger().processChanges(info ->
         ConcurrencyUtil.withLock(myManager.myWriteLock, () -> {
           try {
