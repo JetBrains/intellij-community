@@ -26,20 +26,7 @@ import java.beans.PropertyChangeListener
 
 internal class HTMLFileEditor private constructor() : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(null).also {
-    it.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
-      override fun onBeforeBrowse(browser: CefBrowser,
-                                  frame: CefFrame,
-                                  request: CefRequest,
-                                  user_gesture: Boolean,
-                                  is_redirect: Boolean): Boolean {
-        if (user_gesture) {
-          BrowserUtil.browse(request.url)
-        }
-        return user_gesture
-      }
-    }, it.cefBrowser)
-  }
+  private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
 
   private val multiPanel = object : MultiPanel() {
@@ -66,17 +53,17 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
     loadingPanel.setLoadingText(CommonBundle.getLoadingTreeNodeText())
 
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
-      override fun onLoadStart(browser: CefBrowser?, frame: CefFrame?, transitionType: CefRequest.TransitionType?) {
+      override fun onLoadStart(browser: CefBrowser, frame: CefFrame, transitionType: CefRequest.TransitionType?) {
         if (fallback.isNotEmpty()) {
           alarm.addRequest({ contentPanel.setHtml(fallback)}, Registry.intValue("html.editor.timeout", 10000))
         }
       }
 
-      override fun onLoadEnd(browser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
+      override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
         alarm.cancelAllRequests()
       }
 
-      override fun onLoadingStateChange(browser: CefBrowser?, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
+      override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
         if (isLoading) {
           invokeLater {
             loadingPanel.startLoading()
@@ -90,6 +77,12 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
           }
         }
       }
+    }, contentPanel.cefBrowser)
+
+    contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
+      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
+        if (userGesture) { BrowserUtil.browse(request.url); true }
+        else false
     }, contentPanel.cefBrowser)
 
     multiPanel.select(CONTENT_KEY, true)
