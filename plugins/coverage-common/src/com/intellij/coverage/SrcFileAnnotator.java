@@ -59,7 +59,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public final class SrcFileAnnotator implements Disposable {
+public final class SrcFileAnnotator implements SrcFileAnnotatorBase, Disposable {
   private static final Logger LOG = Logger.getInstance(SrcFileAnnotator.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
@@ -84,7 +84,7 @@ public final class SrcFileAnnotator implements Disposable {
     myDocument = myEditor.getDocument();
   }
 
-
+  @Override
   public void hideCoverageData() {
     Editor editor = myEditor;
     PsiFile file = myFile;
@@ -258,6 +258,7 @@ public final class SrcFileAnnotator implements Disposable {
     return null;
   }
 
+  @Override
   public void showCoverageInformation(final CoverageSuitesBundle suite) {
     // Store the values of myFile and myEditor in local variables to avoid an NPE after dispose() has been called in the EDT.
     final PsiFile psiFile = myFile;
