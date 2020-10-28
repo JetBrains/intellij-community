@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,8 @@ import java.util.*;
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 final class ClassLoaderConfigurator {
   private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
-  private static final boolean SEPARATE_CLASSLOADER_FOR_SUB = SystemProperties.is("idea.classloader.per.descriptor");
+  private static final boolean SEPARATE_CLASSLOADER_FOR_SUB =
+    Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "false"));
 
   // grab classes from platform loader only if nothing is found in any of plugin dependencies
   private final boolean usePluginClassLoader;
