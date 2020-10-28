@@ -9,9 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerExImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +20,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -440,9 +437,25 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       //todo order should be the same
       if (waitForDiskRefreshCompletionBeforeStartingModality) {
         assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
-      } else {
+      }
+      else {
         assertThat(log).containsExactly("modal finished", "non-modal finished");
       }
     });
+  }
+
+  @Test
+  public void testVfsUtilCopyMustNotDuplicateBOM() throws IOException {
+    File file = myTempDir.newFile("test.txt");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertFalse(vFile.isDirectory());
+    WriteAction.runAndWait(() -> vFile.setBinaryContent(CharsetToolkit.UTF8_BOM));
+    assertEquals("", VfsUtilCore.loadText(vFile));
+    VirtualFile dir = WriteAction.computeAndWait(() -> vFile.getParent().createChildDirectory(this, "dir"));
+
+    VirtualFile copy = WriteAction.computeAndWait(() -> VfsUtil.copy(this, vFile, dir));
+
+    assertEquals("", VfsUtilCore.loadText(copy));
   }
 }
