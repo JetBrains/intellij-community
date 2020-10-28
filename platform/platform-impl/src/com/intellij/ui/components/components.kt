@@ -36,6 +36,8 @@ import javax.swing.text.Segment
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
   get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor())
 
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) = Label(text, style, fontColor, bold, null)
+
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label: JLabel
