@@ -15,6 +15,7 @@
  */
 package com.android.tools.idea.gradle.dsl.parser
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
@@ -28,7 +29,6 @@ import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslElement
-import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 import com.intellij.psi.PsiElement
 import java.util.ArrayList
@@ -176,7 +176,7 @@ internal fun maybeTrimForParent(element: GradleDslElement, converter: GradleDslN
     null -> part
     else -> effect.property.name
   }
-  val parentParts = GradleNameElement.split(parent.qualifiedName)
+  val parentParts = GradleNameElementUtil.split(parent.qualifiedName)
   var i = 0
   while (i < parentParts.size && !parts.isEmpty() && parentParts[i] == parts[0]) {
     parts.removeAt(0)

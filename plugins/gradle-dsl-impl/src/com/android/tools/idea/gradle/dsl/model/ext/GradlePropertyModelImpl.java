@@ -16,6 +16,7 @@ package com.android.tools.idea.gradle.dsl.model.ext;
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.api.util.TypeReference;
 import com.android.tools.idea.gradle.dsl.model.ext.transforms.PropertyTransform;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
@@ -403,7 +404,7 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
   public void rename(@NotNull List<String> name) {
     // If we have no backing element then just alter the name that we will change.
     if (myElement == null) {
-      myName = GradleNameElement.join(name);
+      myName = GradleNameElementUtil.join(name);
       return;
     }
 

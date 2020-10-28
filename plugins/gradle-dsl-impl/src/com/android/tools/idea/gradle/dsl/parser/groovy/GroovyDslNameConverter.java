@@ -27,11 +27,11 @@ import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanti
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR_BUT_DO_NOT_USE_FOR_WRITING_IN_KTS;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VWO;
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.parser.ExternalNameInfo;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
@@ -56,7 +56,7 @@ public class GroovyDslNameConverter implements GradleDslNameConverter {
     if (isStringLiteral(element)) {
       StringBuilder sb = new StringBuilder();
       if (decodeStringLiteral(element, sb)) {
-        return GradleNameElement.escape(sb.toString());
+        return GradleNameElementUtil.escape(sb.toString());
       }
     }
     // TODO(xof): the project-massaging in getGradleNameForPsiElement should be rewritten in gradleNameFor

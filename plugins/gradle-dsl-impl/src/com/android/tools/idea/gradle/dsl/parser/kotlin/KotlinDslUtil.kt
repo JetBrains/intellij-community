@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.parser.kotlin
 
 import com.android.tools.idea.gradle.dsl.api.ext.RawText
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationDslElement
@@ -33,7 +34,6 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainCon
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSettableExpression
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
@@ -418,7 +418,7 @@ fun gradleNameFor(expression: KtExpression): String? {
         else -> index.text
       }
       if (convertIndexToName) {
-        sb.append(".${GradleNameElement.escape(text)}")
+        sb.append(".${GradleNameElementUtil.escape(text)}")
         convertIndexToName = false
       }
       else {
@@ -449,7 +449,7 @@ fun gradleNameFor(expression: KtExpression): String? {
           allValid = false
         }
         else {
-          sb.append(GradleNameElement.escape(name))
+          sb.append(GradleNameElementUtil.escape(name))
         }
       }
     }
@@ -469,7 +469,7 @@ fun gradleNameFor(expression: KtExpression): String? {
         is KtSimpleNameExpression -> {
           when (val text = expression.getReferencedName()) {
             "extra" -> { convertIndexToName = true; sb.append("ext") }
-            else -> sb.append(GradleNameElement.escape(text))
+            else -> sb.append(GradleNameElementUtil.escape(text))
           }
         }
         else -> super.visitReferenceExpression(expression)
@@ -792,7 +792,7 @@ internal fun maybeUpdateName(element : GradleDslElement, writer: KotlinDslWriter
     }
   }
 
-  val newName = GradleNameElement.unescape(localName)
+  val newName = GradleNameElementUtil.unescape(localName)
 
   val newElement : PsiElement
   if (oldName is PsiNamedElement) {

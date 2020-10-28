@@ -16,7 +16,7 @@
 package com.android.tools.idea.gradle.dsl.api.ext;
 
 import com.android.tools.idea.gradle.dsl.api.android.SigningConfigModel;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,11 +36,11 @@ public final class ReferenceTo {
   }
 
   public ReferenceTo(@NotNull SigningConfigModel model) {
-    myReferenceText = SIGNING_CONFIGS + "." + GradleNameElement.escape(model.name());
+    myReferenceText = SIGNING_CONFIGS + "." + GradleNameElementUtil.escape(model.name());
   }
 
   public static ReferenceTo createForSigningConfig(@NotNull String signingConfigName) {
-    return new ReferenceTo(SIGNING_CONFIGS + "." + GradleNameElement.escape(signingConfigName));
+    return new ReferenceTo(SIGNING_CONFIGS + "." + GradleNameElementUtil.escape(signingConfigName));
   }
 
   @NotNull

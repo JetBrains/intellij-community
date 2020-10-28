@@ -15,11 +15,11 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.kotlin
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil
 import com.android.tools.idea.gradle.dsl.parser.ExternalNameInfo
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -37,7 +37,7 @@ interface KotlinDslNameConverter: GradleDslNameConverter {
     return when (element) {
       is KtStringTemplateExpression -> when (val contents = element.literalContents()) {
         null -> element.text
-        else -> GradleNameElement.escape(contents)
+        else -> GradleNameElementUtil.escape(contents)
       }
       is KtExpression -> gradleNameFor(element) ?: element.text
       else -> element.text

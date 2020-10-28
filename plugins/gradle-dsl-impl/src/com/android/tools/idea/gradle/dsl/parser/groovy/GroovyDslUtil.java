@@ -26,6 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.escapeStri
 
 import com.android.tools.idea.gradle.dsl.api.ext.RawText;
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.parser.ExternalNameInfo;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
 import com.android.tools.idea.gradle.dsl.parser.build.BuildScriptDslElement;
@@ -500,7 +501,7 @@ public final class GroovyDslUtil {
         }
         String name = referenceExpression.getReferenceName();
         if (name != null) {
-          result.append(GradleNameElement.escape(name));
+          result.append(GradleNameElementUtil.escape(name));
         }
         else {
           allValid[0] = false;
@@ -1014,7 +1015,7 @@ public final class GroovyDslUtil {
         }
       }
     }
-    String newName = GradleNameElement.unescape(localName);
+    String newName = GradleNameElementUtil.unescape(localName);
 
     PsiElement newElement;
     if (oldName instanceof PsiNamedElement) {

@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.parser.elements;
 
 import com.android.tools.idea.gradle.dsl.api.BuildModelNotification;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.model.notifications.NotificationTypeReference;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
@@ -133,11 +134,11 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
   public String getQualifiedName() {
     // Don't include the name of the parent if this element is a direct child of the file.
     if (myParent == null || myParent instanceof GradleDslFile) {
-      return GradleNameElement.escape(getName());
+      return GradleNameElementUtil.escape(getName());
     }
 
     String ourName = getName();
-    return myParent.getQualifiedName() + (ourName.isEmpty() ? "" : "." + GradleNameElement.escape(ourName));
+    return myParent.getQualifiedName() + (ourName.isEmpty() ? "" : "." + GradleNameElementUtil.escape(ourName));
   }
 
   @Override
