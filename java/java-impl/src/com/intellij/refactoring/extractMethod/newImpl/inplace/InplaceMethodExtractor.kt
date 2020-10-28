@@ -44,6 +44,7 @@ import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
+import org.jetbrains.annotations.NonNls
 import java.awt.Point
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
@@ -103,7 +104,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
 
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
+    val (callElements, method) = MethodExtractor().extractMethod(extractOptions.copy(methodName = "extracted"))
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -174,7 +175,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-    return super.performInplaceRefactoring(nameSuggestions)
+    val result = super.performInplaceRefactoring(nameSuggestions)
+    ApplicationManager.getApplication().runWriteAction { setMethodName(extractOptions.methodName) }
+    return result
   }
 
   override fun revertState() {
@@ -224,10 +227,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     installMethodNameValidation(templateState)
   }
 
-  private fun getMethodName(): String {
-    return editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
-  }
-
   private fun setMethodName(methodName: String) {
     editor.document.replaceString(methodCallExpressionRange.startOffset, methodCallExpressionRange.endOffset, methodName)
     editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
@@ -236,40 +235,47 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   private fun installMethodNameValidation(templateState: TemplateState) {
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
 
-      var restartAction: () -> Unit = { }
+      var restartOptions: ExtractOptions? = null
+      var errorMessage: @NonNls String? = null
 
       override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        val methodName = getMethodName()
+        val methodName = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
         fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
         fun hasSingleResolve(): Boolean {
           val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return false
           val methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, methodCallExpressionRange.startOffset, PsiMethodCallExpression::class.java, true)
           return methodCall?.resolveMethod() != null
         }
-        val errorMessage = when {
+        errorMessage = when {
           ! isValidName() -> JavaRefactoringBundle.message("extract.method.error.invalid.name")
           ! hasSingleResolve() -> JavaRefactoringBundle.message("extract.method.error.method.conflict")
           else -> null
         }
         if (errorMessage != null) {
-          val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic).copy(methodName = "extracted")
-          restartAction = {
-              WriteCommandAction.runWriteCommandAction(myProject) {
-                val extractor = InplaceMethodExtractor(editor, newOptions, popupProvider)
-                extractor.performInplaceRefactoring(linkedSetOf())
-                extractor.setMethodName(methodName)
-                CommonRefactoringUtil.showErrorHint(myProject, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
-              }
-            }
+          restartOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
         }
       }
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (! brokenOff) ApplicationManager.getApplication().invokeLater { restartAction() }
+        if (! brokenOff) restartWithInvalidName()
       }
 
       override fun templateCancelled(template: Template?) {
-        ApplicationManager.getApplication().invokeLater { restartAction() }
+        restartWithInvalidName()
+      }
+
+      private fun restartWithInvalidName(){
+        ApplicationManager.getApplication().invokeLater {
+          val message = errorMessage
+          val options = restartOptions
+          if (message != null && options != null) {
+            WriteCommandAction.runWriteCommandAction(myProject) {
+              val extractor = InplaceMethodExtractor(editor, options, popupProvider)
+              extractor.performInplaceRefactoring(linkedSetOf())
+              CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
+            }
+          }
+        }
       }
     })
   }
@@ -311,12 +317,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun restartInplace() {
-    val methodName = getMethodName()
-    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic).copy(methodName = "extracted")
+    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
     WriteCommandAction.runWriteCommandAction(myProject) {
-      val extractor = InplaceMethodExtractor(editor, newOptions, popupProvider)
-      extractor.performInplaceRefactoring(linkedSetOf())
-      extractor.setMethodName(methodName)
+      InplaceMethodExtractor(editor, newOptions, popupProvider).performInplaceRefactoring(linkedSetOf())
     }
   }
 
