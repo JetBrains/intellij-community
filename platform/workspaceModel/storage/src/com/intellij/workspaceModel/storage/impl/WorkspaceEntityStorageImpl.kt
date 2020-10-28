@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.exceptions.*
+import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
@@ -86,13 +88,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (ids != null && ids.isNotEmpty()) {
         // Oh oh. This persistent id exists already
         // Fallback strategy: remove existing entity with all it's references
-        val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
+        val existingEntityData = entityDataByIdOrDie(ids.single())
+        val existingEntity = existingEntityData.createEntity(this)
         removeEntity(existingEntity)
         LOG.error("""
           addEntity: persistent id already exists. Replacing entity with the new one.
           Persistent id: $persistentId
           
-          Existing entity data: $existingEntity
+          Existing entity data: $existingEntityData
           New entity data: $pEntityData
         """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
       }
@@ -133,11 +136,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // Oh oh. This persistent id exists already.
           // Remove an existing entity and replace it with the new one.
 
-          val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
+          val existingEntityData = entityDataByIdOrDie(ids.single())
+          val existingEntity = existingEntityData.createEntity(this)
           removeEntity(existingEntity)
           LOG.error("""
             modifyEntity: persistent id already exists. Replacing entity with the new one.
-            Old entity: $existingEntity
+            Old entity: $existingEntityData
             Persistent id: $copiedData
           """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
         }
