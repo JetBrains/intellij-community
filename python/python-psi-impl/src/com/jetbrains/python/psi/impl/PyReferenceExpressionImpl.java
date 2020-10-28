@@ -249,7 +249,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context), key);
+      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context));
     }
     return null;
   }

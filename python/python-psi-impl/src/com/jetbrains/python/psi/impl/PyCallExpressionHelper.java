@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +13,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -104,8 +106,7 @@ public final class PyCallExpressionHelper {
    * please obtain its result via {@link TypeEvalContext#getType} with {@code call.getCallee()} as an argument.
    */
   static @Nullable PyType getCalleeType(@NotNull PyCallExpression call,
-                                        @NotNull PyResolveContext resolveContext,
-                                        @SuppressWarnings("unused") @NotNull TypeEvalContext.Key key) {
+                                        @NotNull PyResolveContext resolveContext) {
     final List<PyType> callableTypes = new ArrayList<>();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
 
@@ -189,7 +190,10 @@ public final class PyCallExpressionHelper {
     return PyUtil.getParameterizedCachedValue(
       call,
       resolveContext,
-      it -> ContainerUtil.concat(getExplicitResolveResults(call, it), getImplicitResolveResults(call, it))
+      it -> ContainerUtil.concat(
+          getExplicitResolveResults(call, it),
+          getImplicitResolveResults(call, it),
+          getRemoteResolveResults(call, it))
     );
   }
 
@@ -275,6 +279,16 @@ public final class PyCallExpressionHelper {
     }
 
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static List<@NotNull PyCallableType> getRemoteResolveResults(@NotNull PyCallExpression call,
+                                                                       @NotNull PyResolveContext resolveContext) {
+    if (!resolveContext.allowRemote()) return Collections.emptyList();
+    PsiFile file = call.getContainingFile();
+    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return Collections.emptyList();
+    PyType calleeType = getCalleeType(call, resolveContext);
+    return PyTypeUtil.toStream(calleeType).select(PyCallableType.class).toList();
   }
 
   @NotNull
