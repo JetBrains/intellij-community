@@ -18,11 +18,13 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.FilteringProcessor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
+import java.util.Set;
 
 /**
  * @author yole
@@ -80,7 +82,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
     }
 
     final FileType[] types = reference.getFileReferenceSet().getSuitableFileTypes();
-    final THashSet<PsiElement> set = new THashSet<>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
+    final Set<PsiElement> set = new THashSet<>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
     final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
 
     final Object[] variants = new Object[candidates.length + additionalItems.size()];

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -45,7 +30,6 @@ import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +37,7 @@ import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
-public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
+public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   InjectedGeneralHighlightingPass(@NotNull Project project,
                                   @NotNull PsiFile file,
                                   @NotNull Document document,
@@ -85,7 +69,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     // but some of the infos for the "injected fragment for the host which is outside" can be still inside
     Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
 
-    Set<HighlightInfo> injectedResult = new THashSet<>();
+    Set<HighlightInfo> injectedResult = new HashSet<>();
     if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) {
       throw new ProcessCanceledException();
     }
@@ -93,9 +77,9 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     Set<HighlightInfo> result;
     synchronized (injectedResult) {
       // sync here because all writes happened in another thread
-      result = injectedResult.isEmpty() ? Collections.emptySet(): new THashSet<>(injectedResult);
+      result = injectedResult.isEmpty() ? Collections.emptySet(): new HashSet<>(injectedResult);
     }
-    Set<HighlightInfo> gotHighlights = new THashSet<>(100);
+    Set<HighlightInfo> gotHighlights = new HashSet<>(100);
     List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
@@ -147,7 +131,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<DocumentWindow> injected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(myFile, myFile.getTextRange());
-    Collection<PsiElement> hosts = new THashSet<>(elements1.size() + elements2.size() + injected.size());
+    Collection<PsiElement> hosts = new HashSet<>(elements1.size() + elements2.size() + injected.size());
 
     //rehighlight all injected PSI regardless the range,
     //since change in one place can lead to invalidation of injected PSI in (completely) other place.
@@ -180,7 +164,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     injectedLanguageManager.processInjectableElements(elements1, collectInjectableProcessor);
     injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
-    Set<PsiFile> outInjected = new THashSet<>();
+    Set<PsiFile> outInjected = new HashSet<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
       synchronized (outInjected) {
         ProgressManager.checkCanceled();
@@ -202,7 +186,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       throw new ProcessCanceledException();
     }
     synchronized (outInjected) {
-      return outInjected.isEmpty() ? Collections.emptySet() : new THashSet<>(outInjected);
+      return outInjected.isEmpty() ? Collections.emptySet() : new HashSet<>(outInjected);
     }
   }
 

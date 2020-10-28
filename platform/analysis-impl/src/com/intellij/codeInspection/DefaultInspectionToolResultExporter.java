@@ -31,7 +31,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
@@ -274,7 +273,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
 
   private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
-    return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
+    return new SynchronizedBidiMultiMap<>() {
       @NotNull
       @Override
       protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
@@ -374,7 +373,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
     else {
       // add actual problems
-      elements = new THashSet<>(getProblemElements().keys());
+      elements = new HashSet<>(getProblemElements().keys());
       // add quick-fixed elements
       elements.addAll(getResolvedElements());
       // add suppressed elements

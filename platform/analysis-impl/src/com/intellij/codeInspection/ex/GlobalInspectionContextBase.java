@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -30,7 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -69,7 +68,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
-  final Map<String, Tools> myTools = new THashMap<>();
+  final Map<String, Tools> myTools = new HashMap<>();
 
   @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";

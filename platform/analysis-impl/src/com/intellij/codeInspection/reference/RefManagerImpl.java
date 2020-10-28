@@ -40,7 +40,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +78,7 @@ public class RefManagerImpl extends RefManager {
   private final List<RefGraphAnnotator> myGraphAnnotators = ContainerUtil.createConcurrentList();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
+  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
 

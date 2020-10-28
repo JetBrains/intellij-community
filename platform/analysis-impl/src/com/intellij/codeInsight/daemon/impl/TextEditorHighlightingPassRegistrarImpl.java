@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -159,16 +158,16 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         // init with editor's colors scheme
         pass.setColorsScheme(editor.getColorsScheme());
 
-        TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
+        IntArrayList ids = new IntArrayList(passConfig.completionPredecessorIds.length);
         for (int id : passConfig.completionPredecessorIds) {
           if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
         }
-        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
-        ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
+        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
+        ids = new IntArrayList(passConfig.startingPredecessorIds.length);
         for (int id : passConfig.startingPredecessorIds) {
           if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
         }
-        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
+        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
         pass.setId(passId);
         result.add(pass);
       }
