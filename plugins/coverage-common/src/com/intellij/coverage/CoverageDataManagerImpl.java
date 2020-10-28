@@ -61,7 +61,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -130,12 +129,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       addSuiteListener(coverageViewListener, this);
     }
 
-    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageRunner>() {
+    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageRunner coverageRunner, @NotNull PluginDescriptor pluginDescriptor) {
         CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
         if (suitesBundle != null &&
-            Arrays.stream(suitesBundle.getSuites()).anyMatch(suite -> coverageRunner == suite.getRunner())) {
+            ContainerUtil.exists(suitesBundle.getSuites(), suite -> coverageRunner == suite.getRunner())) {
           chooseSuitesBundle(null);
         }
 
@@ -168,7 +167,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
     }, this);
 
-    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageEngine>() {
+    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageEngine coverageEngine, @NotNull PluginDescriptor pluginDescriptor) {
         CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
