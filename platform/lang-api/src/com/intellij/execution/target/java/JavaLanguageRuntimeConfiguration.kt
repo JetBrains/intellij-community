@@ -19,9 +19,6 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     it.homePath = this.homePath
     it.javaVersionString = this.javaVersionString
 
-    it.saveInState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME) { volumeState ->
-      applicationFolder = volumeState
-    }
     it.saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { volumeState ->
       classpathFolder = volumeState
     }
@@ -34,7 +31,6 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     this.homePath = state.homePath ?: ""
     this.javaVersionString = state.javaVersionString ?: ""
 
-    loadVolumeState(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, state.applicationFolder)
     loadVolumeState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, state.classpathFolder)
     loadVolumeState(JavaLanguageRuntimeType.AGENTS_VOLUME, state.agentFolder)
   }

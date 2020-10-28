@@ -36,8 +36,6 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
         textField(config::javaVersionString)
       }
 
-      addVolumeUI(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME)
-
       hideableRow(ExecutionBundle.message("java.language.runtime.separator.advanced.volume.settings")) {
         subRowIndent = 0
         addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
@@ -48,14 +46,14 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
 
   override fun apply() {
     super.apply()
-    targetVolumeContributions.forEach { (volume, contribution) ->
+    targetVolumeContributions.forEach { volume, contribution ->
       config.setTargetSpecificData(volume, contribution.getConfiguredValue())
     }
   }
 
   override fun reset() {
     super.reset()
-    targetVolumeContributions.forEach { (volume, contribution) ->
+    targetVolumeContributions.forEach { volume, contribution ->
       contribution.resetFrom(volume)
     }
   }

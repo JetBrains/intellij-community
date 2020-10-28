@@ -89,9 +89,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
-  override fun volumeDescriptors() = listOf(APPLICATION_FOLDER_VOLUME,
-                                            CLASS_PATH_VOLUME,
-                                            AGENTS_VOLUME)
+  override fun volumeDescriptors() = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
 
   override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
     duplicatePersistentComponent(this, config)
@@ -99,13 +97,6 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
-
-    @JvmStatic
-    val APPLICATION_FOLDER_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":appFolder",
-                                                     ExecutionBundle.message("java.language.runtime.application.folder.label"),
-                                                     ExecutionBundle.message("java.language.runtime.application.folder.description"),
-                                                     ExecutionBundle.message("java.language.runtime.application.folder.browsing.title"),
-                                                     "/app")
 
     @JvmStatic
     val CLASS_PATH_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
