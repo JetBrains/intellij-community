@@ -2,8 +2,10 @@
 package com.intellij.stats.completion.sender
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,11 +23,16 @@ internal fun isCompletionLogsSendAllowed(): Boolean {
   return ApplicationManager.getApplication().isEAP && Registry.`is`("completion.stats.send.logs")
 }
 
-internal class SenderPreloadingActivity : PreloadingActivity() {
-  companion object {
-    private val LOG = logger<SenderPreloadingActivity>()
+private val LOG = logger<SenderPreloadingActivity>()
+
+@Service
+private class StatsCollectorPluginDisposable : Disposable {
+  override fun dispose() {
   }
-  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication())
+}
+
+internal class SenderPreloadingActivity : PreloadingActivity() {
+  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, service<StatsCollectorPluginDisposable>())
   private val sendInterval = 5 * Time.MINUTE
 
   override fun preload(indicator: ProgressIndicator) {
