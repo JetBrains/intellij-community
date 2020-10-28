@@ -265,10 +265,16 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     String mavenHomeFieldText = mavenHomeField.getText();
     if (targetMavenHomes.isEmpty()) {
-      EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(""));
+      if (!mavenHomeFieldText.isEmpty()) {
+        EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(""));
+      }
     }
     else if (!targetMavenHomes.contains(mavenHomeFieldText)) {
-      EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(targetMavenHomes.get(0)));
+      EdtInvocationManager.getInstance().invokeLater(() -> {
+        if (!targetMavenHomes.contains(mavenHomeField.getText())) {
+          mavenHomeField.setSelectedItem(targetMavenHomes.get(0));
+        }
+      });
     }
   }
 
