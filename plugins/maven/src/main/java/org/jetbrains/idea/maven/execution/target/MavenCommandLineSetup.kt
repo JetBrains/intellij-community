@@ -65,8 +65,7 @@ class MavenCommandLineSetup(private val project: Project,
     setupTargetProjectDirectories(settings)
     setupMavenExtClassPath(mavenOptsValues)
     addMavenParameters(settings, mavenOptsValues)
-    commandLine.addEnvironmentVariable(MAVEN_OPTS,
-                                       TargetValue.composite(mavenOptsValues) { values -> values.joinToString(separator = " ") })
+    setupTargetEnvironmentVariables(settings, mavenOptsValues)
     return this
   }
 
@@ -119,8 +118,8 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun addMavenParameters(settings: MavenRunConfiguration.MavenSettings, mavenOptsValues: MutableList<TargetValue<String>>) {
-    val generalSettings: MavenGeneralSettings = settings.myGeneralSettings ?: MavenProjectsManager.getInstance(project).generalSettings
-    val runnerSettings: MavenRunnerSettings = settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
+    val generalSettings: MavenGeneralSettings = mavenGeneralSettings(settings)
+    val runnerSettings = mavenRunnerSettings(settings)
     if (runnerSettings.isSkipTests) {
       commandLine.addParameter("-DskipTests=true")
     }
@@ -129,14 +128,6 @@ class MavenCommandLineSetup(private val project: Project,
       mavenOptsValues.add(TargetValue.fixed(runnerSettings.vmOptions))
     }
 
-    runnerSettings.environmentProperties.forEach { (name, value) ->
-      if (MAVEN_OPTS == name) {
-        mavenOptsValues.add(TargetValue.fixed(value))
-      }
-      else {
-        commandLine.addEnvironmentVariable(name, value)
-      }
-    }
     val mavenPropertiesList = ParametersList()
     runnerSettings.mavenProperties
       .filterKeys { it.isNotEmpty() }
@@ -181,6 +172,29 @@ class MavenCommandLineSetup(private val project: Project,
       commandLine.addParameters("-s", generalSettings.userSettingsFile)
     }
     generalSettings.localRepository.nullize(true)?.also { commandLine.addParameter("-Dmaven.repo.local=$it") }
+  }
+
+  private fun setupTargetEnvironmentVariables(settings: MavenRunConfiguration.MavenSettings,
+                                              mavenOptsValues: MutableList<TargetValue<String>>) {
+    val runnerSettings = mavenRunnerSettings(settings)
+    runnerSettings.environmentProperties.forEach { (name, value) ->
+      if (MAVEN_OPTS == name) {
+        mavenOptsValues.add(TargetValue.fixed(value))
+      }
+      else {
+        commandLine.addEnvironmentVariable(name, value)
+      }
+    }
+    val targetValue = TargetValue.composite(mavenOptsValues) { it.joinToString(separator = " ") }
+    commandLine.addEnvironmentVariable(MAVEN_OPTS, targetValue)
+  }
+
+  private fun mavenGeneralSettings(settings: MavenRunConfiguration.MavenSettings): MavenGeneralSettings {
+    return settings.myGeneralSettings ?: MavenProjectsManager.getInstance(project).generalSettings
+  }
+
+  private fun mavenRunnerSettings(settings: MavenRunConfiguration.MavenSettings): MavenRunnerSettings {
+    return settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
   }
 
   private fun upload(uploadRoot: TargetEnvironment.UploadRoot,
