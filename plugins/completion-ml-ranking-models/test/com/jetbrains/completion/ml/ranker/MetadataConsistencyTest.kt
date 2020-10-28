@@ -33,4 +33,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testTypeScriptMetadata() = ExperimentTypeScriptMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testDartMetadata() = ExperimentDartMLRankingProvider().assertModelMetadataConsistent()
 }
