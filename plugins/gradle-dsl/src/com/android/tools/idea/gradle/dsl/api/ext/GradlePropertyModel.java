@@ -15,7 +15,6 @@ package com.android.tools.idea.gradle.dsl.api.ext;
 
 import com.android.tools.idea.gradle.dsl.api.GradleBuildModel;
 import com.android.tools.idea.gradle.dsl.api.util.TypeReference;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +42,11 @@ public interface GradlePropertyModel {
   @NotNull
   String DOUBLE_QUOTES = "\"";
 
+  /**
+   * @return instance of GradleDslElement, which is not accessible from this module
+   */
   @Nullable
-  GradleDslElement getRawElement();
+  Object getRawElement(); // FIXME-ank4: real type is GradleDslElement
 
   /**
    * Converts a string to one that can be used to set interpolated strings using {@link #setValue(Object)}

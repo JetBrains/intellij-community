@@ -66,7 +66,7 @@ public class SigningConfigModelImpl extends GradleDslBlockModel implements Signi
   }
 
   private static void renameModelDependents(GradlePropertyModel model) {
-    GradleDslElement element = model.getRawElement();
+    GradleDslElement element = (GradleDslElement)model.getRawElement();
     if (element != null) {
       for (GradleReferenceInjection dependent : element.getDependents()) {
         // NB the new ReferenceTo(...) here will bypass the SigningConfig method
