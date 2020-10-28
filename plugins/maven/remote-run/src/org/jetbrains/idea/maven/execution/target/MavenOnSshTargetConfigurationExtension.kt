@@ -21,7 +21,7 @@ class MavenOnSshTargetConfigurationExtension : TargetConfigurationExtension {
     if (targetEnvironmentConfiguration !is SshTargetEnvironmentConfiguration) return null
     if (!targetEnvironmentConfiguration.useRsync) return null
 
-    val applicationDir = targetEnvironmentConfiguration.applicationDir
+    val applicationDir = targetEnvironmentConfiguration.projectRootOnTarget
     if (applicationDir.isBlank()) return null
 
     val fileSeparator = targetEnvironmentRequest.targetPlatform.platform.fileSeparator

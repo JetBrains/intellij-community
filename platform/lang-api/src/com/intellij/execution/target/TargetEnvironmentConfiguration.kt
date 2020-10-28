@@ -25,6 +25,8 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
 
   fun createEnvironmentFactory(project: Project): TargetEnvironmentFactory = getTargetType().createEnvironmentFactory(project, this)
 
+  abstract var projectRootOnTarget: String
+
   /**
    * Validates this configuration. By default delegates validation to each of the attached language runtimes.
    * Subclasses may override.
