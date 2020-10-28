@@ -18,6 +18,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -33,6 +35,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
+import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector.ModifyModuleStatementUsageInfo;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
@@ -45,6 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,6 +187,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usageInfos = allUsages.toArray(UsageInfo.EMPTY_ARRAY);
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
+    PsiPackage newPackage = JavaPsiFacade.getInstance(myProject).findPackage(getTargetPackage().getQualifiedName());
+    if (newPackage != null) {
+      new ModuleInfoUsageDetector(myProject, myElementsToMove, newPackage).detectModuleStatementsUsed(allUsages, myConflicts);
+    }
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
   }
@@ -225,6 +233,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
+    if (!myConflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(myConflicts.values());
+      }
+      return true;
+    }
     return showConflicts(myConflicts, usages);
   }
 
@@ -594,6 +608,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
 
+      modifyModuleStatementsInDescriptor(usages, branch);
+
       if (branch != null) {
         branch.runAfterMerge(() -> {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -607,6 +623,38 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
+  }
+
+  private void modifyModuleStatementsInDescriptor(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
+    Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(usages)
+      .select(ModifyModuleStatementUsageInfo.class).groupingBy(usage -> branch == null ? usage.getModuleDescriptor() :
+                                                                        branch.obtainPsiCopy(usage.getModuleDescriptor()));
+    for (var entry : moduleStatementsByDescriptor.entrySet()) {
+      PsiJavaModule moduleDescriptor = entry.getKey();
+      for (ModifyModuleStatementUsageInfo modifyStatementInfo : entry.getValue()) {
+        if (modifyStatementInfo.isAddition()) {
+          PsiUtil.addModuleStatement(moduleDescriptor, modifyStatementInfo.getModuleStatement());
+        }
+        else if (modifyStatementInfo.isDeletion()) {
+          PsiPackageAccessibilityStatement statementToDelete = modifyStatementInfo.getModuleStatement();
+          Iterable<PsiPackageAccessibilityStatement> statements = null;
+          if (statementToDelete.getRole() == Role.EXPORTS) {
+            statements = moduleDescriptor.getExports();
+          }
+          else if (statementToDelete.getRole() == Role.OPENS) {
+            statements = moduleDescriptor.getOpens();
+          }
+          assert statements != null;
+          for (PsiPackageAccessibilityStatement statement : statements) {
+            if (statement.getText().equals(statementToDelete.getText())) {
+              statement.delete();
+              break;
+            }
+          }
+        }
+      }
+    }
+    moduleStatementsByDescriptor.keySet().forEach(descriptor -> CodeStyleManager.getInstance(myProject).reformat(descriptor));
   }
 
   private void afterMovement(List<RefactoringElementListener> listeners,
