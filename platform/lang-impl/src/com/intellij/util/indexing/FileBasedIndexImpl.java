@@ -175,7 +175,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        if (!myRegisteredIndexes.areIndexesReady()) {
+        if (myRegisteredIndexes != null && !myRegisteredIndexes.areIndexesReady()) {
           new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -969,7 +969,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   // returns false if doc was not indexed because it is already up to date
   // return true if document was indexed
   // caller is responsible to ensure no concurrent same document processing
-  void indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project,
+  void indexUnsavedDocument(@NotNull final Document document,
+                            @NotNull final ID<?, ?> requestedIndexId,
+                            @NotNull Project project,
                             @NotNull final VirtualFile vFile) {
     myStorageBufferingHandler.assertTransientMode();
 
