@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.jcef.JBCefApp
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
@@ -21,7 +22,8 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     return if (html != null) HTMLFileEditor(html) else HTMLFileEditor(url!!, timeoutHtml)
   }
 
-  override fun accept(project: Project, file: VirtualFile): Boolean = isHTMLEditor(file)
+  override fun accept(project: Project, file: VirtualFile): Boolean =
+    JBCefApp.isSupported() && isHTMLEditor(file)
 
   override fun getEditorTypeId(): String = "html-editor"
 
