@@ -2,7 +2,6 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -40,15 +39,16 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   companion object {
     @JvmStatic
-    protected fun <B, T, State> duplicatePersistentComponent(base: B, config: T): T
-      where T : PersistentStateComponent<State>,
-            T : ContributedConfigurationBase,
-            B : ContributedTypeBase<T> {
-      return base.createDefaultConfig().also {
-        val state = config.state
+    fun <Type, Config, State> duplicatePersistentComponent(type: Type, template: Config): Config
+      where Config : PersistentStateComponent<State>,
+            Config : ContributedConfigurationBase,
+            Type : ContributedTypeBase<Config> {
+      return type.createDefaultConfig().also {
+        val state = template.state
         if (state != null) {
           it.loadState(state)
         }
+        it.displayName = template.displayName
       }
     }
   }
