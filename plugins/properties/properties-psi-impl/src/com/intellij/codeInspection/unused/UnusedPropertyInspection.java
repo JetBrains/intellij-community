@@ -169,9 +169,12 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
                                        @Nullable ProgressIndicator indicator) {
     GlobalSearchScope exceptPropertyFiles = createExceptPropertyFilesScope(searchScope);
     GlobalSearchScope newScope = searchScope.intersectWith(exceptPropertyFiles);
-    PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, newScope, null, indicator);
-    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
-    if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+
+    if (onTheFly) {
+      PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, newScope, null, indicator);
+      if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+      if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+    }
 
     return ReferencesSearch.search(property, newScope, false).findFirst() != null;
   }
