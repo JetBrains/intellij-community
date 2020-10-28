@@ -18,6 +18,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -111,6 +112,9 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   private void onStartBuild(@NotNull Object buildId, @NotNull StartBuildEvent startBuildEvent) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment() && !application.isUnitTestMode()) return;
+
     if (startBuildEvent instanceof StartBuildEventImpl) {
       myViewSettingsProvider = ((StartBuildEventImpl)startBuildEvent).getBuildViewSettingsProvider();
     }
