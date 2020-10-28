@@ -21,6 +21,7 @@ import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
   }
 
+  @Contract("_, null, null -> fail")
   public static void openWhatsNewFile(@NotNull Project project, String url, @DetailedDescription String content) {
     if (url == null && content == null) throw new IllegalArgumentException();
 
