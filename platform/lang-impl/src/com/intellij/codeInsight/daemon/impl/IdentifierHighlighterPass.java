@@ -57,6 +57,10 @@ public class IdentifierHighlighterPass {
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
+  /**
+   * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
+   * In both cases, {@link #doCollectInformation()} will produce and {@link #doApplyInformationToEditor()} will apply HighlightInfos for the host file.
+   */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
     myEditor = editor;

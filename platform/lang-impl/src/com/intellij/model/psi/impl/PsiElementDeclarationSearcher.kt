@@ -2,6 +2,7 @@
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.search.PsiSymbolDeclarationSearchParameters
@@ -40,41 +41,11 @@ class PsiElementDeclarationSearcher : PsiSymbolDeclarationSearcher {
   private fun inLocalScope(psi: PsiElement, searchScope: LocalSearchScope): PsiSymbolDeclaration? {
     for (scopeElement in searchScope.scope) {
       val scopeFile = scopeElement.containingFile ?: continue
-      val declarationRange = getNameIdentifierRange(scopeFile, psi) ?: continue // call old implementation as is
-      return PsiElement2Declaration(psi, scopeFile, declarationRange)
+      val declarationRange = HighlightUsagesHandler.getNameIdentifierRangeInCurrentRoot(scopeFile, psi) ?: continue // call old implementation as is
+      return PsiElement2Declaration(psi, scopeFile, declarationRange.getSecond())
     }
     return null
   }
-
-  private fun getNameIdentifierRange(file: PsiFile, element: PsiElement): TextRange? {
-    if (element is PomTargetPsiElement) {
-      val target = element.target
-      if (target is PsiDeclaredTarget) {
-        val declaredTarget = target
-        val range = declaredTarget.nameIdentifierRange
-        if (range != null) {
-          if (range.startOffset < 0 || range.length <= 0) {
-            return null
-          }
-          val navElement = declaredTarget.navigationElement
-          if (PsiUtilBase.isUnderPsiRoot(file, navElement)) {
-            return range.shiftRight(navElement.textRange.startOffset)
-          }
-        }
-      }
-    }
-    if (!PsiUtilBase.isUnderPsiRoot(file, element)) {
-      return null
-    }
-    val identifier = IdentifierUtil.getNameIdentifier(element)
-    if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
-      val range = if (identifier is ExternallyAnnotated) (identifier as ExternallyAnnotated).annotationRegion // the way to skip the id highlighting
-      else identifier.textRange
-      return range
-    }
-    return null
-  }
-
 
   private fun inGlobalScope(psi: PsiElement, searchScope: GlobalSearchScope): PsiSymbolDeclaration? {
     val containingFile = psi.containingFile ?: return null

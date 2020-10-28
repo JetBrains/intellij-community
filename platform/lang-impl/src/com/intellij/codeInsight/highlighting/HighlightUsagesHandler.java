@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -289,9 +290,23 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, writeUsages);
   }
 
+  /**
+   * @return range (in the host file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element
+   */
   @Nullable
   public static TextRange getNameIdentifierRange(@NotNull PsiFile file, @NotNull PsiElement element) {
-    final InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(element.getProject());
+    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(file.getProject());
+    Pair<PsiElement, TextRange> pair = getNameIdentifierRangeInCurrentRoot(file, element);
+    if (pair == null) return null;
+    return injectedManager.injectedToHost(pair.getFirst(), pair.getSecond());
+  }
+
+  /**
+   * @return range (in the current containing file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element,
+   * and the context element for this range
+   */
+  @Nullable
+  public static Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof PsiDeclaredTarget) {
@@ -303,7 +318,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           }
           final PsiElement navElement = declaredTarget.getNavigationElement();
           if (PsiUtilBase.isUnderPsiRoot(file, navElement)) {
-            return injectedManager.injectedToHost(navElement, range.shiftRight(navElement.getTextRange().getStartOffset()));
+            return Pair.create(navElement, range.shiftRight(navElement.getTextRange().getStartOffset()));
           }
         }
       }
@@ -318,7 +333,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       TextRange range = identifier instanceof ExternallyAnnotated
                         ? ((ExternallyAnnotated)identifier).getAnnotationRegion() // the way to skip the id highlighting
                         : identifier.getTextRange();
-      return range == null ? null : injectedManager.injectedToHost(identifier, range);
+      return range == null ? null : Pair.create(identifier, range);
     }
     return null;
   }
