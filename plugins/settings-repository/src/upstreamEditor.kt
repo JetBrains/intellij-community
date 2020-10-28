@@ -42,52 +42,52 @@ private class SyncAction(private val syncType: SyncType,
       runBlocking {
         val url = urlTextField.text.nullize(true)
         validateUrl(url, project)
-        ?: doSync(url!!)
+        ?: doSync(project, syncType, url!!)
       }?.let { listOf(ValidationInfo(it, urlTextField)) }
     }
   }
+}
 
-  private suspend fun doSync(url: String): String? {
-    val icsManager = icsManager
-    IcsActionsLogger.logSettingsSync(project, syncType)
-    val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
-    var upstreamSet = false
-    try {
-      val repositoryManager = icsManager.repositoryManager
-      repositoryManager.createRepositoryIfNeeded()
-      repositoryManager.setUpstream(url, null)
+internal suspend fun doSync(project: Project?, syncType: SyncType, url: String): String? {
+  val icsManager = icsManager
+  IcsActionsLogger.logSettingsSync(project, syncType)
+  val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
+  var upstreamSet = false
+  try {
+    val repositoryManager = icsManager.repositoryManager
+    repositoryManager.createRepositoryIfNeeded()
+    repositoryManager.setUpstream(url, null)
 
-      upstreamSet = true
+    upstreamSet = true
 
-      if (isRepositoryWillBeCreated) {
-        icsManager.setApplicationLevelStreamProvider()
-      }
-
-      if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
-        ApplicationManager.getApplication().saveSettings()
-        icsManager.sync(syncType, project) { copyLocalConfig() }
-      }
-      else {
-        icsManager.sync(syncType, project, null)
-      }
-    }
-    catch (e: Throwable) {
-      if (isRepositoryWillBeCreated) {
-        // remove created repository
-        icsManager.repositoryManager.deleteRepository()
-      }
-
-      LOG.warn(e)
-
-      if (!upstreamSet || e is NoRemoteRepositoryException) {
-        return e.message?.let { icsMessage("set.upstream.failed.message", it) }?: icsMessage("set.upstream.failed.message.without.details")
-      }
-      else {
-        return e.message ?: IcsBundle.message("sync.internal.error")
-      }
+    if (isRepositoryWillBeCreated) {
+      icsManager.setApplicationLevelStreamProvider()
     }
 
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
-    return null
+    if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
+      ApplicationManager.getApplication().saveSettings()
+      icsManager.sync(syncType, project) { copyLocalConfig() }
+    }
+    else {
+      icsManager.sync(syncType, project, null)
+    }
   }
+  catch (e: Throwable) {
+    if (isRepositoryWillBeCreated) {
+      // remove created repository
+      icsManager.repositoryManager.deleteRepository()
+    }
+
+    LOG.warn(e)
+
+    if (!upstreamSet || e is NoRemoteRepositoryException) {
+      return e.message?.let { icsMessage("set.upstream.failed.message", it) } ?: icsMessage("set.upstream.failed.message.without.details")
+    }
+    else {
+      return e.message ?: IcsBundle.message("sync.internal.error")
+    }
+  }
+
+  NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
+  return null
 }
