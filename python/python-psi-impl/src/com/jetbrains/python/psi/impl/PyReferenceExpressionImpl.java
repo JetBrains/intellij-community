@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
@@ -250,7 +249,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context), key);
+      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context));
     }
     return null;
   }
