@@ -37,20 +37,17 @@ private class SyncAction(private val syncType: SyncType,
                          private val dialogManager: DialogManager) : AbstractAction(
   icsMessage(syncType.messageKey)) {
 
-  private fun createError(@NlsContexts.DialogMessage message: String) = ValidationInfo(message, urlTextField)
-
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
       runBlocking {
         val url = urlTextField.text.nullize(true)
-        validateUrl(url, project)?.let {
-          listOf(createError(it))
-        } ?: doSync(url!!)
-      }
+        validateUrl(url, project)
+        ?: doSync(url!!)
+      }?.let { listOf(ValidationInfo(it, urlTextField)) }
     }
   }
 
-  private suspend fun doSync(url: String): List<ValidationInfo>? {
+  private suspend fun doSync(url: String): String? {
     val icsManager = icsManager
     IcsActionsLogger.logSettingsSync(project, syncType)
     val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
@@ -83,16 +80,14 @@ private class SyncAction(private val syncType: SyncType,
       LOG.warn(e)
 
       if (!upstreamSet || e is NoRemoteRepositoryException) {
-        val message = e.message?.let { icsMessage("set.upstream.failed.message", it) } ?: icsMessage(
-          "set.upstream.failed.message.without.details")
-        return listOf(createError(message))
+        return e.message?.let { icsMessage("set.upstream.failed.message", it) }?: icsMessage("set.upstream.failed.message.without.details")
       }
       else {
-        return listOf(createError(e.message ?: IcsBundle.message("sync.internal.error")))
+        return e.message ?: IcsBundle.message("sync.internal.error")
       }
     }
 
     NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
-    return emptyList()
+    return null
   }
 }
