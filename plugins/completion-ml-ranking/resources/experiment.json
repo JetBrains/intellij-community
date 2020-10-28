@@ -87,6 +87,11 @@
       "id": "dart",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 12, 13]
+    },
+    {
+      "id": "swift",
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 12, 13]
     }
   ]
 }

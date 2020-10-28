@@ -36,4 +36,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testDartMetadata() = ExperimentDartMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testSwiftMetadata() = ExperimentSwiftMLRankingProvider().assertModelMetadataConsistent()
 }
