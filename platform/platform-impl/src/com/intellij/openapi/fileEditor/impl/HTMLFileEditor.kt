@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JCEFHtmlPanel
@@ -22,7 +22,7 @@ import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 
-internal class HTMLFileEditor private constructor() : FileEditor {
+internal class HTMLFileEditor private constructor() : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
@@ -87,8 +87,6 @@ internal class HTMLFileEditor private constructor() : FileEditor {
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun <T : Any?> getUserData(key: Key<T>): T? = null
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
   override fun getCurrentLocation(): FileEditorLocation? = null
   override fun dispose() { }
