@@ -1,9 +1,9 @@
-import java.sql.Date as SqlDate
+import kotlin.collections.List as KotlinList
 
 /**
- * This is [<caret>SqlDate]
+ * This is [<caret>KotlinList]
  */
 class Foo {
 }
 
-// REF: (java.sql).Date
+// REF: (kotlin.collections).List

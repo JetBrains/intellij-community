@@ -8,4 +8,4 @@ class C {
 
 }
 
-// REF: (kotlin).require(kotlin.Boolean)
+// REF: (kotlin).require(Boolean)
