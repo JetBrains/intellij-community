@@ -196,8 +196,7 @@ object UpdateChecker {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
-    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings)
-    return strategy.checkForUpdates()
+    return UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings).checkForUpdates()
   }
 
   @JvmStatic
@@ -371,7 +370,7 @@ object UpdateChecker {
         LOG.error(onceInstalled.toString(), e)
       }
 
-      //noinspection SSBasedInspection
+      @Suppress("SSBasedInspection")
       onceInstalled.toFile().deleteOnExit()
     }
 

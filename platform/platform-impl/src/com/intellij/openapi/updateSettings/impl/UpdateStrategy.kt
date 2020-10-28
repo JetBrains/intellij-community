@@ -6,15 +6,15 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.InboundSemiGraph
-import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@NonNls
 private val NUMBER = Regex("\\d+")
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UpdateSettings) {
   constructor(currentBuild: BuildNumber, updates: UpdatesInfo) :
     this(currentBuild, updates, UpdateSettings.getInstance())
+
+  private val customization = UpdateStrategyCustomization.getInstance()
 
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
@@ -29,12 +29,11 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     val selectedChannel = settings.selectedChannelStatus
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
-    val customization = UpdateStrategyCustomization.getInstance()
     val result = product.channels.asSequence()
-      .filter { ch -> ch.status >= selectedChannel }                                      // filters out inapplicable channels
-      .sortedBy { ch -> ch.status }                                                       // reorders channels (EAPs first)
-      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }              // maps into a sequence of <build, channel> pairs
-      .filter { p -> isApplicable(customization, p.first, ignoredBuilds) }                               // filters out inapplicable builds
+      .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
+      .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
+      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
+      .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
       .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
 
     val newBuild = result?.first
@@ -43,14 +42,12 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     return CheckForUpdateResult(newBuild, updatedChannel, patches)
   }
 
-  private fun isApplicable(customization: UpdateStrategyCustomization, candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean {
-    return customization.isNewerVersion(candidate.number, currentBuild) &&
-           candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
-           candidate.target?.inRange(currentBuild) ?: true
-  }
+  private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =
+    customization.isNewerVersion(candidate.number, currentBuild) &&
+    candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
+    candidate.target?.inRange(currentBuild) ?: true
 
   private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
-    val customization = UpdateStrategyCustomization.getInstance()
     val preferSameMajorVersion = customization.haveSameMajorVersion(currentBuild, n1).compareTo(customization.haveSameMajorVersion(currentBuild, n2))
     return if (preferSameMajorVersion != 0) preferSameMajorVersion else n1.compareTo(n2)
   }
@@ -72,7 +69,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
             val fromBuild = patch.fromBuild.withoutProductCode()
             upgrades.putValue(toBuild, fromBuild)
             if (patch.size != null) {
-              val maxSize = NUMBER.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().max()
+              val maxSize = NUMBER.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().maxOrNull()
               if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
             }
           }
