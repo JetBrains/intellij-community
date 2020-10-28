@@ -1,7 +1,7 @@
-import java.sql.Date as SqlDate
+import kotlin.Int.Companion.MIN_VALUE as MinInt
 
 fun foo() {
-    val v: SqlDate = SqlDa<caret>
+    val v: Int = MinI<caret>
 }
 
-// ELEMENT: "SqlDate"
+// ELEMENT: "MinInt"
