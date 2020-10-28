@@ -6,5 +6,5 @@ fun main() {
 }
 
 /*
-Text: (<highlight>myParamName1: Int</highlight>, myParamName2: String!), Disabled: false, Strikeout: false, Green: true
+Text: (<highlight>Int</highlight>, String!), Disabled: false, Strikeout: false, Green: true
 */
