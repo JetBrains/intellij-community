@@ -37,6 +37,7 @@
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
     <extensionPoint name="targetRuntimeConfigurableFactory" interface="org.jetbrains.idea.maven.execution.target.MavenRuntimeUIFactory" dynamic="true"/>
     <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationExtension" dynamic="true"/>
+    <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -430,6 +431,10 @@
     <executionEnvironmentProvider
       implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
 
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenBadConfigEventParser"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.JavaBuildErrorNotification"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.KotlinBuildErrorNotification"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.WarningNotifier"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>

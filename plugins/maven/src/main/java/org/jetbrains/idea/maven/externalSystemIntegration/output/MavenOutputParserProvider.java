@@ -30,10 +30,6 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
                                                              @NotNull Function<String, String> targetFileMapper) {
     return new MavenLogOutputParser(taskId,
                                     targetFileMapper,
-                                    Arrays.asList( new JavaBuildErrorNotification(),
-                                                   new KotlinBuildErrorNotification(),
-                                                   new WarningNotifier(),
-
-                                                   new MavenBadConfigEventParser()));
+                                    MavenLoggedEventParser.EP_NAME.getExtensionList());
   }
 }
