@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public final class DisabledPluginsState {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -171,48 +168,41 @@ public final class DisabledPluginsState {
   }
 
   public static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
-    enablePlugins(plugins, enabled, true);
-  }
-
-  static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins,
-                            boolean enabled,
-                            boolean updateDescriptors) {
-    enablePluginsById(
-      map2SetNotNull(plugins, PluginDescriptor::getPluginId),
-      enabled,
-      updateDescriptors
-    );
+    enablePluginsById(ContainerUtil.map(plugins, (plugin) -> plugin.getPluginId()), enabled);
   }
 
   public static void enablePluginsById(@NotNull Collection<PluginId> plugins, boolean enabled) {
-    enablePluginsById(plugins, enabled, true);
-  }
-
-  // todo reconsider whether PluginDescriptor#setEnabled should be updated as well
-  static void enablePluginsById(@NotNull Collection<PluginId> plugins,
-                                boolean enabled,
-                                boolean updateDescriptors) {
     Set<PluginId> disabled = getDisabledIds();
-    boolean changed = enabled ?
-                      disabled.removeAll(plugins) :
-                      disabled.addAll(plugins);
-
-    String message;
-    if (updateDescriptors) {
-      List<IdeaPluginDescriptor> descriptors = mapNotNull(plugins, PluginManagerCore::getPlugin);
-      message = joinedDescriptors(descriptors, enabled);
-      descriptors.forEach(descriptor -> descriptor.setEnabled(enabled));
+    int sizeBefore = disabled.size();
+    for (PluginId plugin : plugins) {
+      if (enabled) {
+        disabled.remove(plugin);
+      }
+      else {
+        disabled.add(plugin);
+      }
+      IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
+      if (pluginDescriptor != null) {
+        pluginDescriptor.setEnabled(enabled);
+      }
     }
-    else {
-      message = joinedPluginIds(plugins, enabled);
-    }
-    getLogger().info(message);
 
-    if (!changed) {
+    if (sizeBefore == disabled.size()) {
+      // nothing changed
       return;
     }
 
     trySaveDisabledPlugins(disabled);
+  }
+
+  static boolean updateDisabledPluginsState(@NotNull Collection<PluginId> pluginIdsToEnable,
+                                            @NotNull Collection<PluginId> pluginIdsToDisable) {
+    Set<PluginId> disabledIds = getDisabledIds();
+
+    pluginIdsToEnable.forEach(disabledIds::remove);
+    disabledIds.addAll(pluginIdsToDisable);
+
+    return trySaveDisabledPlugins(disabledIds);
   }
 
   static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
@@ -251,30 +241,5 @@ public final class DisabledPluginsState {
 
   static void invalidate() {
     ourDisabledPlugins = null;
-  }
-
-  private static @NotNull String joinedDescriptors(@NotNull Collection<? extends PluginDescriptor> descriptors,
-                                                   boolean enabled) {
-    return joinedPluginIds(
-      mapNotNull(descriptors, PluginDescriptor::getPluginId),
-      enabled
-    );
-  }
-
-  private static @NotNull String joinedPluginIds(@NotNull Collection<PluginId> pluginIds,
-                                                 boolean enabled) {
-    StringBuilder buffer = new StringBuilder("Plugins to ")
-      .append(enabled ? "enable" : "disable")
-      .append(": [");
-
-    join(
-      pluginIds,
-      PluginId::getIdString,
-      ", ",
-      buffer
-    );
-    return buffer
-      .append(']')
-      .toString();
   }
 }

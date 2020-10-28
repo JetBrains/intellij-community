@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileVisitResult;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,11 +53,11 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
     Set<IdeaPluginDescriptor> autoSwitchedIds = enabled ?
                                                 getPluginsIdsToEnable(plugin) :
                                                 getPluginsIdsToDisable(plugin);
-    boolean enabledWithoutRestart = ProjectPluginTrackerManager.updatePluginsState(
-      autoSwitchedIds,
-      enabled ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED
+    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(
+      null,
+      new ArrayList<>(autoSwitchedIds),
+      enabled
     );
-
     if (autoSwitchedIds.size() > 1) {
       showAutoSwitchNotification(autoSwitchedIds, enabled);
     }

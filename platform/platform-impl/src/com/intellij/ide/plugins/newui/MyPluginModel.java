@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -223,8 +224,32 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myPluginsToRemoveOnCancel.clear();
   }
 
-  private boolean applyEnableDisablePlugins(@Nullable JComponent parentComponent) {
-    EnumMap<PluginEnabledState, List<IdeaPluginDescriptor>> descriptorsByState = new EnumMap<>(PluginEnabledState.class);
+  private final class UpdatePluginStateAction implements BiPredicate<@Nullable JComponent, @NotNull Boolean> {
+
+    private final ArrayList<IdeaPluginDescriptor> myPluginsToEnable = new ArrayList<>();
+    private final ArrayList<IdeaPluginDescriptor> myPluginsToDisable = new ArrayList<>();
+
+    public void register(@NotNull IdeaPluginDescriptor descriptor,
+                         boolean enable) {
+      (enable ? myPluginsToEnable : myPluginsToDisable).add(descriptor);
+    }
+
+    @Override
+    public boolean test(@Nullable JComponent parentComponent,
+                        @NotNull Boolean updatePluginEnabledState) {
+      return PluginEnabler.updatePluginEnabledState(
+        getProject(),
+        myPluginsToEnable,
+        myPluginsToDisable,
+        parentComponent,
+        updatePluginEnabledState
+      );
+    }
+  }
+
+  private boolean applyEnableDisablePlugins(@Nullable JComponent parent) {
+    UpdatePluginStateAction applyPerProjectAction = new UpdatePluginStateAction();
+    UpdatePluginStateAction applyGloballyAction = new UpdatePluginStateAction();
 
     for (Map.Entry<IdeaPluginDescriptor, PluginEnabledState> entry : myDiff.entrySet()) {
       IdeaPluginDescriptor descriptor = entry.getKey();
@@ -245,22 +270,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean isEnabled = entry.getValue().isEnabled();
       if (shouldEnable != isEnabled ||
           !shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
-        descriptorsByState.computeIfAbsent(
-          newState,
-          __ -> new ArrayList<>()
-        ).add(descriptor);
+        UpdatePluginStateAction action = newState.isPerProject() ?
+                                         applyPerProjectAction :
+                                         applyGloballyAction;
+        action.register(descriptor, shouldEnable);
       }
     }
 
-    return ContainerUtil.all(
-      descriptorsByState.entrySet(),
-      entry -> ProjectPluginTrackerManager.updatePluginsState(
-        entry.getValue(),
-        entry.getKey(),
-        getProject(),
-        parentComponent
-      )
-    );
+    return applyPerProjectAction.test(parent, Boolean.FALSE) &&
+           applyGloballyAction.test(parent, Boolean.TRUE);
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {

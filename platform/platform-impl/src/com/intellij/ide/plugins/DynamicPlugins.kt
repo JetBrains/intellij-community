@@ -105,69 +105,38 @@ object DynamicPlugins {
     return reason == null
   }
 
-  /**
-   * @return true if the requested enabled state was applied without restart, false if restart is required
-   */
-  @JvmStatic
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-    val descriptorsToLoad = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = true,
-    ) ?: return false
-
-    val loader = lazy(LazyThreadSafetyMode.NONE) { OptionalDependencyDescriptorLoader() }
-    return descriptorsToLoad.all { descriptor ->
-      descriptor.isEnabled = true
-      loadPlugin(descriptor, checkImplementationDetailDependencies = true, loader = loader)
-    }
-  }
-
-  /**
-   * @return true if the requested enabled state was applied without restart, false if restart is required
-   */
   @JvmStatic
   @JvmOverloads
-  fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptor>,
-    project: Project? = null,
-    parentComponent: JComponent? = null,
-    options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true),
-  ): Boolean {
-    val descriptorsToUnload = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = false,
-    ) ?: return false
-
-    return descriptorsToUnload.reversed().all { descriptor ->
-      descriptor.isEnabled = false
-      unloadPluginWithProgress(project, parentComponent, descriptor, options)
+  fun loadUnloadPlugins(pluginsToEnable: List<IdeaPluginDescriptor>,
+                        pluginsToDisable: List<IdeaPluginDescriptor>,
+                        project: Project? = null,
+                        parentComponent: JComponent? = null,
+                        options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true)): Boolean {
+    val descriptorsToEnable = loadFullDescriptorsWithoutRestart(pluginsToEnable, enable = true) ?: return false
+    val descriptorsToDisable = loadFullDescriptorsWithoutRestart(pluginsToDisable, enable = false) ?: return false
+    val loader = lazy(LazyThreadSafetyMode.NONE) { OptionalDependencyDescriptorLoader() }
+    return descriptorsToDisable.reversed().all {
+      unloadPluginWithProgress(project, parentComponent, it, options)
+    } && descriptorsToEnable.all {
+      loadPlugin(it, checkImplementationDetailDependencies = true, loader = loader)
     }
   }
 
-  private fun loadFullDescriptorsWithoutRestart(
-    plugins: Collection<IdeaPluginDescriptor>,
-    load: Boolean
-  ): List<IdeaPluginDescriptorImpl>? {
-    val loadedPlugins = PluginManagerCore.getLoadedPlugins()
+  private fun loadFullDescriptorsWithoutRestart(plugins: List<IdeaPluginDescriptor>, enable: Boolean): List<IdeaPluginDescriptorImpl>? {
+    val loadedPlugins = PluginManagerCore.getLoadedPlugins(null)
     val descriptors = plugins
       .asSequence()
       .filterIsInstance<IdeaPluginDescriptorImpl>()
-      .filterNot { loadedPlugins.contains(it) == load }
+      .filter { loadedPlugins.contains(it) != enable }
       .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .toList()
 
-    val message = descriptors.joinToString(
-      prefix = "Plugins to ${if (load) "load" else "unload"}: [",
-      postfix = "]"
-    ) {
-      it.pluginId.idString
+    if (descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) }) {
+      return PluginManagerCore.getPluginsSortedByDependency(descriptors, true)
     }
-    LOG.info(message)
-
-    return if (descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) })
-      PluginManagerCore.getPluginsSortedByDependency(descriptors, true)
-    else
-      null
+    else {
+      return null
+    }
   }
 
   /**

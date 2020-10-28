@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 
 final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForSmartMode {
   private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
@@ -159,13 +158,13 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
   private static void enablePlugins(@NotNull Project project,
                                     @NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    Set<PluginId> pluginIds = map2SetNotNull(plugins, IdeaPluginDescriptor::getPluginId);
-    LOG.info("Required plugins to enable: [" + join(pluginIds, ", ") + "]");
+    Set<PluginId> pluginIds = PluginEnabler.mapPluginId(plugins);
+    LOG.info(PluginEnabler.getLogMessage("Required plugins to enable", pluginIds));
 
     ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
     pluginIds.forEach(id -> pluginTracker.changeEnableDisable(id, PluginEnabledState.ENABLED));
 
-    ProjectPluginTrackerManager.updatePluginsState(plugins, PluginEnabledState.ENABLED_FOR_PROJECT, project);
+    PluginEnabler.enablePlugins(project, plugins, true);
   }
 
   private static @NotNull NotificationListener createEnableNotificationListener(@NotNull Project project,
