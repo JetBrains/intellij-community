@@ -12,9 +12,9 @@ import java.awt.*;
 public final class MessageType {
 
   public static final MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
-                                                          JBUI.CurrentTheme.NotificationErrorColor.backgroundColor(),
-                                                          JBUI.CurrentTheme.NotificationErrorColor.foregroundColor(),
-                                                          JBUI.CurrentTheme.NotificationErrorColor.borderColor());
+                                                          JBUI.CurrentTheme.NotificationError.backgroundColor(),
+                                                          JBUI.CurrentTheme.NotificationError.foregroundColor(),
+                                                          JBUI.CurrentTheme.NotificationError.borderColor());
 
   public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
                                                          JBUI.CurrentTheme.NotificationInfo.backgroundColor(),
