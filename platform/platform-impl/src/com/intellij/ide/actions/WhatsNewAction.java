@@ -3,16 +3,21 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
@@ -30,7 +35,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (whatsNewUrl == null) throw new IllegalStateException();
 
     Project project = e.getProject();
-    if (project == null) {
+    if (project == null || !JBCefApp.isSupported()) {
       BrowserUtil.browse(whatsNewUrl);
     }
     else {
@@ -53,7 +58,20 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     String title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
 
-    if (url != null) {
+    if (!JBCefApp.isSupported()) {
+      String notificationTitle = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+
+      if (content == null) {
+        String name = ApplicationNamesInfo.getInstance().getFullProductName();
+        String version = ApplicationInfo.getInstance().getMajorVersion() + "." + ApplicationInfo.getInstance().getMinorVersionMainPart();
+        content = IdeBundle.message("whats.new.notification.text", name, version, url);
+      }
+
+      UpdateChecker.getNotificationGroup()
+        .createNotification(notificationTitle, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+        .notify(project);
+    }
+    else if (url != null) {
       boolean darkTheme = UIUtil.isUnderDarcula();
 
       Url embeddedUrl = Urls.newFromEncoded(url).addParameters(Map.of("var", "embed"));
