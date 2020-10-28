@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.targets
 
 import com.google.gson.Gson
-import com.intellij.analysis.AnalysisScope
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInspection.InspectionApplication
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
@@ -22,7 +22,7 @@ private const val QODANA_GLOBAL_SCOPE = "qodana.global"
 private const val QODANA_CONFIG_FILENAME = "qodana.json"
 
 
-class QodanaConfig(val profile: String = "", val excludes: List<ExclusionFilter> = emptyList()) {
+class QodanaConfig(val profile: QodanaProfile = QodanaProfile(), val excludes: List<ExclusionFilter> = emptyList()) {
   companion object {
     @JvmField
     val EMPTY = QodanaConfig()
@@ -30,7 +30,7 @@ class QodanaConfig(val profile: String = "", val excludes: List<ExclusionFilter>
     fun load(projectPath: Path): QodanaConfig {
       val path = projectPath.resolve(QODANA_CONFIG_FILENAME)
       if (!path.exists()) return EMPTY
-      val logTarget = Paths.get(PathManager.getLogPath(), QODANA_CONFIG_FILENAME);
+      val logTarget = Paths.get(PathManager.getLogPath(), QODANA_CONFIG_FILENAME)
       Files.copy(path, logTarget, StandardCopyOption.REPLACE_EXISTING)
       return Gson().fromJson(path.toFile().readText(), QodanaConfig::class.java)
     }
@@ -85,5 +85,22 @@ data class ExclusionFilter(
       sets.add(pathsSet)
     }
     return UnionPackageSet.create(*sets.toTypedArray())
+  }
+}
+
+data class QodanaProfile(val path: String = "", val name: String = "") {
+  fun loadProfile(application: InspectionApplication, project: Project): InspectionProfileImpl? {
+    if (path.isNotEmpty()) {
+      val profile = application.loadProfileByPath(path)
+      if (profile != null) return profile
+    }
+    if (name.isEmpty()) return null
+
+    val profile = application.loadProfileByName(project, name)
+    if (profile != null) return profile
+
+    val embeddedProfilesPath = System.getProperty("qodana.embedded.profiles.path") ?: return null
+
+    return application.loadProfileByPath("$embeddedProfilesPath/$name.xml")
   }
 }

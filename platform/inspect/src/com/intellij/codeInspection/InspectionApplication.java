@@ -246,9 +246,12 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-    myInspectionProfile = loadInspectionProfile(project);
-    if (myInspectionProfile == null) return;
     myQodanaConfig = loadQodanaConfig(projectPath);
+    myInspectionProfile = myQodanaConfig.getProfile().loadProfile(this, project);
+    if (myInspectionProfile == null) {
+      myInspectionProfile = loadInspectionProfile(project);
+    }
+    if (myInspectionProfile == null) return;
     myQodanaConfig.updateToolsScopes(myInspectionProfile, project);
 
     AnalysisScope scope = getAnalysisScope(project);
@@ -785,7 +788,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     return inspectionProfile;
   }
 
-  private @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
+  public  @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
       reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
@@ -793,7 +796,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     return inspectionProfile;
   }
 
-  private @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
+  public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
