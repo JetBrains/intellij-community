@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,8 +10,7 @@ import java.awt.BorderLayout
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 
-class InlayHintsPanel(languages: Iterable<Language>,
-                      val settings: InlayHintsSettings) : JPanel() {
+class InlayHintsPanel(languages: Iterable<Language>) : JPanel() {
   private val hintsEnabledGlobally = JCheckBox(CodeInsightBundle.message("inlay.hints.show.hints.for"), true)
   private val languagePanels = languages.map { LanguagePanel(it) }
 
@@ -45,7 +44,10 @@ class InlayHintsPanel(languages: Iterable<Language>,
   }
 
   fun isModified() : Boolean {
-    if (hintsEnabledGlobally.isSelected != settings.hintsEnabledGlobally()) return true
+    val settings = InlayHintsSettings.instance()
+    if (hintsEnabledGlobally.isSelected != settings.hintsEnabledGlobally()) {
+      return true
+    }
     for ((index, panel) in languagePanels.withIndex()) {
       val checkboxSelected = languagePanels[index].selected()
       val inSettingsEnabled = settings.hintsEnabled(panel.language)
@@ -55,6 +57,7 @@ class InlayHintsPanel(languages: Iterable<Language>,
   }
 
   fun apply() {
+    val settings = InlayHintsSettings.instance()
     settings.setEnabledGlobally(hintsEnabledGlobally.isSelected)
     for ((index, panel) in languagePanels.withIndex()) {
       settings.setHintsEnabledForLanguage(panel.language, languagePanels[index].selected())
@@ -63,6 +66,7 @@ class InlayHintsPanel(languages: Iterable<Language>,
   }
 
   fun reset() {
+    val settings = InlayHintsSettings.instance()
     hintsEnabledGlobally.isSelected = settings.hintsEnabledGlobally()
     for ((index, panel) in languagePanels.withIndex()) {
       val languagePanel = languagePanels[index]

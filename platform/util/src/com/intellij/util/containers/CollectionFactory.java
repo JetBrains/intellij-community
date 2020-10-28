@@ -122,6 +122,10 @@ public final class CollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
+  public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap(@NotNull Map<String, V> source) {
+    return new Object2ObjectOpenCustomHashMap<>(source, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+  }
+
   @Contract(value = "_,_,_ -> new", pure = true)
   @SuppressWarnings("SameParameterValue")
   static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueMap(int initialCapacity,

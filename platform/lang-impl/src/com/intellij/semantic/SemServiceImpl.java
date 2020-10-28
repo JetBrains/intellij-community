@@ -57,24 +57,23 @@ public final class SemServiceImpl extends SemService {
       }
     };
 
-    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
+    SemContributor.EP_NAME.processWithPluginDescriptor((contributor, pluginDescriptor) -> {
       SemContributor semContributor;
       try {
-        semContributor =
-          myProject.instantiateExtensionWithPicoContainerOnlyIfNeeded(contributor.implementation, contributor.getPluginDescriptor());
+        semContributor = myProject.instantiateClass(contributor.implementation, pluginDescriptor);
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (ExtensionNotApplicableException e) {
-        continue;
+        return;
       }
       catch (Exception e) {
         LOG.error(e);
-        continue;
+        return;
       }
       semContributor.registerSemProviders(registrar, myProject);
-    }
+    });
 
     return map;
   }
