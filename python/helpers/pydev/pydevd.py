@@ -346,6 +346,35 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
             yield
 
 
+# noinspection SpellCheckingInspection
+def stoptrace():
+    """Stops tracing in the current process and undoes all monkey-patches done by the debugger."""
+    global connected
+
+    if connected:
+        pydevd_tracing.restore_sys_set_trace_func()
+        sys.settrace(None)
+        try:
+            # Not available in Jython!
+            threading.settrace(None)  # Disable tracing for all future threads.
+        except:
+            pass
+
+        from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
+        undo_patch_thread_modules()
+
+        debugger = get_global_debugger()
+
+        if debugger:
+
+            debugger.set_trace_for_frame_and_parents(get_frame(), disable=True)
+            debugger.exiting()
+
+            kill_all_pydev_threads()
+
+        connected = False
+
+
 #=======================================================================================================================
 # PyDB
 #=======================================================================================================================
@@ -1498,6 +1527,15 @@ class PyDB(object):
     frame_eval_func = frame_eval_func
     dummy_trace_dispatch = dummy_trace_dispatch
 
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def stoptrace():
+        """A proxy method for calling :func:`stoptrace` from the modules where direct import
+        is impossible because, for example, a circular dependency."""
+        PyDBDaemonThread.created_pydb_daemon_threads = {}
+        stoptrace()
+
+
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
     setup['DEBUG_TRACE_BREAKPOINTS'] = 1
@@ -1762,31 +1800,6 @@ def _locked_settrace(
             # Ask to break as soon as possible.
             debugger.set_suspend(t, CMD_SET_BREAK)
 
-
-def stoptrace():
-    global connected
-    if connected:
-        pydevd_tracing.restore_sys_set_trace_func()
-        sys.settrace(None)
-        try:
-            #not available in jython!
-            threading.settrace(None) # for all future threads
-        except:
-            pass
-
-        from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
-        undo_patch_thread_modules()
-
-        debugger = get_global_debugger()
-
-        if debugger:
-
-            debugger.set_trace_for_frame_and_parents(get_frame(), disable=True)
-            debugger.exiting()
-
-            kill_all_pydev_threads()
-
-        connected = False
 
 class Dispatcher(object):
     def __init__(self):
