@@ -19,6 +19,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     val html = file.getUserData(HTML_KEY)
     val url = file.getUserData(URL_KEY)
     val timeoutHtml = file.getUserData(TIMEOUT_HTML_KEY)
+    arrayOf(HTML_KEY, URL_KEY, TIMEOUT_HTML_KEY).forEach { file.putUserData(it, null) }
     return if (html != null) HTMLFileEditor(html) else HTMLFileEditor(url!!, timeoutHtml)
   }
 
@@ -30,6 +31,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   companion object {
+    private val AFFINITY_KEY: Key<Boolean> = Key.create("html.editor.affinity.key")
     private val HTML_KEY: Key<String> = Key.create("html.editor.html.key")
     private val URL_KEY: Key<String> = Key.create("html.editor.url.key")
     private val TIMEOUT_HTML_KEY: Key<String> = Key.create("html.editor.timeout.text.key")
@@ -37,6 +39,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, @DetailedDescription html: String) {
       val file = LightVirtualFile(title)
+      file.putUserData(AFFINITY_KEY, true)
       file.putUserData(HTML_KEY, html)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
@@ -44,13 +47,14 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, url: String, @DetailedDescription timeoutHtml: String? = null) {
       val file = LightVirtualFile(title)
+      file.putUserData(AFFINITY_KEY, true)
       file.putUserData(URL_KEY, url)
-      if (timeoutHtml != null) file.putUserData(TIMEOUT_HTML_KEY, timeoutHtml)
+      file.putUserData(TIMEOUT_HTML_KEY, timeoutHtml)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
 
     @JvmStatic
     fun isHTMLEditor(file: VirtualFile): Boolean =
-      file.getUserData(URL_KEY) != null || file.getUserData(HTML_KEY) != null
+      file.getUserData(AFFINITY_KEY) == true
   }
 }
