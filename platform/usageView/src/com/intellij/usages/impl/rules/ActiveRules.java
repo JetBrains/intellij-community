@@ -25,7 +25,7 @@ public final class ActiveRules {
                                                              boolean supportsModuleRule) {
     List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule) {
-      rules.add(new NonCodeUsageGroupingRule(project));
+      rules.add(new NonCodeUsageGroupingRule());
     }
     if (supportsScopesRule && usageViewSettings.isGroupByScope()) {
       rules.add(new UsageScopeGroupingRule());
@@ -61,7 +61,7 @@ public final class ActiveRules {
                                                           boolean supportsModuleRule) {
     List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule) {
-      rules.add(new NonCodeUsageGroupingRule(project));
+      rules.add(new NonCodeUsageGroupingRule());
     }
     if (supportsScopesRule) {
       rules.add(new UsageScopeGroupingRule());
