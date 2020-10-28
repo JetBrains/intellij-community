@@ -70,7 +70,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
     myInterpreterComboBox
-      .setRenderer(new PySdkListCellRenderer(null, "<" + PyBundle.message("python.sdk.rendering.project.default") + ">"));
+      .setRenderer(new PySdkListCellRenderer("<" + PyBundle.message("python.sdk.rendering.project.default") + ">"));
     myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
