@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -66,7 +67,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     @get:ReportValue var showRenderedDocs by property(true)
     @get:ReportValue var showInlayHints by property(true)
     @get:ReportValue var showWarnings by property(false)
-    @get:ReportValue var enabled by property(true)
+    @get:ReportValue var enabled by property(Experiments.getInstance().isFeatureEnabled("editor.reader.mode"))
 
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
