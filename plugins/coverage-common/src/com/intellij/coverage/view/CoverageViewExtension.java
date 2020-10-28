@@ -4,6 +4,7 @@ package com.intellij.coverage.view;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,5 +85,15 @@ public abstract class CoverageViewExtension {
 
   public boolean supportFlattenPackages() {
     return false;
+  }
+
+  /**
+   * @return extra actions which will be added to {@link CoverageView} toolbar menu
+   * directly after all еру default actions (Flatten Packages, Generate Coverage Report)
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public List<AnAction> createExtraToolbarActions() {
+    return Collections.emptyList();
   }
 }
