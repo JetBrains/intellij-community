@@ -237,11 +237,6 @@ public abstract class FileBasedIndex {
     throw new IncorrectOperationException();
   }
 
-  @ApiStatus.Internal
-  public boolean isIndexingCandidate(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    throw new UnsupportedOperationException();
-  }
-
   @ApiStatus.Experimental
   public static class AllKeysQuery<K, V> {
     @NotNull

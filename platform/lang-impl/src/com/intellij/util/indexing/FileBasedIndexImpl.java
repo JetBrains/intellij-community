@@ -1403,11 +1403,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @Override
-  public boolean isIndexingCandidate(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    return !isTooLarge(file) && getAffectedIndexCandidates(file).contains(indexId);
-  }
-
   @NotNull
   List<ID<?, ?>> getAffectedIndexCandidates(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
