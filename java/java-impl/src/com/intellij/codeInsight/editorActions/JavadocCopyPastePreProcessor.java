@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +28,10 @@ public class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
   @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    if (!(file instanceof PsiJavaFile)) {
+      return text;
+    }
+
     JavaCodeStyleSettings settings = CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
     if (!settings.JD_LEADING_ASTERISKS_ARE_ENABLED) return text;
     
