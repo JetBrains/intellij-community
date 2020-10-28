@@ -27,7 +27,7 @@ import java.beans.PropertyChangeListener
 internal class HTMLFileEditor private constructor() : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null).also {
-    it.cefBrowser.client.addRequestHandler(object : CefRequestHandlerAdapter() {
+    it.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
       override fun onBeforeBrowse(browser: CefBrowser,
                                   frame: CefFrame,
                                   request: CefRequest,
@@ -38,7 +38,7 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
         }
         return user_gesture
       }
-    })
+    }, it.cefBrowser)
   }
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
 
