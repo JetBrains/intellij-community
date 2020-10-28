@@ -36,41 +36,29 @@ private class SyncAction(private val syncType: SyncType,
                          private val project: Project?,
                          private val dialogManager: DialogManager) : AbstractAction(
   icsMessage(syncType.messageKey)) {
-  private fun saveRemoteRepositoryUrl(): ValidationInfo? {
-    val url = urlTextField.text.nullize(true)
-    validateUrl(url, project)?.let {
-      return createError(it)
-    }
-
-    val repositoryManager = icsManager.repositoryManager
-    repositoryManager.createRepositoryIfNeeded()
-    repositoryManager.setUpstream(url, null)
-    return null
-  }
 
   private fun createError(@NlsContexts.DialogMessage message: String) = ValidationInfo(message, urlTextField)
 
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
       runBlocking {
-        doSync()
+        val url = urlTextField.text.nullize(true)
+        validateUrl(url, project)?.let {
+          listOf(createError(it))
+        } ?: doSync(url!!)
       }
     }
   }
 
-  private suspend fun doSync(): List<ValidationInfo>? {
+  private suspend fun doSync(url: String): List<ValidationInfo>? {
     val icsManager = icsManager
     IcsActionsLogger.logSettingsSync(project, syncType)
     val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
     var upstreamSet = false
     try {
-      saveRemoteRepositoryUrl()?.let {
-        if (isRepositoryWillBeCreated) {
-          // remove created repository
-          icsManager.repositoryManager.deleteRepository()
-        }
-        return listOf(it)
-      }
+      val repositoryManager = icsManager.repositoryManager
+      repositoryManager.createRepositoryIfNeeded()
+      repositoryManager.setUpstream(url, null)
 
       upstreamSet = true
 
@@ -95,8 +83,8 @@ private class SyncAction(private val syncType: SyncType,
       LOG.warn(e)
 
       if (!upstreamSet || e is NoRemoteRepositoryException) {
-        val message = e.message?.let { icsMessage("set.upstream.failed.message", it) } ?:
-                      icsMessage("set.upstream.failed.message.without.details")
+        val message = e.message?.let { icsMessage("set.upstream.failed.message", it) } ?: icsMessage(
+          "set.upstream.failed.message.without.details")
         return listOf(createError(message))
       }
       else {
