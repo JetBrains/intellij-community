@@ -68,7 +68,7 @@ class Testmark(val name: String): TestmarkPred {
     override fun <T> checkHit(f: () -> T): T = checkHit(TestmarkState.HIT, f)
 
     @TestOnly
-    fun <T> checkNotHit(f: () -> T): T = checkHit(TestmarkState.NOT_HIT, f)
+    override fun <T> checkNotHit(f: () -> T): T = checkHit(TestmarkState.NOT_HIT, f)
 
     @TestOnly
     private fun <T> checkHit(expected: TestmarkState, f: () -> T): T {
@@ -102,9 +102,13 @@ fun Testmark.hitOnFalse(b: Boolean): Boolean {
 interface TestmarkPred {
     @TestOnly
     fun <T> checkHit(f: () -> T): T
+
+    @TestOnly
+    fun <T> checkNotHit(f: () -> T): T
 }
 
 @TestOnly
 operator fun Testmark.not(): TestmarkPred = object : TestmarkPred {
-    override fun <T> checkHit(f: () -> T): T = checkNotHit(f)
+    override fun <T> checkHit(f: () -> T): T = this@not.checkNotHit(f)
+    override fun <T> checkNotHit(f: () -> T): T = this@not.checkHit(f)
 }
