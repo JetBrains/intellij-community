@@ -61,6 +61,9 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
+  private val projectHomeOnTarget = VolumeDescriptor(
+    LanguageRuntimeType.VolumeType("projectHomeOnTarget"), "", "", "", "/app")
+
   /**
    * @param uploadPathIsFile
    *   * true: [uploadPathString] points to a file, the volume should be created for the file's directory.
@@ -152,14 +155,14 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private fun setupWorkingDirectory(javaParameters: SimpleJavaParameters) {
     val workingDirectory = javaParameters.workingDirectory
     if (workingDirectory != null) {
-      val targetWorkingDirectory = uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, workingDirectory)
+      val targetWorkingDirectory = uploadIntoTarget(projectHomeOnTarget, workingDirectory)
       commandLine.setWorkingDirectory(targetWorkingDirectory)
     }
   }
 
   @Throws(CantRunException::class)
   private fun setupEnvironment(javaParameters: SimpleJavaParameters) {
-    javaParameters.env.forEach { (key: String, value: String?) -> commandLine.addEnvironmentVariable(key, value) }
+    javaParameters.env.forEach { key: String, value: String? -> commandLine.addEnvironmentVariable(key, value) }
 
     if (request is LocalTargetEnvironmentRequest) {
       val type = if (javaParameters.isPassParentEnvs) ParentEnvironmentType.CONSOLE else ParentEnvironmentType.NONE
@@ -446,7 +449,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else if (jarPath != null) {
       listOf(TargetValue.fixed("-jar"),
-             uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, jarPath, uploadPathIsFile = true))
+             uploadIntoTarget(projectHomeOnTarget, jarPath, uploadPathIsFile = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
