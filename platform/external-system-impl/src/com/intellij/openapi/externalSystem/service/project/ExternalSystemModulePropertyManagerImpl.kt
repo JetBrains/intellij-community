@@ -119,11 +119,11 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
   }
 
   override fun setLinkedProjectPath(path: String?) {
-    state.linkedProjectPath = path
+    store.linkedProjectPath = path
   }
 
   override fun setRootProjectPath(path: String?) {
-    state.rootProjectPath = path
+    store.rootProjectPath = path
   }
 
   override fun setExternalModuleType(type: String?) {
