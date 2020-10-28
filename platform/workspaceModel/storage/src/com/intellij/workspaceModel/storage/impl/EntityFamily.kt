@@ -77,12 +77,12 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
     val bookedId = if (availableSlots.isEmpty()) {
       entities.add(null)
+      amountOfGapsInEntities++
       entities.lastIndex
     }
     else {
       val emptySlot = availableSlots.pop()
       entities[emptySlot] = null
-      amountOfGapsInEntities--
       emptySlot
     }
     copiedToModify.add(bookedId)
@@ -92,8 +92,10 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   fun insertAtId(data: WorkspaceEntityData<E>) {
     startWrite()
 
+    val prevValue = entities[data.id]
     entities[data.id] = data
-    if (availableSlots.remove(data.id)) amountOfGapsInEntities--
+    availableSlots.remove(data.id)
+    if (prevValue == null) amountOfGapsInEntities--
 
     copiedToModify.add(data.id)
   }
