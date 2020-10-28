@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.application.invokeLater
@@ -18,13 +19,27 @@ import com.intellij.util.AlarmFactory
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 
 internal class HTMLFileEditor private constructor() : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(null)
+  private val contentPanel = JCEFHtmlPanel(null).also {
+    it.cefBrowser.client.addRequestHandler(object : CefRequestHandlerAdapter() {
+      override fun onBeforeBrowse(browser: CefBrowser,
+                                  frame: CefFrame,
+                                  request: CefRequest,
+                                  user_gesture: Boolean,
+                                  is_redirect: Boolean): Boolean {
+        if (user_gesture) {
+          BrowserUtil.browse(request.url)
+        }
+        return user_gesture
+      }
+    })
+  }
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
 
   private val multiPanel = object : MultiPanel() {
