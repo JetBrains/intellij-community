@@ -3,7 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingListener
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.IdeEventQueue
@@ -224,27 +224,27 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     installMethodNameValidation(templateState)
   }
 
+  private fun getMethodName(): String {
+    return editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
+  }
+
   private fun setMethodName(methodName: String) {
     editor.document.replaceString(methodCallExpressionRange.startOffset, methodCallExpressionRange.endOffset, methodName)
     editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
   }
 
   private fun installMethodNameValidation(templateState: TemplateState) {
-    templateState.addTemplateStateListener(object: TemplateEditingListener {
+    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
 
       var restartAction: () -> Unit = { }
 
-      override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) { }
-
-      override fun waitingForInput(template: Template?) { }
-
       override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        val methodName = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
+        val methodName = getMethodName()
         fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
         fun hasSingleResolve(): Boolean {
           val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return false
           val methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, methodCallExpressionRange.startOffset, PsiMethodCallExpression::class.java, true)
-          return methodCall?.methodExpression?.multiResolve(false)?.size == 1
+          return methodCall?.resolveMethod() != null
         }
         val errorMessage = when {
           ! isValidName() -> JavaRefactoringBundle.message("extract.method.error.invalid.name")
@@ -311,9 +311,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun restartInplace() {
-    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
+    val methodName = getMethodName()
+    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic).copy(methodName = "extracted")
     WriteCommandAction.runWriteCommandAction(myProject) {
-      InplaceMethodExtractor(editor, newOptions, popupProvider).performInplaceRefactoring(linkedSetOf())
+      val extractor = InplaceMethodExtractor(editor, newOptions, popupProvider)
+      extractor.performInplaceRefactoring(linkedSetOf())
+      extractor.setMethodName(methodName)
     }
   }
 
