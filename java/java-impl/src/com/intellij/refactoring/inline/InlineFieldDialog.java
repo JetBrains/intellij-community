@@ -72,6 +72,11 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   @Override
+  protected boolean isKeepTheDeclarationByDefault() {
+    return JavaRefactoringSettings.getInstance().INLINE_FIELD_KEEP;
+  }
+
+  @Override
   protected boolean ignoreOccurrence(PsiReference reference) {
     return PsiTreeUtil.getParentOfType(reference.getElement(), PsiImportStatementBase.class) == null;
   }
@@ -106,6 +111,9 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();
     }
+    if (myKeepTheDeclaration != null && myKeepTheDeclaration.isEnabled()) {
+      settings.INLINE_FIELD_KEEP = isKeepTheDeclaration();
+    } 
   }
 
   @Override
