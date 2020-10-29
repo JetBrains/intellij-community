@@ -10230,6 +10230,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/variable.kt");
         }
 
+        @TestMetadata("withLabel.kt")
+        public void testWithLabel() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/withLabel.kt");
+        }
+
         @TestMetadata("withPackage.kt")
         public void testWithPackage() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/withPackage.kt");

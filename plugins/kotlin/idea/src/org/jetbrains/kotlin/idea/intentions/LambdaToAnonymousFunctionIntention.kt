@@ -57,7 +57,13 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val functionDescriptor = element.functionLiteral.descriptor as? AnonymousFunctionDescriptor ?: return
         val resultingFunction = convertLambdaToFunction(element, functionDescriptor) ?: return
-        (resultingFunction.parent as? KtLambdaArgument)?.also { it.moveInsideParentheses(it.analyze(BodyResolveMode.PARTIAL)) }
+        val argument = when (val parent = resultingFunction.parent) {
+            is KtLambdaArgument -> parent
+            is KtLabeledExpression -> parent.replace(resultingFunction).parent as? KtLambdaArgument
+            else -> null
+        } ?: return
+
+        argument.moveInsideParentheses(argument.analyze(BodyResolveMode.PARTIAL))
     }
 
     companion object {
