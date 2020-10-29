@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.CompositeShortNamesCache
@@ -26,7 +27,7 @@ import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.forceEnableSamAdapters
@@ -53,9 +54,9 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.collectSyntheticStaticFunctions
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import java.util.*
 
 class KotlinIndicesHelper(
     private val resolutionFacade: ResolutionFacade,
@@ -504,7 +505,20 @@ class KotlinIndicesHelper(
     private fun KtNamedDeclaration.resolveToDescriptorsWithHack(
         psiFilter: (KtDeclaration) -> Boolean
     ): Collection<DeclarationDescriptor> {
-        if (containingKtFile.isCompiled) { //TODO: it's temporary while resolveToDescriptor does not work for compiled declarations
+        val ktFile = containingFile
+        if (ktFile !is KtFile) {
+            // https://ea.jetbrains.com/browser/ea_problems/219256
+            LOG.warn(
+                KotlinExceptionWithAttachments("KtElement not inside KtFile ($ktFile, is valid: ${ktFile.isValid})")
+                    .withAttachment("file", ktFile.text)
+                    .withAttachment("element", this)
+                    .withAttachment("type", javaClass)
+            )
+
+            return emptyList()
+        }
+
+        if (ktFile.isCompiled) { //TODO: it's temporary while resolveToDescriptor does not work for compiled declarations
             val fqName = fqName ?: return emptyList()
             return resolutionFacade.resolveImportReference(moduleDescriptor, fqName)
         } else {
@@ -513,6 +527,10 @@ class KotlinIndicesHelper(
 
             return listOfNotNull(resolutionFacade.resolveToDescriptor(translatedDeclaration))
         }
+    }
+
+    companion object {
+        private val LOG = Logger.getInstance(KotlinIndicesHelper::class.java)
     }
 }
 
