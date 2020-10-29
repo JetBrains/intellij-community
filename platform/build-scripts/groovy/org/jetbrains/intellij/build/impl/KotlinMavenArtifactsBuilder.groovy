@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.module.JpsModule
  */
 @CompileStatic
 class KotlinMavenArtifactsBuilder extends MavenArtifactsBuilder {
-  private static final Set<String> MODULE_GROUP_NAMES = ["gradle", "compiler-plugins"] as Set<String>
+  private static final Set<String> MODULE_GROUP_NAMES = ["gradle", "uast"] as Set<String>
 
   KotlinMavenArtifactsBuilder(BuildContext buildContext) {
     super(buildContext)
