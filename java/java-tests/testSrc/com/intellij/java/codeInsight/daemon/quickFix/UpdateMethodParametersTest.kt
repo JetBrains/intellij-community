@@ -45,35 +45,6 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  // I can't fine a way to keep unresolved references without modifying some Jvm classes :'(
-  fun `test annotation preservation with unresolved references`() {
-    myFixture.addClass("""
-      public @interface Anno {
-        int num();
-        Class<?> clazz();
-      }
-    """.trimIndent())
-    myFixture.configureByText("A.java", """
-      class A {
-        void bar(@Nls String param1, @Anno(num = CONST, clazz = Unknown.class) String param2) {}
-      }
-    """.trimIndent())
-
-    val method = myFixture.findElementByText("bar", PsiMethod::class.java)
-
-    val request = updateMethodParametersRequest(Supplier { method }) { existing ->
-      val oldParam = existing[1]
-      val newParam = expectedParameter(PsiPrimitiveType.INT, oldParam.semanticNames.first(), oldParam.expectedAnnotations)
-      existing.toMutableList().also { it[1] = newParam }
-    }
-    myFixture.launchAction(updateParametersAction(method, request))
-    myFixture.checkResult("""
-      class A {
-        void bar(@Nls String param1, @Anno(num = CONST, clazz = Unknown.class) int param2) {}
-      }
-    """.trimIndent())
-  }
-
   fun `test complex annotation preservation`() {
     myFixture.addClass("""
       public @interface Anno {

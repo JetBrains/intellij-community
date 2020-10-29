@@ -4,9 +4,7 @@ package com.intellij.lang.jvm.actions
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmField
 import com.intellij.lang.jvm.annotation.*
-import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiNameValuePair
 
 
@@ -43,25 +41,12 @@ fun arrayAttribute(name: String, members: List<AnnotationAttributeValueRequest>)
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ArrayValue(members))
 
 fun JvmAnnotationAttributeValue.toAttributeValueRequest(attribute: JvmAnnotationAttribute? = null): AnnotationAttributeValueRequest? = when (this) {
-  is JvmAnnotationArrayValue -> AnnotationAttributeValueRequest.ArrayValue(
-    this.values.mapNotNull { it.toAttributeValueRequest(attribute) })
-  is JvmAnnotationClassValue -> {
-    val referenceText = this.clazz?.qualifiedName ?: run {
-      // Try to preserve unresolved class literal
-      val classLiteralExpression = ((attribute as? PsiNameValuePair)?.value as? PsiExpression)?.type
-      val genericParameter = (classLiteralExpression as? PsiClassType)?.parameters?.firstOrNull()
-      genericParameter?.canonicalText
-    }
-    referenceText?.let(AnnotationAttributeValueRequest::ClassValue)
-  }
+  is JvmAnnotationArrayValue -> AnnotationAttributeValueRequest.ArrayValue(this.values.mapNotNull { it.toAttributeValueRequest(attribute) })
+  is JvmAnnotationClassValue -> this.clazz?.qualifiedName?.let(AnnotationAttributeValueRequest::ClassValue)
   is JvmAnnotationConstantValue -> when (val constantVal = this.constantValue) {
     is String -> AnnotationAttributeValueRequest.StringValue(constantVal)
     is Any -> AnnotationAttributeValueRequest.PrimitiveValue(constantVal)
-    else -> {
-      // Try to preserve original reference text
-      val referenceText = (attribute as? PsiNameValuePair)?.value?.text
-      referenceText?.let { AnnotationAttributeValueRequest.ConstantValue(null, it) }
-    }
+    else -> null
   }
   is JvmAnnotationEnumFieldValue -> {
     // Try to preserve the original text, otherwise fallback to field name
