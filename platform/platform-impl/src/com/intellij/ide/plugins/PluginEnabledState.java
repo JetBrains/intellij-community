@@ -64,4 +64,8 @@ public enum PluginEnabledState {
 
     throw new IllegalArgumentException("Target state not found: enabled='" + enabled + "', perProject='" + perProject + "'");
   }
+
+  public static @NotNull PluginEnabledState getState(boolean enabled) {
+    return getState(enabled, false);
+  }
 }

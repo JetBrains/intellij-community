@@ -182,13 +182,10 @@ public class ListPluginComponent extends JPanel {
         else {
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.addActionListener(e -> {
-            UIUtils.changeEnableDisable(
-              myPluginModel,
-              Set.of(myPlugin),
-              !myPluginModel.isEnabled(myPlugin)
-            );
-          });
+          myEnableDisableButton.addActionListener(__ -> myPluginModel.changeEnableDisable(
+            Set.of(myPlugin),
+            PluginEnabledState.getState(!myPluginModel.isEnabled(myPlugin))
+          ));
           updateEnabledStateUI();
         }
       }
