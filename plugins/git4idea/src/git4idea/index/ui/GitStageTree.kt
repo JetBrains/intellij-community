@@ -307,6 +307,10 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         super.appendParentPath(renderer, parentPath)
       }
     }
+
+    override fun getBackgroundColor(project: Project): Color? {
+      return getBackgroundColorFor(project, getUserObject().filePath)
+    }
   }
 
   private open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
