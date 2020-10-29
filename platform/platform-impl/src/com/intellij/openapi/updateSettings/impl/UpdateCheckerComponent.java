@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,20 +61,17 @@ final class UpdateCheckerComponent {
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
 
   private volatile ScheduledFuture<?> myScheduledCheck;
+  private volatile String myLastCheckedBuild;  // [r.sh] for 203; drop in master after backporting
 
   static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appStarted() {
       Application app = ApplicationManager.getApplication();
-      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) return;
-
-      UpdateSettings settings = UpdateSettings.getInstance();
-      updateDefaultChannel(settings);
-      if (settings.isCheckNeeded()) {
-        scheduleFirstCheck(settings);
-        snapPackageNotification(settings);
+      if (!(app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode())) {
+        getInstance().appStarted();
       }
     }
   }
@@ -85,6 +83,15 @@ final class UpdateCheckerComponent {
   public void cancelChecks() {
     ScheduledFuture<?> future = myScheduledCheck;
     if (future != null) future.cancel(false);
+  }
+
+  private void appStarted() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    myLastCheckedBuild = settings.getLastBuildChecked();
+    updateDefaultChannel(settings);
+    if (settings.isCheckNeeded()) {
+      scheduleFirstCheck(settings);
+    }
   }
 
   private static void updateDefaultChannel(UpdateSettings settings) {
@@ -108,7 +115,7 @@ final class UpdateCheckerComponent {
     }
   }
 
-  private static void scheduleFirstCheck(@NotNull UpdateSettings settings) {
+  private void scheduleFirstCheck(UpdateSettings settings) {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
@@ -117,7 +124,7 @@ final class UpdateCheckerComponent {
       checkUpdates();
     }
     else {
-      getInstance().queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
+      queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
     }
   }
 
@@ -125,8 +132,8 @@ final class UpdateCheckerComponent {
     myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> checkUpdates(), delay, TimeUnit.MILLISECONDS);
   }
 
-  private static void checkUpdates() {
-    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> getInstance().queueNextCheck());
+  private void checkUpdates() {
+    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck());
   }
 
   static final class MyActivity implements StartupActivity.DumbAware {
@@ -141,8 +148,19 @@ final class UpdateCheckerComponent {
     public void runActivity(@NotNull Project project) {
       if (ourWaiting.getAndSet(false)) {
         checkIfPreviousUpdateFailed();
-        showWhatsNew(project);
+
+        PropertiesComponent properties = PropertiesComponent.getInstance();
+        BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
+        if (previous == null && !ConfigImportHelper.isFirstSession()) {
+          previous = BuildNumber.fromString(getInstance().myLastCheckedBuild);
+        }
+        BuildNumber current = ApplicationInfo.getInstance().getBuild();
+        properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
+        showWhatsNew(project, previous, current);
+        showSnapUpdateNotification(project, previous, current);
+
         showUpdatedPluginsNotification(project);
+
         ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
       }
     }
@@ -158,27 +176,14 @@ final class UpdateCheckerComponent {
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
   }
 
-  private static void showWhatsNew(Project project) {
+  private static void showWhatsNew(Project project, @SuppressWarnings("unused") @Nullable BuildNumber previous, @SuppressWarnings("unused") BuildNumber current) {
     if (!Experiments.getInstance().isFeatureEnabled("whats.new.notification")) return;
     WhatsNewAction.openWhatsNewFile(project, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), null);
     IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
   }
 
-  private static void snapPackageNotification(UpdateSettings settings) {
-    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
-
-    BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-    BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
-    if (lastBuildChecked == null) {
-      // first IDE start, just save info about build
-      UpdateSettings.getInstance().saveLastCheckedInfo();
-      return;
-    }
-
-    // show notification even in case of downgrade
-    if (currentBuild.equals(lastBuildChecked)) {
-      return;
-    }
+  private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {
+    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP || previous == null || current.equals(previous)) return;
 
     UpdatesInfo updatesInfo = null;
     try {
@@ -190,12 +195,12 @@ final class UpdateCheckerComponent {
 
     String blogPost = null;
     if (updatesInfo != null) {
-      Product product = updatesInfo.get(currentBuild.getProductCode());
+      Product product = updatesInfo.get(current.getProductCode());
       if (product != null) {
         outer:
         for (UpdateChannel channel : product.getChannels()) {
           for (BuildInfo build : channel.getBuilds()) {
-            if (currentBuild.equals(build.getNumber())) {
+            if (current.equals(build.getNumber())) {
               blogPost = build.getBlogPost();
               break outer;
             }
@@ -207,10 +212,9 @@ final class UpdateCheckerComponent {
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
-    UpdateChecker.getNotificationGroup().createNotification(
-      title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap").notify(null);
-
-    UpdateSettings.getInstance().saveLastCheckedInfo();
+    UpdateChecker.getNotificationGroup()
+      .createNotification(title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap")
+      .notify(project);
   }
 
   private static void showUpdatedPluginsNotification(Project project) {
