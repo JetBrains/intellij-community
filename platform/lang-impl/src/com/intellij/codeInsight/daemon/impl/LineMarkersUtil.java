@@ -153,6 +153,7 @@ final class LineMarkersUtil {
     }
   }
 
+  @Nullable
   static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
