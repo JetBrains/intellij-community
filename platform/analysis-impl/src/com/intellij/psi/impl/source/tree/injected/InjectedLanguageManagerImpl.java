@@ -234,7 +234,6 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
    *  @param rangeToEdit range in encoded(raw) PSI
    *  @return list of ranges in encoded (raw) PSI
    */
-  @SuppressWarnings("ConstantConditions")
   @Override
   public @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedPsi);

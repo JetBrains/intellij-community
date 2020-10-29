@@ -102,9 +102,7 @@ public final class VfsUtil extends VfsUtilCore {
       copyDirectory(requestor, file, newDir, null);
       return newDir;
     }
-    else {
-      return copyFile(requestor, file, toDir);
-    }
+    return copyFile(requestor, file, toDir);
   }
 
   /**
