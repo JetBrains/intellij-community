@@ -10,6 +10,8 @@ import com.intellij.projectImport.ProjectAttachProcessor
 class CloseProjectAction : CloseProjectsActionBase() {
   override fun canClose(project: Project, currentProject: Project) = project === currentProject
 
+  override fun shouldShow(e: AnActionEvent) = e.project != null
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 

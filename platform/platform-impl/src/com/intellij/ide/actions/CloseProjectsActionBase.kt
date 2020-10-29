@@ -35,8 +35,10 @@ abstract class CloseProjectsActionBase : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabled = project != null && !project.isDefault
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && shouldShow(e)
   }
+
+  protected abstract fun shouldShow(e: AnActionEvent): Boolean
 
   protected abstract fun canClose(project: Project, currentProject: Project): Boolean
 }
