@@ -674,8 +674,8 @@ public final class DaemonListeners implements Disposable {
       }
     }
 
-    LineMarkerInfo info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    if (info.getClass().getClassLoader() == pluginClassLoader) {
+    LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    if (info != null && info.getClass().getClassLoader() == pluginClassLoader) {
       return true;
     }
 
