@@ -6,8 +6,8 @@ import com.intellij.lang.jvm.JvmAnnotation
 fun annotationRequest(fqn: String, vararg parameters: AnnotationAttributeRequest): AnnotationRequest =
   SimpleAnnotationRequest(fqn, parameters.asList())
 
-fun JvmAnnotation.toRequest(): AnnotationRequest =
-  SimpleAnnotationRequest(qualifiedName ?: throw IllegalStateException(), getAttributeRequests())
+fun annotationRequest(annotation: JvmAnnotation): AnnotationRequest =
+  SimpleAnnotationRequest(annotation.qualifiedName ?: throw IllegalStateException(), attributeRequests(annotation))
 
 private class SimpleAnnotationRequest(private val fqn: String,
                                       private val attributes: List<AnnotationAttributeRequest>) : AnnotationRequest {

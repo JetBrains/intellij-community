@@ -47,7 +47,7 @@ public interface ChangeParametersRequest extends ActionRequest {
     @NotNull
     @Override
     public Collection<AnnotationRequest> getExpectedAnnotations() {
-      return ContainerUtil.map(myExistingParameter.getAnnotations(), AnnotationRequestsKt::toRequest);
+      return ContainerUtil.map(myExistingParameter.getAnnotations(), AnnotationRequestsKt::annotationRequest);
     }
   }
 }

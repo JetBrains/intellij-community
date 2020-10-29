@@ -40,27 +40,30 @@ fun nestedAttribute(name: String, annotation: AnnotationRequest): AnnotationAttr
 fun arrayAttribute(name: String, members: List<AnnotationAttributeValueRequest>): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ArrayValue(members))
 
-fun JvmAnnotationAttributeValue.toAttributeValueRequest(attribute: JvmAnnotationAttribute? = null): AnnotationAttributeValueRequest? = when (this) {
-  is JvmAnnotationArrayValue -> AnnotationAttributeValueRequest.ArrayValue(this.values.mapNotNull { it.toAttributeValueRequest(attribute) })
-  is JvmAnnotationClassValue -> this.clazz?.qualifiedName?.let(AnnotationAttributeValueRequest::ClassValue)
-  is JvmAnnotationConstantValue -> when (val constantVal = this.constantValue) {
+fun attributeValueRequest(attribValue: JvmAnnotationAttributeValue,
+                          attribute: JvmAnnotationAttribute? = null): AnnotationAttributeValueRequest? = when (attribValue) {
+  is JvmAnnotationArrayValue -> AnnotationAttributeValueRequest.ArrayValue(
+    attribValue.values.mapNotNull { attributeValueRequest(it, attribute) })
+  is JvmAnnotationClassValue -> attribValue.clazz?.qualifiedName?.let(AnnotationAttributeValueRequest::ClassValue)
+  is JvmAnnotationConstantValue -> when (val constantVal = attribValue.constantValue) {
     is String -> AnnotationAttributeValueRequest.StringValue(constantVal)
     is Any -> AnnotationAttributeValueRequest.PrimitiveValue(constantVal)
     else -> null
   }
   is JvmAnnotationEnumFieldValue -> {
     // Try to preserve the original text, otherwise fallback to field name
-    val referenceText = (attribute as? PsiNameValuePair)?.value?.text ?: (this.field as? PsiElement)?.text
-    referenceText?.let { AnnotationAttributeValueRequest.ConstantValue(this.field, it) }
+    val referenceText = (attribute as? PsiNameValuePair)?.value?.text ?: (attribValue.field as? PsiElement)?.text
+    referenceText?.let { AnnotationAttributeValueRequest.ConstantValue(attribValue.field, it) }
   }
-  is JvmNestedAnnotationValue -> AnnotationAttributeValueRequest.NestedAnnotation(this.value.toRequest())
+  is JvmNestedAnnotationValue -> AnnotationAttributeValueRequest.NestedAnnotation(annotationRequest(attribValue.value))
   else -> null
 }
 
-fun JvmAnnotationAttribute.toAttributeRequest(): AnnotationAttributeRequest? {
-  val valueRequest = this.attributeValue?.toAttributeValueRequest(this) ?: return null
-  return AnnotationAttributeRequest(this.attributeName, valueRequest)
+fun attributeRequest(attribute: JvmAnnotationAttribute): AnnotationAttributeRequest? {
+  val attribValue = attribute.attributeValue ?: return null
+  val valueRequest = attributeValueRequest(attribValue, attribute) ?: return null
+  return AnnotationAttributeRequest(attribute.attributeName, valueRequest)
 }
 
-fun JvmAnnotation.getAttributeRequests(): List<AnnotationAttributeRequest> =
-  attributes.mapNotNull(JvmAnnotationAttribute::toAttributeRequest)
+fun attributeRequests(annotation: JvmAnnotation): List<AnnotationAttributeRequest> =
+  annotation.attributes.mapNotNull(::attributeRequest)
