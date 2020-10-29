@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.MergingCharSequence;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -229,8 +229,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         range.mapper.removeMapping(range);
         myRanges[i] = null;
       }
-
-      updateMappingForToken(i);
+      updateMappingForToken(i, null);
     }
 
     private void setElementLight(final int i, final int startOffset, final int endOffset, final int data) {
@@ -264,8 +263,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     @Override
     public void replace(int startOffset, @NotNull SegmentArrayWithData data, int len) {
       super.replace(startOffset, data, len);
-      for (int i = startOffset; i < startOffset + len; i++) {
-        updateMappingForToken(i);
+      Set<LazyLexerEditorHighlighter> freezedHighlighters = new HashSet<>();
+      try {
+        for (int i = startOffset; i < startOffset + len; i++) {
+          updateMappingForToken(i, freezedHighlighters);
+        }
+      } finally {
+        freezedHighlighters.forEach(LazyLexerEditorHighlighter::finishUpdate);
       }
     }
 
@@ -308,12 +312,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
-    private void updateMappingForToken(final int i) {
+    private void updateMappingForToken(final int i, @Nullable Set<LazyLexerEditorHighlighter> freezedHighlighters) {
       final int data = getSegmentData(i);
       final IElementType token = getSegments().unpackTokenFromData(data);
       final Mapper mapper = getMappingDocument(token);
       final MappedRange oldMapping = myRanges[i];
       if (mapper != null) {
+        if (freezedHighlighters != null && freezedHighlighters.add(mapper.highlighter)) {
+          mapper.highlighter.beginUpdate();
+        }
         if (oldMapping != null) {
           if (oldMapping.mapper == mapper && oldMapping.outerToken == token) {
             mapper.updateMapping(i, oldMapping);
@@ -338,7 +345,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   private final class Mapper implements HighlighterClient {
     private final DocumentImpl doc;
-    private final EditorHighlighter highlighter;
+    private final LazyLexerEditorHighlighter highlighter;
     private final String mySeparator;
     private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
     @NotNull
@@ -351,7 +358,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
       mySyntaxHighlighter = descriptor.getLayerHighlighter();
       myBackground = descriptor.getBackgroundKey();
-      highlighter = new LexerEditorHighlighter(mySyntaxHighlighter, getScheme());
+      highlighter = new LazyLexerEditorHighlighter(mySyntaxHighlighter, getScheme());
       mySeparator = descriptor.getTokenSeparator();
       highlighter.setEditor(this);
       doc.addDocumentListener(highlighter);
@@ -600,6 +607,60 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private static MappedRange @NotNull [] reallocateArray(MappedRange @NotNull [] array, int index) {
     if (index < array.length) return array;
     return ArrayUtil.realloc(array, SegmentArray.calcCapacity(array.length, index), MappedRange[]::new);
+  }
+
+  private static class LazyLexerEditorHighlighter extends LexerEditorHighlighter {
+
+    private boolean inUpdate = false;
+    private List<DocumentEvent> updates;
+
+    LazyLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter,
+                               @NotNull EditorColorsScheme scheme) {
+      super(highlighter, scheme);
+    }
+
+    public void beginUpdate() {
+      inUpdate = true;
+      updates = new SmartList<>();
+    }
+
+    public void finishUpdate() {
+      inUpdate = false;
+      if (updates.isEmpty()) {
+        updates = null;
+        return;
+      }
+      int lastOffset = -1;
+      final Document document = updates.get(0).getDocument();
+      for (DocumentEvent update: updates) {
+        int offset = update.getOffset();
+        if (offset < lastOffset) {
+          throw new IllegalStateException("Updates are not sorted: " + updates);
+        }
+        if (update.getDocument() != document) {
+          throw new IllegalStateException("Updates are for multiple documents: " + updates);
+        }
+        lastOffset = offset;
+      }
+      int processedOffset = -1;
+      CharSequence text = document.getImmutableCharSequence();
+      for (DocumentEvent event: updates) {
+        if (event.getOffset() + event.getNewLength() < processedOffset) {
+          continue;
+        }
+        processedOffset = super.incrementalUpdate(event, text);
+      }
+      updates = null;
+    }
+
+    @Override
+    int incrementalUpdate(@NotNull DocumentEvent e, CharSequence text) {
+      if (inUpdate) {
+        updates.add(e);
+        return -1;
+      }
+      return super.incrementalUpdate(e, text);
+    }
   }
 
   @Override
