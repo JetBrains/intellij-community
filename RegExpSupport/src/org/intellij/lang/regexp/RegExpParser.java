@@ -425,7 +425,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         builder.advanceLexer();
         parseBranch(builder);
       }
-      checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.conditional"));
+      checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
       marker.done(RegExpElementTypes.CONDITIONAL);
     }
     else if (type == RegExpTT.PROPERTY) {

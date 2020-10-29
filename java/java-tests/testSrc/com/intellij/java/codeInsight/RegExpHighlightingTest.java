@@ -191,7 +191,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testNoNPE() {
-    doTest("(<error descr=\"Unclosed group\">\"</error>);}}//");
+    doTest("(<error descr=\"')' expected\">\"</error>);}}//");
   }
 
   public void testBadInlineOption() {

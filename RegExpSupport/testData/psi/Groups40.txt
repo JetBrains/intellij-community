@@ -33,5 +33,5 @@ REGEXP_FILE
           PsiErrorElement:Dangling metacharacter
             <empty list>
           PsiElement(LBRACE)('{')
-        PsiErrorElement:Unclosed conditional
+        PsiErrorElement:')' expected
           <empty list>

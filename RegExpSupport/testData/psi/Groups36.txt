@@ -10,5 +10,5 @@ REGEXP_FILE
             PsiErrorElement:Dangling metacharacter
               <empty list>
             PsiElement(LBRACE)('{')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>
