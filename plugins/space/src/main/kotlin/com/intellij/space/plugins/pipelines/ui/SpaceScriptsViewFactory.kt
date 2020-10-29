@@ -358,7 +358,7 @@ fun ScriptStep.traverseJobs(): SpaceModelTreeNode {
       return res
     }
 
-    is ScriptStep.Process.Container -> {
+    is ScriptStep.SimpleStep.Process.Container -> {
       val res = SpaceModelTreeNode("container: ${job.image}")
       val execPrefix = "exec: "
       val execNode = DefaultMutableTreeNode("exec:")
@@ -377,8 +377,11 @@ fun ScriptStep.traverseJobs(): SpaceModelTreeNode {
       res.add(execNode)
       return res
     }
-    is ScriptStep.Process.VM -> {
+    is ScriptStep.SimpleStep.Process.VM -> {
       return SpaceModelTreeNode("vm: ${job.image}. VM is not implemented in UI yet")
+    }
+    is ScriptStep.SimpleStep.DockerComposeStep -> {
+      return SpaceModelTreeNode("compose: ${job.mainService}. Compose is not implemented in UI yet")
     }
   }
 }
