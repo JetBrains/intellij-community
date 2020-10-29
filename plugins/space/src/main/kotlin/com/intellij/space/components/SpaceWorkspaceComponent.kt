@@ -83,8 +83,9 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
-      if (autoSignIn(wsLifetime) == AutoSignInResult.NOT_AUTHORIZED) {
-        SpaceAuthNotifier.notifyDisconnected()
+      val signInResult = autoSignIn(wsLifetime)
+      if (signInResult == AutoSignInResult.NOT_AUTHORIZED) {
+        authFailed()
       }
     }
 
@@ -118,11 +119,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
 
   override suspend fun authFailed() {
-    SpaceAuthNotifier.authCheckFailedNotification()
-    manager.value?.signOut(false)
+    signOut()
+    SpaceAuthNotifier.authFailed()
   }
 
-  suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
+  private suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
     LOG.assert(manager.value == null, "manager.value == null")
 
     val lt = workspacesLifetimes.next()
