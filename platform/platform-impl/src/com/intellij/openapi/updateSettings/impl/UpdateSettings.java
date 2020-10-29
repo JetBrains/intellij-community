@@ -121,14 +121,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   public void saveLastCheckedInfo() {
-    saveLastCheckedInfo(false);
-  }
-
-  public void saveLastCheckedInfo(boolean onlyBuild) {
     myState.setLastBuildChecked(ApplicationInfo.getInstance().getBuild().asString());
-    if (!onlyBuild) {
-      myState.setLastTimeChecked(System.currentTimeMillis());
-    }
+    myState.setLastTimeChecked(System.currentTimeMillis());
   }
 
   public boolean isThirdPartyPluginsAllowed() {
