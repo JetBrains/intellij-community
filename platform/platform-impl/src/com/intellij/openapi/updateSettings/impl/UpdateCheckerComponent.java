@@ -61,6 +61,7 @@ final class UpdateCheckerComponent {
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
+  private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
 
   private volatile ScheduledFuture<?> myScheduledCheck;
   private volatile String myLastCheckedBuild;  // [r.sh] for 203; drop in master after backporting
@@ -175,10 +176,43 @@ final class UpdateCheckerComponent {
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
   }
 
-  private static void showWhatsNew(Project project, @SuppressWarnings("unused") @Nullable BuildNumber previous, @SuppressWarnings("unused") BuildNumber current) {
-    if (!Experiments.getInstance().isFeatureEnabled("whats.new.notification")) return;
-    WhatsNewAction.openWhatsNewFile(project, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), null);
-    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+  private static void showWhatsNew(Project project, @Nullable BuildNumber previous, BuildNumber current) {
+    if (!UpdateSettings.getInstance().isShowWhatsNewEditor() || !Experiments.getInstance().isFeatureEnabled("whats.new.notification")) return;
+
+    if (previous != null && previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a downgrade
+
+    int shownFor = PropertiesComponent.getInstance().getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
+    if (shownFor == current.getBaselineVersion()) return;  // already shown for this release
+
+    String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    if (url == null) return;
+
+    Product product = UpdateChecker.getProductData().first;
+    if (product == null) return;
+
+    int lastRelease = 0;
+    String announce = null;
+    String releaseVersion = ApplicationInfo.getInstance().getMajorVersion() + '.' + ApplicationInfo.getInstance().getMinorVersionMainPart();
+    for (UpdateChannel updateChannel : product.getChannels()) {
+      if (updateChannel.getLicensing() == UpdateChannel.Licensing.RELEASE && updateChannel.getStatus() == ChannelStatus.RELEASE) {
+        for (BuildInfo buildInfo : updateChannel.getBuilds()) {
+          lastRelease = max(lastRelease, buildInfo.getNumber().getBaselineVersion());
+          announce = releaseVersion.equals(buildInfo.getVersion()) && announce == null ? buildInfo.getMessage() : announce;
+        }
+      }
+    }
+    if (lastRelease < current.getBaselineVersion()) return;  // not yet released
+    if (lastRelease > current.getBaselineVersion()) url = null;  // "what's new" page is no longer relevant to this release
+
+    PropertiesComponent.getInstance().setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+    if (url != null || announce != null) {
+      String _url = url, _announce = announce;
+      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewFile(project, _url, _announce));
+      IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+    }
+    else {
+      LOG.info("neither URL nor message available for " + current);
+    }
   }
 
   private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {
