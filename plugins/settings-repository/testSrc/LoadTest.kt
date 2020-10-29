@@ -40,13 +40,14 @@ class LoadTest : IcsTestCase() {
     val schemeManager = createSchemeManager(dirName)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+    val actualLocalScheme = schemeManager.findSchemeByName("local")!!
 
     schemeManager.save()
 
     val dirPath = (icsManager.repositoryManager as GitRepositoryManager).repository.workTree.toPath().resolve(dirName)
     assertThat(dirPath).isDirectory()
 
-    schemeManager.removeScheme(localScheme)
+    schemeManager.removeScheme(actualLocalScheme)
     schemeManager.save()
 
     assertThat(dirPath).doesNotExist()
