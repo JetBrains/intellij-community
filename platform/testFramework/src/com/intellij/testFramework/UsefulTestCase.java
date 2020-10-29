@@ -298,7 +298,13 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          removeGlobalTempDirectory(myTempDir);
+          try {
+            removeGlobalTempDirectory(myTempDir);
+          }
+          catch (Throwable e) {
+            printThreadDump();
+            throw e;
+          }
         }
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
