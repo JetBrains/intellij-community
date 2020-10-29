@@ -11,8 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import com.intellij.util.ArrayUtil.getFirstElement
 import javax.swing.BorderFactory.createEmptyBorder
 import javax.swing.JComponent
@@ -21,8 +19,8 @@ import javax.swing.JLabel
 internal class ProblemsViewPreview(private val panel: ProblemsViewPanel)
   : JLabel(ProblemsViewBundle.message("problems.view.panel.preview.nothing"), CENTER) {
 
-  private var preview: Editor? = null
-    set(value) {
+  var preview: Editor? = null
+    private set(value) {
       field?.let { EditorFactory.getInstance().releaseEditor(it) }
       field = value
     }
@@ -53,12 +51,6 @@ internal class ProblemsViewPreview(private val panel: ProblemsViewPanel)
     }
     editor.setBorder(createEmptyBorder())
     return update(editor, editor.component) // show editor preview
-  }
-
-  fun findEditor(psi: PsiFile): Editor? {
-    return preview ?: PsiDocumentManager.getInstance(psi.project).getDocument(psi)?.let {
-      EditorFactory.getInstance().editors(it, psi.project).findFirst().orElse(null)
-    }
   }
 
   fun findFileEditor(file: VirtualFile, project: Project) =
