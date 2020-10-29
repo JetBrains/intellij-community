@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -14,11 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
  */
 public class BuildScriptDataBuilder {
+  private final static Logger LOG = Logger.getInstance(BuildScriptDataBuilder.class);
+
   @NotNull private final VirtualFile myBuildScriptFile;
   protected final Set<String> imports = new TreeSet<>();
   protected final Set<String> plugins = new TreeSet<>();
@@ -163,6 +167,11 @@ public class BuildScriptDataBuilder {
   }
 
   public BuildScriptDataBuilder addDependencyNotation(@NonNls @NotNull String notation) {
+    if (notation.matches("\\s*(compile|testCompile|runtime|testRuntime)[^\\w].*")) {
+      LOG.warn(notation);
+      LOG.warn("compile, testCompile, runtime and testRuntime dependency notations were deprecated in Gradle 3.4, " +
+               "use implementation, api, compileOnly and runtimeOnly instead", new Throwable());
+    }
     dependencies.add(notation.trim());
     return this;
   }
