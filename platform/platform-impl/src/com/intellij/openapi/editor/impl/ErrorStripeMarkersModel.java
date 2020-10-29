@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -190,7 +191,7 @@ class ErrorStripeMarkersModel {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int offset = highlighter.getStartOffset();
     MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(
-      new TextRangeInterval(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset), null);
+      new ProperTextRange(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset), null);
     try {
       return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
     }
@@ -228,7 +229,7 @@ class ErrorStripeMarkersModel {
       endOffset = Math.max(startOffset, endOffset);
 
       MarkupIterator<ErrorStripeMarkerImpl> exact = myTree
-        .overlappingIterator(new TextRangeInterval(startOffset, endOffset), null);
+        .overlappingIterator(new ProperTextRange(startOffset, endOffset), null);
       MarkupIterator<ErrorStripeMarkerImpl> lines = myTreeForLines
         .overlappingIterator(MarkupModelImpl.roundToLineBoundaries(myEditor.getDocument(), startOffset, endOffset), null);
       myDelegate = MarkupIterator.mergeIterators(exact, lines, BY_AFFECTED_START_OFFSET);

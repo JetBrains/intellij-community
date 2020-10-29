@@ -604,7 +604,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new ReadOnlyModificationException(this);
     }
 
-    if (moveOffset != startOffset && (startOffset != endOffset && s.length() != 0)) {
+    if (moveOffset != startOffset && startOffset != endOffset && s.length() != 0) {
       throw new IllegalArgumentException(
         "moveOffset != startOffset for a modification which is neither an insert nor deletion." +
         " startOffset: " + startOffset + "; endOffset: " + endOffset + ";" + "; moveOffset: " + moveOffset + ";");
@@ -1152,7 +1152,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    TextRangeInterval interval = new TextRangeInterval(start, end);
+    TextRange interval = new ProperTextRange(start, end);
     MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
       .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
     try {

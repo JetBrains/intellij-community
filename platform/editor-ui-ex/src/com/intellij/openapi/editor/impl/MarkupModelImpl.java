@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -320,7 +322,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     startOffset = Math.max(0,startOffset);
     endOffset = Math.max(startOffset, endOffset);
     return IntervalTreeImpl
-      .mergingOverlappingIterator(myHighlighterTree, new TextRangeInterval(startOffset, endOffset), myHighlighterTreeForLines,
+      .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset), myHighlighterTreeForLines,
                                   roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
@@ -332,17 +334,17 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     startOffset = Math.max(0,startOffset);
     endOffset = Math.max(startOffset, endOffset);
     MarkupIterator<RangeHighlighterEx> exact = myHighlighterTree
-      .overlappingIterator(new TextRangeInterval(startOffset, endOffset), onlyRenderedInGutter);
+      .overlappingIterator(new ProperTextRange(startOffset, endOffset), onlyRenderedInGutter);
     MarkupIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines
       .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter);
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull
-  public static TextRangeInterval roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
+  public static TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
     int textLength = document.getTextLength();
     int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));
     int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= textLength ? textLength : document.getLineEndOffset(document.getLineNumber(endOffset));
-    return new TextRangeInterval(lineStartOffset, lineEndOffset);
+    return new ProperTextRange(lineStartOffset, lineEndOffset);
   }
 }

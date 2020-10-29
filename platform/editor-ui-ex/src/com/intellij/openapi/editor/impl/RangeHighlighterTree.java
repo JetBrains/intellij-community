@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
@@ -36,7 +37,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval, boolean onlyRenderedInGutter) {
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRange rangeInterval, boolean onlyRenderedInGutter) {
     MarkupIterator<RangeHighlighterEx> iterator =
       overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)));
 
