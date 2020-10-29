@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitPlatformTest;
@@ -32,8 +33,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GitPushResultNotificationTest extends GitPlatformTest {
-  private static final String UPDATE_WITH_RESOLVED_CONFLICTS = "Push has been cancelled, because there were conflicts during update.<br/>" +
-                                                               "Check that conflicts were resolved correctly, and invoke push again.";
+  private static final String UPDATE_WITH_RESOLVED_CONFLICTS = GitBundle.message("push.notification.description.rejected.and.conflicts");
 
   private static Project ourProject; // for static map initialization
 
