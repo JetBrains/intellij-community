@@ -136,6 +136,9 @@ public class PythonTask {
     ProcessHandler handler;
     if (PythonSdkUtil.isRemote(mySdk)) {
       assert mySdk != null;
+      // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
+      // (yep, this is hacky)
+      commandLine.putUserData(PyRemoteProcessStarter.RUN_AS_AUXILIARY_PROCESS, true);
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
     else {
@@ -276,12 +279,13 @@ public class PythonTask {
         Disposer.dispose(disposable);
       }
     }, disposable);
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appWillBeClosed(boolean isRestart) {
-        process.destroyProcess();
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect(disposable)
+      .subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+        @Override
+        public void appWillBeClosed(boolean isRestart) {
+          process.destroyProcess();
+        }
+      });
   }
 
   /**
@@ -295,7 +299,7 @@ public class PythonTask {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
     if (SwingUtilities.isEventDispatchThread()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "This method can't run under write action";
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "This method can't run under write action";
       output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
     else {
@@ -306,7 +310,7 @@ public class PythonTask {
       return output.getStdout();
     }
     throw new ExecutionException(PyBundle.message("dialog.message.error.on.python.side.exit.code.stderr.stdout",
-                                                  exitCode,output.getStderr(),output.getStdout()));
+                                                  exitCode, output.getStderr(), output.getStdout()));
   }
 
   @NotNull
