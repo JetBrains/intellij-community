@@ -27,7 +27,6 @@ public class UsageViewPresentation {
     // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private @NlsContexts.ListItem String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
@@ -212,15 +211,6 @@ public class UsageViewPresentation {
     return myDynamicCodeUsagesString;
   }
 
-  @NotNull
-  public @NlsContexts.ListItem String getUsagesInGeneratedCodeString() {
-    return myUsagesInGeneratedCodeString;
-  }
-
-  public void setUsagesInGeneratedCodeString(@NotNull @NlsContexts.ListItem String usagesInGeneratedCodeString) {
-    myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
-  }
-
   public boolean isMergeDupLinesAvailable() {
     return myMergeDupLinesAvailable;
   }
@@ -291,7 +281,6 @@ public class UsageViewPresentation {
            && Objects.equals(myTabText, that.myTabText)
            && Objects.equals(myTargetsNodeText, that.myTargetsNodeText)
            && Objects.equals(myToolwindowTitle, that.myToolwindowTitle)
-           && Objects.equals(myUsagesInGeneratedCodeString, that.myUsagesInGeneratedCodeString)
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
@@ -320,7 +309,6 @@ public class UsageViewPresentation {
       myTargetsNodeText,
       myNonCodeUsagesString,
       myCodeUsagesString,
-      myUsagesInGeneratedCodeString,
       myShowReadOnlyStatusAsRed,
       myShowCancelButton,
       myOpenInNewTab,
@@ -348,7 +336,6 @@ public class UsageViewPresentation {
     copyInstance.myTargetsNodeText = myTargetsNodeText;
     copyInstance.myNonCodeUsagesString = myNonCodeUsagesString;
     copyInstance.myCodeUsagesString = myCodeUsagesString;
-    copyInstance.myUsagesInGeneratedCodeString = myUsagesInGeneratedCodeString;
     copyInstance.myShowReadOnlyStatusAsRed = myShowReadOnlyStatusAsRed;
     copyInstance.myShowCancelButton = myShowCancelButton;
     copyInstance.myOpenInNewTab = myOpenInNewTab;
