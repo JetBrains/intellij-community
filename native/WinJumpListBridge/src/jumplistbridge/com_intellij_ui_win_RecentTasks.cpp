@@ -216,7 +216,7 @@ namespace intellij::ui::win::jni
                 throw std::logic_error("intellij::ui::win::jni::RecentTasks has already been initialized");
 
             const auto appId = jStringToWideString(jEnv, jAppId);
-            Application::getInstance().setAppUserModelId(appId);
+            //Application::getInstance().setAppUserModelId(appId);
 
             storage.emplace(PrivateCtorTag{});
         }
@@ -472,8 +472,8 @@ namespace intellij::ui::win::jni
 
         ensureJNINoErrors(*jEnv);
 
-        Application::getInstance().deleteJumpList(COM_IS_INITIALIZED_IN_THIS_THREAD);
-        //Application::getInstance().clearRecentsAndFrequents(COM_IS_INITIALIZED_IN_THIS_THREAD);
+        //Application::getInstance().deleteJumpList(COM_IS_INITIALIZED_IN_THIS_THREAD);
+        Application::getInstance().clearRecentsAndFrequents(COM_IS_INITIALIZED_IN_THIS_THREAD);
     }
 
 
