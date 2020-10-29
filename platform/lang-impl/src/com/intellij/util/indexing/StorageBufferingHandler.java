@@ -16,7 +16,15 @@ abstract class StorageBufferingHandler {
 
   boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
     StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
+    try {
+      ensureBufferingState(transientInMemoryIndices);
+      return update.compute();
+    } finally {
+      storageModeExitHandler.leave();
+    }
+  }
 
+  private void ensureBufferingState(boolean transientInMemoryIndices) {
     if (myPreviousDataBufferingState != transientInMemoryIndices) {
       synchronized (myBufferingStateUpdateLock) {
         if (myPreviousDataBufferingState != transientInMemoryIndices) {
@@ -27,12 +35,6 @@ abstract class StorageBufferingHandler {
           myPreviousDataBufferingState = transientInMemoryIndices;
         }
       }
-    }
-
-    try {
-      return update.compute();
-    } finally {
-      storageModeExitHandler.leave();
     }
   }
 
