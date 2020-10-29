@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,28 +184,13 @@ final class UpdateCheckerComponent {
   private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {
     if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP || previous == null || current.equals(previous)) return;
 
-    UpdatesInfo updatesInfo = null;
-    try {
-      updatesInfo = UpdateChecker.getUpdatesInfo();
-    }
-    catch (IOException | JDOMException e) {
-      LOG.warn(e);
-    }
-
     String blogPost = null;
-    if (updatesInfo != null) {
-      Product product = updatesInfo.get(current.getProductCode());
-      if (product != null) {
-        outer:
-        for (UpdateChannel channel : product.getChannels()) {
-          for (BuildInfo build : channel.getBuilds()) {
-            if (current.equals(build.getNumber())) {
-              blogPost = build.getBlogPost();
-              break outer;
-            }
-          }
-        }
-      }
+    Product product = UpdateChecker.getProductData().first;
+    if (product != null) {
+      blogPost = product.getChannels().stream()
+        .flatMap(channel -> channel.getBuilds().stream())
+        .filter(build -> current.equals(build.getNumber()))
+        .findFirst().map(BuildInfo::getBlogPost).orElse(null);
     }
 
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());

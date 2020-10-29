@@ -25,11 +25,14 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameUpdater
+import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -44,9 +47,12 @@ import java.net.HttpURLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.concurrent.withLock
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -55,8 +61,15 @@ object UpdateChecker {
   private val LOG = logger<UpdateChecker>()
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
+  private const val PRODUCT_DATA_TTL_MS = 300_000L
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
+
+  private val updateUrl: String
+    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
+
+  private val productDataLock = ReentrantLock()
+  private var productDataCache: SoftReference<Product>? = null
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourUpdatedPlugins = hashMapOf<PluginId, PluginDownloader>()
@@ -68,9 +81,6 @@ object UpdateChecker {
    */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
-
-  private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
 
   init {
     UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
@@ -174,37 +184,59 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    val updateInfo = try {
-      var updateUrl = Urls.newFromEncoded(updateUrl)
-      if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = UpdateRequestParameters.amendUpdateRequest(updateUrl)
+    val (product, error) = getProductData()
+    return when {
+      product != null && settings.isPlatformUpdateEnabled -> {
+        UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
       }
-      LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
-      HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+      error is JDOMException -> {
+        // corrupted content, don't bother telling user
+        LOG.info(error)
+        CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
+      }
+      error != null -> {
+        LOG.info(error)
+        CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, error)
+      }
+      else -> CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
-    catch (e: JDOMException) {
-      // corrupted content, don't bother telling user
-      LOG.info(e)
-      null
-    }
-    catch (e: Exception) {
-      LOG.info(e)
-      return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
-    }
-
-    if (updateInfo == null || !settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
-    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings)
-    return strategy.checkForUpdates()
   }
 
   @JvmStatic
+  fun getProductData(): Pair<Product?, Exception?> {
+    productDataLock.withLock {
+      val cached = SoftReference.dereference(productDataCache)
+      if (cached != null) return pair(cached, null)
+
+      try {
+        val product = loadUpdatesData()?.get(ApplicationInfo.getInstance().build.productCode)
+        if (product != null) {
+          productDataCache = SoftReference(product)
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
+        }
+        return pair(product, null)
+      }
+      catch (e: Exception) {
+        return pair(null, e)
+      }
+    }
+  }
+
   @Throws(IOException::class, JDOMException::class)
-  fun getUpdatesInfo(): UpdatesInfo? {
-    val updateUrl = Urls.newFromEncoded(updateUrl)
-    return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+  private fun loadUpdatesData(): UpdatesInfo? {
+    var url = Urls.newFromEncoded(updateUrl)
+    if (url.scheme != URLUtil.FILE_PROTOCOL) {
+      url = UpdateRequestParameters.amendUpdateRequest(url)
+    }
+    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", url)
+    return HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+  }
+
+  private fun clearProductDataCache() {
+    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
+      productDataCache = null
+      productDataLock.unlock()
+    }
   }
 
   /**
@@ -717,7 +749,7 @@ object UpdateChecker {
     }
     else {
       val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
