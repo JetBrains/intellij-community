@@ -23,14 +23,10 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -42,10 +38,14 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
@@ -67,9 +67,7 @@ final class UpdateCheckerComponent {
     @Override
     public void appStarted() {
       Application app = ApplicationManager.getApplication();
-      if (app.isCommandLine() || app.isHeadlessEnvironment()) {
-        return;
-      }
+      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) return;
 
       UpdateSettings settings = UpdateSettings.getInstance();
       updateDefaultChannel(settings);
@@ -77,26 +75,6 @@ final class UpdateCheckerComponent {
         scheduleFirstCheck(settings);
         snapPackageNotification(settings);
       }
-    }
-  }
-
-  static final class MyActivity implements StartupActivity.DumbAware {
-    private final @NotNull NotNullLazyValue<Boolean> updateFailed = AtomicNotNullLazyValue.createValue(() -> checkIfPreviousUpdateFailed());
-
-    MyActivity() {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
-      }
-    }
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (Experiments.getInstance().isFeatureEnabled("whats.new.notification") && !updateFailed.getValue()) {
-        showWhatsNew(project);
-      }
-
-      showUpdatedPluginsNotification(project);
-      ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
     }
   }
 
@@ -109,24 +87,7 @@ final class UpdateCheckerComponent {
     if (future != null) future.cancel(false);
   }
 
-  private static void showWhatsNew(@NotNull Project project) {
-    WhatsNewAction.openWhatsNewFile(project, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), null);
-    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
-  }
-
-  private static boolean checkIfPreviousUpdateFailed() {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
-        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
-      IdeUpdateUsageTriggerCollector.trigger("update.failed");
-      LOG.info("The previous IDE update failed");
-      return false;
-    }
-    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
-    return true;
-  }
-
-  private static void updateDefaultChannel(@NotNull UpdateSettings settings) {
+  private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
@@ -161,19 +122,50 @@ final class UpdateCheckerComponent {
   }
 
   private void queueNextCheck(long delay) {
-    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      checkUpdates();
-    }, delay, TimeUnit.MILLISECONDS);
+    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> checkUpdates(), delay, TimeUnit.MILLISECONDS);
   }
 
   private static void checkUpdates() {
-    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> getInstance().queueNextCheck(CHECK_INTERVAL));
+    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> getInstance().queueNextCheck());
   }
 
-  private static void snapPackageNotification(@NotNull UpdateSettings settings) {
-    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) {
-      return;
+  static final class MyActivity implements StartupActivity.DumbAware {
+    private static final AtomicBoolean ourWaiting = new AtomicBoolean(true);
+
+    MyActivity() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) throw ExtensionNotApplicableException.INSTANCE;
     }
+
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (ourWaiting.getAndSet(false)) {
+        checkIfPreviousUpdateFailed();
+        showWhatsNew(project);
+        showUpdatedPluginsNotification(project);
+        ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
+      }
+    }
+  }
+
+  private static void checkIfPreviousUpdateFailed() {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
+        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
+      IdeUpdateUsageTriggerCollector.trigger("update.failed");
+      LOG.info("The previous IDE update failed");
+    }
+    properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
+  }
+
+  private static void showWhatsNew(Project project) {
+    if (!Experiments.getInstance().isFeatureEnabled("whats.new.notification")) return;
+    WhatsNewAction.openWhatsNewFile(project, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), null);
+    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+  }
+
+  private static void snapPackageNotification(UpdateSettings settings) {
+    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
 
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
@@ -221,11 +213,7 @@ final class UpdateCheckerComponent {
     UpdateSettings.getInstance().saveLastCheckedInfo();
   }
 
-  private static void showUpdatedPluginsNotification(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
+  private static void showUpdatedPluginsNotification(Project project) {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
@@ -240,7 +228,7 @@ final class UpdateCheckerComponent {
         }
 
         try {
-          FileUtil.writeToFile(getUpdatedPluginsFile(), StringUtil.join(list, LineSeparator.getSystemLineSeparator().getSeparatorString()));
+          Files.write(getUpdatedPluginsFile(), list);
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -290,13 +278,12 @@ final class UpdateCheckerComponent {
     }, "plugins.updated.after.restart").notify(project);
   }
 
-  @NotNull
   private static Set<String> getUpdatedPlugins() {
     try {
-      File file = getUpdatedPluginsFile();
-      if (file.isFile()) {
-        List<String> list = FileUtil.loadLines(file);
-        FileUtil.delete(file);
+      Path file = getUpdatedPluginsFile();
+      if (Files.isRegularFile(file)) {
+        List<String> list = Files.readAllLines(file);
+        Files.delete(file);
         return new HashSet<>(list);
       }
     }
@@ -306,8 +293,7 @@ final class UpdateCheckerComponent {
     return new HashSet<>();
   }
 
-  @NotNull
-  private static File getUpdatedPluginsFile() {
-    return new File(PathManager.getConfigPath(), ".updated_plugins_list");
+  private static Path getUpdatedPluginsFile() {
+    return Paths.get(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 }
