@@ -56,6 +56,7 @@
     <multiHostInjector implementation="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector"/>
     <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <!--suppress PluginXmlI18n -->
     <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
                                  id="editor.preferences.yamlOptions"
                                  displayName="YAML"/>
