@@ -64,6 +64,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setKeepPluginsArchive(value);
   }
 
+  public boolean isShowWhatsNewEditor() {
+    return myState.isShowWhatsNewEditor();
+  }
+
+  public void setShowWhatsNewEditor(boolean value) {
+    myState.setShowWhatsNewEditor(value);
+  }
+
   public List<String> getEnabledExternalUpdateSources() {
     return myState.getEnabledExternalComponentSources();
   }

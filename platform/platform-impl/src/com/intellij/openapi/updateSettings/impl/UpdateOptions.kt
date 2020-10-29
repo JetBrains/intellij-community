@@ -29,6 +29,9 @@ class UpdateOptions : BaseState() {
   @get:OptionTag("KEEP_PLUGINS_ARCHIVE")
   var isKeepPluginsArchive by property(true)
 
+  @get:OptionTag("SHOW_WHATS_NEW_EDITOR")
+  var isShowWhatsNewEditor by property(true)
+
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)
 
