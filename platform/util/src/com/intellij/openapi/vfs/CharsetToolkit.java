@@ -538,10 +538,6 @@ public final class CharsetToolkit {
     return collection.toArray(new Charset[0]);
   }
 
-  public static byte @NotNull [] getUtf8Bytes(@NotNull String s) {
-    return s.getBytes(StandardCharsets.UTF_8);
-  }
-
   public static int getBOMLength(byte @NotNull [] content, @NotNull Charset charset) {
     if (charset.name().contains(UTF8) && hasUTF8Bom(content)) {
       return UTF8_BOM.length;
