@@ -255,7 +255,6 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
-      <add-to-group group-id="CutCopyPasteGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
 
     <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject"/>
