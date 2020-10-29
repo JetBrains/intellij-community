@@ -85,8 +85,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   public String myOutPath;
   String mySourceDirectory;
   public String myStubProfile;
-  String myProfileName;
-  String myProfilePath;
+  public String myProfileName;
+  public String myProfilePath;
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
   boolean myAnalyzeChanges;

@@ -90,17 +90,19 @@ data class ExclusionFilter(
 
 data class QodanaProfile(val path: String = "", val name: String = "") {
   fun loadProfile(application: InspectionApplication, project: Project): InspectionProfileImpl? {
-    if (path.isNotEmpty()) {
+    val loadingPath = if (path.isNotEmpty()) path else application.myProfilePath ?: ""
+    if (loadingPath.isNotEmpty()) {
       val profile = application.loadProfileByPath(path)
       if (profile != null) return profile
     }
     if (name.isEmpty()) return null
 
-    val profile = application.loadProfileByName(project, name)
+    val loadingProfileName = if (name.isNotEmpty()) path else application.myProfileName ?: ""
+    val profile = application.loadProfileByName(project, loadingProfileName)
     if (profile != null) return profile
 
     val embeddedProfilesPath = System.getProperty("qodana.embedded.profiles.path") ?: return null
 
-    return application.loadProfileByPath("$embeddedProfilesPath/$name.xml")
+    return application.loadProfileByPath("$embeddedProfilesPath/$loadingProfileName.xml")
   }
 }
