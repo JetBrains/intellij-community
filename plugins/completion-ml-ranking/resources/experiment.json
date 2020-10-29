@@ -85,8 +85,8 @@
     },
     {
       "id": "dart",
-      "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13]
+      "experimentBucketsCount": 2,
+      "includeGroups": [ 12, 13]
     }
   ]
 }
