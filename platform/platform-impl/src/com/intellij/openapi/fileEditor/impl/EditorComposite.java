@@ -443,6 +443,7 @@ public class EditorComposite implements Disposable {
   /**
    * @return component which represents the component that is supposed to be focusable
    */
+  @Nullable
   public JComponent getFocusComponent() {
     return myComponent.myFocusComponent.get();
   }

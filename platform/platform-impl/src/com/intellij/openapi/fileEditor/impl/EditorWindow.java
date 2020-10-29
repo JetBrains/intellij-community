@@ -638,7 +638,12 @@ public final class EditorWindow {
       }
       if (!focusNew) {
         res.setSelectedEditor(selectedEditor, true);
-        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getFocusComponent(), true));
+        getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          JComponent focusComponent = selectedEditor.getFocusComponent();
+          if (focusComponent != null) {
+            getGlobalInstance().requestFocus(focusComponent, true);
+          }
+        });
       }
       panel.revalidate();
       return res;
