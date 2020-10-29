@@ -28,7 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class JrtFileSystemImpl extends JrtFileSystem {
+public class JrtFileSystemImpl extends JrtFileSystem {
   private final Map<String, ArchiveHandler> myHandlers = Collections.synchronizedMap(CollectionFactory.createFilePathMap());
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 

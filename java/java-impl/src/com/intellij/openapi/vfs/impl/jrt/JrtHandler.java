@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("SynchronizeOnThis")
-class JrtHandler extends ArchiveHandler {
+public class JrtHandler extends ArchiveHandler {
   private static final URI ROOT_URI = URI.create("jrt:/");
 
   private SoftReference<FileSystem> myFileSystem;
 
-  JrtHandler(@NotNull String path) {
+  public JrtHandler(@NotNull String path) {
     super(path);
   }
 
