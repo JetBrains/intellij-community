@@ -629,7 +629,6 @@ object DynamicPlugins {
           classloadersFromUnloadedPlugins.remove(pluginId)
         }
         else {
-          InstalledPluginsState.getInstance().isRestartRequired = true
           if ((options.requireMemorySnapshot || (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !app.isUnitTestMode)) &&
               MemoryDumpHelper.memoryDumpAvailable()) {
             classLoaderUnloaded = saveMemorySnapshot(pluginId)
@@ -637,6 +636,9 @@ object DynamicPlugins {
           else {
             LOG.info("Plugin $pluginId is not unload-safe because class loader cannot be unloaded")
           }
+        }
+        if (!classLoaderUnloaded) {
+          InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
         val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
