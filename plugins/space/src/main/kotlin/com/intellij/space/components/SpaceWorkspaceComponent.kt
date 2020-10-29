@@ -7,7 +7,7 @@ import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.code.api.CodeReviewArena
 import circlet.code.api.CodeReviewParticipantsArena
 import circlet.common.oauth.IdeaOAuthConfig
-import circlet.permission.FeatureFlagsVmPersistenceKey
+import circlet.permissions.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
