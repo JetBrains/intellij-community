@@ -355,17 +355,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandPackages(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(CLASS);
+    if (shouldProcessClasses && !processCurrentPackage(processor, state, place)) return false;
 
     if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(processor, getExplicitlyEnumeratedDeclarations()))) {
       return false;
     }
 
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(CLASS);
-    if (shouldProcessClasses) {
-      if (!processCurrentPackage(processor, state, place)) return false;
-      if (!processOnDemandTypeImports(processor, state, place)) return false;
-    }
+    if (shouldProcessClasses && !processOnDemandTypeImports(processor, state, place)) return false;
 
     return !shouldProcessClasses || processImplicitImports(processor, state, place);
   }
