@@ -110,16 +110,14 @@ private fun PsiElement.addWhiteSpace(factory: KtPsiFactory, whiteSpaceText: Stri
     val siblingWhiteSpace = (if (before) prevLeaf() else nextLeaf()) as? PsiWhiteSpace
     if (siblingWhiteSpace == null) {
         addSiblingFunction(before)(parent, factory.createWhiteSpace(whiteSpaceText), this)
-    }
-    else {
+    } else {
         val siblingText = siblingWhiteSpace.text
         val containsLineBreak = StringUtil.containsLineBreak(siblingText) && StringUtil.containsLineBreak(whiteSpaceText)
 
         val newWhiteSpaceText = if (before) {
             if (containsLineBreak) whiteSpaceText
             else siblingText + whiteSpaceText
-        }
-        else {
+        } else {
             if (containsLineBreak) return
             whiteSpaceText + siblingText
         }
