@@ -145,7 +145,6 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     doTestPlainDirectoryImportOfModule();
   }
 
-
   public void testPlainDirectorySameDirectoryImportRegistryOff() {
     RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false);
     myTestFileName = PLAIN_DIR + "/mod.py";
@@ -172,6 +171,195 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     PsiFileSystemItem stdlibOsModule = assertInstanceOf(absOnlyResult, PsiFileSystemItem.class);
     assertNotEquals(myFixture.findFileInTempDir("dir/os.py"), stdlibOsModule.getVirtualFile());
     assertFalse(psiManager.isInProject(stdlibOsModule));
+  }
+
+  // PY-45114
+  public void testPlainDirectoryImportPrioritizeFileItselfOverSdk() {
+    myTestFileName = PLAIN_DIR + "/os.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryImportPrioritizeSameDirectoryModuleOverSdk() {
+    myTestFileName = PLAIN_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryInsideOrdinaryPackageImportPrioritizeSameDirectoryModuleOverSdk() {
+    myTestFileName = ORDINARY_PACK_DIR + "/" + PLAIN_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageImportPrioritizeSdkOverSameDirectoryModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPython2OrdinaryPackageImportPrioritizeSameDirectoryModuleOverSdk() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+      assertResolvesInsideProjectTo(PyFile.class);
+    });
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageSourceRootImportPrioritizeSameDirectoryModuleOverSdk() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    PsiFile currentFile = prepareFile();
+    runWithSourceRoots(List.of(myFixture.findFileInTempDir("ordinaryPackage")), () -> {
+      PsiManager psiManager = myFixture.getPsiManager();
+      PsiElement element = doResolve(currentFile);
+      assertInstanceOf(element, PyFile.class);
+      assertTrue(psiManager.isInProject(element));
+    });
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageRelativeFromImportPrioritizeSameDirectoryModuleOverSdk() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageRelativeImportSourcePrioritizeSameDirectoryModuleOverSdk() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageImportPrioritizeSdkOverFileItself() {
+    myTestFileName = ORDINARY_PACK_DIR + "/os.py";
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testInitPyImportPrioritizeSubmoduleOverPackageItself() {
+    myTestFileName = ORDINARY_PACK_DIR + "/__init__.py";
+    assertResolvesTo(PyFile.class, "ordinaryPackage.py", "/src/" + ORDINARY_PACK_DIR + "/ordinaryPackage.py");
+  }
+
+  // PY-45114
+  public void testInitPyFromImportPrioritizeNestedOrdinaryPackageOverNestedOrdinaryPackageModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/__init__.py";
+    assertResolvesTo(PyFile.class, "__init__.py", "/src/" + ORDINARY_PACK_DIR + "/" + ORDINARY_PACK_DIR + "/__init__.py");
+  }
+
+  // PY-45114
+  public void testInitPyFromImportPrioritizeNestedOrdinaryPackageOverModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/__init__.py";
+    assertResolvesTo(PyFile.class, "__init__.py", "/src/" + ORDINARY_PACK_DIR + "/" + ORDINARY_PACK_DIR + "/__init__.py");
+  }
+
+  // PY-45114
+  public void testInitPyImportPrioritizePackageOverSameDirectoryModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/__init__.py";
+    assertResolvesTo(PyFile.class, "__init__.py", "/src/" + ORDINARY_PACK_DIR + "/__init__.py");
+  }
+
+  // PY-45114
+  public void testNamespacePackageImportPrioritizeSdkOverSameDirectoryModule() {
+    myTestFileName = NAMESPACE_PACK_DIR + "/script.py";
+    myNamespacePackageDirectory = NAMESPACE_PACK_DIR;
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testNamespacePackageImportPrioritizeSdkOverFileItself() {
+    myTestFileName = NAMESPACE_PACK_DIR + "/os.py";
+    myNamespacePackageDirectory = NAMESPACE_PACK_DIR;
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryImportPrioritizeUserDirectoryOverSdk() {
+    myTestFileName = PLAIN_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PsiDirectory.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryImportPrioritizeNestedOrdinaryPackageOverSdk() {
+    myTestFileName = PLAIN_DIR + "/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryImportPrioritizeNestedNamespacePackageOverSdk() {
+    myTestFileName = PLAIN_DIR + "/script.py";
+    myNamespacePackageDirectory = PLAIN_DIR + "/os";
+    assertResolvesInsideProjectTo(PsiDirectory.class);
+  }
+
+  // PY-45114
+  public void testOrdinaryPackageImportPrioritizeSdkOverNestedOrdinaryPackage() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testNamespacePackageImportPrioritizeSdkOverNestedOrdinaryPackage() {
+    myTestFileName = NAMESPACE_PACK_DIR + "/script.py";
+    myNamespacePackageDirectory = NAMESPACE_PACK_DIR;
+    assertResolvesOutsideProjectTo(PyFile.class);
+  }
+
+  // PY-45114
+  public void testPlainDirectoryOutsideProjectImportPrioritizeSdkOverSameDirectoryModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      assertResolvesTo(PyFile.class, "__init__.pyi", "__init__.pyi");
+    });
+  }
+
+  public void testInitPyImportResolveSameDirectoryModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/__init__.py";
+    assertResolvesTo(PyFile.class, "mymod.py", "/src/" + ORDINARY_PACK_DIR + "/mymod.py");
+  }
+
+  public void testOrdinaryPackageOutsideProjectNotResolveSameDirectoryImportedModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      assertUnresolved();
+    });
+  }
+
+  public void testOrdinaryPackageOutsideProjectResolveRelativeImportedModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      assertResolvesTo(PyFile.class, "mod.py", "mod.py");
+    });
+  }
+
+  public void testNamespacePackageOutsideProjectNotResolveSameDirectoryImportedModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      assertUnresolved();
+    });
+  }
+
+  public void testNamespacePackageOutsideProjectResolveRelativeImportedModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      assertResolvesTo(PyFile.class, "mod.py", "mod.py");
+    });
+  }
+
+  private <T extends PsiElement> void assertResolvesInsideProjectTo(@NotNull Class<T> cls) {
+    PsiManager psiManager = myFixture.getPsiManager();
+    assertTrue(psiManager.isInProject(assertResolvesToElementOfClass(cls)));
+  }
+
+  private <T extends PsiElement> void assertResolvesOutsideProjectTo(@NotNull Class<T> cls) {
+    PsiManager psiManager = myFixture.getPsiManager();
+    assertFalse(psiManager.isInProject(assertResolvesToElementOfClass(cls)));
+  }
+
+  private <T extends PsiElement> @NotNull T assertResolvesToElementOfClass(@NotNull Class<T> cls) {
+    PsiElement resolved = doResolve();
+    assertInstanceOf(resolved, cls);
+    return (T) resolved;
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {
