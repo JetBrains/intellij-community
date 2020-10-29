@@ -76,7 +76,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
     return Pair.create(component, (renderer, bounds, text, right, textBaseline) -> {
       Dimension size = renderer.getPreferredSize();
-      int x = right.x - JBUIScale.scale(2) + (right.width - size.width) / 2;
+      int x = right.x - JBUIScale.scale(20) + (right.width - size.width) / 2;
       if (icon != null && myCountValue != null) {
         x -= getHGap() + myExtraLabel.getPreferredSize().width / 2;
       }
