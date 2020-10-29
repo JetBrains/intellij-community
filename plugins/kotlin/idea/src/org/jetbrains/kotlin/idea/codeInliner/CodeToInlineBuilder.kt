@@ -65,6 +65,12 @@ class CodeToInlineBuilder(
         )
 
         val copyOfBodyOrExpression = bodyOrExpression.copied()
+
+        // Body's expressions to be inlined contain related comments as a user data (see CommentHolder.CommentNode.Companion.mergeComments).
+        // When inlining (with untouched declaration!) is reverted and called again expressions become polluted with duplicates (^ merge!).
+        // Now that we copied required data it's time to clear the storage.
+        codeToInline.expressions.forEach { it.putCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY, null) }
+
         val (resultMainExpression, resultStatementsBefore) = expressionMapper(copyOfBodyOrExpression) ?: return null
         codeToInline.mainExpression = resultMainExpression
         codeToInline.statementsBefore.clear()
