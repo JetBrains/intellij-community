@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -104,9 +105,10 @@ class LeakingThisInspection : AbstractKotlinInspection() {
     }
 }
 
+@Nls
 private fun KtClass.createDescription(
-    defaultText: String,
-    enumText: String = defaultText,
+    @Nls defaultText: String,
+    @Nls enumText: String = defaultText,
     check: (KtClass) -> Boolean
 ): String? = if (isEnum()) enumText.takeUnless { check(this) } else defaultText
 
