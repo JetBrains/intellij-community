@@ -45,6 +45,8 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     myPatternList.setModel(myModel);
     myPatternList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myPatternList)
+                                                 .setScrollPaneBorder(JBUI.Borders.empty())
+                                                 .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
                                                  .setAddAction(__ -> addPattern())
                                                  .setEditAction(__ -> editPattern())
                                                  .setRemoveAction(__ -> removePattern())
@@ -116,7 +118,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     private @Nls @NlsSafe String             myOldValue;
 
     private PatternEditField() {
-      setBorder(JBUI.Borders.customLine(JBColor.LIGHT_GRAY, 0, 1, 1, 1));
+      setBorder(true);
       myValueEditor = new PatternValueEditor(this);
       addKeyListener(new KeyAdapter() {
         @Override
@@ -144,7 +146,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
 
     void setBorder(boolean isValid) {
       if (isValid) {
-        setBorder(JBUI.Borders.customLine(JBColor.LIGHT_GRAY, 0, 1, 1, 1));
+        setBorder(JBUI.Borders.customLine(JBColor.LIGHT_GRAY, 1, 1, 0, 1));
       }
       else {
         setBorder(JBUI.Borders.customLine(JBColor.RED));
