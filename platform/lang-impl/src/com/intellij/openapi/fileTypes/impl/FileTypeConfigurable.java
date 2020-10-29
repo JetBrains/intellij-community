@@ -298,10 +298,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (type == null) return;
 
     if (item == null) {
-      FileTypeConfigurableInteractions.patternAdded.log(type.getName());
+      FileTypeConfigurableInteractions.patternAdded.log(type);
     }
     else {
-      FileTypeConfigurableInteractions.patternEdited.log(type.getName());
+      FileTypeConfigurableInteractions.patternEdited.log(type);
     }
 
     String title = item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
@@ -380,7 +380,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removePattern() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    FileTypeConfigurableInteractions.patternRemoved.log(type.getName());
+    FileTypeConfigurableInteractions.patternRemoved.log(type);
     String extension = myPatterns.removeSelected();
     if (extension == null) return;
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
@@ -392,7 +392,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeHashBang() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    FileTypeConfigurableInteractions.hashbangRemoved.log(type.getName());
+    FileTypeConfigurableInteractions.hashbangRemoved.log(type);
     String extension = myHashBangs.removeSelected();
     if (extension == null) return;
 
@@ -679,10 +679,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (type == null) return;
 
     if (oldHashBang == null) {
-      FileTypeConfigurableInteractions.hashbangAdded.log(type.getName());
+      FileTypeConfigurableInteractions.hashbangAdded.log(type);
     }
     else {
-      FileTypeConfigurableInteractions.hashbangEdited.log(type.getName());
+      FileTypeConfigurableInteractions.hashbangEdited.log(type);
     }
 
     String title = FileTypesBundle.message("filetype.edit.hashbang.title");

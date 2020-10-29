@@ -47,7 +47,6 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 60);
 
-  private static final EventField<String> FILE_TYPE = EventFields.StringValidatedByCustomRule("file_type", "file_type");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
@@ -58,7 +57,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   private static VarargEventId registerFileTypeEvent(String eventId, EventField<?>... extraFields) {
-    EventField<?>[] baseFields = {EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA};
+    EventField<?>[] baseFields = {EventFields.PluginInfoFromInstance, EventFields.FileType, EventFields.AnonymizedPath, SCHEMA};
     return GROUP.registerVarargEvent(eventId, ArrayUtil.mergeArrays(baseFields, extraFields));
   }
 
@@ -100,7 +99,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
                                                                 @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
-      FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
+      EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
       SCHEMA.with(findSchema(project, file))};
   }
