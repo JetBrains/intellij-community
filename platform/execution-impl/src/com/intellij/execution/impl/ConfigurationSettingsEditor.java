@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
@@ -68,7 +69,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       myRunnersComponent = new RunnersEditorComponent();
 
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
+        ProgramRunner<RunnerSettings> runner = getRunner(executor, myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -97,6 +98,19 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
                              });
       }
     }
+  }
+
+  @Nullable
+  private static ProgramRunner<RunnerSettings> getRunner(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    if (executor instanceof ExecutorGroup<?>) {
+      for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(childExecutor.getId(), configuration);
+        if (runner != null) {
+          return runner;
+        }
+      }
+    }
+    return ProgramRunner.getRunner(executor.getId(), configuration);
   }
 
   @Nullable
