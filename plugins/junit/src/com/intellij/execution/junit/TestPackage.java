@@ -89,7 +89,7 @@ public class TestPackage extends TestObject {
           String packageName = getPackageName(data);
           String filters = getFilters(myClasses, packageName);
           if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && module != null && filterOutputByDirectoryForJunit5(myClasses)) {
-            JUnitStarter.printClassesList(composeDirectoryFilter(module), packageName, "", filters, myTempFile);
+            JUnitStarter.printClassesList(composeDirectoryFilter(getModuleWithTestsToFilter(module)), packageName, "", filters, myTempFile);
           }
           else {
             addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);
@@ -103,6 +103,10 @@ public class TestPackage extends TestObject {
         return TestPackage.this.requiresSmartMode();
       }
     };
+  }
+
+  protected Module getModuleWithTestsToFilter(Module module) {
+    return module;
   }
 
   @Nullable
