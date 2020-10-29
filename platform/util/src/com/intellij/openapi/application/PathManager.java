@@ -626,6 +626,50 @@ public final class PathManager {
     return resourceRoot != null ? Paths.get(resourceRoot).toAbsolutePath().toString() : null;
   }
 
+  /**
+   * Resolves the path to the jar file of an artifact.
+   *
+   * @param classesRoot  the resource root containing any class of the plugin, see {@link #getJarPathForClass}.
+   * @param artifactName the artifact name, from which the necessary relative paths and the jar name are derived.
+   *                     For an artifact named "foo-bar:jar", we assume that:
+   *                     <li> the artifact jar file name is "foo-bar.jar",
+   *                     <li> the output directory specified in the project structure is named "foo_bar_jar",
+   *                     <li> the "relativeOutputPath" argument of "withArtifact()" in the plugin layout script is just "rt".
+   */
+  public static @NotNull Path getJarArtifactPath(@NotNull String classesRoot,
+                                                 @NotNull String artifactName) {
+    String artifactJarName = Strings.trimEnd(artifactName, ":jar") + ".jar";
+    String artifactDirNameInBuildLayout = artifactName.replaceAll("\\W", "_");
+    return getArtifactPath(classesRoot, artifactJarName, "rt", artifactDirNameInBuildLayout);
+  }
+
+  /**
+   * Resolves the path to an artifact.
+   *
+   * @param classesRoot                   the resource root containing any class of the plugin, see {@link #getJarPathForClass}.
+   * @param artifactFileName              the name of the target artifact file
+   * @param artifactDirNameInPluginLayout the value of "relativeOutputPath" used in the plugin layout for "withArtifact()", usually "rt"
+   * @param artifactDirNameInBuildLayout  the name specified in the output directory property in the project structure
+   */
+  public static @NotNull Path getArtifactPath(@NotNull String classesRoot,
+                                              @NotNull String artifactFileName,
+                                              @NotNull String artifactDirNameInPluginLayout,
+                                              @NotNull String artifactDirNameInBuildLayout) {
+    Path rootPath = Paths.get(classesRoot);
+    if (Files.isRegularFile(rootPath)) {
+      // running regular installation
+      return rootPath.resolveSibling(artifactDirNameInPluginLayout).resolve(artifactFileName);
+    }
+
+    Path outClassesDir = rootPath.getParent().getParent();
+    Path artifactsDir = outClassesDir.resolveSibling("project-artifacts");
+    if (!Files.exists(artifactsDir)) {
+      // running IDE or tests in IDE
+      artifactsDir = outClassesDir.resolve("artifacts");
+    } // otherwise running tests via build scripts
+    return artifactsDir.resolve(artifactDirNameInBuildLayout).resolve(artifactFileName);
+  }
+
   public static @NotNull Collection<String> getUtilClassPath() {
     Set<String> classPath = new HashSet<>();
 
