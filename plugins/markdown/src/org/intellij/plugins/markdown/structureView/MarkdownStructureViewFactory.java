@@ -1,9 +1,6 @@
 package org.intellij.plugins.markdown.structureView;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewModelBase;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.*;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -36,7 +33,7 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
     };
   }
 
-  private static class MarkdownStructureViewModel extends StructureViewModelBase {
+  private static class MarkdownStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
     MarkdownStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
       super(psiFile, editor, new MarkdownStructureElement(psiFile));
     }
@@ -58,6 +55,16 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
       }
 
       return element;
+    }
+
+    @Override
+    public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+      return false;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+      return false;
     }
   }
 }
