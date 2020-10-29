@@ -151,7 +151,7 @@ public class MavenServerConnector implements @NotNull Disposable {
       if (factories.length > 1) {
         throw new RuntimeException("More than one MavenRemoteProcessSupportFactory is registered: " + Arrays.toString(factories));
       }
-      if (factories.length ==1 ){
+      if (factories.length == 1) {
         mySupport = factories[0].create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
       } else{
         mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
@@ -212,7 +212,14 @@ public class MavenServerConnector implements @NotNull Disposable {
 
   @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(() -> myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken));
+    return perform(() -> {
+      MavenModel m = myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
+      RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(basedir.getPath());
+      if (transformer != RemotePathTransformerFactory.Transformer.ID) {
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
+      }
+      return m;
+    });
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {

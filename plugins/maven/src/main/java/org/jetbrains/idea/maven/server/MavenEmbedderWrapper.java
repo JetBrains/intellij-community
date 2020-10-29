@@ -101,7 +101,16 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(projectPath);
     return performCancelable(() -> {
       final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
-      return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
+      Collection<MavenServerExecutionResult> results =
+        getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
+      if (transformer != RemotePathTransformerFactory.Transformer.ID) {
+        for (MavenServerExecutionResult result : results) {
+          MavenServerExecutionResult.ProjectData data = result.projectData;
+          if (data == null) continue;
+          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(data.mavenModel);
+        }
+      }
+      return results;
     });
   }
 
