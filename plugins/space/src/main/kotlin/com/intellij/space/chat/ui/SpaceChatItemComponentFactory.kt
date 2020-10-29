@@ -54,7 +54,10 @@ import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.reactive.awaitLoaded
 import java.awt.*
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 internal class SpaceChatItemComponentFactory(
   private val project: Project,
@@ -120,6 +123,17 @@ internal class SpaceChatItemComponentFactory(
           createSimpleMessagePanel(
             HtmlChunk.raw(
               SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
+            ).wrapWith(html()).toString()
+          )
+        )
+        is ReviewTitleChangedEvent -> EventMessagePanel(
+          createSimpleMessagePanel(
+            HtmlChunk.raw(
+              SpaceBundle.message(
+                "chat.review.title.changed",
+                HtmlChunk.text(details.oldTitle).bold(), // NON-NLS
+                HtmlChunk.text(details.newTitle).bold()  // NON-NLS
+              )
             ).wrapWith(html()).toString()
           )
         )
