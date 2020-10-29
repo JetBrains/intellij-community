@@ -28,6 +28,7 @@ import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -478,23 +479,30 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     private int myLastSelectedIndex = -2;
     private Point myLastMouseLocation;
 
+    /**
+     * this method should be changed only in par with
+     * {@link TreePopupImpl.MyMouseMotionListener#isMouseMoved(Point)}
+     */
     private boolean isMouseMoved(Point location) {
       if (myLastMouseLocation == null) {
         myLastMouseLocation = location;
         return false;
       }
-      return !myLastMouseLocation.equals(location);
+      Point prev = myLastMouseLocation;
+      myLastMouseLocation = location;
+      return !prev.equals(location);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      Point lastPoint = myLastMouseLocation;
       if (!isMouseMoved(e.getLocationOnScreen())) return;
 
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
       if (isSelectableAt(index)) {
-        if (index != myLastSelectedIndex) {
+        if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
             showSubMenu(index);
@@ -509,6 +517,23 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       notifyParentOnChildSelection();
+    }
+
+    private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
+      if (myChild == null) return false;
+
+      Rectangle childBounds = myChild.getBounds();
+      childBounds.setLocation(myChild.getLocationOnScreen());
+
+      Polygon triangle = childBounds.x > prevPoint.x
+          ? new Polygon(
+                new int[]{prevPoint.x, childBounds.x, childBounds.x},
+                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3)
+          : new Polygon(
+                new int[]{prevPoint.x, childBounds.x + childBounds.width, childBounds.x + childBounds.width},
+                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3);
+
+      return triangle.contains(newPoint);
     }
 
     private void showSubMenu(int forIndex) {
